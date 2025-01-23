@@ -16,7 +16,6 @@
 
 package stroom.pipeline.task;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.docref.DocRef;
@@ -54,7 +53,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,10 +94,10 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         scyllaDbDoc.setConnection(ScyllaDbUtil.getDefaultConnection());
         scyllaDbDocStore.writeDocument(scyllaDbDoc);
 
-        createStateDoc(scyllaDbDoc, "hostname_to_location_map");
-        createStateDoc(scyllaDbDoc, "hostname_to_ip_map");
-        createStateDoc(scyllaDbDoc, "id_to_user_map");
-        createStateDoc(scyllaDbDoc, "number_to_id");
+        final DocRef stateDoc1 = createStateDoc(scyllaDbDoc, "hostname_to_location_map");
+        final DocRef stateDoc2 = createStateDoc(scyllaDbDoc, "hostname_to_ip_map");
+        final DocRef stateDoc3 = createStateDoc(scyllaDbDoc, "id_to_user_map");
+        final DocRef stateDoc4 = createStateDoc(scyllaDbDoc, "number_to_id");
 
         // Add reference data to state store.
         // Setup the pipeline.
@@ -125,12 +124,15 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         assertThat(refDataProcessResults).hasSize(3);
 
         // Add event data and processor filters.
-        final List<PipelineReference> pipelineReferences = Collections.singletonList(PipelineDataUtil.createReference(
-                "translationFilter",
-                "pipelineReference",
-                new DocRef(StateDoc.TYPE, UUID.randomUUID().toString()),
-                null,
-                null));
+        final List<PipelineReference> pipelineReferences = Stream
+                .of(stateDoc1, stateDoc2, stateDoc3, stateDoc4)
+                .map(docRef -> PipelineDataUtil.createReference(
+                        "translationFilter",
+                        "pipelineReference",
+                        docRef,
+                        null,
+                        null))
+                .toList();
         commonTranslationTestHelper.setupStateProcess(
                 CommonTranslationTestHelper.FEED_NAME,
                 Collections.singletonList(CommonTranslationTestHelper.VALID_RESOURCE_NAME),
@@ -181,11 +183,12 @@ class TestStateLookupTask extends AbstractProcessIntegrationTest {
         }
     }
 
-    private void createStateDoc(final ScyllaDbDoc scyllaDbDoc, final String name) {
+    private DocRef createStateDoc(final ScyllaDbDoc scyllaDbDoc, final String name) {
         final DocRef docRef = stateDocStore.createDocument(name);
         final StateDoc doc = stateDocStore.readDocument(docRef);
         doc.setScyllaDbRef(scyllaDbDoc.asDocRef());
         doc.setStateType(StateType.TEMPORAL_STATE);
         stateDocStore.writeDocument(doc);
+        return docRef;
     }
 }

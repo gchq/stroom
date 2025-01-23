@@ -27,9 +27,9 @@ import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.core.Admin;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.extension.PostServeAction;
+import com.github.tomakehurst.wiremock.extension.Parameters;
+import com.github.tomakehurst.wiremock.extension.ServeEventListener;
 import com.github.tomakehurst.wiremock.http.HttpHeaders;
 import com.github.tomakehurst.wiremock.http.LoggedResponse;
 import com.github.tomakehurst.wiremock.http.MultiValue;
@@ -77,20 +77,23 @@ public class MockHttpDestination {
     WireMockExtension createExtension() {
         return WireMockExtension.newInstance()
                 .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
-                .options(WireMockConfiguration.wireMockConfig().extensions(new PostServeAction() {
+                .options(WireMockConfiguration.wireMockConfig().extensions(new ServeEventListener() {
                     @Override
                     public String getName() {
                         return "Request logging action";
                     }
 
                     @Override
-                    public void doGlobalAction(final ServeEvent serveEvent, final Admin admin) {
-                        super.doGlobalAction(serveEvent, admin);
-                        if (isRequestLoggingEnabled) {
-                            dumpWireMockEvent(serveEvent);
-                        }
-                        if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
-                            captureDataFeedRequest(serveEvent);
+                    public void afterComplete(final ServeEvent serveEvent, final Parameters parameters) {
+                        if (serveEvent.getResponse().getStatus() == 200) {
+                            if (isRequestLoggingEnabled) {
+                                dumpWireMockEvent(serveEvent);
+                            }
+                            if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
+                                captureDataFeedRequest(serveEvent);
+                            }
+                        } else {
+                            LOGGER.error(serveEvent.toString());
                         }
                     }
                 }))

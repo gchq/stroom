@@ -30,6 +30,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4693** : Add the property `stroom.session.maxInactiveInterval` to control the HTTP session expiry. Defaults to `1d`.
 
 
+## [v7.8-planb-beta.9] - 2025-01-21
+
+* Change `receiptId` format to `<epoch ms>_<seq no>_<(P|S)>_<proxyId or stroom nodeName>`. `P|S` represents stroom or Proxy.
+
+* Change stroom to also set the `receiptId` meta attribute on receipt or upload.
+
+* Change proxy logging to still log datafeed events even if the `metaKeys` config prop is empty.
+
+* Issue **#4695** : Change proxy to re-create the proxy ID in proxy-id.txt if the value in there does not match the required pattern.
+
+* Fix the sleep time in UniqueIdGenerator (from 50ms to 0.1ms).
+
+
 ## [v7.8-beta.8] - 2025-01-10
 
 * Fix tests that were breaking the build.
@@ -1165,7 +1178,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...HEAD
+[v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
 [v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
 [v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
 [v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6

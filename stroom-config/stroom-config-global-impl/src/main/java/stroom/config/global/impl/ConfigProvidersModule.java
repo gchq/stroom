@@ -486,6 +486,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.planb.impl.PlanBConfig getPlanBConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.planb.impl.PlanBConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.processor.impl.ProcessorConfig getProcessorConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

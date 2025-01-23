@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +50,11 @@ class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
         final Path importDir = rootTestDir.resolve("samples/config");
         final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID() + ".zip");
 
-        ZipUtil.zip(zipFile, importDir, Pattern.compile(".*DATA_SPLITTER.*"), null);
+        final Predicate<Path> filePredicate = path -> !path.equals(zipFile);
+        final Predicate<String> entryPredicate = ZipUtil
+                .createIncludeExcludeEntryPredicate(Pattern.compile(".*DATA_SPLITTER.*"), null);
+
+        ZipUtil.zip(zipFile, importDir, filePredicate, entryPredicate);
         assertThat(Files.isRegularFile(zipFile)).isTrue();
         assertThat(Files.isDirectory(importDir)).isTrue();
 

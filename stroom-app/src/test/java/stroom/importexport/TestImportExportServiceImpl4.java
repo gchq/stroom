@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -73,7 +74,11 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
         final Path zipFile = getCurrentTestDir().resolve(UUID.randomUUID() + ".zip");
         final ImportSettings.Builder builder = ImportSettings.builder();
 
-        ZipUtil.zip(zipFile, importDir, Pattern.compile(".*DATA_SPLITTER.*"), null);
+        final Predicate<Path> filePredicate = path -> !path.equals(zipFile);
+        final Predicate<String> entryPredicate = ZipUtil
+                .createIncludeExcludeEntryPredicate(Pattern.compile(".*DATA_SPLITTER.*"), null);
+
+        ZipUtil.zip(zipFile, importDir, filePredicate, entryPredicate);
         assertThat(Files.isRegularFile(zipFile)).isTrue();
         assertThat(Files.isDirectory(importDir)).isTrue();
 

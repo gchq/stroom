@@ -3005,6 +3005,56 @@ paths:
       summary: Submit a request to get the status of a feed
       tags:
       - Feed Status
+  /fileTransfer/v1/fetchSnapshot:
+    post:
+      operationId: fetchSnapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnapshotRequest"
+      responses:
+        default:
+          description: "Returns: 200 if the request was ok and the snapshot returned,\
+            \ 304 if the snapshot has not been modified, 401 if unauthorised, 500\
+            \ for any other error"
+      summary: Fetch Plan B snapshot
+      tags:
+      - File Transfer
+  /fileTransfer/v1/sendPart:
+    post:
+      operationId: sendPart
+      parameters:
+      - in: header
+        name: createTime
+        schema:
+          type: integer
+          format: int64
+      - in: header
+        name: metaId
+        schema:
+          type: integer
+          format: int64
+      - in: header
+        name: fileHash
+        schema:
+          type: string
+      - in: header
+        name: fileName
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: object
+      responses:
+        default:
+          description: "Returns: 200 if the part was sent ok, 401 if unauthorised,\
+            \ 500 for any other error"
+      summary: Send Plan B part
+      tags:
+      - File Transfer
   /fsVolume/v1:
     post:
       operationId: createFsVolume
@@ -4558,6 +4608,50 @@ paths:
       summary: Update a pipeline doc
       tags:
       - Pipelines
+  /planB/v1/{uuid}:
+    get:
+      operationId: fetchStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanBDoc"
+          description: default response
+      summary: Fetch an state store doc by its UUID
+      tags:
+      - State Stores
+    put:
+      operationId: updateStateStore
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanBDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanBDoc"
+          description: default response
+      summary: Update an state store doc
+      tags:
+      - State Stores
   /preferences/v1:
     get:
       operationId: fetchUserPreferences
@@ -6263,7 +6357,7 @@ paths:
       - Sql Statistics Query
   /stateStore/v1/{uuid}:
     get:
-      operationId: fetchStateStore
+      operationId: fetchStateStore_1
       parameters:
       - in: path
         name: uuid
@@ -6281,7 +6375,7 @@ paths:
       tags:
       - State Stores
     put:
-      operationId: updateStateStore
+      operationId: updateStateStore_1
       parameters:
       - in: path
         name: uuid
@@ -9524,6 +9618,7 @@ components:
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
+          - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_REPORT
@@ -12458,6 +12553,7 @@ components:
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
+          - DOCUMENT_PLAN_B
           - DOCUMENT_QUERY
           - DOCUMENT_RECEIVE_DATA_RULE_SET
           - DOCUMENT_REPORT
@@ -12794,6 +12890,71 @@ components:
         timeout:
           type: integer
           format: int64
+    PlanBDoc:
+      type: object
+      properties:
+        condense:
+          type: boolean
+        condenseAge:
+          type: integer
+          format: int32
+        condenseTimeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        retainAge:
+          type: integer
+          format: int32
+        retainForever:
+          type: boolean
+        retainTimeUnit:
+          type: string
+          enum:
+          - NANOSECONDS
+          - MILLISECONDS
+          - SECONDS
+          - MINUTES
+          - HOURS
+          - DAYS
+          - WEEKS
+          - MONTHS
+          - YEARS
+        stateType:
+          type: string
+          enum:
+          - STATE
+          - TEMPORAL_STATE
+          - RANGED_STATE
+          - TEMPORAL_RANGED_STATE
+          - SESSION
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     ProcessConfig:
       type: object
       properties:
@@ -14884,6 +15045,17 @@ components:
           format: int32
       xml:
         name: size
+    SnapshotRequest:
+      type: object
+      properties:
+        currentSnapshotTime:
+          type: integer
+          format: int64
+        effectiveTime:
+          type: integer
+          format: int64
+        planBDocRef:
+          $ref: "#/components/schemas/DocRef"
     SolrConnectionConfig:
       type: object
       properties:

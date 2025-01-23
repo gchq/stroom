@@ -40,6 +40,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public final class ZipUtil {
@@ -57,24 +58,50 @@ public final class ZipUtil {
     }
 
     public static void zip(final Path zipFile, final Path dir) throws IOException {
-        zip(zipFile, dir, null, null);
+        final Predicate<Path> filePredicate = path -> !path.equals(zipFile);
+        zip(zipFile, dir, filePredicate, name -> true);
+    }
+
+    public static Predicate<String> createIncludeExcludeEntryPredicate(final Pattern includePattern,
+                                                                       final Pattern excludePattern) {
+        if (includePattern == null && excludePattern == null) {
+            return name -> true;
+        }
+        Predicate<String> include = null;
+        Predicate<String> exclude = null;
+        if (includePattern != null) {
+            include = name -> includePattern.matcher(name).matches();
+        }
+        if (excludePattern != null) {
+            exclude = name -> !excludePattern.matcher(name).matches();
+        }
+        if (include != null && exclude != null) {
+            return include.and(exclude);
+        } else if (include != null) {
+            return include;
+        }
+        return exclude;
     }
 
     public static void zip(final Path zipFile,
                            final Path dir,
-                           final Pattern includePattern,
-                           final Pattern excludePattern) throws IOException {
+                           final Predicate<Path> filePredicate,
+                           final Predicate<String> entryPredicate) throws IOException {
         try (final ZipArchiveOutputStream zipOutputStream =
                 createOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
-            zip(zipFile, dir, zipOutputStream, includePattern, excludePattern);
+            zip(dir, zipOutputStream, filePredicate, entryPredicate);
         }
     }
 
-    private static void zip(final Path zipFile,
-                            final Path dir,
+    public static void zip(final Path dir,
+                            final ZipArchiveOutputStream zipOutputStream) {
+        zip(dir, zipOutputStream, path -> true, name -> true);
+    }
+
+    private static void zip(final Path dir,
                             final ZipArchiveOutputStream zipOutputStream,
-                            final Pattern includePattern,
-                            final Pattern excludePattern) {
+                            final Predicate<Path> filePredicate,
+                            final Predicate<String> entryPredicate) {
         try {
             Files.walkFileTree(
                     dir,
@@ -85,11 +112,10 @@ public final class ZipUtil {
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
                                 // Make sure we don't include the destination zip file in the zip file.
-                                if (!file.equals(zipFile)) {
-                                    final String fullPath = dir.relativize(file).toString();
-                                    if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
-                                            (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
-                                        putEntry(zipOutputStream, file, fullPath);
+                                if (filePredicate.test(file)) {
+                                    final String name = dir.relativize(file).toString();
+                                    if (entryPredicate.test(name)) {
+                                        putEntry(zipOutputStream, file, name);
                                     }
                                 }
                             } catch (final IOException e) {
@@ -119,8 +145,12 @@ public final class ZipUtil {
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
+        unzip(Files.newInputStream(zipFile), dir);
+    }
+
+    public static void unzip(final InputStream inputStream, final Path dir) throws IOException {
         try (final ZipArchiveInputStream zip =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+                new ZipArchiveInputStream(new BufferedInputStream(inputStream))) {
             ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
                 // Get output file.

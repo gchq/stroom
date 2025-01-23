@@ -92,9 +92,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -152,9 +150,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling PUT on {}{}, passing {}",
                 getResourceBasePath(), subPath, requestEntity);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -193,9 +189,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling GET on {}{}, expecting {}",
                 getResourceBasePath(), subPath, expectedResponse);
 
-        WebTarget webTarget = resources
-                .target(getResourceBasePath())
-                .path(subPath);
+        WebTarget webTarget = getWebTarget(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
@@ -226,7 +220,6 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     }
 
     public WebTarget getWebTarget(final String subPath) {
-
         return resources
                 .target(getResourceBasePath())
                 .path(subPath);

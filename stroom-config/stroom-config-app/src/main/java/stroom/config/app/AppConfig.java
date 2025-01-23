@@ -44,6 +44,7 @@ import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
+import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
@@ -119,6 +120,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
     public static final String PROP_NAME_STATE = "state";
+    public static final String PROP_NAME_PLANB = "planb";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
@@ -165,6 +167,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
     private final StateConfig stateConfig;
+    private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
@@ -216,6 +219,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new SessionConfig(),
                 new SolrConfig(),
                 new StateConfig(),
+                new PlanBConfig(),
                 new StatisticsConfig(),
                 new StoredQueryConfig(),
                 new StroomPathConfig(),
@@ -266,6 +270,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                      @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
+                     @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
@@ -312,6 +317,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
         this.stateConfig = stateConfig;
+        this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
@@ -553,6 +559,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("Configuration for the stroom state service")
     public StateConfig getStateConfig() {
         return stateConfig;
+    }
+
+    @JsonProperty(PROP_NAME_PLANB)
+    @JsonPropertyDescription("Configuration for the stroom Plan B state service")
+    public PlanBConfig getPlanBConfig() {
+        return planBConfig;
     }
 
     @JsonProperty(PROP_NAME_STATISTICS)

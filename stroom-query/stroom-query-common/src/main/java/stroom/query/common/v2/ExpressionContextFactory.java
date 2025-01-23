@@ -4,7 +4,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.language.functions.ExpressionContext;
-import stroom.query.language.functions.StateProvider;
+import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.ValNull;
 
 import jakarta.inject.Inject;
@@ -14,21 +14,21 @@ public class ExpressionContextFactory {
 
     private final Provider<AnalyticResultStoreConfig> analyticResultStoreConfigProvider;
     private final Provider<SearchResultStoreConfig> searchResultStoreConfigProvider;
-    private final Provider<StateProvider> stateProviderProvider;
+    private final Provider<StateFetcher> stateFetcherProvider;
 
     public ExpressionContextFactory() {
         this.analyticResultStoreConfigProvider = AnalyticResultStoreConfig::new;
         this.searchResultStoreConfigProvider = SearchResultStoreConfig::new;
-        stateProviderProvider = () -> (StateProvider) (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        stateFetcherProvider = () -> (StateFetcher) (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
     }
 
     @Inject
     public ExpressionContextFactory(final Provider<AnalyticResultStoreConfig> analyticResultStoreConfigProvider,
                                     final Provider<SearchResultStoreConfig> searchResultStoreConfigProvider,
-                                    final Provider<StateProvider> stateProviderProvider) {
+                                    final Provider<StateFetcher> stateFetcherProvider) {
         this.analyticResultStoreConfigProvider = analyticResultStoreConfigProvider;
         this.searchResultStoreConfigProvider = searchResultStoreConfigProvider;
-        this.stateProviderProvider = stateProviderProvider;
+        this.stateFetcherProvider = stateFetcherProvider;
     }
 
     public ExpressionContext createContext(final SearchRequest searchRequest) {
@@ -51,7 +51,7 @@ public class ExpressionContextFactory {
         return ExpressionContext.builder()
                 .maxStringLength(maxStringLength)
                 .dateTimeSettings(dateTimeSettings)
-                .stateProvider(stateProviderProvider.get())
+                .stateFetcher(stateFetcherProvider.get())
                 .build();
     }
 

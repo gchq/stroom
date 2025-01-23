@@ -1,0 +1,145 @@
+package stroom.planb.impl.data;
+
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.docref.DocRef;
+import stroom.node.api.NodeInfo;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.db.AbstractLmdb;
+import stroom.planb.impl.db.StatePaths;
+import stroom.planb.shared.PlanBDoc;
+import stroom.util.NullSafe;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+@Singleton
+public class ShardManager {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardManager.class);
+
+    public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
+
+    private final ByteBufferFactory byteBufferFactory;
+    private final PlanBDocCache planBDocCache;
+    private final PlanBDocStore planBDocStore;
+    private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
+    private final NodeInfo nodeInfo;
+    private final Provider<PlanBConfig> configProvider;
+    private final StatePaths statePaths;
+    private final FileTransferClient fileTransferClient;
+
+    @Inject
+    public ShardManager(final ByteBufferFactory byteBufferFactory,
+                        final PlanBDocCache planBDocCache,
+                        final PlanBDocStore planBDocStore,
+                        final NodeInfo nodeInfo,
+                        final Provider<PlanBConfig> configProvider,
+                        final StatePaths statePaths,
+                        final FileTransferClient fileTransferClient) {
+        this.byteBufferFactory = byteBufferFactory;
+        this.planBDocCache = planBDocCache;
+        this.planBDocStore = planBDocStore;
+        this.nodeInfo = nodeInfo;
+        this.configProvider = configProvider;
+        this.statePaths = statePaths;
+        this.fileTransferClient = fileTransferClient;
+
+        // Delete any existing snapshots that might have been left behind from the last use of Stroom.
+        FileUtil.deleteDir(statePaths.getSnapshotDir());
+    }
+
+    private boolean isSnapshotNode() {
+        final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
+        // If we have no node info or no nodes are configured then treat this as a shard writer node and not a
+        // snapshot node.
+        return nodeInfo != null && !nodes.isEmpty() && !nodes.contains(nodeInfo.getThisNodeName());
+    }
+
+    public void merge(final Path sourceDir) throws IOException {
+        final String docUuid = sourceDir.getFileName().toString();
+        final Shard shard = getShardForDocUuid(docUuid);
+        shard.merge(sourceDir);
+    }
+
+    public void condenseAll() {
+        shardMap.values().forEach(shard -> {
+            final PlanBDoc doc = shard.getDoc();
+            final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
+            // If we can't get the doc then we must have deleted it so delete the shard.
+            if (loaded == null) {
+                shard.delete();
+                shardMap.remove(shard.getDoc().getUuid());
+            } else {
+                shard.condense(loaded);
+            }
+        });
+    }
+
+    public void checkSnapshotStatus(final SnapshotRequest request) {
+        final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
+        shard.checkSnapshotStatus(request);
+    }
+
+    public void createSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
+        final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
+        shard.createSnapshot(request, outputStream);
+    }
+
+    public <R> R get(final String mapName, final Function<AbstractLmdb<?, ?>, R> function) {
+        final Shard shard = getShardForMapName(mapName);
+        return shard.get(function);
+    }
+
+    public void cleanup() {
+        shardMap.values().forEach(Shard::cleanup);
+    }
+
+    private Shard getShardForMapName(final String mapName) {
+        final PlanBDoc doc = planBDocCache.get(mapName);
+        if (doc == null) {
+            LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
+            throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
+        }
+        return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
+    }
+
+    private Shard getShardForDocUuid(final String docUuid) {
+        return shardMap.computeIfAbsent(docUuid, k -> {
+            final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
+            if (doc == null) {
+                LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
+                throw new RuntimeException("No PlanB doc found for UUID '" + docUuid + "'");
+            }
+            return createShard(doc);
+        });
+    }
+
+    private Shard createShard(final PlanBDoc doc) {
+        if (isSnapshotNode()) {
+            return new SnapshotShard(byteBufferFactory,
+                    configProvider,
+                    statePaths,
+                    fileTransferClient,
+                    doc);
+        }
+        return new LocalShard(
+                byteBufferFactory,
+                configProvider,
+                statePaths,
+                doc);
+    }
+}

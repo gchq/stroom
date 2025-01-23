@@ -592,6 +592,17 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
       maxElements: 1000000
+  planb:
+    minTimeToKeepEnvOpen: "PT1M"
+    minTimeToKeepSnapshots: "PT10M"
+    nodeList: []
+    path: "${stroom.home}/planb"
+    snapshotRetryFetchInterval: "PT1M"
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   processor:
     assignTasks: true
     createTasksBeyondProcessLimit: true

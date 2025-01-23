@@ -111,6 +111,11 @@ public class DocumentTypeRegistry {
             "StateStore",
             "State Store",
             SvgImage.DOCUMENT_STATE_STORE);
+    public static final DocumentType PLAN_B_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "PlanB",
+            "Plan B",
+            SvgImage.DOCUMENT_PLAN_B);
     public static final DocumentType STATISTIC_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
             "StatisticStore",
@@ -191,6 +196,7 @@ public class DocumentTypeRegistry {
         put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
         put(STATE_STORE_DOCUMENT_TYPE);
+        put(PLAN_B_DOCUMENT_TYPE);
         put(STATISTIC_STORE_DOCUMENT_TYPE);
         put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
