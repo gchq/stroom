@@ -461,7 +461,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                    .addIdTerm(ProcessorFilterFields.PROCESSOR_ID,
+                    .addIdTerm(ProcessorFields.ID,
                             ExpressionTerm.Condition.EQUALS,
                             processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
@@ -554,7 +554,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         int priority = defaultPriority;
 
         final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                .addIdTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
+                .addIdTerm(ProcessorFields.ID, ExpressionTerm.Condition.EQUALS, processor.getId())
                 .addBooleanTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
         final List<ProcessorFilter> list = processorFilterDao.find(
