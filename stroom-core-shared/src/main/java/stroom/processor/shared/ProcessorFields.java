@@ -28,20 +28,20 @@ public class ProcessorFields {
     public static final QueryField PROCESSOR_TYPE = QueryField.createText("Processor Type");
     public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
             PipelineDoc.TYPE, "Processor Pipeline");
-    public static final QueryField ANALYTIC_RULE = QueryField.createDocRefByUuid(
-            AnalyticRuleDoc.TYPE, "Analytic Rule");
     public static final QueryField ENABLED = QueryField.createBoolean("Processor Enabled");
     public static final QueryField DELETED = QueryField.createBoolean("Processor Deleted");
     public static final QueryField UUID = QueryField.createText("Processor UUID");
+    public static final QueryField ANALYTIC_RULE = QueryField.createDocRefByUuid(
+            AnalyticRuleDoc.TYPE, "Analytic Rule");
 
     static {
         FIELDS.add(ID);
         FIELDS.add(PROCESSOR_TYPE);
         FIELDS.add(PIPELINE);
-        FIELDS.add(ANALYTIC_RULE);
         FIELDS.add(ENABLED);
         FIELDS.add(DELETED);
         FIELDS.add(UUID);
+        FIELDS.add(ANALYTIC_RULE);
 
         ALL_FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }

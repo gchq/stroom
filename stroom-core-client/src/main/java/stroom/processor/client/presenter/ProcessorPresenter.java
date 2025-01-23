@@ -21,11 +21,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterResource;
@@ -59,6 +61,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -242,9 +245,12 @@ public class ProcessorPresenter
             e.hide();
         };
 
+        final List<QueryField> fields = new ArrayList<>();
+        fields.addAll(ProcessorFields.getFields());
+        fields.addAll(ProcessorFilterFields.getFields());
         presenter.read(processorListPresenter.getExpression(),
                 ProcessorFilterFields.PROCESSOR_FILTERS_DOC_REF,
-                ProcessorFilterFields.getFields());
+                fields);
 
         presenter.getWidget().getElement().addClassName("default-min-sizes");
         final PopupSize popupSize = PopupSize.resizable(800, 600);

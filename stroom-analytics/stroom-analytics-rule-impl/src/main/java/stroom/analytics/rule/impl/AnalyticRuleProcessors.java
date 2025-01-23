@@ -94,7 +94,7 @@ public class AnalyticRuleProcessors {
     private ResultPage<ProcessorFilter> getProcessorFilters(final Processor processor) {
         final ExpressionOperator filterExpression = ExpressionOperator.builder()
                 .addIdTerm(
-                        ProcessorFilterFields.PROCESSOR_ID,
+                        ProcessorFields.ID,
                         ExpressionTerm.Condition.EQUALS,
                         processor.getId())
                 .addBooleanTerm(
