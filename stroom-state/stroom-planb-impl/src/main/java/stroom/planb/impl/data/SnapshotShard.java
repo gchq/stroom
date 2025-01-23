@@ -218,7 +218,7 @@ class SnapshotShard implements Shard {
                     throw new RuntimeException("Unable to get snapshot shard for '" + doc + "'");
                 }
             } catch (final Exception e) {
-                LOGGER.warn(e::getMessage, e);
+                LOGGER.debug(e::getMessage, e);
                 fetchException = new RuntimeException(e);
                 // If we have an exception then we will want to retry getting a snapshot so expire soon.
                 expiryTime = createTime.plus(configProvider.get().getSnapshotRetryFetchInterval());

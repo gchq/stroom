@@ -31,6 +31,7 @@ Each of these store types require data to be described in specific ways, however
 <referenceData xmlns="reference-data:2" xmlns:evt="event-logging:3">
     <reference>
         <map>cityToCountry</map>
+        <time>2024-01-01T08:10:22.023Z</time> <!-- optional defaults to effective time -->
         <key>cardiff</key>
         <value>Wales</value>
     </reference>
@@ -40,11 +41,19 @@ Each of these store types require data to be described in specific ways, however
         <value>Cardiff</value>
     </reference>
     
-    <!-- Ranged state -->
+    <!-- Ranged state using from/to numeric values -->
     <reference>
         <map>employeeIdToCountry</map>
+        <time>2024-01-01T08:10:22.023Z</time> <!-- optional defaults to effective time -->
         <from>1001</from>
         <to>1700</to>
+        <value>UK</value>
+    </reference>
+    <!-- Ranged state using key for specific numeric value -->
+    <reference>
+        <map>employeeIdToCountry</map>
+        <time>2024-01-01T08:10:22.023Z</time> <!-- optional defaults to effective time -->
+        <key>203</key>
         <value>UK</value>
     </reference>
     ...

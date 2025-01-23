@@ -152,11 +152,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 192;
 
     private static final String REFERENCE_ELEMENT = "reference";
+    private static final String SESSION_ELEMENT = "session";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
     private static final String FROM_ELEMENT = "from";
     private static final String TO_ELEMENT = "to";
     private static final String VALUE_ELEMENT = "value";
+    private static final String TIME_ELEMENT = "time";
+    private static final String TIMEOUT_ELEMENT = "timeout";
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
@@ -187,7 +190,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private boolean isFastInfosetDocStarted = false;
     private String valueXmlDefaultNamespaceUri = null;
 
-    private Long effectiveTime;
+    private Instant effectiveTime;
     private final LocationFactoryProxy locationFactory;
     private final ShardWriters shardWriters;
     private Locator locator;
@@ -212,8 +215,9 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
-            final Long effectiveMs = metaHolder.getMeta().getEffectiveMs();
-            effectiveTime = Objects.requireNonNullElseGet(effectiveMs, () -> metaHolder.getMeta().getCreateMs());
+            final long ms = Optional.ofNullable(metaHolder.getMeta().getEffectiveMs())
+                    .orElse(metaHolder.getMeta().getCreateMs());
+            effectiveTime = Instant.ofEpochMilli(ms);
             writer = shardWriters.createWriter(metaHolder.getMeta());
         } finally {
             super.startProcessing();
@@ -353,10 +357,6 @@ public class PlanBFilter extends AbstractXMLFilter {
             }
 
             fastInfosetStartElement(localName, uri, qName, atts);
-
-        } else if ("session".equals(localName)) {
-            time = null;
-            timeout = null;
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -446,19 +446,15 @@ public class PlanBFilter extends AbstractXMLFilter {
                 } catch (final RuntimeException e) {
                     error("Unable to parse string \"" + string + "\" as long for range to", e);
                 }
-            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
+            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName) ||
+                       SESSION_ELEMENT.equalsIgnoreCase(localName)) {
                 addData();
 
-            } else if ("time".equals(localName)) {
+            } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
                 time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
 
-            } else if ("timeout".equals(localName)) {
+            } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
                 timeout = StroomDuration.parse(contentBuffer.toString());
-
-            } else if ("session".equals(localName) ||
-                       "session-start".equals(localName) ||
-                       "session-end".equals(localName)) {
-                addData();
             }
         }
 
@@ -515,124 +511,23 @@ public class PlanBFilter extends AbstractXMLFilter {
     private void addData() {
         final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
         optional.ifPresent(doc -> {
-            // end of the ref data item so ensure it is persisted in the store
+            // End of the data item so ensure it is persisted in the store
             try {
                 switch (doc.getStateType()) {
                     case STATE -> {
-                        if (key == null) {
-                            error(LogUtil.message("Key is null for {}", mapName));
-                        } else {
-                            LOGGER.trace("Putting key {} into table {}", key, mapName);
-                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                            value.flip();
-                            final State.Key k = State.Key.builder()
-                                    .name(key)
-                                    .build();
-                            final StateValue v = StateValue.builder()
-                                    .typeId(typeId)
-                                    .byteBuffer(value)
-                                    .build();
-                            writer.addState(doc, new State(k, v));
-                        }
+                        addState(doc);
                     }
                     case TEMPORAL_STATE -> {
-                        if (key == null) {
-                            error(LogUtil.message("Key is null for {}", mapName));
-                        } else if (effectiveTime == null) {
-                            error(LogUtil.message("Effective time is null for {}", mapName));
-                        } else {
-                            LOGGER.trace("Putting key {} into table {}", key, mapName);
-                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                            value.flip();
-                            final TemporalState.Key k = TemporalState.Key.builder()
-                                    .name(key)
-                                    .effectiveTime(effectiveTime)
-                                    .build();
-                            final StateValue v = StateValue.builder()
-                                    .typeId(typeId)
-                                    .byteBuffer(value)
-                                    .build();
-                            writer.addTemporalState(doc, new TemporalState(k, v));
-                        }
+                        addTemporalState(doc);
                     }
                     case RANGED_STATE -> {
-                        if (rangeFrom == null) {
-                            error(LogUtil.message("Range from is null for {}", mapName));
-                        } else if (rangeTo == null) {
-                            error(LogUtil.message("Range to is null for {}", mapName));
-                        } else if (rangeFrom > rangeTo) {
-                            error(LogUtil.message(
-                                    "Range from must be less than or equal to range to (from: {}, to: {}) for {}",
-                                    rangeFrom, rangeTo, mapName));
-                        } else if (rangeFrom < 0) {
-                            // negative values cause problems for the ordering of data in LMDB so prevent their use
-                            // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                            error(LogUtil.message(
-                                    "Only non-negative numbers are supported (from: {}, to: {}) for {}",
-                                    rangeFrom, rangeTo, mapName));
-                        } else {
-                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                            value.flip();
-                            final RangedState.Key k = RangedState.Key.builder()
-                                    .keyStart(rangeFrom)
-                                    .keyEnd(rangeTo)
-                                    .build();
-                            final StateValue v = StateValue.builder()
-                                    .typeId(typeId)
-                                    .byteBuffer(value)
-                                    .build();
-                            writer.addRangedState(doc, new RangedState(k, v));
-                        }
+                        addRangedState(doc);
                     }
                     case TEMPORAL_RANGED_STATE -> {
-                        if (rangeFrom == null) {
-                            error(LogUtil.message("Range from is null for {}", mapName));
-                        } else if (rangeTo == null) {
-                            error(LogUtil.message("Range to is null for {}", mapName));
-                        } else if (effectiveTime == null) {
-                            error(LogUtil.message("Effective time is null for {}", mapName));
-                        } else if (rangeFrom > rangeTo) {
-                            error(LogUtil.message(
-                                    "Range from must be less than or equal to range to (from: {}, to: {}) for {}",
-                                    rangeFrom, rangeTo, mapName));
-                        } else if (rangeFrom < 0) {
-                            // negative values cause problems for the ordering of data in LMDB so prevent their use
-                            // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                            error(LogUtil.message(
-                                    "Only non-negative numbers are supported (from: {}, to: {}) for {}",
-                                    rangeFrom, rangeTo, mapName));
-                        } else {
-                            final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                            value.flip();
-                            final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
-                                    .keyStart(rangeFrom)
-                                    .keyEnd(rangeTo)
-                                    .effectiveTime(effectiveTime)
-                                    .build();
-                            final StateValue v = StateValue.builder()
-                                    .typeId(typeId)
-                                    .byteBuffer(value)
-                                    .build();
-                            writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
-                        }
+                        addTemporalRangedState(doc);
                     }
                     case SESSION -> {
-                        if (key == null) {
-                            error(LogUtil.message("Session key is null for {}", mapName));
-                        } else if (time == null) {
-                            error(LogUtil.message("Session time is null for {}", mapName));
-                        } else {
-                            final Session.Builder sessionBuilder = new Session.Builder();
-                            sessionBuilder.key(key);
-                            sessionBuilder.start(time);
-                            sessionBuilder.end(time);
-                            if (timeout != null) {
-                                sessionBuilder.end(time.plus(timeout));
-                            }
-
-                            LOGGER.trace("Putting session {} into table {}", key, mapName);
-                            writer.addSession(doc, sessionBuilder.build());
-                        }
+                        addSession(doc);
                     }
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
@@ -659,6 +554,197 @@ public class PlanBFilter extends AbstractXMLFilter {
         valueXmlDefaultNamespaceUri = null;
         time = null;
         timeout = null;
+    }
+
+    private void addState(final PlanBDoc doc) {
+        if (key == null) {
+            error(LogUtil.message("State 'key' is null for {}", mapName));
+        } else {
+            LOGGER.trace("Putting key {} into table {}", key, mapName);
+            final State.Key k = State.Key.builder()
+                    .name(key)
+                    .build();
+            final StateValue v = getStateValue();
+            writer.addState(doc, new State(k, v));
+        }
+    }
+
+    private void addTemporalState(final PlanBDoc doc) {
+        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+        if (time == null) {
+            error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
+
+        } else {
+            if (key == null) {
+                error(LogUtil.message("Temporal state 'key' is null for {}", mapName));
+            } else {
+                LOGGER.trace("Putting key {} into table {}", key, mapName);
+                final TemporalState.Key k = TemporalState.Key.builder()
+                        .name(key)
+                        .effectiveTime(time)
+                        .build();
+                final StateValue v = getStateValue();
+                writer.addTemporalState(doc, new TemporalState(k, v));
+            }
+        }
+    }
+
+    private void addRangedState(final PlanBDoc doc) {
+        // If key is provided then from/to are the same.
+        if (key != null) {
+            if (rangeFrom != null) {
+                error(LogUtil.message("Range state 'key` provided plus `from' for {}", mapName));
+            } else if (rangeTo != null) {
+                error(LogUtil.message("Range state 'key` provided plus `to' for {}", mapName));
+            } else {
+                try {
+                    final long longKey = Long.parseLong(key);
+                    if (longKey < 0) {
+                        // negative values cause problems for the ordering of data in LMDB so prevent
+                        // their use when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB
+                        // as 0, 10, -10
+                        error(LogUtil.message(
+                                "Range state only supports non-negative numbers (key: {}) for {}",
+                                longKey, mapName));
+                    } else {
+                        final RangedState.Key k = RangedState.Key.builder()
+                                .keyStart(longKey)
+                                .keyEnd(longKey)
+                                .build();
+                        final StateValue v = getStateValue();
+                        writer.addRangedState(doc, new RangedState(k, v));
+                    }
+                } catch (final RuntimeException e) {
+                    error("Unable to parse string \"" + key + "\" as long for range", e);
+                }
+            }
+
+        } else {
+            if (rangeFrom == null) {
+                error(LogUtil.message("Range state 'from' is null for {}", mapName));
+            } else if (rangeTo == null) {
+                error(LogUtil.message("Range state 'to' is null for {}", mapName));
+            } else if (rangeFrom > rangeTo) {
+                error(LogUtil.message(
+                        "Range 'from' must be less than or equal to range 'to' " +
+                        "(from: {}, to: {}) for {}",
+                        rangeFrom, rangeTo, mapName));
+            } else if (rangeFrom < 0) {
+                // negative values cause problems for the ordering of data in LMDB so prevent their use
+                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                error(LogUtil.message(
+                        "Range state only supports non-negative numbers (from: {}, to: {}) for {}",
+                        rangeFrom, rangeTo, mapName));
+            } else {
+                final RangedState.Key k = RangedState.Key.builder()
+                        .keyStart(rangeFrom)
+                        .keyEnd(rangeTo)
+                        .build();
+                final StateValue v = getStateValue();
+                writer.addRangedState(doc, new RangedState(k, v));
+            }
+        }
+    }
+
+    private void addTemporalRangedState(final PlanBDoc doc) {
+        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+        if (time == null) {
+            error(LogUtil.message("Temporal range range 'time' is null for {}", mapName));
+
+        } else {
+            // If key is provided then from/to are the same.
+            if (key != null) {
+                if (rangeFrom != null) {
+                    error(LogUtil.message("Temporal range state 'key` provided plus `from' for {}",
+                            mapName));
+                } else if (rangeTo != null) {
+                    error(LogUtil.message("Temporal range state 'key` provided plus `to' for {}",
+                            mapName));
+                } else {
+                    try {
+                        final long longKey = Long.parseLong(key);
+                        if (longKey < 0) {
+                            // negative values cause problems for the ordering of data in LMDB so
+                            // prevent their use when using byteBuffer.putLong, -10, 0 & 10 will be
+                            // stored in LMDB as 0, 10, -10
+                            error(LogUtil.message(
+                                    "Temporal range state only supports non-negative numbers " +
+                                    "(key: {}) for {}",
+                                    longKey,
+                                    mapName));
+                        } else {
+                            final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                                    .keyStart(longKey)
+                                    .keyEnd(longKey)
+                                    .effectiveTime(time.toEpochMilli())
+                                    .build();
+                            final StateValue v = getStateValue();
+                            writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                        }
+                    } catch (final RuntimeException e) {
+                        error("Unable to parse string \"" + key + "\" as long for range", e);
+                    }
+                }
+
+            } else {
+                if (rangeFrom == null) {
+                    error(LogUtil.message("Temporal range 'from' is null for {}", mapName));
+                } else if (rangeTo == null) {
+                    error(LogUtil.message("Temporal range 'to' is null for {}", mapName));
+                } else if (rangeFrom > rangeTo) {
+                    error(LogUtil.message(
+                            "Temporal range 'from' must be less than or equal to range 'to' " +
+                            "(from: {}, to: {}) for {}",
+                            rangeFrom, rangeTo, mapName));
+                } else if (rangeFrom < 0) {
+                    // negative values cause problems for the ordering of data in LMDB so prevent their
+                    // use when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB
+                    // as 0, 10, -10
+                    error(LogUtil.message(
+                            "Temporal range only supports non-negative numbers " +
+                            "(from: {}, to: {}) for {}",
+                            rangeFrom,
+                            rangeTo,
+                            mapName));
+                } else {
+                    final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                            .keyStart(rangeFrom)
+                            .keyEnd(rangeTo)
+                            .effectiveTime(time.toEpochMilli())
+                            .build();
+                    final StateValue v = getStateValue();
+                    writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                }
+            }
+        }
+    }
+
+    private void addSession(final PlanBDoc doc) {
+        if (key == null) {
+            error(LogUtil.message("Session 'key' is null for {}", mapName));
+        } else if (time == null) {
+            error(LogUtil.message("Session 'time' is null for {}", mapName));
+        } else {
+            final Session.Builder sessionBuilder = new Session.Builder();
+            sessionBuilder.key(key);
+            sessionBuilder.start(time);
+            sessionBuilder.end(time);
+            if (timeout != null) {
+                sessionBuilder.end(time.plus(timeout));
+            }
+
+            LOGGER.trace("Putting session {} into table {}", key, mapName);
+            writer.addSession(doc, sessionBuilder.build());
+        }
+    }
+
+    private StateValue getStateValue() {
+        final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+        value.flip();
+        return StateValue.builder()
+                .typeId(typeId)
+                .byteBuffer(value)
+                .build();
     }
 
     /**
