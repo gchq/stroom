@@ -1,4 +1,4 @@
-package stroom.cache.shared;
+package stroom.util.shared.cache;
 
 import stroom.util.shared.PropertyPath;
 
@@ -38,9 +38,9 @@ public class CacheIdentity implements Comparable<CacheIdentity> {
     @Override
     public String toString() {
         return "CacheIdentity{" +
-                "cacheName='" + cacheName + '\'' +
-                ", basePropertyPath=" + basePropertyPath +
-                '}';
+               "cacheName='" + cacheName + '\'' +
+               ", basePropertyPath=" + basePropertyPath +
+               '}';
     }
 
     @Override

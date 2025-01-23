@@ -31,6 +31,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
@@ -76,42 +77,47 @@ class FeedStatusServiceImpl implements FeedStatusService {
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         // Can't allow anyone with an api key to check feed statues.
-        return securityContext.secureResult(AppPermission.CHECK_RECEIPT_STATUS, () ->
-                securityContext.asProcessingUserResult(() -> {
+        try {
+            return securityContext.secureResult(AppPermission.CHECK_RECEIPT_STATUS, () ->
+                    securityContext.asProcessingUserResult(() -> {
 
-                    final String feedName;
-                    try {
-                        feedName = request.getFeedName();
-                    } catch (Exception e) {
-                        return new GetFeedStatusResponse(stroom.proxy.feed.remote.FeedStatus.Reject,
-                                e.getMessage(),
-                                StroomStatusCode.FEED_MUST_BE_SPECIFIED);
-                    }
-
-                    FeedStatus feedStatus = feedProperties.getStatus(feedName);
-                    final UserDesc userDesc = request.getUserDesc();
-                    final AttributeMap attributeMap = new AttributeMap(request.getAttributeMap());
-
-                    LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
-                            feedName, userDesc, feedStatus);
-
-                    // Feed does not exist so auto-create it if so configured
-                    if (feedStatus == null && userDesc != null) {
-                        if (autoContentCreationConfigProvider.get().isEnabled()) {
-                            // Create the feed if it doesn't already exist
-                            feedStatus = contentAutoCreationService.tryCreateFeed(feedName, userDesc, attributeMap)
-                                    .map(FeedDoc::getStatus)
-                                    .orElse(null);
-                        } else {
-                            LOGGER.debug("Content auto-creation disabled");
+                        final String feedName;
+                        try {
+                            feedName = request.getFeedName();
+                        } catch (Exception e) {
+                            return new GetFeedStatusResponse(stroom.proxy.feed.remote.FeedStatus.Reject,
+                                    e.getMessage(),
+                                    StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                         }
-                    } else {
-                        LOGGER.debug("Can't auto-create");
-                    }
-                    LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
-                            feedName, userDesc, feedStatus);
-                    return buildGetFeedStatusResponse(feedStatus);
-                }));
+
+                        FeedStatus feedStatus = feedProperties.getStatus(feedName);
+                        final UserDesc userDesc = request.getUserDesc();
+                        final AttributeMap attributeMap = new AttributeMap(request.getAttributeMap());
+
+                        LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
+                                feedName, userDesc, feedStatus);
+
+                        // Feed does not exist so auto-create it if so configured
+                        if (feedStatus == null && userDesc != null) {
+                            if (autoContentCreationConfigProvider.get().isEnabled()) {
+                                // Create the feed if it doesn't already exist
+                                feedStatus = contentAutoCreationService.tryCreateFeed(feedName, userDesc, attributeMap)
+                                        .map(FeedDoc::getStatus)
+                                        .orElse(null);
+                            } else {
+                                LOGGER.debug("Content auto-creation disabled");
+                            }
+                        } else {
+                            LOGGER.debug("Can't auto-create");
+                        }
+                        LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
+                                feedName, userDesc, feedStatus);
+                        return buildGetFeedStatusResponse(feedStatus);
+                    }));
+        } catch (Exception e) {
+            LOGGER.debug(() -> LogUtil.message("Error getting feed status: {}", LogUtil.exceptionMessage(e)), e);
+            throw e;
+        }
     }
 
     private static GetFeedStatusResponse buildGetFeedStatusResponse(final FeedStatus feedStatus) {

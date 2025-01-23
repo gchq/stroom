@@ -46,7 +46,7 @@ class TestHashedDataFeedKeys {
                 Map.of(
                         "key1", "val1",
                         "key2", "val2"),
-                Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
+                Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli());
 
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
@@ -57,7 +57,7 @@ class TestHashedDataFeedKeys {
                 Map.of(
                         "key3", "val3",
                         "key4", "val4"),
-                Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
+                Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli());
 
         final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(List.of(
                 hashedDataFeedKey1,

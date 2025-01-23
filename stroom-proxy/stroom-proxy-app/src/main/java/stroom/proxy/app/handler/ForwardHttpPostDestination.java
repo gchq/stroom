@@ -5,6 +5,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -25,6 +26,7 @@ public class ForwardHttpPostDestination {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardHttpPostDestination.class);
 
     private static final String ERROR_LOG = "error.log";
+    public static final int FORWARD_HTTP_ORDER = 50;
 
     private final StreamDestination destination;
     private final DirQueue forwardQueue;
@@ -44,7 +46,8 @@ public class ForwardHttpPostDestination {
                                       final DirQueueFactory sequentialDirQueueFactory,
                                       final int forwardThreads,
                                       final int retryThreads,
-                                      final DataDirProvider dataDirProvider) {
+                                      final DataDirProvider dataDirProvider,
+                                      final FileStores fileStores) {
         this.destination = destination;
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
@@ -60,7 +63,7 @@ public class ForwardHttpPostDestination {
 
         forwardQueue = sequentialDirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
-                50,
+                FORWARD_HTTP_ORDER,
                 "forward - " + destinationName);
         retryQueue = sequentialDirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
@@ -80,6 +83,9 @@ public class ForwardHttpPostDestination {
         // Create failure destination.
         final Path failureDir = forwardingDir.resolve("03_failure");
         DirUtil.ensureDirExists(failureDir);
+        fileStores.add(FORWARD_HTTP_ORDER,
+                "forward - " + destinationName + " - failure",
+                failureDir);
         failureDestination = new ForwardFileDestinationImpl(failureDir);
     }
 

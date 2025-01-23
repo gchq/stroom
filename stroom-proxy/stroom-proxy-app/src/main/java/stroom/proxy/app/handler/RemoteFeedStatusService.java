@@ -1,5 +1,7 @@
 package stroom.proxy.app.handler;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
@@ -10,7 +12,6 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.NullSafe;
-import stroom.util.cache.CacheConfig;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
@@ -18,8 +19,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,48 +48,28 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusService.class);
 
+    private static final String CACHE_NAME = "Remote Feed Status Response Cache";
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final LoadingCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
+    private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter;
 
     @Inject
     RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final JerseyClientFactory jerseyClientFactory,
                             final UserIdentityFactory userIdentityFactory,
-                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter) {
+                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter,
+                            final CacheManager cacheManager) {
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
-        this.getFeedStatusRequestAdapter = getFeedStatusRequestAdapter;
-
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
-
-        final CacheConfig cacheConfig = feedStatusConfig.getFeedStatusCache();
-        Objects.requireNonNull(cacheConfig, "Feed status cache config is null");
-        this.updaters = createFromConfig(cacheConfig)
-                .build(k -> new FeedStatusUpdater(executorService));
-    }
-
-    private Caffeine<Object, Object> createFromConfig(final CacheConfig cacheConfig) {
-        final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.recordStats();
-
-        if (cacheConfig.getMaximumSize() != null) {
-            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
-        }
-        if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
-        }
-        if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
-        }
-        return cacheBuilder;
+        this.updaters = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> feedStatusConfigProvider.get().getFeedStatusCache(),
+                k -> new FeedStatusUpdater(executorService));
     }
 
     @Override
@@ -298,17 +277,23 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             }
 
             if (cachedResponse.isOld()) {
+                LOGGER.debug("Response is old {}", cachedResponse);
                 if (updating.compareAndSet(false, true)) {
                     CompletableFuture
-                            .runAsync(() -> setCachedResponse(function.apply(cachedResponse)), executor)
-                            .whenComplete((v, t) -> updating.set(false));
+                            .runAsync(() ->
+                                    setCachedResponse(function.apply(cachedResponse)), executor)
+                            .whenComplete((v, t) ->
+                                    updating.set(false));
                 }
+            } else {
+                LOGGER.debug("Response is fresh {}", cachedResponse);
             }
 
             return cachedResponse;
         }
 
         private synchronized void setCachedResponse(final CachedResponse cachedResponse) {
+            LOGGER.debug("Setting cachedResponse to {}", cachedResponse);
             this.cachedResponse = cachedResponse;
         }
     }
@@ -333,6 +318,14 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
         public GetFeedStatusResponse getResponse() {
             return response;
+        }
+
+        @Override
+        public String toString() {
+            return "CachedResponse{" +
+                   "creationTime=" + creationTime +
+                   ", response=" + response +
+                   '}';
         }
     }
 }

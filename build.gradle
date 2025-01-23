@@ -232,6 +232,7 @@ ext.libs = [
         dropwizard_jetty                    : "io.dropwizard:dropwizard-jetty", //was 1.0.6 now 1.1.0
         dropwizard_lifecycle                : "io.dropwizard:dropwizard-lifecycle", // version controlled by dropwizard-dependencies
         dropwizard_metrics_annotation       : "io.dropwizard.metrics:metrics-annotation", // version controlled by dropwizard-dependencies
+        dropwizard_metrics_caffeine3        : "io.dropwizard.metrics:metrics-caffeine3", // version controlled by dropwizard-dependencies
         dropwizard_metrics_core             : "io.dropwizard.metrics:metrics-core", // version controlled by dropwizard-dependencies
         dropwizard_metrics_healthchecks     : "io.dropwizard.metrics:metrics-healthchecks", // version controlled by dropwizard-dependencies
         dropwizard_servlets                 : "io.dropwizard:dropwizard-servlets", // version controlled by dropwizard-dependencies

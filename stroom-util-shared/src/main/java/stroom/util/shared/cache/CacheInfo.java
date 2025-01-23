@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.shared;
+package stroom.util.shared.cache;
 
 import stroom.util.shared.PropertyPath;
 

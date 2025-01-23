@@ -6,7 +6,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.PeriodicallyUpdatedValue;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,7 +36,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
     private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
 
-    private final PeriodicallyUpdatedValue<AuthenticatorFilter, ConfigState> updatableAttributeMapFilter;
+    private final CachedValue<AuthenticatorFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
     public RequestAuthenticatorImpl(
@@ -51,7 +51,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = new PeriodicallyUpdatedValue<>(
+        this.updatableAttributeMapFilter = new CachedValue<>(
                 Duration.ofSeconds(60),
                 this::createFilter,
                 () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));

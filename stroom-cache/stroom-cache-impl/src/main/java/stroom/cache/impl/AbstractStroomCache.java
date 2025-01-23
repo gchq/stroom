@@ -1,20 +1,28 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.StroomCache;
-import stroom.cache.shared.CacheInfo;
+import stroom.util.Metrics;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
+import stroom.util.cache.CacheConfig.StatisticsMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.cache.CacheInfo;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import com.github.benmanes.caffeine.cache.stats.ConcurrentStatsCounter;
+import com.github.benmanes.caffeine.cache.stats.StatsCounter;
+import io.dropwizard.metrics.caffeine3.MetricsStatsCounter;
+import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,7 +59,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         Objects.requireNonNull(cacheConfigSupplier);
 
         LOGGER.debug(() -> LogUtil.message("Creating cache {} from config {} ({}), " +
-                        "(has removalNotificationConsumer: {})",
+                                           "(has removalNotificationConsumer: {})",
                 name,
                 NullSafe.getOrElseGet(
                         cacheConfigSupplier.get(),
@@ -83,7 +91,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         final CacheConfig newCacheConfig = cacheConfigSupplier.get();
 
         if (existingCacheHolder != null
-                && Objects.equals(existingCacheHolder.getCacheConfig(), newCacheConfig)) {
+            && Objects.equals(existingCacheHolder.getCacheConfig(), newCacheConfig)) {
             LOGGER.info("Clearing cache '{}' (Property path: '{}'). No config changed.",
                     name, getBasePropertyPath());
             CacheUtil.clear(getCache());
@@ -94,7 +102,8 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                         name, getBasePropertyPath(), newCacheConfig);
             }
             final Caffeine newCacheBuilder = Caffeine.newBuilder();
-            newCacheBuilder.recordStats();
+
+            configureStatisticsRecording(newCacheBuilder, newCacheConfig);
 
             NullSafe.consume(newCacheConfig.getMaximumSize(), newCacheBuilder::maximumSize);
             NullSafe.consume(
@@ -123,6 +132,26 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         }
     }
 
+    private void configureStatisticsRecording(final Caffeine<?, ?> newCacheBuilder,
+                                              final CacheConfig cacheConfig) {
+        final StatisticsMode statisticsMode = Objects.requireNonNullElse(
+                cacheConfig.getStatisticsMode(),
+                CacheConfig.DEFAULT_STATISTICS_MODE);
+
+        switch (statisticsMode) {
+            case NONE -> {
+                // no-op
+            }
+            case INTERNAL -> newCacheBuilder.recordStats();
+            case DROPWIZARD_METRICS -> newCacheBuilder.recordStats(() -> {
+                //  https://metrics.dropwizard.io/4.2.0/manual/caffeine.html
+                return new MetricsStatsCounter(
+                        SharedMetricRegistries.getDefault(),
+                        Metrics.buildName(getClass(), name));
+            });
+        }
+    }
+
     protected Cache<K, V> getCache() {
         return cacheHolder.getCache();
     }
@@ -136,13 +165,13 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         // logs the reason for the removal
         return (key, value, cause) -> {
             final Supplier<String> messageSupplier = () -> "Removal notification for cache '" +
-                    name +
-                    "' (key=" +
-                    key +
-                    ", value=" +
-                    value +
-                    ", cause=" +
-                    cause + ")";
+                                                           name +
+                                                           "' (key=" +
+                                                           key +
+                                                           ", value=" +
+                                                           value +
+                                                           ", cause=" +
+                                                           cause + ")";
 
             if (cause == RemovalCause.SIZE) {
                 reachedSizeLimitCount.incrementAndGet();
@@ -298,8 +327,8 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
         map.forEach((k, v) -> {
             if (k.startsWith("Expire") ||
-                    k.equals("TotalLoadTime") ||
-                    k.equals("RefreshAfterWrite")) {
+                k.equals("TotalLoadTime") ||
+                k.equals("RefreshAfterWrite")) {
                 convertNanosToDuration(map, k, v);
             }
         });
@@ -373,8 +402,64 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     @Override
     public String toString() {
         return "AbstractICache{" +
-                "name='" + name + "', " +
-                "basePath='" + getBasePropertyPath() + '\'' +
-                '}';
+               "name='" + name + "', " +
+               "basePath='" + getBasePropertyPath() + '\'' +
+               '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Allows a cache to record stats to both the internal {@link ConcurrentStatsCounter}
+     */
+    private static class ForkedStatsCounter implements StatsCounter {
+
+        private final ConcurrentStatsCounter concurrentStatsCounter;
+        private final MetricsStatsCounter metricsStatsCounter;
+
+        private ForkedStatsCounter(final String cacheName) {
+            concurrentStatsCounter = new ConcurrentStatsCounter();
+            metricsStatsCounter = new MetricsStatsCounter(
+                    SharedMetricRegistries.getDefault(),
+                    cacheName);
+        }
+
+        @Override
+        public void recordHits(@NonNegative final int count) {
+            concurrentStatsCounter.recordHits(count);
+            metricsStatsCounter.recordHits(count);
+        }
+
+        @Override
+        public void recordMisses(@NonNegative final int count) {
+            concurrentStatsCounter.recordMisses(count);
+            metricsStatsCounter.recordMisses(count);
+        }
+
+        @Override
+        public void recordLoadSuccess(@NonNegative final long loadTime) {
+            concurrentStatsCounter.recordLoadSuccess(loadTime);
+            metricsStatsCounter.recordLoadSuccess(loadTime);
+        }
+
+        @Override
+        public void recordLoadFailure(@NonNegative final long loadTime) {
+            concurrentStatsCounter.recordLoadFailure(loadTime);
+            metricsStatsCounter.recordLoadFailure(loadTime);
+        }
+
+        @Override
+        public void recordEviction(@NonNegative final int weight, final RemovalCause cause) {
+            concurrentStatsCounter.recordEviction(weight, cause);
+            metricsStatsCounter.recordEviction(weight, cause);
+        }
+
+        @Override
+        public CacheStats snapshot() {
+            // This just gets a snapshot of current values so no need to call it on both
+            return concurrentStatsCounter.snapshot();
+        }
     }
 }

@@ -15,10 +15,10 @@
  *
  */
 
-package stroom.cache.impl;
+package stroom.cache.service.impl;
 
-import stroom.cache.shared.CacheIdentity;
-import stroom.cache.shared.CacheInfo;
+import stroom.util.shared.cache.CacheIdentity;
+import stroom.util.shared.cache.CacheInfo;
 
 import java.util.List;
 

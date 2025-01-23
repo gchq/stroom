@@ -53,6 +53,9 @@ public class GetFeedStatusRequestV2 extends RemoteRequest {
         return attributeMap;
     }
 
+    // IMPORTANT - if attributeMap is in equals/hashcode then it stops us being able to cache
+    // FeedStatusUpdater instances by request. If attributeMap has a bearing on the feed status
+    // then we need to re-think. Currently only used for the initial content auto creation.
     @Override
     public boolean equals(final Object object) {
         if (this == object) {
@@ -62,13 +65,13 @@ public class GetFeedStatusRequestV2 extends RemoteRequest {
             return false;
         }
         final GetFeedStatusRequestV2 that = (GetFeedStatusRequestV2) object;
-        return Objects.equals(feedName, that.feedName) && Objects.equals(userDesc,
-                that.userDesc) && Objects.equals(attributeMap, that.attributeMap);
+        return Objects.equals(feedName, that.feedName)
+               && Objects.equals(userDesc, that.userDesc);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedName, userDesc, attributeMap);
+        return Objects.hash(feedName, userDesc);
     }
 
     @Override

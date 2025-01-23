@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -208,6 +209,26 @@ public class PredicateUtil {
         Objects.requireNonNull(counter);
         return val -> {
             final boolean result = predicate.test(val);
+            if (result) {
+                counter.incrementAndGet();
+            }
+            return result;
+        };
+    }
+
+    /**
+     * Creates a {@link BiPredicate} that increments counter for each match encountered.
+     *
+     * @param counter   The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param predicate The {@link BiPredicate} to wrap
+     * @return The wrapped predicate
+     */
+    public static <T1, T2> BiPredicate<T1, T2> countingBiPredicate(final AtomicInteger counter,
+                                                                   final BiPredicate<T1, T2> predicate) {
+        Objects.requireNonNull(predicate);
+        Objects.requireNonNull(counter);
+        return (t1, t2) -> {
+            final boolean result = predicate.test(t1, t2);
             if (result) {
                 counter.incrementAndGet();
             }

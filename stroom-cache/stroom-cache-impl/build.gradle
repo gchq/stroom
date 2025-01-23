@@ -2,27 +2,17 @@ ext.moduleName = 'stroom.cache.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-//    implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-docref')
-    // Seem to need this else it moans it can't see HasName in AbstractStroomCacheImpl
-    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-job:stroom-job-api')
-    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
-    implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.caffeine
 //    implementation libs.guava
+    implementation libs.dropwizard_metrics_caffeine3
+    implementation libs.dropwizard_metrics_core
     implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
-    implementation libs.restygwt
     implementation libs.slf4j_api
-    implementation libs.ws_rs_api
 
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core

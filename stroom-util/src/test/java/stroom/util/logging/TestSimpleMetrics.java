@@ -1,7 +1,7 @@
 package stroom.util.logging;
 
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.logging.Metrics.LocalMetrics;
+import stroom.util.logging.SimpleMetrics.LocalMetrics;
 
 import org.junit.jupiter.api.Test;
 
@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetrics {
+class TestSimpleMetrics {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetrics.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSimpleMetrics.class);
 
     @Test
     void testLocalMetrics_Disabled() {
-        final LocalMetrics localMetrics = Metrics.createLocalMetrics(false);
+        final LocalMetrics localMetrics = SimpleMetrics.createLocalMetrics(false);
         final AtomicBoolean wasCalled = new AtomicBoolean(false);
         localMetrics.measure("x", () -> wasCalled.set(true));
         assertThat(wasCalled)
@@ -38,7 +38,7 @@ class TestMetrics {
 
     @Test
     void testLocalMetrics_Enabled() {
-        final LocalMetrics localMetrics = Metrics.createLocalMetrics(LOGGER.isInfoEnabled());
+        final LocalMetrics localMetrics = SimpleMetrics.createLocalMetrics(LOGGER.isInfoEnabled());
         final AtomicBoolean wasCalled = new AtomicBoolean(false);
         localMetrics.measure("x", () -> wasCalled.set(true));
         assertThat(wasCalled)

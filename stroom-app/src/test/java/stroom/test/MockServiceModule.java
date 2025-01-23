@@ -2,6 +2,7 @@ package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
+import stroom.cache.service.impl.CacheServiceModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -58,6 +59,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockActivityModule());
         install(new MockDocRefInfoModule());
         install(new CacheModule());
+        install(new CacheServiceModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
         install(new MockWordListProviderModule());

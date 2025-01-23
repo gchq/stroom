@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.repo.store.FileStores;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -35,15 +36,14 @@ public class Forwarder {
                      final HttpSenderFactory httpSenderFactory,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ProxyServices proxyServices,
-                     final DirQueueFactory sequentialDirQueueFactory) {
+                     final DirQueueFactory sequentialDirQueueFactory,
+                     final FileStores fileStores) {
 
         // Find out how many forward destinations are enabled.
         final long enabledForwardCount = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
-                                .stream()
+                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
                                 .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations())
-                                .stream()
+                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
                                 .filter(ForwardFileConfig::isEnabled))
                 .count();
 
@@ -65,7 +65,8 @@ public class Forwarder {
                         sequentialDirQueueFactory,
                         proxyConfig.getThreadConfig().getForwardThreadCount(),
                         proxyConfig.getThreadConfig().getForwardRetryThreadCount(),
-                        dataDirProvider);
+                        dataDirProvider,
+                        fileStores);
                 this.destinations.add(forwardDestination::add);
             }
         });

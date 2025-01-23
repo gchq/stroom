@@ -7,6 +7,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.Metrics;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -14,6 +15,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.Timer;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.core5.http.ClassicHttpResponse;
@@ -52,6 +54,7 @@ public class HttpSender implements StreamDestination {
     private final String forwardUrl;
     private final StroomDuration forwardDelay;
     private final String forwarderName;
+    private final Timer sendTimer;
 
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
@@ -66,6 +69,11 @@ public class HttpSender implements StreamDestination {
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = NullSafe.duration(config.getForwardDelay());
         this.forwarderName = config.getName();
+        this.sendTimer = Metrics.registrationBuilder(getClass())
+                .addNamePart(forwarderName)
+                .addNamePart("send")
+                .timer()
+                .createAndRegister();
     }
 
     @Override
@@ -133,7 +141,9 @@ public class HttpSender implements StreamDestination {
         httpPost.setEntity(new BasicHttpEntity(inputStream, ContentType.create("application/audit"), true));
 
         // Execute and get the response.
-        final int code = post(httpPost, startTime, attributeMap);
+        final int code = sendTimer.timeSupplier(() ->
+                post(httpPost, startTime, attributeMap));
+
         if (code != 200) {
             // We technically shouldn't get here but put here to be extra safe.
             throw new RuntimeException("Bad response");

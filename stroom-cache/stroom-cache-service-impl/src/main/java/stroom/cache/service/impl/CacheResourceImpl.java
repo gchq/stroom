@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.cache.impl;
+package stroom.cache.service.impl;
 
-import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
@@ -35,6 +34,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.cache.CacheInfo;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -86,7 +86,7 @@ class CacheResourceImpl implements CacheResource {
             result = new CacheNamesResponse(cacheManagerService.get().getCacheIdentities());
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.LIST_PATH);
+                               + ResourcePaths.buildAuthenticatedApiPath(LIST_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
@@ -120,7 +120,7 @@ class CacheResourceImpl implements CacheResource {
             cacheInfoList = cacheManagerService.get().find(criteria);
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
+                               + ResourcePaths.buildAuthenticatedApiPath(INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
@@ -194,7 +194,7 @@ class CacheResourceImpl implements CacheResource {
                                             exception.set(throwable);
                                             LOGGER.error(
                                                     "Error clearing cache [{}] on node [{}]: {}. Enable DEBUG for " +
-                                                            "stacktrace",
+                                                    "stacktrace",
                                                     cacheName,
                                                     nodeName,
                                                     throwable.getMessage());
@@ -229,7 +229,7 @@ class CacheResourceImpl implements CacheResource {
 
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo.get(), nodeService.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
+                               + ResourcePaths.buildAuthenticatedApiPath(BASE_PATH);
 
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);

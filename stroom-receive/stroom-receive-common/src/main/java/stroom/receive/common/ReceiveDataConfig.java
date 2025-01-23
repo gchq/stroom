@@ -2,11 +2,13 @@ package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.util.NullSafe;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.shared.validation.ValidDirectoryPath;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -42,6 +44,8 @@ public class ReceiveDataConfig
     @JsonProperty
     private final String dataFeedKeysDir;
     @JsonProperty
+    private final CacheConfig authenticatedDataFeedKeyCache;
+    @JsonProperty
     private final Set<AuthenticationType> enabledAuthenticationTypes;
     @JsonProperty
     private final AutoContentCreationConfig autoContentCreation;
@@ -58,6 +62,11 @@ public class ReceiveDataConfig
         enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
+        authenticatedDataFeedKeyCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(5))
+                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
+                .build();
         autoContentCreation = new AutoContentCreationConfig();
         x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
@@ -72,6 +81,7 @@ public class ReceiveDataConfig
             @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
             @JsonProperty("authenticationRequired") final boolean authenticationRequired,
             @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
+            @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
             @JsonProperty("autoContentCreation") final AutoContentCreationConfig autoContentCreation,
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
@@ -82,6 +92,7 @@ public class ReceiveDataConfig
         this.enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, enabledAuthenticationTypes);
         this.authenticationRequired = authenticationRequired;
         this.dataFeedKeysDir = dataFeedKeysDir;
+        this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
         this.autoContentCreation = autoContentCreation;
         this.x509CertificateHeader = x509CertificateHeader;
         this.x509CertificateDnHeader = x509CertificateDnHeader;
@@ -96,6 +107,7 @@ public class ReceiveDataConfig
         enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, builder.enabledAuthenticationTypes);
         authenticationRequired = builder.authenticationRequired;
         dataFeedKeysDir = builder.dataFeedKeysDir;
+        authenticatedDataFeedKeyCache = builder.authenticatedDataFeedKeyCache;
         autoContentCreation = builder.autoContentCreation;
         x509CertificateHeader = builder.x509CertificateHeader;
         x509CertificateDnHeader = builder.x509CertificateDnHeader;
@@ -164,6 +176,11 @@ public class ReceiveDataConfig
         return dataFeedKeysDir;
     }
 
+    @NotNull
+    public CacheConfig getAuthenticatedDataFeedKeyCache() {
+        return authenticatedDataFeedKeyCache;
+    }
+
     @JsonPropertyDescription(
             "The HTTP header key used to extract an X509 certificate. This is used when a load balancer does the " +
             "SSL/mTLS termination and passes the client certificate though in a header. Only used for " +
@@ -220,6 +237,7 @@ public class ReceiveDataConfig
         builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
         builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
+        builder.authenticatedDataFeedKeyCache = receiveDataConfig.getAuthenticatedDataFeedKeyCache();
         builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
         builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
         builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
@@ -241,6 +259,7 @@ public class ReceiveDataConfig
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
         private boolean authenticationRequired;
         private String dataFeedKeysDir;
+        private CacheConfig authenticatedDataFeedKeyCache;
         private AutoContentCreationConfig autoContentCreation;
         private String x509CertificateHeader;
         private String x509CertificateDnHeader;
@@ -291,6 +310,11 @@ public class ReceiveDataConfig
 
         public Builder withDataFeedKeysDir(final String val) {
             dataFeedKeysDir = val;
+            return this;
+        }
+
+        public Builder withAuthenticatedDataFeedKeyCache(final CacheConfig val) {
+            authenticatedDataFeedKeyCache = val;
             return this;
         }
 

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.cache.impl;
+package stroom.cache.service.impl;
 
 import stroom.cache.api.StroomCache;
-import stroom.cache.shared.CacheIdentity;
-import stroom.cache.shared.CacheInfo;
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.cache.CacheIdentity;
+import stroom.util.shared.cache.CacheInfo;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;

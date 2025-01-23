@@ -19,7 +19,7 @@ import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -70,11 +70,11 @@ public class ReceiveDataHelper {
         final UniqueId receiptId = receiptIdGenerator.generateId();
 
         try {
-            Metrics.measure("ProxyRequestHandler - stream", () -> {
+            SimpleMetrics.measure("ProxyRequestHandler - stream", () -> {
                 // Authorise request.
                 requestAuthenticator.authenticate(request, attributeMap);
 
-                Metrics.measure("ProxyRequestHandler - handle1", () -> {
+                SimpleMetrics.measure("ProxyRequestHandler - handle1", () -> {
                     // TODO The following validate call was commented out on master by 66 for some reason
                     // Validate the supplied attributes.
 //                    attributeMapValidator.validate(

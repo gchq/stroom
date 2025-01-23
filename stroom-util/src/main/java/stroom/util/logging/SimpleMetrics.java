@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 
-public class Metrics {
+public class SimpleMetrics {
 
     private static final Map<String, Metric> NAME_TO_METRIC_MAP = new ConcurrentHashMap<>();
     public static final int NANOS_IN_ONE_MILLI = 1_000_000;
@@ -46,7 +46,7 @@ public class Metrics {
     }
 
     public static void setEnabled(final boolean enabled) {
-        Metrics.enabled = enabled;
+        SimpleMetrics.enabled = enabled;
     }
 
     /**
@@ -147,7 +147,7 @@ public class Metrics {
 
         @Override
         public String toString() {
-            return Metrics.toAsciiTable(nameToMetricsMap);
+            return SimpleMetrics.toAsciiTable(nameToMetricsMap);
         }
 
         public void reset() {
@@ -288,9 +288,9 @@ public class Metrics {
             final String deltaCallsPerSecondStr = ModelStringUtil.formatCsv(deltaCallsPerSecond);
             final String callsPerSecondStr = ModelStringUtil.formatCsv(callsPerSecond);
             return name +
-                    ": " +
-                    "Delta " + deltaCalls + " in " + deltaElapsedString + " " + deltaCallsPerSecondStr + " calls/sec " +
-                    "Total " + calls + " in " + elapsedString + " " + callsPerSecondStr + " calls/sec";
+                   ": " +
+                   "Delta " + deltaCalls + " in " + deltaElapsedString + " " + deltaCallsPerSecondStr + " calls/sec " +
+                   "Total " + calls + " in " + elapsedString + " " + callsPerSecondStr + " calls/sec";
         }
     }
 

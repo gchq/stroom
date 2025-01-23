@@ -67,6 +67,7 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: "PT10M"
+      statisticsMode: "INTERNAL"
     timezone: "UTC"
   annotation:
     createText: "Create Annotation"
@@ -186,6 +187,7 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
   data:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
@@ -198,6 +200,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       findOrphanedMetaBatchSize: 7000
       maxVolumeStateAge: "PT30S"
       metaTypeExtensions:
@@ -215,11 +218,13 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       volumeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       volumeSelector: "RoundRobin"
     meta:
       dataFormats:
@@ -260,17 +265,20 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       metaProcessorCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       metaStatusUpdateBatchSize: 0
       metaTypeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       metaTypes:
       - "Context"
       - "Raw Reference"
@@ -343,11 +351,13 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     indexClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     indexing:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
@@ -383,6 +393,7 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     suggestedTags:
     - "reference-loader"
     - "dynamic"
@@ -395,6 +406,7 @@ appConfig:
       expireAfterWrite: "PT1M"
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   haltBootOnConfigValidationFailure: true
@@ -420,11 +432,13 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     indexFieldCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10H"
       maximumSize: 10000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     ramBufferSizeMB: 1024
     writer:
       activeShardCache:
@@ -432,6 +446,7 @@ appConfig:
         expireAfterWrite: "PT1H"
         maximumSize: 100
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       cache:
         coreItems: 50
         maxItems: 100
@@ -443,6 +458,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 100
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       slowIndexWriteWarningThreshold: "PT1S"
   job:
     db:
@@ -470,6 +486,7 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
       \ key.serializer and value.serializer should not be set as\n# these are set\
@@ -509,6 +526,7 @@ appConfig:
       expireAfterWrite: "PT1H"
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     logEveryRestCallEnabled: false
     maxDataElementStringLength: 500
     maxListElements: 5
@@ -552,29 +570,34 @@ appConfig:
       expireAfterWrite: "PT30S"
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     httpClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     parser:
       cache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     referenceData:
       effectiveStreamCache:
         expireAfterAccess: null
         expireAfterWrite: "PT10M"
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       lmdb:
         localDir: "reference_data"
         maxReaders: 150
@@ -589,6 +612,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       purgeAge: "P30D"
       stagingLmdb:
         localDir: "reference_staging_data"
@@ -602,12 +626,14 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
     xslt:
       cache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       maxElements: 1000000
   processor:
     assignTasks: true
@@ -637,21 +663,25 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     processorFeedCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     processorFilterCache:
       expireAfterAccess: null
       expireAfterWrite: "PT1H"
       maximumSize: 1000
       refreshAfterWrite: "PT10S"
+      statisticsMode: "INTERNAL"
     processorNodeCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     queueSize: 1000
     skipNonProducingFiltersDuration: "PT10S"
     taskCreationThreadCount: 5
@@ -717,6 +747,12 @@ appConfig:
     itemsRetention: 100
   receive:
     allowedCertificateProviders: []
+    authenticatedDataFeedKeyCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT5M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
     autoContentCreation:
       additionalGroupSuffix: " (sandbox)"
@@ -749,6 +785,7 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     skeletonConfigContent: "{\n  \"credentialsProviderType\" : \"DEFAULT\",\n  \"\
       region\" : \"eu-west-2\",\n  \"bucketName\" : \"XXXX-eu-west-2\",\n  \"keyPattern\"\
       \ : \"${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip\"\n\
@@ -783,6 +820,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 2
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
       remoteSearchResultCache:
@@ -790,6 +828,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 100
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
   security:
     authentication:
       apiKeyCache:
@@ -797,6 +836,7 @@ appConfig:
         expireAfterWrite: "PT1M"
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       maxApiKeyExpiryAge: "P365D"
       openId:
         authEndpoint: null
@@ -828,6 +868,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       db:
         connection:
           jdbcDriverClassName: null
@@ -849,36 +890,43 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userAppPermissionsCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userByUuidCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userDocumentPermissionsCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userGroupsCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       userInfoByUuidCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
     crypto:
       secretEncryptionKey: ""
     identity:
@@ -922,11 +970,13 @@ appConfig:
           expireAfterWrite: null
           maximumSize: 1000
           refreshAfterWrite: null
+          statisticsMode: "INTERNAL"
         refreshTokenCache:
           expireAfterAccess: "P1D"
           expireAfterWrite: null
           maximumSize: 10000
           refreshAfterWrite: null
+          statisticsMode: "INTERNAL"
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -973,11 +1023,13 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     indexClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
@@ -987,16 +1039,19 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     sessionCache:
       expireAfterAccess: "PT1H"
       expireAfterWrite: null
       maximumSize: 10
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     stateDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
   statistics:
     hbase:
       docRefType: "StroomStatsStore"
@@ -1126,6 +1181,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 100
         refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       db:
         connection:
           jdbcDriverClassName: null
@@ -1254,3 +1310,4 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"

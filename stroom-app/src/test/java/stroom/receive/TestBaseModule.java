@@ -1,6 +1,7 @@
 package stroom.receive;
 
 import stroom.cache.impl.CacheModule;
+import stroom.cache.service.impl.CacheServiceModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
 import stroom.data.store.mock.MockStreamStoreModule;
@@ -34,6 +35,7 @@ public class TestBaseModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new CacheModule());
+        install(new CacheServiceModule());
         install(new DictionaryModule());
         install(new DocumentationModule());
         install(new DocStoreModule());

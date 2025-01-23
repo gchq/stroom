@@ -1,5 +1,7 @@
 package stroom.receive.common;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
@@ -9,6 +11,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -21,15 +24,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 @Singleton
-public class DataFeedKeyServiceImpl implements DataFeedKeyService {
+public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyServiceImpl.class);
+    private static final String CACHE_NAME = "Authenticated Data Feed Key Cache";
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER_PREFIX = "Bearer ";
@@ -45,17 +51,25 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
 
     // TODO replace with cache
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
-    private final Map<String, Optional<HashedDataFeedKey>> keyToDataFeedKeyMap = new ConcurrentHashMap<>();
+    private final LoadingStroomCache<String, Optional<HashedDataFeedKey>> unHashedKeyToDataFeedKeyCache;
 
     private final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap = new EnumMap<>(
             DataFeedKeyHashAlgorithm.class);
 
+    private final Timer timer;
+
     @Inject
-    public DataFeedKeyServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+    public DataFeedKeyServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                  final CacheManager cacheManager) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
 
         hashFunctionMap.put(DataFeedKeyHashAlgorithm.ARGON2, new Argon2DataFeedKeyHasher());
 //        hashFunctionMap.put(DataFeedKeyHashAlgorithm.BCRYPT, new BCryptApiKeyHasher());
+        unHashedKeyToDataFeedKeyCache = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> receiveDataConfigProvider.get().getAuthenticatedDataFeedKeyCache(),
+                this::createHashedDataFeedKey);
+        timer = new Timer("DataFeedKeyTimer");
     }
 
     @Override
@@ -133,9 +147,13 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
 
         counter.set(0);
-        keyToDataFeedKeyMap.entrySet().removeIf(PredicateUtil.countingPredicate(counter, entry ->
-                entry.getValue().filter(HashedDataFeedKey::isExpired).isPresent()));
-        LOGGER.debug("Removed {} keyToDataFeedKeyMap entries", counter);
+
+        unHashedKeyToDataFeedKeyCache.invalidateEntries(PredicateUtil.countingBiPredicate(
+                counter,
+                (unHashedKey, optHashedKey) ->
+                        optHashedKey.filter(HashedDataFeedKey::isExpired).isPresent()));
+
+        LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", counter);
     }
 
     @Override
@@ -194,29 +212,28 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         }
     }
 
-    private Optional<HashedDataFeedKey> lookupKey(final String key,
+    private Optional<HashedDataFeedKey> lookupKey(final String unHashedKey,
                                                   final AttributeMap attributeMap) {
 
-        // Try the cache first to save on the hashing cost.
-        Optional<HashedDataFeedKey> optDataFeedKey = keyToDataFeedKeyMap.get(key);
-        if (optDataFeedKey == null) {
-            // Not in cache,
-            optDataFeedKey = getCacheKey(key)
-                    .map(cacheKey -> {
-                        Objects.requireNonNull(cacheKey);
-                        final CachedHashedDataFeedKey dataFeedKey = cacheKeyToDataFeedKeyMap.get(cacheKey);
-                        LOGGER.debug("Lookup of cacheKey {}, found {}", cacheKey, dataFeedKey);
-                        return dataFeedKey;
-                    })
-                    .map(CachedHashedDataFeedKey::getDataFeedKey);
-            // Cache it to save hashing next time
-            keyToDataFeedKeyMap.put(key, optDataFeedKey);
-            return optDataFeedKey;
-        } else {
-            return optDataFeedKey
-                    .filter(dataFeedKey ->
-                            validateDataFeedKeyExpiry(dataFeedKey, attributeMap));
-        }
+        final Optional<HashedDataFeedKey> optDataFeedKey = unHashedKeyToDataFeedKeyCache.get(unHashedKey);
+
+        return optDataFeedKey
+                .filter(dataFeedKey ->
+                        validateDataFeedKeyExpiry(dataFeedKey, attributeMap));
+    }
+
+    private Optional<HashedDataFeedKey> createHashedDataFeedKey(final String unHashedKey) {
+        final Optional<HashedDataFeedKey> optDataFeedKey = getCacheKey(unHashedKey)
+                .map(cacheKey -> {
+                    Objects.requireNonNull(cacheKey);
+                    final CachedHashedDataFeedKey dataFeedKey = cacheKeyToDataFeedKeyMap.get(cacheKey);
+                    LOGGER.debug("Lookup of cacheKey {}, found {}", cacheKey, dataFeedKey);
+                    return dataFeedKey;
+                })
+                .map(CachedHashedDataFeedKey::getDataFeedKey);
+
+        LOGGER.debug("unHashedKey: {}, optDataFeedKey: {}", unHashedKey, optDataFeedKey);
+        return optDataFeedKey;
     }
 
     /**
@@ -259,6 +276,32 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService {
         }
     }
 
+    @Override
+    public void start() throws Exception {
+        final TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    evictExpired();
+                } catch (Exception e) {
+                    LOGGER.error("Error running entry eviction timerTask: {}", e.getMessage(), e);
+                }
+            }
+        };
+
+        LOGGER.info("Starting cache eviction timer");
+        timer.scheduleAtFixedRate(timerTask, 0, 60_000);
+    }
+
+    @Override
+    public void stop() throws Exception {
+        LOGGER.info("Shutting down entry eviction timer");
+        try {
+            timer.cancel();
+        } catch (Exception e) {
+            LOGGER.error("Error shutting down the timer: {}", LogUtil.exceptionMessage(e), e);
+        }
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -17,16 +17,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestPeriodicallyUpdatedValue {
+class TestCachedValue {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestPeriodicallyUpdatedValue.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCachedValue.class);
 
     @Test
     void singleThreadTest() {
 
         final AtomicInteger version = new AtomicInteger(1);
 
-        final PeriodicallyUpdatedValue<String, Integer> periodicallyUpdatedValue = new PeriodicallyUpdatedValue<>(
+        final CachedValue<String, Integer> cachedValue = new CachedValue<>(
                 Duration.ofMillis(100),
                 state -> {
                     LOGGER.debug("Supplying value");
@@ -37,9 +37,9 @@ class TestPeriodicallyUpdatedValue {
                     return version.get();
                 });
 
-        assertThat(periodicallyUpdatedValue.getValue())
+        assertThat(cachedValue.getValue())
                 .isEqualTo("version 1");
-        assertThat(periodicallyUpdatedValue.getValue())
+        assertThat(cachedValue.getValue())
                 .isEqualTo("version 1");
 
         version.incrementAndGet();
@@ -47,15 +47,15 @@ class TestPeriodicallyUpdatedValue {
         LOGGER.debug("Sleeping");
         ThreadUtil.sleepIgnoringInterrupts(150);
 
-        assertThat(periodicallyUpdatedValue.getValue())
+        assertThat(cachedValue.getValue())
                 .isEqualTo("version 2");
-        assertThat(periodicallyUpdatedValue.getValue())
+        assertThat(cachedValue.getValue())
                 .isEqualTo("version 2");
 
         LOGGER.debug("Sleeping");
         ThreadUtil.sleepIgnoringInterrupts(100);
 
-        assertThat(periodicallyUpdatedValue.getValue())
+        assertThat(cachedValue.getValue())
                 .isEqualTo("version 2");
     }
 
@@ -65,7 +65,7 @@ class TestPeriodicallyUpdatedValue {
 //        final AtomicInteger version = new AtomicInteger(1);
         final int version = 1;
 
-        final PeriodicallyUpdatedValue<String, Integer> periodicallyUpdatedValue = new PeriodicallyUpdatedValue<>(
+        final CachedValue<String, Integer> cachedValue = new CachedValue<>(
                 Duration.ofMillis(60_000),
                 state -> {
                     LOGGER.debug("Supplying value");
@@ -94,7 +94,7 @@ class TestPeriodicallyUpdatedValue {
                         throw new RuntimeException(e);
                     }
                     LOGGER.debug("Thread starting");
-                    final String value = periodicallyUpdatedValue.getValue();
+                    final String value = cachedValue.getValue();
                     final boolean areEqual = Objects.equals(value, "version 1");
                     if (!areEqual) {
                         LOGGER.debug("Not equal, value: {}", value);
@@ -112,5 +112,30 @@ class TestPeriodicallyUpdatedValue {
 
         finishLatch.await(10, TimeUnit.SECONDS);
         LOGGER.debug("Finished");
+    }
+
+    @Test
+    void testStateless() {
+        final AtomicInteger updateCount = new AtomicInteger();
+        final CachedValue<Integer, Void> updater = CachedValue.stateless(
+                Duration.ofMillis(200),
+                updateCount::incrementAndGet);
+
+        assertThat(updateCount)
+                .hasValue(0);
+
+        Integer value = updater.getValue();
+        assertThat(value)
+                .isEqualTo(1);
+
+        value = updater.getValue();
+        assertThat(value)
+                .isEqualTo(1);
+
+        ThreadUtil.sleep(250);
+
+        value = updater.getValue();
+        assertThat(value)
+                .isEqualTo(2);
     }
 }

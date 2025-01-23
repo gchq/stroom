@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cache.impl;
+package stroom.cache.service.impl;
 
 import stroom.util.guice.RestResourcesBinder;
 

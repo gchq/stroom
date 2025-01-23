@@ -88,16 +88,30 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        // Content gets created as the configured user
-        final UserRef runAsUserRef = getRunAsUser();
+        if (isEligibleForAutoCreation(userDesc, attributeMap)) {
+            // Content gets created as the configured user
+            final UserRef runAsUserRef = getRunAsUser();
 
-        final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
-                ensureFeed(feedName, userDesc, attributeMap));
+            final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
+                    ensureFeed(feedName, userDesc, attributeMap));
 
-        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                feedName, userDesc, optFeedDoc);
+            LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                    feedName, userDesc, optFeedDoc);
 
-        return optFeedDoc;
+            return optFeedDoc;
+        } else {
+            LOGGER.debug("Not eligible for auto-creation");
+            return Optional.empty();
+        }
+    }
+
+    private boolean isEligibleForAutoCreation(final UserDesc userDesc,
+                                              final AttributeMap attributeMap) {
+        return NullSafe.allNonNull(userDesc, userDesc.getSubjectId(), attributeMap)
+               && attributeMap.containsKey(StandardHeaderArguments.ACCOUNT_ID)
+               && attributeMap.containsKey(StandardHeaderArguments.COMPONENT)
+               && attributeMap.containsKey(StandardHeaderArguments.SCHEMA)
+               && attributeMap.containsKey(StandardHeaderArguments.FORMAT);
     }
 
     private UserRef getRunAsUser() {

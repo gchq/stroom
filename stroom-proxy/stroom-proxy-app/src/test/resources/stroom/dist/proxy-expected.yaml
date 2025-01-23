@@ -18,7 +18,12 @@ proxyConfig:
     maxAge: "PT1M"
     maxByteCount: 9223372036854775807
     maxEventCount: 9223372036854775807
-    maxOpenFiles: 100
+    openFilesCache:
+      expireAfterAccess: null
+      expireAfterWrite: null
+      maximumSize: 100
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
     apiKey: null
@@ -29,6 +34,7 @@ proxyConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     url: null
   forwardFileDestinations:
   - enabled: true
@@ -78,6 +84,12 @@ proxyConfig:
   proxyId: null
   receive:
     allowedCertificateProviders: []
+    authenticatedDataFeedKeyCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT5M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
     autoContentCreation:
       additionalGroupSuffix: " (sandbox)"

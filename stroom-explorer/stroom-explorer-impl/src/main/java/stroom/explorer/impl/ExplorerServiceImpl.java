@@ -72,8 +72,8 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.Metrics;
-import stroom.util.logging.Metrics.LocalMetrics;
+import stroom.util.logging.SimpleMetrics;
+import stroom.util.logging.SimpleMetrics.LocalMetrics;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.PermissionException;
@@ -162,7 +162,7 @@ class ExplorerServiceImpl
     @Override
     public FetchExplorerNodeResult getData(final FetchExplorerNodesRequest criteria) {
         final DurationTimer timer = DurationTimer.start();
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             // Get a copy of the master tree model, so we can add the favourites into it.
             final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
@@ -1593,7 +1593,7 @@ class ExplorerServiceImpl
 
     @Override
     public ResultPage<FindResult> find(final DocumentFindRequest request) {
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (request.getFilter() == null) {
                 return ResultPage.empty();
@@ -1712,7 +1712,7 @@ class ExplorerServiceImpl
 
     private void applyExpressionFilter(final AdvancedDocumentFindRequest request,
                                        final TreeConsumer consumer) {
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (!ExpressionUtil.hasTerms(request.getExpression())) {
                 return;

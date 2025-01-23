@@ -1,5 +1,6 @@
 package stroom.proxy.app.event;
 
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ReceiverFactory;
@@ -31,7 +32,8 @@ public class TestEventStore {
                 receiveStreamHandlers,
                 () -> eventStoreConfig,
                 dataDirProvider,
-                new FileStores());
+                new FileStores(),
+                new CacheManagerImpl());
 
         for (int i = 0; i < 10; i++) {
             final AttributeMap attributeMap = new AttributeMap();

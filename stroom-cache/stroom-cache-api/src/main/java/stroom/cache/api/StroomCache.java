@@ -1,7 +1,7 @@
 package stroom.cache.api;
 
-import stroom.cache.shared.CacheInfo;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.cache.CacheInfo;
 
 import java.util.Collection;
 import java.util.Map;

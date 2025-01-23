@@ -3,7 +3,7 @@ package stroom.receive.common;
 import stroom.docref.DocRef;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.PeriodicallyUpdatedValue;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -25,26 +25,26 @@ public class AttributeMapFilterFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AttributeMapFilterFactory.class);
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
-    private final Provider<FeedStatusService> feedStatusServiceProvider;
     private final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider;
+    private final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
 
-    private final PeriodicallyUpdatedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
+    private final CachedValue<AttributeMapFilter, ConfigState> updatableAttributeMapFilter;
 
     @Inject
     public AttributeMapFilterFactory(
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-            final Provider<FeedStatusService> feedStatusServiceProvider,
             final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider,
+            final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory) {
 
         this.receiveDataConfigProvider = receiveDataConfigProvider;
-        this.feedStatusServiceProvider = feedStatusServiceProvider;
         this.feedNameCheckAttributeMapFilterProvider = feedNameCheckAttributeMapFilterProvider;
+        this.feedStatusAttributeMapFilterProvider = feedStatusAttributeMapFilterProvider;
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = new PeriodicallyUpdatedValue<>(
+        this.updatableAttributeMapFilter = new CachedValue<>(
                 Duration.ofSeconds(60),
                 this::create,
                 () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
@@ -66,7 +66,7 @@ public class AttributeMapFilterFactory {
         // The feed status filter will determine if the feed status check needs
         // to happen as the config for it is different between proxy and stroom.
         // Proxy and stroom each have a different FeedStatusService impl bound.
-        filters.add(new FeedStatusAttributeMapFilter(feedStatusServiceProvider.get()));
+        filters.add(feedStatusAttributeMapFilterProvider.get());
 
         return AttributeMapFilter.wrap(filters);
     }

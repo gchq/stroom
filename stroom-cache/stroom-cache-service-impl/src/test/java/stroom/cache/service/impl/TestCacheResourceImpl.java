@@ -1,8 +1,6 @@
-package stroom.cache.impl;
+package stroom.cache.service.impl;
 
 
-import stroom.cache.shared.CacheIdentity;
-import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
@@ -12,6 +10,8 @@ import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.cache.CacheIdentity;
+import stroom.util.shared.cache.CacheInfo;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

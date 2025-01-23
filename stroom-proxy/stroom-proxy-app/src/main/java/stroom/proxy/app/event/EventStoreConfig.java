@@ -1,5 +1,6 @@
 package stroom.proxy.app.event;
 
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -27,7 +28,7 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     private final long maxByteCount;
     @JsonProperty
-    private final int maxOpenFiles;
+    private final CacheConfig openFilesCache;
     @JsonProperty
     private final int forwardQueueSize;
 
@@ -36,7 +37,10 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
         maxAge = StroomDuration.ofMinutes(1);
         maxEventCount = Long.MAX_VALUE;
         maxByteCount = Long.MAX_VALUE;
-        maxOpenFiles = 100;
+        openFilesCache = CacheConfig.builder()
+                .maximumSize(100)
+                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE)
+                .build();
         forwardQueueSize = 1_000;
     }
 
@@ -46,13 +50,13 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
                             @JsonProperty("maxAge") final StroomDuration maxAge,
                             @JsonProperty("maxEventCount") final long maxEventCount,
                             @JsonProperty("maxByteCount") final long maxByteCount,
-                            @JsonProperty("maxOpenFiles") final int maxOpenFiles,
+                            @JsonProperty("openFilesCache") final CacheConfig openFilesCache,
                             @JsonProperty("forwardQueueSize") final int forwardQueueSize) {
         this.rollFrequency = rollFrequency;
         this.maxAge = maxAge;
         this.maxEventCount = maxEventCount;
         this.maxByteCount = maxByteCount;
-        this.maxOpenFiles = maxOpenFiles;
+        this.openFilesCache = openFilesCache;
         this.forwardQueueSize = forwardQueueSize;
     }
 
@@ -77,9 +81,8 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @RequiresProxyRestart
-    @Min(0)
-    public int getMaxOpenFiles() {
-        return maxOpenFiles;
+    public CacheConfig getOpenFilesCache() {
+        return openFilesCache;
     }
 
     @RequiresProxyRestart
@@ -98,27 +101,27 @@ public class EventStoreConfig extends AbstractConfig implements IsProxyConfig {
         }
         final EventStoreConfig that = (EventStoreConfig) o;
         return maxEventCount == that.maxEventCount
-                && maxByteCount == that.maxByteCount
-                && maxOpenFiles == that.maxOpenFiles
-                && forwardQueueSize == that.forwardQueueSize
-                && Objects.equals(rollFrequency, that.rollFrequency)
-                && Objects.equals(maxAge, that.maxAge);
+               && maxByteCount == that.maxByteCount
+               && openFilesCache == that.openFilesCache
+               && forwardQueueSize == that.forwardQueueSize
+               && Objects.equals(rollFrequency, that.rollFrequency)
+               && Objects.equals(maxAge, that.maxAge);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rollFrequency, maxAge, maxEventCount, maxByteCount, maxOpenFiles, forwardQueueSize);
+        return Objects.hash(rollFrequency, maxAge, maxEventCount, maxByteCount, openFilesCache, forwardQueueSize);
     }
 
     @Override
     public String toString() {
         return "EventStoreConfig{" +
-                "rollFrequency=" + rollFrequency +
-                ", maxAge=" + maxAge +
-                ", maxEventCount=" + maxEventCount +
-                ", maxByteCount=" + maxByteCount +
-                ", maxOpenFiles=" + maxOpenFiles +
-                ", forwardQueueSize=" + forwardQueueSize +
-                '}';
+               "rollFrequency=" + rollFrequency +
+               ", maxAge=" + maxAge +
+               ", maxEventCount=" + maxEventCount +
+               ", maxByteCount=" + maxByteCount +
+               ", openFilesCache=" + openFilesCache +
+               ", forwardQueueSize=" + forwardQueueSize +
+               '}';
     }
 }

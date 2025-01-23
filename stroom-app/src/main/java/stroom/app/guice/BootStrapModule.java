@@ -70,6 +70,7 @@ public class BootStrapModule extends AbstractModule {
 
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(MetricRegistry.class).toInstance(environment.metrics());
 
         final AppConfigModule appConfigModule = appConfigModuleFunc.apply(configHolder);
         install(appConfigModule);
