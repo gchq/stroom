@@ -35,12 +35,23 @@ public class CopyTextUtil {
         return sb.toSafeHtml();
     }
 
-    public static void render(final String value, final SafeHtmlBuilder sb) {
+    public static void render(final String value,
+                              final SafeHtmlBuilder sb) {
+        if (value == null) {
+            sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
+        } else {
+            render(value, SafeHtmlUtils.fromString(value), sb);
+        }
+    }
+
+    public static void render(final String value,
+                              final SafeHtml safeHtml,
+                              final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final SafeHtml textSafeHtml = TEMPLATE
-                    .div("docRefLinkText", SafeHtmlUtils.fromString(value));
+                    .div("docRefLinkText", safeHtml);
 
             final String containerClasses = String.join(
                     " ",

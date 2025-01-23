@@ -59,7 +59,9 @@ import stroom.widget.util.client.TableCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
@@ -264,6 +266,8 @@ public class DataPresenter
         registerHandler(dataView.getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
         registerHandler(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
+        registerHandler(htmlPresenter.getWidget().addDomHandler(e ->
+                CopyTextUtil.onClick(e.getNativeEvent()), MouseDownEvent.getType()));
     }
 
     private void onNewTabSelected(final TabData tab) {
@@ -331,8 +335,8 @@ public class DataPresenter
         // a sub-set of the data (i.e. from DataDisplaySupport) and it makes no sense to
         // see hex of this sub-set when the sub-set location is reliant on chars being decodeable.
         if (INFO_TAB_NAME.equals(currentTabName)
-                || ERROR_TAB_NAME.equals(currentTabName)
-                || currentSourceLocation.getDataRange() != null) {
+            || ERROR_TAB_NAME.equals(currentTabName)
+            || currentSourceLocation.getDataRange() != null) {
             textPresenter.getViewAsHexOption().setOff();
             textPresenter.getViewAsHexOption().setUnavailable();
         } else {
@@ -343,8 +347,8 @@ public class DataPresenter
             showErrors(lastResult);
         } else {
             final boolean shouldFormatData = lastResult != null
-                    && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
-                    && AceEditorMode.XML.equals(editorMode);
+                                             && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
+                                             && AceEditorMode.XML.equals(editorMode);
 
             textPresenter.getViewAsHexOption()
                     .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult != null
@@ -363,10 +367,10 @@ public class DataPresenter
 
     private void refreshProgressBar(final boolean isVisible) {
         if (isVisible
-                && lastResult != null
-                && lastResult instanceof FetchDataResult
-                && lastResult.getSourceLocation() != null
-                && lastResult.getSourceLocation().getDataRange() != null) {
+            && lastResult != null
+            && lastResult instanceof FetchDataResult
+            && lastResult.getSourceLocation() != null
+            && lastResult.getSourceLocation().getDataRange() != null) {
 
             final DataRange dataRange = lastResult.getSourceLocation().getDataRange();
 
@@ -378,25 +382,25 @@ public class DataPresenter
             // not segments in a segmented file. Thus for most segmented streams the segment will fit in the
             // data preview and thus will always see 100%
             if (!DataType.SEGMENTED.equals(fetchDataResult.getDataType())
-                    && fetchDataResult.getOptTotalBytes().isPresent()
-                    && dataRange.getOptByteOffsetFrom().isPresent()
-                    && dataRange.getOptByteOffsetTo().isPresent()) {
+                && fetchDataResult.getOptTotalBytes().isPresent()
+                && dataRange.getOptByteOffsetFrom().isPresent()
+                && dataRange.getOptByteOffsetTo().isPresent()) {
                 // progress based on know byte size and byte offsets
                 progressPresenter.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalBytes() - 1, // count to zero based bound
                         dataRange.getByteOffsetFrom(),
                         dataRange.getByteOffsetTo()));
             } else if (fetchDataResult.getTotalCharacterCount() != null
-                    && fetchDataResult.getTotalCharacterCount().isExact()
-                    && dataRange.getCharOffsetFrom() != null
-                    && dataRange.getCharOffsetTo() != null) {
+                       && fetchDataResult.getTotalCharacterCount().isExact()
+                       && dataRange.getCharOffsetFrom() != null
+                       && dataRange.getCharOffsetTo() != null) {
                 // progress based on known char count and char offsets
                 progressPresenter.setProgress(Progress.boundedRange(
                         fetchDataResult.getTotalCharacterCount().getCount() - 1, // count to zero based bound
                         dataRange.getCharOffsetFrom(),
                         dataRange.getCharOffsetTo()));
             } else if (dataRange.getCharOffsetFrom() != null
-                    && dataRange.getCharOffsetTo() != null) {
+                       && dataRange.getCharOffsetTo() != null) {
                 // progress based on unknown char count and char offsets
                 progressPresenter.setProgress(Progress.unboundedRange(
                         dataRange.getCharOffsetFrom(),
@@ -595,13 +599,13 @@ public class DataPresenter
         final long currentPartNo = getCurrentPartIndex() + 1;
         final long currentRecordNo = getCurrentRecordIndex() + 1;
         textPresenter.setErrorText("Error: Invalid stream ID "
-                + (currentMetaId != null
+                                   + (currentMetaId != null
                 ? currentMetaId
                 : "null")
-                + ":"
-                + currentPartNo
-                + ":"
-                + currentRecordNo, "");
+                                   + ":"
+                                   + currentPartNo
+                                   + ":"
+                                   + currentRecordNo, "");
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         dataView.setSourceLinkVisible(false, false);
         showTextPresenter();
@@ -629,7 +633,7 @@ public class DataPresenter
 //        GWT.log(currentStreamType + " - " + currentChildDataType + " - " + availableChildStreamTypes);
 
         if (effectiveChildStreamType != null
-                && availableChildStreamTypes.contains(effectiveChildStreamType)) {
+            && availableChildStreamTypes.contains(effectiveChildStreamType)) {
             if (!Objects.equals(currentSourceLocation.getChildType(), effectiveChildStreamType)) {
                 currentSourceLocation = currentSourceLocation.copy()
                         .withChildStreamType(effectiveChildStreamType)
@@ -680,7 +684,7 @@ public class DataPresenter
 
             final FetchDataRequest request = new FetchDataRequest(builder.build());
             if (StreamTypeNames.ERROR.equals(currentStreamType)
-                    && isInErrorMarkerMode()) {
+                && isInErrorMarkerMode()) {
                 request.setDisplayMode(FetchDataRequest.DisplayMode.MARKER);
             } else {
                 if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
@@ -707,7 +711,7 @@ public class DataPresenter
                     .orElse(null);
 
             final boolean isSame = Objects.equals(getCurrentMetaId(), lastId)
-                    && Objects.equals(getCurrentPartIndex(), lastPartNo);
+                                   && Objects.equals(getCurrentPartIndex(), lastPartNo);
 //            GWT.log(lastId + ":" + lastPartNo
 //                    + " => "
 //                    + getCurrentMetaId() + ":" + getCurrentPartIndex()
@@ -1010,11 +1014,11 @@ public class DataPresenter
                     .map(childType -> " (" + childType + ")")
                     .orElse("");
             final String title = "Unable to display stream ["
-                    + lastResult.getSourceLocation().getIdentifierString()
-                    + "]"
-                    + childStreamText
-                    + " as "
-                    + (lastResult.getDisplayMode() != null
+                                 + lastResult.getSourceLocation().getIdentifierString()
+                                 + "]"
+                                 + childStreamText
+                                 + " as "
+                                 + (lastResult.getDisplayMode() != null
                     ? lastResult.getDisplayMode().name().toLowerCase()
                     : "text");
             final String errorText = String.join("\n", lastResult.getErrors());
@@ -1022,8 +1026,8 @@ public class DataPresenter
             textPresenter.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
-                    && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
-                    && AceEditorMode.XML.equals(editorMode);
+                                             && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
+                                             && AceEditorMode.XML.equals(editorMode);
 
             textPresenter.setMode(editorMode);
             textPresenter.setText(data, shouldFormatData);
@@ -1070,10 +1074,10 @@ public class DataPresenter
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
         if (highlights != null
-                && Objects.equals(getCurrentMetaId(), highlightMetaId)
-                && partIndex == highlightPartIndex
-                && result != null
-                && Objects.equals(result.getStreamTypeName(), highlightChildDataType)) {
+            && Objects.equals(getCurrentMetaId(), highlightMetaId)
+            && partIndex == highlightPartIndex
+            && result != null
+            && Objects.equals(result.getStreamTypeName(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -1144,7 +1148,7 @@ public class DataPresenter
 
     private SafeHtml toHtmlLineBreaks(final String str) {
         if (str != null) {
-            HtmlBuilder sb = new HtmlBuilder();
+            final HtmlBuilder sb = new HtmlBuilder();
             // Change any line breaks html line breaks
             final String[] lines = str.split("\n");
             for (int i = 0; i < lines.length; i++) {
@@ -1154,7 +1158,11 @@ public class DataPresenter
                 }
                 sb.append(line);
             }
-            return sb.toSafeHtml();
+
+            final SafeHtmlBuilder copyLinkHtml = new SafeHtmlBuilder();
+            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml);
+
+            return copyLinkHtml.toSafeHtml();
         } else {
             return null;
         }
@@ -1205,17 +1213,17 @@ public class DataPresenter
                 ? (" as " + displayMode.name().toLowerCase())
                 : "";
         final String title = "Unable to display source ["
-                + sourceLocation.getIdentifierString()
-                + "]"
-                + childStreamText
-                + displayModeText;
+                             + sourceLocation.getIdentifierString()
+                             + "]"
+                             + childStreamText
+                             + displayModeText;
 
         final String errorText = Stream.concat(
                         errors != null
                                 ? errors.stream()
                                 : Stream.empty(),
                         Stream.of("You can right click this pane and select 'View as hex' to see the raw data in " +
-                                "hexadecimal form."))
+                                  "hexadecimal form."))
                 .collect(Collectors.joining("\n"));
 
         dataView.setSourceLinkVisible(false, false);
