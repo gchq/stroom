@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.11] - 2025-01-23
+
+* Issue **#4713** : Fix datasource in use issue for API key DAO.
+
+* Issue **#4714** : Fix display of disabled `RunAs` users.
+
+* Issue **#4708** : Add copy links to stream info pane.
+
+* Issue **#4687** : Fix dependencies NPE.
+
+* Issue **#4717** : Fix processor filter expression fields.
+
+
 ## [v7.7-beta.10] - 2025-01-22
 
 * Issue **#4652** : Add user links to server tasks and search results lists.
@@ -1099,7 +1112,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.11...HEAD
+[v7.7-beta.11]: https://github.com/gchq/stroom/compare/v7.7-beta.10...v7.7-beta.11
 [v7.7-beta.10]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.7-beta.10
 [v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
 [v7.7-beta.8]: https://github.com/gchq/stroom/compare/v7.7-beta.7...v7.7-beta.8
