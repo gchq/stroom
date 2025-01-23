@@ -33,7 +33,6 @@ import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SelectFieldOrAsterisk;
@@ -56,12 +55,6 @@ import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 public class ApiKeyDaoImpl implements ApiKeyDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyDaoImpl.class);
-
-    // We need a db field to mirror the Owner column in the UI so we can sort on it
-    private static final Name OWNER_UI_VALUE_JOOQ_FIELD_NAME = DSL.name("owner_ui_value");
-
-    private static final Field<String> OWNER_UI_VALUE_JOOQ_FIELD = DSL.field(
-            DSL.coalesce(STROOM_USER.DISPLAY_NAME, STROOM_USER.NAME).as(OWNER_UI_VALUE_JOOQ_FIELD_NAME));
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindApiKeyCriteria.FIELD_NAME, API_KEY.NAME,
@@ -180,16 +173,15 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         final long nowMs = Instant.now().toEpochMilli();
         // Prefix is not unique, so we may get a few keys back, however in most cases it will be one.
         // In tests creating 10mil keys, there were only 50 odd prefixes clashes.
-        final List<HashedApiKey> result = JooqUtil.contextResult(securityDbConnProvider, context ->
-                context.selectFrom(API_KEY)
-                        .where(API_KEY.API_KEY_PREFIX.eq(prefix))
-                        .and(API_KEY.ENABLED.isTrue())
-                        .and(DSL.or(
-                                API_KEY.EXPIRES_ON_MS.isNull(),
-                                API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
-                        .fetch()
-                        .map(this::mapRecordToApiKey));
-        return result;
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                        context.selectFrom(API_KEY)
+                                .where(API_KEY.API_KEY_PREFIX.eq(prefix))
+                                .and(API_KEY.ENABLED.isTrue())
+                                .and(DSL.or(
+                                        API_KEY.EXPIRES_ON_MS.isNull(),
+                                        API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
+                                .fetch())
+                .map(this::mapRecordToApiKey);
     }
 
     @Override
@@ -200,7 +192,6 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         Objects.requireNonNull(hashedApiKeyParts);
         final String userIdentityForAudit = securityContext.getUserIdentityForAudit();
         final long nowMs = Instant.now().toEpochMilli();
-        final int version = INITIAL_VERSION;
 
         final ApiKeyRecord apiKeyRecord;
         try {
@@ -219,7 +210,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                             API_KEY.NAME,
                             API_KEY.COMMENTS,
                             API_KEY.ENABLED)
-                    .values(version,
+                    .values(INITIAL_VERSION,
                             nowMs,
                             userIdentityForAudit,
                             nowMs,
@@ -302,11 +293,10 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     @Override
     public int delete(final Collection<Integer> ids) {
         if (NullSafe.hasItems(ids)) {
-            final Integer count = JooqUtil.contextResult(securityDbConnProvider, dslContext ->
+            return JooqUtil.contextResult(securityDbConnProvider, dslContext ->
                     dslContext.deleteFrom(API_KEY)
                             .where(API_KEY.ID.in(ids))
                             .execute());
-            return count;
         } else {
             return 0;
         }

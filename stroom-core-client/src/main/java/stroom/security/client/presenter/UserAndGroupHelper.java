@@ -104,9 +104,8 @@ public class UserAndGroupHelper {
     }
 
     public static Preset mapUserRefTypeToIcon(final UserRef userRef) {
-        // TODO get enabled state from userRef
         return GwtNullSafe.get(userRef,
-                userRef2 -> mapUserTypeToIcon(userRef2.isGroup(), true));
+                userRef2 -> mapUserTypeToIcon(userRef2.isGroup(), userRef.isEnabled()));
     }
 
     public static Preset mapUserTypeToIcon(final User user) {

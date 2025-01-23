@@ -326,7 +326,9 @@ class TaskProgressUtil {
                             compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
                             break;
                         case FindTaskProgressCriteria.FIELD_USER:
-                            compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
+                            compare = CompareUtil.compareString(
+                                    o1.getUserRef().getDisplayName(),
+                                    o2.getUserRef().getDisplayName());
                             break;
                         case FindTaskProgressCriteria.FIELD_SUBMIT_TIME:
                             compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());

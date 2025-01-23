@@ -18,7 +18,9 @@ package stroom.task.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.HasUserRef;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
@@ -35,6 +37,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import io.vavr.Tuple;
 import jakarta.inject.Inject;
@@ -59,7 +62,8 @@ class TaskManagerImpl implements TaskManager {
     public static final FilterFieldMappers<TaskProgress> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NODE, TaskProgress::getNodeName),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NAME, TaskProgress::getTaskName),
-            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_USER, TaskProgress::getUserName),
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_USER, (TaskProgress taskProgress) ->
+                    taskProgress.getUserRef().getDisplayName()),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_SUBMIT_TIME, (TaskProgress taskProgress) ->
                     Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString()),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo)
@@ -189,8 +193,8 @@ class TaskManagerImpl implements TaskManager {
 
     public ResultPage<TaskProgress> find(final FindTaskProgressCriteria findTaskProgressCriteria) {
         final boolean sessionMatch = findTaskProgressCriteria != null &&
-                findTaskProgressCriteria.getSessionId() != null &&
-                findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
+                                     findTaskProgressCriteria.getSessionId() != null &&
+                                     findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
 
         if (sessionMatch) {
             // Always allow a user to see tasks for their own session if tasks for the current session
@@ -261,10 +265,18 @@ class TaskManagerImpl implements TaskManager {
             final long timeNowMs,
             final TaskContextImpl taskContext) {
 
+        final UserRef userRef;
+        final UserIdentity userIdentity = taskContext.getUserIdentity();
+        if (userIdentity instanceof final HasUserRef hasUserRef) {
+            userRef = hasUserRef.getUserRef();
+        } else {
+            userRef = UserRef.builder().subjectId(userIdentity.getSubjectId()).build();
+        }
+
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(taskContext.getTaskId());
         taskProgress.setTaskName(taskContext.getName());
-        taskProgress.setUserName(taskContext.getUserIdentity().getUserIdentityForAudit());
+        taskProgress.setUserRef(userRef);
         taskProgress.setThreadName(taskContext.getThreadName());
         taskProgress.setTaskInfo(taskContext.getInfo());
         taskProgress.setSubmitTimeMs(taskContext.getSubmitTimeMs());
@@ -371,7 +383,7 @@ class TaskManagerImpl implements TaskManager {
                     final TaskProgress taskProgress = new TaskProgress();
                     taskProgress.setId(taskId);
                     taskProgress.setTaskName(taskName);
-                    taskProgress.setUserName(users.get(id.get() % 2));
+                    taskProgress.setUserRef(UserRef.builder().subjectId(users.get(id.get() % 2)).build());
                     taskProgress.setThreadName("thread-" + (ThreadLocalRandom.current().nextInt(20) + 1));
                     taskProgress.setTaskInfo(taskInfo);
                     taskProgress.setSubmitTimeMs(now.minus(timeDelta.incrementAndGet(), ChronoUnit.DAYS)
@@ -393,7 +405,7 @@ class TaskManagerImpl implements TaskManager {
                 new TaskId(thisNodeName + "-" + id.incrementAndGet(), missingParentTask),
                 "Orphaned-task",
                 "taskInfo-Orphaned-task",
-                "janedoe",
+                UserRef.builder().subjectId("janedoe").build(),
                 "threadY",
                 thisNodeName,
                 now.minus(timeDelta.get(), ChronoUnit.DAYS).toEpochMilli(),
