@@ -18,6 +18,8 @@ import stroom.state.impl.dao.TemporalState;
 import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.state.shared.StateDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -32,6 +34,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public class StateProviderImpl implements StateProvider {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateProviderImpl.class);
 
     private final CqlSessionFactory cqlSessionFactory;
     private final StateDocCache stateDocCache;
@@ -48,16 +52,21 @@ public class StateProviderImpl implements StateProvider {
 
     @Override
     public Val getState(final String mapName, final String keyName, final Instant effectiveTimeMs) {
-        final String keyspace = mapName.toLowerCase(Locale.ROOT);
-        final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
-                Optional.ofNullable(stateDocCache.get(keyspace)));
-        return stateOptional
-                .map(stateDoc -> {
-                    final Key key = new Key(keyspace, keyName, effectiveTimeMs);
-                    return cache.get(key,
-                            k -> getState(stateDoc, keyspace, keyName, effectiveTimeMs));
-                })
-                .orElse(ValNull.INSTANCE);
+        try {
+            final String keyspace = mapName.toLowerCase(Locale.ROOT);
+            final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
+                    Optional.ofNullable(stateDocCache.get(keyspace)));
+            return stateOptional
+                    .map(stateDoc -> {
+                        final Key key = new Key(keyspace, keyName, effectiveTimeMs);
+                        return cache.get(key,
+                                k -> getState(stateDoc, keyspace, keyName, effectiveTimeMs));
+                    })
+                    .orElse(ValNull.INSTANCE);
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            return null;
+        }
     }
 
     private Val getState(final StateDoc doc,

@@ -57,16 +57,21 @@ public class StateProviderImpl implements StateProvider {
 
     @Override
     public Val getState(final String mapName, final String keyName, final Instant effectiveTimeMs) {
-        final String keyspace = mapName.toLowerCase(Locale.ROOT);
-        final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
-                Optional.ofNullable(stateDocCache.get(keyspace)));
-        return stateOptional
-                .map(stateDoc -> {
-                    final Key key = new Key(keyspace, keyName, effectiveTimeMs);
-                    return cache.get(key,
-                            k -> getState(stateDoc, keyspace, keyName, effectiveTimeMs));
-                })
-                .orElse(ValNull.INSTANCE);
+        try {
+            final String docName = mapName.toLowerCase(Locale.ROOT);
+            final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
+                    Optional.ofNullable(stateDocCache.get(docName)));
+            return stateOptional
+                    .map(stateDoc -> {
+                        final Key key = new Key(docName, keyName, effectiveTimeMs);
+                        return cache.get(key,
+                                k -> getState(stateDoc, docName, keyName, effectiveTimeMs));
+                    })
+                    .orElse(ValNull.INSTANCE);
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            return null;
+        }
     }
 
     private Val getState(final PlanBDoc doc,

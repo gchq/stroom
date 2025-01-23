@@ -69,21 +69,21 @@ public class PlanBLookupImpl implements PlanBLookup {
                           final String keyName,
                           final Instant eventTime,
                           final ReferenceDataResult result) {
-        final String name = mapName.toLowerCase(Locale.ROOT);
-        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(name, k ->
+        final String docName = mapName.toLowerCase(Locale.ROOT);
+        final Optional<PlanBDoc> stateOptional = stateDocMap.computeIfAbsent(docName, k ->
                 securityContext.useAsReadResult(() ->
-                        Optional.ofNullable(stateDocCache.get(name))));
+                        Optional.ofNullable(stateDocCache.get(docName))));
         stateOptional.ifPresent(stateDoc -> {
-            final Key key = new Key(name, keyName, eventTime);
+            final Key key = new Key(docName, keyName, eventTime);
             final Optional<TemporalState> optional = cache.get(key,
-                    k -> getState(stateDoc, name, keyName, eventTime));
+                    k -> getState(stateDoc, docName, keyName, eventTime));
 
             // If we found a result then add the value.
             if (optional.isPresent()) {
                 final TemporalState state = optional.get();
                 final RefStreamDefinition refStreamDefinition =
                         new RefStreamDefinition(stateDoc.asDocRef(), "0", -1);
-                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, name);
+                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, docName);
                 result.addRefDataValueProxy(new StateValueProxy(state, mapDefinition));
             }
         });

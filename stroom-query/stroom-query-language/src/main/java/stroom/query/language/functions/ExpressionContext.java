@@ -10,21 +10,21 @@ public class ExpressionContext {
 
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
-    private final StateFetcher stateProvider;
+    private final StateFetcher stateFetcher;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
-        this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        this.stateFetcher = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
     }
 
     @JsonCreator
     public ExpressionContext(final int maxStringLength,
                              final DateTimeSettings dateTimeSettings,
-                             final StateFetcher stateProvider) {
+                             final StateFetcher stateFetcher) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
-        this.stateProvider = stateProvider;
+        this.stateFetcher = stateFetcher;
     }
 
     public int getMaxStringLength() {
@@ -35,8 +35,8 @@ public class ExpressionContext {
         return dateTimeSettings;
     }
 
-    public StateFetcher getStateProvider() {
-        return stateProvider;
+    public StateFetcher getStateFetcher() {
+        return stateFetcher;
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ExpressionContext {
 
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
-        private StateFetcher stateProvider;
+        private StateFetcher stateFetcher;
 
         private Builder() {
         }
@@ -89,7 +89,7 @@ public class ExpressionContext {
         private Builder(final ExpressionContext expressionContext) {
             this.maxStringLength = expressionContext.maxStringLength;
             this.dateTimeSettings = expressionContext.dateTimeSettings;
-            this.stateProvider = expressionContext.stateProvider;
+            this.stateFetcher = expressionContext.stateFetcher;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -102,13 +102,13 @@ public class ExpressionContext {
             return this;
         }
 
-        public Builder stateProvider(final StateFetcher stateProvider) {
-            this.stateProvider = stateProvider;
+        public Builder stateFetcher(final StateFetcher stateFetcher) {
+            this.stateFetcher = stateFetcher;
             return this;
         }
 
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, stateFetcher);
         }
     }
 }

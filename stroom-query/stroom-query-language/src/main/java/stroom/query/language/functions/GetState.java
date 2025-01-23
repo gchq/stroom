@@ -50,7 +50,7 @@ import java.util.function.Supplier;
 class GetState extends AbstractManyChildFunction {
 
     static final String NAME = "getState";
-    private final StateFetcher stateProvider;
+    private final StateFetcher stateFetcher;
     private Generator gen;
     private String map;
     private String key;
@@ -58,8 +58,8 @@ class GetState extends AbstractManyChildFunction {
 
     public GetState(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
-        this.stateProvider = expressionContext.getStateProvider();
-        Objects.requireNonNull(stateProvider, "Null lookup provider");
+        this.stateFetcher = expressionContext.getStateFetcher();
+        Objects.requireNonNull(stateFetcher, "Null lookup provider");
     }
 
     @Override
@@ -83,7 +83,7 @@ class GetState extends AbstractManyChildFunction {
         // If we have values for all params then do a lookup now.
         if (map != null && key != null && effectiveTime != null) {
             // Create static value.
-            final Val val = stateProvider.getState(map, key, effectiveTime);
+            final Val val = stateFetcher.getState(map, key, effectiveTime);
             gen = new StaticValueGen(val);
         }
     }
@@ -98,7 +98,7 @@ class GetState extends AbstractManyChildFunction {
 
     @Override
     protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(stateProvider, map, key, effectiveTime, childGenerators);
+        return new Gen(stateFetcher, map, key, effectiveTime, childGenerators);
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
