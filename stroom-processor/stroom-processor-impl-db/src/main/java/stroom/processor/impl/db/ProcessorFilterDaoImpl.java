@@ -82,11 +82,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.RUN_AS_USER, PROCESSOR_FILTER.RUN_AS_USER_UUID, value -> value);
 
-        expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
         expressionMapper.map(ProcessorFields.PROCESSOR_TYPE, PROCESSOR.TASK_TYPE, String::valueOf);
         expressionMapper.map(ProcessorFields.ANALYTIC_RULE, PROCESSOR.PIPELINE_UUID, value -> value, false);
         expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value, false);

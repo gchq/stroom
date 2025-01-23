@@ -461,7 +461,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                    .addIdTerm(ProcessorFilterFields.PROCESSOR_ID,
+                    .addIdTerm(ProcessorFields.ID,
                             ExpressionTerm.Condition.EQUALS,
                             processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(filterExpression));
@@ -554,7 +554,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         int priority = defaultPriority;
 
         final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                .addIdTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
+                .addIdTerm(ProcessorFields.ID, ExpressionTerm.Condition.EQUALS, processor.getId())
                 .addBooleanTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
         final List<ProcessorFilter> list = processorFilterDao.find(
@@ -624,18 +624,24 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
         return NullSafe.stream(processorFilterDao.fetchByRunAsUser(userRef.getUuid()))
                 .map(processorFilter -> {
-                    final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
+                    try {
+                        final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
 
-                    DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
-                    pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
+                        DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                        pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
 
-                    final String details = LogUtil.message(
-                            "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
-                    return new UserDependency(
-                            userRef,
-                            details,
-                            processorFilter.getPipeline());
+                        final String details = LogUtil.message(
+                                "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                        return new UserDependency(
+                                userRef,
+                                details,
+                                processorFilter.getPipeline());
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
 //                    .filter(userDependency ->
 //                            NullSafe.getOrElse(
 //                                    userDependency.getDocRef(),
