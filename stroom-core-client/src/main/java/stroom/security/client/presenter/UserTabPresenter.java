@@ -59,7 +59,6 @@ public class UserTabPresenter
             .build();
 
     private final UserInfoPresenter userInfoPresenter;
-    private final ClientSecurityContext clientSecurityContext;
     private final LazyValue<UserPermissionReportPresenter> userPermsReportPresenterLazyValue;
     private final LazyValue<UserDependenciesListPresenter> userDependenciesListPresenterLazyValue;
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
@@ -70,7 +69,6 @@ public class UserTabPresenter
     private UserRef userRef;
     private String label;
     private PresenterWidget<?> currentContent;
-    private TabData selectedTab;
 
     @Inject
     public UserTabPresenter(final EventBus eventBus,
@@ -84,7 +82,6 @@ public class UserTabPresenter
                             final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
         super(eventBus, view);
         this.userInfoPresenter = userInfoPresenter;
-        this.clientSecurityContext = clientSecurityContext;
         this.userPermsReportPresenterLazyValue = new LazyValue<>(
                 userPermsReportPresenterProvider,
                 userPermissionReportPresenter -> {
@@ -151,7 +148,6 @@ public class UserTabPresenter
                         getView().getLayerContainer().show((Layer) currentContent);
                         // Update the selected tab.
                         getView().getTabBar().selectTab(tab);
-                        selectedTab = tab;
                         afterSelectTab(content);
                     }
                 });

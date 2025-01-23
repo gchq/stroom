@@ -384,12 +384,18 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                 .flatMap(hasUserDependencies ->
                         hasUserDependencies.getUserDependencies(UserRef.forUserUuid(userUuid)).stream())
                 .map(userDependency -> {
-                    final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
-                    return new UserDependency(
-                            userDependency.getUserRef(),
-                            userDependency.getDetails(),
-                            docRef);
+                    try {
+                        final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
+                        return new UserDependency(
+                                userDependency.getUserRef(),
+                                userDependency.getDetails(),
+                                docRef);
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
                 .toList();
 
         LOGGER.debug(() -> LogUtil.message("Found {} userDependencies", allUserDependencies.size()));
