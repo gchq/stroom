@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4713** : Fix datasource in use issue for API key DAO.
+
+* Issue **#4714** : Fix display of disabled `RunAs` users.
+
+* Issue **#4708** : Add copy links to stream info pane.
+
+* Issue **#4687** : Fix dependencies NPE.
+
+* Issue **#4717** : Fix processor filter expression fields.
+
 * Issue **#4652** : Add user links to server tasks and search results lists.
 
 * Issue **#4669** : Make user dependency list document column resizable.
