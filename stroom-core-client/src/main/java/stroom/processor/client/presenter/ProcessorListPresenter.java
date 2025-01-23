@@ -56,8 +56,8 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.TreeRow;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -75,6 +75,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -550,10 +551,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 (ProcessorListRow row) -> {
                                     if (row instanceof ProcessorFilterRow) {
                                         final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                                        return GwtNullSafe.get(
-                                                processorFilterRow,
-                                                ProcessorFilterRow::getProcessorFilter,
-                                                ProcessorFilter::getRunAsUser);
+                                        return Optional
+                                                .of(processorFilterRow)
+                                                .map(ProcessorFilterRow::getProcessorFilter)
+                                                .map(ProcessorFilter::getRunAsUser)
+                                                .orElse(null);
                                     } else {
                                         return null;
                                     }
@@ -562,6 +564,19 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 securityContext,
                                 true,
                                 DisplayType.AUTO)
+                        .enabledWhen((ProcessorListRow row) -> {
+                            if (row instanceof ProcessorFilterRow) {
+                                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                                return Optional
+                                        .of(processorFilterRow)
+                                        .map(ProcessorFilterRow::getProcessorFilter)
+                                        .map(ProcessorFilter::getRunAsUser)
+                                        .map(UserRef::isEnabled)
+                                        .orElse(true);
+                            } else {
+                                return true;
+                            }
+                        })
                         .build(),
                 DataGridUtil.headingBuilder("Run As User")
                         .withToolTip("The processor will run with the same permissions as the Run As User.")
