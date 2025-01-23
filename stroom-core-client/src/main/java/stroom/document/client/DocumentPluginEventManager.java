@@ -742,31 +742,39 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
                      final TaskMonitorFactory taskMonitorFactory) {
-        final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
-        if (documentPlugin != null) {
-            // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory
-                    .create(EXPLORER_RESOURCE)
-                    .method(res ->
-                            res.decorate(DecorateRequest.create(docRef)))
-                    .onSuccess(decoratedDocRef -> {
-                        documentPlugin.open(
-                                decoratedDocRef,
-                                forceOpen,
-                                fullScreen,
-                                selectedLinkTab,
-                                new DefaultTaskMonitorFactory(this));
-                        highlight(decoratedDocRef, explorerListener);
-                    })
-                    .onFailure(error -> {
-                        AlertEvent.fireError(DocumentPluginEventManager.this,
-                                buildNotFoundMessage(docRef),
-                                null);
-                    })
-                    .taskMonitorFactory(taskMonitorFactory)
-                    .exec();
-        } else {
-            throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+        if (docRef != null && docRef.getType() != null) {
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
+            if (documentPlugin != null) {
+                // Decorate the DocRef with its name from the info service (required by the doc presenter)
+                restFactory
+                        .create(EXPLORER_RESOURCE)
+                        .method(res ->
+                                res.decorate(DecorateRequest.create(docRef)))
+                        .onSuccess(decoratedDocRef -> {
+                            if (decoratedDocRef == null) {
+                                AlertEvent.fireError(DocumentPluginEventManager.this,
+                                        buildNotFoundMessage(docRef),
+                                        null);
+                            } else {
+                                documentPlugin.open(
+                                        decoratedDocRef,
+                                        forceOpen,
+                                        fullScreen,
+                                        selectedLinkTab,
+                                        new DefaultTaskMonitorFactory(this));
+                                highlight(decoratedDocRef, explorerListener);
+                            }
+                        })
+                        .onFailure(error -> {
+                            AlertEvent.fireError(DocumentPluginEventManager.this,
+                                    buildNotFoundMessage(docRef),
+                                    null);
+                        })
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec();
+            } else {
+                throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
+            }
         }
     }
 

@@ -590,16 +590,22 @@ public class ScheduledQueryAnalyticExecutor implements HasUserDependencies {
         final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
         return NullSafe.stream(executionScheduleDao.fetchSchedulesByRunAsUser(userRef.getUuid()))
                 .map(executionSchedule -> {
-                    DocRef owningDocRef = executionSchedule.getOwningDoc();
-                    owningDocRef = docRefInfoService.decorate(owningDocRef);
-                    final String details = LogUtil.message(
-                            "{} '{}' has as a scheduled executor named '{}' " +
-                            "with a run-as dependency.",
-                            owningDocRef.getType(),
-                            owningDocRef.getName(),
-                            executionSchedule.getName());
-                    return new UserDependency(userRef, details, executionSchedule.getOwningDoc());
+                    try {
+                        DocRef owningDocRef = executionSchedule.getOwningDoc();
+                        owningDocRef = docRefInfoService.decorate(owningDocRef);
+                        final String details = LogUtil.message(
+                                "{} '{}' has as a scheduled executor named '{}' " +
+                                "with a run-as dependency.",
+                                owningDocRef.getType(),
+                                owningDocRef.getName(),
+                                executionSchedule.getName());
+                        return new UserDependency(userRef, details, executionSchedule.getOwningDoc());
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
 //                    .filter(userDependency ->
 //                            NullSafe.getOrElse(
 //                                    userDependency.getDocRef(),

@@ -27,6 +27,8 @@ import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -48,7 +50,7 @@ import java.util.Set;
         EntityAction.UPDATE_EXPLORER_NODE})
 class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 
     // Effectively docUuid => optDocRefInfo
@@ -87,7 +89,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                 }
             });
         } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
         }
         return Optional.ofNullable(docRefInfo);
     }
@@ -103,6 +105,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
                     try {
                         return handler.info(docRef);
                     } catch (DocumentNotFoundException e) {
+                        LOGGER.debug(e::getMessage, e);
                         return null;
                     }
                 })
