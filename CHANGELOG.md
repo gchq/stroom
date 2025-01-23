@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.10] - 2025-01-23
+
 * Issue **#4713** : Fix datasource in use issue for API key DAO.
 
 * Issue **#4714** : Fix display of disabled `RunAs` users.
@@ -1188,7 +1190,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.10...HEAD
+[v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
 [v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
 [v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
 [v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
