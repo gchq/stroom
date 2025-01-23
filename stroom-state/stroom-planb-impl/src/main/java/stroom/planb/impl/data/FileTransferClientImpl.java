@@ -44,7 +44,7 @@ public class FileTransferClientImpl implements FileTransferClient {
     private final NodeInfo nodeInfo;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final WebTargetFactory webTargetFactory;
-    private final SequentialFileStore fileStore;
+    private final PartDestination partDestination;
     private final SecurityContext securityContext;
 
     @Inject
@@ -53,14 +53,14 @@ public class FileTransferClientImpl implements FileTransferClient {
                                   final NodeInfo nodeInfo,
                                   @Nullable final TargetNodeSetFactory targetNodeSetFactory,
                                   @Nullable final WebTargetFactory webTargetFactory,
-                                  final SequentialFileStore fileStore,
+                                  final PartDestination partDestination,
                                   final SecurityContext securityContext) {
         this.configProvider = configProvider;
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.webTargetFactory = webTargetFactory;
-        this.fileStore = fileStore;
+        this.partDestination = partDestination;
         this.securityContext = securityContext;
     }
 
@@ -99,9 +99,12 @@ public class FileTransferClientImpl implements FileTransferClient {
                 // Send the data to all nodes.
                 for (final String nodeName : targetNodes) {
                     if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                        // Allow file move if the only target is the local node.
+                        final boolean allowMove = targetNodes.size() == 1;
                         storePartLocally(
                                 fileDescriptor,
-                                path);
+                                path,
+                                allowMove);
                     } else {
                         storePartRemotely(
                                 nodeName,
@@ -117,8 +120,9 @@ public class FileTransferClientImpl implements FileTransferClient {
     }
 
     private void storePartLocally(final FileDescriptor fileDescriptor,
-                                  final Path path) throws IOException {
-        fileStore.add(fileDescriptor, path);
+                                  final Path path,
+                                  final boolean allowMove) throws IOException {
+        partDestination.receiveLocalPart(fileDescriptor, path, allowMove);
     }
 
     private void storePartRemotely(final String targetNode,

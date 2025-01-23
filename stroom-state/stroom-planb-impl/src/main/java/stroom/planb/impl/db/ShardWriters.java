@@ -221,7 +221,7 @@ public class ShardWriters {
                     try {
                         FileUtil.deleteDir(dir);
                         if (zipFile != null) {
-                            FileUtil.delete(zipFile);
+                            Files.deleteIfExists(zipFile);
                         }
                     } catch (final Exception e) {
                         LOGGER.error(e.getMessage(), e);

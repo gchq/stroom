@@ -1,11 +1,7 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.StatePaths;
 import stroom.security.api.SecurityContext;
-import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.PermissionException;
-import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -13,34 +9,22 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class FileTransferServiceImpl implements FileTransferService {
 
-    private final SequentialFileStore fileStore;
+    private final PartDestination partReceiver;
     private final SecurityContext securityContext;
     private final ShardManager shardManager;
 
-    private final Path receiveDir;
-    private final AtomicLong receiveId = new AtomicLong();
 
     @Inject
-    public FileTransferServiceImpl(final SequentialFileStore fileStore,
+    public FileTransferServiceImpl(final PartDestination partReceiver,
                                    final SecurityContext securityContext,
-                                   final ShardManager shardManager,
-                                   final StatePaths statePaths) {
-        this.fileStore = fileStore;
+                                   final ShardManager shardManager) {
+        this.partReceiver = partReceiver;
         this.securityContext = securityContext;
         this.shardManager = shardManager;
-
-        // Create the receive directory.
-        receiveDir = statePaths.getReceiveDir();
-        FileUtil.ensureDirExists(receiveDir);
-        if (!FileUtil.deleteContents(receiveDir)) {
-            throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(receiveDir));
-        }
     }
 
     /**
@@ -87,15 +71,6 @@ public class FileTransferServiceImpl implements FileTransferService {
                             final String fileHash,
                             final String fileName,
                             final InputStream inputStream) throws IOException {
-        if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
-        }
-
-        final FileDescriptor fileDescriptor = new FileDescriptor(createTime, metaId, fileHash);
-        final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
-                                       SequentialFile.ZIP_EXTENSION;
-        final Path receiveFile = receiveDir.resolve(receiveFileName);
-        StreamUtil.streamToFile(inputStream, receiveFile);
-        fileStore.add(fileDescriptor, receiveFile);
+        partReceiver.receiveRemotePart(createTime, metaId, fileHash, fileName, inputStream);
     }
 }
