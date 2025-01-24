@@ -138,7 +138,6 @@ proxyConfig:
     enabled: true
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1G"
-    maxAggregateAge: 10s
     aggregationFrequency: 10s
 
   forwardHttpDestinations:

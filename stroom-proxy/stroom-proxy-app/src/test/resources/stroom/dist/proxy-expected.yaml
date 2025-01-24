@@ -1,9 +1,8 @@
 ---
 proxyConfig:
   aggregator:
-    aggregationFrequency: "PT1M"
+    aggregationFrequency: "PT10M"
     enabled: true
-    maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
     splitSources: true

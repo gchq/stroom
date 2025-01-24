@@ -104,8 +104,7 @@ class TestInnerProcessEndToEnd {
                     .aggregatorConfig(AggregatorConfig.builder()
                             .maxItemsPerAggregate(1000)
                             .maxUncompressedByteSizeString("1G")
-                            .maxAggregateAge(StroomDuration.ofSeconds(5))
-                            .aggregationFrequency(StroomDuration.ofSeconds(1))
+                            .aggregationFrequency(StroomDuration.ofSeconds(5))
                             .build())
                     .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
                     .build();

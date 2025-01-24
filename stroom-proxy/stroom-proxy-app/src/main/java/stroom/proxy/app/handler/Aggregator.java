@@ -1,13 +1,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
-import stroom.util.Metrics;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.codahale.metrics.Histogram;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -32,7 +30,6 @@ public class Aggregator {
     private final NumberedDirProvider tempAggregatesDirProvider;
 
     private Consumer<Path> destination;
-    private Histogram aggregateCountHistogram;
 
     @Inject
     public Aggregator(final CleanupDirQueue deleteDirQueue,
@@ -49,10 +46,6 @@ public class Aggregator {
         }
 
         tempAggregatesDirProvider = new NumberedDirProvider(aggregatesDir);
-        aggregateCountHistogram = Metrics.registrationBuilder(getClass())
-                .addNamePart("aggregateCount")
-                .histogram()
-                .createAndRegister();
     }
 
     public void addDir(final Path dir) {
@@ -69,7 +62,6 @@ public class Aggregator {
                 throw new RuntimeException("Unexpected dir count");
 
             } else if (sourceDirCount == 1) {
-                aggregateCountHistogram.update(1);
                 // If we only have one source dir then no merging is required, just forward.
                 try (final Stream<Path> stream = Files.list(dir)) {
                     stream.forEach(fileGroupDir -> destination.accept(fileGroupDir));
@@ -128,8 +120,6 @@ public class Aggregator {
                         });
                     }
                 }
-
-                aggregateCountHistogram.update(count.get());
 
                 // We have finished the merge so transfer the new item to be forwarded.
                 destination.accept(tempDir);

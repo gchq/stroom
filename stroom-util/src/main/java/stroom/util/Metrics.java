@@ -44,6 +44,7 @@ public class Metrics {
     public static final String POSITION = "position";
     public static final String SIZE = "size";
     public static final String COUNT = "count";
+    public static final String AGE_MS = "ageMs";
     public static final String FILE_COUNT = "fileCount";
     public static final String SIZE_IN_BYTES = "sizeInBytes";
 

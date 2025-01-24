@@ -3,14 +3,20 @@ package stroom.proxy.app.handler;
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.handler.PreAggregator.Part;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
+import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 public class TestPreAggregator extends StroomUnitTest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestPreAggregator.class);
 
     private static final int MAX_ITEMS_PER_AGGREGATE = 3;
 
@@ -139,9 +147,9 @@ public class TestPreAggregator extends StroomUnitTest {
         final ProxyConfig proxyConfig = getProxyConfig(splitSources);
         final PreAggregator preAggregator = new PreAggregator(
                 cleanupDirQueue,
-                () -> proxyConfig,
                 dataDirProvider,
-                proxyServices);
+                proxyServices,
+                proxyConfig::getAggregatorConfig);
 
         final AtomicInteger aggregateCount = new AtomicInteger();
         preAggregator.setDestination(preAggregateDir -> {
@@ -202,7 +210,6 @@ public class TestPreAggregator extends StroomUnitTest {
         return ProxyConfig.builder()
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
-                        .maxAggregateAge(StroomDuration.ofDays(1))
                         .aggregationFrequency(StroomDuration.ofDays(1))
                         .maxItemsPerAggregate(MAX_ITEMS_PER_AGGREGATE)
                         .splitSources(splitSources)
@@ -212,5 +219,38 @@ public class TestPreAggregator extends StroomUnitTest {
 
     private record ExpectedOutput(List<Integer> entryCounts) {
 
+    }
+
+    /**
+     * Using records takes ~x5 as long
+     */
+    @Disabled // manual only
+    @Test
+    void testPerf() {
+        TestUtil.comparePerformance(
+                3,
+                10_000_000,
+                LOGGER::info,
+                TimedCase.of(
+                        "primitives",
+                        (round, iterations) -> {
+                            long items = round;
+                            long byteSize = round;
+                            for (int i = 0; i < iterations; i++) {
+                                items++;
+                                byteSize += 1;
+                            }
+                            LOGGER.info("items: {}, byteSize: {}", items, byteSize);
+                        }),
+                TimedCase.of(
+                        "records",
+                        (round, iterations) -> {
+                            Part part = new Part(round, round);
+                            for (int i = 0; i < iterations; i++) {
+                                part = part.addItem(1);
+                            }
+                            LOGGER.info("part: {}", part);
+                        })
+        );
     }
 }
