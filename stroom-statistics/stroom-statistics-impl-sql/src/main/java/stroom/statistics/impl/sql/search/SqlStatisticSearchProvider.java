@@ -203,7 +203,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         final StatisticStoreDoc statisticStoreDoc = statisticStoreCache.getStatisticsDataSource(docRef);
 
         Preconditions.checkNotNull(statisticStoreDoc, "Statistic configuration could not be found for uuid "
-                + docRef.getUuid());
+                                                      + docRef.getUuid());
 
         return buildStore(searchRequest, statisticStoreDoc);
     }
@@ -305,12 +305,12 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return statisticStoreStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return StatisticStoreDoc.TYPE;
     }
 }

@@ -274,12 +274,12 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return stateDocStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return StateDoc.TYPE;
     }
 }

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class IndexShardFields {
 
     public static final DocRef INDEX_SHARDS_PSEUDO_DOC_REF = new DocRef(
-            "Searchable", "Index Shards", "Index Shards");
+            "IndexShards", "IndexShards", "Index Shards");
 
     public static final String FIELD_NAME_NODE = "Node";
     public static final String FIELD_NAME_INDEX = "Index";

@@ -88,7 +88,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceImpl.class);
 
-    private static final DocRef META_STORE_PSEUDO_DOC_REF = new DocRef("Searchable", "Meta Store", "Meta Store");
     private static final List<String> FEED_FIELDS = List.of(MetaFields.FIELD_FEED);
     private static final List<String> ALL_FEED_FIELDS = List.of(MetaFields.FIELD_FEED, MetaFields.FIELD_PARENT_FEED);
 
@@ -301,7 +300,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public DocRef getDocRef() {
-        return META_STORE_PSEUDO_DOC_REF;
+        return MetaFields.STREAM_STORE_DOC_REF;
     }
 
     @Override

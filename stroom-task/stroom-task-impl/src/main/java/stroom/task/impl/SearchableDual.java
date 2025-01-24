@@ -35,7 +35,7 @@ import java.util.Optional;
 public class SearchableDual implements Searchable {
 
     private static final DocRef DOC_REF = new DocRef(
-            "Searchable",
+            "Dual",
             "Dual",
             "Dual");
 

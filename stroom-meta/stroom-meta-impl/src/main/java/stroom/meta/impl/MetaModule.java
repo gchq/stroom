@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.MetaSecurityFilter;
@@ -31,8 +30,6 @@ public class MetaModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(MetaServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
-                .addBinding(MetaDataSourceProvider.class);
 
         RestResourcesBinder.create(binder())
                 .bind(MetaResourceImpl.class);
@@ -46,7 +43,7 @@ public class MetaModule extends AbstractModule {
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
                         .name("Attribute Value Data Retention")
                         .description("Delete data attribute values older than system property " +
-                                "stroom.data.meta.metaValue.deleteAge")
+                                     "stroom.data.meta.metaValue.deleteAge")
                         .frequencySchedule("1d"));
     }
 

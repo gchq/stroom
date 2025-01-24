@@ -64,7 +64,7 @@ import java.util.function.Supplier;
 class SearchableTaskProgress implements Searchable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableTaskProgress.class);
-    private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("Searchable", "Task Manager", "Task Manager");
+    private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("TaskManager", "TaskManager", "Task Manager");
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;

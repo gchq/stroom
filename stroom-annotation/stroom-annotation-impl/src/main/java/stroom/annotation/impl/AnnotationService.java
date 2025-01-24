@@ -52,7 +52,7 @@ import java.util.Optional;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
-    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
+    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;

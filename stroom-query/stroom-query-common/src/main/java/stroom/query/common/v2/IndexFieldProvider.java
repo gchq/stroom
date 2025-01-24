@@ -7,5 +7,5 @@ public interface IndexFieldProvider {
 
     IndexField getIndexField(DocRef docRef, String fieldName);
 
-    String getType();
+    String getDataSourceType();
 }

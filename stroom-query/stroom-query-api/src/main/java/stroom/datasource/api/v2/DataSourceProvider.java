@@ -24,9 +24,10 @@ import java.util.Optional;
 
 public interface DataSourceProvider {
 
-    List<DocRef> list();
+    List<DocRef> getDataSourceDocRefs();
 
-    String getType();
+    // List the doc type that this data source can provide data for.
+    String getDataSourceType();
 
     ResultPage<QueryField> getFieldInfo(FindFieldCriteria criteria);
 

@@ -80,21 +80,21 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
     private final Map<QueryKey, ResultStore> resultStoreMap;
-    private final StoreFactoryRegistry storeFactoryRegistry;
+    private final SearchProviderRegistry searchProviderRegistry;
     private final UserRefLookup userRefLookup;
 
     @Inject
     ResultStoreManager(final TaskContextFactory taskContextFactory,
                        final SecurityContext securityContext,
                        final ExecutorProvider executorProvider,
-                       final StoreFactoryRegistry storeFactoryRegistry,
+                       final SearchProviderRegistry searchProviderRegistry,
                        final UserRefLookup userRefLookup) {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
         this.userRefLookup = userRefLookup;
         this.resultStoreMap = new ConcurrentHashMap<>();
-        this.storeFactoryRegistry = storeFactoryRegistry;
+        this.searchProviderRegistry = searchProviderRegistry;
     }
 
     public void update(final QueryKey queryKey,
@@ -214,11 +214,11 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             }
 
             // Get a store factory to perform this new search.
-            final Optional<SearchProvider> optionalStoreFactory =
-                    storeFactoryRegistry.getStoreFactory(modifiedRequest.getQuery().getDataSource());
-            final SearchProvider storeFactory = optionalStoreFactory
+            final Optional<SearchProvider> optionalSearchProvider =
+                    searchProviderRegistry.getSearchProvider(modifiedRequest.getQuery().getDataSource());
+            final SearchProvider searchProvider = optionalSearchProvider
                     .orElseThrow(() ->
-                            new RuntimeException("No store factory found for " +
+                            new RuntimeException("No search provider found for " +
                                                  searchRequest.getQuery().getDataSource().getType()));
 
 
@@ -229,7 +229,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             modifiedRequest = addCurrentUserParam(modifiedRequest);
 
             // Add partition time constraints to the query.
-            modifiedRequest = addTimeRangeExpression(storeFactory.getTimeField(dataSourceRef), modifiedRequest);
+            modifiedRequest = addTimeRangeExpression(searchProvider.getTimeField(dataSourceRef), modifiedRequest);
 
             // Ensure we have a reference time so relative time expression work
             modifiedRequest = addReferenceTime(modifiedRequest);
@@ -240,7 +240,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
             try {
                 LOGGER.trace(() -> "create() " + queryKey);
                 LOGGER.debug(() -> "Creating new store for key: " + queryKey);
-                resultStore = storeFactory.createResultStore(finalModifiedRequest);
+                resultStore = searchProvider.createResultStore(finalModifiedRequest);
                 resultStoreMap.put(queryKey, resultStore);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);

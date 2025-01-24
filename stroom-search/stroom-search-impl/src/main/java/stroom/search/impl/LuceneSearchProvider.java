@@ -212,12 +212,12 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return indexStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return LuceneIndexDoc.TYPE;
     }
 }

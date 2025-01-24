@@ -31,7 +31,7 @@ import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.IndexFieldProviders;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProvider;
-import stroom.query.common.v2.StoreFactoryRegistry;
+import stroom.query.common.v2.SearchProviderRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -53,14 +53,14 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewSearchProvider.class);
 
     private final ViewStore viewStore;
-    private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
+    private final Provider<SearchProviderRegistry> storeFactoryRegistryProvider;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
     private final IndexFieldProviders indexFieldProviders;
 
     @Inject
     public ViewSearchProvider(final ViewStore viewStore,
-                              final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
+                              final Provider<SearchProviderRegistry> storeFactoryRegistryProvider,
                               final SecurityContext securityContext,
                               final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
                               final IndexFieldProviders indexFieldProviders) {
@@ -208,7 +208,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
         }
 
         final Optional<SearchProvider> delegate =
-                storeFactoryRegistryProvider.get().getStoreFactory(dataSource);
+                storeFactoryRegistryProvider.get().getSearchProvider(dataSource);
         if (delegate.isEmpty()) {
             throw new RuntimeException("No data source provider found for " + dataSource);
         }
@@ -223,12 +223,12 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return viewStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return ViewDoc.TYPE;
     }
 }
