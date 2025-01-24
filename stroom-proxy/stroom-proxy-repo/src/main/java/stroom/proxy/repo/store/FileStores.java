@@ -31,15 +31,13 @@ public class FileStores {
     private final Map<Key, Path> fileStores = new ConcurrentHashMap<>();
 
     private final CachedValue<Map<Key, StoreStats>, Void> statsMapUpdater;
-//    private final Queue<NamedMetric> unregisteredMetrics = new ConcurrentLinkedQueue<>();
-//    private volatile Consumer<NamedMetric> metricConsumer;
 
     public FileStores() {
         statsMapUpdater = CachedValue.stateless(Duration.ofSeconds(30), this::buildStoreState);
     }
 
     private Map<Key, StoreStats> buildStoreState() {
-        LOGGER.info("Capturing store stats");
+        LOGGER.debug("Capturing store stats");
         final Map<Key, StoreStats> map = new HashMap<>();
         for (final Entry<Key, Path> entry : fileStores.entrySet()) {
             final Path path = entry.getValue();
