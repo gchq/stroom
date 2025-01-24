@@ -42,16 +42,16 @@ proxyConfig:
     forwardDelay: "PT0S"
     forwardUrl: null
     httpClient:
-      connectionRequestTimeout: "PT0.5S"
-      connectionTimeout: "PT0.5S"
+      connectionRequestTimeout: "PT1M"
+      connectionTimeout: "PT1M"
       cookiesEnabled: false
       keepAlive: "PT0S"
       maxConnections: 1024
       maxConnectionsPerRoute: 1024
       proxy: null
       retries: 0
-      timeToLive: "PT1H"
-      timeout: "PT0.5S"
+      timeToLive: "PT1M"
+      timeout: "PT1M"
       tls: null
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
