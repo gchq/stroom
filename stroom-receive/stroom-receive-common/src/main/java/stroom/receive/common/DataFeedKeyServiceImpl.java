@@ -3,6 +3,7 @@ package stroom.receive.common;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
@@ -37,12 +38,10 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyServiceImpl.class);
     private static final String CACHE_NAME = "Authenticated Data Feed Key Cache";
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-    public static final String BEARER_PREFIX = "Bearer ";
+    static final String AUTHORIZATION_HEADER = "Authorization";
+    static final String BEARER_PREFIX = "Bearer ";
     private static final Pattern DATA_FEED_KEY_PATTERN = Pattern.compile(
             "^sdk_[0-9]{3}_[A-HJ-NP-Za-km-z1-9]{128}$");
-
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     // Holds all the keys read from the data feed key files, entries are evicted when
     // the DataFeedKey has passed its expiry date.
@@ -61,8 +60,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
     @Inject
     public DataFeedKeyServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                                   final CacheManager cacheManager) {
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
-
         hashFunctionMap.put(DataFeedKeyHashAlgorithm.ARGON2, new Argon2DataFeedKeyHasher());
 //        hashFunctionMap.put(DataFeedKeyHashAlgorithm.BCRYPT, new BCryptApiKeyHasher());
         unHashedKeyToDataFeedKeyCache = cacheManager.createLoadingCache(
@@ -263,6 +260,11 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
                         final Map<String, String> streamMeta = NullSafe.map(dataFeedKey.getStreamMetaData());
                         // Entries from the data feed key trump what is in the headers
                         attributeMap.putAll(streamMeta);
+
+                        final String accountId = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
+                        if (!Objects.equals(dataFeedKey.getAccountId(), accountId)) {
+                            throw new StroomStreamException(StroomStatusCode.INVALID_ACCOUNT_ID, attributeMap);
+                        }
 
                         return new DataFeedKeyUserIdentity(dataFeedKey);
                     });

@@ -41,6 +41,10 @@ public enum StroomStatusCode {
             "Feed is not valid",
             "The feed you have provided does not match an agreed pattern"),
 
+    INVALID_ACCOUNT_ID(HttpServletResponse.SC_NOT_ACCEPTABLE, 112,
+            "AccountId is not valid",
+            "The AccountId you have provided does not match the AccountId associated with the Data Feed Key"),
+
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
 
