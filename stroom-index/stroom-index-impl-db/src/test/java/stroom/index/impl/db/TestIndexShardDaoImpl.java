@@ -16,17 +16,20 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.AuditUtil;
 import stroom.util.io.ByteSizeUnit;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,22 +37,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardDaoImpl {
 
-    private static IndexVolumeDao indexVolumeDao;
-    private static IndexVolumeGroupDao indexVolumeGroupDao;
-    private static IndexShardDao indexShardDao;
-    private static Path tempDir;
+    @Inject
+    private IndexVolumeDao indexVolumeDao;
+    @Inject
+    private IndexVolumeGroupDao indexVolumeGroupDao;
+    @Inject
+    private IndexShardDao indexShardDao;
+    @Inject
+    private Set<Clearable> clearables;
+    private Path tempDir;
 
-    @BeforeAll
-    static void beforeAll(@TempDir final Path tempDir) {
+    @BeforeEach
+    void beforeEach(@TempDir final Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new IndexDbModule(),
                 new IndexDaoModule(),
                 new TestModule());
-
-        indexVolumeDao = injector.getInstance(IndexVolumeDao.class);
-        indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
-        indexShardDao = injector.getInstance(IndexShardDao.class);
-        TestIndexShardDaoImpl.tempDir = tempDir;
+        injector.injectMembers(this);
+        clearables.forEach(Clearable::clear);
+        this.tempDir = tempDir;
     }
 
 //    @Test
