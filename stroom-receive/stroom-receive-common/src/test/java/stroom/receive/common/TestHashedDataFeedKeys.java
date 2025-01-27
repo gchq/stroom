@@ -48,14 +48,16 @@ class TestHashedDataFeedKeys {
     void testSerde() throws IOException {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
 
-        @SuppressWarnings("checkstyle:lineLength") final String key1 = "sdk_"
-                                                                       + hasher.getAlgorithm().getUniqueId()
-                                                                       + "_"
-                                                                       + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
-        @SuppressWarnings("checkstyle:lineLength") final String key2 = "sdk_"
-                                                                       + hasher.getAlgorithm().getUniqueId()
-                                                                       + "_"
-                                                                       + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
+        @SuppressWarnings("checkstyle:lineLength") final String key1 =
+                "sdk_"
+                + hasher.getAlgorithm().getUniqueId()
+                + "_"
+                + "okfXqkmtns3k4828fZcnutWUFmegj3hqk83o9sYCLefWGTrRrpT6Bt23FuT1ebwcftPNaL1B7aFbK37gbpefZgQeeP3esbnvNXu612co4awVxpn33He6i1vn7g8kUFEk";
+        @SuppressWarnings("checkstyle:lineLength") final String key2 =
+                "sdk_"
+                + hasher.getAlgorithm().getUniqueId()
+                + "_"
+                + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
 
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
