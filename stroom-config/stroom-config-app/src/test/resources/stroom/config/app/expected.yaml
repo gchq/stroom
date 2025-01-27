@@ -646,6 +646,7 @@ appConfig:
       expireAfterWrite: "PT10M"
       maximumSize: 100
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
     createTasksBeyondProcessLimit: true
