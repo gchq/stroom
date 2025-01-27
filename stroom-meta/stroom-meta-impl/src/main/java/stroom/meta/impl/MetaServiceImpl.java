@@ -40,6 +40,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
@@ -609,7 +610,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private DocRef getPipeline(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
             final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(meta.getPipelineUuid());
-            return optionalDocRefInfo.map(DocRefInfo::getDocRef).orElse(null);
+            return optionalDocRefInfo
+                    .map(DocRefInfo::getDocRef)
+                    .orElse(DocRef
+                            .builder()
+                            .type(PipelineDoc.TYPE)
+                            .uuid(meta.getPipelineUuid())
+                            .build());
         }
         return null;
     }

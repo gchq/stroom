@@ -31,7 +31,6 @@ public class ProcessorFilterFields {
     public static final QueryField PRIORITY = QueryField.createInteger("Processor Filter Priority");
     public static final QueryField ENABLED = QueryField.createBoolean("Processor Filter Enabled");
     public static final QueryField DELETED = QueryField.createBoolean("Processor Filter Deleted");
-    public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");
     public static final QueryField UUID = QueryField.createText("Processor Filter UUID");
     public static final QueryField RUN_AS_USER = QueryField
             .builder()
@@ -47,7 +46,6 @@ public class ProcessorFilterFields {
         FIELDS.add(PRIORITY);
         FIELDS.add(ENABLED);
         FIELDS.add(DELETED);
-        FIELDS.add(PROCESSOR_ID);
         FIELDS.add(UUID);
         FIELDS.add(RUN_AS_USER);
 

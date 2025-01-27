@@ -1,0 +1,66 @@
+ext.moduleName = 'stroom.planb.impl'
+
+dependencies {
+    implementation project(':stroom-bytebuffer')
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-cluster:stroom-cluster-task-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lmdb')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.caffeine
+    implementation libs.commons_compress
+    implementation libs.fast_infoset
+    implementation libs.guava
+    implementation libs.guice
+    implementation libs.http_client
+    implementation libs.jackson_annotations
+    implementation libs.jakarta_inject
+    implementation libs.jakarta_servlet_api
+    implementation libs.jaxb_api
+    implementation libs.kryo
+    implementation libs.lmdbjava
+    implementation libs.restygwt
+    implementation libs.saxon_he
+    implementation libs.slf4j_api
+    implementation libs.swagger_annotations
+    implementation libs.ws_rs_api
+    implementation libs.zero_allocation_hashing
+
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj_core
+    testImplementation libs.mockito_core
+    testImplementation libs.mockito_junit_jupiter
+
+    testImplementation libs.junit_jupiter_api
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jakarta_activation
+    testRuntimeOnly libs.jaxb_impl
+    testRuntimeOnly libs.jcl_over_slf4j
+    testRuntimeOnly libs.jul_to_slf4j
+    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.log4j_over_slf4j
+    testRuntimeOnly libs.logback_classic
+    testRuntimeOnly libs.logback_core
+}

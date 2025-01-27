@@ -36,6 +36,7 @@ import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -96,21 +97,29 @@ public class ExpressionPredicateFactory {
                                                                final ValueFunctionFactories<T> queryFieldIndex,
                                                                final DateTimeSettings dateTimeSettings,
                                                                final WordListProvider wordListProvider) {
-        if (!operator.enabled() || operator.getChildren() == null || operator.getChildren().isEmpty()) {
+        // If the operator is not enabled then ignore this branch.
+        if (!operator.enabled()) {
             return Optional.empty();
+        }
+
+        // Create child predicates.
+        final List<Predicate<T>> predicates;
+        if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
+            predicates = new ArrayList<>(operator.getChildren().size());
+            for (final ExpressionItem child : operator.getChildren()) {
+                Optional<Predicate<T>> optional = createPredicate(
+                        child,
+                        queryFieldIndex,
+                        dateTimeSettings,
+                        wordListProvider);
+                optional.ifPresent(predicates::add);
+            }
+        } else {
+            predicates = Collections.emptyList();
         }
 
         return switch (operator.op()) {
             case AND -> {
-                final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
-                for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<Predicate<T>> optional = createPredicate(
-                            child,
-                            queryFieldIndex,
-                            dateTimeSettings,
-                            wordListProvider);
-                    optional.ifPresent(predicates::add);
-                }
                 if (predicates.isEmpty()) {
                     yield Optional.empty();
                 }
@@ -120,15 +129,6 @@ public class ExpressionPredicateFactory {
                 yield AndPredicate.create(predicates);
             }
             case OR -> {
-                final List<Predicate<T>> predicates = new ArrayList<>(operator.getChildren().size());
-                for (final ExpressionItem child : operator.getChildren()) {
-                    Optional<Predicate<T>> optional = createPredicate(
-                            child,
-                            queryFieldIndex,
-                            dateTimeSettings,
-                            wordListProvider);
-                    optional.ifPresent(predicates::add);
-                }
                 if (predicates.isEmpty()) {
                     yield Optional.empty();
                 }
@@ -138,18 +138,13 @@ public class ExpressionPredicateFactory {
                 yield OrPredicate.create(predicates);
             }
             case NOT -> {
-                if (operator.getChildren().size() > 1) {
+                if (predicates.size() > 1) {
                     throw new MatchException("Unexpected number of child terms in NOT");
                 }
-                final Optional<Predicate<T>> optionalChildPredicate = createPredicate(
-                        operator.getChildren().getFirst(),
-                        queryFieldIndex,
-                        dateTimeSettings,
-                        wordListProvider);
-                if (optionalChildPredicate.isEmpty()) {
-                    yield Optional.empty();
+                if (predicates.isEmpty()) {
+                    yield Optional.of(t -> false);
                 }
-                yield NotPredicate.create(optionalChildPredicate.get());
+                yield NotPredicate.create(predicates.getFirst());
             }
         };
     }

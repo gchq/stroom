@@ -135,6 +135,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.config.app.SessionConfig getSessionConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.config.app.SessionConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.config.app.SessionCookieConfig getSessionCookieConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -472,6 +481,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.pipeline.refdata.ReferenceDataStagingLmdbConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.planb.impl.PlanBConfig getPlanBConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.planb.impl.PlanBConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

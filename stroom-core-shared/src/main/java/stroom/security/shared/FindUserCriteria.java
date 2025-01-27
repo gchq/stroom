@@ -35,29 +35,43 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends ExpressionCriteria {
 
+    @JsonProperty
+    private final boolean activeUsersOnly;
+
     public FindUserCriteria() {
-        this(PageRequest.unlimited(), Collections.emptyList(), ExpressionOperator.builder().build());
+        this(PageRequest.unlimited(), Collections.emptyList(), ExpressionOperator.builder().build(), false);
     }
 
     @JsonCreator
     public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                            @JsonProperty("expression") final ExpressionOperator expression) {
+                            @JsonProperty("expression") final ExpressionOperator expression,
+                            @JsonProperty("activeUsersOnly") final boolean activeUsersOnly) {
         super(pageRequest, sortList, expression);
+        this.activeUsersOnly = activeUsersOnly;
     }
 
+    public boolean isActiveUsersOnly() {
+        return activeUsersOnly;
+    }
 
     // --------------------------------------------------------------------------------
 
 
     public static class Builder extends AbstractBuilder<FindUserCriteria, Builder> {
 
-        public Builder() {
+        private boolean activeUsersOnly;
 
+        public Builder() {
         }
 
-        public Builder(final FindUserCriteria expressionCriteria) {
-            super(expressionCriteria);
+        public Builder(final FindUserCriteria criteria) {
+            super(criteria);
+            this.activeUsersOnly = criteria.activeUsersOnly;
+        }
+
+        public void activeUsersOnly(final boolean activeUsersOnly) {
+            this.activeUsersOnly = activeUsersOnly;
         }
 
         @Override
@@ -70,7 +84,8 @@ public class FindUserCriteria extends ExpressionCriteria {
             return new FindUserCriteria(
                     pageRequest,
                     sortList,
-                    expression);
+                    expression,
+                    activeUsersOnly);
         }
     }
 }

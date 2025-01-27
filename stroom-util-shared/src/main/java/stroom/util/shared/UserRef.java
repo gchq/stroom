@@ -44,7 +44,6 @@ public final class UserRef {
                    @JsonProperty("fullName") final String fullName,
                    @JsonProperty("group") final boolean group,
                    @JsonProperty("enabled") final boolean enabled) {
-        Objects.requireNonNull(uuid, "Null uuid provided to UserRef");
         if (group && !enabled) {
             throw new IllegalArgumentException("Groups cannot be disabled");
         }
@@ -356,7 +355,6 @@ public final class UserRef {
         }
 
         public UserRef build() {
-            Objects.requireNonNull(uuid, "Null UUID");
             if (group && !enabled) {
                 throw new IllegalArgumentException("Groups cannot be disabled");
             }

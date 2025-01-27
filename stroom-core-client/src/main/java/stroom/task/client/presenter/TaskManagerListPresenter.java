@@ -39,6 +39,7 @@ import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.shared.FindTaskCriteria;
@@ -55,6 +56,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -94,6 +96,7 @@ public class TaskManagerListPresenter
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final DateTimeFormatter dateTimeFormatter;
+    private final ClientSecurityContext securityContext;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
@@ -129,13 +132,15 @@ public class TaskManagerListPresenter
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
                                     final NodeManager nodeManager,
-                                    final DateTimeFormatter dateTimeFormatter) {
+                                    final DateTimeFormatter dateTimeFormatter,
+                                    final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
+        this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>(1000);
         view.setDataWidget(dataGrid);
@@ -335,11 +340,13 @@ public class TaskManagerListPresenter
 
         // User.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getUserName))
+                DataGridUtil.userRefColumnBuilder(
+                                TaskProgress::getUserRef, getEventBus(), securityContext, DisplayType.DISPLAY_NAME)
+                        .enabledWhen(taskProgress -> taskProgress.getUserRef().isEnabled())
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)
                         .build(),
                 FindTaskProgressCriteria.FIELD_USER,
-                80);
+                100);
 
         // Submit Time.
         dataGrid.addResizableColumn(
@@ -386,7 +393,7 @@ public class TaskManagerListPresenter
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
                 .row("Node", getNodeName(row))
-                .row("User", row.getUserName())
+                .row("User", row.getUserRef().getDisplayName())
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
                 .row("Id", GwtNullSafe.get(row.getId(), TaskId::getId));

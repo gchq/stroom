@@ -26,6 +26,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
+import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -35,11 +36,14 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.UserFields;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -55,6 +59,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ScheduledProcessListPresenter
@@ -69,6 +74,7 @@ public class ScheduledProcessListPresenter
     private final RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
+    private final ClientSecurityContext securityContext;
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -80,10 +86,12 @@ public class ScheduledProcessListPresenter
     public ScheduledProcessListPresenter(final EventBus eventBus,
                                          final PagerView view,
                                          final RestFactory restFactory,
-                                         final DateTimeFormatter dateTimeFormatter) {
+                                         final DateTimeFormatter dateTimeFormatter,
+                                         final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.securityContext = securityContext;
 
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionScheduleFields.ID, true, true);
         request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
@@ -186,13 +194,26 @@ public class ScheduledProcessListPresenter
                     }
                 }, ExecutionScheduleFields.SCHEDULE, ColumnSizeConstants.DATE_COL);
 
-        dataGrid.addResizableColumn(
-                new Column<ExecutionSchedule, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final ExecutionSchedule row) {
-                        return GwtNullSafe.get(row, ExecutionSchedule::getRunAsUser, UserRef::toDisplayString);
-                    }
-                }, ExecutionScheduleFields.RUN_AS_USER, ColumnSizeConstants.DATE_COL);
+
+        final Column<ExecutionSchedule, UserRefProvider<ExecutionSchedule>> runAsCol = DataGridUtil
+                .userRefColumnBuilder(
+                        ExecutionSchedule::getRunAsUser,
+                        getEventBus(),
+                        securityContext,
+                        true,
+                        DisplayType.AUTO)
+                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
+                .enabledWhen(executionSchedule ->
+                        Optional.ofNullable(executionSchedule)
+                                .map(ExecutionSchedule::getRunAsUser)
+                                .map(UserRef::isEnabled)
+                                .orElse(true))
+                .build();
+        dataGrid.addResizableColumn(runAsCol,
+                DataGridUtil.headingBuilder(ExecutionScheduleFields.RUN_AS_USER)
+                        .withToolTip("The processor will run with the same permissions as the Run As User.")
+                        .build(),
+                ColumnSizeConstants.USER_DISPLAY_NAME_COL);
 
         dataGrid.addAutoResizableColumn(
                 new OrderByColumn<ExecutionSchedule, String>(
@@ -206,19 +227,19 @@ public class ScheduledProcessListPresenter
                             if (bounds.getStartTimeMs() != null && bounds.getEndTimeMs() != null) {
                                 if (bounds.getStartTimeMs().equals(bounds.getEndTimeMs())) {
                                     return "On " +
-                                            dateTimeFormatter.format(bounds.getStartTimeMs());
+                                           dateTimeFormatter.format(bounds.getStartTimeMs());
                                 } else {
                                     return "Between " +
-                                            dateTimeFormatter.format(bounds.getStartTimeMs()) +
-                                            " and " +
-                                            dateTimeFormatter.format(bounds.getEndTimeMs());
+                                           dateTimeFormatter.format(bounds.getStartTimeMs()) +
+                                           " and " +
+                                           dateTimeFormatter.format(bounds.getEndTimeMs());
                                 }
                             } else if (bounds.getStartTimeMs() != null) {
                                 return "After " +
-                                        dateTimeFormatter.format(bounds.getStartTimeMs());
+                                       dateTimeFormatter.format(bounds.getStartTimeMs());
                             } else if (bounds.getEndTimeMs() != null) {
                                 return "Until " +
-                                        dateTimeFormatter.format(bounds.getEndTimeMs());
+                                       dateTimeFormatter.format(bounds.getEndTimeMs());
                             }
                         }
                         return "Unbounded";

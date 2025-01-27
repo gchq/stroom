@@ -201,6 +201,9 @@ include 'stroom-node:stroom-node-impl-db-jooq'
 // Pipeline
 include 'stroom-pipeline'
 
+// Plan B
+include 'stroom-state:stroom-planb-impl'
+
 // Processor
 include 'stroom-processor:stroom-processor-api'
 include 'stroom-processor:stroom-processor-impl'
@@ -221,7 +224,6 @@ include 'stroom-query:stroom-query-language'
 include 'stroom-query:stroom-query-language-api'
 
 // State store
-include 'stroom-state:stroom-state-api'
 include 'stroom-state:stroom-state-impl'
 
 // Suggestions

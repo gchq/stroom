@@ -69,7 +69,6 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
         final DictionaryDoc dictionaryDoc = documentResourceHelperProvider.get()
                 .read(dictionaryStoreProvider.get(), getDocRef(uuid));
 
-        //
         if (NullSafe.hasItems(dictionaryDoc.getImports())) {
             final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
             final List<DocRef> decoratedImports = dictionaryDoc.getImports()

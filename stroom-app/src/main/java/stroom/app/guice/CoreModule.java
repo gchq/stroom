@@ -104,6 +104,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.analytics.rule.impl.AnalyticRuleModule());
         install(new stroom.analytics.rule.impl.ReportModule());
         install(new stroom.state.impl.StateModule());
+        install(new stroom.planb.impl.PlanBModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

@@ -13,6 +13,48 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.10] - 2025-01-23
+
+* Issue **#4713** : Fix datasource in use issue for API key DAO.
+
+* Issue **#4714** : Fix display of disabled `RunAs` users.
+
+* Issue **#4708** : Add copy links to stream info pane.
+
+* Issue **#4687** : Fix dependencies NPE.
+
+* Issue **#4717** : Fix processor filter expression fields.
+
+* Issue **#4652** : Add user links to server tasks and search results lists.
+
+* Issue **#4669** : Make user dependency list document column resizable.
+
+* Issue **#4685** : Fix doc permission layout.
+
+* Issue **#4705** : Fix conditional format fall through.
+
+* Issue **#4671** : Remove foreign key constraints from the legacy `(app|doc)_permission` tables to `stroom_user` to fix user deletion.
+
+* Issue **#4670** : Fix display of disabled users in multiple permission related screens.
+
+* Issue **#4659** : Fix refresh selection changes after adding/removing users to/from groups.
+
+* Issue **#4693** : Add the property `stroom.session.maxInactiveInterval` to control the HTTP session expiry. Defaults to `1d`.
+
+
+## [v7.8-planb-beta.9] - 2025-01-21
+
+* Change `receiptId` format to `<epoch ms>_<seq no>_<(P|S)>_<proxyId or stroom nodeName>`. `P|S` represents stroom or Proxy.
+
+* Change stroom to also set the `receiptId` meta attribute on receipt or upload.
+
+* Change proxy logging to still log datafeed events even if the `metaKeys` config prop is empty.
+
+* Issue **#4695** : Change proxy to re-create the proxy ID in proxy-id.txt if the value in there does not match the required pattern.
+
+* Fix the sleep time in UniqueIdGenerator (from 50ms to 0.1ms).
+
+
 ## [v7.8-beta.8] - 2025-01-10
 
 * Fix tests that were breaking the build.
@@ -1148,7 +1190,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.10...HEAD
+[v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
+[v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
 [v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
 [v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
 [v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6

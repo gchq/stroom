@@ -16,6 +16,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.commons_compress
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson_annotations

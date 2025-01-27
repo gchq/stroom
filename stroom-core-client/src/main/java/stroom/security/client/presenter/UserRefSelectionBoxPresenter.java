@@ -96,4 +96,8 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
             getView().asWidget().getElement().removeClassName("disabled");
         }
     }
+
+    public void showActiveUsersOnly(final boolean activeUsersOnly) {
+        userRefPopupPresenter.showActiveUsersOnly(activeUsersOnly);
+    }
 }

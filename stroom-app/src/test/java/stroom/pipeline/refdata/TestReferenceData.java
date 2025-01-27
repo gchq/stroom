@@ -241,6 +241,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -344,6 +345,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -492,9 +494,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private StringValue buildValue(MapDefinition mapDefinition, String value) {
         return StringValue.of(
                 mapDefinition.getRefStreamDefinition().getPipelineDocRef().getUuid() + "|" +
-                        mapDefinition.getRefStreamDefinition().getStreamId() + "|" +
-                        mapDefinition.getMapName() + "|" +
-                        value
+                mapDefinition.getRefStreamDefinition().getStreamId() + "|" +
+                mapDefinition.getMapName() + "|" +
+                value
         );
     }
 
@@ -591,6 +593,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -674,6 +677,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();

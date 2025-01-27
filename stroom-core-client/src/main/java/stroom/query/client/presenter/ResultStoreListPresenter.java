@@ -28,11 +28,12 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserRef;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -62,7 +63,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                                     final PagerView view,
                                     final ResultStoreModel resultStoreModel,
                                     final DateTimeFormatter dateTimeFormatter,
-                                    final ResultStoreSettingsPresenter resultStoreSettingsPresenter) {
+                                    final ResultStoreSettingsPresenter resultStoreSettingsPresenter,
+                                    final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
@@ -84,12 +86,12 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         settingsButton.setEnabled(false);
 
         // User Id
-        dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
-            @Override
-            public String getValue(final ResultStoreInfo resultStoreInfo) {
-                return GwtNullSafe.get(resultStoreInfo.getOwner(), UserRef::toDisplayString);
-            }
-        }, "User Display Name", 300);
+        dataGrid.addResizableColumn(
+                DataGridUtil.userRefColumnBuilder(
+                                ResultStoreInfo::getOwner, getEventBus(), securityContext, DisplayType.AUTO)
+                        .enabledWhen(taskProgress -> taskProgress.getOwner().isEnabled())
+                        .build(),
+                "User Display Name", 300);
 
         // Store size
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
@@ -197,7 +199,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
             if (selected == null ||
-                    SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
+                SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 settingsButton.setEnabled(false);

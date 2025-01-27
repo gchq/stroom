@@ -48,8 +48,6 @@ public class UserDependenciesListPresenter
 
     private UserRef userRef;
     private RestDataProvider<UserDependency, ResultPage<UserDependency>> dataProvider;
-    private ResultPage<UserDependency> currentData = null;
-    private Consumer<ResultPage<UserDependency>> resultPageConsumer;
     private String filter;
 
     @Inject
@@ -137,11 +135,7 @@ public class UserDependenciesListPresenter
 
             @Override
             protected void changeData(final ResultPage<UserDependency> data) {
-                currentData = data;
                 super.changeData(data);
-                if (resultPageConsumer != null) {
-                    resultPageConsumer.accept(data);
-                }
                 if (!data.isEmpty()) {
                     selectionModel.setSelected(data.getFirst());
                 } else {
@@ -190,7 +184,7 @@ public class UserDependenciesListPresenter
                         cellBuilder)
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();
-        dataGrid.addColumn(
+        dataGrid.addResizableColumn(
                 docNameCol,
                 DataGridUtil.headingBuilder("Document Name")
                         .withToolTip("The document that depends on this user.")

@@ -156,7 +156,7 @@ class TestUserServiceImpl {
         final PageRequest pageRequest = new PageRequest(0, 100);
         final ExpressionOperator expression = QuickFilterExpressionParser
                 .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
-        return new FindUserCriteria(pageRequest, null, expression);
+        return new FindUserCriteria(pageRequest, null, expression, false);
     }
 
     private User createUser(final String baseName) {

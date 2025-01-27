@@ -635,6 +635,17 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       maxElements: 1000000
+  planb:
+    minTimeToKeepEnvOpen: "PT1M"
+    minTimeToKeepSnapshots: "PT10M"
+    nodeList: []
+    path: "${stroom.home}/planb"
+    snapshotRetryFetchInterval: "PT1M"
+    stateDocCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
   processor:
     assignTasks: true
     createTasksBeyondProcessLimit: true
@@ -1014,6 +1025,8 @@ appConfig:
     servicesPort: 8080
     zookeeperBasePath: "/stroom-services"
     zookeeperUrl: "localhost:2181"
+  session:
+    maxInactiveInterval: "P1D"
   sessionCookie:
     httpOnly: true
     secure: true

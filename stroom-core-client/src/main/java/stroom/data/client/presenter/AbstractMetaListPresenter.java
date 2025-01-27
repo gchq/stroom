@@ -365,11 +365,12 @@ public abstract class AbstractMetaListPresenter
 
     void addStreamTypeColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
                                 Optional.ofNullable(metaRow)
                                         .map(MetaRow::getMeta)
                                         .map(Meta::getTypeName)
-                                        .orElse(""))
+                                        .orElse(""),
+                                getEventBus())
                         .withSorting(MetaFields.TYPE)
                         .build(),
                 "Type",

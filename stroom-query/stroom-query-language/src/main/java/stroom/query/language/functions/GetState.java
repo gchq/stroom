@@ -32,7 +32,7 @@ import java.util.function.Supplier;
         commonReturnDescription = "The state value if found else null.",
         signatures = @FunctionSignature(
                 description = "Lookup a value from a state map using a key and optional effective time for " +
-                        "temporally sensitive states.",
+                              "temporally sensitive states.",
                 args = {
                         @FunctionArg(
                                 name = "map",
@@ -50,7 +50,7 @@ import java.util.function.Supplier;
 class GetState extends AbstractManyChildFunction {
 
     static final String NAME = "getState";
-    private final StateProvider lookupProvider;
+    private final StateFetcher stateFetcher;
     private Generator gen;
     private String map;
     private String key;
@@ -58,8 +58,8 @@ class GetState extends AbstractManyChildFunction {
 
     public GetState(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
-        this.lookupProvider = expressionContext.getStateProvider();
-        Objects.requireNonNull(lookupProvider, "Null lookup provider");
+        this.stateFetcher = expressionContext.getStateFetcher();
+        Objects.requireNonNull(stateFetcher, "Null lookup provider");
     }
 
     @Override
@@ -83,7 +83,7 @@ class GetState extends AbstractManyChildFunction {
         // If we have values for all params then do a lookup now.
         if (map != null && key != null && effectiveTime != null) {
             // Create static value.
-            final Val val = lookupProvider.getState(map, key, effectiveTime);
+            final Val val = stateFetcher.getState(map, key, effectiveTime);
             gen = new StaticValueGen(val);
         }
     }
@@ -98,23 +98,23 @@ class GetState extends AbstractManyChildFunction {
 
     @Override
     protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(lookupProvider, map, key, effectiveTime, childGenerators);
+        return new Gen(stateFetcher, map, key, effectiveTime, childGenerators);
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private final StateProvider lookupProvider;
+        private final StateFetcher stateProvider;
         private final String map;
         private final String key;
         private final Instant effectiveTime;
 
-        Gen(final StateProvider lookupProvider,
+        Gen(final StateFetcher stateProvider,
             final String map,
             final String key,
             final Instant effectiveTime,
             final Generator[] childGenerators) {
             super(childGenerators);
-            this.lookupProvider = lookupProvider;
+            this.stateProvider = stateProvider;
             this.map = map;
             this.key = key;
             this.effectiveTime = effectiveTime;
@@ -150,7 +150,7 @@ class GetState extends AbstractManyChildFunction {
 
                 Val val = ValNull.INSTANCE;
                 if (map != null && key != null && effectiveTime != null) {
-                    val = lookupProvider.getState(map, key, effectiveTime);
+                    val = stateProvider.getState(map, key, effectiveTime);
                 }
                 return val;
 

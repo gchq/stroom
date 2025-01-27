@@ -43,6 +43,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -88,7 +89,16 @@ public class UserPermissionReportPresenter
         view.setPermissionListView(quickFilterPageView);
         quickFilterPageView.setDataView(documentPermissionsListPresenter.getView());
         quickFilterPageView.setUiHandlers(this);
-
+        quickFilterPageView.setLabel("Documents");
+        quickFilterPageView.setHelpText(new SafeHtmlBuilder()
+                .appendHtmlConstant("<p>")
+                .appendEscaped("Lists documents, optionally filtered based on the value of the")
+                .appendHtmlConstant("<em>")
+                .appendEscaped("Permission Visibility")
+                .appendHtmlConstant("</em>")
+                .appendEscaped("dropdown.")
+                .appendHtmlConstant("</p>")
+                .toSafeHtml());
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
         quickFilterExpression = getShowAllExpression();
 
