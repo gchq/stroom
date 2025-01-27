@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.core.setup.Environment;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -36,127 +35,153 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInnerProcessEndToEnd {
 
-    @Inject
-    private ProxyLifecycle proxyLifecycle;
-    @Inject
-    private ReceiverFactory receiverFactory;
-    @Inject
-    private MockForwardFileDestinationFactory forwardFileDestinationFactory;
+//    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
 
     @Test
-    void testSimple() throws Exception {
+    void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 10, () -> sendSimpleData(feedName));
+        test(1, 10001, 10, receiverFactory ->
+                sendSimpleData(receiverFactory, feedName));
     }
 
     @Test
-    void testSimpleZip() throws Exception {
+    void testSimpleZip() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 10, () -> sendSimpleZip(feedName, 1));
+        test(1, 10001, 10, receiverFactory ->
+                sendSimpleZip(receiverFactory, feedName, 1));
     }
 
     @Test
-    void testSourceSplitting() throws Exception {
+    void testSourceSplitting() {
+//        final CompletableFuture[] arr = new CompletableFuture[1000];
+//        for (int i = 0; i < arr.length; i++) {
+//            final int instanceId = i;
+//            final CompletableFuture<?> completableFuture = CompletableFuture.runAsync(() -> {
+//                try {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 20, () -> sendComplexZip(feedName1, feedName2, 1));
+        test(1,
+                10001,
+                20,
+                receiverFactory ->
+                        sendComplexZip(receiverFactory, feedName1, feedName2, 1));
+//                } catch (final Exception e) {
+//                    throw new RuntimeException(e);
+//                }
+//            });
+//            arr[i] = completableFuture;
+//        }
+//        CompletableFuture.allOf(arr).join();
     }
 
     @Test
-    void testAggregateSplitting() throws Exception {
+    void testAggregateSplitting() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 1, 2, () -> sendSimpleZip(feedName, 2001));
+        test(1, 1, 2, receiverFactory ->
+                sendSimpleZip(receiverFactory, feedName, 2001));
     }
 
     @Test
-    void testSourceAndAggregateSplitting() throws Exception {
+    void testSourceAndAggregateSplitting() {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
-        test(1, 1, 4, () -> sendComplexZip(feedName1, feedName2, 2001));
+        test(1, 1, 4, receiverFactory ->
+                sendComplexZip(receiverFactory, feedName1, feedName2, 2001));
     }
 
 
     private void test(final int threadCount,
                       final int totalStreams,
                       final int expectedOutputStreamCount,
-                      final Runnable sender) throws Exception {
-
-        final Path root = Files.createTempDirectory("stroom-proxy");
+                      final Consumer<ReceiverFactory> sender) {
         try {
-            FileUtil.deleteContents(root);
+            final Path root = Files.createTempDirectory("stroom-proxy");
+            ProxyLifecycle proxyLifecycle = null;
+            try {
+                FileUtil.deleteContents(root);
 
-            final Path dataDir = root.resolve("data");
-            final Path tempDir = root.resolve("temp");
-            final Path homeDir = root.resolve("home");
-            Files.createDirectories(tempDir);
-            Files.createDirectories(homeDir);
+                final Path dataDir = root.resolve("data");
+                final Path tempDir = root.resolve("temp");
+                final Path homeDir = root.resolve("home");
+                Files.createDirectories(tempDir);
+                Files.createDirectories(homeDir);
 
-            final ProxyConfig proxyConfig = ProxyConfig.builder()
-                    .pathConfig(new ProxyPathConfig(
-                            dataDir.toAbsolutePath().toString(),
-                            homeDir.toAbsolutePath().toString(),
-                            tempDir.toAbsolutePath().toString()))
-                    .aggregatorConfig(AggregatorConfig.builder()
-                            .maxItemsPerAggregate(1000)
-                            .maxUncompressedByteSizeString("1G")
-                            .maxAggregateAge(StroomDuration.ofSeconds(5))
-                            .aggregationFrequency(StroomDuration.ofSeconds(1))
-                            .build())
-                    .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
-                    .build();
+                final ProxyConfig proxyConfig = ProxyConfig.builder()
+                        .pathConfig(new ProxyPathConfig(
+                                dataDir.toAbsolutePath().toString(),
+                                homeDir.toAbsolutePath().toString(),
+                                tempDir.toAbsolutePath().toString()))
+                        .aggregatorConfig(AggregatorConfig.builder()
+                                .maxItemsPerAggregate(1000)
+                                .maxUncompressedByteSizeString("1G")
+                                .maxAggregateAge(StroomDuration.ofSeconds(5))
+                                .aggregationFrequency(StroomDuration.ofSeconds(1))
+                                .build())
+                        .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
+                        .build();
 
-            final AbstractModule proxyModule = getModule(proxyConfig);
-            final Injector injector = Guice.createInjector(proxyModule);
-            injector.injectMembers(this);
+                final AbstractModule proxyModule = getModule(proxyConfig);
+                final Injector injector = Guice.createInjector(proxyModule);
+                injector.injectMembers(this);
 
-            final CountDownLatch countDownLatch = new CountDownLatch(expectedOutputStreamCount);
-            forwardFileDestinationFactory.getForwardFileDestination().setCountDownLatch(countDownLatch);
-            proxyLifecycle.start();
+                proxyLifecycle = injector.getInstance(ProxyLifecycle.class);
+                final ReceiverFactory receiverFactory = injector.getInstance(ReceiverFactory.class);
+                final MockForwardFileDestinationFactory forwardFileDestinationFactory = injector.getInstance(
+                        MockForwardFileDestinationFactory.class);
 
-            final AtomicInteger count = new AtomicInteger();
-            final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
-            for (int i = 0; i < threadCount; i++) {
-                futures[i] = CompletableFuture.runAsync(() -> {
-                    boolean add = true;
-                    while (add) {
-                        if (count.incrementAndGet() > totalStreams) {
-                            add = false;
-                        } else {
-                            sender.run();
+                final CountDownLatch countDownLatch = new CountDownLatch(expectedOutputStreamCount);
+                forwardFileDestinationFactory.getForwardFileDestination().setCountDownLatch(countDownLatch);
+                proxyLifecycle.start();
+
+                final AtomicInteger count = new AtomicInteger();
+                final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
+                for (int i = 0; i < threadCount; i++) {
+                    futures[i] = CompletableFuture.runAsync(() -> {
+                        boolean add = true;
+                        while (add) {
+                            if (count.incrementAndGet() > totalStreams) {
+                                add = false;
+                            } else {
+                                sender.accept(receiverFactory);
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
+                CompletableFuture.allOf(futures).join();
+
+                // Wait for all data to arrive.
+                final MockForwardFileDestination forwardFileDestination =
+                        forwardFileDestinationFactory.getForwardFileDestination();
+                countDownLatch.await();
+
+                // Examine data.
+                final Path storeDir = forwardFileDestination.getStoreDir();
+                long maxId = DirUtil.getMaxDirId(storeDir);
+
+                // Cope with final rolling output (hence +1).
+                assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);
+                assertThat(maxId).isLessThanOrEqualTo(expectedOutputStreamCount + 1);
+
+            } finally {
+                if (proxyLifecycle != null) {
+                    proxyLifecycle.stop();
+                }
+                FileUtil.deleteContents(root);
             }
-
-            CompletableFuture.allOf(futures).join();
-
-            // Wait for all data to arrive.
-            final MockForwardFileDestination forwardFileDestination =
-                    forwardFileDestinationFactory.getForwardFileDestination();
-            countDownLatch.await();
-
-            // Examine data.
-            final Path storeDir = forwardFileDestination.getStoreDir();
-            long maxId = DirUtil.getMaxDirId(storeDir);
-
-            // Cope with final rolling output (hence +1).
-            assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);
-            assertThat(maxId).isLessThanOrEqualTo(expectedOutputStreamCount + 1);
-
-        } finally {
-            if (proxyLifecycle != null) {
-                proxyLifecycle.stop();
-            }
-            FileUtil.deleteContents(root);
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private void sendSimpleData(final String feedName) {
+    private void sendSimpleData(final ReceiverFactory receiverFactory,
+                                final String feedName) {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
@@ -173,7 +198,9 @@ class TestInnerProcessEndToEnd {
         }
     }
 
-    private void sendSimpleZip(final String feedName, final int entryCount) {
+    private void sendSimpleZip(final ReceiverFactory receiverFactory,
+                               final String feedName,
+                               final int entryCount) {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
@@ -205,7 +232,10 @@ class TestInnerProcessEndToEnd {
         }
     }
 
-    private void sendComplexZip(final String feedName1, final String feedName2, final int entryCount) {
+    private void sendComplexZip(final ReceiverFactory receiverFactory,
+                                final String feedName1,
+                                final String feedName2,
+                                final int entryCount) {
         final byte[] dataBytes;
 
         try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
@@ -245,7 +275,6 @@ class TestInnerProcessEndToEnd {
     }
 
     private AbstractModule getModule(final ProxyConfig proxyConfig) {
-
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);
 

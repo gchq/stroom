@@ -145,20 +145,19 @@ public class HttpSender implements StreamDestination {
                      final AttributeMap attributeMap) {
         // Execute and get the response.
         try {
+            if (!forwardDelay.isZero()) {
+                LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
+                ThreadUtil.sleep(forwardDelay);
+            }
+
             return httpClient.execute(httpPost, response -> {
                 try {
-                    if (!forwardDelay.isZero()) {
-                        LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
-                        ThreadUtil.sleep(forwardDelay);
-                    }
-
                     LOGGER.debug(() -> LogUtil.message("'{}' - Closing stream, response header fields:\n{}",
                             forwarderName,
                             formatHeaderEntryListForLogging(response.getHeaders())));
                 } finally {
                     logResponse(startTime, response, attributeMap);
                 }
-
                 return response.getCode();
             });
         } catch (final RuntimeException e) {

@@ -44,7 +44,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         retryDelay = DEFAULT_RETRY_DELAY;
         maxRetries = DEFAULT_MAX_RETRIES;
         addOpenIdAccessToken = false;
-        httpClient = new HttpClientConfiguration();
+        httpClient = createDefaultHttpClientConfiguration();
     }
 
     @SuppressWarnings("unused")
@@ -74,13 +74,17 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                 ? DEFAULT_MAX_RETRIES
                 : maxRetries;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
-        this.httpClient = Objects.requireNonNullElse(httpClient, HttpClientConfiguration
+        this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
+    }
+
+    private HttpClientConfiguration createDefaultHttpClientConfiguration() {
+        return HttpClientConfiguration
                 .builder()
                 .timeout(DEFAULT_FORWARD_TIMEOUT)
                 .connectionTimeout(DEFAULT_FORWARD_TIMEOUT)
                 .connectionRequestTimeout(DEFAULT_FORWARD_TIMEOUT)
                 .timeToLive(DEFAULT_FORWARD_TIMEOUT)
-                .build());
+                .build();
     }
 
     /**
