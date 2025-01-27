@@ -150,7 +150,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 //            streamSet.add(EFFECTIVE_STREAM_2);
 //            streamSet.add(EFFECTIVE_STREAM_3);
 
-            try (final CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl(metrics)) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
@@ -283,7 +283,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
             final EffectiveMetaSet streamSet = EffectiveMetaSet.singleton(effectiveStream);
 
-            try (final CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl(metrics)) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,

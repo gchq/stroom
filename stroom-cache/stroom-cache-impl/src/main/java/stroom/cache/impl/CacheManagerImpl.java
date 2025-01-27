@@ -24,10 +24,12 @@ import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.cache.CacheIdentity;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Collections;
@@ -49,6 +51,12 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     private static final String PARAM_NAME_CACHE_NAME = "name";
 
     private final Map<String, StroomCache<?, ?>> caches = new ConcurrentHashMap<>();
+    private final Metrics metrics;
+
+    @Inject
+    public CacheManagerImpl(final Metrics metrics) {
+        this.metrics = metrics;
+    }
 
     @Override
     public synchronized void close() {
@@ -62,7 +70,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         final StroomCache<K, V> cache = new StroomCacheImpl<>(
                 name,
                 cacheConfigSupplier,
-                removalNotificationConsumer);
+                removalNotificationConsumer,
+                metrics);
         registerCache(name, cache);
         return cache;
     }
@@ -80,7 +89,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 name,
                 cacheConfigSupplier,
                 loadFunction,
-                removalNotificationConsumer);
+                removalNotificationConsumer,
+                metrics);
         registerCache(name, cache);
         return cache;
     }

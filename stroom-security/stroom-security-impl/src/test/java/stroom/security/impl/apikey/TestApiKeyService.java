@@ -16,6 +16,7 @@ import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -70,13 +71,13 @@ class TestApiKeyService {
 
     @BeforeEach
     void setUp() {
-        final CacheManager cacheManager = new CacheManagerImpl();
+        final CacheManager cacheManager = new CacheManagerImpl(new MockMetrics());
         final UserCache userCache = new UserCache(cacheManager, AuthorisationConfig::new, () -> mockUserDao);
         apiKeyService = new ApiKeyService(
                 mockApiKeyDao,
                 securityContext,
                 apiKeyGenerator,
-                new CacheManagerImpl(),
+                new CacheManagerImpl(new MockMetrics()),
                 AuthenticationConfig::new,
                 userCache);
     }

@@ -1,6 +1,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.LoadingStroomCache;
+import stroom.test.common.MockMetrics;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,7 +51,8 @@ class TestLoadingStroomCacheImpl {
                     if (removalConsumerRef.get() != null) {
                         removalConsumerRef.get().accept(k, v);
                     }
-                });
+                },
+                new MockMetrics());
     }
 
     @Test

@@ -10,6 +10,7 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.test.common.MockMetrics;
 import stroom.util.NullSafe;
 import stroom.util.shared.Document;
 
@@ -58,7 +59,7 @@ class TestDocRefInfoCache {
             .name("bongo")
             .build();
 
-    final CacheManagerImpl cacheManager = new CacheManagerImpl();
+    final CacheManagerImpl cacheManager = new CacheManagerImpl(new MockMetrics());
     final SecurityContext securityContext = new MockSecurityContext();
     DocRefInfoCache docRefInfoCache;
 

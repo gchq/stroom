@@ -7,6 +7,7 @@ import stroom.util.cache.CacheConfig.StatisticsMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PropertyPath;
@@ -48,12 +49,15 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private final Supplier<CacheConfig> cacheConfigSupplier;
     private final BiConsumer<K, V> removalNotificationConsumer;
     private final AtomicInteger reachedSizeLimitCount = new AtomicInteger();
+    private final Metrics metrics;
 
     protected volatile CacheHolder<K, V> cacheHolder = null;
 
     public AbstractStroomCache(final String name,
                                final Supplier<CacheConfig> cacheConfigSupplier,
-                               final BiConsumer<K, V> removalNotificationConsumer) {
+                               final BiConsumer<K, V> removalNotificationConsumer,
+                               final Metrics metrics) {
+        this.metrics = metrics;
 
         Objects.requireNonNull(name);
         Objects.requireNonNull(cacheConfigSupplier);
@@ -146,7 +150,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
             case DROPWIZARD_METRICS -> newCacheBuilder.recordStats(() -> {
                 //  https://metrics.dropwizard.io/4.2.0/manual/caffeine.html
                 return new MetricsStatsCounter(
-                        SharedMetricRegistries.getDefault(),
+                        metrics.getRegistry(),
                         MetricsUtil.buildName(getClass(), name));
             });
         }

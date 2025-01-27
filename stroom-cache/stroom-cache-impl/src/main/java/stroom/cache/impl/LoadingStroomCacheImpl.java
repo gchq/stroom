@@ -4,6 +4,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.metrics.Metrics;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -24,8 +25,9 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
     public LoadingStroomCacheImpl(final String name,
                                   final Supplier<CacheConfig> cacheConfigSupplier,
                                   final Function<K, V> loadFunction,
-                                  final BiConsumer<K, V> removalNotificationConsumer) {
-        super(name, cacheConfigSupplier, removalNotificationConsumer);
+                                  final BiConsumer<K, V> removalNotificationConsumer,
+                                  final Metrics metrics) {
+        super(name, cacheConfigSupplier, removalNotificationConsumer, metrics);
         Objects.requireNonNull(loadFunction);
         this.loadFunction = loadFunction;
         rebuild();
@@ -33,8 +35,9 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
 
     public LoadingStroomCacheImpl(final String name,
                                   final Supplier<CacheConfig> cacheConfigSupplier,
-                                  final Function<K, V> loadFunction) {
-        this(name, cacheConfigSupplier, loadFunction, null);
+                                  final Function<K, V> loadFunction,
+                                  final Metrics metrics) {
+        this(name, cacheConfigSupplier, loadFunction, null, metrics);
     }
 
     @Override

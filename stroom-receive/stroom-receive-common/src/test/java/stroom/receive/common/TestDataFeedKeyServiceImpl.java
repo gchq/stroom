@@ -6,6 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
 import stroom.security.api.UserIdentity;
+import stroom.test.common.MockMetrics;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.assertj.core.api.Assertions;
@@ -33,7 +34,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_noKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
 
@@ -48,7 +49,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_invalidKey1() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         setAuthHeaderOnMock("foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
@@ -64,7 +65,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_invalidKey2() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + "foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
@@ -80,7 +81,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_validButUnknownKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
@@ -99,7 +100,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_validAndKnownKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
@@ -126,7 +127,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_badAccountId() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 ReceiveDataConfig::new,
-                new CacheManagerImpl());
+                new CacheManagerImpl(new MockMetrics()));
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());

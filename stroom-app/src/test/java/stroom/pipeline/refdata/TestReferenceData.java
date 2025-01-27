@@ -51,6 +51,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.MockMetrics;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
@@ -217,7 +218,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 effectiveMetasByFeed.put(feedName, streamSet);
             }
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
 
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
@@ -322,7 +323,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             final EffectiveMetaSet streamSetAll = EffectiveMetaSet.of(stream1, stream2, stream3);
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
 
@@ -569,7 +570,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     .add(createMeta(feed1Ref.getName()).getId(), 0L)
                     .build();
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
@@ -653,7 +654,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     .add(createMeta(feed1Ref.getName()).getId(), 0L)
                     .build();
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,

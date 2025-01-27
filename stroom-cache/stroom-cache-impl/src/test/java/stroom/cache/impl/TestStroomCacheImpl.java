@@ -1,6 +1,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.StroomCache;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
 import stroom.util.cache.CacheConfig;
 import stroom.util.concurrent.ThreadUtil;
@@ -73,7 +74,7 @@ class TestStroomCacheImpl {
                     if (removalConsumerRef.get() != null) {
                         removalConsumerRef.get().accept(k, v);
                     }
-                });
+                }, new MockMetrics());
     }
 
     private void populateCache() {

@@ -1,6 +1,7 @@
 package stroom.cache.impl;
 
 import stroom.util.cache.CacheConfig;
+import stroom.util.metrics.Metrics;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -12,8 +13,9 @@ class StroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
 
     public StroomCacheImpl(final String name,
                            final Supplier<CacheConfig> cacheConfigSupplier,
-                           final BiConsumer<K, V> removalNotificationConsumer) {
-        super(name, cacheConfigSupplier, removalNotificationConsumer);
+                           final BiConsumer<K, V> removalNotificationConsumer,
+                           final Metrics metrics) {
+        super(name, cacheConfigSupplier, removalNotificationConsumer, metrics);
         rebuild();
     }
 
