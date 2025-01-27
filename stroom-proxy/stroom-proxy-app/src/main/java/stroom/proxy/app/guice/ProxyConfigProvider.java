@@ -205,8 +205,7 @@ public class ProxyConfigProvider {
                 changeCounter.incrementAndGet();
                 if (logChanges) {
                     final String extraText = prop.hasAnnotation(RequiresProxyRestart.class)
-                                             || NullSafe.test(parentProp,
-                            p -> p.hasAnnotation(RequiresProxyRestart.class))
+                                             || Prop.hasAnnotation(parentProp, RequiresProxyRestart.class)
                             ? ". NOTE: This property requires an application re-start to take effect."
                             : "";
 

@@ -46,6 +46,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.MockMetrics;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
@@ -150,7 +151,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 //            streamSet.add(EFFECTIVE_STREAM_2);
 //            streamSet.add(EFFECTIVE_STREAM_3);
 
-            try (final CacheManager cacheManager = new CacheManagerImpl(metrics)) {
+            try (final CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
@@ -283,7 +284,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
             final EffectiveMetaSet streamSet = EffectiveMetaSet.singleton(effectiveStream);
 
-            try (final CacheManager cacheManager = new CacheManagerImpl(metrics)) {
+            try (final CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
