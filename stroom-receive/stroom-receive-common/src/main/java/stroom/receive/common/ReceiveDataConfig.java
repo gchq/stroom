@@ -238,6 +238,7 @@ public class ReceiveDataConfig
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
         builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
         builder.authenticatedDataFeedKeyCache = receiveDataConfig.getAuthenticatedDataFeedKeyCache();
+        builder.autoContentCreation = receiveDataConfig.getAutoContentCreationConfig();
         builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
         builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
         builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
