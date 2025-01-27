@@ -1,13 +1,14 @@
 package stroom.proxy.repo.store;
 
-import stroom.util.Metrics;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -31,8 +32,11 @@ public class FileStores {
     private final Map<Key, Path> fileStores = new ConcurrentHashMap<>();
 
     private final CachedValue<Map<Key, StoreStats>, Void> statsMapUpdater;
+    private final Metrics metrics;
 
-    public FileStores() {
+    @Inject
+    public FileStores(final Metrics metrics) {
+        this.metrics = metrics;
         statsMapUpdater = CachedValue.stateless(Duration.ofSeconds(30), this::buildStoreState);
     }
 
@@ -82,7 +86,7 @@ public class FileStores {
         // dir trees twice each. Instead, we use the CachedValue class to hold on
         // to the size/count stats for future calls.
 
-        Metrics.registrationBuilder(getClass())
+        metrics.registrationBuilder(getClass())
                 .addNamePart(key.name)
                 .addNamePart(Metrics.FILE_COUNT)
                 .gauge(() ->
@@ -93,7 +97,7 @@ public class FileStores {
                                 0L))
                 .register();
 
-        Metrics.registrationBuilder(getClass())
+        metrics.registrationBuilder(getClass())
                 .addNamePart(key.name)
                 .addNamePart(Metrics.SIZE_IN_BYTES)
                 .gauge(() ->

@@ -15,6 +15,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -47,6 +48,7 @@ class TestInnerProcessEndToEnd {
     private ReceiverFactory receiverFactory;
     @Inject
     private MockForwardFileDestinationFactory forwardFileDestinationFactory;
+
 
     @Test
     void testSimple() throws Exception {
@@ -251,10 +253,13 @@ class TestInnerProcessEndToEnd {
         final Environment environmentMock = Mockito.mock(Environment.class);
         Mockito.when(environmentMock.healthChecks())
                 .thenReturn(new HealthCheckRegistry());
+        Mockito.when(environmentMock.metrics())
+                .thenReturn(new MetricRegistry());
 
         return new ProxyTestModule(
                 config,
-                new Environment("TestEnvironment"),
+                environmentMock,
+//                new Environment("TestEnvironment"),
                 Path.of("dummy/path/to/config.yml"));
     }
 }

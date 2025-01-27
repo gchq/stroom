@@ -1,8 +1,9 @@
 package stroom.proxy.repo.queue;
 
-import stroom.util.Metrics;
 import stroom.util.NullSafe;
+import stroom.util.metrics.Metrics;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Comparator;
@@ -16,6 +17,12 @@ import java.util.function.Function;
 public class QueueMonitors {
 
     private final Map<Key, QueueMonitorImpl> queueMonitorMap = new ConcurrentHashMap<>();
+    private final Metrics metrics;
+
+    @Inject
+    public QueueMonitors(final Metrics metrics) {
+        this.metrics = metrics;
+    }
 
 //    private final Queue<NamedMetric> unregisteredMetrics = new ConcurrentLinkedQueue<>();
 //    private volatile Consumer<NamedMetric> metricConsumer;
@@ -111,7 +118,7 @@ public class QueueMonitors {
     private void registerMetric(final List<String> nameParts,
                                 final QueueMonitorImpl queueMonitor,
                                 final Function<QueueMonitorImpl, Long> valueFunc) {
-        Metrics.registrationBuilder(getClass())
+        metrics.registrationBuilder(getClass())
                 .withNameParts(nameParts)
                 .gauge(() ->
                         valueFunc.apply(queueMonitor))

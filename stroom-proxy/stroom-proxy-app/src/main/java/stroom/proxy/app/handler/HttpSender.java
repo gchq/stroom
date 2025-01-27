@@ -7,12 +7,12 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.Metrics;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 import stroom.util.time.StroomDuration;
 
 import com.codahale.metrics.Timer;
@@ -60,7 +60,8 @@ public class HttpSender implements StreamDestination {
                       final ForwardHttpPostConfig config,
                       final String userAgent,
                       final UserIdentityFactory userIdentityFactory,
-                      final HttpClient httpClient) {
+                      final HttpClient httpClient,
+                      final Metrics metrics) {
         this.logStream = logStream;
         this.config = config;
         this.userAgent = userAgent;
@@ -69,7 +70,7 @@ public class HttpSender implements StreamDestination {
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = NullSafe.duration(config.getForwardDelay());
         this.forwarderName = config.getName();
-        this.sendTimer = Metrics.registrationBuilder(getClass())
+        this.sendTimer = metrics.registrationBuilder(getClass())
                 .addNamePart(forwarderName)
                 .addNamePart("send")
                 .timer()

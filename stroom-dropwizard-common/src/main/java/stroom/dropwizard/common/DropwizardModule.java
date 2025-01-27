@@ -1,9 +1,9 @@
 package stroom.dropwizard.common;
 
 import stroom.util.HasAdminTasks;
-import stroom.util.HasMetrics;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.http.HttpClientFactory;
+import stroom.util.metrics.HasMetrics;
 import stroom.util.shared.AuthenticationBypassChecker;
 
 import com.codahale.metrics.Metric;

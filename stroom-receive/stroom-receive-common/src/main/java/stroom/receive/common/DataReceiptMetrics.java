@@ -1,12 +1,13 @@
 package stroom.receive.common;
 
-import stroom.util.Metrics;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -17,13 +18,14 @@ public class DataReceiptMetrics {
     private final Timer requestTimer;
     private final Histogram contentLengthHistogram;
 
-    public DataReceiptMetrics() {
-        this.requestTimer = Metrics.registrationBuilder(getClass())
+    @Inject
+    public DataReceiptMetrics(Metrics metrics) {
+        this.requestTimer = metrics.registrationBuilder(getClass())
                 .addNamePart("request")
                 .addNamePart("time")
                 .timer()
                 .createAndRegister();
-        this.contentLengthHistogram = Metrics.registrationBuilder(getClass())
+        this.contentLengthHistogram = metrics.registrationBuilder(getClass())
                 .addNamePart("contentLength")
                 .addNamePart(Metrics.SIZE_IN_BYTES)
                 .histogram()

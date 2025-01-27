@@ -1,12 +1,12 @@
 package stroom.dropwizard.common;
 
-import stroom.util.HasMetrics;
-import stroom.util.Metrics;
-import stroom.util.Metrics.NamedMetric;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.HasMetrics;
+import stroom.util.metrics.MetricsUtil;
+import stroom.util.metrics.MetricsUtil.NamedMetric;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -70,7 +70,7 @@ public class DropWizardMetrics {
                 .flatMap(map -> map.entrySet().stream())
                 .filter(Objects::nonNull)
                 .map(entry -> new NamedMetric(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(Metrics.NamedMetric::name, String::compareToIgnoreCase))
+                .sorted(Comparator.comparing(MetricsUtil.NamedMetric::name, String::compareToIgnoreCase))
                 .toList();
 
         int maxNameLength = namedMetrics.stream()
@@ -93,7 +93,7 @@ public class DropWizardMetrics {
 
         if (NullSafe.hasEntries(metrics)) {
             final Predicate<String> invalidNamePredicate = Predicate.not(
-                    Metrics.METRIC_NAME_PATTERN.asPredicate());
+                    MetricsUtil.METRIC_NAME_PATTERN.asPredicate());
 
             final String invalidNames = metrics.keySet()
                     .stream()
@@ -102,7 +102,7 @@ public class DropWizardMetrics {
                     .collect(Collectors.joining(", "));
             if (!invalidNames.isEmpty()) {
                 throw new RuntimeException(LogUtil.message("Metrics [{}] from {} do not match pattern {}",
-                        invalidNames, hasMetrics.getClass().getName(), Metrics.METRIC_NAME_PATTERN));
+                        invalidNames, hasMetrics.getClass().getName(), MetricsUtil.METRIC_NAME_PATTERN));
             }
         }
         return metrics;

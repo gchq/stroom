@@ -5,6 +5,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
+import stroom.test.common.MockMetrics;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.concurrent.UniqueId.NodeType;
 
@@ -32,7 +33,7 @@ public class TestEventStore {
                 receiveStreamHandlers,
                 () -> eventStoreConfig,
                 dataDirProvider,
-                new FileStores(),
+                new FileStores(new MockMetrics()),
                 new CacheManagerImpl());
 
         for (int i = 0; i < 10; i++) {

@@ -50,7 +50,10 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
+import stroom.util.metrics.Metrics;
+import stroom.util.metrics.MetricsImpl;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import io.dropwizard.core.setup.Environment;
@@ -80,7 +83,9 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(MetricRegistry.class).toInstance(environment.metrics());
         bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
+        bind(Metrics.class).to(MetricsImpl.class);
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());

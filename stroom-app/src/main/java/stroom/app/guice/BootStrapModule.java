@@ -8,6 +8,8 @@ import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.db.util.DbModule;
 import stroom.util.io.DirProvidersModule;
+import stroom.util.metrics.Metrics;
+import stroom.util.metrics.MetricsImpl;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -71,6 +73,7 @@ public class BootStrapModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
         bind(MetricRegistry.class).toInstance(environment.metrics());
+        bind(Metrics.class).to(MetricsImpl.class);
 
         final AppConfigModule appConfigModule = appConfigModuleFunc.apply(configHolder);
         install(appConfigModule);

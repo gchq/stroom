@@ -7,12 +7,12 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
-import stroom.util.Metrics;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Histogram;
 import jakarta.inject.Inject;
@@ -51,6 +51,7 @@ public class PreAggregator {
     private final CleanupDirQueue deleteDirQueue;
     private final Provider<AggregatorConfig> aggregatorConfigProvider;
     private final DataDirProvider dataDirProvider;
+    private final Metrics metrics;
 
     private final Path aggregatingDir;
 
@@ -66,13 +67,15 @@ public class PreAggregator {
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
                          final DataDirProvider dataDirProvider,
                          final ProxyServices proxyServices,
-                         final Provider<AggregatorConfig> aggregatorConfigProvider) {
+                         final Provider<AggregatorConfig> aggregatorConfigProvider,
+                         final Metrics metrics) {
         this.deleteDirQueue = deleteDirQueue;
         this.aggregatorConfigProvider = aggregatorConfigProvider;
         this.dataDirProvider = dataDirProvider;
 
         // Get or create the aggregating dir.
         aggregatingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
+        this.metrics = metrics;
         DirUtil.ensureDirExists(aggregatingDir);
 
         // Read all the current aggregates and establish the aggregation state.
@@ -108,17 +111,17 @@ public class PreAggregator {
             throw new UncheckedIOException(e);
         }
 
-        aggregateItemCountHistogram = Metrics.registrationBuilder(getClass())
+        aggregateItemCountHistogram = metrics.registrationBuilder(getClass())
                 .addNamePart(AGGREGATE_NAME_PART)
                 .addNamePart(Metrics.COUNT)
                 .histogram()
                 .createAndRegister();
-        aggregateByteSizeHistogram = Metrics.registrationBuilder(getClass())
+        aggregateByteSizeHistogram = metrics.registrationBuilder(getClass())
                 .addNamePart(AGGREGATE_NAME_PART)
                 .addNamePart(Metrics.SIZE_IN_BYTES)
                 .histogram()
                 .createAndRegister();
-        aggregateAgeHistogram = Metrics.registrationBuilder(getClass())
+        aggregateAgeHistogram = metrics.registrationBuilder(getClass())
                 .addNamePart(AGGREGATE_NAME_PART)
                 .addNamePart(Metrics.AGE_MS)
                 .histogram()

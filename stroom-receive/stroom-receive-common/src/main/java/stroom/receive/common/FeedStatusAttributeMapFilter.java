@@ -6,8 +6,8 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.util.Metrics;
 import stroom.util.NullSafe;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.UserDesc;
 
 import com.codahale.metrics.Meter;
@@ -27,12 +27,14 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
     private final Provider<FeedStatusService> feedStatusServiceProvider;
     private final EnumMap<FeedStatus, Meter> feedStatusMeters;
 
+
     @Inject
-    public FeedStatusAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider) {
+    public FeedStatusAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider,
+                                        final Metrics metrics) {
         this.feedStatusServiceProvider = feedStatusServiceProvider;
         feedStatusMeters = new EnumMap<>(FeedStatus.class);
         for (final FeedStatus feedStatus : FeedStatus.values()) {
-            final Meter meter = Metrics.registrationBuilder(getClass())
+            final Meter meter = metrics.registrationBuilder(getClass())
                     .addNamePart("feedStatus")
                     .addNamePart(feedStatus.name())
                     .meter()

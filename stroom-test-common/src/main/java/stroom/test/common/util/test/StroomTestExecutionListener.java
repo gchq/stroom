@@ -27,7 +27,7 @@ public class StroomTestExecutionListener implements TestExecutionListener {
 
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
-        initDropwizardMetricsRegistry();
+//        initDropwizardMetricsRegistry();
 
         // If we don't have a DB conn don't bother doing anything, e.g. is a pure unit test
         // TODO: 12/09/2022 There ought to be a better way to do this so we can avoid logging
@@ -75,6 +75,8 @@ public class StroomTestExecutionListener implements TestExecutionListener {
         // Called after all tests have run on this JVM.
         LOGGER.info("Finished test plan");
 
+//        clearDropwizardMetricsRegistry();
+
         TestClassLogger.writeTestClassesLogToDisk();
 
         if (DbTestUtil.isDbAvailable()) {
@@ -102,6 +104,15 @@ public class StroomTestExecutionListener implements TestExecutionListener {
         } catch (IllegalStateException e) {
             LOGGER.info("Creating new static metrics registry for testing");
             SharedMetricRegistries.setDefault("defaultRegistry", new MetricRegistry());
+        }
+    }
+
+    private void clearDropwizardMetricsRegistry() {
+        LOGGER.info("Clearing metrics registry");
+        final MetricRegistry registry = SharedMetricRegistries.getDefault();
+        if (registry != null) {
+            registry.getNames()
+                    .forEach(registry::remove);
         }
     }
 }

@@ -1,4 +1,4 @@
-package stroom.util;
+package stroom.util.metrics;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;

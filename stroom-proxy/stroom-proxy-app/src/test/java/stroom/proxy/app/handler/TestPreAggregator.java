@@ -7,6 +7,7 @@ import stroom.proxy.app.handler.PreAggregator.Part;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -149,7 +150,7 @@ public class TestPreAggregator extends StroomUnitTest {
                 cleanupDirQueue,
                 dataDirProvider,
                 proxyServices,
-                proxyConfig::getAggregatorConfig);
+                proxyConfig::getAggregatorConfig, new MockMetrics());
 
         final AtomicInteger aggregateCount = new AtomicInteger();
         preAggregator.setDestination(preAggregateDir -> {

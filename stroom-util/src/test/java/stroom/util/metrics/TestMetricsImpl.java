@@ -1,4 +1,4 @@
-package stroom.util;
+package stroom.util.metrics;
 
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -9,7 +9,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,34 +19,30 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetrics {
+public class TestMetricsImpl {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetrics.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetricsImpl.class);
 
-    private final String name = Metrics.buildName(getClass(), "foo", "bar");
+    private final String name = MetricsUtil.buildName(getClass(), "foo", "bar");
+
+    private Metrics metrics;
 
     @BeforeEach
     void setUp() {
-        // This normally gets done by dropwizard on boot
-        try {
-            SharedMetricRegistries.getDefault();
-        } catch (IllegalStateException e) {
-            SharedMetricRegistries.setDefault("myDefault", new MetricRegistry());
-        }
-        SharedMetricRegistries.getDefault().remove(name);
+        metrics = new MetricsImpl(new MetricRegistry());
     }
 
     @Test
     void testGauge() {
         final AtomicLong atomicLong = new AtomicLong();
-        Metrics.registrationBuilder(getClass())
+        metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .gauge(atomicLong::longValue)
                 .register();
         atomicLong.set(123L);
 
-        final Gauge<Long> gauge = Metrics.getRegistry().gauge(name);
+        final Gauge<Long> gauge = metrics.getRegistry().gauge(name);
 
         assertThat(gauge.getValue())
                 .isEqualTo(123L);
@@ -60,13 +55,13 @@ class TestMetrics {
 
     @Test
     void testCounter() {
-        final Counter counter = Metrics.registrationBuilder(getClass())
+        final Counter counter = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .counter()
                 .createAndRegister();
 
-        final Counter counter2 = Metrics.registrationBuilder(getClass())
+        final Counter counter2 = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .counter()
@@ -75,7 +70,7 @@ class TestMetrics {
         assertThat(counter2)
                 .isSameAs(counter);
 
-        assertThat(Metrics.getRegistry().counter(name))
+        assertThat(metrics.getRegistry().counter(name))
                 .isSameAs(counter);
 
         assertThat(counter.getCount())
@@ -90,13 +85,13 @@ class TestMetrics {
 
     @Test
     void testMeter() {
-        final Meter meter = Metrics.registrationBuilder(getClass())
+        final Meter meter = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .meter()
                 .createAndRegister();
 
-        final Meter meter2 = Metrics.registrationBuilder(getClass())
+        final Meter meter2 = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .meter()
@@ -104,7 +99,7 @@ class TestMetrics {
 
         assertThat(meter2)
                 .isSameAs(meter);
-        assertThat(Metrics.getRegistry().meter(name))
+        assertThat(metrics.getRegistry().meter(name))
                 .isSameAs(meter);
 
         for (int i = 0; i < 15; i++) {
@@ -121,13 +116,13 @@ class TestMetrics {
 
     @Test
     void testTimer() {
-        final Timer timer = Metrics.registrationBuilder(getClass())
+        final Timer timer = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .timer()
                 .createAndRegister();
 
-        final Timer timer2 = Metrics.registrationBuilder(getClass())
+        final Timer timer2 = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .timer()
@@ -135,7 +130,7 @@ class TestMetrics {
 
         assertThat(timer2)
                 .isSameAs(timer);
-        assertThat(Metrics.getRegistry().timer(name))
+        assertThat(metrics.getRegistry().timer(name))
                 .isSameAs(timer);
 
         assertThat(timer.getCount())
@@ -165,13 +160,13 @@ class TestMetrics {
 
     @Test
     void testHistogram() {
-        final Histogram histogram = Metrics.registrationBuilder(getClass())
+        final Histogram histogram = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .histogram()
                 .createAndRegister();
 
-        final Histogram histogram2 = Metrics.registrationBuilder(getClass())
+        final Histogram histogram2 = metrics.registrationBuilder(getClass())
                 .addNamePart("foo")
                 .addNamePart("bar")
                 .histogram()
@@ -179,7 +174,7 @@ class TestMetrics {
 
         assertThat(histogram2)
                 .isSameAs(histogram);
-        assertThat(Metrics.getRegistry().histogram(name))
+        assertThat(metrics.getRegistry().histogram(name))
                 .isSameAs(histogram);
 
         histogram.update(5);
@@ -199,4 +194,5 @@ class TestMetrics {
         assertThat(histogram.getSnapshot().getMedian())
                 .isEqualTo(10);
     }
+
 }
