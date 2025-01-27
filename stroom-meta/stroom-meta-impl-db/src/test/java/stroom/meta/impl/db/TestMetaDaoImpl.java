@@ -24,10 +24,12 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.shared.StreamTypeNames;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMeta;
@@ -47,6 +49,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.language.functions.FieldIndex;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.TestUtil;
@@ -1108,6 +1111,24 @@ class TestMetaDaoImpl {
 
         assertThat(inputIds.containsAll(ids))
                 .isTrue();
+    }
+
+    @Test
+    void testSearch() {
+        final List<QueryField> fields = MetaFields.getAllFields();
+        assertThat(fields.size()).isEqualTo(22);
+
+        for (final QueryField field : fields) {
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(field.getFldName());
+
+            final AtomicInteger count = new AtomicInteger();
+            metaDao.search(new ExpressionCriteria(), fieldIndex, values -> {
+                count.incrementAndGet();
+                assertThat(values.length).isEqualTo(1);
+            });
+            assertThat(count.get()).isEqualTo(40);
+        }
     }
 
     private Instant addDeletedData(final List<Meta> metaList) {

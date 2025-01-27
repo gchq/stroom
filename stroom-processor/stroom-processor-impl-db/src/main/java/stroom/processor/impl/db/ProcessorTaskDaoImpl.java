@@ -871,7 +871,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final boolean processorUsed =
                 isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID.getFldName()), fieldNames, criteria);
         final boolean pipelineUsed =
-                isUsed(Set.of(ProcessorTaskFields.PIPELINE.getFldName()), fieldNames, criteria);
+                isUsed(Set.of(
+                        ProcessorTaskFields.PIPELINE.getFldName(),
+                        ProcessorTaskFields.PIPELINE_NAME.getFldName()), fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());

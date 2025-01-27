@@ -1295,7 +1295,7 @@ public class MetaDaoImpl implements MetaDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.selectDistinct(dbFields).from(meta);
+            var select = context.select(dbFields).from(meta);
             if (feedUsed) {
                 select = select.straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
