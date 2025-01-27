@@ -21,6 +21,8 @@ import stroom.util.io.FileName;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
@@ -40,8 +42,6 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -57,12 +57,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.LongSummaryStatistics;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class MockHttpDestination {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MockHttpDestination.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockHttpDestination.class);
 
     private static final int DEFAULT_STROOM_PORT = 8080;
 
@@ -74,6 +75,9 @@ public class MockHttpDestination {
     // Hold all requests send to the wiremock stroom datafeed endpoint
     private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
 
+    private final ThreadLocal<Long> responseTimes = new ThreadLocal<>();
+    private final AtomicInteger count = new AtomicInteger();
+
     WireMockExtension createExtension() {
         return WireMockExtension.newInstance()
                 .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
@@ -84,16 +88,33 @@ public class MockHttpDestination {
                     }
 
                     @Override
+                    public void beforeResponseSent(final ServeEvent serveEvent, final Parameters parameters) {
+                        responseTimes.set(System.currentTimeMillis());
+                    }
+
+                    @Override
                     public void afterComplete(final ServeEvent serveEvent, final Parameters parameters) {
-                        if (serveEvent.getResponse().getStatus() == 200) {
-                            if (isRequestLoggingEnabled) {
-                                dumpWireMockEvent(serveEvent);
+                        try {
+                            if (serveEvent.getResponse().getStatus() == 200) {
+                                if (isRequestLoggingEnabled) {
+                                    dumpWireMockEvent(serveEvent);
+                                }
+                                if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
+                                    captureDataFeedRequest(serveEvent);
+                                }
+                            } else {
+                                LOGGER.error(serveEvent.toString());
                             }
-                            if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
-                                captureDataFeedRequest(serveEvent);
-                            }
-                        } else {
-                            LOGGER.error(serveEvent.toString());
+
+                        } finally {
+                            final long startTime = responseTimes.get();
+                            responseTimes.remove();
+                            LOGGER.info(() -> "Responding " +
+                                              serveEvent.getResponse().getStatus() +
+                                              " after " +
+                                              Duration.ofMillis(System.currentTimeMillis() - startTime).toString() +
+                                              " count = " +
+                                              count.incrementAndGet());
                         }
                     }
                 }))
