@@ -408,7 +408,7 @@ Allow storage of keys < 492 bytes directly.
 * `(empty)`
 
 Potentially faster.
-Sessions may end up with many duplicate keys increasing storage use, especially without session compaction.
+Sessions may end up with many duplicate keys increasing storage use, especially without session condensation.
 No need to store values in the table as we only care about the key.
 
 #### Option - Increase the key size of LMDB
@@ -435,19 +435,19 @@ If we used a lookup table to store the key then we wouldn't need to store a valu
 ### Value
 No value is needed for `Session` stores as we only care about the key and session start/end times.
 
-# Compaction
-Stores with temporal data can be compacted:
+# Condensation
+Stores with temporal data can be condensed:
 * `Temporal State` - Repeated confirmations of identical state can be removed.
 * `Temporal Ranged State` - Repeated confirmations of identical state can be removed.
 * `Session` - Overlapping sessions can be collapsed into a single session.
 
-Stores are compacted on the storage nodes, using the `Plan B Maintenance Processor`.
-The compaction settings in the Plan B document govern how compaction is performed.
-Data is considered for compaction based on temporal state.
+Stores are condensed on the storage nodes, using the `Plan B Maintenance Processor`.
+The condensation settings in the Plan B document govern how condensation is performed.
+Data is considered for condensation based on temporal state.
 
-> Note that when loading old data it may be necessary to disable compaction for a store until data is loaded and processing is up-to-date, otherwise some data could be compacted prematurely.
+> Note that when loading old data it may be necessary to disable condensation for a store until data is loaded and processing is up-to-date, otherwise some data could be condensed prematurely.
 
-> We could introduce an update time to all store rows and only compact data based on update time which would remove the risk of compacting data with old timestamps we have recently added.
+> We could introduce an update time to all store rows and only condense data based on update time which would remove the risk of condensing data with old timestamps we have recently added.
 
 # Data Retention
 Stores with temporal data can have data removed that is older than a certain age:
@@ -455,7 +455,7 @@ Stores with temporal data can have data removed that is older than a certain age
 * `Temporal Ranged State` - Old state data can be deleted.
 * `Session` - Old sessions can be deleted.
 
-Data retention is performed on the storage nodes, with the same process as compaction,  using the `Plan B Maintenance Processor`.
+Data retention is performed on the storage nodes, with the same process as condensation,  using the `Plan B Maintenance Processor`.
 The retention settings in the Plan B document govern how retention is performed and data to consider for deletion based on temporal state.
 
 > Note that when loading old data it may be necessary to disable data retention processing for a store until data is loaded and processing is up-to-date, otherwise some data could be deleted prematurely.
@@ -464,7 +464,7 @@ The retention settings in the Plan B document govern how retention is performed 
 
 # Store Deletion
 Deleting Plan B documents will not immediately delete the associated LMDB data.
-Instead, the data will be deleted on the storage nodes, with the same process as compaction and retention, using the `Plan B Maintenance Processor`.
+Instead, the data will be deleted on the storage nodes, with the same process as condensation and retention, using the `Plan B Maintenance Processor`.
 And LMDB data stores that are found that do not have an associated Plan B document will be deleted.
 
 # Cleanup
@@ -495,8 +495,8 @@ Sharding by effective time would be expensive on write as changes to old shards 
 
 Sharding by key ranges could be done but would ideally be optional with various settings to control keyspace splitting as it is largely data dependant.
 
-We could also produce fully compacted snapshots regardless of the compaction status of the primary store.
-Compacted snapshots could be produced eagerly and asynchronously by storage nodes in anticipation of download requests.
+We could also produce fully condensed snapshots regardless of the condensation status of the primary store.
+Condensed snapshots could be produced eagerly and asynchronously by storage nodes in anticipation of download requests.
 
 ## Snapshot Diff
 Rather than always transferring whole snapshots or key range slices, we could just transfer diffs.
@@ -515,9 +515,9 @@ At present, searches using the query API, do a full table scan.
 This is because it is difficult to turn complex query expressions into sensible key limited ranges.
 In future some code could be added to do this, but it isn't a priority for the initial implementation and the current performance seems acceptable.
 
-## Compaction Disk Saving
+## Condensation Disk Saving
 LMDB does not free disk space just because you delete entries, instead it just frees pages for reuse.
-We might want to create a new compacted instance instead of deleting in place when we perform compaction and retention operations.
+We might want to create a new condensed instance instead of deleting in place when we perform condensation and retention operations.
 
 ## Statistics
 The process of local writes, central merges and snapshots could easily be used for statistics.
