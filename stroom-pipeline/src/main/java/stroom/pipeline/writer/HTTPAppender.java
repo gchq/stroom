@@ -141,7 +141,6 @@ public class HTTPAppender extends AbstractAppender {
         setUseCompression(Boolean.parseBoolean(DEFAULT_USE_COMPRESSION_PROP_VALUE));
         setCompressionMethod(DEFAULT_COMPRESSION_METHOD_PROP_VALUE);
         setUseContentEncodingHeader(DEFAULT_USE_CONTENT_ENCODING_PROP_VALUE_BOOL);
-        this.outputStreamSupport.setUseCompression(true);
     }
 
     @Override

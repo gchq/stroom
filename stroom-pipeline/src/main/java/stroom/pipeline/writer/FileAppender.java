@@ -63,6 +63,8 @@ public class FileAppender extends AbstractAppender {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileAppender.class);
 
     private static final String LOCK_EXTENSION = ".lock";
+    private static final String DEFAULT_USE_COMPRESSION_PROP_VALUE = "false";
+    private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final PathCreator pathCreator;
     private final OutputFactory outputFactory;
@@ -76,6 +78,11 @@ public class FileAppender extends AbstractAppender {
         super(errorReceiverProxy);
         this.pathCreator = pathCreator;
         outputFactory = new OutputFactory(metaDataHolder);
+
+        // Ensure outputStreamSupport has the defaults for FileAppender
+        //noinspection ConstantValue
+        setUseCompression(Boolean.parseBoolean(DEFAULT_USE_COMPRESSION_PROP_VALUE));
+        setCompressionMethod(DEFAULT_COMPRESSION_METHOD_PROP_VALUE);
     }
 
     @Override
@@ -161,7 +168,7 @@ public class FileAppender extends AbstractAppender {
      */
     @PipelineProperty(
             description = "One or more destination paths for output files separated with commas. " +
-                    "Replacement variables can be used in path strings such as ${feed}.",
+                          "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
@@ -193,7 +200,7 @@ public class FileAppender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Apply compression to output files.",
-            defaultValue = "false",
+            defaultValue = DEFAULT_USE_COMPRESSION_PROP_VALUE,
             displayPriority = 5)
     public void setUseCompression(final boolean useCompression) {
         outputFactory.setUseCompression(useCompression);
@@ -201,8 +208,8 @@ public class FileAppender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Compression method to apply, if compression is enabled. Supported values: " +
-                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
-            defaultValue = CompressorStreamFactory.GZIP,
+                          CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = DEFAULT_COMPRESSION_METHOD_PROP_VALUE,
             displayPriority = 6)
     public void setCompressionMethod(final String compressionMethod) {
         try {
