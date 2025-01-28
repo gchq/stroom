@@ -27,6 +27,7 @@ import stroom.security.shared.User;
 import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.BasicHttpClientFactory;
 import stroom.util.http.HttpClientFactory;
@@ -59,6 +60,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockJerseyModule());
         install(new MockActivityModule());
         install(new MockDocRefInfoModule());
+        install(new MockMetricsModule());
         install(new CacheModule());
         install(new CacheServiceModule());
         install(new MockMetaModule());
