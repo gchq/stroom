@@ -267,7 +267,7 @@ public class DataPresenter
                 onNewTabSelected(event.getSelectedItem())));
         registerHandler(dataView.getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
         registerHandler(htmlPresenter.getWidget().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent()), MouseDownEvent.getType()));
+                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
     private void onNewTabSelected(final TabData tab) {
