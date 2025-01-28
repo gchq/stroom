@@ -46,7 +46,7 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_PROCESSORS_PERMISSION(
             "Manage Processors",
             "Access the Processors tab and manage the processors/filters used to process stream data " +
-                    "through pipelines."),
+            "through pipelines."),
     MANAGE_TASKS_PERMISSION(
             "Manage Tasks",
             "Access the Server Tasks screen to view/stop tasks running on the nodes."),
@@ -56,9 +56,9 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_API_KEYS(
             "Manage API Keys",
             "Access the API Keys screen to view, create, edit, delete the user's own API keys. " +
-                    "'" + MANAGE_USERS_PERMISSION.displayValue +
-                    "' permission is also required to managed other users' " +
-                    "API keys"),
+            "'" + MANAGE_USERS_PERMISSION.displayValue +
+            "' permission is also required to managed other users' " +
+            "API keys"),
     MANAGE_JOBS_PERMISSION(
             "Manage Jobs",
             "Access the Jobs screen to manage Stroom's background jobs."),
@@ -71,7 +71,7 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_NODES_PERMISSION(
             "Manage Nodes",
             "Access the Nodes screen to view the nodes the cluster and manage their priority and enabled " +
-                    "states."),
+            "states."),
     MANAGE_INDEX_SHARDS_PERMISSION(
             "Manage Index Shards",
             ""),
@@ -89,7 +89,11 @@ public enum AppPermission implements HasDisplayValue {
             ""),
     VIEW_SYSTEM_INFO_PERMISSION(
             "View System Information",
-            "");
+            ""),
+    CHECK_RECEIPT_STATUS(
+            "Check Receipt Status",
+            "Ability to check the receipt status of a feed."),
+    ;
 
     private static final Map<String, AppPermission> APP_PERMISSION_ENUM_MAP;
     public static final List<AppPermission> LIST;

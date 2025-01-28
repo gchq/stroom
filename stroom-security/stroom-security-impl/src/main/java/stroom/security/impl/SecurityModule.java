@@ -17,10 +17,12 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.security.api.AppPermissionService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.api.UserService;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalServiceUserFactory;
@@ -46,7 +48,6 @@ import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.http.HttpClientFactory;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;

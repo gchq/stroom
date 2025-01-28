@@ -16,18 +16,27 @@
 
 package stroom.core.receive;
 
+import stroom.receive.common.CertificateExtractorImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
+import stroom.util.cert.CertificateExtractor;
+import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
 
 public class ReceiveDataModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
+        bind(CertificateExtractor.class).to(CertificateExtractorImpl.class);
+        bind(ContentAutoCreationService.class).to(ContentAutoCreationServiceImpl.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
+        bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(TemplateConfigDirChangeMonitorImpl.class);
     }
 }

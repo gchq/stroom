@@ -49,6 +49,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.TestUtil;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.Period;
@@ -158,6 +159,7 @@ class TestMetaDaoImpl {
                         new MockCollectionModule(),
                         new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
+                        new MockMetricsModule(),
                         new CacheModule(),
                         new DbTestModule(),
                         localModule
@@ -334,10 +336,10 @@ class TestMetaDaoImpl {
                             .withColumn(Column.of("Id", row -> row.get(meta.ID)))
                             .withColumn(Column.of("Create Time", row ->
                                     Instant.ofEpochMilli(row.get(meta.CREATE_TIME))
-                                            + " (" + row.get(meta.CREATE_TIME) + ")"))
+                                    + " (" + row.get(meta.CREATE_TIME) + ")"))
                             .withColumn(Column.of("Effective Time", row ->
                                     Instant.ofEpochMilli(row.get(meta.EFFECTIVE_TIME))
-                                            + " (" + row.get(meta.EFFECTIVE_TIME) + ")"))
+                                    + " (" + row.get(meta.EFFECTIVE_TIME) + ")"))
                             .withColumn(Column.of("Parent Id", row -> row.get(meta.PARENT_ID)))
                             .withColumn(Column.of("Status", row -> row.get(meta.STATUS)))
                             .withColumn(Column.of("Feed", row ->
@@ -549,8 +551,8 @@ class TestMetaDaoImpl {
     private DynamicTest makeTest(final int testNo, final ExpressionOperator expression, final int expected) {
         return DynamicTest.dynamicTest(
                 Strings.padStart(String.valueOf(testNo), 2, '0')
-                        + " - "
-                        + expression.toString(),
+                + " - "
+                + expression.toString(),
                 () -> {
                     final ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(expression));
                     assertThat(resultPage.size()).isEqualTo(expected);

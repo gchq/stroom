@@ -26,4 +26,6 @@ import java.util.List;
 public interface FeedStore extends DocumentStore<FeedDoc> {
 
     List<DocRef> list();
+
+    List<String> fetchSupportedEncodings();
 }

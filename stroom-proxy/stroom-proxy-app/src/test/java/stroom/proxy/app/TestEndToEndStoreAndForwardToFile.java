@@ -38,7 +38,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
-                        .maxAggregateAge(StroomDuration.ofSeconds(5))
                         .aggregationFrequency(StroomDuration.ofSeconds(5))
                         .maxItemsPerAggregate(MAX_ITEMS_PER_AGG)
                         .build())

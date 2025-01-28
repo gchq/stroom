@@ -29,6 +29,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.collections.BatchingCollector;
 import stroom.util.date.DateUtil;
@@ -108,6 +109,7 @@ class TestMetaServiceImpl {
                         new MockCollectionModule(),
                         new MockDocRefInfoModule(),
                         new MockWordListProviderModule(),
+                        new MockMetricsModule(),
                         new CacheModule(),
                         new DbTestModule(),
                         new MetaTestModule(),
@@ -724,8 +726,8 @@ class TestMetaServiceImpl {
         return summaries.stream()
                 .filter(summary ->
                         summary.getRuleNumber() == ruleNo
-                                && summary.getFeed().equals(feedName)
-                                && summary.getType().equals(type))
+                        && summary.getFeed().equals(feedName)
+                        && summary.getType().equals(type))
                 .findAny()
                 .orElseThrow()
                 .getCount();

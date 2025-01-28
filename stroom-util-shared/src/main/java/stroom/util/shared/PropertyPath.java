@@ -16,8 +16,6 @@
 
 package stroom.util.shared;
 
-import stroom.docref.HasName;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,7 +41,8 @@ import java.util.stream.Stream;
  * Also makes it easier to merge property paths together.
  */
 @JsonInclude(Include.NON_NULL)
-public class PropertyPath implements Comparable<PropertyPath>, HasName {
+public class PropertyPath implements Comparable<PropertyPath> {
+//    public class PropertyPath implements Comparable<stroom.util.shared.PropertyPath>, HasName {
 
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
@@ -339,7 +338,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
         final PropertyPath that = (PropertyPath) o;
         return Objects.equals(parentParts, that.parentParts)
-                && Objects.equals(leafPart, that.leafPart);
+               && Objects.equals(leafPart, that.leafPart);
     }
 
     public boolean equalsIgnoreCase(final Object o) {
@@ -358,7 +357,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             return false;
         } else {
             return this.leafPart.equalsIgnoreCase(that.leafPart)
-                    && areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
+                   && areParentPartsEqualIgnoringCase(this.parentParts, that.parentParts);
         }
     }
 
@@ -395,7 +394,6 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         return new Builder(this);
     }
 
-    @Override
     @JsonIgnore
     public String getName() {
         return this.toString();

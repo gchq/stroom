@@ -17,7 +17,9 @@
 package stroom.proxy.app;
 
 import stroom.dropwizard.common.AdminServlets;
+import stroom.dropwizard.common.AdminTasks;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.dropwizard.common.DropWizardMetrics;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -71,6 +73,10 @@ public class App extends Application<Config> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
+    @Inject
+    private DropWizardMetrics dropWizardMetrics;
+    @Inject
+    private AdminTasks adminTasks;
     @Inject
     private HealthChecks healthChecks;
     @Inject
@@ -176,6 +182,12 @@ public class App extends Application<Config> {
         // Ensure we have our home/temp dirs set up
         FileUtil.ensureDirExists(homeDirProvider.get());
         FileUtil.ensureDirExists(tempDirProvider.get());
+
+        // Add DropWizard metrics
+        dropWizardMetrics.register();
+
+        // Add admin tasks
+        adminTasks.register();
 
         // Add health checks
         healthChecks.register();

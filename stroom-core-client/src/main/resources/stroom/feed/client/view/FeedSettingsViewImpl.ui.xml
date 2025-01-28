@@ -5,26 +5,48 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="feedSettingsClassification" label="Classification">
+        <form:FormGroup identity="feedSettingsClassification"
+                        label="Classification">
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsReferenceFeed" label="Reference Feed">
+        <form:FormGroup identity="feedSettingsReferenceFeed"
+                        label="Reference Feed">
             <tickbox:CustomCheckBox ui:field="reference"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsFeedStatus" label="Feed Status">
+        <form:FormGroup identity="feedSettingsFeedStatus"
+                        label="Feed Status">
             <l:SelectionBox ui:field="feedStatus"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsReceivedType" label="Received Type">
+        <form:FormGroup identity="feedSettingsReceivedType"
+                        label="Received Type">
             <l:SelectionBox ui:field="receivedType"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsDataEncoding" label="Data Encoding">
+        <form:FormGroup identity="feedSettingsDataEncoding"
+                        label="Data Encoding">
             <l:SelectionBox ui:field="dataEncoding"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedSettingsContextEncoding" label="Context Encoding">
+        <form:FormGroup identity="feedSettingsContextEncoding"
+                        label="Context Encoding">
             <l:SelectionBox ui:field="contextEncoding"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsDataFormat"
+                        label="Data Format">
+            <l:SelectionBox ui:field="dataFormat"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsContextFormat"
+                        label="Context Format">
+            <l:SelectionBox ui:field="contextFormat"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsSchema"
+                        label="Data Schema">
+            <g:TextBox ui:field="schema"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsSchemaVersion"
+                        label="Data Schema Version">
+            <g:TextBox ui:field="schemaVersion"/>
         </form:FormGroup>
         <form:FormGroup identity="feedVolumeGroup" label="Volume Group">
             <l:SelectionBox ui:field="volumeGroup"/>
         </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

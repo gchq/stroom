@@ -18,8 +18,43 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
+import stroom.util.NullSafe;
+
+import java.util.List;
 
 public interface AttributeMapFilter {
 
+    /**
+     * Used for filtering received data based on its attributeMap and userIdentity.
+     * May add items to the {@link AttributeMap}, e.g. adding a Feed attribute if
+     * possible and configured.
+     *
+     * @return True if the data should be accepted, false if it should be dropped.
+     * @throws StroomStreamException When data should be rejected for some reason.
+     */
     boolean filter(AttributeMap attributeMap);
+
+    /**
+     * Combine multiple filters into a single filter. Each one will be called in turn
+     * until one returns false.
+     * If null or empty, a permissive filter will be returned.
+     */
+    static AttributeMapFilter wrap(final AttributeMapFilter... attributeMapFilters) {
+        return wrap(NullSafe.asList(attributeMapFilters));
+    }
+
+    /**
+     * Combine multiple filters into a single filter. Each one will be called in turn
+     * until one returns false.
+     * If null or empty, a permissive filter will be returned.
+     */
+    static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
+        if (NullSafe.isEmptyCollection(attributeMapFilters)) {
+            return PermissiveAttributeMapFilter.getInstance();
+        } else if (attributeMapFilters.size() == 1 && attributeMapFilters.get(0) != null) {
+            return attributeMapFilters.get(0);
+        } else {
+            return new MultiAttributeMapFilter(attributeMapFilters);
+        }
+    }
 }

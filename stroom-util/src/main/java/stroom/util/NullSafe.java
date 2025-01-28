@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -605,6 +606,44 @@ public class NullSafe {
         return set != null
                 ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing the items in set.
+     * If set is not itself an {@link EnumSet} then the items will be copied into
+     * a new {@link EnumSet}.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <S extends Set<T>, T extends Enum<T>> Set<T> enumSet(final Class<T> type,
+                                                                       final S set) {
+        if (set instanceof EnumSet<?>) {
+            return set;
+        } else if (set == null || set.isEmpty()) {
+            return EnumSet.noneOf(type);
+        } else {
+            // Make sure we get back an EnumSet as they are faster and more memory efficient
+            return EnumSet.copyOf(set);
+        }
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing all non-null items.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <T extends Enum<T>> Set<T> enumSetOf(final Class<T> type, final T... items) {
+        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+        if (items != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    enumSet.add(item);
+                }
+            }
+        }
+        return enumSet;
     }
 
     /**
