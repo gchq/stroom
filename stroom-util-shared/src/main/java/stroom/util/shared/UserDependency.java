@@ -71,8 +71,9 @@ public class UserDependency {
             return false;
         }
         final UserDependency that = (UserDependency) object;
-        return Objects.equals(userRef, that.userRef) && Objects.equals(details,
-                that.details) && Objects.equals(docRef, that.docRef);
+        return Objects.equals(userRef, that.userRef) &&
+               Objects.equals(details, that.details) &&
+               Objects.equals(docRef, that.docRef);
     }
 
     @Override
