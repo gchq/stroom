@@ -2,7 +2,6 @@ package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
-import stroom.util.resultpage.InexactResultPageBuilder;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.ResultPage;
 import stroom.util.string.StringMatcher;
@@ -21,7 +20,7 @@ public class FieldInfoResultPageBuilder {
     private FieldInfoResultPageBuilder(final FindFieldCriteria criteria) {
         stringMatcher = new StringMatcher(criteria.getStringMatch());
         queryable = criteria.getQueryable();
-        resultPageBuilder = new InexactResultPageBuilder<>(criteria.getPageRequest());
+        resultPageBuilder = new ResultPageBuilder<>(criteria.getPageRequest());
     }
 
     public static FieldInfoResultPageBuilder builder(final FindFieldCriteria criteria) {

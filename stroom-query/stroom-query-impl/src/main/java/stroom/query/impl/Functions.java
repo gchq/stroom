@@ -47,9 +47,9 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
@@ -189,29 +189,29 @@ public class Functions {
     public void addRows(final PageRequest pageRequest,
                         final String parentUuid,
                         final StringMatcher stringMatcher,
-                        final ResultConsumer<QueryHelpRow> resultConsumer) {
+                        final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final List<QueryHelpRow> rows = map.getOrDefault(parentUuid, Collections.emptyList());
-        final ResultPageBuilder<QueryHelpRow> builder =
-                new ResultPageBuilder<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
+        final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
+                new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
         for (final QueryHelpRow row : rows) {
             if (row.isHasChildren()) {
                 if (!hasChildren(row, stringMatcher)) {
                     if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                            match(row, stringMatcher)) {
-                        builder.add(row.copy().hasChildren(false).build());
+                        match(row, stringMatcher)) {
+                        trimmedSortedList.add(row.copy().hasChildren(false).build());
                     }
                 } else {
-                    builder.add(row);
+                    trimmedSortedList.add(row);
                 }
             } else if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    match(row, stringMatcher)) {
-                builder.add(row);
+                       match(row, stringMatcher)) {
+                trimmedSortedList.add(row);
             }
         }
-        for (final QueryHelpRow row : builder.build().getValues()) {
-            if (!resultConsumer.add(row)) {
-                break;
-            }
+
+        final List<QueryHelpRow> list = trimmedSortedList.getList();
+        for (final QueryHelpRow row : list) {
+            resultPageBuilder.add(row);
         }
     }
 
@@ -284,7 +284,7 @@ public class Functions {
                 }
             }
             final String helpAnchor = functionDef.helpAnchor() == null
-                    || FunctionDef.UNDEFINED.equals(functionDef.helpAnchor())
+                                      || FunctionDef.UNDEFINED.equals(functionDef.helpAnchor())
                     ? null
                     : functionDef.helpAnchor();
 
@@ -614,7 +614,7 @@ public class Functions {
             final UiConfig uiConfig = uiConfigProvider.get();
             if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
                 addHelpLinkToInfo(signature, uiConfig.getHelpUrl() +
-                        uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
+                                             uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
             }
         }
         return detail.build();
@@ -626,9 +626,9 @@ public class Functions {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                        signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
-                        "#" +
-                        functionSignatureToAnchor(signature),
+                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                "#" +
+                functionSignatureToAnchor(signature),
                 "Help Documentation");
         htmlBuilder.append(".");
     }
@@ -678,7 +678,7 @@ public class Functions {
             return !Character.isAlphabetic(name.charAt(0));
         } else if (name.length() <= 2) {
             return !Character.isAlphabetic(name.charAt(0))
-                    && !Character.isAlphabetic(name.charAt(1));
+                   && !Character.isAlphabetic(name.charAt(1));
         } else {
             return false;
         }

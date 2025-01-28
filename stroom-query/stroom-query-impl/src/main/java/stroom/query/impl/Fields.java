@@ -34,9 +34,9 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
@@ -72,7 +72,7 @@ public class Fields {
     }
 
     public void addRows(final QueryHelpRequest request,
-                        final ResultConsumer<QueryHelpRow> resultConsumer) {
+                        final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final PageRequest pageRequest = request.getPageRequest();
         if (pageRequest.getLength() > 0) {
             final QueryService queryService = queryServiceProvider.get();
@@ -89,14 +89,14 @@ public class Fields {
                             optional.get(),
                             request.getStringMatch(),
                             null);
-                    hasChildren = queryService.findFields(criteria).size() > 0;
+                    hasChildren = !queryService.findFields(criteria).isEmpty();
                 }
 
                 final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
                 if (hasChildren ||
                         MatchType.ANY.equals(stringMatcher.getMatchType()) ||
                         stringMatcher.match(ROOT.getTitle()).isPresent()) {
-                    resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+                    resultPageBuilder.add(ROOT.copy().hasChildren(hasChildren).build());
                 }
 
             } else if (request.getParentPath().startsWith(FIELDS_PARENT) && optional.isPresent()) {
@@ -109,7 +109,7 @@ public class Fields {
                         request.getStringMatch(),
                         null);
                 final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
-                resultConsumer.skip(resultPage.getPageStart());
+                resultPageBuilder.skip(resultPage.getPageStart());
                 resultPage.getValues().forEach(fieldInfo -> {
                     final QueryHelpRow row = new QueryHelpRow(
                             QueryHelpType.FIELD,
@@ -119,7 +119,7 @@ public class Fields {
                             null,
                             fieldInfo.getFldName(),
                             new QueryHelpField(fieldInfo));
-                    resultConsumer.add(row);
+                    resultPageBuilder.add(row);
                 });
             }
         }
