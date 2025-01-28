@@ -277,8 +277,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     ? "node " + nodeName
                     : "all nodes";
             final String taskName = "Reference Data Purge on "
-                    + nodeNameStr
-                    + " (purge age: " + purgeAge.toString() + ")";
+                                    + nodeNameStr
+                                    + " (purge age: " + purgeAge.toString() + ")";
 
             taskContextFactory.context(
                     taskName,
@@ -309,7 +309,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error purging reference data store on node [{}]: {}. " +
-                                                                "Enable DEBUG for stacktrace",
+                                                        "Enable DEBUG for stacktrace",
                                                         nodeName2,
                                                         throwable.getMessage());
                                                 LOGGER.debug("Error purging ref data store on node [{}]",
@@ -346,8 +346,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     ? "node " + nodeName
                     : "all nodes";
             final String taskName = "Reference Data Purge on "
-                    + nodeNameStr
-                    + " (feed: " + feedName + ", purge age: " + purgeAge.toString() + ")";
+                                    + nodeNameStr
+                                    + " (feed: " + feedName + ", purge age: " + purgeAge.toString() + ")";
 
             taskContextFactory.context(
                     taskName,
@@ -378,7 +378,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error purging reference data store on node [{}]: {}. " +
-                                                                "Enable DEBUG for stacktrace",
+                                                        "Enable DEBUG for stacktrace",
                                                         nodeName2,
                                                         throwable.getMessage());
                                                 LOGGER.debug("Error purging ref data store on node [{}]",
@@ -432,8 +432,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     ? "node " + nodeName
                     : "all nodes";
             final String taskName = "Reference Data Purge on "
-                    + nodeNameStr
-                    + " (Stream: " + refStreamId + ")";
+                                    + nodeNameStr
+                                    + " (Stream: " + refStreamId + ")";
 
             taskContextFactory.context(
                     taskName,
@@ -467,7 +467,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error purging reference data store on node [{}]: {}. " +
-                                                                "Enable DEBUG for stacktrace",
+                                                        "Enable DEBUG for stacktrace",
                                                         nodeName2,
                                                         throwable.getMessage());
                                                 LOGGER.debug("Error purging ref data store on node [{}]",
@@ -509,7 +509,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     ? "node " + nodeName
                     : "all nodes";
             final String taskName = "Clearing Byte Buffer Pool on "
-                    + nodeNameStr;
+                                    + nodeNameStr;
 
             taskContextFactory.context(
                     nodeNameStr,
@@ -540,7 +540,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                 exception.set(throwable);
                                                 LOGGER.error(
                                                         "Error clearing byte buffer pool on node [{}]: {}. " +
-                                                                "Enable DEBUG for stacktrace",
+                                                        "Enable DEBUG for stacktrace",
                                                         nodeName2,
                                                         throwable.getMessage());
                                                 LOGGER.debug("Error clearing byte buffer pool on node [{}]",
@@ -650,7 +650,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             throw RestUtil.badRequest("Null referenceLoader");
         } else {
             if (referenceLoader.getReferenceFeed().getUuid() != null
-                    && referenceLoader.getReferenceFeed().getName() != null) {
+                && referenceLoader.getReferenceFeed().getName() != null) {
 
                 return referenceLoader.getReferenceFeed();
             } else if (referenceLoader.getReferenceFeed().getName() != null) {
@@ -690,8 +690,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public DocRef getDocRef() {
-        return ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF;
+    public String getDataSourceType() {
+        return ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        return Collections.singletonList(ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF);
     }
 
     @Override
@@ -711,16 +716,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public int getFieldCount(final DocRef docRef) {
         return NullSafe.size(getFields());
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return null;
     }
 
     @Override
@@ -808,7 +803,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 final Predicate<RefStoreEntry> predicate = convertExpressionItem(expressionCriteria.getExpression());
                 if (predicate == null) {
                     if (expressionCriteria.getExpression() != null
-                            && Op.NOT.equals(expressionCriteria.getExpression().op())) {
+                        && Op.NOT.equals(expressionCriteria.getExpression().op())) {
                         return refStoreEntry -> false;
                     } else {
                         return refStoreEntry -> true;

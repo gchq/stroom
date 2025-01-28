@@ -15,8 +15,8 @@ public class MetaFields {
     public static final String STREAM_STORE_TYPE = "StreamStore";
     public static final DocRef STREAM_STORE_DOC_REF = DocRef.builder()
             .type(STREAM_STORE_TYPE)
-            .uuid("0")
-            .name(STREAM_STORE_TYPE)
+            .uuid(STREAM_STORE_TYPE)
+            .name("Stream Store")
             .build();
 
     public static final String FIELD_ID = "Id";

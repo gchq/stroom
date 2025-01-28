@@ -132,25 +132,22 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final LuceneIndexDoc index = luceneIndexDocCache.get(dataSourceRef);
-            if (index != null) {
-                return index.getDefaultExtractionPipeline();
-            }
-            return null;
+            return Optional.ofNullable(index).map(LuceneIndexDoc::getDefaultExtractionPipeline);
         });
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final LuceneIndexDoc index = luceneIndexDocCache.get(docRef);
             QueryField timeField = null;
-            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
+            if (index != null && index.getTimeField() != null && !index.getTimeField().isBlank()) {
                 timeField = QueryField.createDate(index.getTimeField());
             }
-            return timeField;
+            return Optional.ofNullable(timeField);
         });
     }
 
@@ -212,12 +209,12 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return indexStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return LuceneIndexDoc.TYPE;
     }
 }

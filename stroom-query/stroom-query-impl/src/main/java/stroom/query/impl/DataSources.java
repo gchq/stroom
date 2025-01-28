@@ -82,7 +82,7 @@ public class DataSources {
                     dataSourceProviderRegistryProvider.get();
             final ResultPageBuilder<QueryHelpRow> builder =
                     new ResultPageBuilder<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
-            for (final DocRef docRef : dataSourceProviderRegistry.list()) {
+            for (final DocRef docRef : dataSourceProviderRegistry.getDataSourceDocRefs()) {
                 if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
                     final QueryHelpRow row = QueryHelpRow
                             .builder()
@@ -110,11 +110,11 @@ public class DataSources {
 
         try {
             final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
-            final List<DocRef> docRefs = dataSourceProviderRegistry.list();
+            final List<DocRef> docRefs = dataSourceProviderRegistry.getDataSourceDocRefs();
 
             if (docRefs.size() > maxCompletions) {
                 final List<AceMatchResult<DocRef>> matchResults = AceStringMatcher.filterCompletions(
-                        dataSourceProviderRegistry.list(),
+                        dataSourceProviderRegistry.getDataSourceDocRefs(),
                         request.getPattern(),
                         INITIAL_SCORE,
                         DocRef::getName);
@@ -199,7 +199,7 @@ public class DataSources {
     private boolean hasChildren(final StringMatcher stringMatcher) {
         final DataSourceProviderRegistry dataSourceProviderRegistry =
                 dataSourceProviderRegistryProvider.get();
-        for (final DocRef docRef : dataSourceProviderRegistry.list()) {
+        for (final DocRef docRef : dataSourceProviderRegistry.getDataSourceDocRefs()) {
             if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
                 return true;
             }

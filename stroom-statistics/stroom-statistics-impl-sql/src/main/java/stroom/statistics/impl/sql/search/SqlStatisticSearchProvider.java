@@ -126,17 +126,12 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
-    }
-
-    @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        return QueryField.createDate(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(QueryField.createDate(StatisticStoreDoc.FIELD_NAME_DATE_TIME));
     }
 
     /**
-     * Turn the {@link StatisticStoreDoc} into an {@link List<  QueryField  >} object
+     * Turn the {@link StatisticStoreDoc} into an {@link List<QueryField>} object
      * <p>
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance
@@ -203,7 +198,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         final StatisticStoreDoc statisticStoreDoc = statisticStoreCache.getStatisticsDataSource(docRef);
 
         Preconditions.checkNotNull(statisticStoreDoc, "Statistic configuration could not be found for uuid "
-                + docRef.getUuid());
+                                                      + docRef.getUuid());
 
         return buildStore(searchRequest, statisticStoreDoc);
     }
@@ -305,12 +300,12 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return statisticStoreStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return StatisticStoreDoc.TYPE;
     }
 }

@@ -86,7 +86,7 @@ public class DocResolver {
     private DocRef getDataSourceRefFromName(final String name) {
         final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
         final List<DocRef> docRefs = dataSourceProviderRegistry
-                .list()
+                .getDataSourceDocRefs()
                 .stream()
                 .filter(docRef -> docRef != null && docRef.getName() != null && docRef.getName().equals(name))
                 .toList();

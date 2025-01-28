@@ -197,8 +197,8 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 <query>
                    <dataSource>
                       <type>StreamStore</type>
-                      <uuid>0</uuid>
-                      <name>StreamStore</name>
+                      <uuid>StreamStore</uuid>
+                      <name>Stream Store</name>
                    </dataSource>
                    <expression>
                       <children>

@@ -403,7 +403,7 @@ public class MetaDaoImpl implements MetaDao {
         final Map<String, Integer> processorIds = metaPropertiesList.stream()
                 .filter(metaProperties ->
                         metaProperties.getProcessorUuid() != null &&
-                                metaProperties.getPipelineUuid() != null)
+                        metaProperties.getPipelineUuid() != null)
                 .map(metaProperties -> Tuple.of(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid()))
                 .distinct()
                 .map(tuple -> Tuple.of(
@@ -727,8 +727,8 @@ public class MetaDaoImpl implements MetaDao {
     private Condition getFilterCriteriaCondition(final ExpressionCriteria criteria) {
         final Condition filterCondition;
         if (criteria != null
-                && criteria.getExpression() != null
-                && !criteria.getExpression().equals(ExpressionOperator.builder().build())) {
+            && criteria.getExpression() != null
+            && !criteria.getExpression().equals(ExpressionOperator.builder().build())) {
 
             filterCondition = expressionMapper.apply(criteria.getExpression());
         } else {
@@ -937,8 +937,8 @@ public class MetaDaoImpl implements MetaDao {
                 LogUtil.message("logicalDelete called for {} and actions\n{}",
                         period, ruleActions.stream()
                                 .map(ruleAction -> ruleAction.getRule().getRuleNumber() + " " +
-                                        ruleAction.getRule().getExpression() + " " +
-                                        ruleAction.getOutcome().name())
+                                                   ruleAction.getRule().getExpression() + " " +
+                                                   ruleAction.getOutcome().name())
                                 .collect(Collectors.joining("\n"))));
 
         final AtomicInteger totalUpdateCount = new AtomicInteger(0);
@@ -949,7 +949,8 @@ public class MetaDaoImpl implements MetaDao {
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
             final boolean rulesUsePipelineField = ruleActionsContainField(MetaFields.PIPELINE.getFldName(),
                     ruleActions)
-                    || ruleActionsContainField(MetaFields.PIPELINE_NAME.getFldName(), ruleActions);
+                                                  || ruleActionsContainField(MetaFields.PIPELINE_NAME.getFldName(),
+                    ruleActions);
 
             final List<Condition> conditions = new ArrayList<>(baseConditions);
 
@@ -1154,7 +1155,7 @@ public class MetaDaoImpl implements MetaDao {
         for (DataRetentionRuleAction ruleAction : ruleActions) {
             final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
             if (dataRetentionConfig.isUseQueryOptimisation() &&
-                    !DSL.noCondition().equals(ruleCondition)) {
+                !DSL.noCondition().equals(ruleCondition)) {
                 orConditions.add(ruleCondition);
             }
 
@@ -1233,7 +1234,7 @@ public class MetaDaoImpl implements MetaDao {
                            final String[] resultFields,
                            final ExpressionCriteria criteria) {
         return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+               ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
@@ -1243,7 +1244,10 @@ public class MetaDaoImpl implements MetaDao {
         final String[] fieldNames = fieldIndex.getFields();
         final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getFldName()), fieldNames, criteria);
         final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getFldName()), fieldNames, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getFldName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(
+                        MetaFields.PIPELINE.getFldName(),
+                        MetaFields.PIPELINE_NAME.getFldName()),
+                fieldNames, criteria);
         final Set<String> extendedFieldNames = MetaFields
                 .getExtendedFields()
                 .stream()
@@ -1291,7 +1295,7 @@ public class MetaDaoImpl implements MetaDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.selectDistinct(dbFields).from(meta);
+            var select = context.select(dbFields).from(meta);
             if (feedUsed) {
                 select = select.straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
@@ -1393,7 +1397,14 @@ public class MetaDaoImpl implements MetaDao {
         validateExpressionTerms(criteria.getExpression());
 
         final Collection<Condition> conditions = createCondition(criteria);
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+
+        final Collection<OrderField<?>> orderFields;
+        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
+            orderFields = Collections.singleton(meta.ID);
+        } else {
+            orderFields = createOrderFields(criteria);
+        }
+
         final int offset = JooqUtil.getOffset(pageRequest);
         final int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
@@ -1431,7 +1442,7 @@ public class MetaDaoImpl implements MetaDao {
                 } else {
                     //Don't know what this is!
                     LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
-                            " unable to optimise meta query");
+                                " unable to optimise meta query");
                     //Allow search to succeed without optimisation
                     return IntStream.range(metaKeyDao.getMinId(),
                             metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
@@ -1737,10 +1748,9 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
-        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return Collections.singleton(meta.ID);
+        if (criteria.getSortList() == null) {
+            return Collections.emptyList();
         }
-
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
             if (MetaFields.ID.getFldName().equals(sort.getId())) {
@@ -1891,7 +1901,7 @@ public class MetaDaoImpl implements MetaDao {
                                                 final int batchSize,
                                                 final Set<Long> metaIdExcludeSet) {
         LOGGER.debug(() -> LogUtil.message("getLogicallyDeleted() - deleteThreshold: {}, batchSize: {}, " +
-                        "metaIdExcludeSet size: {}",
+                                           "metaIdExcludeSet size: {}",
                 deleteThreshold, batchSize, metaIdExcludeSet.size()));
 
         Objects.requireNonNull(deleteThreshold);
@@ -1970,7 +1980,7 @@ public class MetaDaoImpl implements MetaDao {
                     final boolean isValid = field.supportsCondition(term.getCondition());
                     if (!isValid) {
                         throw new RuntimeException(LogUtil.message("Condition '{}' is not supported by field '{}' " +
-                                        "of type {}. Term: {}",
+                                                                   "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
                                 field.getFldType().getTypeName(), term));
@@ -2001,7 +2011,7 @@ public class MetaDaoImpl implements MetaDao {
                 minId, maxId, batchSize);
 
         if ((maxId != null && maxId < minId)
-                || batchSize <= 0) {
+            || batchSize <= 0) {
             return Collections.emptyList();
         } else {
             final Collection<Condition> conditions = JooqUtil.conditions(

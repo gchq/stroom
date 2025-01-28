@@ -35,8 +35,8 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService, Searchable {
@@ -58,8 +58,13 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public DocRef getDocRef() {
-        return IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF;
+    public String getDataSourceType() {
+        return IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        return Collections.singletonList(IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF);
     }
 
     @Override
@@ -77,16 +82,6 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     @Override
     public int getFieldCount(final DocRef docRef) {
         return NullSafe.size(getFields());
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return null;
     }
 
     @Override

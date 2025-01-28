@@ -16,6 +16,7 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.searchable.api.Searchable;
@@ -42,6 +43,8 @@ public class ReferenceDataModule extends PipelineElementModule {
         RestResourcesBinder.create(binder())
                 .bind(ReferenceDataResourceImpl.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(ReferenceDataServiceImpl.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ReferenceDataServiceImpl.class);
 
