@@ -12,7 +12,7 @@ public interface DataFeedKeyService extends AuthenticatorFilter {
     Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
                                                final AttributeMap attributeMap);
 
-    Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId);
+    Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId);
 
     void addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
                          Path sourceFile);

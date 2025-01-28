@@ -27,8 +27,6 @@ public class DataFeedKeyGenerator {
         return new KeyWithHash(key, new HashedDataFeedKey(
                 hasher.hash(key),
                 hasher.getAlgorithm().getUniqueId(),
-                subjectId,
-                displayName,
                 accountId,
                 attributeMap,
                 expiry.toEpochMilli()));
@@ -45,8 +43,6 @@ public class DataFeedKeyGenerator {
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
                 hasher.getAlgorithm().getUniqueId(),
-                "datafeed-key-user1",
-                "user 1",
                 "1234",
                 Map.of(
                         "key1", "val1",
@@ -67,8 +63,6 @@ public class DataFeedKeyGenerator {
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
                 hasher.getAlgorithm().getUniqueId(),
-                "datafeed-key-user2",
-                "user 2",
                 "6789",
                 Map.of(
                         "key3", "val3",

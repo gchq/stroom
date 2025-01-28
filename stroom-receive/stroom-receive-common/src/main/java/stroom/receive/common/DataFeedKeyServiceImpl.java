@@ -20,14 +20,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -46,9 +48,10 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
     // Holds all the keys read from the data feed key files, entries are evicted when
     // the DataFeedKey has passed its expiry date.
     private final Map<CacheKey, CachedHashedDataFeedKey> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
-    private final Map<String, CachedHashedDataFeedKey> subjectIdToDataFeedKeyMap = new ConcurrentHashMap<>();
+    // An account will likely have >1 CachedHashedDataFeedKey due to the overlap of keys when
+    // new keys are being supplied
+    private final Map<String, List<CachedHashedDataFeedKey>> accountIdToDataFeedKeyMap = new ConcurrentHashMap<>();
 
-    // TODO replace with cache
     // Cache of the un-hashed key to validated DataFeedKey, to save us the hashing cost
     private final LoadingStroomCache<String, Optional<HashedDataFeedKey>> unHashedKeyToDataFeedKeyCache;
 
@@ -96,10 +99,22 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
     }
 
     @Override
-    public Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId) {
-        return Optional.ofNullable(subjectIdToDataFeedKeyMap.get(subjectId))
-                .map(CachedHashedDataFeedKey::getDataFeedKey);
+    public Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId) {
+        if (accountId == null) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(accountIdToDataFeedKeyMap.get(accountId))
+                    .flatMap(cachedKeys -> cachedKeys.stream()
+                            .max(Comparator.comparing(CachedHashedDataFeedKey::getExpiryDate)))
+                    .map(CachedHashedDataFeedKey::getDataFeedKey);
+        }
     }
+
+//    @Override
+//    public Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId) {
+//        return Optional.ofNullable(subjectIdToDataFeedKeyMap.get(subjectId))
+//                .map(CachedHashedDataFeedKey::getDataFeedKey);
+//    }
 
     @Override
     public void addDataFeedKeys(final HashedDataFeedKeys hashedDataFeedKeys,
@@ -122,7 +137,11 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
             final DataFeedKeyHashAlgorithm hashAlgorithm = DataFeedKeyHashAlgorithm.fromUniqueId(hashAlgorithmId);
             final CacheKey cacheKey = new CacheKey(hashAlgorithm, hash);
             cacheKeyToDataFeedKeyMap.put(cacheKey, cachedHashedDataFeedKey);
-            subjectIdToDataFeedKeyMap.put(cachedHashedDataFeedKey.getSubjectId(), cachedHashedDataFeedKey);
+            // Use CopyOnWriteArrayList as write are very infrequent
+            accountIdToDataFeedKeyMap.computeIfAbsent(
+                            cachedHashedDataFeedKey.getAccountId(),
+                            k -> new CopyOnWriteArrayList<>())
+                    .add(cachedHashedDataFeedKey);
         }
     }
 
@@ -130,18 +149,18 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
     public void evictExpired() {
         LOGGER.debug("Evicting expired dataFeedKeys");
         final AtomicInteger counter = new AtomicInteger();
-        final Predicate<Entry<?, CachedHashedDataFeedKey>> removeIfPredicate = entry ->
-                entry.getValue().isExpired();
 
         counter.set(0);
         cacheKeyToDataFeedKeyMap.entrySet().removeIf(
-                PredicateUtil.countingPredicate(counter, removeIfPredicate));
+                PredicateUtil.countingPredicate(counter, entry -> entry.getValue().isExpired()));
         LOGGER.debug("Removed {} cacheKeyToDataFeedKeyMap entries", counter);
 
         counter.set(0);
-        subjectIdToDataFeedKeyMap.entrySet().removeIf(
-                PredicateUtil.countingPredicate(counter, removeIfPredicate));
-        LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
+        accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) -> {
+            cachedHashedDataFeedKeys.removeIf(
+                    PredicateUtil.countingPredicate(counter, CachedHashedDataFeedKey::isExpired));
+        });
+        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from subjectIdToDataFeedKeyMap", counter);
 
         counter.set(0);
 
@@ -158,20 +177,20 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
         if (sourceFile != null) {
             LOGGER.info("Evicting dataFeedKeys for sourceFile {}", sourceFile);
             final AtomicInteger counter = new AtomicInteger();
-            final Predicate<Entry<?, CachedHashedDataFeedKey>> removeIfPredicate = entry -> {
-                final boolean doRemove = Objects.equals(
-                        sourceFile, entry.getValue().getSourceFile());
-                if (doRemove) {
-                    counter.incrementAndGet();
-                }
-                return doRemove;
-            };
+            final Predicate<CachedHashedDataFeedKey> removeIfPredicate = cachedKey -> Objects.equals(
+                    sourceFile, cachedKey.getSourceFile());
 
-            cacheKeyToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
+            cacheKeyToDataFeedKeyMap.entrySet().removeIf(PredicateUtil.countingPredicate(
+                    counter,
+                    entry -> removeIfPredicate.test(entry.getValue())));
             LOGGER.debug("Removed {} cacheKeyToDataFeedKeyMap entries", counter);
             LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", counter, sourceFile);
             counter.set(0);
-            subjectIdToDataFeedKeyMap.entrySet().removeIf(removeIfPredicate);
+            accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) -> {
+                cachedHashedDataFeedKeys.removeIf(PredicateUtil.countingPredicate(
+                        counter, removeIfPredicate));
+            });
+
             LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
         }
     }

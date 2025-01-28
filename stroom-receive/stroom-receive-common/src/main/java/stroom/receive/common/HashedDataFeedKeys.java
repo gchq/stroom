@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A collection of {@link HashedDataFeedKey}
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class HashedDataFeedKeys {
 

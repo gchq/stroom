@@ -9,13 +9,15 @@ import java.util.Objects;
  */
 public class DataFeedKeyUserIdentity implements UserIdentity {
 
+    public static final String SUBJECT_ID_PREFIX = "data-feed-key-";
+
     private final String subjectId;
     private final String displayName;
 
     public DataFeedKeyUserIdentity(final HashedDataFeedKey hashedDataFeedKey) {
         Objects.requireNonNull(hashedDataFeedKey);
-        this.subjectId = hashedDataFeedKey.getSubjectId();
-        this.displayName = hashedDataFeedKey.getDisplayName();
+        this.subjectId = SUBJECT_ID_PREFIX + hashedDataFeedKey.getAccountId();
+        this.displayName = subjectId;
     }
 
     @Override

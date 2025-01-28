@@ -35,17 +35,12 @@ class FeedResourceImpl implements FeedResource {
 
     private final Provider<FeedStore> feedStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
-    private final List<String> supportedEncodings;
 
     @Inject
     FeedResourceImpl(final Provider<FeedStore> feedStoreProvider,
                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
         this.feedStoreProvider = feedStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
-        final List<String> encodings = new ArrayList<>(feedStoreProvider.get().fetchSupportedEncodings());
-        // Allow user to select no encoding
-        encodings.add("");
-        supportedEncodings = Collections.unmodifiableList(encodings);
     }
 
     @Override
@@ -64,6 +59,9 @@ class FeedResourceImpl implements FeedResource {
 
     @Override
     public List<String> fetchSupportedEncodings() {
-        return supportedEncodings;
+        final List<String> encodings = new ArrayList<>(feedStoreProvider.get().fetchSupportedEncodings());
+        // Allow user to select no encoding
+        encodings.add("");
+        return Collections.unmodifiableList(encodings);
     }
 }

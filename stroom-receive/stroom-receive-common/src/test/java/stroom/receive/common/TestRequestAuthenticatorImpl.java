@@ -64,9 +64,7 @@ class TestRequestAuthenticatorImpl {
         final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity(new HashedDataFeedKey(
                 "my hash",
                 DataFeedKeyHashAlgorithm.ARGON2.getDisplayValue(),
-                "MySubjectId",
-                "My Display Name",
-                "My System Name",
+                "MyAccountId",
                 null,
                 Long.MAX_VALUE));
 

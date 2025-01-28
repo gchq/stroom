@@ -62,8 +62,6 @@ class TestHashedDataFeedKeys {
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
                 hasher.getAlgorithm().getUniqueId(),
-                "user1",
-                "user 1",
                 "system 1",
                 Map.of(
                         "key1", "val1",
@@ -73,8 +71,6 @@ class TestHashedDataFeedKeys {
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
                 hasher.getAlgorithm().getUniqueId(),
-                "user2",
-                "user 2",
                 "system 2",
                 Map.of(
                         "key3", "val3",

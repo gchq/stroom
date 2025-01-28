@@ -14,6 +14,10 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Represents the hashed form of a Data Feed Key, i.e. where we only have the
+ * hash of the key and not the key itself.
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class HashedDataFeedKey {
 
@@ -25,13 +29,13 @@ public class HashedDataFeedKey {
     @JsonPropertyDescription("The hash algorithm ID used to hash the datafeed key. A zero padded 3 digit number.")
     private final String hashAlgorithmId;
 
-    @JsonProperty
-    @JsonPropertyDescription("The unique subject ID of the user associated with the datafeed key.")
-    private final String subjectId;
-
-    @JsonProperty
-    @JsonPropertyDescription("A more human friendly display form of the user identity. May be null.")
-    private final String displayName;
+//    @JsonProperty
+//    @JsonPropertyDescription("The unique subject ID of the user associated with the datafeed key.")
+//    private final String subjectId;
+//
+//    @JsonProperty
+//    @JsonPropertyDescription("A more human friendly display form of the user identity. May be null.")
+//    private final String displayName;
 
     @JsonProperty
     @JsonPropertyDescription("The unique ID for the account sending the data to stroom. " +
@@ -51,15 +55,15 @@ public class HashedDataFeedKey {
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
                              @JsonProperty("hashAlgorithmId") final String hashAlgorithmId,
-                             @JsonProperty("subjectId") final String subjectId,
-                             @JsonProperty("displayName") final String displayName,
+//                             @JsonProperty("subjectId") final String subjectId,
+//                             @JsonProperty("displayName") final String displayName,
                              @JsonProperty("accountId") final String accountId,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = hash;
         this.hashAlgorithmId = hashAlgorithmId;
-        this.subjectId = subjectId;
-        this.displayName = displayName;
+//        this.subjectId = subjectId;
+//        this.displayName = displayName;
         this.accountId = accountId;
         this.streamMetaData = streamMetaData;
         this.expiryDateEpochMs = expiryDateEpochMs;
@@ -75,17 +79,17 @@ public class HashedDataFeedKey {
         return hashAlgorithmId;
     }
 
-    @NotBlank
-    public String getSubjectId() {
-        return subjectId;
-    }
+//    @NotBlank
+//    public String getSubjectId() {
+//        return subjectId;
+//    }
 
-    /**
-     * May be null.
-     */
-    public String getDisplayName() {
-        return displayName;
-    }
+//    /**
+//     * May be null.
+//     */
+//    public String getDisplayName() {
+//        return displayName;
+//    }
 
     @NotBlank
     public String getAccountId() {
@@ -123,8 +127,8 @@ public class HashedDataFeedKey {
         return expiryDateEpochMs == that.expiryDateEpochMs
                && Objects.equals(hash, that.hash)
                && Objects.equals(hashAlgorithmId, that.hashAlgorithmId)
-               && Objects.equals(subjectId, that.subjectId)
-               && Objects.equals(displayName, that.displayName)
+//               && Objects.equals(subjectId, that.subjectId)
+//               && Objects.equals(displayName, that.displayName)
                && Objects.equals(accountId, that.accountId)
                && Objects.equals(streamMetaData, that.streamMetaData);
     }
@@ -133,8 +137,8 @@ public class HashedDataFeedKey {
     public int hashCode() {
         return Objects.hash(hash,
                 hashAlgorithmId,
-                subjectId,
-                displayName,
+//                subjectId,
+//                displayName,
                 accountId,
                 streamMetaData,
                 expiryDateEpochMs);
@@ -145,8 +149,8 @@ public class HashedDataFeedKey {
         return "DataFeedKey{" +
                "hash='" + hash + '\'' +
                ", hashAlgorithmId='" + hashAlgorithmId + '\'' +
-               ", subjectId='" + subjectId + '\'' +
-               ", displayName='" + displayName + '\'' +
+//               ", subjectId='" + subjectId + '\'' +
+//               ", displayName='" + displayName + '\'' +
                ", accountId='" + accountId + '\'' +
                ", streamMetaData=" + streamMetaData +
                ", expiryDateEpochMs=" + expiryDateEpochMs +

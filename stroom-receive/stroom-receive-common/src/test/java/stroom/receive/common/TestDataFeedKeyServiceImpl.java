@@ -118,9 +118,9 @@ class TestDataFeedKeyServiceImpl {
 
         final UserIdentity userIdentity = optUserIdentity.get();
         assertThat(userIdentity.getSubjectId())
-                .isEqualTo(hashedDataFeedKey.getSubjectId());
+                .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX + hashedDataFeedKey.getAccountId());
         assertThat(userIdentity.getDisplayName())
-                .isEqualTo(hashedDataFeedKey.getDisplayName());
+                .isEqualTo(userIdentity.getSubjectId());
     }
 
     @Test

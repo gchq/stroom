@@ -38,13 +38,18 @@ public class CachedHashedDataFeedKey {
     }
 
     @NotBlank
-    public String getSubjectId() {
-        return hashedDataFeedKey.getSubjectId();
+    public String getAccountId() {
+        return hashedDataFeedKey.getAccountId();
     }
 
-    public String getDisplayName() {
-        return hashedDataFeedKey.getDisplayName();
-    }
+    //    @NotBlank
+//    public String getSubjectId() {
+//        return hashedDataFeedKey.getSubjectId();
+//    }
+//
+//    public String getDisplayName() {
+//        return hashedDataFeedKey.getDisplayName();
+//    }
 
     public Map<String, String> getStreamMetaData() {
         return hashedDataFeedKey.getStreamMetaData();
