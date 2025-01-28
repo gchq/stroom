@@ -82,29 +82,38 @@ public class ShardWriters {
         }
 
         public Optional<PlanBDoc> getDoc(final String mapName, final Consumer<String> errorConsumer) {
-            if (NullSafe.isBlankString(mapName)) {
-                errorConsumer.accept("Null map name");
-                return Optional.empty();
-            }
+            Optional<PlanBDoc> result = Optional.empty();
 
-            return stateDocMap.computeIfAbsent(mapName, k -> {
-                PlanBDoc doc = null;
-
-                if (!PlanBNameValidator.isValidName(k)) {
-                    errorConsumer.accept("Bad map name: " + k);
-                } else {
-                    try {
-                        doc = planBDocCache.get(k);
-                        if (doc == null) {
-                            errorConsumer.accept("Unable to find state doc for map name: " + k);
-                        }
-                    } catch (final RuntimeException e) {
-                        errorConsumer.accept(e.getMessage());
-                    }
+            try {
+                if (NullSafe.isBlankString(mapName)) {
+                    throw new RuntimeException("Null map name");
                 }
 
-                return Optional.ofNullable(doc);
-            });
+                result = stateDocMap.computeIfAbsent(mapName, k -> {
+                    PlanBDoc doc = null;
+
+                    try {
+                        if (!PlanBNameValidator.isValidName(k)) {
+                            throw new RuntimeException("Bad map name: " + k);
+                        } else {
+                            doc = planBDocCache.get(k);
+                            if (doc == null) {
+                                throw new RuntimeException("Unable to find state doc for map name: " + k);
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        errorConsumer.accept(e.getMessage());
+                    }
+
+                    return Optional.ofNullable(doc);
+                });
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                errorConsumer.accept(e.getMessage());
+            }
+
+            return result;
         }
 
         private static class WriterInstance implements AutoCloseable {

@@ -404,7 +404,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
+        LOGGER.trace("endElement {} {} {} level:{} content:{}", uri, localName, qName, depthLevel, contentBuffer);
 
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
@@ -509,26 +509,17 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addData() {
+        LOGGER.debug(() -> "Adding data to map: " + mapName);
         final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
         optional.ifPresent(doc -> {
             // End of the data item so ensure it is persisted in the store
             try {
                 switch (doc.getStateType()) {
-                    case STATE -> {
-                        addState(doc);
-                    }
-                    case TEMPORAL_STATE -> {
-                        addTemporalState(doc);
-                    }
-                    case RANGED_STATE -> {
-                        addRangedState(doc);
-                    }
-                    case TEMPORAL_RANGED_STATE -> {
-                        addTemporalRangedState(doc);
-                    }
-                    case SESSION -> {
-                        addSession(doc);
-                    }
+                    case STATE -> addState(doc);
+                    case TEMPORAL_STATE -> addTemporalState(doc);
+                    case RANGED_STATE -> addRangedState(doc);
+                    case TEMPORAL_RANGED_STATE -> addTemporalRangedState(doc);
+                    case SESSION -> addSession(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
             } catch (final BufferOverflowException boe) {
