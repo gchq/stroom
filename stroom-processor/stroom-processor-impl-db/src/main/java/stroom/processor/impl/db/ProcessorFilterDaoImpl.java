@@ -389,6 +389,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .join(PROCESSOR)
                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(PROCESSOR_FILTER.RUN_AS_USER_UUID.eq(userUuid))
+                        .and(PROCESSOR_FILTER.DELETED.isFalse())
                         .fetch())
                 .map(this::mapRecord);
     }
