@@ -6,7 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
 import stroom.security.api.UserIdentity;
-import stroom.test.common.MockMetrics;
+import stroom.util.cache.CacheConfig;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.assertj.core.api.Assertions;
@@ -33,8 +33,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_noKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
 
@@ -48,8 +48,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_invalidKey1() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         setAuthHeaderOnMock("foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
@@ -64,8 +64,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_invalidKey2() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + "foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
@@ -80,8 +80,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_validButUnknownKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
@@ -99,8 +99,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_validAndKnownKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
@@ -126,8 +126,8 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_badAccountId() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                ReceiveDataConfig::new,
-                new CacheManagerImpl(new MockMetrics()));
+                this::getReceiveDataConfig,
+                new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
@@ -151,5 +151,12 @@ class TestDataFeedKeyServiceImpl {
     private void setAuthHeaderOnMock(final String value) {
         Mockito.when(mockHttpServletRequest.getHeader(DataFeedKeyServiceImpl.AUTHORIZATION_HEADER))
                 .thenReturn(value);
+    }
+
+    private ReceiveDataConfig getReceiveDataConfig() {
+        // Use a vanilla CacheConfig so it doesn't user dropwizard metrics
+        return ReceiveDataConfig.builder()
+                .withAuthenticatedDataFeedKeyCache(new CacheConfig())
+                .build();
     }
 }

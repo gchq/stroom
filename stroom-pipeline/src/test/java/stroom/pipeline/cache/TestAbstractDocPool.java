@@ -8,7 +8,6 @@ import stroom.cache.service.impl.FindCacheInfoCriteria;
 import stroom.docstore.shared.Doc;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
-import stroom.test.common.MockMetrics;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.StringCriteria;
@@ -32,7 +31,7 @@ class TestAbstractDocPool {
     @Mock
     DocumentPermissionCache documentPermissionCache;
 
-    final CacheManagerImpl cacheManager = new CacheManagerImpl(new MockMetrics());
+    final CacheManagerImpl cacheManager = new CacheManagerImpl();
 
     final CacheManagerService cacheManagerService = new CacheManagerServiceImpl(
             cacheManager,

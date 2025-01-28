@@ -30,6 +30,7 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collections;
@@ -51,11 +52,18 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     private static final String PARAM_NAME_CACHE_NAME = "name";
 
     private final Map<String, StroomCache<?, ?>> caches = new ConcurrentHashMap<>();
-    private final Metrics metrics;
+    private final Provider<Metrics> metricsProvider;
 
     @Inject
-    public CacheManagerImpl(final Metrics metrics) {
-        this.metrics = metrics;
+    public CacheManagerImpl(final Provider<Metrics> metricsProvider) {
+        this.metricsProvider = metricsProvider;
+    }
+
+    /**
+     * This is only for tests to save providing a {@link Metrics} instance
+     */
+    public CacheManagerImpl() {
+        this.metricsProvider = null;
     }
 
     @Override
@@ -71,7 +79,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 name,
                 cacheConfigSupplier,
                 removalNotificationConsumer,
-                metrics);
+                metricsProvider);
         registerCache(name, cache);
         return cache;
     }
@@ -90,7 +98,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 cacheConfigSupplier,
                 loadFunction,
                 removalNotificationConsumer,
-                metrics);
+                metricsProvider);
         registerCache(name, cache);
         return cache;
     }

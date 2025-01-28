@@ -5,6 +5,7 @@ import stroom.util.metrics.Metrics;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.inject.Provider;
 
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -14,8 +15,8 @@ class StroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
     public StroomCacheImpl(final String name,
                            final Supplier<CacheConfig> cacheConfigSupplier,
                            final BiConsumer<K, V> removalNotificationConsumer,
-                           final Metrics metrics) {
-        super(name, cacheConfigSupplier, removalNotificationConsumer, metrics);
+                           final Provider<Metrics> metricsProvider) {
+        super(name, cacheConfigSupplier, removalNotificationConsumer, metricsProvider);
         rebuild();
     }
 

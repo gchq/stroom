@@ -74,7 +74,7 @@ class TestStroomCacheImpl {
                     if (removalConsumerRef.get() != null) {
                         removalConsumerRef.get().accept(k, v);
                     }
-                }, new MockMetrics());
+                }, MockMetrics::new);
     }
 
     private void populateCache() {

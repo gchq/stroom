@@ -9,6 +9,7 @@ import stroom.util.metrics.Metrics;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import jakarta.inject.Provider;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,8 +27,8 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
                                   final Supplier<CacheConfig> cacheConfigSupplier,
                                   final Function<K, V> loadFunction,
                                   final BiConsumer<K, V> removalNotificationConsumer,
-                                  final Metrics metrics) {
-        super(name, cacheConfigSupplier, removalNotificationConsumer, metrics);
+                                  final Provider<Metrics> metricsProvider) {
+        super(name, cacheConfigSupplier, removalNotificationConsumer, metricsProvider);
         Objects.requireNonNull(loadFunction);
         this.loadFunction = loadFunction;
         rebuild();
@@ -36,8 +37,8 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
     public LoadingStroomCacheImpl(final String name,
                                   final Supplier<CacheConfig> cacheConfigSupplier,
                                   final Function<K, V> loadFunction,
-                                  final Metrics metrics) {
-        this(name, cacheConfigSupplier, loadFunction, null, metrics);
+                                  final Provider<Metrics> metricsProvider) {
+        this(name, cacheConfigSupplier, loadFunction, null, metricsProvider);
     }
 
     @Override

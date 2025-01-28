@@ -27,13 +27,19 @@ public interface Metrics {
     String FILE_COUNT = "fileCount";
     String SIZE_IN_BYTES = "sizeInBytes";
 
-    MetricRegistry getRegistry();
-
     /**
+     * A builder for registering and in some cases also creating a {@link com.codahale.metrics.Metric}
+     *
      * @param clazz The class that owns the metric. The fully qualified class name
      *              will be used as the prefix in the metric name.
      */
     default MetricRegistrationBuilder registrationBuilder(final Class<?> clazz) {
         return new MetricRegistrationBuilder(getRegistry(), clazz);
     }
+
+    /**
+     * Mostly for use in tests. Metrics should be registered using
+     * {@link Metrics#registrationBuilder(Class)}
+     */
+    MetricRegistry getRegistry();
 }

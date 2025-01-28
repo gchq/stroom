@@ -1,6 +1,8 @@
 package stroom.util.metrics;
 
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.codahale.metrics.CachedGauge;
 import com.codahale.metrics.Counter;
@@ -21,6 +23,8 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 public class MetricRegistrationBuilder {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetricRegistrationBuilder.class);
 
     private final MetricRegistry metricRegistry;
     private final Class<?> clazz;
@@ -160,12 +164,10 @@ public class MetricRegistrationBuilder {
         }
 
         public void register() {
-            final String[] namePartsArr = NullSafe.stream(nameParts)
-                    .toArray(String[]::new);
-
+            // This does the debug logging of the registration
             MetricsUtil.register(
                     metricRegistry,
-                    MetricsUtil.buildName(clazz, namePartsArr),
+                    MetricsUtil.buildName(clazz, nameParts),
                     metric);
         }
     }
@@ -192,12 +194,13 @@ public class MetricRegistrationBuilder {
         }
 
         public M createAndRegister() {
-            final String[] namePartsArr = NullSafe.stream(nameParts)
-                    .toArray(String[]::new);
+            final String name = MetricsUtil.buildName(clazz, nameParts);
+            final M metric = createFunc.apply(metricRegistry, name);
 
-            return createFunc.apply(
-                    metricRegistry,
-                    MetricsUtil.buildName(clazz, namePartsArr));
+            LOGGER.debug("Registering metric '{}' of type {}",
+                    name, MetricsUtil.getMetricType(metric));
+
+            return metric;
         }
     }
 }

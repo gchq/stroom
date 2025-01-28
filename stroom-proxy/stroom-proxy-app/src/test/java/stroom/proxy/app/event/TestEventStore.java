@@ -8,6 +8,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.test.common.MockMetrics;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.concurrent.UniqueId.NodeType;
+import stroom.util.metrics.Metrics;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -29,12 +30,13 @@ public class TestEventStore {
         final EventStoreConfig eventStoreConfig = new EventStoreConfig();
         final ReceiverFactory receiveStreamHandlers = Mockito.mock(ReceiverFactory.class);
         final DataDirProvider dataDirProvider = () -> dir;
+        final Metrics metrics = new MockMetrics();
         final EventStore eventStore = new EventStore(
                 receiveStreamHandlers,
                 () -> eventStoreConfig,
                 dataDirProvider,
-                new FileStores(new MockMetrics()),
-                new CacheManagerImpl(new MockMetrics()));
+                new FileStores(metrics),
+                new CacheManagerImpl(() -> metrics));
 
         for (int i = 0; i < 10; i++) {
             final AttributeMap attributeMap = new AttributeMap();

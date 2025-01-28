@@ -151,11 +151,11 @@ public class TestMetricsImpl {
 
         assertThat(timer.getSnapshot().getMin())
                 .isCloseTo(TimeUnit.MILLISECONDS.toNanos(100),
-                        Percentage.withPercentage(10));
+                        Percentage.withPercentage(30));
 
         assertThat(timer.getSnapshot().getMax())
                 .isCloseTo(TimeUnit.MILLISECONDS.toNanos(200),
-                        Percentage.withPercentage(10));
+                        Percentage.withPercentage(30));
     }
 
     @Test

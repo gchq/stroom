@@ -29,7 +29,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.security.mock.MockSecurityContext;
-import stroom.test.common.MockMetrics;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
@@ -97,7 +96,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
             }
         };
 
-        try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                     metaService,
                     new EffectiveStreamInternPool(),
@@ -140,7 +139,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
 
         final InnerStreamMetaService mockStore = new InnerStreamMetaService();
 
-        try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig()
                     .withEffectiveStreamCache(CacheConfig.builder()
                             .maximumSize(1000L)
@@ -226,7 +225,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
         Mockito.when(mockMetaService.findEffectiveData(Mockito.any()))
                 .thenReturn(effectiveMetaSet);
 
-        try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                     cacheManager,
                     mockMetaService,
@@ -257,7 +256,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
     void testSystemInfo() throws JsonProcessingException {
         final MetaService mockMetaService = Mockito.mock(MetaService.class);
 
-        try (CacheManager cacheManager = new CacheManagerImpl(new MockMetrics())) {
+        try (CacheManager cacheManager = new CacheManagerImpl()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                     mockMetaService,
                     new EffectiveStreamInternPool(),

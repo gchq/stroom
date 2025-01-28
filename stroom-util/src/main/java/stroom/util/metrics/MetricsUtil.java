@@ -16,6 +16,7 @@ import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.RatioGauge;
 import com.codahale.metrics.Timer;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -44,7 +45,7 @@ public class MetricsUtil {
      *
      * @param clazz
      * @param nameParts
-     * @return
+     * @return The metric name
      */
     public static String buildName(final Class<?> clazz, final String... nameParts) {
         return MetricRegistry.name(
@@ -55,6 +56,16 @@ public class MetricsUtil {
                         .map(part -> REPLACE_PATTERN.matcher(part).replaceAll(""))
                         .filter(Predicate.not(String::isEmpty))
                         .toArray(String[]::new));
+    }
+
+    public static String buildName(final Class<?> clazz, final List<String> nameParts) {
+        if (NullSafe.hasItems(nameParts)) {
+            final String[] namePartsArr = NullSafe.stream(nameParts)
+                    .toArray(String[]::new);
+            return buildName(clazz, namePartsArr);
+        } else {
+            return MetricRegistry.name(Objects.requireNonNull(clazz), (String[]) null);
+        }
     }
 
     /**
@@ -78,7 +89,7 @@ public class MetricsUtil {
 
     static String getMetricType(final Metric metric) {
         // Metrics are often lambdas so this makes it easier to see in the logs
-        // what each one is
+        // what flavour of metric is being registered
         return switch (metric) {
             case null -> null;
             case MetricRegistry ignored -> MetricRegistry.class.getSimpleName();
@@ -94,7 +105,6 @@ public class MetricsUtil {
             default -> metric.getClass().getSimpleName();
         };
     }
-
 
     // --------------------------------------------------------------------------------
 

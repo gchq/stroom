@@ -16,6 +16,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockUserIdentityFactoryModule;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.ui.config.shared.UserPreferencesService;
@@ -32,6 +33,7 @@ public class TestModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new DbTestModule());
+        install(new MockMetricsModule());
         install(new CacheModule());
         install(new SecurityDbModule());
         install(new SecurityDaoModule());

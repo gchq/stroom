@@ -23,6 +23,7 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.github.benmanes.caffeine.cache.stats.ConcurrentStatsCounter;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import io.dropwizard.metrics.caffeine3.MetricsStatsCounter;
+import jakarta.inject.Provider;
 import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Arrays;
@@ -49,15 +50,15 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
     private final Supplier<CacheConfig> cacheConfigSupplier;
     private final BiConsumer<K, V> removalNotificationConsumer;
     private final AtomicInteger reachedSizeLimitCount = new AtomicInteger();
-    private final Metrics metrics;
+    private final Provider<Metrics> metricsProvider;
 
     protected volatile CacheHolder<K, V> cacheHolder = null;
 
     public AbstractStroomCache(final String name,
                                final Supplier<CacheConfig> cacheConfigSupplier,
                                final BiConsumer<K, V> removalNotificationConsumer,
-                               final Metrics metrics) {
-        this.metrics = metrics;
+                               final Provider<Metrics> metricsProvider) {
+        this.metricsProvider = metricsProvider;
 
         Objects.requireNonNull(name);
         Objects.requireNonNull(cacheConfigSupplier);
@@ -149,9 +150,14 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
             case INTERNAL -> newCacheBuilder.recordStats();
             case DROPWIZARD_METRICS -> newCacheBuilder.recordStats(() -> {
                 //  https://metrics.dropwizard.io/4.2.0/manual/caffeine.html
-                return new MetricsStatsCounter(
-                        metrics.getRegistry(),
-                        MetricsUtil.buildName(getClass(), name));
+                final Metrics metrics = NullSafe.get(metricsProvider, Provider::get);
+                Objects.requireNonNull(
+                        metrics,
+                        "metrics or its provider is null. You must supply a " +
+                        "metrics provider to use StatisticsMode "
+                        + StatisticsMode.DROPWIZARD_METRICS + " or change the cache config to use "
+                        + StatisticsMode.INTERNAL);
+                return new MetricsStatsCounter(metrics.getRegistry(), MetricsUtil.buildName(getClass(), name));
             });
         }
     }

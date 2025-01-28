@@ -52,7 +52,7 @@ class TestLoadingStroomCacheImpl {
                         removalConsumerRef.get().accept(k, v);
                     }
                 },
-                new MockMetrics());
+                MockMetrics::new);
     }
 
     @Test
