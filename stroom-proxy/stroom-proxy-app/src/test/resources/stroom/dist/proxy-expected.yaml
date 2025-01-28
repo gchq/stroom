@@ -94,9 +94,9 @@ proxyConfig:
       additionalGroupSuffix: " (sandbox)"
       createAsSubjectId: "Administrators"
       createAsType: "GROUP"
-      destinationPath: "/Feeds"
+      destinationExplorerPath: "/Feeds"
       enabled: false
-      templatesPath: "/Feeds/Content Templates"
+      templatesExplorerPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
     - "CERTIFICATE"

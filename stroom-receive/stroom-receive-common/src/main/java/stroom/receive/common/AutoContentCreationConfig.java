@@ -32,7 +32,7 @@ public class AutoContentCreationConfig
     private final String destinationExplorerPath;
 
     @JsonProperty
-    private final String templatesPath;
+    private final String templatesExplorerPath;
 
     @JsonProperty
     private final String additionalGroupSuffix;
@@ -47,7 +47,7 @@ public class AutoContentCreationConfig
         enabled = false;
         destinationExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
                 .toString();
-        templatesPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
+        templatesExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
         additionalGroupSuffix = " (sandbox)";
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
@@ -57,13 +57,13 @@ public class AutoContentCreationConfig
     @JsonCreator
     public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
                                      @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
-                                     @JsonProperty("templatesPath") final String templatesPath,
+                                     @JsonProperty("templatesExplorerPath") final String templatesExplorerPath,
                                      @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
                                      @JsonProperty("createAsSubjectId") final String createAsSubjectId,
                                      @JsonProperty("createAsType") final UserType createAsType) {
         this.enabled = enabled;
         this.destinationExplorerPath = destinationExplorerPath;
-        this.templatesPath = templatesPath;
+        this.templatesExplorerPath = templatesExplorerPath;
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
@@ -72,7 +72,7 @@ public class AutoContentCreationConfig
     private AutoContentCreationConfig(Builder builder) {
         this.enabled = builder.enabled;
         this.destinationExplorerPath = builder.destinationPath;
-        this.templatesPath = builder.templatesPath;
+        this.templatesExplorerPath = builder.templatesPath;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
@@ -99,8 +99,8 @@ public class AutoContentCreationConfig
     @JsonPropertyDescription(
             "The path to a folder in the Stroom explorer tree where Stroom will look for content " +
             "to use as a template for auto-creating content.")
-    public String getTemplatesPath() {
-        return templatesPath;
+    public String getTemplatesExplorerPath() {
+        return templatesExplorerPath;
     }
 
     @JsonPropertyDescription(
@@ -145,7 +145,7 @@ public class AutoContentCreationConfig
         return new Builder()
                 .enabled(enabled)
                 .destinationPath(destinationExplorerPath)
-                .templatesPath(templatesPath);
+                .templatesPath(templatesExplorerPath);
     }
 
 

@@ -280,6 +280,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
                         // Entries from the data feed key trump what is in the headers
                         attributeMap.putAll(streamMeta);
 
+                        // Verify that the accountId provided in the headers corresponds to the data
+                        // feed key sent. Stops them using their own DFK to authenticate to someone
+                        // else's accountId.
                         final String accountId = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
                         if (!Objects.equals(dataFeedKey.getAccountId(), accountId)) {
                             throw new StroomStreamException(StroomStatusCode.INVALID_ACCOUNT_ID, attributeMap);
