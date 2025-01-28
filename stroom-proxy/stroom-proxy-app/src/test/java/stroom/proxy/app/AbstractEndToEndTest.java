@@ -23,7 +23,7 @@ import java.util.Map;
 
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
-public class AbstractEndToEndTest extends AbstractApplicationTest {
+public abstract class AbstractEndToEndTest extends AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndToEndTest.class);
 

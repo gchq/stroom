@@ -43,6 +43,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_metrics_core
     implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_el

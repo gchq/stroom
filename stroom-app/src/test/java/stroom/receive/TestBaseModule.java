@@ -22,6 +22,7 @@ import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.api.UserIdentity;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.impl.TaskContextModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
@@ -45,6 +46,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MemoryPersistenceModule());
         install(new MockMetaModule());
         install(new MockMetaStatisticsModule());
+        install(new MockMetricsModule());
         install(new MockNodeServiceModule());
         install(new MockSecurityContextModule());
         install(new MockStreamStoreModule());

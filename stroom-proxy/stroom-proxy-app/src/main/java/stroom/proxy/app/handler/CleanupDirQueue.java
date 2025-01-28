@@ -4,15 +4,15 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 public class CleanupDirQueue {
@@ -20,6 +20,7 @@ public class CleanupDirQueue {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CleanupDirQueue.class);
 
     private final Path dir;
+    private final AtomicLong count = new AtomicLong();
 
     @Inject
     CleanupDirQueue(final DataDirProvider dataDirProvider) {
@@ -31,12 +32,12 @@ public class CleanupDirQueue {
     public void add(final Path sourceDir) {
         try {
             // We will move before delete to help ensure we don't end up partially deleting dir contents in place.
-            final Path deleteDir = dir.resolve(sourceDir.getFileName());
+            // Make sure we get a unique dir name.
+            final Path deleteDir = dir.resolve(StringIdUtil.idToString(count.incrementAndGet()));
             Files.move(sourceDir, deleteDir, StandardCopyOption.ATOMIC_MOVE);
             FileUtil.deleteDir(deleteDir);
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             LOGGER.error(() -> "Failed to cleanup dir: " + FileUtil.getCanonicalPath(sourceDir), e);
-            throw new UncheckedIOException(e);
         }
     }
 }

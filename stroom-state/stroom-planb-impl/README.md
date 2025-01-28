@@ -3,7 +3,7 @@ Plan B is a new implementation of a state store with the aim of improving storag
 
 We currently have the previous Stroom State feature and two versions of statistics called Stroom Statistics and Stroom Stats Store.
 Choosing a unique name for this feature will make all discussions less confusing hence the current name, Plan B.
-The name can be changed but it needs to remain unique and memorable for this reason.
+The name can be changed, but it needs to remain unique and memorable for this reason.
 
 The initial implementation of Plan B seeks to prove the write/read process for an LMDB shard based approach to state storage and query before any optimisations are considered.
 Future optimisations will be discussed in the document.
@@ -14,7 +14,7 @@ To use the new Plan B state store feature the user must create Plan B docs in th
 Documents describe data stores that are analogous to maps in lookup functions and should therefore be named as such.
 
 The maps must be uniquely named as all lower case characters and underscores, e.g. `my_map_name`.
-Map names are case insentive so existing XSLT that loads reference data with a different case will still work, e.g. `MY_MAP_NAME` in XSLT will work with a Plan B document called `my_map_name`.
+Map names are case-insensitive so existing XSLT that loads reference data with a different case will still work, e.g. `MY_MAP_NAME` in XSLT will work with a Plan B document called `my_map_name`.
 
 ## Writing
 Once the Plan B documents are created, users can load data into the maps.
@@ -83,7 +83,7 @@ For this reason the new pipeline can have a new processing filter created to imm
 
 Each stream processed by the loading pipeline will create a set of local LMDB instances, one per map, for the data contained within that stream provided to it by the `PlanBFilter`.
 The location that the LMDB instances is written to is controlled by `stroom.planb.path` and defaults to `${stroom.home}/planb`.
-Pipelines will write data to the `writer` sub directory of this path, e.g. `${stroom.home}/planb/writer`.
+Pipelines will write data to the `writer` subdirectory of this path, e.g. `${stroom.home}/planb/writer`.
 The final step of the pipeline execution before it completes processing it to upload the LMDB store to one or more storage nodes.
 
 ## Uploading
@@ -91,10 +91,10 @@ Storage nodes are configured in the global Stroom config with the property `stro
 As the property is a list the system administrator must provide a comma delimited string of node names starting with a comma, e.g. `,node1a,node2a`.
 If the property is not set then Plan B will assume that you are using a single node instance of Stroom as is commonly the case for demo and test purposes.
 
-The processing will zip all of the LMDB instances it has just created and upload them to all of the nodes in the node list.
+The processing will zip all the LMDB instances it has just created and upload them to all the nodes in the node list.
 If the node in the node list is the same as the one that has done the processing then it will just move the zip file.
 This is also the case if no nodes are configured as a single node is assumed.
-The stream processing will only complete sucessully without a fatal error if the zip file can be uploaded to all storage nodes.
+The stream processing will only complete successfully without a fatal error if the zip file can be uploaded to all storage nodes.
 Failure to upload the zip to any of the nodes will log a fatal error and the stream will need to be processed again once the problem has been resolved.
 Upload could fail for a number of reasons including full disk, network problems, down nodes etc.
 All processing and storage is expected to be idempotent so that future attempts to load the data again will just add the data to the store again.
@@ -103,20 +103,20 @@ It may be necessary to rebuild a store if erroneous data is accidentally loaded 
 
 > It may be possible in a future iteration to delete data based on a search query to correct data.
 
-Data uploaded to a storage node (or moved if the processing node is a storage node) is placed in the `receive` sub direcotry of the Plan B path, e.g. `${stroom.home}/planb/receive`.
+Data uploaded to a storage node (or moved if the processing node is a storage node) is placed in the `receive` subdirectory of the Plan B path, e.g. `${stroom.home}/planb/receive`.
 Temporary files will be created here as data is streamed from the processing node.
-Once the processing node has finished successully streaming data to the receiving node then the data will be moved to the `staging` sub direcotry of the Plan B path, e.g. `${stroom.home}/planb/staging`.
+Once the processing node has finished successfully streaming data to the receiving node then the data will be moved to the `staging` subdirectory of the Plan B path, e.g. `${stroom.home}/planb/staging`.
 This location represents a sequential file store that is waiting for a reader to process received items in order.
 
 ## Merging
 Storage nodes need to run the job `Plan B Merge Processor`.
-This job will run perpertually once started and will merge data placed in the `staging` sequential file store as soon as it is available.
+This job will run perpetually once started and will merge data placed in the `staging` sequential file store as soon as it is available.
 Each zip provided by the sequential file store using the `staging` directory is unzipped to the `merging` directory, e.g. `${stroom.home}/planb/merging`.
 Once uncompressed each subdirectory containing an LMDB instance will be merged into shards in the `shards` directory, e.g. `${stroom.home}/planb/shards`.
 
-> Note that the LMDB databases representing a Plan B map are known as shards as it was originally planned that the keyspace for each map would be split amoung multiple shards.
+> Note that the LMDB databases representing a Plan B map are known as shards as it was originally planned that the keyspace for each map would be split among multiple shards.
 > This is not currently the case but may end up being necessary to reduce the size of snapshots that are downloaded.
-> Any future requirement for sharding will be dependant on specific store types and keyspace distribution.
+> Any future requirement for sharding will be dependent on specific store types and keyspace distribution.
 
 If an LMDB instance is the first for a given map then the LMDB instance will just be moved to become the basis for future merges.
 If a shard already exists for a map then the new LMDB instance will be merged into the existing shard by reading the contents of the new instance and writing them to the existing.
@@ -128,9 +128,9 @@ The system will always look to see if the current node that needs the data is a 
 If it is a storage node then the query will be performed directly on the data in the local store.
 If the current node needing the data is not a storage node then it will use a snapshot.
 A snapshot is requested from a storage node and stored locally for a period of time.
-Snapshots are stored in the `snapshots` sub directory, e.g. `${stroom.home}/planb/snapshots`.
+Snapshots are stored in the `snapshots` subdirectory, e.g. `${stroom.home}/planb/snapshots`.
 There may be multiple snapshots related to a Plan B document, fetched at different times.
-The snapshots are in subdiretories under `<doc_uuid>/<create_time>`.
+The snapshots are in subdirectories under `<doc_uuid>/<create_time>`.
 
 A node will try to get a snapshot from each of the storage nodes in the order specified in config and will try each until it is able to get a snapshot.
 The storage node will zip the current LMDB instance it has and will return that data to the requesting node.
@@ -142,12 +142,12 @@ If a previous snapshot is available then it will continue to be used until anoth
 
 Snapshots will be kept at least as long as `stroom.planb.minTimeToKeepSnapshots` (default 10 minutes) after which time they will asynchronously try to get another snapshot, continuing to use the previous one until a new one has been successfully fetched.
 
-To improve read performance LMDB instrances will remain open between reads for at least `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
+To improve read performance LMDB instances will remain open between reads for at least `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
 
 ### XSLT `stroom:lookup()`
 A user can query Plan B state using the standard `lookup()` XSLT function.
 Lookups in XSLT are done in the same way as reference data lookups in the XSLT but the `Pipeline Reference` in the relevant `XSLTFilter` must point to the necessary Plan B documents for each of the maps that is required.
-For example if you have `stroom:lookup('my_map_name', 'some_key')` then you will need a Plan B doc called `my_map_name` (case insensitive) that has data for `some_key` and the Plan B doc must be specified as a reference pipeline.
+For example if you have `stroom:lookup('my_map_name', 'some_key')` then you will need a Plan B doc called `my_map_name` (case-insensitive) that has data for `some_key` and the Plan B doc must be specified as a reference pipeline.
 
 > Note that Plan B documents are obviously not pipelines, but for the purposes of the initial version they will be treated as such by the UI when picking an XSLT lookup pipeline reference.
 > The UI will show Plan B documents when picking a reference loader.
@@ -228,9 +228,9 @@ The data is currently stored as follows:
 * `<KEY_LENGTH (int)><KEY (bytes)><VALUE_TYPE (byte)><VALUE (bytes)>`
 
 ### Key
-If we could gurantee that a key would always be less than 512 bytes then it would obviously be the best option to just store the key directly.
+If we could guarantee that a key would always be less than 512 bytes then it would obviously be the best option to just store the key directly.
 
-Because we cannot gurantee that this is the case without some future user configuration we instead need to store the key differently.
+Because we cannot guarantee that this is the case without some future user configuration we instead need to store the key differently.
 The key is converted into a long hash using `xx3` byte hashing.
 This long is used as the key in the table and the real key is inserted before the value.
 As with any hashing there is a change that we will get hash clashes between different keys.
@@ -266,14 +266,14 @@ Alternatively we could use a lookup table for the key.
 A lookup table could store the key as a value with a numeric index as the key.
 The numeric index (pointer) could then be used in the primary table.
 Inserts would need to first see if the key exists.
-To make this performant we would still need to use a hash of the key for the index otehrwise we would need to scan the table to find the key and associated index.
-We could cache this information but it is unlikely that we could hold the whole table in heap and unless there was a high chance of cache hits this would be pointless.
+To make this performant we would still need to use a hash of the key for the index otherwise we would need to scan the table to find the key and associated index.
+We could cache this information, but it is unlikely that we could hold the whole table in heap and unless there was a high chance of cache hits this would be pointless.
 Hashing the key comes with the same problems as the current solution in terms of hash clashes.
 We would potentially need to store multiple rows for each key if there were hash clashes and have an additional numeric part to uniquely identify them, e.g.
 
 * `<KEY_HASH (long)><UNIQUE_NUM (int)>`
 
-This would mean an even longer key lengh than the current solution.
+This would mean an even longer key length than the current solution.
 If we had many key hash clashes then this would also suffer greatly and potentially require a `long` for the unique part.
 Having said that we might also get away with an `int` hash and even shorter unique part depending on the data.
 
@@ -282,7 +282,7 @@ This means that this scheme would use certainly use more storage as there would 
 
 In testing the use of lookup tables for keys and values was found to be far slower hence due to the additional processing involved.
 Using lookup tables might be a useful future option for keys and values for data sets that have high degrees of duplication to save storage at the cost of performance.
-However it will never be appropriate for storing the key of non temporal state.
+However, it will never be appropriate for storing the key of non-temporal state.
 
 Deletions are harder with lookup tables if you want to delete from the lookup table as well as the primary table as you need to ensure there are no uses of a lookup value before you can delete it.
 
@@ -295,7 +295,7 @@ In the current scheme this comes after the key as the key is a prefix for the va
 There is no more efficient way of storing the value part from a performance perspective.
 
 #### Option - Compression
-It is unlikley that additional compression would substantially affect the size of the value assuming that appropriate serialisation is performed upastream, e.g. `Fast Infoset`.
+It is unlikely that additional compression would substantially affect the size of the value assuming that appropriate serialisation is performed upstream, e.g. `Fast Infoset`.
 
 #### Option - Use a lookup table
 If we have datasets that use the same value for many keys we may benefit from the use of a lookup table as previously discussed for keys.
@@ -313,10 +313,10 @@ The data is currently stored as follows:
 * `<KEY_LENGTH (int)><KEY (bytes)><VALUE_TYPE (byte)><VALUE (bytes)>`
 
 ### Key
-If we could gurantee that a key would always be less than 512 bytes minus an effecive time suffix then it would obviously be the best option to just store the key directly.
+If we could guarantee that a key would always be less than 512 bytes minus an effective time suffix then it would obviously be the best option to just store the key directly.
 This would be a max key length of 512 - key length (int) - effective time (long), e.g. `512 - 4 - 8 = 500`   
 
-At present a long hash is used for the key as descibed for `State`. 
+At present a long hash is used for the key as described for `State`. 
 
 Because we have temporal state we may end up with many duplicate keys increasing storage use.
 
@@ -338,7 +338,7 @@ As above.
 Pros and cons as above but potentially more beneficial as we are likely to insert the same keys multiple times due to storing temporal state.
 
 ### Value
-Currently stored the same way as the `State` scheme.
+Currently, stored the same way as the `State` scheme.
 
 #### Option - Use a lookup table
 All considerations are the same as for `State` except that as with the key, the temporal nature of this storage type potentially increases the duplication of values.
@@ -408,7 +408,7 @@ Allow storage of keys < 492 bytes directly.
 * `(empty)`
 
 Potentially faster.
-Sessions may end up with many duplicate keys increasing storage use, especially without session compaction.
+Sessions may end up with many duplicate keys increasing storage use, especially without session condensation.
 No need to store values in the table as we only care about the key.
 
 #### Option - Increase the key size of LMDB
@@ -435,19 +435,19 @@ If we used a lookup table to store the key then we wouldn't need to store a valu
 ### Value
 No value is needed for `Session` stores as we only care about the key and session start/end times.
 
-# Compaction
-Stores with temporal data can be compacted:
+# Condensation
+Stores with temporal data can be condensed:
 * `Temporal State` - Repeated confirmations of identical state can be removed.
 * `Temporal Ranged State` - Repeated confirmations of identical state can be removed.
-* `Session` - Overlapping sesions can be collapsed into a single session.
+* `Session` - Overlapping sessions can be collapsed into a single session.
 
-Stores are compacted on the storage nodes, using the `Plan B Maintenance Processor`.
-The compaction settings in the Plan B document govern how compaction is performed.
-Data is considered for compaction based on temporal state.
+Stores are condensed on the storage nodes, using the `Plan B Maintenance Processor`.
+The condensation settings in the Plan B document govern how condensation is performed.
+Data is considered for condensation based on temporal state.
 
-> Note that when loading old data it may be necessary to disable compaction for a store until data is loaded and processing is up to date, otherwise some data could be compacted prematurely.
+> Note that when loading old data it may be necessary to disable condensation for a store until data is loaded and processing is up-to-date, otherwise some data could be condensed prematurely.
 
-> We could introduce an update time to all store rows and only compact data based on update time which would remove the risk of compacting data with old timestamps we have recently added.
+> We could introduce an update time to all store rows and only condense data based on update time which would remove the risk of condensing data with old timestamps we have recently added.
 
 # Data Retention
 Stores with temporal data can have data removed that is older than a certain age:
@@ -455,21 +455,21 @@ Stores with temporal data can have data removed that is older than a certain age
 * `Temporal Ranged State` - Old state data can be deleted.
 * `Session` - Old sessions can be deleted.
 
-Data retention is performed on the storage nodes, with the same process as compaction,  using the `Plan B Maintenance Processor`.
+Data retention is performed on the storage nodes, with the same process as condensation,  using the `Plan B Maintenance Processor`.
 The retention settings in the Plan B document govern how retention is performed and data to consider for deletion based on temporal state.
 
-> Note that when loading old data it may be necessary to disable data retention processing for a store until data is loaded and processing is up to date, otherwise some data could be deleted prematurely.
+> Note that when loading old data it may be necessary to disable data retention processing for a store until data is loaded and processing is up-to-date, otherwise some data could be deleted prematurely.
 
 > We could introduce an update time to all store rows and delete data based on update time rather than temporal state time.
 
 # Store Deletion
 Deleting Plan B documents will not immediately delete the associated LMDB data.
-Instead the data will be deleted on the storage nodes, with the same process as compaction and retention, using the `Plan B Maintenance Processor`.
+Instead, the data will be deleted on the storage nodes, with the same process as condensation and retention, using the `Plan B Maintenance Processor`.
 And LMDB data stores that are found that do not have an associated Plan B document will be deleted.
 
 # Cleanup
 LMDB environments are kept open for reading and writing, this includes shards and snapshots.
-A periodic cleanup job, `Plan B shard cleanup`, should be run on all nodes when using Plan B to ensure LMDB environments are closed and snapshots cleaned up if the environments have ben idle for longer than `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
+A periodic cleanup job, `Plan B shard cleanup`, should be run on all nodes when using Plan B to ensure LMDB environments are closed and snapshots cleaned up if the environments have been idle for longer than `stroom.planb.minTimeToKeepEnvOpen` (default 1 minute).
 
 # Future Work
 
@@ -482,28 +482,28 @@ This includes:
 * Hybrid key storage for full short keys and hash/lookup for longer keys.
 
 ## Multi Threaded Merge
-At present the merge process uses a single thread because the code is simpler and it makes it much easier to reason about the status of the process.
-However, if we find that merge struggles to keep up with high frequencies of incoming data then we could easily add multi threaded execution to this process.
+At present the merge process uses a single thread because the code is simpler, and it makes it much easier to reason about the status of the process.
+However, if we find that merge struggles to keep up with high frequencies of incoming data then we could easily add multithreaded execution to this process.
 This could include the unzip of received data as well as the merging into different shards.
 Shards currently possess write locks so multi threading the merge process would not be dangerous from an LMDB writer perspective where only one writer and one writing thread are allowed at any time. 
 
 ## Snapshot Size Reduction 
-It may be ncessary to reduce snapshot sizes to prevent excessive download times and disk usage.
+It may be necessary to reduce snapshot sizes to prevent excessive download times and disk usage.
 
 This could be achieved by sharding data on write to specific key ranges or by filtering data on read to produce slices to cover a certain keyspace or effective time range to meet the snapshot request.
 Sharding by effective time would be expensive on write as changes to old shards would need to be copied through to all later shards.
 
 Sharding by key ranges could be done but would ideally be optional with various settings to control keyspace splitting as it is largely data dependant.
 
-We could also produce fully compacted snapshots regardless of the compaction status of the primary store.
-Compacted snapshots could be produced eagerly and asynchronously by storage nodes in anticipation of download requests.
+We could also produce fully condensed snapshots regardless of the condensation status of the primary store.
+Condensed snapshots could be produced eagerly and asynchronously by storage nodes in anticipation of download requests.
 
 ## Snapshot Diff
 Rather than always transferring whole snapshots or key range slices, we could just transfer diffs.
 This could be accomplished if we tracked the insert/update time for each row and only delivered rows that were new or changed since the last snapshot delivery.
 
 ## Remote Query
-Snapshots are essential for providing millions of ultra fast lookups when decorating/enriching events.
+Snapshots are essential for providing millions of ultra-fast lookups when decorating/enriching events.
 The design of Plan B is all about using snapshots because of the performance failings identified with using ScyallaDB, which in theory is one of the fastest remote key/value stores available.
 
 Even the fastest remote DB still has the network performance overhead and other resiliency/replication factors that make them a poor fit for our use case.
@@ -513,11 +513,11 @@ In these use cases we could query a remote store directly via an API.
 ## Search Performance
 At present, searches using the query API, do a full table scan.
 This is because it is difficult to turn complex query expressions into sensible key limited ranges.
-In future some code could be added to do this but it isn't a priority for the initial implementation and the current performance seems acceptable.
+In future some code could be added to do this, but it isn't a priority for the initial implementation and the current performance seems acceptable.
 
-## Compaction Disk Saving
+## Condensation Disk Saving
 LMDB does not free disk space just because you delete entries, instead it just frees pages for reuse.
-We might want to create a new compacted instance instead of deleting in place when we perform compaction and retention operations.
+We might want to create a new condensed instance instead of deleting in place when we perform condensation and retention operations.
 
 ## Statistics
 The process of local writes, central merges and snapshots could easily be used for statistics.

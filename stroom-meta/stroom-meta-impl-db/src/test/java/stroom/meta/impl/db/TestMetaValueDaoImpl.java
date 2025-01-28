@@ -62,6 +62,16 @@ class TestMetaValueDaoImpl {
 
     @BeforeEach
     void setup() {
+        final AbstractModule module = new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(MetaServiceConfig.class).toProvider(() ->
+                        getMetaServiceConfig());
+                bind(MetaValueConfig.class).toProvider(() ->
+                        getMetaValueConfig());
+            }
+        };
+
         Guice.createInjector(
                         new MetaModule(),
                         new MetaDbModule(),
@@ -77,15 +87,7 @@ class TestMetaValueDaoImpl {
                         new MetaTestModule(),
                         new MockTaskModule(),
                         new MockStroomEventLoggingModule(),
-                        new AbstractModule() {
-                            @Override
-                            protected void configure() {
-                                bind(MetaServiceConfig.class).toProvider(() ->
-                                        getMetaServiceConfig());
-                                bind(MetaValueConfig.class).toProvider(() ->
-                                        getMetaValueConfig());
-                            }
-                        })
+                        module)
                 .injectMembers(this);
         setAddAsync(false);
         // Delete everything
