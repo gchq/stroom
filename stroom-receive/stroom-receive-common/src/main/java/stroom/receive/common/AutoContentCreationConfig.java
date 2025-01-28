@@ -29,7 +29,7 @@ public class AutoContentCreationConfig
     private final boolean enabled;
 
     @JsonProperty
-    private final String destinationPath;
+    private final String destinationExplorerPath;
 
     @JsonProperty
     private final String templatesPath;
@@ -45,7 +45,7 @@ public class AutoContentCreationConfig
 
     public AutoContentCreationConfig() {
         enabled = false;
-        destinationPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
+        destinationExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
                 .toString();
         templatesPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
@@ -56,13 +56,13 @@ public class AutoContentCreationConfig
 
     @JsonCreator
     public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
-                                     @JsonProperty("destinationPath") final String destinationPath,
+                                     @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
                                      @JsonProperty("templatesPath") final String templatesPath,
                                      @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
                                      @JsonProperty("createAsSubjectId") final String createAsSubjectId,
                                      @JsonProperty("createAsType") final UserType createAsType) {
         this.enabled = enabled;
-        this.destinationPath = destinationPath;
+        this.destinationExplorerPath = destinationExplorerPath;
         this.templatesPath = templatesPath;
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
@@ -71,7 +71,7 @@ public class AutoContentCreationConfig
 
     private AutoContentCreationConfig(Builder builder) {
         this.enabled = builder.enabled;
-        this.destinationPath = builder.destinationPath;
+        this.destinationExplorerPath = builder.destinationPath;
         this.templatesPath = builder.templatesPath;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
@@ -92,8 +92,8 @@ public class AutoContentCreationConfig
             "The path to a folder in the Stroom explorer tree where Stroom will auto-create " +
             "content. If it doesn't exist it will be created. Content will be created in a sub-folder of this " +
             "folder with a name derived from the system name of the received data.")
-    public String getDestinationPath() {
-        return destinationPath;
+    public String getDestinationExplorerPath() {
+        return destinationExplorerPath;
     }
 
     @JsonPropertyDescription(
@@ -129,10 +129,10 @@ public class AutoContentCreationConfig
     @JsonIgnore
     @ValidationMethod(message = "destinationPath must be an absolute path.")
     public boolean isDestinationPathValid() {
-        if (destinationPath == null) {
+        if (destinationExplorerPath == null) {
             return true;
         } else {
-            final DocPath docPath = DocPath.fromParts(destinationPath);
+            final DocPath docPath = DocPath.fromParts(destinationExplorerPath);
             return docPath.isAbsolute();
         }
     }
@@ -144,7 +144,7 @@ public class AutoContentCreationConfig
     public Builder copy() {
         return new Builder()
                 .enabled(enabled)
-                .destinationPath(destinationPath)
+                .destinationPath(destinationExplorerPath)
                 .templatesPath(templatesPath);
     }
 

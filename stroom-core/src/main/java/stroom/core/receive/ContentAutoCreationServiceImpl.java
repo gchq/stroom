@@ -176,7 +176,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                 final AttributeMap attributeMap) {
 
         final AutoContentCreationConfig config = autoContentCreationConfigProvider.get();
-        final String destinationPath = config.getDestinationPath();
+        final String destinationPath = config.getDestinationExplorerPath();
         final String accountId = Objects.requireNonNull(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
         final DocPath docPath = DocPath.fromPathString(destinationPath)
                 .append(accountId);
