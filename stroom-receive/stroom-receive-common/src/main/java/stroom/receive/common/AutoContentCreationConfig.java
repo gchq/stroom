@@ -35,6 +35,9 @@ public class AutoContentCreationConfig
     private final String templatesExplorerPath;
 
     @JsonProperty
+    private final String templateConfigDir;
+
+    @JsonProperty
     private final String additionalGroupSuffix;
 
     @JsonProperty
@@ -49,6 +52,7 @@ public class AutoContentCreationConfig
                 .toString();
         templatesExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
+        templateConfigDir = "content_template_config";
         additionalGroupSuffix = " (sandbox)";
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
@@ -58,12 +62,14 @@ public class AutoContentCreationConfig
     public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
                                      @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
                                      @JsonProperty("templatesExplorerPath") final String templatesExplorerPath,
+                                     @JsonProperty("templateConfigDir") final String templateConfigDir,
                                      @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
                                      @JsonProperty("createAsSubjectId") final String createAsSubjectId,
                                      @JsonProperty("createAsType") final UserType createAsType) {
         this.enabled = enabled;
         this.destinationExplorerPath = destinationExplorerPath;
         this.templatesExplorerPath = templatesExplorerPath;
+        this.templateConfigDir = templateConfigDir;
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
@@ -73,6 +79,7 @@ public class AutoContentCreationConfig
         this.enabled = builder.enabled;
         this.destinationExplorerPath = builder.destinationPath;
         this.templatesExplorerPath = builder.templatesPath;
+        this.templateConfigDir = builder.templateConfigDir;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
@@ -101,6 +108,12 @@ public class AutoContentCreationConfig
             "to use as a template for auto-creating content.")
     public String getTemplatesExplorerPath() {
         return templatesExplorerPath;
+    }
+
+    @JsonPropertyDescription(
+            "The ")
+    public String getTemplateConfigDir() {
+        return templateConfigDir;
     }
 
     @JsonPropertyDescription(
@@ -157,6 +170,7 @@ public class AutoContentCreationConfig
         private boolean enabled;
         private String destinationPath;
         private String templatesPath;
+        public String templateConfigDir;
         public String additionalGroupSuffix;
         public String createAsSubjectId;
         public UserType createAsType;
@@ -173,6 +187,11 @@ public class AutoContentCreationConfig
 
         public Builder templatesPath(String templatesPath) {
             this.templatesPath = templatesPath;
+            return this;
+        }
+
+        public Builder templateConfigDir(String templateConfigDir) {
+            this.templateConfigDir = templateConfigDir;
             return this;
         }
 
@@ -196,6 +215,7 @@ public class AutoContentCreationConfig
                     .enabled(this.enabled)
                     .destinationPath(this.destinationPath)
                     .templatesPath(this.templatesPath)
+                    .templateConfigDir(this.templateConfigDir)
                     .additionalGroupSuffix(this.additionalGroupSuffix)
                     .createAsSubjectId(this.createAsSubjectId)
                     .createAsType(this.createAsType);

@@ -1,4 +1,4 @@
-package stroom.receive.common;
+package stroom.util.io;
 
 import stroom.util.HasHealthCheck;
 import stroom.util.NullSafe;
@@ -361,29 +361,29 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     /**
      * Called once the directory monitor has been started
      */
-    abstract void onInitialisation();
+    protected abstract void onInitialisation();
 
     /**
      * Called when a file/directory in the monitored directory is modified.
      */
-    abstract void onEntryModify(final Path path);
+    protected abstract void onEntryModify(final Path path);
 
     /**
      * Called when a file/directory in the monitored directory is created.
      */
-    abstract void onEntryCreate(final Path path);
+    protected abstract void onEntryCreate(final Path path);
 
     /**
      * Called when a file/directory in the monitored directory is deleted.
      */
-    abstract void onEntryDelete(final Path path);
+    protected abstract void onEntryDelete(final Path path);
 
     /**
      * Called when the consumption of events is not keeping up with the production.
      * If this is called, other events may have been dropped, so you may need
      * to re-scan the watched director.
      */
-    abstract void onOverflow();
+    protected abstract void onOverflow();
 
 
     // --------------------------------------------------------------------------------

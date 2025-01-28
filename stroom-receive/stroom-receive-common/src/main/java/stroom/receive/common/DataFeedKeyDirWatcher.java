@@ -1,6 +1,7 @@
 package stroom.receive.common;
 
 import stroom.util.NullSafe;
+import stroom.util.io.AbstractDirChangeMonitor;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -53,12 +54,12 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     }
 
     @Override
-    void onInitialisation() {
+    protected void onInitialisation() {
         processAllFiles();
     }
 
     @Override
-    void onEntryModify(final Path path) {
+    protected void onEntryModify(final Path path) {
         LOGGER.debug("onEntryModify - path: {}", path);
         if (path != null) {
             processFile(path);
@@ -66,7 +67,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     }
 
     @Override
-    void onEntryCreate(final Path path) {
+    protected void onEntryCreate(final Path path) {
         LOGGER.debug("onEntryCreate - path: {}", path);
         if (path != null) {
             processFile(path);
@@ -74,7 +75,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     }
 
     @Override
-    void onEntryDelete(final Path path) {
+    protected void onEntryDelete(final Path path) {
         LOGGER.debug("onEntryDelete - path: {}", path);
         if (path != null) {
             dataFeedKeyServiceProvider.get().removeKeysForFile(path);
@@ -82,7 +83,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     }
 
     @Override
-    void onOverflow() {
+    protected void onOverflow() {
         LOGGER.debug("onOverflow");
         processAllFiles();
     }
