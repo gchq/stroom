@@ -141,11 +141,6 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
-    }
-
-    @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
@@ -257,9 +252,9 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         final StateDoc doc = getStateDoc(docRef);
-        return StateFieldUtil.getTimeField(doc.getStateType());
+        return Optional.ofNullable(StateFieldUtil.getTimeField(doc.getStateType()));
     }
 
     private String getStoreName(final DocRef docRef) {

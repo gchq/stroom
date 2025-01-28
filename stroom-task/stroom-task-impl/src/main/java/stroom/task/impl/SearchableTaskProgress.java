@@ -49,6 +49,7 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,11 +90,21 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public DocRef getDocRef() {
+    public String getDataSourceType() {
+        return TASK_MANAGER_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(AppPermission.MANAGE_TASKS_PERMISSION)) {
-            return TASK_MANAGER_PSEUDO_DOC_REF;
+            return Collections.singletonList(TASK_MANAGER_PSEUDO_DOC_REF);
         }
-        return null;
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(TaskManagerFields.SUBMIT_TIME);
     }
 
     @Override
@@ -113,16 +124,6 @@ class SearchableTaskProgress implements Searchable {
     @Override
     public int getFieldCount(final DocRef docRef) {
         return NullSafe.size(getFields());
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return TaskManagerFields.SUBMIT_TIME;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package stroom.meta.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.MetaSecurityFilter;
@@ -28,6 +29,8 @@ public class MetaModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(Meta.class, MetaObjectInfoProvider.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(MetaServiceImpl.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(MetaServiceImpl.class);
 

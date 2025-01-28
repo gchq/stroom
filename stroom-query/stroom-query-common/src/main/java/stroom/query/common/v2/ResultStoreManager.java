@@ -282,12 +282,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 .build();
     }
 
-    private SearchRequest addTimeRangeExpression(final QueryField partitionTimeField,
+    private SearchRequest addTimeRangeExpression(final Optional<QueryField> optionalPartitionTimeField,
                                                  final SearchRequest searchRequest) {
         SearchRequest result = searchRequest;
 
         // Add the time range to the expression.
-        if (partitionTimeField != null) {
+        if (optionalPartitionTimeField.isPresent()) {
+            final QueryField partitionTimeField = optionalPartitionTimeField.get();
             final TimeRange timeRange = result.getQuery().getTimeRange();
             if (timeRange != null && (timeRange.getFrom() != null || timeRange.getTo() != null)) {
                 ExpressionOperator.Builder and = ExpressionOperator.builder().op(Op.AND);

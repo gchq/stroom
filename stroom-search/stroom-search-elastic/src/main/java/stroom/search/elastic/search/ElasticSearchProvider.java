@@ -197,13 +197,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(dataSourceRef);
-            if (index != null) {
-                return index.getDefaultExtractionPipeline();
-            }
-            return null;
+            return Optional.ofNullable(index).map(ElasticIndexDoc::getDefaultExtractionPipeline);
         });
     }
 
@@ -213,16 +210,14 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-
             QueryField timeField = null;
-            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                return QueryField.createDate(index.getTimeField());
+            if (index != null && index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                timeField = QueryField.createDate(index.getTimeField());
             }
-
-            return null;
+            return Optional.ofNullable(timeField);
         });
     }
 

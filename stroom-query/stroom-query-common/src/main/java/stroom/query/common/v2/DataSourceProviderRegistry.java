@@ -42,12 +42,8 @@ public class DataSourceProviderRegistry {
     private final Map<String, DataSourceProvider> dataSourceProviders = new ConcurrentHashMap<>();
 
     @Inject
-    public DataSourceProviderRegistry(final Set<DataSourceProvider> providers,
-                                      final AdditionalDataSourceProviders additionalDataSourceProviders) {
+    public DataSourceProviderRegistry(final Set<DataSourceProvider> providers) {
         for (final DataSourceProvider provider : providers) {
-            dataSourceProviders.put(provider.getDataSourceType(), provider);
-        }
-        for (final DataSourceProvider provider : additionalDataSourceProviders.getDataSourceProviders()) {
             dataSourceProviders.put(provider.getDataSourceType(), provider);
         }
     }
@@ -56,11 +52,10 @@ public class DataSourceProviderRegistry {
         return Optional.ofNullable(dataSourceProviders.get(type));
     }
 
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
         return getDataSourceProvider(docRef.getType())
-                .map(dsp -> dsp.fetchDefaultExtractionPipeline(docRef))
-                .orElse(null);
+                .flatMap(dsp -> dsp.fetchDefaultExtractionPipeline(docRef));
     }
 
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
@@ -93,10 +88,6 @@ public class DataSourceProviderRegistry {
         final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
         return getDataSourceProvider(docRef.getType())
                 .flatMap(dsp -> dsp.fetchDocumentation(docRef));
-    }
-
-    public Set<String> getTypes() {
-        return dataSourceProviders.keySet();
     }
 
     public List<DocRef> getDataSourceDocRefs() {

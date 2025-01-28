@@ -24,7 +24,7 @@ class SpecialExplorerDataSourceImpl implements IsSpecialExplorerDataSource {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return searchables.stream()
-                .map(Searchable::getDocRef)
+                .flatMap(searchable -> searchable.getDataSourceDocRefs().stream())
                 .filter(Objects::nonNull)
                 .toList();
     }

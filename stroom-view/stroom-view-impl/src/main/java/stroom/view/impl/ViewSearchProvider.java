@@ -135,13 +135,10 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final ViewDoc viewDoc = viewStore.readDocument(dataSourceRef);
-            if (viewDoc != null) {
-                return viewDoc.getPipeline();
-            }
-            return null;
+            return Optional.ofNullable(viewDoc).map(ViewDoc::getPipeline);
         });
     }
 
@@ -217,7 +214,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         final ViewDoc viewDoc = getView(docRef);
         return getDelegateStoreFactory(viewDoc).getTimeField(viewDoc.getDataSource());
     }

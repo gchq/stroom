@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
@@ -64,6 +65,8 @@ public class ProcessorModule extends AbstractModule {
                 .addBinding(ProcessorFilterCache.class)
                 .addBinding(PrioritisedFilters.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(ProcessorTaskServiceImpl.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
 

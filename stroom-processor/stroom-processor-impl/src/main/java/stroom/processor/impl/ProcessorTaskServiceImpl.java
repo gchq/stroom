@@ -39,6 +39,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,11 +88,21 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public DocRef getDocRef() {
+    public String getDataSourceType() {
+        return ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(PERMISSION)) {
-            return ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF;
+            return Collections.singletonList(ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF);
         }
-        return null;
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(ProcessorTaskFields.CREATE_TIME);
     }
 
     @Override
@@ -111,15 +122,5 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
 
     private List<QueryField> getFields() {
         return ProcessorTaskFields.getFields();
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return ProcessorTaskFields.CREATE_TIME;
     }
 }

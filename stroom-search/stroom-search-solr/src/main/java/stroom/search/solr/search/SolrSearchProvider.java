@@ -137,26 +137,23 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(dataSourceRef);
-            if (index != null) {
-                return index.getDefaultExtractionPipeline();
-            }
-            return null;
+            return Optional.ofNullable(index).map(SolrIndexDoc::getDefaultExtractionPipeline);
         });
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
             QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                return QueryField.createDate(index.getTimeField());
+                return Optional.of(QueryField.createDate(index.getTimeField()));
             }
 
-            return null;
+            return Optional.empty();
         });
     }
 

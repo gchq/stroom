@@ -154,10 +154,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(PageRequest.oneRow());
         final List<Meta> list = find(findMetaCriteria).getValues();
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             return null;
         }
-        return list.get(0);
+        return list.getFirst();
     }
 
     @Override
@@ -299,8 +299,18 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public DocRef getDocRef() {
-        return MetaFields.STREAM_STORE_DOC_REF;
+    public String getDataSourceType() {
+        return MetaFields.STREAM_STORE_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        return Collections.singletonList(MetaFields.STREAM_STORE_DOC_REF);
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(MetaFields.CREATE_TIME);
     }
 
     @Override
@@ -314,16 +324,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public int getFieldCount(final DocRef docRef) {
         return NullSafe.size(MetaFields.getAllFields());
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return MetaFields.CREATE_TIME;
     }
 
     @Override

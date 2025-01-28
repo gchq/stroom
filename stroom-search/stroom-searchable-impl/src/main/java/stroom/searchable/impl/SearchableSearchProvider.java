@@ -112,8 +112,8 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return searchable.fetchDefaultExtractionPipeline(dataSourceRef);
     }
 
     @Override
@@ -161,7 +161,7 @@ class SearchableSearchProvider implements SearchProvider {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
-        final DocRef docRef = searchable.getDocRef();
+        final DocRef docRef = searchable.getDataSourceDocRefs().getFirst();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
@@ -281,17 +281,17 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        return searchable.getTimeField();
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return searchable.getTimeField(docRef);
     }
 
     @Override
     public List<DocRef> getDataSourceDocRefs() {
-        return Collections.singletonList(searchable.getDocRef());
+        return searchable.getDataSourceDocRefs();
     }
 
     @Override
     public String getDataSourceType() {
-        return searchable.getDocRef().getType();
+        return searchable.getDataSourceType();
     }
 }

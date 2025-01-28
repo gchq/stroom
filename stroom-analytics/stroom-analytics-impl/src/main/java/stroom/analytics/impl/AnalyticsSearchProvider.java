@@ -79,18 +79,8 @@ public class AnalyticsSearchProvider implements SearchProvider, IsSpecialExplore
     }
 
     @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
-    }
-
-    @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        return AnalyticFields.TIME_FIELD;
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(AnalyticFields.TIME_FIELD);
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
