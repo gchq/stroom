@@ -34,7 +34,6 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.resultpage.InexactResultPageBuilder;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PageRequest;
@@ -186,7 +185,7 @@ class QueryResourceImpl implements QueryResource {
         final String parentPath = request.getParentPath();
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
         final ResultPageBuilder<QueryHelpRow> resultPageBuilder =
-                new InexactResultPageBuilder<>(request.getPageRequest());
+                new ResultPageBuilder<>(request.getPageRequest());
         PageRequest pageRequest = request.getPageRequest();
         if (request.isTypeIncluded(QueryHelpType.DATA_SOURCE)) {
             dataSourcesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);

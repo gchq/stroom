@@ -44,7 +44,7 @@ public interface QueryService {
 
     List<String> fetchTimeZones();
 
-    DocRef fetchDefaultExtractionPipeline(DocRef dataSourceRef);
+    Optional<DocRef> fetchDefaultExtractionPipeline(DocRef dataSourceRef);
 
     Optional<DocRef> getReferencedDataSource(String query);
 

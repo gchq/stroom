@@ -130,7 +130,7 @@ public class MockIndexFieldService implements IndexFieldService {
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return LuceneIndexDoc.TYPE;
     }
 }

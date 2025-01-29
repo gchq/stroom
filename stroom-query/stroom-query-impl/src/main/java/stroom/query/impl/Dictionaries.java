@@ -31,8 +31,8 @@ import stroom.query.shared.QueryHelpType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
@@ -68,18 +68,18 @@ public class Dictionaries {
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
                         final StringMatcher stringMatcher,
-                        final ResultConsumer<QueryHelpRow> resultConsumer) {
+                        final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final List<DocRef> docs = dictionaryStore.list();
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(docs, stringMatcher);
             if (hasChildren ||
                 MatchType.ANY.equals(stringMatcher.getMatchType()) ||
                 stringMatcher.match(ROOT.getTitle()).isPresent()) {
-                resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+                resultPageBuilder.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(DICTIONARY_ID + ".")) {
-            final ResultPageBuilder<QueryHelpRow> builder =
-                    new ResultPageBuilder<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
+            final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
+                    new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
 
             for (final DocRef docRef : docs) {
                 if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
@@ -92,13 +92,13 @@ public class Dictionaries {
                             .title(docRef.getDisplayValue())
                             .data(new QueryHelpDocument(docRef))
                             .build();
-                    builder.add(row);
+                    trimmedSortedList.add(row);
                 }
             }
-            for (final QueryHelpRow row : builder.build().getValues()) {
-                if (!resultConsumer.add(row)) {
-                    break;
-                }
+
+            final List<QueryHelpRow> list = trimmedSortedList.getList();
+            for (final QueryHelpRow row : list) {
+                resultPageBuilder.add(row);
             }
         }
     }

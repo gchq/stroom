@@ -1,47 +1,61 @@
 package stroom.index.impl.db;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.language.functions.FieldIndex;
 import stroom.util.AuditUtil;
 import stroom.util.io.ByteSizeUnit;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardDaoImpl {
 
-    private static IndexVolumeDao indexVolumeDao;
-    private static IndexVolumeGroupDao indexVolumeGroupDao;
-    private static IndexShardDao indexShardDao;
-    private static Path tempDir;
+    @Inject
+    private IndexVolumeDao indexVolumeDao;
+    @Inject
+    private IndexVolumeGroupDao indexVolumeGroupDao;
+    @Inject
+    private IndexShardDao indexShardDao;
+    @Inject
+    private Set<Clearable> clearables;
+    private Path tempDir;
 
-    @BeforeAll
-    static void beforeAll(@TempDir final Path tempDir) {
+    @BeforeEach
+    void beforeEach(@TempDir final Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new IndexDbModule(),
                 new IndexDaoModule(),
                 new TestModule());
-
-        indexVolumeDao = injector.getInstance(IndexVolumeDao.class);
-        indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
-        indexShardDao = injector.getInstance(IndexShardDao.class);
-        TestIndexShardDaoImpl.tempDir = tempDir;
+        injector.injectMembers(this);
+        clearables.forEach(Clearable::clear);
+        this.tempDir = tempDir;
     }
 
 //    @Test
@@ -152,5 +166,48 @@ class TestIndexShardDaoImpl {
         indexVolumeGroup.setName(name);
         AuditUtil.stamp(() -> "test", indexVolumeGroup);
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
+    }
+
+    @Test
+    void testSearch() {
+        // Given
+        final DocRef index = DocRef.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(TestData.createIndexName())
+                .type(LuceneIndexDoc.TYPE)
+                .build();
+        final String nodeName = TestData.createNodeName();
+
+        final String volumeGroupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(volumeGroupName);
+
+        final IndexVolume indexVolume = createVolume(
+                nodeName, tempDir.resolve("my_vol1").toString(), indexVolumeGroup);
+
+        // When
+        createGroup(volumeGroupName);
+        final IndexShardKey indexShardKey = IndexShardKey
+                .builder()
+                .indexUuid(index.getUuid())
+                .partition(AllPartition.INSTANCE)
+                .build();
+
+        indexShardDao.create(indexShardKey, indexVolume, nodeName, "1.0-test");
+        indexShardDao.create(indexShardKey, indexVolume, nodeName, "1.0-test");
+
+        final List<QueryField> fields = IndexShardFields.getFields();
+        assertThat(fields.size()).isEqualTo(10);
+
+        for (final QueryField field : fields) {
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(field.getFldName());
+
+            final AtomicInteger count = new AtomicInteger();
+            indexShardDao.search(new ExpressionCriteria(), fieldIndex, values -> {
+                count.incrementAndGet();
+                assertThat(values.length).isEqualTo(1);
+            });
+            assertThat(count.get()).isEqualTo(2);
+        }
     }
 }

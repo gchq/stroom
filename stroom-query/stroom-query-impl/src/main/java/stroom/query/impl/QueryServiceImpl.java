@@ -639,7 +639,7 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() ->
                 dataSourceProviderRegistry.fetchDefaultExtractionPipeline(dataSourceRef));
     }

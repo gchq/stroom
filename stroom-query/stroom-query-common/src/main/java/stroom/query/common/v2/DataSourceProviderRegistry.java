@@ -44,7 +44,7 @@ public class DataSourceProviderRegistry {
     @Inject
     public DataSourceProviderRegistry(final Set<DataSourceProvider> providers) {
         for (final DataSourceProvider provider : providers) {
-            dataSourceProviders.put(provider.getType(), provider);
+            dataSourceProviders.put(provider.getDataSourceType(), provider);
         }
     }
 
@@ -52,42 +52,48 @@ public class DataSourceProviderRegistry {
         return Optional.ofNullable(dataSourceProviders.get(type));
     }
 
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return getDataSourceProvider(dataSourceRef.getType())
-                .map(dsp -> dsp.fetchDefaultExtractionPipeline(dataSourceRef))
-                .orElse(null);
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
+        return getDataSourceProvider(docRef.getType())
+                .flatMap(dsp -> dsp.fetchDefaultExtractionPipeline(docRef));
     }
 
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         try {
-            return getDataSourceProvider(criteria.getDataSourceRef().getType())
-                    .map(dsp -> dsp.getFieldInfo(criteria))
-                    .orElseGet(() -> ResultPage.createCriterialBasedList(Collections.emptyList(), criteria));
+            final DocRef docRef = LegacyDocRefConverter.convert(criteria.getDataSourceRef());
+            final FindFieldCriteria findFieldCriteria = new FindFieldCriteria(
+                    criteria.getPageRequest(),
+                    criteria.getSortList(),
+                    docRef,
+                    criteria.getStringMatch(),
+                    criteria.getQueryable());
+
+            return getDataSourceProvider(docRef.getType())
+                    .map(dsp -> dsp.getFieldInfo(findFieldCriteria))
+                    .orElseGet(() -> ResultPage.createCriterialBasedList(Collections.emptyList(), findFieldCriteria));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
     }
 
-    public int getFieldCount(final DocRef docRef) {
+    public int getFieldCount(final DocRef dataSourceRef) {
+        final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
         return getDataSourceProvider(docRef.getType())
                 .map(dataSourceProvider -> dataSourceProvider.getFieldCount(docRef))
                 .orElse(0);
     }
 
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
+    public Optional<String> fetchDocumentation(final DocRef dataSourceRef) {
+        final DocRef docRef = LegacyDocRefConverter.convert(dataSourceRef);
         return getDataSourceProvider(docRef.getType())
                 .flatMap(dsp -> dsp.fetchDocumentation(docRef));
     }
 
-    public Set<String> getTypes() {
-        return dataSourceProviders.keySet();
-    }
-
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return dataSourceProviders.values()
                 .stream()
-                .map(DataSourceProvider::list)
+                .map(DataSourceProvider::getDataSourceDocRefs)
                 .flatMap(List::stream)
                 .toList();
     }

@@ -2,7 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerDecorator;
-import stroom.explorer.api.HasDataSourceDocRefs;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 
 import jakarta.inject.Inject;
 
@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 
 public class ExplorerDecoratorImpl implements ExplorerDecorator {
 
-    private final Set<HasDataSourceDocRefs> set;
+    private final Set<IsSpecialExplorerDataSource> set;
 
     @Inject
-    public ExplorerDecoratorImpl(final Set<HasDataSourceDocRefs> set) {
+    public ExplorerDecoratorImpl(final Set<IsSpecialExplorerDataSource> set) {
         this.set = set;
     }
 

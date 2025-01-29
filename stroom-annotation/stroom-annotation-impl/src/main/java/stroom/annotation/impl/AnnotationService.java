@@ -46,13 +46,14 @@ import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
-    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
+    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
@@ -65,13 +66,21 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     }
 
     @Override
-    public DocRef getDocRef() {
-        try {
-            checkPermission();
-            return ANNOTATIONS_PSEUDO_DOC_REF;
-        } catch (final PermissionException e) {
-            return null;
+    public String getDataSourceType() {
+        return ANNOTATIONS_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
+            return Collections.singletonList(ANNOTATIONS_PSEUDO_DOC_REF);
         }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(AnnotationFields.UPDATED_ON_FIELD);
     }
 
     @Override
@@ -85,16 +94,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     @Override
     public int getFieldCount(final DocRef docRef) {
         return NullSafe.size(AnnotationFields.FIELDS);
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return AnnotationFields.UPDATED_ON_FIELD;
     }
 
     @Override

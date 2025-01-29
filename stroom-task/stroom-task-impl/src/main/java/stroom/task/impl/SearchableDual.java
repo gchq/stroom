@@ -30,12 +30,11 @@ import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class SearchableDual implements Searchable {
 
     private static final DocRef DOC_REF = new DocRef(
-            "Searchable",
+            "Dual",
             "Dual",
             "Dual");
 
@@ -45,8 +44,13 @@ public class SearchableDual implements Searchable {
     private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
     @Override
-    public DocRef getDocRef() {
-        return DOC_REF;
+    public String getDataSourceType() {
+        return DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        return Collections.singletonList(DOC_REF);
     }
 
     @Override
@@ -60,16 +64,6 @@ public class SearchableDual implements Searchable {
     @Override
     public int getFieldCount(final DocRef docRef) {
         return FIELDS.size();
-    }
-
-    @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return null;
     }
 
     @Override

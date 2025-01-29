@@ -85,6 +85,9 @@ public class SelectionHandlerListPresenter
                 new Column<ComponentSelectionHandler, String>(new TextCell()) {
                     @Override
                     public String getValue(final ComponentSelectionHandler row) {
+                        if (row.getComponentId() == null) {
+                            return "Any";
+                        }
                         if (components != null) {
                             final Component component = components.get(row.getComponentId());
                             if (component != null) {

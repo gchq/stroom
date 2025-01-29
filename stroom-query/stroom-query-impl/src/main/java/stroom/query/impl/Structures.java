@@ -30,8 +30,8 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
 import stroom.util.string.StringMatcher;
@@ -294,26 +294,26 @@ class Structures {
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
                         final StringMatcher stringMatcher,
-                        final ResultConsumer<QueryHelpRow> resultConsumer) {
+                        final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(stringMatcher);
             if (hasChildren ||
-                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                    stringMatcher.match(root.getTitle()).isPresent()) {
-                resultConsumer.add(root.copy().hasChildren(hasChildren).build());
+                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                stringMatcher.match(root.getTitle()).isPresent()) {
+                resultPageBuilder.add(root.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(SECTION_ID + ".")) {
-            final ResultPageBuilder<QueryHelpRow> builder =
-                    new ResultPageBuilder<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
+            final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
+                    new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
             for (final QueryHelpRow row : list) {
                 if (stringMatcher.match(row.getTitle()).isPresent()) {
-                    builder.add(row);
+                    trimmedSortedList.add(row);
                 }
             }
-            for (final QueryHelpRow row : builder.build().getValues()) {
-                if (!resultConsumer.add(row)) {
-                    break;
-                }
+
+            final List<QueryHelpRow> list = trimmedSortedList.getList();
+            for (final QueryHelpRow row : list) {
+                resultPageBuilder.add(row);
             }
         }
     }
@@ -395,8 +395,8 @@ class Structures {
             detail.append("For more information see the ");
             detail.appendLink(
                     uiConfig.getHelpUrl() +
-                            uiConfig.getHelpSubPathStroomQueryLanguage() +
-                            "#" + structureElement.title.toLowerCase().replace(" ", "-"),
+                    uiConfig.getHelpSubPathStroomQueryLanguage() +
+                    "#" + structureElement.title.toLowerCase().replace(" ", "-"),
                     "Help Documentation");
             detail.append(".");
         }
