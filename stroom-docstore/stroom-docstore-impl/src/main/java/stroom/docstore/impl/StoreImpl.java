@@ -612,11 +612,17 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     private void checkType(final DocRef docRef) {
-        Objects.requireNonNull(docRef);
-        if (!Objects.equals(type, docRef.getType())) {
-            throw new RuntimeException(LogUtil.message(
-                    "Invalid docRef type, found: '{}', expecting: '{}'",
-                    docRef.getType(), type));
+        try {
+            Objects.requireNonNull(docRef);
+            Objects.requireNonNull(docRef.getType());
+            if (!Objects.equals(type, docRef.getType())) {
+                throw new RuntimeException(LogUtil.message(
+                        "Invalid docRef type, found: '{}', expecting: '{}'",
+                        docRef.getType(), type));
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
     }
 
