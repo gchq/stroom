@@ -308,7 +308,7 @@ class TestPooledByteBufferOutputStream {
                     .isGreaterThan(BYTES);
             assertThat(pooledBuffer.limit())
                     .isEqualTo(BYTES);
-            assertThat(org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+            assertThat(ByteBufferUtils.compareTo(
                     byteBuffer, 5, BYTES,
                     pooledBuffer, 0, BYTES))
                     .isZero();

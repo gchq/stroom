@@ -23,7 +23,6 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
 import jakarta.inject.Inject;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -107,7 +106,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     @Override
     public void write(int b) throws IOException {
         checkWriteableState();
-        checkSizeAndGrow(Bytes.SIZEOF_BYTE);
+        checkSizeAndGrow(1);
         getCurrentPooledBuffer().getByteBuffer().put((byte) b);
     }
 
@@ -231,8 +230,8 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     @Override
     public String toString() {
         return "PooledByteBufferOutputStream{" +
-                "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
-                '}';
+               "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
+               '}';
     }
 
     public interface Factory {

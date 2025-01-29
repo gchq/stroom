@@ -23,7 +23,6 @@ import stroom.util.logging.LogUtil;
 
 import jakarta.xml.bind.DatatypeConverter;
 import net.openhft.hashing.LongHashFunction;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -37,14 +36,14 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferToString(final ByteBuffer byteBuffer) {
-        return ByteArrayUtils.byteArrayToString(Bytes.getBytes(byteBuffer));
+        return ByteArrayUtils.byteArrayToString(toBytes(byteBuffer));
     }
 
     public static String byteBufferToHex(final ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return "null";
         }
-        return ByteArrayUtils.byteArrayToHex(Bytes.getBytes(byteBuffer));
+        return ByteArrayUtils.byteArrayToHex(toBytes(byteBuffer));
     }
 
     public static String byteBufferToHexAll(final ByteBuffer byteBuffer) {
@@ -160,11 +159,11 @@ public class ByteBufferUtils {
         if (byteBuffer == null) {
             return "null";
         }
-        return ByteArrayUtils.byteArrayToAllForms(Bytes.getBytes(byteBuffer));
+        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
     }
 
     public static int compare(final ByteBuffer left, final ByteBuffer right) {
-        int cmpResult = org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
                 left, left.position(), left.remaining(),
                 right, right.position(), right.remaining());
 
@@ -174,6 +173,10 @@ public class ByteBufferUtils {
                 cmpResult));
         return cmpResult;
 
+    }
+
+    public static int compareTo(ByteBuffer buf1, int o1, int l1, ByteBuffer buf2, int o2, int l2) {
+        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
     }
 
     /**
@@ -367,8 +370,9 @@ public class ByteBufferUtils {
     }
 
     public static byte[] toBytes(final ByteBuffer byteBuffer) {
-        final byte[] arr = new byte[byteBuffer.remaining()];
-        byteBuffer.get(byteBuffer.position(), arr, 0, arr.length);
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+        final byte[] arr = new byte[dupBuffer.remaining()];
+        dupBuffer.get(arr);
         return arr;
     }
 
@@ -379,6 +383,13 @@ public class ByteBufferUtils {
         final byte[] arr = new byte[length];
         byteBuffer.get(index, arr, 0, length);
         return arr;
+    }
+
+    public static byte[] getBytes(final ByteBuffer byteBuffer) {
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+        byte[] result = new byte[dupBuffer.remaining()];
+        dupBuffer.get(result);
+        return result;
     }
 
 //    public static void debug(final ByteBuffer byteBuffer) {
