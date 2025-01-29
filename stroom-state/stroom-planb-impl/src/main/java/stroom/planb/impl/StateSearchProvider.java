@@ -113,6 +113,22 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
+    public String getDataSourceType() {
+        return PlanBDoc.TYPE;
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
+        return stateDocStore.list();
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        final PlanBDoc doc = getPlanBDoc(docRef);
+        return Optional.ofNullable(StateFieldUtil.getTimeField(doc.getStateType()));
+    }
+
+    @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final PlanBDoc doc = getPlanBDoc(criteria.getDataSourceRef());
         final List<QueryField> fields = StateFieldUtil.getQueryableFields(doc.getStateType());
@@ -146,11 +162,6 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return Optional.ofNullable(getPlanBDoc(docRef)).map(PlanBDoc::getDescription);
-    }
-
-    @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
     }
 
     @Override
@@ -267,12 +278,6 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         return resultStore;
     }
 
-    @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        final PlanBDoc doc = getPlanBDoc(docRef);
-        return StateFieldUtil.getTimeField(doc.getStateType());
-    }
-
     private String getStoreName(final DocRef docRef) {
         return NullSafe.toStringOrElse(
                 docRef,
@@ -282,15 +287,5 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
 
     private String getTaskName(final DocRef docRef) {
         return getStoreName(docRef) + " Search";
-    }
-
-    @Override
-    public List<DocRef> list() {
-        return stateDocStore.list();
-    }
-
-    @Override
-    public String getType() {
-        return PlanBDoc.TYPE;
     }
 }
