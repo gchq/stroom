@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.12] - 2025-01-29
+
+* Issue **#4690** : Fix meta data source fields.
+
+* Issue **#4691** : Fix meta data source fields.
+
+* Issue **#4701** : Fix selection filter null component.
+
+* Issue **#4698** : Fix default S3 Appender options.
+
+* Issue **#4686** : StroomQL now uses `stroom.ui.defaultMaxResults` if no `LIMIT` is set.
+
+* Issue **#4696** : Fix paging of large numbers of data sources.
+
+* Issue **#4672** : Add right click menu to copyable items.
+
+* Issue **#4719** : Fix duplicate pipeline dependencies per user due to multiple processor filters.
+
+* Issue **#4728** : No longer treat deleted pipeline filters as dependencies.
+
+* Issue **#4707** : Fix doc ref info service.
+
+
 ## [v7.7-beta.11] - 2025-01-23
 
 * Issue **#4713** : Fix datasource in use issue for API key DAO.
@@ -1112,7 +1135,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.12...HEAD
+[v7.7-beta.12]: https://github.com/gchq/stroom/compare/v7.7-beta.11...v7.7-beta.12
 [v7.7-beta.11]: https://github.com/gchq/stroom/compare/v7.7-beta.10...v7.7-beta.11
 [v7.7-beta.10]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.7-beta.10
 [v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
