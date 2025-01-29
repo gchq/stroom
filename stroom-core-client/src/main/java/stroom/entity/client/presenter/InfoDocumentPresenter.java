@@ -62,7 +62,7 @@ public class InfoDocumentPresenter
     @Override
     protected void onBind() {
         registerHandler(getView().asWidget().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent()), MouseDownEvent.getType()));
+                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
     }
 
     @Override

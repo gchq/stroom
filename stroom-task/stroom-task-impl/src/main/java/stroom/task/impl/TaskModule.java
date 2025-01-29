@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
@@ -49,6 +50,9 @@ public class TaskModule extends AbstractModule {
                 .addBinding(TaskManagerSessionListener.class);
 
         // TODO 10/03/2022 AT: Need to move SearchableDual to a better home
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(SearchableTaskProgress.class)
+                .addBinding(SearchableDual.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(SearchableTaskProgress.class)
                 .addBinding(SearchableDual.class);

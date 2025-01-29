@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.11] - 2025-01-29
+
+* Issue **#4682** : Improve Plan B filter error handling.
+
+* Issue **#4690** : Fix meta data source fields.
+
+* Issue **#4691** : Fix meta data source fields.
+
+* Issue **#4701** : Fix selection filter null component.
+
+* Issue **#4698** : Fix default S3 Appender options.
+
+* Issue **#4686** : StroomQL now uses `stroom.ui.defaultMaxResults` if no `LIMIT` is set.
+
+* Issue **#4696** : Fix paging of large numbers of data sources.
+
+* Issue **#4672** : Add right click menu to copyable items.
+
+* Issue **#4719** : Fix duplicate pipeline dependencies per user due to multiple processor filters.
+
+* Issue **#4728** : No longer treat deleted pipeline filters as dependencies.
+
+* Issue **#4707** : Fix doc ref info service.
+
+
 ## [v7.8-beta.10] - 2025-01-23
 
 * Issue **#4713** : Fix datasource in use issue for API key DAO.
@@ -1190,7 +1215,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.11...HEAD
+[v7.8-beta.11]: https://github.com/gchq/stroom/compare/v7.8-beta.10...v7.8-beta.11
 [v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
 [v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
 [v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
@@ -1201,31 +1227,3 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 [v7.8-beta.3]: https://github.com/gchq/stroom/compare/v7.8-beta.2...v7.8-beta.3
 [v7.8-beta.2]: https://github.com/gchq/stroom/compare/v7.8-beta.1...v7.8-beta.2
 [v7.8-beta.1]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...v7.8-beta.1
-[v7.8-reporting.5]: https://github.com/gchq/stroom/compare/v7.8-reporting.4...v7.8-reporting.5
-[v7.8-reporting.4]: https://github.com/gchq/stroom/compare/v7.8-reporting.3...v7.8-reporting.4
-[v7.8-reporting.3]: https://github.com/gchq/stroom/compare/v7.8-reporting.2...v7.8-reporting.3
-[v7.8-reporting.2]: https://github.com/gchq/stroom/compare/v7.8-reporting...v7.8-reporting.2
-[v7.8-reporting]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.8-reporting
-[v7.7-beta.9]: https://github.com/gchq/stroom/compare/v7.7-beta.8...v7.7-beta.9
-[v7.7-beta.8]: https://github.com/gchq/stroom/compare/v7.7-beta.7...v7.7-beta.8
-[v7.7-beta.7]: https://github.com/gchq/stroom/compare/v7.7-beta.6...v7.7-beta.7
-[v7.7-beta.6]: https://github.com/gchq/stroom/compare/v7.7-beta.5...v7.7-beta.6
-[v7.7-beta.5]: https://github.com/gchq/stroom/compare/v7.7-beta.4...v7.7-beta.5
-[v7.7-beta.4]: https://github.com/gchq/stroom/compare/v7.7-beta.3...v7.7-beta.4
-[v7.7-beta.3]: https://github.com/gchq/stroom/compare/v7.7-beta.2...v7.7-beta.3
-[v7.7-beta.2]: https://github.com/gchq/stroom/compare/v7.7-beta.1...v7.7-beta.2
-[v7.7-beta.1]: https://github.com/gchq/stroom/compare/v7.6-beta.4...v7.7-beta.1
-[v7.6-beta.4]: https://github.com/gchq/stroom/compare/v7.6-beta.3...v7.6-beta.4
-[v7.6-beta.3]: https://github.com/gchq/stroom/compare/v7.6-beta.2...v7.6-beta.3
-[v7.6-beta.2]: https://github.com/gchq/stroom/compare/v7.6-beta.1...v7.6-beta.2
-[v7.6-beta.1]: https://github.com/gchq/stroom/compare/v7.5-beta.9...v7.6-beta.1
-[v7.5-beta.9]: https://github.com/gchq/stroom/compare/v7.5-beta.8...v7.5-beta.9
-[v7.5-beta.8]: https://github.com/gchq/stroom/compare/v7.5-beta.7...v7.5-beta.8
-[v7.5-beta.7]: https://github.com/gchq/stroom/compare/v7.5-beta.6...v7.5-beta.7
-[v7.5-beta.6]: https://github.com/gchq/stroom/compare/v7.5-beta.5...v7.5-beta.6
-[v7.5-beta.5]: https://github.com/gchq/stroom/compare/v7.5-beta.4...v7.5-beta.5
-[v7.5-beta.4]: https://github.com/gchq/stroom/compare/v7.5-beta.3...v7.5-beta.4
-[v7.5-beta.3]: https://github.com/gchq/stroom/compare/v7.5-beta.2...v7.5-beta.3
-[v7.5-beta.2]: https://github.com/gchq/stroom/compare/v7.5-beta.1...v7.5-beta.2
-[v7.5-beta.1]: https://github.com/gchq/stroom/compare/v7.4-beta.16...v7.5-beta.1
-[v7.4.1]: https://github.com/gchq/stroom/compare/v7.4.0...v7.4.1

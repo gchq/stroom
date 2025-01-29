@@ -19,6 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestDocRefInfoCache {
 
     public static final String TYPE_FOO = "foo";
@@ -96,6 +99,7 @@ class TestDocRefInfoCache {
     @Test
     void testGet_folder() {
         final DocRef docRef = DOC_REF_FOLDER;
+        Mockito.when(mockExplorerActionHandlers.stream()).thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
         Mockito.when(mockExplorerActionHandlers.getHandler(Mockito.anyString()))
                 .thenReturn(new MyFolderExplorerActionHandler());
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef);

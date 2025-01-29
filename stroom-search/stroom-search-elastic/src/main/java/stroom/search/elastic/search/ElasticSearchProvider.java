@@ -197,13 +197,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(dataSourceRef);
-            if (index != null) {
-                return index.getDefaultExtractionPipeline();
-            }
-            return null;
+            return Optional.ofNullable(index).map(ElasticIndexDoc::getDefaultExtractionPipeline);
         });
     }
 
@@ -213,16 +210,14 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-
             QueryField timeField = null;
-            if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                return QueryField.createDate(index.getTimeField());
+            if (index != null && index.getTimeField() != null && !index.getTimeField().isBlank()) {
+                timeField = QueryField.createDate(index.getTimeField());
             }
-
-            return null;
+            return Optional.ofNullable(timeField);
         });
     }
 
@@ -294,7 +289,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             return firstFieldMapping.get()._kind().jsonValue();
         } else {
             LOGGER.debug(() -> "Mapping properties for field '" + fieldName +
-                    "' were in an unrecognised format. Field ignored.");
+                               "' were in an unrecognised format. Field ignored.");
         }
 
         return null;
@@ -310,7 +305,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             }
         } else {
             LOGGER.debug(() -> "Mapping properties for field '" + fieldName +
-                    "' were in an unrecognised format. Field ignored.");
+                               "' were in an unrecognised format. Field ignored.");
         }
 
         return null;
@@ -469,12 +464,12 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public List<DocRef> list() {
+    public List<DocRef> getDataSourceDocRefs() {
         return elasticIndexStore.list();
     }
 
     @Override
-    public String getType() {
+    public String getDataSourceType() {
         return ElasticIndexDoc.TYPE;
     }
 }

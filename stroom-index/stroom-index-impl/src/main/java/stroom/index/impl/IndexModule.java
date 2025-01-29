@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -76,6 +77,8 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
                 .addBinding(IndexStoreImpl.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(IndexShardServiceImpl.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(IndexShardServiceImpl.class);
 

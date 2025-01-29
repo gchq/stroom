@@ -1,8 +1,13 @@
 package stroom.processor.impl.db;
 
+import stroom.datasource.api.v2.QueryField;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.language.functions.FieldIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -10,7 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -283,8 +290,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(3);
     }
 
-    @Test
-    void testPhysicallyDeleteOldTasks() {
+    void setup() {
         assertThat(getProcessorCount(null))
                 .isEqualTo(0);
 
@@ -302,6 +308,11 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         createProcessorTask(processorFilter1b, TaskStatus.PROCESSING, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.COMPLETE, NODE1, FEED);
         createProcessorTask(processorFilter1b, TaskStatus.DELETED, NODE1, FEED);
+    }
+
+    @Test
+    void testPhysicallyDeleteOldTasks() {
+        setup();
 
         // These two are older than the threshold time, the rest are not
         createProcessorTask(processorFilter1b,
@@ -349,5 +360,25 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void testSearch() {
+        setup();
+
+        final List<QueryField> fields = ProcessorTaskFields.getFields();
+        assertThat(fields.size()).isEqualTo(18);
+
+        for (final QueryField field : fields) {
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(field.getFldName());
+
+            final AtomicInteger count = new AtomicInteger();
+            processorTaskDao.search(new ExpressionCriteria(), fieldIndex, values -> {
+                count.incrementAndGet();
+                assertThat(values.length).isEqualTo(1);
+            });
+            assertThat(count.get()).isEqualTo(8);
+        }
     }
 }

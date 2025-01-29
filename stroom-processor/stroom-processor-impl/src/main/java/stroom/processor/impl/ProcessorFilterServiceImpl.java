@@ -647,6 +647,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 //                                    userDependency.getDocRef(),
 //                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
 //                                    true))
+                .distinct()
                 .toList();
     }
 }

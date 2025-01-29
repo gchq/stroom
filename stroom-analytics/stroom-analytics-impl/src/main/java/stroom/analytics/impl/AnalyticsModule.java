@@ -18,7 +18,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.explorer.api.HasDataSourceDocRefs;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
 import stroom.processor.shared.ProcessorType;
@@ -92,7 +92,7 @@ public class AnalyticsModule extends AbstractModule {
                 .addBinding(AnalyticsSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
                 .addBinding(AnalyticsSearchProvider.class);
-        GuiceUtil.buildMultiBinder(binder(), HasDataSourceDocRefs.class)
+        GuiceUtil.buildMultiBinder(binder(), IsSpecialExplorerDataSource.class)
                 .addBinding(AnalyticsSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);

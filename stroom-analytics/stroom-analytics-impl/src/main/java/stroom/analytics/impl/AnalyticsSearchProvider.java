@@ -19,7 +19,7 @@ package stroom.analytics.impl;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.explorer.api.HasDataSourceDocRefs;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
+public class AnalyticsSearchProvider implements SearchProvider, IsSpecialExplorerDataSource {
 
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
@@ -65,9 +65,9 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        if (!getType().equals(criteria.getDataSourceRef().getType())) {
-            return ResultPage.empty();
-        }
+//        if (!getType().equals(criteria.getDataSourceRef().getType())) {
+//            return ResultPage.empty();
+//        }
         return FieldInfoResultPageBuilder.builder(criteria)
                 .addAll(AnalyticFields.getFields())
                 .build();
@@ -79,18 +79,8 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
-    }
-
-    @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        return AnalyticFields.TIME_FIELD;
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(AnalyticFields.TIME_FIELD);
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
@@ -146,7 +136,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
      * highlighting.
      */
     private Set<String> getHighlights(final ExpressionOperator expression,
-                                      DateTimeSettings dateTimeSettings) {
+                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
 //        try {
@@ -167,17 +157,12 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public List<DocRef> list() {
-        return List.of(AnalyticFields.ANALYTICS_DOC_REF);
-    }
-
-    @Override
-    public String getType() {
-        return AnalyticFields.ANALYTICS_DOC_REF.getType();
-    }
-
-    @Override
     public List<DocRef> getDataSourceDocRefs() {
         return List.of(AnalyticFields.ANALYTICS_DOC_REF);
+    }
+
+    @Override
+    public String getDataSourceType() {
+        return AnalyticFields.ANALYTICS_DOC_REF.getType();
     }
 }

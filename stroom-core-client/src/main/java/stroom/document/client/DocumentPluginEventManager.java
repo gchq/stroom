@@ -1265,9 +1265,15 @@ public class DocumentPluginEventManager extends Plugin {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.info(explorerNode.getDocRef()))
                         .onSuccess(explorerNodeInfo -> {
-                            ShowInfoDocumentDialogEvent.fire(
-                                    DocumentPluginEventManager.this,
-                                    explorerNodeInfo);
+                            if (explorerNodeInfo == null) {
+                                AlertEvent.fireError(DocumentPluginEventManager.this,
+                                        buildNotFoundMessage(explorerNode.getDocRef()),
+                                        null);
+                            } else {
+                                ShowInfoDocumentDialogEvent.fire(
+                                        DocumentPluginEventManager.this,
+                                        explorerNodeInfo);
+                            }
                         })
                         .onFailure(this::handleFailure)
                         .taskMonitorFactory(taskMonitorFactory)

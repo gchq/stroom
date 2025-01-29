@@ -11,8 +11,8 @@ import java.util.List;
 public class ReferenceDataFields {
 
     public static final DocRef REF_STORE_PSEUDO_DOC_REF = new DocRef(
-            "Searchable",
-            "Reference Data Store",
+            "ReferenceDataStore",
+            "ReferenceDataStore",
             "Reference Data Store (This Node Only)");
     public static final QueryField FEED_NAME_FIELD = QueryField
             .builder()

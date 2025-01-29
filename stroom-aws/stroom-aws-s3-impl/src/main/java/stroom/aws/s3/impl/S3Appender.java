@@ -66,6 +66,8 @@ import java.util.Optional;
 public class S3Appender extends AbstractAppender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Appender.class);
+    private static final String DEFAULT_USE_COMPRESSION_PROP_VALUE = "true";
+    private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final S3AppenderTempDir s3AppenderTempDir;
     private final PathCreator pathCreator;
@@ -92,6 +94,11 @@ public class S3Appender extends AbstractAppender {
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
         outputFactory = new OutputFactory(metaDataHolder);
+
+        // Ensure outputStreamSupport has the defaults for S3Appender
+        //noinspection ConstantValue
+        setUseCompression(Boolean.parseBoolean(DEFAULT_USE_COMPRESSION_PROP_VALUE));
+        setCompressionMethod(DEFAULT_COMPRESSION_METHOD_PROP_VALUE);
     }
 
     @Override
@@ -202,7 +209,7 @@ public class S3Appender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Apply compression to output objects.",
-            defaultValue = "true",
+            defaultValue = DEFAULT_USE_COMPRESSION_PROP_VALUE,
             displayPriority = 7)
     public void setUseCompression(final boolean useCompression) {
         outputFactory.setUseCompression(useCompression);
@@ -210,8 +217,8 @@ public class S3Appender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Compression method to apply, if compression is enabled. Supported values: " +
-                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
-            defaultValue = CompressorStreamFactory.GZIP,
+                          CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = DEFAULT_COMPRESSION_METHOD_PROP_VALUE,
             displayPriority = 8)
     public void setCompressionMethod(final String compressionMethod) {
         try {
