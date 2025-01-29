@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.11] - 2025-01-29
+
+* Issue **#4682** : Improve Plan B filter error handling.
+
 * Issue **#4690** : Fix meta data source fields.
 
 * Issue **#4691** : Fix meta data source fields.
@@ -1211,7 +1215,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.11...HEAD
+[v7.8-beta.11]: https://github.com/gchq/stroom/compare/v7.8-beta.10...v7.8-beta.11
 [v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
 [v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
 [v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
