@@ -46,8 +46,8 @@ dependencies {
     implementation libs.guava
     implementation libs.guice
     implementation libs.guice_assistedinject
-    implementation libs.hadoopCommonShaded
-    implementation libs.hadoopHdfsShaded
+    implementation project(path: ":stroom-hadoop:stroom-hadoop-shaded", configuration: 'shadow') // Use shadow JAR
+    implementation project(path: ":stroom-hadoop:stroom-hdfs-shaded", configuration: 'shadow') // Use shadow JAR
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind

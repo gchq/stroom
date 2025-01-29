@@ -22,12 +22,12 @@
 package stroom.bytebuffer.hbase;
 
 import stroom.hadoopcommonshaded.org.apache.commons.collections.CollectionUtils;
+import stroom.hadoopcommonshaded.org.apache.hadoop.classification.InterfaceAudience;
+import stroom.hadoopcommonshaded.org.apache.hadoop.io.RawComparator;
+import stroom.hadoopcommonshaded.org.apache.hadoop.io.WritableComparator;
+import stroom.hadoopcommonshaded.org.apache.hadoop.io.WritableUtils;
 
 import com.google.common.base.Preconditions;
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.WritableComparator;
-import org.apache.hadoop.io.WritableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

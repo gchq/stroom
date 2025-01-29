@@ -1,0 +1,53 @@
+ext.moduleName = 'hdfs.shaded'
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+configurations {
+    shadow {
+        canBeConsumed = true
+        canBeResolved = false
+        transitive = false
+    }
+}
+
+dependencies {
+    implementation("org.apache.hadoop:hadoop-hdfs:3.4.1") {
+        //exclude(module: 'slf4j-api')
+        //exclude(module: 'slf4j-log4j12')
+        //exclude(module: 'log4j')
+        //exclude(module: 'commons-logging:commons-logging')
+        // Exclude all logging so we can use our own SLF4J/Logback and its bridging pkgs
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+        exclude group: "commons-logging", module: "commons-logging"
+
+        // We want to use the xerces impl bundled in the jdk
+        // see https://stackoverflow.com/questions/11677572/dealing-with-xerces-hell-in-java-maven
+        exclude module: 'xercesImpl'
+    }
+    implementation "org.apache.hadoop:hadoop-hdfs-client:3.4.1"
+}
+
+tasks.register('hdfsShadowJar', ShadowJar) {
+    archiveClassifier = 'all'
+    configurations = [project.configurations.runtimeClasspath]
+    zip64 true
+
+    relocate 'org', 'stroom.hadoophdfsshaded.org'
+    relocate 'jersey', 'stroom.hadoophdfsshaded.jersey'
+    relocate 'jakarta', 'stroom.hadoophdfsshaded.jakarta'
+    relocate 'io', 'stroom.hadoophdfsshaded.io'
+    relocate 'com', 'stroom.hadoophdfsshaded.com'
+    relocate 'javax', 'stroom.hadoophdfsshaded.javax'
+
+    mergeServiceFiles()
+}
+
+artifacts {
+    shadow(hdfsShadowJar.archiveFile) {
+        builtBy(hdfsShadowJar)
+    }
+}
+
+tasks.build.dependsOn hdfsShadowJar

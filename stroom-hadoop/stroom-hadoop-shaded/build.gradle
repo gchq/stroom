@@ -1,0 +1,52 @@
+ext.moduleName = 'hadoop.shaded'
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+configurations {
+    shadow {
+        canBeConsumed = true
+        canBeResolved = false
+        transitive = false
+    }
+}
+
+dependencies {
+    implementation("org.apache.hadoop:hadoop-common:3.4.1") {
+        // Exclude all logging so we can use our own SLF4J/Logback and its bridging pkgs
+        exclude group: "org.slf4j", module: "slf4j-api"
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+        exclude group: "commons-logging", module: "commons-logging"
+        // Stop it dragging in any xerces impls that will conflict with ours
+        exclude module: 'xercesImpl'
+
+        // we wannt to use the jaxb impl in the jdk
+        exclude group: "com.sun.xml.bind", module: "jaxb-impl"
+    }
+}
+
+tasks.register('hadoopShadowJar', ShadowJar) {
+    archiveClassifier = 'all'
+    configurations = [project.configurations.runtimeClasspath]
+    zip64 true
+
+    relocate 'org', 'stroom.hadoopcommonshaded.org'
+    relocate 'net', 'stroom.hadoopcommonshaded.net'
+    relocate 'mozilla', 'stroom.hadoopcommonshaded.mozilla'
+    relocate 'jersey', 'stroom.hadoopcommonshaded.jersey'
+    relocate 'jakarta', 'stroom.hadoopcommonshaded.jakarta'
+    relocate 'io', 'stroom.hadoopcommonshaded.io'
+    relocate 'com', 'stroom.hadoopcommonshaded.com'
+    relocate 'assets', 'stroom.hadoopcommonshaded.assets'
+    relocate 'javax', 'stroom.hadoopcommonshaded.javax'
+
+    mergeServiceFiles()
+}
+
+artifacts {
+    shadow(hadoopShadowJar.archiveFile) {
+        builtBy(hadoopShadowJar)
+    }
+}
+
+tasks.build.dependsOn hadoopShadowJar

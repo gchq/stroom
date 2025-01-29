@@ -7,6 +7,7 @@ dependencies {
 //    implementation libs.guava
     implementation libs.guice_assistedinject
     implementation libs.guice
+    implementation project(path: ":stroom-hadoop:stroom-hadoop-shaded", configuration: 'shadow') // Use shadow JAR
     implementation libs.hbase_shaded_netty
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api

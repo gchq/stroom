@@ -36,7 +36,7 @@ def stroomDockerBuildDir = "${projectDir}/docker/build"
 def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.gradleup.shadow'
 apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
 apply plugin: "java"
 

@@ -21,8 +21,8 @@
 
 package stroom.bytebuffer.hbase;
 
-import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.WritableUtils;
+import stroom.hadoopcommonshaded.org.apache.hadoop.io.IOUtils;
+import stroom.hadoopcommonshaded.org.apache.hadoop.io.WritableUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;

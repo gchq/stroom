@@ -4,7 +4,7 @@ def fatJarName = 'stroom-headless-all.jar'
 def releaseBuildDir = 'build/release'
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.gradleup.shadow'
 mainClassName = 'stroom.headless.Cli'
 
 dependencies {

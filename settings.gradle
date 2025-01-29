@@ -143,6 +143,10 @@ include 'stroom-explorer:stroom-explorer-impl-db-jooq'
 include 'stroom-feed:stroom-feed-api'
 include 'stroom-feed:stroom-feed-impl'
 
+// Hadoop
+include 'stroom-hadoop:stroom-hadoop-shaded'
+include 'stroom-hadoop:stroom-hdfs-shaded'
+
 // Headless
 include 'stroom-headless'
 

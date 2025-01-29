@@ -16,10 +16,9 @@
 
 package stroom.pipeline.writer;
 
+import stroom.hadoopcommonshaded.org.apache.hadoop.fs.FileSystem;
+import stroom.hadoopcommonshaded.org.apache.hadoop.fs.Path;
 import stroom.util.io.WrappedOutputStream;
-
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
 import java.io.OutputStream;
