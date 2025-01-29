@@ -173,7 +173,7 @@ class ReportStoreImpl implements ReportStore {
                                 final DataSourceProviderRegistry dataSourceProviderRegistry =
                                         dataSourceProviderRegistryProvider.get();
                                 final Optional<DocRef> optional = dataSourceProviderRegistry
-                                        .list()
+                                        .getDataSourceDocRefs()
                                         .stream()
                                         .filter(dr -> dr.equals(docRef))
                                         .findAny();
