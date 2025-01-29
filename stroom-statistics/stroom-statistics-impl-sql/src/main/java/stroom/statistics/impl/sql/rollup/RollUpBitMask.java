@@ -16,9 +16,9 @@
 
 package stroom.statistics.impl.sql.rollup;
 
-import com.google.common.base.Preconditions;
+import stroom.bytebuffer.hbase.Bytes;
+
 import jakarta.xml.bind.DatatypeConverter;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -211,7 +212,7 @@ public class RollUpBitMask {
 
             if (rollUpBitMask == null) {
                 throw new RuntimeException(String.format("Position lists have not been loaded into the cache for " +
-                                "a position list [%s] of size %s. This should never happen",
+                                                         "a position list [%s] of size %s. This should never happen",
                         tagPositions,
                         tagPositions.size()));
             }
@@ -512,7 +513,7 @@ public class RollUpBitMask {
      * @return A new {@link RollUpBitMask} object
      */
     public RollUpBitMask convert(final Map<Integer, Integer> newToOldFieldPositionMap) {
-        Preconditions.checkNotNull(newToOldFieldPositionMap);
+        Objects.requireNonNull(newToOldFieldPositionMap);
 
         final Set<Integer> rolledUpFieldPositions = new HashSet<>();
 
