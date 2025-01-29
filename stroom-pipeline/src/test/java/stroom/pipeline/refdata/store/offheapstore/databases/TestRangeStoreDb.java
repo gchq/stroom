@@ -26,12 +26,12 @@ import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde.CompareResult;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.shared.Range;
 
 import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -383,7 +383,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
                             if (!success) {
                                 throw new RuntimeException("compare and set failed");
                             }
-                            ThreadUtil.sleepAtLeastIgnoreInterrupts(500);
+                            ThreadUtil.sleepIgnoringInterrupts(500);
 
                             success = atomicInteger.compareAndSet(1, 0);
                             if (!success) {

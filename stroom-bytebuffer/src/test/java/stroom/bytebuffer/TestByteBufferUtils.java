@@ -167,8 +167,8 @@ class TestByteBufferUtils {
 
         // ensure comparison of the long value is the same (pos, neg or zero) as our func
         if ((cmpAsLongResult == cmpAsBufsResult && cmpAsLongResult == cmpAsLongAndBufsResult) ||
-                (cmpAsLongResult < 0 && cmpAsBufsResult < 0 && cmpAsLongAndBufsResult < 0) ||
-                (cmpAsLongResult > 0 && cmpAsBufsResult > 0 && cmpAsLongAndBufsResult > 0)) {
+            (cmpAsLongResult < 0 && cmpAsBufsResult < 0 && cmpAsLongAndBufsResult < 0) ||
+            (cmpAsLongResult > 0 && cmpAsBufsResult > 0 && cmpAsLongAndBufsResult > 0)) {
             // comparison is the same
         } else {
             LOGGER.error("Comparing {} [{}] to {} [{}], {} {} {}",
@@ -198,8 +198,8 @@ class TestByteBufferUtils {
 
         // ensure comparison of the int value is the same (pos, neg or zero) as our func
         if (cmpLong == cmpBuf ||
-                cmpLong < 0 && cmpBuf < 0 ||
-                cmpLong > 0 && cmpBuf > 0) {
+            cmpLong < 0 && cmpBuf < 0 ||
+            cmpLong > 0 && cmpBuf > 0) {
             // comparison is the same
         } else {
             fail("Mismatch on %s [%s] to %s [%s]",
@@ -423,7 +423,7 @@ class TestByteBufferUtils {
     }
 
     private void doHadoopCopyTest(final ByteBuffer src, final ByteBuffer dest) {
-        org.apache.hadoop.hbase.util.ByteBufferUtils.copyFromBufferToBuffer(src, dest);
+        stroom.bytebuffer.hbase.ByteBufferUtils.copyFromBufferToBuffer(src, dest);
     }
 
     private void doSimpleCopyTest(final ByteBuffer src, final ByteBuffer dest) {

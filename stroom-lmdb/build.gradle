@@ -7,7 +7,6 @@ dependencies {
 
     implementation libs.guava
     implementation libs.guice_assistedinject
-    implementation(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jakarta_inject

@@ -164,7 +164,7 @@ ext.versions = [
         aws               : '2.20.157',
         bnd               : '7.0.0',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '4.0.10', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '4.0.12', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '8.11.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
@@ -255,7 +255,7 @@ ext.libs = [
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
         gwtp_mvp_client                     : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                                : 'com.google.code.gson:gson:2.6.2',
-        hbase                               : "org.apache.hbase:hbase-common:2.1.10", // should be set to be consistent with CDH version
+        hbase_shaded_netty                  : "org.apache.hbase.thirdparty:hbase-shaded-netty:4.1.10", // Needed by our copied HBase classes in stroom.bytebuffer.hbase
         hessian                             : "com.caucho:hessian:4.0.65",
         hibernate_jpa                       : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
         hikari                              : "com.zaxxer:HikariCP:5.1.0",
