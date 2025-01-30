@@ -267,10 +267,6 @@ include 'stroom-security:stroom-security-mock'
 include 'stroom-security:stroom-security-openid-api'
 include 'stroom-security:stroom-security-user-api'
 
-// Service discovery
-include 'stroom-servicediscovery:stroom-servicediscovery-api'
-include 'stroom-servicediscovery:stroom-servicediscovery-impl'
-
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-client'

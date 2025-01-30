@@ -21,13 +21,11 @@ dependencies {
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.commons_text
-    implementation libs.curator_x_discovery
     implementation libs.dropwizard_jersey
     //implementation libs.dropwizard_websockets
     implementation libs.eventLogging

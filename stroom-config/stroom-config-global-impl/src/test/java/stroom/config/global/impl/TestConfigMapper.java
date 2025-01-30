@@ -63,7 +63,6 @@ import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -956,7 +955,6 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
-                @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
@@ -1018,7 +1016,6 @@ class TestConfigMapper {
                     s3Config,
                     searchConfig,
                     securityConfig,
-                    serviceDiscoveryConfig,
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,

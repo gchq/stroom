@@ -141,24 +141,8 @@ ext.versions = [
         stroomStats       : '1.0-alpha.6',
         stroomTestData    : '0.2.3',
 
-        // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
-        // Curator 4 can apparently work with zk 3.4.x as long as you exclude its zk dependency
-        // and explicitly add your own 3.4.x dependency. See https://curator.apache.org/zk-compatibility.html
-        // Also curator has a dependency on guava as it uses a handful of guava classes in its api. Its
-        // implementation relies on a shaded guava so you should be able to use any version of guava
-        // to satisfy the few classes used in the curator api, see https://issues.apache.org/jira/browse/CURATOR-200
-        // It is not clear whether a 3.4.x zk client (where x > 5) and a 3.4.5 zk server are compatible. Given that
-        // CHD6.1 ships with HBase 2.1 which uses a 3.4.10 zk client against a 3.4.5 server, we should be ok.
-        // If the version of curator is changed then this may need to be done in tandem with stroom-stats to ensure
-        // both sides' curator content in zk are compatible.
-
-        // For details of cloudera maven dependencies (i.e. hbase/zookeeper versions) see:
-        // 5.16.x - https://www.cloudera.com/documentation/enterprise/release-notes/topics/cdh_vd_cdh5_maven_repo_516x.html
-        // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
-
         //------------3rd-party------------
         aws               : '2.30.7',
-        curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exclude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '4.0.12', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '8.12.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
@@ -174,7 +158,6 @@ ext.versions = [
         scylladb         : '4.18.0.2',
         simple_java_mail  : '8.8.0',
         swagger           : '2.2.18',
-        zookeeper         : '3.9.3', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
 ]
 
 // Dependency strings for use in sub projects
@@ -208,9 +191,6 @@ ext.libs = [
         commons_pool2                       : "org.apache.commons:commons-pool2:2.12.0",
         commons_text                        : "org.apache.commons:commons-text", // version controlled by dropwizard-dependencies
         classgraph                          : "io.github.classgraph:classgraph:4.8.179",
-        curator_client                      : "org.apache.curator:curator-client:$versions.curator",
-        curator_framework                   : "org.apache.curator:curator-framework:$versions.curator",
-        curator_x_discovery                 : "org.apache.curator:curator-x-discovery:$versions.curator",
         data_faker                          : "net.datafaker:datafaker:2.0.2",
         dropwizard_assets                   : "io.dropwizard:dropwizard-assets", // version controlled by dropwizard-dependencies
         dropwizard_auth                     : "io.dropwizard:dropwizard-auth", // version controlled by dropwizard-dependencies
@@ -334,7 +314,7 @@ ext.libs = [
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
         snake_yaml                          : "org.yaml:snakeyaml:2.3",
-        solrj                               : "org.apache.solr:solr-solrj:8.11.4",
+        solrj                               : "org.apache.solr:solr-solrj:9.8.0",
         stax_api                            : "stax:stax-api:1.0.1",
         swagger_annotations                 : "io.swagger.core.v3:swagger-annotations-jakarta:$versions.swagger",
         swagger_core                        : "io.swagger.core.v3:swagger-core-jakarta:$versions.swagger",
@@ -346,7 +326,6 @@ ext.libs = [
         xerces                              : "xerces:xercesImpl:2.12.2",
         //xml_apis                            : "xml-apis:xml-apis:2.0.2",
         zero_allocation_hashing             : "net.openhft:zero-allocation-hashing:0.16",
-        zookeeper                           : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
 ]
 
 // Defines the content packs that will be donwloaded/copied for SetupSampleData,
@@ -471,15 +450,6 @@ subprojects {
                 //details.useVersion versions.dropwizard_metrics
                 //}
                 //}
-
-                forcedModules = [
-                        // This is how to force a dep to a specific version
-                        //libs.xerces,
-
-                        // Curator will drag in a more recent version of zk but will support older versions so
-                        // substitute it here. See NOTE in versions block above.
-                        libs.zookeeper
-                ]
             }
         }
     }
