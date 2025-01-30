@@ -11,20 +11,20 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.flyway_core
-    implementation libs.flyway_mysql
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
     implementation libs.hikari
     implementation libs.jooq
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj_core
-    testImplementation libs.guice_extension
-    testImplementation libs.junit_jupiter_api
+    testImplementation libs.assertj.core
+    testImplementation libs.guice.extension
+    testImplementation libs.junit.jupiter.api
 
-    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.junit.jupiter.engine
 }

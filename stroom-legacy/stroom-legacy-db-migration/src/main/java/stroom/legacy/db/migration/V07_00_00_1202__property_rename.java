@@ -290,8 +290,16 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
             ignoredMappings.add("stroom.security.userNamePattern");
 
+            ignoredMappings.add("stroom.serviceDiscovery.enabled");
             ignoredMappings.add("stroom.serviceDiscovery.simpleLookup.basePath");
-
+            ignoredMappings.add("stroom.serviceDiscovery.zookeeperUrl");
+            ignoredMappings.add("stroom.serviceDiscovery.servicesHostNameOrIpAddress");
+            ignoredMappings.add("stroom.serviceDiscovery.servicesPort");
+            ignoredMappings.add("stroom.serviceDiscovery.curator.baseSleepTimeMs");
+            ignoredMappings.add("stroom.serviceDiscovery.curator.maxSleepTimeMs");
+            ignoredMappings.add("stroom.serviceDiscovery.curator.maxRetries");
+            ignoredMappings.add("stroom.serviceDiscovery.zookeeperBasePath");
+            
             ignoredMappings.add("stroom.search.extraction.maxThreads");
             ignoredMappings.add("stroom.search.shard.maxThreads");
             ignoredMappings.add("stroom.search.storeSize");
@@ -578,22 +586,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
 //        map("stroom.security.userNamePattern",
 //                "stroom.security.authentication.userNamePattern");
-
-            map("stroom.serviceDiscovery.curator.baseSleepTimeMs",
-                    "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
-            map("stroom.serviceDiscovery.curator.maxRetries",
-                    "stroom.serviceDiscovery.curatorMaxRetries");
-            map("stroom.serviceDiscovery.curator.maxSleepTimeMs",
-                    "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
-
-            // TODO need to figure out what we are doing with service disco
-            map("stroom.serviceDiscovery.enabled", "stroom.serviceDiscovery.enabled");
-            map("stroom.serviceDiscovery.servicesHostNameOrIpAddress",
-                    "stroom.serviceDiscovery.servicesHostNameOrIpAddress");
-            map("stroom.serviceDiscovery.servicesPort", "stroom.serviceDiscovery.servicesPort");
-//        map("stroom.serviceDiscovery.simpleLookup.basePath", "stroom.serviceDiscovery.simpleLookup.basePath");
-            map("stroom.serviceDiscovery.zookeeperBasePath", "stroom.serviceDiscovery.zookeeperBasePath");
-            map("stroom.serviceDiscovery.zookeeperUrl", "stroom.serviceDiscovery.zookeeperUrl");
             // stroom.services.authentication.docRefType
             // stroom.services.authentication.name
             // stroom.services.authentication.version

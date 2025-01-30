@@ -211,10 +211,6 @@ appConfig:
         # EXTERNAL_IDP - Usa an external IDP for receipt token auth and for outbound HTTP connections
         identityProviderType: "{{ 'INTERNAL_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
   {% endif %}
-  serviceDiscovery:
-    enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"
-    zookeeperUrl: "{{ 'localhost:2181' | envVar('STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL') }}"
-  {% endif %}
 
   statistics:
 

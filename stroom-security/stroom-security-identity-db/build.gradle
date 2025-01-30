@@ -12,25 +12,24 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.bcrypt
-    implementation libs.flyway_core
-    implementation libs.flyway_mysql
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.hikari
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_inject
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
     implementation libs.jooq
     implementation libs.jose4j
-    implementation libs.slf4j_api
-    implementation libs.ws_rs_api
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
 
-    runtimeOnly libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-test-common')
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.junit_jupiter_engine
-    testImplementation libs.assertj_core
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.junit.jupiter.engine
+    testImplementation libs.assertj.core
     testImplementation libs.wiremock
-    testImplementation libs.mockito_core
-    testImplementation libs.dropwizard_testing
-    testImplementation libs.unirest
+    testImplementation libs.mockito.core
+    testImplementation libs.dropwizard.testing
 }

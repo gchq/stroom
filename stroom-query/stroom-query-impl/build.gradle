@@ -46,28 +46,28 @@ dependencies {
 //
 //    implementation libs.guava
     implementation libs.guice
-//    implementation libs.jackson_annotations
-//    implementation libs.jackson_core
-//    implementation libs.jackson_databind
-//    implementation libs.jackson_core
-    implementation libs.jakarta_servlet_api
-//    implementation libs.jakarta_validation_api
-    implementation libs.jakarta_inject
-//    implementation libs.jaxb_api
+//    implementation libs.jackson.annotations
+//    implementation libs.jackson.core
+//    implementation libs.jackson.databind
+//    implementation libs.jackson.core
+    implementation libs.jakarta.servlet.api
+//    implementation libs.jakarta.validation.api
+    implementation libs.jakarta.inject
+//    implementation libs.jaxb.api
 //    implementation libs.kryo
 //    implementation libs.lmdbjava
     implementation libs.restygwt
-    implementation libs.slf4j_api
-    implementation libs.ws_rs_api
-//    implementation libs.zero_allocation_hashing
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
+//    implementation libs.zero.allocation.hashing
 
     //--------testing----------
-    testImplementation libs.assertj_core
-    testCompileOnly libs.junit_jupiter_api
-    testImplementation libs.jaxb_api
-    testImplementation libs.mockito_core
+    testImplementation libs.assertj.core
+    testCompileOnly libs.junit.jupiter.api
+    testImplementation libs.jaxb.api
+    testImplementation libs.mockito.core
 
-    testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 }

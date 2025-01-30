@@ -730,15 +730,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.servicediscovery.impl.ServiceDiscoveryConfig getServiceDiscoveryConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.servicediscovery.impl.ServiceDiscoveryConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.state.impl.StateConfig getStateConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

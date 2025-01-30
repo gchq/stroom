@@ -9,8 +9,8 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_servlet_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.servlet.api
     implementation libs.guice
-    implementation libs.ws_rs_api
+    implementation libs.ws.rs.api
 }

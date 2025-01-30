@@ -11,8 +11,8 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
-    implementation libs.jakarta_inject
+    implementation libs.jakarta.inject
     implementation libs.restygwt
-    implementation libs.slf4j_api
+    implementation libs.slf4j.api
     implementation libs.vavr
 }

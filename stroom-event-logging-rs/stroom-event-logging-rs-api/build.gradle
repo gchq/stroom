@@ -19,5 +19,5 @@ dependencies {
     implementation project (':stroom-event-logging:stroom-event-logging-api')
 //    implementation project (':stroom-util-shared')
     implementation libs.eventLogging
-    implementation libs.ws_rs_api
+    implementation libs.ws.rs.api
 }

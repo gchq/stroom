@@ -22,24 +22,24 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.flyway_core
-    implementation libs.flyway_mysql
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guice
     implementation libs.hikari
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_inject
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
     implementation libs.jooq
-    implementation libs.slf4j_api
+    implementation libs.slf4j.api
 
-    runtimeOnly libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
     testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-index:stroom-index-mock')
 
-    testImplementation libs.assertj_core
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.mockito_core
+    testImplementation libs.assertj.core
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.mockito.core
 
-    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.junit.jupiter.engine
 }

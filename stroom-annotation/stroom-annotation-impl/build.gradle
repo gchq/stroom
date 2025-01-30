@@ -20,13 +20,13 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.commons_csv
-    implementation libs.dropwizard_metrics_healthchecks
+    implementation libs.commons.csv
+    implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
     implementation libs.restygwt
-    implementation libs.slf4j_api
+    implementation libs.slf4j.api
 }

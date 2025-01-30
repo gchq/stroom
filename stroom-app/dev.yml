@@ -117,9 +117,6 @@ appConfig:
       openId:
         identityProviderType: ${IDP_TYPE:-TEST_CREDENTIALS}
 
-  serviceDiscovery:
-    zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
-    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
   statistics:
     hbase:
       # UUID of the Kafka Config Doc that is created by Setup Sample Data

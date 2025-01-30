@@ -1,0 +1,41 @@
+ext.moduleName = 'stroom.hadoop'
+
+dependencies {
+    api("org.apache.hadoop:hadoop-common:3.4.1") {
+        transitive = false
+
+//        // Exclude all logging so we can use our own SLF4J/Logback and its bridging pkgs
+//        exclude group: "org.slf4j", module: "slf4j-api"
+//        exclude group: "org.slf4j", module: "slf4j-log4j12"
+//        exclude group: "log4j", module: "log4j"
+//        exclude group: "commons-logging", module: "commons-logging"
+//        exclude group: "commons-io", module: "commons-io"
+//        // Stop it dragging in any xerces impls that will conflict with ours
+//        exclude module: 'xercesImpl'
+//
+//        // we want to use the jaxb impl in the jdk
+//        exclude group: "com.sun.xml.bind", module: "jaxb-impl"
+//        exclude group: "org.bouncycastle", module: "bcprov-jdk18on"
+    }
+    api("org.apache.hadoop:hadoop-hdfs:3.4.1") {
+        transitive = false
+
+//        //exclude(module: 'slf4j-api')
+//        //exclude(module: 'slf4j-log4j12')
+//        //exclude(module: 'log4j')
+//        //exclude(module: 'commons-logging:commons-logging')
+//        // Exclude all logging so we can use our own SLF4J/Logback and its bridging pkgs
+//        exclude group: "org.slf4j", module: "slf4j-api"
+//        exclude group: "org.slf4j", module: "slf4j-log4j12"
+//        exclude group: "log4j", module: "log4j"
+//        exclude group: "commons-logging", module: "commons-logging"
+//        exclude group: "commons-io", module: "commons-io"
+//
+//        // We want to use the xerces impl bundled in the jdk
+//        // see https://stackoverflow.com/questions/11677572/dealing-with-xerces-hell-in-java-maven
+//        exclude module: 'xercesImpl'
+    }
+    api ("org.apache.hadoop:hadoop-hdfs-client:3.4.1") {
+        transitive = false
+    }
+}

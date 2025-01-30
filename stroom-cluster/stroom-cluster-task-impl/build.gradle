@@ -17,7 +17,7 @@ dependencies {
 //    implementation project(':stroom-docref')
 
     implementation libs.guice
-    implementation libs.jakarta_inject
+    implementation libs.jakarta.inject
     implementation libs.restygwt
-    implementation libs.slf4j_api
+    implementation libs.slf4j.api
 }

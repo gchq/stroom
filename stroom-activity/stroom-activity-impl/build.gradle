@@ -12,9 +12,9 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
-    implementation libs.jakarta_servlet_api
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
+    implementation libs.jakarta.servlet.api
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
     implementation libs.restygwt
-    implementation libs.slf4j_api
+    implementation libs.slf4j.api
 }

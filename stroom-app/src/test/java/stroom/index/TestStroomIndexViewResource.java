@@ -4,6 +4,7 @@ import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.IndexResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;
@@ -11,7 +12,6 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.servicediscovery.api.RegisteredService;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -49,7 +49,7 @@ class TestStroomIndexViewResource {
             .addPathPart("http://localhost:8080")
             .addPathPart(ResourcePaths.ROOT_PATH)
             .addPathPart(ResourcePaths.API_ROOT_PATH)
-            .addPathPart(RegisteredService.INDEX_V2.getVersionedPath())
+            .addPathPart(IndexResource.BASE_PATH)
             .addPathPart("/search")
             .build();
 

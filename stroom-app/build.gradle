@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath libs.mysql_connector_java
+        classpath libs.mysql.connector.java
         classpath 'org.reflections:reflections:0.9.12'
     }
 }
@@ -36,7 +36,7 @@ def stroomDockerBuildDir = "${projectDir}/docker/build"
 def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.gradleup.shadow'
 apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
 apply plugin: "java"
 
@@ -176,8 +176,6 @@ dependencies {
     implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-security:stroom-security-impl-db-jooq')
     implementation project(':stroom-security:stroom-security-openid-api')
-    implementation project(':stroom-servicediscovery:stroom-servicediscovery-api')
-    implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-statistics:stroom-statistics-api')
@@ -192,48 +190,48 @@ dependencies {
     implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
-    implementation libs.commons_compress
-    implementation libs.dropwizard_assets
-    implementation libs.dropwizard_client
-    implementation libs.dropwizard_configuration
-    implementation libs.dropwizard_core
-    implementation libs.dropwizard_jersey
-    implementation libs.dropwizard_jetty
-    implementation libs.dropwizard_lifecycle
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.dropwizard_metrics_core
-    implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.dropwizard_servlets
-    implementation libs.dropwizard_validation
-    //implementation libs.dropwizard_websockets
+    implementation libs.commons.compress
+    implementation libs.dropwizard.assets
+    implementation libs.dropwizard.client
+    implementation libs.dropwizard.configuration
+    implementation libs.dropwizard.core
+    implementation libs.dropwizard.jersey
+    implementation libs.dropwizard.jetty
+    implementation libs.dropwizard.lifecycle
+    implementation libs.dropwizard.metrics.annotation
+    implementation libs.dropwizard.metrics.core
+    implementation libs.dropwizard.metrics.healthchecks
+    implementation libs.dropwizard.servlets
+    implementation libs.dropwizard.validation
+    //implementation libs.dropwizard.websockets
     implementation libs.eventLogging
-    implementation libs.flyway_core
-    implementation libs.flyway_mysql
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guava
     implementation libs.guice
-    implementation libs.jakarta_servlet_api
-    implementation libs.jakarta_validation_api
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
+    implementation libs.jakarta.servlet.api
+    implementation libs.jakarta.validation.api
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
     implementation libs.jcommander
-    implementation libs.jersey_common
-    implementation libs.jetty_server
-    implementation libs.jetty_servlet
-    implementation libs.jetty_servlets
+    implementation libs.jersey.common
+    implementation libs.jetty.server
+    implementation libs.jetty.servlet
+    implementation libs.jetty.servlets
     implementation libs.jooq
     implementation libs.jose4j
-    implementation libs.logback_classic
-    implementation libs.mysql_connector_java
+    implementation libs.logback.classic
+    implementation libs.mysql.connector.java
     implementation libs.restygwt
 
-    implementation libs.scylladb_driver_core
-    implementation libs.scylladb_query_builder
-    implementation libs.scylladb_driver_mapper
+    implementation libs.scylladb.driver.core
+    implementation libs.scylladb.query.builder
+    implementation libs.scylladb.driver.mapper
 
-    implementation libs.slf4j_api
-    implementation libs.ws_rs_api
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
 
-    runtimeOnly libs.jakarta_el
+    runtimeOnly libs.jakarta.el
 
     // Use default DB config.
     testImplementation project(':stroom-activity:stroom-activity-api')
@@ -284,48 +282,48 @@ dependencies {
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-util-shared')
 
-    testImplementation libs.commons_io
+    testImplementation libs.commons.io
     testImplementation libs.classgraph
-    testImplementation libs.data_faker
+    testImplementation libs.data.faker
     testImplementation libs.guice
-    testImplementation libs.guice_extension
-    testImplementation libs.guice_grapher
-    testImplementation libs.hibernate_jpa
+    testImplementation libs.guice.extension
+    testImplementation libs.guice.grapher
+    testImplementation libs.hibernate.jpa
     testImplementation libs.hikari
     testImplementation libs.jinjava
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.junit_platform_launcher
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.junit.platform.launcher
     testImplementation libs.lmdbjava
-    testImplementation libs.saxon_he
-    testImplementation libs.slf4j_api
-    testImplementation libs.swagger_annotations
+    testImplementation libs.saxon.he
+    testImplementation libs.slf4j.api
+    testImplementation libs.swagger.annotations
     testImplementation libs.vavr
 
-    testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jakarta_el
-    testRuntimeOnly libs.jaxb_impl
-    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.jakarta.activation
+    testRuntimeOnly libs.jakarta.el
+    testRuntimeOnly libs.jaxb.impl
+    testRuntimeOnly libs.junit.jupiter.engine
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 
-    testImplementation libs.assertj_core
-    testImplementation libs.dropwizard_client
-    testImplementation libs.dropwizard_testing
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testImplementation libs.assertj.core
+    testImplementation libs.dropwizard.client
+    testImplementation libs.dropwizard.testing
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
 
     // These are for the gradle swagger plugin to ensure it is using the jakarta variants rather than the javax ones
-    swaggerBuild platform(libs.dropwizard_dependencies) // So swaggerBuild can see the dep versions
-    swaggerBuild libs.jakarta_servlet_api
-    swaggerBuild libs.swagger_annotations
-    swaggerBuild libs.swagger_core
-    swaggerBuild libs.swagger_jaxrs
-    swaggerBuild libs.ws_rs_api
+    swaggerBuild platform(libs.dropwizard.dependencies) // So swaggerBuild can see the dep versions
+    swaggerBuild libs.jakarta.servlet.api
+    swaggerBuild libs.swagger.annotations
+    swaggerBuild libs.swagger.core
+    swaggerBuild libs.swagger.jaxrs
+    swaggerBuild libs.ws.rs.api
 }
 
 jar {

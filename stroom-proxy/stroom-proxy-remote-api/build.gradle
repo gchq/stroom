@@ -1,6 +1,6 @@
 ext.moduleName = 'stroom.proxy.remote.api'
 
 dependencies {
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_servlet_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.servlet.api
 }

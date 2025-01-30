@@ -43,33 +43,33 @@ dependencies {
     implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_validation_api
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
+    implementation libs.jaxb.api
     implementation libs.jinjava
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.restygwt
-    implementation libs.saxon_he
-    implementation libs.simple_java_mail
-    implementation libs.simple_java_mail_batch_module
-    implementation libs.slf4j_api
-    implementation libs.ws_rs_api
-    implementation libs.zero_allocation_hashing
+    implementation libs.saxon.he
+    implementation libs.simple.java.mail
+    implementation libs.simple.java.mail.batch.module
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
+    implementation libs.zero.allocation.hashing
 
-    testImplementation libs.assertj_core
-    testImplementation libs.guice_extension
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.mockito_core
-    testImplementation libs.mockito_junit_jupiter
+    testImplementation libs.assertj.core
+    testImplementation libs.guice.extension
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_impl
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jakarta.activation
+    testRuntimeOnly libs.jaxb.impl
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 }
