@@ -122,11 +122,34 @@ class TestTemporalStateDb {
         }
     }
 
+    @Test
+    void testCondense2(@TempDir final Path rootDir) throws IOException {
+        final Path dbPath = rootDir.resolve("db");
+        Files.createDirectory(dbPath);
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath, byteBufferFactory)) {
+            insertData(db, refTime, "TEST_KEY", "test", 100, 60 * 60 * 24);
+            insertData(db, refTime, "TEST_KEY2", "test2", 100, 60 * 60 * 24);
+            insertData(db, refTime, "TEST_KEY", "test", 10, -60 * 60 * 24);
+            insertData(db, refTime, "TEST_KEY2", "test2", 10, -60 * 60 * 24);
+
+            assertThat(db.count()).isEqualTo(218);
+
+            db.condense(refTime.toEpochMilli(), 0);
+            assertThat(db.count()).isEqualTo(200);
+
+            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").toEpochMilli(), 0);
+            assertThat(db.count()).isEqualTo(182);
+        }
+    }
+
     private void testWrite(final Path dbDir) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = new TemporalStateDb(dbDir, byteBufferFactory)) {
-            insertData(db, refTime, "test", 100, 10);
+            insertData(db, refTime, "TEST_KEY", "test", 100, 10);
         }
     }
 
@@ -172,6 +195,7 @@ class TestTemporalStateDb {
 
     private void insertData(final TemporalStateDb db,
                             final Instant refTime,
+                            final String key,
                             final String value,
                             final int rows,
                             final long deltaSeconds) {
@@ -181,7 +205,7 @@ class TestTemporalStateDb {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
                 final TemporalState.Key k = TemporalState.Key
                         .builder()
-                        .name("TEST_KEY")
+                        .name(key)
                         .effectiveTime(effectiveTime)
                         .build();
 
