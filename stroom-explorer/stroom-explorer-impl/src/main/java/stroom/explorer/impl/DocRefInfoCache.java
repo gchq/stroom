@@ -35,6 +35,7 @@ import jakarta.inject.Singleton;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -105,9 +106,12 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
         // No type so need to check all handlers and return the one that has it.
         // Hopefully next time it will still be in the cache so this won't be needed
         final Map<String, Function<DocRef, DocRefInfo>> handlers = getHandlers();
-        for (final Function<DocRef, DocRefInfo> function : handlers.values()) {
+        for (final Entry<String, Function<DocRef, DocRefInfo>> entry : handlers.entrySet()) {
             try {
-                final DocRefInfo docRefInfo = function.apply(docRef);
+                final String type = entry.getKey();
+                final Function<DocRef, DocRefInfo> function = entry.getValue();
+                final DocRef typeFixedDocRef = createTypeSpecificDocRef(type, docRef);
+                final DocRefInfo docRefInfo = function.apply(typeFixedDocRef);
                 if (docRefInfo != null) {
                     return docRefInfo;
                 }
@@ -128,14 +132,12 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
             documentActionHandlersProvider.get()
                     .stream()
                     .forEach(handler -> {
-                        final Function<DocRef, DocRefInfo> function = docRef ->
-                                handler.info(createTypeSpecificDocRef(handler.getType(), docRef));
+                        final Function<DocRef, DocRefInfo> function = handler::info;
                         map.putIfAbsent(handler.getType(), function);
                     });
             explorerActionHandlers.stream()
                     .forEach(handler -> {
-                        final Function<DocRef, DocRefInfo> function = docRef ->
-                                handler.info(createTypeSpecificDocRef(handler.getType(), docRef));
+                        final Function<DocRef, DocRefInfo> function = handler::info;
                         map.putIfAbsent(handler.getType(), function);
                     });
             handlers = map;
