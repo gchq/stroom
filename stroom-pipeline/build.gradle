@@ -13,6 +13,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-feed:stroom-feed-api')
+    implementation project(':stroom-hadoop')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
@@ -46,8 +47,6 @@ dependencies {
     implementation libs.guava
     implementation libs.guice
     implementation libs.guice_assistedinject
-    implementation project(path: ":stroom-hadoop:stroom-hadoop-shaded", configuration: 'shadow') // Use shadow JAR
-    implementation project(path: ":stroom-hadoop:stroom-hdfs-shaded", configuration: 'shadow') // Use shadow JAR
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind

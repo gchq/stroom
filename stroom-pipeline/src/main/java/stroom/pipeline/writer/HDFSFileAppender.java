@@ -16,11 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import stroom.hadoopcommonshaded.org.apache.hadoop.conf.Configuration;
-import stroom.hadoopcommonshaded.org.apache.hadoop.fs.FileSystem;
-import stroom.hadoopcommonshaded.org.apache.hadoop.fs.Path;
-import stroom.hadoopcommonshaded.org.apache.hadoop.security.UserGroupInformation;
-import stroom.hadoophdfsshaded.org.apache.hadoop.hdfs.DistributedFileSystem;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -31,6 +26,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

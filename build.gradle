@@ -157,11 +157,10 @@ ext.versions = [
         // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
 
         //------------3rd-party------------
-        aws               : '2.20.157',
-        bnd               : '7.0.0',
+        aws               : '2.30.7',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exclude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '4.0.12', // used to set the dropwizard-bom version, that controls lots of dependency versions
-        elasticsearch     : '8.11.2',
+        elasticsearch     : '8.12.2',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
         flyway            : '10.0.0',
         guice             : '7.0.0',
@@ -170,13 +169,12 @@ ext.versions = [
         jmh               : '1.37',
         jooq              : "${jooqVer}",  // Defined at the top of this file
         junit_jupiter     : '5.10.1',
-        kafka             : '3.6.0',
-        poi               : '5.2.4',
-        scylladb         : '4.17.0.1',
+        kafka             : '3.9.0',
+        poi               : '5.4.0',
+        scylladb         : '4.18.0.2',
         simple_java_mail  : '8.8.0',
         swagger           : '2.2.18',
-        unirest           : '1.4.9',
-        zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
+        zookeeper         : '3.9.3', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
 ]
 
 // Dependency strings for use in sub projects
@@ -205,11 +203,11 @@ ext.libs = [
         commons_compress                    : "org.apache.commons:commons-compress:1.27.1",
         commons_csv                         : "org.apache.commons:commons-csv:1.10.0",
         commons_fileupload                  : "org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1",
-        commons_io                          : "commons-io:commons-io:2.15.0",
+        commons_io                          : "commons-io:commons-io:2.18.0",
         commons_lang                        : "org.apache.commons:commons-lang3", // version controlled by dropwizard-dependencies
         commons_pool2                       : "org.apache.commons:commons-pool2:2.12.0",
         commons_text                        : "org.apache.commons:commons-text", // version controlled by dropwizard-dependencies
-        classgraph                          : "io.github.classgraph:classgraph:4.8.146",
+        classgraph                          : "io.github.classgraph:classgraph:4.8.179",
         curator_client                      : "org.apache.curator:curator-client:$versions.curator",
         curator_framework                   : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery                 : "org.apache.curator:curator-x-discovery:$versions.curator",
@@ -290,14 +288,14 @@ ext.libs = [
         jetty_server                        : "org.eclipse.jetty:jetty-server", // version controlled by dropwizard-dependencies
         jetty_servlet                       : "org.eclipse.jetty:jetty-servlet", // version controlled by dropwizard-dependencies
         jetty_servlets                      : "org.eclipse.jetty:jetty-servlets", // version controlled by dropwizard-dependencies
-        jgit                                : "org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r",
+        jgit                                : "org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r",
         jinjava                             : "com.hubspot.jinjava:jinjava:2.7.2",
         jmh_core                            : "org.openjdk.jmh:jmh-core:$versions.jmh",
         jmh_generator_annprocess            : "org.openjdk.jmh:jmh-generator-annprocess:$versions.jmh",
         jooq                                : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                        : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                           : "org.jooq:jooq-meta:$versions.jooq",
-        jose4j                              : "org.bitbucket.b_c:jose4j:0.9.3",
+        jose4j                              : "org.bitbucket.b_c:jose4j:0.9.4",
 //        jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                        : "org.slf4j:jul-to-slf4j", // version controlled by dropwizard-dependencies
         junit_bom                           : "org.junit:junit-bom:$versions.junit_jupiter",
@@ -318,10 +316,10 @@ ext.libs = [
         //log4j_slf4j2_impl                   : "org.apache.logging.log4j:log4j-slf4j2-impl:2.24.1",
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
-        mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
+        mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.39",
         mockito_core                        : "org.mockito:mockito-core", // version controlled by dropwizard-dependencies
         mockito_junit_jupiter               : "org.mockito:mockito-junit-jupiter", // version controlled by dropwizard-dependencies
-        mysql_connector_java                : "mysql:mysql-connector-java:8.0.33",
+        mysql_connector_java                : "com.mysql:mysql-connector-j:9.2.0",
         poi                                 : "org.apache.poi:poi:${versions.poi}",
         poi_ooxml                           : "org.apache.poi:poi-ooxml:${versions.poi}",
         quartz                              : "org.quartz-scheduler:quartz:2.5.0-rc1",
@@ -336,15 +334,13 @@ ext.libs = [
         simple_java_mail_batch_module       : "org.simplejavamail:batch-module:${versions.simple_java_mail}",
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
         snake_yaml                          : "org.yaml:snakeyaml:2.3",
-        solrj                               : "org.apache.solr:solr-solrj:8.2.0",
+        solrj                               : "org.apache.solr:solr-solrj:8.11.4",
         stax_api                            : "stax:stax-api:1.0.1",
         swagger_annotations                 : "io.swagger.core.v3:swagger-annotations-jakarta:$versions.swagger",
         swagger_core                        : "io.swagger.core.v3:swagger-core-jakarta:$versions.swagger",
         swagger_jaxrs                       : "io.swagger.core.v3:swagger-jaxrs2-jakarta:$versions.swagger",
-        unirest                             : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                                : "io.vavr:vavr:0.10.4",
         wiremock                            : 'org.wiremock:wiremock:3.3.1',
-        wix_embedded_mysql                  : "com.wix:wix-embedded-mysql:4.6.2",
         ws_rs_api                           : "jakarta.ws.rs:jakarta.ws.rs-api", // version controlled by dropwizard-dependencies
         ws_rs_api__gwt                      : "javax.ws.rs:javax.ws.rs-api:2.1.1", // For GWT compilation
         xerces                              : "xerces:xercesImpl:2.12.2",
@@ -457,6 +453,7 @@ subprojects {
                     //substitute module('javax.activation:activation') using module('javax.activation:javax.activation-api:1.2.0')
                     //substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:1.7.25")
                     substitute module('log4j:log4j') using module("org.slf4j:log4j-over-slf4j:$dropwizardBomSlf4jVersion")
+                    substitute module('commons-io:commons-io') using module(libs.commons_io)
 
                     // These three are a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
                     //substitute module('org.glassfish.jersey.core:jersey-common') using module("org.glassfish.jersey.core:jersey-common:$versions.jersey")

@@ -32,5 +32,4 @@ dependencies {
     testImplementation libs.wiremock
     testImplementation libs.mockito_core
     testImplementation libs.dropwizard_testing
-    testImplementation libs.unirest
 }

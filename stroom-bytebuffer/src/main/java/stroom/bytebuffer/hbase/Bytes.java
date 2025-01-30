@@ -21,13 +21,10 @@
 
 package stroom.bytebuffer.hbase;
 
-import stroom.hadoopcommonshaded.org.apache.commons.collections.CollectionUtils;
-import stroom.hadoopcommonshaded.org.apache.hadoop.classification.InterfaceAudience;
-import stroom.hadoopcommonshaded.org.apache.hadoop.io.RawComparator;
-import stroom.hadoopcommonshaded.org.apache.hadoop.io.WritableComparator;
-import stroom.hadoopcommonshaded.org.apache.hadoop.io.WritableUtils;
-
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.WritableComparator;
+import org.apache.hadoop.io.WritableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -292,7 +289,6 @@ public class Bytes implements Comparable<Bytes> {
     /**
      * Byte array comparator class.
      */
-    @InterfaceAudience.Public
     public static class ByteArrayComparator implements RawComparator<byte[]> {
 
         public ByteArrayComparator() {
@@ -318,7 +314,6 @@ public class Bytes implements Comparable<Bytes> {
     // boundaries. Thus semantically, we should treat empty byte array as the smallest value
     // while comparing row keys, start keys etc; but as the largest value for comparing
     // region boundaries for endKeys.
-    @InterfaceAudience.Public
     public static class RowEndKeyComparator extends ByteArrayComparator {
 
         @Override
@@ -2458,7 +2453,7 @@ public class Bytes implements Comparable<Bytes> {
 //  }
 
     public static List<byte[]> getUtf8ByteArrays(List<String> strings) {
-        if (CollectionUtils.isEmpty(strings)) {
+        if (strings.isEmpty()) {
             return Collections.emptyList();
         }
         List<byte[]> byteArrays = new ArrayList<>(strings.size());

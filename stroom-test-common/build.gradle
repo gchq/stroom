@@ -9,6 +9,7 @@ dependencies {
 
     implementation libs.assertj_core
     implementation libs.classgraph
+    implementation libs.commons_compress
     implementation libs.commons_lang
     implementation libs.data_faker
     implementation libs.dropwizard_jersey
@@ -31,7 +32,6 @@ dependencies {
     implementation libs.mockito_junit_jupiter
     implementation libs.slf4j_api
     implementation libs.vavr
-    implementation libs.wix_embedded_mysql
 
     runtimeOnly libs.mysql_connector_java
 
