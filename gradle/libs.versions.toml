@@ -6,7 +6,7 @@ stroomStats = "1.0-alpha.6"
 stroomTestData = "0.2.3"
 
 # ------------3rd-party------------
-aws = "2.30.7"
+aws = "2.30.8"
 commons-io = "2.18.0"
 dropwizard = "4.0.12" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "8.12.2"
@@ -22,7 +22,7 @@ kafka = "3.9.0"
 poi = "5.4.0"
 scylladb = "4.18.0.2"
 simple-java-mail = "8.8.0"
-swagger = "2.2.18"
+swagger = "2.2.21"
 
 [libraries]
 #------Stroom-libs---------------
@@ -32,7 +32,7 @@ stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", v
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.27.3" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.29.22" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
@@ -49,7 +49,7 @@ commons-lang = { module = "org.apache.commons:commons-lang3" } # version control
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.0" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
 classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
-data-faker = { module = "net.datafaker:datafaker", version = "2.0.2" }
+data-faker = { module = "net.datafaker:datafaker", version = "2.3.0" }
 dropwizard-assets = { module = "io.dropwizard:dropwizard-assets" } # version controlled by dropwizard-dependencies
 dropwizard-auth = { module = "io.dropwizard:dropwizard-auth" } # version controlled by dropwizard-dependencies
 dropwizard-bom = { module = "io.dropwizard:dropwizard-bom", version.ref = "dropwizard" }
@@ -111,9 +111,9 @@ java-jwt = { module = "com.auth0:java-jwt", version = "4.4.0" }
 javassist = { module = "org.javassist:javassist" } # version controlled by dropwizard-dependencies
 javax-inject-gwt = { module = "javax.inject:javax.inject", version = "1" }
 jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
-jaxb-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version = "4.0.1" }
+jaxb-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version = "4.0.2" }
 jaxb-api-gwt = { module = "javax.xml.bind:jaxb-api", version = "2.3.1" }#"jakarta.xml.bind:jakarta.xml.bind-api", version = "3.0.1" } # Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
-jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.4" }
+jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.5" }
 #jaxb-impl-gwt = { module = "org.glassfish.jaxb:jaxb-runtime", version = "2.3.1" }#"com.sun.xml.bind:jaxb-impl", version = "3.0.2" }
 #jaxws-api = { module = "javax.xml.ws:jaxws-api", version = "2.2.6" }
 jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" } # version controlled by dropwizard-dependencies
@@ -133,7 +133,7 @@ jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess"
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
 jooq-codegen = { module = "org.jooq:jooq-codegen", version.ref = "jooq" }
 jooq-meta = { module = "org.jooq:jooq-meta", version.ref = "jooq" }
-jose4j = { module = "org.bitbucket.b_c:jose4j", version = "0.9.4" }
+jose4j = { module = "org.bitbucket.b_c:jose4j", version = "0.9.6" }
 # jsr173-api = { module = "javax.xml.bind:jsr173_api", version = "1.0" }
 jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j" } # version controlled by dropwizard-dependencies
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-jupiter" }
