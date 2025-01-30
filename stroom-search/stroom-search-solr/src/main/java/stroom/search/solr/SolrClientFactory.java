@@ -9,6 +9,7 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.Http2SolrClient;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class SolrClientFactory {
 
@@ -30,8 +31,8 @@ public class SolrClientFactory {
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()
-                                    .connectionTimeout(15000)
-                                    .idleTimeout(30000)
+                                    .withConnectionTimeout(15000, TimeUnit.MILLISECONDS)
+                                    .withIdleTimeout(30000, TimeUnit.MILLISECONDS)
                                     .build());
             final CloudSolrClient client = builder.build();
             client.connect();
@@ -45,8 +46,8 @@ public class SolrClientFactory {
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()
-                                    .connectionTimeout(15000)
-                                    .idleTimeout(30000)
+                                    .withConnectionTimeout(15000, TimeUnit.MILLISECONDS)
+                                    .withIdleTimeout(30000, TimeUnit.MILLISECONDS)
                                     .build());
             return builder.build();
         }
