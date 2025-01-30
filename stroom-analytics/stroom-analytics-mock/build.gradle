@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-docref')
 
-    implementation libs.jackson_annotations
+    implementation libs.jackson.annotations
     implementation libs.guice
-    implementation libs.jaxb_api
+    implementation libs.jaxb.api
 }

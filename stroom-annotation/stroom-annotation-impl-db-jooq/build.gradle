@@ -3,11 +3,11 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.annotation.impl.db.jooq'
 
 dependencies {
-    implementation libs.jakarta_annotation_api
+    implementation libs.jakarta.annotation.api
     implementation libs.jooq
 
-    runtimeOnly libs.mysql_connector_java
-    jooqGenerator libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
+    jooqGenerator libs.mysql.connector.java
 }
 
 // Configure jooq plugin to generate code

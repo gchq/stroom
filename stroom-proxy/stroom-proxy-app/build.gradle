@@ -42,62 +42,62 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.aws_sqs
-    implementation libs.commons_compress
-    implementation libs.dropwizard_assets
-    implementation libs.dropwizard_core
-    implementation libs.dropwizard_client
-    implementation libs.dropwizard_jersey
-    implementation libs.dropwizard_jetty
-    implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.dropwizard_servlets
-    implementation libs.dropwizard_metrics_core
-    implementation libs.dropwizard_metrics_annotation
-    implementation libs.dropwizard_configuration
+    implementation libs.aws.sqs
+    implementation libs.commons.compress
+    implementation libs.dropwizard.assets
+    implementation libs.dropwizard.core
+    implementation libs.dropwizard.client
+    implementation libs.dropwizard.jersey
+    implementation libs.dropwizard.jetty
+    implementation libs.dropwizard.metrics.healthchecks
+    implementation libs.dropwizard.servlets
+    implementation libs.dropwizard.metrics.core
+    implementation libs.dropwizard.metrics.annotation
+    implementation libs.dropwizard.configuration
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
-    implementation libs.jakarta_servlet_api
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
-    implementation libs.jetty_server
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.servlet.api
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
+    implementation libs.jetty.server
     implementation libs.jose4j
-    implementation libs.kafka_clients
+    implementation libs.kafka.clients
     implementation libs.kryo
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
+    implementation libs.slf4j.api
+    implementation libs.swagger.annotations
 
-    runtimeOnly libs.jakarta_el
+    runtimeOnly libs.jakarta.el
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.assertj_core
+    testImplementation libs.assertj.core
     testImplementation libs.classgraph
-    testImplementation libs.dropwizard_testing
-    testImplementation libs.dropwizard_validation
-    testImplementation libs.guice_extension
-    testImplementation libs.guice_grapher
+    testImplementation libs.dropwizard.testing
+    testImplementation libs.dropwizard.validation
+    testImplementation libs.guice.extension
+    testImplementation libs.guice.grapher
     testImplementation libs.jinjava
-    testImplementation libs.jmh_core
-    testImplementation libs.jmh_generator_annprocess
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.mbknor_jackson_jsonSchema
-    testImplementation libs.mockito_junit_jupiter
+    testImplementation libs.jmh.core
+    testImplementation libs.jmh.generator.annprocess
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.mbknor.jackson.jsonSchema
+    testImplementation libs.mockito.junit.jupiter
     testImplementation libs.wiremock
 
     // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_impl
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jakarta.activation
+    testRuntimeOnly libs.jaxb.impl
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 }
 
 jar {

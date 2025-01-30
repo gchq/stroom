@@ -3,11 +3,11 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.data.store.impl.fs.db.jooq'
 
 dependencies {
-    implementation libs.jakarta_annotation_api
+    implementation libs.jakarta.annotation.api
     implementation libs.jooq
 
-    runtimeOnly libs.mysql_connector_java
-    jooqGenerator libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
+    jooqGenerator libs.mysql.connector.java
 }
 
 // Configure jooq plugin to generate code
@@ -40,13 +40,13 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'fs_volume|fs_volume_group|fs_volume_state|fs_feed_path|fs_type_path|fs_meta_volume|fs_orphaned_meta_tracker'
+                        includes = 'fs.volume|fs.volume.group|fs.volume.state|fs.feed.path|fs.type.path|fs.meta.volume|fs.orphaned.meta.tracker'
                         // We don't want to include flyway versioning
-                        excludes = 'fs_schema_history'
+                        excludes = 'fs.schema.history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
 
-                        // fs_volume.status is non-boolean tinyint
+                        // fs.volume.status is non-boolean tinyint
 
                         // Treat some tinyint columns as booleans
                         //forcedTypes {

@@ -3,11 +3,11 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.index.impl.db.jooq'
 
 dependencies {
-    implementation libs.jakarta_annotation_api
+    implementation libs.jakarta.annotation.api
     implementation libs.jooq
 
-    runtimeOnly libs.mysql_connector_java
-    jooqGenerator libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
+    jooqGenerator libs.mysql.connector.java
 }
 
 // Configure jooq plugin to generate code
@@ -40,9 +40,9 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'index_volume|index_volume_group|index_shard|index_field_source|index_field'
+                        includes = 'index.volume|index.volume.group|index.shard|index.field.source|index.field'
                         // We don't want to include flyway versioning
-                        excludes = 'index_schema_history'
+                        excludes = 'index.schema.history'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
                         // Treat some tinyint columns as booleans
@@ -50,10 +50,10 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
-                                        '.*\\.index_field\\.indexed|' +
-                                        '.*\\.index_field\\.stored|' +
-                                        '.*\\.index_field\\.term_positions|' +
-                                        '.*\\.index_field\\.case_sensitive'
+                                        '.*\\.index.field\\.indexed|' +
+                                        '.*\\.index.field\\.stored|' +
+                                        '.*\\.index.field\\.term.positions|' +
+                                        '.*\\.index.field\\.case.sensitive'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

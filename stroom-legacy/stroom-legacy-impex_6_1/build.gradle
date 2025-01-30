@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.legacy.impex_6_1'
+ext.moduleName = 'stroom.legacy.impex.6.1'
 
 dependencies {
     implementation project(':stroom-core-shared')
@@ -22,8 +22,8 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.guice
-    implementation libs.hibernate_jpa
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
+    implementation libs.hibernate.jpa
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
+    implementation libs.slf4j.api
 }

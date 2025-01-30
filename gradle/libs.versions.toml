@@ -1,0 +1,214 @@
+[versions]
+# ------Stroom-repos---------------
+# stroomProxyRepo: "v5.1-beta.8"
+eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
+stroomStats = "1.0-alpha.6"
+stroomTestData = "0.2.3"
+
+# ------------3rd-party------------
+aws = "2.30.7"
+commons-io = "2.18.0"
+dropwizard = "4.0.12" # used to set the dropwizard-bom version, that controls lots of dependency versions
+elasticsearch = "8.12.2"
+httpcore = "4.4.16" # Transient dependency of Elasticsearch
+flyway = "10.0.0"
+guice = "7.0.0"
+gwt = "2.11.0"
+jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
+jmh = "1.37"
+jooq = "3.18.7" # Defined at the top of this file
+junit-jupiter = "5.10.1"
+kafka = "3.9.0"
+poi = "5.4.0"
+scylladb = "4.18.0.2"
+simple-java-mail = "8.8.0"
+swagger = "2.2.18"
+
+[libraries]
+#------Stroom-libs---------------
+eventLogging = { module = "uk.gov.gchq.eventlogging:event-logging", version.ref = "eventLogging" }
+stroomStatsSchema = { module = "uk.gov.gchq.stroom.stats:stroom-stats-schema", version.ref = "stroomStats" }
+
+#------3rd Party-libs---------------
+assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
+aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
+aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.27.3" }
+aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
+aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
+aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
+bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.1" }
+bouncy-castle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.78.1" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version controlled by dropwizard-dependencies
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version = "1.9.4" }
+commons-codec = { module = "commons-codec:commons-codec" } # version controlled by dropwizard-dependencies
+commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
+commons-csv = { module = "org.apache.commons:commons-csv", version = "1.10.0" }
+commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta", version = "2.0.0-M1" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
+commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.0" }
+commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
+classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
+data-faker = { module = "net.datafaker:datafaker", version = "2.0.2" }
+dropwizard-assets = { module = "io.dropwizard:dropwizard-assets" } # version controlled by dropwizard-dependencies
+dropwizard-auth = { module = "io.dropwizard:dropwizard-auth" } # version controlled by dropwizard-dependencies
+dropwizard-bom = { module = "io.dropwizard:dropwizard-bom", version.ref = "dropwizard" }
+dropwizard-dependencies = { module = "io.dropwizard:dropwizard-dependencies", version.ref = "dropwizard" }
+dropwizard-client = { module = "io.dropwizard:dropwizard-client" } # version controlled by dropwizard-dependencies
+dropwizard-configuration = { module = "io.dropwizard:dropwizard-configuration" } # version controlled by dropwizard-dependencies
+dropwizard-core = { module = "io.dropwizard:dropwizard-core" }#files("libs/dropwizard-core-2.0.28.jar"),#"io.dropwizard:dropwizard-core" } # version controlled by dropwizard-dependencies
+dropwizard-jackson = { module = "io.dropwizard:dropwizard-jackson" } # version controlled by dropwizard-dependencies
+dropwizard-jersey = { module = "io.dropwizard:dropwizard-jersey" } # version controlled by dropwizard-dependencies
+dropwizard-jetty = { module = "io.dropwizard:dropwizard-jetty" } #was 1.0.6 now 1.1.0
+dropwizard-lifecycle = { module = "io.dropwizard:dropwizard-lifecycle" } # version controlled by dropwizard-dependencies
+dropwizard-metrics-annotation = { module = "io.dropwizard.metrics:metrics-annotation" } # version controlled by dropwizard-dependencies
+dropwizard-metrics-core = { module = "io.dropwizard.metrics:metrics-core" } # version controlled by dropwizard-dependencies
+dropwizard-metrics-healthchecks = { module = "io.dropwizard.metrics:metrics-healthchecks" } # version controlled by dropwizard-dependencies
+dropwizard-servlets = { module = "io.dropwizard:dropwizard-servlets" } # version controlled by dropwizard-dependencies
+dropwizard-testing = { module = "io.dropwizard:dropwizard-testing" } # version controlled by dropwizard-dependencies
+dropwizard-validation = { module = "io.dropwizard:dropwizard-validation" } # version controlled by dropwizard-dependencies
+#dropwizard-websockets = { module = "com.liveperson:dropwizard-websockets", version = "1.3.14" }
+eclipse-transformer-cli = { module = "org.eclipse.transformer:org.eclipse.transformer.cli", version = "0.5.0" }
+elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
+fast-infoset = { module = "com.sun.xml.fastinfoset:FastInfoset", version = "2.1.1" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
+gin = { module = "com.google.gwt.inject:gin", version = "2.1.2" }
+guava = { module = "com.google.guava:guava" } # version controlled by dropwizard-dependencies
+guice-gwt = { module = "com.google.inject:guice", version = "3.0" }
+guice = { module = "com.google.inject:guice", version.ref = "guice" }
+guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
+guice-extension = { module = "name.falgout.jeffrey.testing.junit5:guice-extension", version = "1.2.1" }
+guice-multibindings = { module = "com.google.inject.extensions:guice-multibindings", version.ref = "guice" }
+guice-grapher = { module = "com.google.inject.extensions:guice-grapher", version.ref = "guice" }
+gwt-dev = { module = "org.gwtproject:gwt-dev", version.ref = "gwt" }
+gwt-user = { module = "org.gwtproject:gwt-user", version.ref = "gwt" }
+gwtp-mvp-client = { module = "com.gwtplatform:gwtp-mvp-client", version = "0.7" }
+gson = { module = "com.google.code.gson:gson", version = "2.6.2" }
+hbase-shaded-netty = { module = "org.apache.hbase.thirdparty:hbase-shaded-netty", version = "4.1.10" } # Needed by our copied HBase classes in stroom.bytebuffer.hbase
+hessian = { module = "com.caucho:hessian", version = "4.0.65" }
+hibernate-jpa = { module = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api", version = "1.0.0.Final" } # remove when legacy code is removed
+hikari = { module = "com.zaxxer:HikariCP", version = "5.1.0" }
+http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
+httpcore = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore" }
+jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
+#jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by dropwizard-dependencies
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by dropwizard-dependencies # files('libs/jackson-databind-2.10.5.1.jar'),#
+jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml" } # version controlled by dropwizard-dependencies
+jackson-datatype-jdk8 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" } # version controlled by dropwizard-dependencies
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" } # version controlled by dropwizard-dependencies
+jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies
+jakarta-el = { module = "org.glassfish:jakarta.el" } # version controlled by dropwizard-dependencies
+jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version = "2.0.1" }
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" } # version controlled by dropwizard-dependencies
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" } # version controlled by dropwizard-dependencies
+java-diff-utils = { module = "io.github.java-diff-utils:java-diff-utils", version = "4.11" }
+java-jwt = { module = "com.auth0:java-jwt", version = "4.4.0" }
+#javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version = "1.3.2" }
+javassist = { module = "org.javassist:javassist" } # version controlled by dropwizard-dependencies
+javax-inject-gwt = { module = "javax.inject:javax.inject", version = "1" }
+jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
+jaxb-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version = "4.0.1" }
+jaxb-api-gwt = { module = "javax.xml.bind:jaxb-api", version = "2.3.1" }#"jakarta.xml.bind:jakarta.xml.bind-api", version = "3.0.1" } # Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
+jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.4" }
+#jaxb-impl-gwt = { module = "org.glassfish.jaxb:jaxb-runtime", version = "2.3.1" }#"com.sun.xml.bind:jaxb-impl", version = "3.0.2" }
+#jaxws-api = { module = "javax.xml.ws:jaxws-api", version = "2.2.6" }
+jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" } # version controlled by dropwizard-dependencies
+jcommander = { module = "com.beust:jcommander", version = "1.82" }
+jersey-client = { module = "org.glassfish.jersey.core:jersey-client" } # version controlled by dropwizard-dependencies
+jersey-common = { module = "org.glassfish.jersey.core:jersey-common" } # version controlled by dropwizard-dependencies
+jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version controlled by dropwizard-dependencies
+jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
+jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
+jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
+jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version controlled by dropwizard-dependencies
+jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "7.1.0.202411261347-r" }
+jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
+jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
+jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
+jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
+jooq-codegen = { module = "org.jooq:jooq-codegen", version.ref = "jooq" }
+jooq-meta = { module = "org.jooq:jooq-meta", version.ref = "jooq" }
+jose4j = { module = "org.bitbucket.b_c:jose4j", version = "0.9.4" }
+# jsr173-api = { module = "javax.xml.bind:jsr173_api", version = "1.0" }
+jul-to-slf4j = { module = "org.slf4j:jul-to-slf4j" } # version controlled by dropwizard-dependencies
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-jupiter" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api" } # version controlled by junit-bom
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" } # version controlled by junit-bom
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" } # version controlled by junit-bom
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" } # version controlled by junit-bom
+kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka"} # version controlled by junit-bom
+kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
+# lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
+# See https:#github.com/gchq/stroom/issues/3485 & https:#github.com/gchq/stroom/issues/4133
+# Potentially caused by https:#github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
+# lmdbjava 0.9.0 has a cursor bug though, https:#github.com/lmdbjava/lmdbjava/issues/228
+lmdbjava = { module = "org.lmdbjava:lmdbjava", version = "0.8.2" }
+# This is the bridge from log4j v1 to slf4j
+log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" } # version controlled by dropwizard-dependencies
+# This is the bridge from log4j v2 to slf4j
+#log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version = "2.24.1" }
+logback-classic = { module = "ch.qos.logback:logback-classic" } # version controlled by dropwizard-dependencies
+logback-core = { module = "ch.qos.logback:logback-core" } # version controlled by dropwizard-dependencies
+mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2.12", version = "1.0.39" }
+mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
+mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.2.0" }
+poi = { module = "org.apache.poi:poi", version.ref = "poi" }
+poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
+quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.0-rc1" }
+restygwt = { module = "org.fusesource.restygwt:restygwt", version = "2.2.7" }
+saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
+
+scylladb-driver-core = { module = "com.scylladb:java-driver-core", version.ref = "scylladb" }
+scylladb-query-builder = { module = "com.scylladb:java-driver-query-builder", version.ref = "scylladb" }
+scylladb-driver-mapper = { module = "com.scylladb:java-driver-mapper-runtime", version.ref = "scylladb" }
+
+simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simple-java-mail" }
+simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
+slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
+snake-yaml = { module = "org.yaml:snakeyaml", version = "2.3" }
+solrj = { module = "org.apache.solr:solr-solrj", version = "9.8.0" }
+stax-api = { module = "stax:stax-api", version = "1.0.1" }
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
+swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
+swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
+vavr = { module = "io.vavr:vavr", version = "0.10.4" }
+wiremock = { module = "org.wiremock:wiremock", version = "3.3.1" }
+ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
+ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
+xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
+#xml-apis = { module = "xml-apis:xml-apis", version = "2.0.2" }
+zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "0.16" }
+
+[plugins]
+
+java-library = { id = "java-library" }
+
+# Plugin for downloading content from the 'net
+download = { id = "de.undercouch.download", version = "4.1.2" }
+
+# Plugin for producing a tree of task dependencies, run task 'taskTree'
+task-tree = { id = "com.dorongold.task-tree", version = "1.3.1" }
+
+shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta6" }
+
+jooq = { id = "nu.studer.jooq", version = "8.2.3" }
+
+flyway = { id = "org.flywaydb.flyway", version = "10.0.0" }
+
+jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.16.0" }
+
+# moduleplugin = { id = "org.javamodularity.moduleplugin", version = "1.8.10" }
+
+# analyze = { id = "ca.cutterslade.analyze", version = "1.4.3" }
+
+# lint = { id = "nebula.lint", version = "10.4.2" }
+
+# dependency-graph-generator = { id = "com.vanniktech.dependency.graph.generator", version = "0.5.0" }
+
+swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }

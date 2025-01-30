@@ -6,15 +6,15 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.mockito_core
-    implementation libs.mockito_junit_jupiter
-    implementation libs.slf4j_api
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
+    implementation libs.mockito.core
+    implementation libs.mockito.junit.jupiter
+    implementation libs.slf4j.api
 
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 }

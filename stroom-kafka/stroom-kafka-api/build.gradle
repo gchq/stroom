@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
-    implementation libs.kafka_clients
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
+    implementation libs.kafka.clients
 }

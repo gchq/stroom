@@ -1,17 +1,17 @@
-ext.moduleName = 'stroom.legacy.model_6_1'
+ext.moduleName = 'stroom.legacy.model.6.1'
 
 dependencies {
     implementation project(':stroom-docref')
 
-    implementation libs.hibernate_jpa
-    implementation libs.jackson_annotations
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
-    implementation libs.jakarta_validation_api
+    implementation libs.hibernate.jpa
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.validation.api
     implementation libs.javassist
-    implementation libs.jaxb_api
-    implementation libs.saxon_he
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
+    implementation libs.jaxb.api
+    implementation libs.saxon.he
+    implementation libs.slf4j.api
+    implementation libs.swagger.annotations
     implementation libs.xerces
 }
