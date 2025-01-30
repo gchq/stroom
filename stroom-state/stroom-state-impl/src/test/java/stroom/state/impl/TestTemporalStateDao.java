@@ -45,7 +45,7 @@ class TestTemporalStateDao {
             final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-            insertData(stateDao, refTime, "test", 100, 10);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 100, 10);
 
             final TemporalStateRequest stateRequest =
                     new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
@@ -72,8 +72,8 @@ class TestTemporalStateDao {
             final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-            insertData(stateDao, refTime, "test", 100, 10);
-            insertData(stateDao, refTime, "test", 10, -10);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 100, 10);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 10, -10);
 
             assertThat(stateDao.count()).isEqualTo(109);
 
@@ -91,8 +91,8 @@ class TestTemporalStateDao {
             final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
 
             Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-            insertData(stateDao, refTime, "test", 100, 10);
-            insertData(stateDao, refTime, "test", 10, -10);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 100, 10);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 10, -10);
 
             assertThat(stateDao.count()).isEqualTo(109);
 
@@ -104,16 +104,38 @@ class TestTemporalStateDao {
         });
     }
 
+    @Test
+    void testCondense2() {
+        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
+
+            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+            insertData(stateDao, refTime, "TEST_KEY", "test", 100, 60 * 60 * 24);
+            insertData(stateDao, refTime, "TEST_KEY2", "test2", 100, 60 * 60 * 24);
+            insertData(stateDao, refTime, "TEST_KEY", "test", 10, -60 * 60 * 24);
+            insertData(stateDao, refTime, "TEST_KEY2", "test2", 10, -60 * 60 * 24);
+
+            assertThat(stateDao.count()).isEqualTo(218);
+
+            stateDao.condense(refTime);
+            assertThat(stateDao.count()).isEqualTo(200);
+
+            stateDao.condense(Instant.parse("2000-01-10T00:00:00.000Z"));
+            assertThat(stateDao.count()).isEqualTo(182);
+        });
+    }
+
     private void insertData(final TemporalStateDao stateDao,
-                                    final Instant refTime,
-                                    final String value,
-                                    final int rows,
-                                    final long deltaSeconds) {
+                            final Instant refTime,
+                            final String key,
+                            final String value,
+                            final int rows,
+                            final long deltaSeconds) {
         final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
         for (int i = 0; i < rows; i++) {
             final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
             final TemporalState state = new TemporalState(
-                    "TEST_KEY",
+                    key,
                     effectiveTime,
                     StringValue.TYPE_ID,
                     byteBuffer);
