@@ -55,6 +55,12 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     }
 
     @Override
+    public void clear() {
+        errors.clear();
+        errorCount.set(0);
+    }
+
+    @Override
     public List<String> getErrors() {
         if (errors.size() > 0) {
             return new ArrayList<>(errors);
@@ -78,6 +84,6 @@ public class ErrorConsumerImpl implements ErrorConsumer {
     @Override
     public String toString() {
         return "id=" + System.identityHashCode(this)
-                + " errorCount=" + errorCount.get();
+               + " errorCount=" + errorCount.get();
     }
 }

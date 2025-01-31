@@ -19,8 +19,7 @@ public class CompiledSorters<E extends Item> {
                            final List<Column> columns) {
         this.columns = columns;
         this.maxDepth = compiledDepths.getMaxDepth();
-        @SuppressWarnings("unchecked")
-        final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
+        @SuppressWarnings("unchecked") final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
         boolean hasSort = false;
 
         for (int depth = 0; depth <= maxDepth; depth++) {
@@ -49,8 +48,8 @@ public class CompiledSorters<E extends Item> {
         this.compiledSorters = sorters;
         this.hasSort = hasSort;
         limitResultCount = compiledDepths.getMaxDepth() < Sizes.MAX_SIZE &&
-                !hasSort &&
-                !compiledDepths.hasGroup();
+                           !hasSort &&
+                           !compiledDepths.hasGroup();
     }
 
     public boolean hasSort() {
@@ -67,8 +66,7 @@ public class CompiledSorters<E extends Item> {
     public void update(final List<Column> newColumns) {
         // Map new columns to original columns as close as we can.
         final ColumnMap columnMap = new ColumnMap(columns, newColumns);
-        @SuppressWarnings("unchecked")
-        final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
+        @SuppressWarnings("unchecked") final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
         for (int depth = 0; depth <= maxDepth; depth++) {
             for (int columnIndex = 0; columnIndex < columns.size(); columnIndex++) {
                 final Column originalColumn = columns.get(columnIndex);
@@ -76,9 +74,10 @@ public class CompiledSorters<E extends Item> {
                     final Column newColumn = columnMap.getNewColumnFromOriginalColumn(originalColumn);
                     if (newColumn != null) {
                         if (newColumn.getSort() != null &&
-                                (newColumn.getGroup() == null || newColumn.getGroup() >= depth)) {
+                            (newColumn.getGroup() == null || newColumn.getGroup() >= depth)) {
                             if (limitResultCount) {
-                                throw new RuntimeException("Attempt to add sort to page limited results");
+                                throw new RuntimeException("Attempt to add sort to page limited results.\n" +
+                                                           "Please revert change or run a new query.");
                             }
 
                             // Get an appropriate comparator.

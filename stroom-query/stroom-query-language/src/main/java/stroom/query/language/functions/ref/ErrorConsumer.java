@@ -23,5 +23,7 @@ public interface ErrorConsumer {
 
     List<String> drain();
 
+    void clear();
+
     boolean hasErrors();
 }

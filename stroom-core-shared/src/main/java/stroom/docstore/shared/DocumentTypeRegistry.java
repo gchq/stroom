@@ -172,6 +172,44 @@ public class DocumentTypeRegistry {
             "XSL Translation",
             SvgImage.DOCUMENT_XSLT);
 
+
+    public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Dual",
+            "Dual",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType REF_STORE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "ReferenceDataStore",
+            "Reference Data Store (This Node Only)",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType TASK_MANAGER_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "TaskManager",
+            "Task Manager",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType ANNOTATIONS_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Annotations",
+            "Annotations",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType STREAM_STORE_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "StreamStore",
+            "Stream Store",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType INDEX_SHARDS_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "IndexShards",
+            "Index Shards",
+            SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType PROCESSOR_TASK_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "ProcessorTasks",
+            "Processor Tasks",
+            SvgImage.DOCUMENT_SEARCHABLE);
+
+
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
         put(ANALYTIC_RULE_DOCUMENT_TYPE);
@@ -205,6 +243,15 @@ public class DocumentTypeRegistry {
         put(VISUALISATION_DOCUMENT_TYPE);
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
+
+        // Searchables
+        put(DUAL_DOCUMENT_TYPE);
+        put(REF_STORE_DOCUMENT_TYPE);
+        put(TASK_MANAGER_DOCUMENT_TYPE);
+        put(ANNOTATIONS_DOCUMENT_TYPE);
+        put(STREAM_STORE_DOCUMENT_TYPE);
+        put(INDEX_SHARDS_DOCUMENT_TYPE);
+        put(PROCESSOR_TASK_DOCUMENT_TYPE);
     }
 
     private static void put(final DocumentType documentType) {

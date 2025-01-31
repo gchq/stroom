@@ -27,6 +27,7 @@ import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
 import stroom.data.grid.client.DataGridSelectionEventManager;
+import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
@@ -437,6 +438,8 @@ public class QueryResultTablePresenter
 
     private void setDataInternal(final Result componentResult) {
         GWT.log("setDataInternal");
+        final MessagePanel messagePanel = pagerView.getMessagePanel();
+        messagePanel.hideMessage();
 
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
@@ -531,6 +534,10 @@ public class QueryResultTablePresenter
 
                 // Enable download of current results.
                 downloadButton.setEnabled(true);
+
+                // Show errors if there are any.
+                messagePanel.showMessage(tableResult.getErrors());
+
             } else {
                 // Disable download of current results.
                 downloadButton.setEnabled(false);

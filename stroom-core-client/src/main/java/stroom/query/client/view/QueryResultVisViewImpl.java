@@ -17,6 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.dashboard.client.vis.VisFrame;
+import stroom.data.grid.client.MessagePanelImpl;
 import stroom.data.pager.client.RefreshButton;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
@@ -25,7 +26,6 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,21 +35,14 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
 
     private final FlowPanel widget;
     private final SimplePanel visContainer;
-    private final SimplePanel messagePanel;
-    private final Label message;
+    private final MessagePanelImpl messagePanel;
     private final RefreshButton refreshButton;
 
     private VisFrame visFrame;
 
     @Inject
     public QueryResultVisViewImpl() {
-        message = new Label("", false);
-        message.setStyleName("dashboardVis-messageInner");
-
-        messagePanel = new SimplePanel();
-        messagePanel.setStyleName("dashboardVis-messageOuter");
-        messagePanel.add(message);
-        messagePanel.setVisible(false);
+        messagePanel = new MessagePanelImpl();
 
         visContainer = new SimplePanel();
         visContainer.setStyleName("queryVis-innerLayout");
@@ -151,8 +144,8 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
     private Element getParentByClass(final Element element, final String className) {
         Element el = element;
         while (el != null &&
-                (el.getClassName() == null ||
-                        !el.getClassName().contains(className))) {
+               (el.getClassName() == null ||
+                !el.getClassName().contains(className))) {
             el = el.getParentElement();
         }
         return el;
@@ -160,12 +153,11 @@ public class QueryResultVisViewImpl extends ViewImpl implements QueryResultVisVi
 
     @Override
     public void showMessage(final String msg) {
-        message.setText(msg);
-        messagePanel.setVisible(true);
+        messagePanel.showMessage(msg);
     }
 
     @Override
     public void hideMessage() {
-        messagePanel.setVisible(false);
+        messagePanel.hideMessage();
     }
 }
