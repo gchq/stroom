@@ -77,7 +77,10 @@ public class ColumnMap {
                 // Important column for data structure.
                 // Check it exists in the requested column set.
                 if (originalColumn == null) {
-                    throw new RuntimeException("Structural column missing from original data: " + column);
+                    throw new RuntimeException("Grouped column '" +
+                                               column.getName() +
+                                               "' missing from original query.\n" +
+                                               "Please revert change or run a new query.");
                 }
             }
         }
@@ -85,7 +88,7 @@ public class ColumnMap {
         originalColumnToNewColumnMap = newColumnToOriginalColumnMap
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(Entry::getValue, Entry::getKey));
+                .collect(Collectors.toMap(Entry::getValue, Entry::getKey, (map1, map2) -> map1));
 
         // Check that the request contains all of the same columns that affect the data structure of the stored data.
         for (final Column originalColumn : originalColumns) {
@@ -95,7 +98,10 @@ public class ColumnMap {
                 // Check it exists in the requested column set.
                 final Column newColumn = originalColumnToNewColumnMap.get(originalColumn);
                 if (newColumn == null) {
-                    throw new RuntimeException("Structural column missing from request: " + originalColumn);
+                    throw new RuntimeException("Grouped column '" +
+                                               originalColumn.getName() +
+                                               "' missing from request.\n" +
+                                               "Please revert change or run a new query.");
                 }
             }
         }
@@ -115,9 +121,9 @@ public class ColumnMap {
                                 final Column newColumn) {
         for (final Column originalColumn : originalColumns) {
             if (Objects.equals(newColumn.getId(), originalColumn.getId()) &&
-                    Objects.equals(newColumn.getExpression(), originalColumn.getExpression()) &&
-                    Objects.equals(newColumn.getFilter(), originalColumn.getFilter()) &&
-                    Objects.equals(newColumn.getGroup(), originalColumn.getGroup())) {
+                Objects.equals(newColumn.getExpression(), originalColumn.getExpression()) &&
+                Objects.equals(newColumn.getFilter(), originalColumn.getFilter()) &&
+                Objects.equals(newColumn.getGroup(), originalColumn.getGroup())) {
                 return originalColumn;
             }
         }
@@ -128,8 +134,8 @@ public class ColumnMap {
                                         final Column newColumn) {
         for (final Column originalColumn : originalColumns) {
             if (Objects.equals(newColumn.getExpression(), originalColumn.getExpression()) &&
-                    Objects.equals(newColumn.getFilter(), originalColumn.getFilter()) &&
-                    Objects.equals(newColumn.getGroup(), originalColumn.getGroup())) {
+                Objects.equals(newColumn.getFilter(), originalColumn.getFilter()) &&
+                Objects.equals(newColumn.getGroup(), originalColumn.getGroup())) {
                 return originalColumn;
             }
         }
@@ -156,9 +162,9 @@ public class ColumnMap {
     private boolean hasFilter(final Column column) {
         return column.getFilter() != null && (
                 (column.getFilter().getIncludes() != null &&
-                        !column.getFilter().getIncludes().isBlank()) ||
-                        (column.getFilter().getExcludes() != null &&
-                                !column.getFilter().getExcludes().isBlank()));
+                 !column.getFilter().getIncludes().isBlank()) ||
+                (column.getFilter().getExcludes() != null &&
+                 !column.getFilter().getExcludes().isBlank()));
     }
 
     public Column getNewColumnFromOriginalColumn(final Column originalColumn) {

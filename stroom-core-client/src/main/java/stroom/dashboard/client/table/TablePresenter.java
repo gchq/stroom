@@ -42,6 +42,7 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
+import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.ConditionSet;
@@ -540,6 +541,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void setDataInternal(final Result componentResult) {
         ignoreRangeChange = true;
+        final MessagePanel messagePanel = pagerView.getMessagePanel();
+        messagePanel.hideMessage();
 
         try {
             if (componentResult != null) {
@@ -560,6 +563,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Enable download of current results.
                 downloadButton.setEnabled(true);
+
+                // Show errors if there are any.
+                messagePanel.showMessage(tableResult.getErrors());
+
             } else {
                 // Disable download of current results.
                 downloadButton.setEnabled(false);

@@ -30,7 +30,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 
@@ -45,13 +44,13 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @UiField
     FlowPanel toolbarWidgets;
     @UiField
-    SimplePanel listContainer;
+    FlowPanel listContainer;
 
     private int taskCount;
     private ButtonPanel buttonPanel;
-    private boolean addedWidgets;
 
     private final Widget widget;
+    private final MessagePanelImpl messagePanel = new MessagePanelImpl();
 
     @Inject
     public PagerViewImpl(final Binder binder) {
@@ -62,7 +61,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public void setDataWidget(final AbstractHasData<?> widget) {
         pager.setDisplay(widget);
-        listContainer.setWidget(widget);
+        listContainer.add(widget);
+        listContainer.add(messagePanel);
     }
 
     @Override
@@ -86,20 +86,10 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
         return getButtonPanel().addToggleButton(primaryPreset, secondaryPreset);
     }
 
-    @Override
-    public void addToolbarWidget(final Widget widget) {
-        if (!addedWidgets) {
-            addedWidgets = true;
-            toolbarWidgets.getElement().getStyle().setProperty("paddingLeft", "var(--control__gap--horizontal)");
-        }
-        toolbarWidgets.add(widget);
-    }
-
     private ButtonPanel getButtonPanel() {
         if (buttonPanel == null) {
             buttonPanel = new ButtonPanel();
             toolbarWidgets.add(buttonPanel);
-            addedWidgets = true;
         }
         return buttonPanel;
     }
@@ -134,6 +124,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
                 pager.getRefreshButton().setRefreshing(taskCount > 0);
             }
         };
+    }
+
+    @Override
+    public MessagePanel getMessagePanel() {
+        return messagePanel;
     }
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {
