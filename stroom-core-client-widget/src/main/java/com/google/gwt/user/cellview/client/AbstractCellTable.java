@@ -2637,4 +2637,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             }
         }
     }
+
+    /**
+     * To fix issue gh-4684 we stop tables from taking focus if the user is clicking an item in the header.
+     * This allows the header controls (filer text boxes) to take focus themselves.
+     */
+    @Override
+    boolean allowFocus(final Element element) {
+        if (getTableHeadElement().isOrHasChild(element)) {
+            return false;
+        }
+        return super.allowFocus(element);
+    }
 }
