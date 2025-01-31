@@ -2069,6 +2069,11 @@ button.main-menu svg {
     height: 2.1rem;
 }
 
+.find-topBar .gwt-TextArea.multiLine {
+    /* Multi line */
+    height: 6.3rem;
+}
+
 .find-buttons {
     display: flex;
     position: absolute;

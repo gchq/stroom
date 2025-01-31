@@ -26,6 +26,7 @@ import stroom.widget.spinner.client.SpinnerLarge;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -99,13 +100,24 @@ public class FindInContentViewImpl
     }
 
     @UiHandler("pattern")
-    void onPatternChange(final KeyUpEvent e) {
+    void onPatternKeyUp(final KeyUpEvent e) {
         getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
     }
 
     @UiHandler("pattern")
-    void onPatternKeyDown(final KeyDownEvent event) {
-        getUiHandlers().onPatternKeyDown(event);
+    void onPatternKeyDown(final KeyDownEvent e) {
+        if (!e.getNativeEvent().getShiftKey()) {
+            getUiHandlers().onPatternKeyDown(e);
+        }
+    }
+
+    @UiHandler("pattern")
+    void onPatternChange(final ValueChangeEvent<String> e) {
+        if (pattern.getText().contains("\n")) {
+            pattern.getElement().addClassName("multiLine");
+        } else {
+            pattern.getElement().removeClassName("multiLine");
+        }
     }
 
     @UiHandler("toggleMatchCase")
