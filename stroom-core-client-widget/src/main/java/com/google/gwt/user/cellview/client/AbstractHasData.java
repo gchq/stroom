@@ -318,7 +318,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
                 CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
                     @Override
                     public void execute() {
-                        if (!hasData.resetFocusOnCell()) {
+                        if (!hasData.resetFocusOnCell() && wasFocused) {
                             Element elem = hasData.getKeyboardSelectedElement();
                             if (elem != null) {
                                 FocusUtil.focusRow(elem);
@@ -777,19 +777,27 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         final Element target = Element.as(eventTarget);
         if (BrowserEvents.FOCUS.equals(eventType)) {
             // Remember the focus state.
-            isFocused = true;
+            isFocused = allowFocus(target);
         } else if (BrowserEvents.BLUR.equals(eventType)) {
             // Remember the blur state.
             isFocused = false;
         } else if (BrowserEvents.KEYDOWN.equals(eventType)) {
             // A key event indicates that we already have focus.
-            isFocused = true;
+            isFocused = allowFocus(target);
         } else if (BrowserEvents.MOUSEDOWN.equals(eventType)
                 && CellBasedWidgetImpl.get().isFocusable(Element.as(target))) {
             // If a natively focusable element was just clicked, then we must have
             // focus.
-            isFocused = true;
+            isFocused = allowFocus(target);
         }
+    }
+
+    /**
+     * Provide a method so that subclasses can choose if this widget is allowed to obtain focus.
+     * This was introduced to fix issue gh-4684
+     */
+    boolean allowFocus(Element element) {
+        return true;
     }
 
     /**
