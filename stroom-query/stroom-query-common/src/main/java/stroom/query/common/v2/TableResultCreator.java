@@ -68,6 +68,8 @@ public class TableResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore dataStore, final ResultRequest resultRequest) {
+        errorConsumer.clear();
+
         final Fetch fetch = resultRequest.getFetch();
         if (Fetch.NONE.equals(fetch)) {
             return null;
@@ -137,11 +139,8 @@ public class TableResultCreator implements ResultCreator {
                         pageLength.incrementAndGet();
                     },
                     resultBuilder::totalResults);
-        } catch (final UncheckedInterruptedException e) {
-            LOGGER.debug(e.getMessage(), e);
-            errorConsumer.add(e);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);
         }
 

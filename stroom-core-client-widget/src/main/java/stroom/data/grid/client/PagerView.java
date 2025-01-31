@@ -35,11 +35,11 @@ public interface PagerView extends View, TaskMonitorFactory {
     ToggleButtonView addToggleButton(Preset primaryPreset,
                                      Preset secondaryPreset);
 
-    void addToolbarWidget(final Widget widget);
-
     RefreshButton getRefreshButton();
 
     void setDataWidget(final AbstractHasData<?> widget);
 
     void setPagerVisible(boolean visible);
+
+    MessagePanel getMessagePanel();
 }
