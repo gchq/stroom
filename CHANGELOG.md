@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.13] - 2025-02-03
+
 * Issue **#4626** : Add error messages to dashboard tables when sorting limited result data.
 
 * Issue **#4684** : Fix focus issue for table quick filter.
@@ -1229,7 +1231,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.13...HEAD
+[v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
 [v7.8-beta.12]: https://github.com/gchq/stroom/compare/v7.8-beta.11...v7.8-beta.12
 [v7.8-beta.11]: https://github.com/gchq/stroom/compare/v7.8-beta.10...v7.8-beta.11
 [v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
