@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.13] - 2025-02-03
+
+* Issue **#4626** : Add error messages to dashboard tables when sorting limited result data.
+
+* Issue **#4684** : Fix focus issue for table quick filter.
+
+* Issue **#4734** : Fix find in content multi line query behaviour.
+
+* Issue **#4696** : Fix paging of large numbers of data sources.
+
+
 ## [v7.7-beta.12] - 2025-01-29
 
 * Issue **#4690** : Fix meta data source fields.
@@ -1135,7 +1146,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.13...HEAD
+[v7.7-beta.13]: https://github.com/gchq/stroom/compare/v7.7-beta.12...v7.7-beta.13
 [v7.7-beta.12]: https://github.com/gchq/stroom/compare/v7.7-beta.11...v7.7-beta.12
 [v7.7-beta.11]: https://github.com/gchq/stroom/compare/v7.7-beta.10...v7.7-beta.11
 [v7.7-beta.10]: https://github.com/gchq/stroom/compare/v7.7-beta.9...v7.7-beta.10
