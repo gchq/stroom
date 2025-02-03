@@ -84,19 +84,16 @@ public class DataSources {
                     new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
             for (final DocRef docRef : dataSourceProviderRegistry.getDataSourceDocRefs()) {
                 if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
-                    for (int i = 0; i < 1000; i++) {
-                        final QueryHelpRow row = QueryHelpRow
-                                .builder()
-                                .type(QueryHelpType.DATA_SOURCE)
-                                .id(DATA_SOURCE_ID + "." + docRef.getUuid() + "dszf")
-                                .documentType(docRef.getType())
-                                .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
-                                .title("asdf " + i + " " + docRef.getDisplayValue())
-                                .data(new QueryHelpDocument(docRef))
-                                .build();
-
-                        trimmedSortedList.add(row);
-                    }
+                    final QueryHelpRow row = QueryHelpRow
+                            .builder()
+                            .type(QueryHelpType.DATA_SOURCE)
+                            .id(DATA_SOURCE_ID + "." + docRef.getUuid())
+                            .documentType(docRef.getType())
+                            .iconTooltip(docRef.getType() + " - " + docRef.getDisplayValue())
+                            .title(docRef.getDisplayValue())
+                            .data(new QueryHelpDocument(docRef))
+                            .build();
+                    trimmedSortedList.add(row);
                 }
             }
 
