@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4626** : Add error messages to dashboard tables when sorting limited result data.
+
+* Issue **#4684** : Fix focus issue for table quick filter.
+
+* Issue **#4734** : Fix find in content multi line query behaviour.
+
+* Issue **#4696** : Fix paging of large numbers of data sources.
+
+
 ## [v7.8-beta.12] - 2025-01-29
 
 * Issue **#4707** : Fix doc ref info service.
