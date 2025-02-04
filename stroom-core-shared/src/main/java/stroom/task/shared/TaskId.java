@@ -21,23 +21,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class TaskId implements Serializable {
-
-    private static final long serialVersionUID = -8404944210149631124L;
+public class TaskId {
 
     @JsonProperty
-    private String id;
+    private final String id;
     @JsonProperty
     private TaskId parentId;
-
-    /**
-     * Do not use this constructor directly, instead please use TaskIdFactory.
-     */
-    public TaskId() {
-    }
 
     /**
      * Do not use this constructor directly, instead please use TaskIdFactory.
@@ -45,16 +37,17 @@ public class TaskId implements Serializable {
     @JsonCreator
     public TaskId(@JsonProperty("id") final String id,
                   @JsonProperty("parentId") final TaskId parentId) {
+        Objects.requireNonNull(id);
         this.id = id;
         this.parentId = parentId;
     }
 
-    public String getId() {
-        return id;
+    public static TaskId createTestTaskId() {
+        return new TaskId("test", null);
     }
 
-    public void setId(final String id) {
-        this.id = id;
+    public String getId() {
+        return id;
     }
 
     public TaskId getParentId() {

@@ -63,7 +63,7 @@ class TaskManagerImpl implements TaskManager {
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NODE, TaskProgress::getNodeName),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NAME, TaskProgress::getTaskName),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_USER, (TaskProgress taskProgress) ->
-                    taskProgress.getUserRef().getDisplayName()),
+                    NullSafe.get(taskProgress, TaskProgress::getUserRef, UserRef::getDisplayName)),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_SUBMIT_TIME, (TaskProgress taskProgress) ->
                     Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString()),
             FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo)

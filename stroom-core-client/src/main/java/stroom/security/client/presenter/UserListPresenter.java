@@ -494,8 +494,7 @@ public class UserListPresenter
     public enum Mode {
         USERS_ONLY(true, false),
         GROUPS_ONLY(false, true),
-        USERS_AND_GROUPS(true, true),
-        ;
+        USERS_AND_GROUPS(true, true);
 
         private final boolean includesUsers;
         private final boolean includesGroups;
