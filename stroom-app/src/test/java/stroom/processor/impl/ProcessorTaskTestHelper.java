@@ -37,6 +37,7 @@ public class ProcessorTaskTestHelper {
     }
 
     public ProcessorTaskList assignTasks(final int count) {
-        return processorTaskQueueManager.assignTasks(new TaskId(), nodeInfo.getThisNodeName(), count);
+        return processorTaskQueueManager.assignTasks(TaskId.createTestTaskId(),
+                nodeInfo.getThisNodeName(), count);
     }
 }

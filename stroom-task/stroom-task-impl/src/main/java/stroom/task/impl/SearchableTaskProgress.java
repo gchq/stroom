@@ -40,10 +40,12 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -144,7 +146,8 @@ class SearchableTaskProgress implements Searchable {
                         final Map<String, Object> attributeMap = new HashMap<>();
                         attributeMap.put(TaskManagerFields.FIELD_NODE, taskProgress.getNodeName());
                         attributeMap.put(TaskManagerFields.FIELD_NAME, taskProgress.getTaskName());
-                        attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserRef().getDisplayName());
+                        attributeMap.put(TaskManagerFields.FIELD_USER, NullSafe
+                                .get(taskProgress, TaskProgress::getUserRef, UserRef::getDisplayName));
                         attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME, taskProgress.getSubmitTimeMs());
                         attributeMap.put(TaskManagerFields.FIELD_AGE, taskProgress.getAgeMs());
                         attributeMap.put(TaskManagerFields.FIELD_INFO, taskProgress.getTaskInfo());

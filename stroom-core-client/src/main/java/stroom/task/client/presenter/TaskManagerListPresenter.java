@@ -56,6 +56,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -341,8 +342,9 @@ public class TaskManagerListPresenter
         // User.
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
-                                TaskProgress::getUserRef, getEventBus(), securityContext, DisplayType.DISPLAY_NAME)
-                        .enabledWhen(taskProgress -> taskProgress.getUserRef().isEnabled())
+                                TaskProgress::getUserRef, getEventBus(), securityContext, DisplayType.AUTO)
+                        .enabledWhen(taskProgress -> GwtNullSafe
+                                .getOrElse(taskProgress, TaskProgress::getUserRef, UserRef::isEnabled, false))
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)
                         .build(),
                 FindTaskProgressCriteria.FIELD_USER,
@@ -393,7 +395,7 @@ public class TaskManagerListPresenter
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
                 .row("Node", getNodeName(row))
-                .row("User", row.getUserRef().getDisplayName())
+                .row("User", GwtNullSafe.get(row, TaskProgress::getUserRef, UserRef::getDisplayName))
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
                 .row("Id", GwtNullSafe.get(row.getId(), TaskId::getId));

@@ -306,8 +306,7 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
         /**
          * The UUID of the {@link DocRef}
          */
-        UUID(DocRef::getUuid, "UUID"),
-        ;
+        UUID(DocRef::getUuid, "UUID");
 
         private final Function<DocRef, String> displayTextFunc;
         private final String typeName;
