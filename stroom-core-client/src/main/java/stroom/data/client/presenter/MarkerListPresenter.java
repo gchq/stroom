@@ -125,54 +125,53 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addElementId() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder(
-                                (Marker marker) -> {
-                                    if (marker instanceof StoredError) {
-                                        final StoredError storedError = (StoredError) marker;
-                                        if (storedError.getElementId() != null) {
-                                            return SafeHtmlUtils.fromString(storedError.getElementId());
-                                        }
+                        .htmlColumnBuilder((Marker marker) -> {
+                            if (marker instanceof StoredError) {
+                                final StoredError storedError = (StoredError) marker;
+                                if (storedError.getElementId() != null) {
+                                    return SafeHtmlUtils.fromString(storedError.getElementId());
+                                }
 
-                                    } else if (marker instanceof Summary) {
-                                        final Summary summary = (Summary) marker;
+                            } else if (marker instanceof Summary) {
+                                final Summary summary = (Summary) marker;
 
-                                        final StringBuilder sb = new StringBuilder();
-                                        sb.append(summary.getSeverity().getSummaryValue());
-                                        sb.append(" (");
-                                        if (summary.getTotal() > summary.getCount()) {
-                                            sb.append(summary.getCount());
-                                            sb.append(" of ");
-                                            sb.append(summary.getTotal());
+                                final StringBuilder sb = new StringBuilder();
+                                sb.append(summary.getSeverity().getSummaryValue());
+                                sb.append(" (");
+                                if (summary.getTotal() > summary.getCount()) {
+                                    sb.append(summary.getCount());
+                                    sb.append(" of ");
+                                    sb.append(summary.getTotal());
 
-                                            if (summary.getTotal() >= FetchMarkerResult.MAX_TOTAL_MARKERS) {
-                                                sb.append("+");
-                                            }
-
-                                            if (summary.getTotal() <= 1) {
-                                                sb.append(" item)");
-                                            } else {
-                                                sb.append(" items)");
-                                            }
-                                        } else {
-                                            sb.append(summary.getCount());
-                                            if (summary.getCount() <= 1) {
-                                                sb.append(" item)");
-                                            } else {
-                                                sb.append(" items)");
-                                            }
-                                        }
-
-                                        // Make summery items bold.
-                                        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                                        builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
-                                        builder.appendEscaped(sb.toString());
-                                        builder.appendHtmlConstant("</div>");
-
-                                        return builder.toSafeHtml();
+                                    if (summary.getTotal() >= FetchMarkerResult.MAX_TOTAL_MARKERS) {
+                                        sb.append("+");
                                     }
 
-                                    return null;
-                                })
+                                    if (summary.getTotal() <= 1) {
+                                        sb.append(" item)");
+                                    } else {
+                                        sb.append(" items)");
+                                    }
+                                } else {
+                                    sb.append(summary.getCount());
+                                    if (summary.getCount() <= 1) {
+                                        sb.append(" item)");
+                                    } else {
+                                        sb.append(" items)");
+                                    }
+                                }
+
+                                // Make summery items bold.
+                                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                                builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
+                                builder.appendEscaped(sb.toString());
+                                builder.appendHtmlConstant("</div>");
+
+                                return builder.toSafeHtml();
+                            }
+
+                            return null;
+                        })
                         .build(),
                 "Element",
                 150);
@@ -180,23 +179,22 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addStream() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder(
-                                this::convertToStoredError,
-                                (StoredError storedError) -> {
-                                    if (storedError.getLocation() != null &&
-                                            storedError.getLocation() instanceof StreamLocation) {
-                                        final StreamLocation streamLocation =
-                                                (StreamLocation) storedError.getLocation();
-                                        if (streamLocation.getPartIndex() > -1) {
-                                            return SafeHtmlUtils
-                                                    .fromString(String.valueOf(streamLocation.getPartIndex() + 1));
-                                        } else {
-                                            return null;
-                                        }
-                                    } else {
-                                        return null;
-                                    }
-                                })
+                        .htmlColumnBuilder((Marker marker) -> {
+                            final StoredError storedError = convertToStoredError(marker);
+                            if (storedError != null && storedError.getLocation() != null &&
+                                storedError.getLocation() instanceof StreamLocation) {
+                                final StreamLocation streamLocation =
+                                        (StreamLocation) storedError.getLocation();
+                                if (streamLocation.getPartIndex() > -1) {
+                                    return SafeHtmlUtils
+                                            .fromString(String.valueOf(streamLocation.getPartIndex() + 1));
+                                } else {
+                                    return null;
+                                }
+                            } else {
+                                return null;
+                            }
+                        })
                         .build(),
                 "Stream",
                 50);
@@ -204,16 +202,15 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addLine() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder(
-                                this::convertToStoredError,
-                                (StoredError storedError) -> {
-                                    if (storedError.getLocation().getLineNo() >= 0) {
-                                        return SafeHtmlUtils
-                                                .fromString(String.valueOf(storedError.getLocation().getLineNo()));
-                                    } else {
-                                        return null;
-                                    }
-                                })
+                        .htmlColumnBuilder((Marker marker) -> {
+                            final StoredError storedError = convertToStoredError(marker);
+                            if (storedError != null && storedError.getLocation().getLineNo() >= 0) {
+                                return SafeHtmlUtils
+                                        .fromString(String.valueOf(storedError.getLocation().getLineNo()));
+                            } else {
+                                return null;
+                            }
+                        })
                         .build(),
                 "Line",
                 50);
@@ -221,16 +218,15 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addCol() {
         dataGrid.addResizableColumn(DataGridUtil
-                        .htmlColumnBuilder(
-                                this::convertToStoredError,
-                                (StoredError storedError) -> {
-                                    if (storedError.getLocation().getColNo() >= 0) {
-                                        return SafeHtmlUtils
-                                                .fromString(String.valueOf(storedError.getLocation().getColNo()));
-                                    } else {
-                                        return null;
-                                    }
-                                })
+                        .htmlColumnBuilder((Marker marker) -> {
+                            final StoredError storedError = convertToStoredError(marker);
+                            if (storedError != null && storedError.getLocation().getColNo() >= 0) {
+                                return SafeHtmlUtils
+                                        .fromString(String.valueOf(storedError.getLocation().getColNo()));
+                            } else {
+                                return null;
+                            }
+                        })
                         .build(),
                 "Col",
                 50);
@@ -243,10 +239,13 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
     }
 
     private void addMessage() {
+        dataGrid.addResizableColumn(DataGridUtil
+                        .htmlColumnBuilder((Marker marker) -> {
+                            final StoredError storedError = convertToStoredError(marker);
+                            if (storedError == null) {
+                                return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                            }
 
-        dataGrid.addResizableColumn(
-                DataGridUtil
-                        .htmlColumnBuilder(this::convertToStoredError, storedError -> {
                             // Some messages, e.g. ref data ones have multiple sub msgs within the msgs
                             // so split them out
                             final SplitResult splitResult = messageCauseDelimiterPattern.split(

@@ -2,7 +2,6 @@ package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -176,11 +175,7 @@ public class UserDependenciesListPresenter
                         .eventBus(getEventBus())
                         .showIcon(true);
 
-        final Column<UserDependency, DocRefProvider<UserDependency>> docNameCol = DataGridUtil.docRefColumnBuilder(
-                        (UserDependency row) ->
-                                GwtNullSafe.get(
-                                        row,
-                                        row2 -> new DocRefProvider<>(row2, UserDependency::getDocRef)),
+        final Column<UserDependency, UserDependency> docNameCol = DataGridUtil.docRefColumnBuilder(
                         cellBuilder)
                 .withSorting(FindUserDependenciesCriteria.FIELD_DOC_NAME)
                 .build();

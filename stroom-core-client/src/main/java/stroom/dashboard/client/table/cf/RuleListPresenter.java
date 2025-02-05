@@ -70,7 +70,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
 
         // Expression.
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.textColumnBuilder(ConditionalFormattingRule::getExpression, Object::toString)
+                DataGridUtil.textColumnBuilder((ConditionalFormattingRule rule) -> rule.getExpression().toString())
                         .enabledWhen(ConditionalFormattingRule::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Expression")

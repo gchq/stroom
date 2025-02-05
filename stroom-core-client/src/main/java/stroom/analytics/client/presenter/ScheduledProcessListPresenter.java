@@ -26,7 +26,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -195,7 +194,7 @@ public class ScheduledProcessListPresenter
                 }, ExecutionScheduleFields.SCHEDULE, ColumnSizeConstants.DATE_COL);
 
 
-        final Column<ExecutionSchedule, UserRefProvider<ExecutionSchedule>> runAsCol = DataGridUtil
+        final Column<ExecutionSchedule, ExecutionSchedule> runAsCol = DataGridUtil
                 .userRefColumnBuilder(
                         ExecutionSchedule::getRunAsUser,
                         getEventBus(),

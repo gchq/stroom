@@ -1,7 +1,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -84,16 +83,13 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         final DocRefCell.Builder<FindResultWithPermissions> cellBuilder =
                 new DocRefCell.Builder<FindResultWithPermissions>()
                         .eventBus(getEventBus())
+                        .docRefFunction(row2 -> GwtNullSafe.get(
+                                row2,
+                                FindResultWithPermissions::getFindResult,
+                                FindResult::getDocRef))
                         .showIcon(true);
-        final Column<FindResultWithPermissions, DocRefProvider<FindResultWithPermissions>> docNameCol =
-                DataGridUtil.docRefColumnBuilder(
-                                (FindResultWithPermissions row) ->
-                                        new DocRefProvider<>(row, row2 -> GwtNullSafe.get(
-                                                row2,
-                                                FindResultWithPermissions::getFindResult,
-                                                FindResult::getDocRef)),
-                                cellBuilder)
-                        .build();
+        final Column<FindResultWithPermissions, FindResultWithPermissions> docNameCol =
+                DataGridUtil.docRefColumnBuilder(cellBuilder).build();
 
         dataGrid.addResizableColumn(docNameCol, "Document", 400);
 

@@ -21,7 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -209,7 +208,7 @@ public class UserListPresenter
 //                .enabledWhen(User::isEnabled)
 //                .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
 //                .build();
-        final Column<User, UserRefProvider<User>> displayNameCol = DataGridUtil.userRefColumnBuilder(
+        final Column<User, User> displayNameCol = DataGridUtil.userRefColumnBuilder(
                         User::getUserRef, getEventBus(), securityContext, DisplayType.DISPLAY_NAME)
                 .enabledWhen(User::isEnabled)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)

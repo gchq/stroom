@@ -19,7 +19,6 @@ package stroom.security.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.PageRequestUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -213,7 +212,7 @@ public class DocumentUserPermissionsListPresenter
                 (ColumnSizeConstants.ICON_COL * 2) + 20);
 
         // User Or Group Name
-        final Column<DocumentUserPermissions, UserRefProvider<DocumentUserPermissions>> displayNameCol =
+        final Column<DocumentUserPermissions, DocumentUserPermissions> displayNameCol =
                 DataGridUtil.userRefColumnBuilder(
                                 DocumentUserPermissions::getUserRef,
                                 getEventBus(),

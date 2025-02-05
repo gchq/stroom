@@ -19,12 +19,12 @@ package stroom.pipeline.structure.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
@@ -39,6 +39,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -154,29 +155,27 @@ public class PropertyListPresenter
                 .eventBus(getEventBus())
                 .showIcon(true)
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
-                .cellTextFunction(docRefProvider -> {
-                    if (docRefProvider == null) {
+                .cellTextFunction(property -> {
+                    if (property == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        final PipelineProperty property = docRefProvider.getRow();
                         final PipelinePropertyValue value = property.getValue();
                         if (value.getEntity() != null) {
-                            return SafeHtmlUtils.fromString(DocRefCell.getTextFromDocRef(value.getEntity()));
+                            return SafeHtmlUtils.fromString(value.getEntity()
+                                    .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                            DisplayType.AUTO,
+                                            DisplayType.AUTO)));
                         } else {
                             return SafeHtmlUtils.fromString(getVal(property));
                         }
                     }
-                });
+                })
+                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                        pipelineProperty,
+                        PipelineProperty::getValue,
+                        PipelinePropertyValue::getEntity));
 
-        final Column<PipelineProperty, DocRefProvider<PipelineProperty>> valueCol = DataGridUtil.docRefColumnBuilder(
-                        (PipelineProperty property) -> new DocRefProvider<>(property, property2 -> {
-                            final PipelinePropertyValue value = property.getValue();
-                            if (value == null) {
-                                return null;
-                            } else {
-                                return value.getEntity();
-                            }
-                        }),
+        final Column<PipelineProperty, PipelineProperty> valueCol = DataGridUtil.docRefColumnBuilder(
                         cellBuilder)
                 .build();
 

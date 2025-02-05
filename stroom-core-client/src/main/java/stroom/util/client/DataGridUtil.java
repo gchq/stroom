@@ -15,10 +15,7 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.client.presenter.UserRefCell;
-import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
 import stroom.data.grid.client.EndColumn;
@@ -189,7 +186,7 @@ public class DataGridUtil {
         Objects.requireNonNull(expanderExtractor);
 
         // Explicit generics typing for GWT
-        final Column<T_ROW, Expander> expanderColumn = new Column<T_ROW, Expander>(new ExpanderCell()) {
+        return new Column<T_ROW, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final T_ROW row) {
                 if (row == null) {
@@ -198,13 +195,10 @@ public class DataGridUtil {
                 return expanderExtractor.apply(row);
             }
         };
-
-        return expanderColumn;
     }
 
     public static <T_ROW> Column<T_ROW, String> endColumn() {
-        Column<T_ROW, String> column = new EndColumn<T_ROW>();
-        return column;
+        return new EndColumn<T_ROW>();
     }
 
 //    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableTextColumn(
@@ -370,50 +364,32 @@ public class DataGridUtil {
 
     // There ought to be a better way of doing this so we don't have to have so many
     // methods to initiate the builder
-
-    public static <T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<
-            T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> columnBuilder(
-            final Function<T_ROW, T_RAW_VAL> valueExtractor,
-            final Function<T_RAW_VAL, T_CELL_VAL> formatter,
-            final Supplier<T_CELL> cellSupplier) {
-
-        return new ColumnBuilder<>(valueExtractor, formatter, cellSupplier);
-    }
-
     public static <T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<
-            T_ROW, T_CELL_VAL, T_CELL_VAL, T_CELL> columnBuilder(
+            T_ROW, T_CELL_VAL, T_CELL> columnBuilder(
             final Function<T_ROW, T_CELL_VAL> valueExtractor,
             final Supplier<T_CELL> cellSupplier) {
-
-        return new ColumnBuilder<>(valueExtractor, Function.identity(), cellSupplier);
+        return new ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL>(valueExtractor, cellSupplier);
     }
 
-    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> textColumnBuilder(
-            final Function<T_ROW, T_RAW_VAL> cellExtractor,
-            final Function<T_RAW_VAL, String> formatter) {
-
-        return new ColumnBuilder<>(cellExtractor, formatter, TextCell::new);
-    }
-
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textColumnBuilder(
-            final Function<T_ROW, String> cellExtractor) {
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
+    public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> textColumnBuilder(
+            final Function<T_ROW, String> valueExtractor) {
+        return new ColumnBuilder<T_ROW, String, Cell<String>>(valueExtractor, TextCell::new);
     }
 
     /**
      * A simple text cell with the value of the cell also as the hover tool tip value.
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
-            final Function<T_ROW, String> cellExtractor) {
-        return textWithTooltipColumnBuilder(cellExtractor, Function.identity());
+    public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> valueExtractor) {
+        return textWithTooltipColumnBuilder(valueExtractor, Function.identity());
     }
 
     /**
      * A simple text cell with the value of the hover tooltip provided by tooltipFunction, which is
      * applied to the cell value.
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textWithTooltipColumnBuilder(
-            final Function<T_ROW, String> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> textWithTooltipColumnBuilder(
+            final Function<T_ROW, String> valueExtractor,
             final Function<String, String> tooltipFunction) {
 
         final Supplier<Cell<String>> cellSupplier = () -> new TextCell() {
@@ -438,33 +414,31 @@ public class DataGridUtil {
                 }
             }
         };
-
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), cellSupplier);
+        return new ColumnBuilder<T_ROW, String, Cell<String>>(valueExtractor, cellSupplier);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, Boolean, Cell<Boolean>> redGreenTextColumnBuilder(
-            final Function<T_ROW, Boolean> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, Cell<Boolean>> redGreenTextColumnBuilder(
+            final Function<T_ROW, Boolean> valueExtractor,
             final String greenText,
             final String redText) {
-
-        return new ColumnBuilder<>(cellExtractor, Function.identity(),
+        return new ColumnBuilder<T_ROW, Boolean, Cell<Boolean>>(
+                valueExtractor,
                 () -> new RedGreenTextCell(greenText, redText));
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
-            final Function<T_ROW, Number> cellExtractor, final long minValue, final long maxValue) {
-        return new ColumnBuilder<>(
-                cellExtractor,
-                Function.identity(),
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, ValueSpinnerCell> valueSpinnerColumnBuilder(
+            final Function<T_ROW, Number> valueExtractor, final long minValue, final long maxValue) {
+        return new ColumnBuilder<T_ROW, Number, ValueSpinnerCell>(
+                valueExtractor,
                 () -> new ValueSpinnerCell(minValue, maxValue));
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, ColourSwatchCell> colourSwatchColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, String, ColourSwatchCell> colourSwatchColumnBuilder(
             final Function<T_ROW, String> cssColourExtractor) {
-        return new ColumnBuilder<>(cssColourExtractor, Function.identity(), ColourSwatchCell::new);
+        return new ColumnBuilder<T_ROW, String, ColourSwatchCell>(cssColourExtractor, ColourSwatchCell::new);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, TextCell> iecByteStringColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, String, TextCell> iecByteStringColumnBuilder(
             final Function<T_ROW, Long> bytesExtractor, final String valueIfNull) {
 
         final Function<T_ROW, String> bytesAsStrExtractor = row -> {
@@ -480,55 +454,52 @@ public class DataGridUtil {
             }
         };
 
-        return new ColumnBuilder<>(bytesAsStrExtractor, Function.identity(), TextCell::new);
+        return new ColumnBuilder<T_ROW, String, TextCell>(bytesAsStrExtractor, TextCell::new);
     }
 
     /**
      * Builds a read only tick box that is either ticked or un-ticked.
      *
-     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param valueExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>        The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
-            final Function<T_ROW, TickBoxState> cellExtractor) {
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> valueExtractor) {
 
-        return updatableTickBoxColumnBuilder(cellExtractor, false);
+        return updatableTickBoxColumnBuilder(valueExtractor, false);
     }
 
     /**
      * Builds an updatable tick box that is either ticked or un-ticked.
      *
-     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param valueExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>        The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
-            final Function<T_ROW, TickBoxState> cellExtractor) {
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> valueExtractor) {
 
-        return updatableTickBoxColumnBuilder(cellExtractor, true);
+        return updatableTickBoxColumnBuilder(valueExtractor, true);
     }
 
     /**
      * Builds an updatable tick box that is either ticked or un-ticked.
      *
-     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param valueExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>        The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
-            final Function<T_ROW, TickBoxState> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, TickBoxState, TickBoxCell> updatableTickBoxColumnBuilder(
+            final Function<T_ROW, TickBoxState> valueExtractor,
             final boolean isUpdatable) {
 
         final DefaultAppearance defaultAppearance = isUpdatable
                 ? new DefaultAppearance()
                 : new NoBorderAppearance();
 
-        return new ColumnBuilder<>(
-                cellExtractor,
-                Function.identity(),
-                () -> TickBoxCell.create(
-                        defaultAppearance,
-                        false,
-                        false,
-                        isUpdatable));
+        return new ColumnBuilder<T_ROW, TickBoxState, TickBoxCell>(valueExtractor, () -> TickBoxCell.create(
+                defaultAppearance,
+                false,
+                false,
+                isUpdatable));
     }
 
     public static <T_ROW> Function<T_ROW, TickBoxState> createTickBoxExtractor(
@@ -542,38 +513,22 @@ public class DataGridUtil {
     /**
      * A builder for creating a text column with a hover icon to copy the text content of the cell
      *
-     * @param cellExtractor Function to extract a String from the {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param valueExtractor Function to extract a cell value from the {@code T_ROW}.
+     * @param <T_ROW>        The row type
      */
-    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
-            final Function<T_ROW, String> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> copyTextColumnBuilder(
+            final Function<T_ROW, String> valueExtractor,
             final EventBus eventBus) {
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), () -> new CopyTextCell(eventBus));
+
+        return new ColumnBuilder<T_ROW, String, Cell<String>>(valueExtractor, () -> new CopyTextCell(eventBus));
     }
 
-    /**
-     * A builder for creating a text column with a hover icon to copy the text content of the cell
-     *
-     * @param cellExtractor Function to extract a T_RAW_VAL from the {@code T_ROW}.
-     * @param formatter     Function to convert T_RAW_VAL into a {@link String}.
-     * @param <T_ROW>       The row type
-     * @param <T_RAW_VAL>>  The type of the extracted value from the row.
-     */
-    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> copyTextColumnBuilder(
-            final Function<T_ROW, T_RAW_VAL> cellExtractor,
-            final EventBus eventBus,
-            final Function<T_RAW_VAL, String> formatter) {
-        return new ColumnBuilder<>(cellExtractor, formatter, () -> new CopyTextCell(eventBus));
-    }
-
-    public static <T_ROW> ColumnBuilder<T_ROW, Number, Number, Cell<Number>> percentBarColumnBuilder(
-            final Function<T_ROW, Number> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, Number, Cell<Number>> percentBarColumnBuilder(
+            final Function<T_ROW, Number> valueExtractor,
             final int warningThreshold,
             final int dangerThreshold) {
 
-        return new ColumnBuilder<>(
-                cellExtractor,
-                Function.identity(),
+        return new ColumnBuilder<T_ROW, Number, Cell<Number>>(valueExtractor,
                 () -> new PercentBarCell(warningThreshold, dangerThreshold));
     }
 
@@ -581,55 +536,57 @@ public class DataGridUtil {
      * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
      * and to open the user/group.
      *
-     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param valueExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>        The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
-            final Function<T_ROW, UserRef> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> valueExtractor,
             final EventBus eventBus,
             final ClientSecurityContext securityContext,
             final UserRef.DisplayType displayType) {
-        return userRefColumnBuilder(cellExtractor, eventBus, securityContext, false, displayType);
+        return userRefColumnBuilder(valueExtractor, eventBus, securityContext, false, displayType);
     }
 
     /**
      * A builder for creating a column for a {@link UserRef} with hover icons to copy the name of the doc
      * and to open the user/group.
      *
-     * @param cellExtractor Function to extract a {@link UserRef} from the {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param userRefFunction Function to extract a {@link UserRef} from the {@code T_ROW}.
+     * @param <T_ROW>         The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, UserRefProvider<T_ROW>, UserRefProvider<T_ROW>, Cell<UserRefProvider<T_ROW>>> userRefColumnBuilder(
-            final Function<T_ROW, UserRef> cellExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> userRefColumnBuilder(
+            final Function<T_ROW, UserRef> userRefFunction,
             final EventBus eventBus,
             final ClientSecurityContext securityContext,
             final boolean showIcon,
             final UserRef.DisplayType displayType) {
 
-        Objects.requireNonNull(cellExtractor);
+        Objects.requireNonNull(userRefFunction);
 
-        return new ColumnBuilder<>(
-                row -> new UserRefProvider<>(row, cellExtractor),
-                Function.identity(),
-                () -> new UserRefCell<>(eventBus, securityContext, showIcon, displayType, null));
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(), () -> new UserRefCell
+                .Builder<T_ROW>()
+                .eventBus(eventBus)
+                .securityContext(securityContext)
+                .showIcon(showIcon)
+                .displayType(displayType)
+                .userRefFunction(userRefFunction)
+                .build());
     }
 
     public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
                                                final MyDataGrid<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
-        final DocRefCell.Builder<T_ROW> cellBuilder = new Builder<T_ROW>()
-                .eventBus(eventBus)
-                .showIcon(true);
-
-        final Column<T_ROW, DocRefProvider<T_ROW>> column =
-                new ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>>()
-                        .valueExtractor(row -> new DocRefProvider<>(row, docRefExtractionFunction))
-                        .formatter(Function.identity())
-                        .cellSupplier(cellBuilder::build)
-                        .build();
+        final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
+                () -> new DocRefCell
+                        .Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .docRefFunction(docRefExtractionFunction)
+                        .showIcon(true)
+                        .build())
+                .build();
 
         final ColSpec<T_ROW> colSpec = new ColSpec.Builder<T_ROW>()
                 .column(column)
@@ -645,74 +602,38 @@ public class DataGridUtil {
      * and to open the doc.
      *
      * @param docRefExtractionFunction Function to extract a {@link DocRef} from the {@code T_ROW}.
-     * @param <T_ROW>       The row type
+     * @param <T_ROW>                  The row type
      */
     @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>> docRefColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> docRefExtractionFunction,
             final EventBus eventBus,
             final boolean allowLinkByName) {
 
         Objects.requireNonNull(docRefExtractionFunction);
 
-        final DocRefCell.Builder<DocRef> cellBuilder = new Builder<DocRef>()
-                .eventBus(eventBus)
-                .allowLinkByName(allowLinkByName);
-
-        final ColumnBuilder<T_ROW, DocRefProvider<DocRef>, DocRefProvider<DocRef>, Cell<DocRefProvider<DocRef>>>
-                columnBuilder = new ColumnBuilder<>();
-        return columnBuilder
-                .valueExtractor(row -> GwtNullSafe.get(docRefExtractionFunction.apply(row), DocRefProvider::forDocRef))
-                .formatter(Function.identity())
-                .cellSupplier(cellBuilder::build);
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
+                Function.identity(),
+                () -> new DocRefCell
+                        .Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .docRefFunction(docRefExtractionFunction)
+                        .allowLinkByName(allowLinkByName)
+                        .build());
     }
 
     /**
      * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
      * and to open the doc.
-     *
-     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
-     * @param <T_ROW>       The row type
      */
-    @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
-            final Function<T_ROW, DocRefProvider<T_ROW>> cellExtractor,
-            final EventBus eventBus,
-            final boolean allowLinkByName,
-            final Function<T_ROW, String> cssClassFunc) {
-
-        final DocRefCell.Builder<T_ROW> cellBuilder = new Builder<T_ROW>()
-                .eventBus(eventBus)
-                .allowLinkByName(allowLinkByName)
-                .cssClassFunction(cssClassFunc);
-
-        return docRefColumnBuilder(cellExtractor, cellBuilder);
-    }
-
-    /**
-     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
-     * and to open the doc.
-     *
-     * @param valueExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
-     * @param <T_ROW>        The row type
-     */
-    @SuppressWarnings("checkstyle:LineLength")
-    public static <T_ROW> ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>> docRefColumnBuilder(
-            final Function<T_ROW, DocRefProvider<T_ROW>> valueExtractor,
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final DocRefCell.Builder<T_ROW> cellBuilder) {
-
-        final ColumnBuilder<T_ROW, DocRefProvider<T_ROW>, DocRefProvider<T_ROW>, Cell<DocRefProvider<T_ROW>>>
-                columnBuilder = new ColumnBuilder<>();
-        return columnBuilder
-                .valueExtractor(valueExtractor)
-                .formatter(Function.identity())
-                .cellSupplier(cellBuilder::build);
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(), cellBuilder::build);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
-            final Function<T_ROW, CommandLink> cellExtractor) {
-
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), CommandLinkCell::new);
+    public static <T_ROW> ColumnBuilder<T_ROW, CommandLink, Cell<CommandLink>> commandLinkColumnBuilder(
+            final Function<T_ROW, CommandLink> valueExtractor) {
+        return new ColumnBuilder<T_ROW, CommandLink, Cell<CommandLink>>(valueExtractor, CommandLinkCell::new);
     }
 
     public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
@@ -723,33 +644,15 @@ public class DataGridUtil {
         });
     }
 
-    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
-            final Function<T_ROW, T_RAW_VAL> cellExtractor,
-            final Function<T_RAW_VAL, SafeHtml> formatter) {
-
-        return new ColumnBuilder<>(cellExtractor, formatter, SafeHtmlCell::new);
+    public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
+            final Function<T_ROW, SafeHtml> valueExtractor) {
+        return new ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>>(valueExtractor, SafeHtmlCell::new);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
-            final Function<T_ROW, SafeHtml> cellExtractor) {
-
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), SafeHtmlCell::new);
-    }
-
-//    public static <T_ROW> ColumnBuilder<T_ROW, String, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
-//            final Function<T_ROW, String> stringExtractor) {
-//
-//        return new ColumnBuilder<>(stringExtractor, SafeHtmlUtils::fromString, SafeHtmlCell::new);
-//    }
-
-    public static <T_ROW> ColumnBuilder<T_ROW, Preset, Preset, Cell<Preset>> svgPresetColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, Preset, Cell<Preset>> svgPresetColumnBuilder(
             final boolean isButton,
-            final Function<T_ROW, Preset> cellExtractor) {
-
-        return new ColumnBuilder<T_ROW, Preset, Preset, Cell<Preset>>()
-                .valueExtractor(cellExtractor)
-                .formatter(Function.identity())
-                .cellSupplier(() -> new SvgCell(isButton));
+            final Function<T_ROW, Preset> valueExtractor) {
+        return new ColumnBuilder<T_ROW, Preset, Cell<Preset>>(valueExtractor, () -> new SvgCell(isButton));
     }
 
     public static HeadingBuilder headingBuilder(final String headingText) {

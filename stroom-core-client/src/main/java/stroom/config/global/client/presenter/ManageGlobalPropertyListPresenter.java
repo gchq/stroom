@@ -348,7 +348,8 @@ public class ManageGlobalPropertyListPresenter
     private void initColumns() {
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getNameAsString, SafeHtmlUtils::fromString)
+                DataGridUtil.htmlColumnBuilder((ConfigPropertyRow row) ->
+                                SafeHtmlUtils.fromString(row.getNameAsString()))
                         .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
@@ -382,7 +383,9 @@ public class ManageGlobalPropertyListPresenter
 
         // Description
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getDescription, SafeHtmlUtils::fromString)
+                DataGridUtil.htmlColumnBuilder(
+                                (ConfigPropertyRow row) ->
+                                        SafeHtmlUtils.fromString(row.getDescription()))
                         .build(),
                 GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
                 750);

@@ -437,13 +437,12 @@ public abstract class AbstractMetaListPresenter
 
     void addAttributeColumn(final String name,
                             final QueryField attribute,
-                            final Function<String, String> formatter,
                             final int size) {
 
         final Function<MetaRow, String> extractor = metaRow ->
                 metaRow.getAttributeValue(attribute.getFldName());
 
-        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
+        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, TextCell::new)
                 .build();
 
         dataGrid.addResizableColumn(
@@ -457,10 +456,16 @@ public abstract class AbstractMetaListPresenter
                                         final Function<String, String> formatter,
                                         final int size) {
 
-        final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getFldName());
+        final Function<MetaRow, String> extractor = metaRow -> {
+            final String value = metaRow.getAttributeValue(attribute.getFldName());
+            if (value == null) {
+                return null;
+            } else {
+                return formatter.apply(value);
+            }
+        };
 
-        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
+        final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, TextCell::new)
                 .rightAligned()
                 .build();
 

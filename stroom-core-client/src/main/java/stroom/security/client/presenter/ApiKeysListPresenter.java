@@ -15,7 +15,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.svg.client.Preset;
@@ -311,7 +310,7 @@ public class ApiKeysListPresenter
 
         // Expires on
         final Column<HashedApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
-                        HashedApiKey::getExpireTimeMs, dateTimeFormatter::formatWithDuration)
+                        (HashedApiKey key) -> dateTimeFormatter.formatWithDuration(key.getExpireTimeMs()))
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
@@ -319,8 +318,7 @@ public class ApiKeysListPresenter
 
         // Hash algorithm
         final Column<HashedApiKey, String> hashAlgorithmColumn = DataGridUtil.textColumnBuilder(
-                        HashedApiKey::getHashAlgorithm,
-                        HashAlgorithm::getDisplayValue)
+                        (HashedApiKey key) -> key.getHashAlgorithm().getDisplayValue())
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_HASH_ALGORITHM)
                 .build();
