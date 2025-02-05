@@ -5,6 +5,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -21,18 +23,15 @@ import java.util.stream.Collectors;
  */
 public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedNameCheckAttributeMapFilter.class);
+
     private static final Pattern REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
     public static final String NAME_PART_DELIMITER = "-";
 
-    private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
-    public FeedNameCheckAttributeMapFilter(
-            final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider,
-            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
-
-        this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
+    public FeedNameCheckAttributeMapFilter(final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
@@ -44,18 +43,16 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
             throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
         }
 
-        final boolean isAutoContentEnabled = autoContentCreationConfigProvider.get()
-                .isEnabled();
-
         String feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
-        if (isAutoContentEnabled) {
+        if (receiveDataConfigProvider.get().isFeedNameGenerationEnabled()) {
+            LOGGER.debug("feedNameGenerationEnabled");
             // If they supply a feed then go with that
             if (feedName.isEmpty()) {
+                LOGGER.debug("No feed name supplied");
                 final String accountName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
                 if (accountName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.ACCOUNT_ID_MUST_BE_SPECIFIED, attributeMap);
                 }
-
                 final String component = NullSafe.trim(attributeMap.get(StandardHeaderArguments.COMPONENT));
                 if (component.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.COMPONENT_MUST_BE_SPECIFIED, attributeMap);
@@ -100,7 +97,10 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 format,
                 effectiveType);
 
-        return buildName(nameParts);
+        final String feedName = buildName(nameParts);
+        LOGGER.debug("Derived feed name: '{}' from name parts: {}, attributeMap: {}",
+                feedName, nameParts, attributeMap);
+        return feedName;
     }
 
     private static String buildName(final List<String> parts) {

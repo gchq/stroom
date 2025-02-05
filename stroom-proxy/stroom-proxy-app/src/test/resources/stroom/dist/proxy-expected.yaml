@@ -90,16 +90,10 @@ proxyConfig:
       refreshAfterWrite: null
       statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    autoContentCreation:
-      additionalGroupSuffix: " (sandbox)"
-      createAsSubjectId: "Administrators"
-      createAsType: "GROUP"
-      destinationExplorerPath: "/Feeds"
-      enabled: false
-      templatesExplorerPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
     - "CERTIFICATE"
+    feedNameGenerationEnabled: false
     metaTypes:
     - "Context"
     - "Raw Reference"

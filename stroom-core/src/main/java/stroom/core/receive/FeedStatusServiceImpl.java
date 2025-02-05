@@ -25,7 +25,6 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.receive.common.AutoContentCreationConfig;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;

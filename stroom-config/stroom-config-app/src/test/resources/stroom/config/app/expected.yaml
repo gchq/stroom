@@ -92,6 +92,14 @@ appConfig:
     - "New"
     - "Assigned"
     - "Closed"
+  autoContentCreation:
+    additionalGroupSuffix: " (sandbox)"
+    createAsSubjectId: "Administrators"
+    createAsType: "GROUP"
+    destinationExplorerPath: "/Feeds"
+    enabled: false
+    templateConfigDir: "content_template_config"
+    templatesExplorerPath: "/Feeds/Content Templates"
   byteBufferPool:
     blockOnExhaustedPool: false
     pooledByteBufferCounts:
@@ -766,16 +774,10 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    autoContentCreation:
-      additionalGroupSuffix: " (sandbox)"
-      createAsSubjectId: "Administrators"
-      createAsType: "GROUP"
-      destinationExplorerPath: "/Feeds"
-      enabled: false
-      templatesExplorerPath: "/Feeds/Content Templates"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
     - "CERTIFICATE"
+    feedNameGenerationEnabled: false
     metaTypes:
     - "Context"
     - "Raw Reference"

@@ -19,10 +19,14 @@ package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.List;
 
 public interface AttributeMapFilter {
+
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AttributeMapFilter.class);
 
     /**
      * Used for filtering received data based on its attributeMap and userIdentity.
@@ -50,11 +54,21 @@ public interface AttributeMapFilter {
      */
     static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
+            LOGGER.debug("Returning permissive instance");
             return PermissiveAttributeMapFilter.getInstance();
-        } else if (attributeMapFilters.size() == 1 && attributeMapFilters.get(0) != null) {
-            return attributeMapFilters.get(0);
+        } else if (attributeMapFilters.size() == 1) {
+            final AttributeMapFilter first = NullSafe.first(attributeMapFilters);
+            if (first != null) {
+                LOGGER.debug(() -> "Returning " + first.getClass().getSimpleName());
+                return first;
+            } else {
+                LOGGER.debug("Returning permissive instance");
+                return PermissiveAttributeMapFilter.getInstance();
+            }
         } else {
-            return new MultiAttributeMapFilter(attributeMapFilters);
+            final MultiAttributeMapFilter filter = new MultiAttributeMapFilter(attributeMapFilters);
+            LOGGER.debug("Returning {}", filter);
+            return filter;
         }
     }
 }

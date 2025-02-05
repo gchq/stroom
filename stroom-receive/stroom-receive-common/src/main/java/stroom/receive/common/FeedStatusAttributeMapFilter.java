@@ -86,6 +86,7 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
         };
         NullSafe.consume(feedStatusMeters.get(feedStatus), Meter::mark);
 
+        LOGGER.debug("Returning {} for feed '{}', feedStatus: {}", result, feedName, feedStatus);
         return result;
     }
 

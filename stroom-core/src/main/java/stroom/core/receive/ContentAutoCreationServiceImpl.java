@@ -12,7 +12,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.DataFormatNames;
-import stroom.receive.common.AutoContentCreationConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;

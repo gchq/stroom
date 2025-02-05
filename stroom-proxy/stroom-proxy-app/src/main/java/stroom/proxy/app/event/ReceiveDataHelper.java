@@ -8,7 +8,6 @@ import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
@@ -39,7 +38,6 @@ public class ReceiveDataHelper {
     private final CertificateExtractor certificateExtractor;
     private final LogStream logStream;
     private final ReceiptIdGenerator receiptIdGenerator;
-    private final AttributeMapValidator attributeMapValidator;
 
     @Inject
     public ReceiveDataHelper(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -47,15 +45,13 @@ public class ReceiveDataHelper {
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
                              final LogStream logStream,
-                             final ReceiptIdGenerator receiptIdGenerator,
-                             final AttributeMapValidator attributeMapValidator) {
+                             final ReceiptIdGenerator receiptIdGenerator) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.certificateExtractor = certificateExtractor;
         this.logStream = logStream;
         this.receiptIdGenerator = receiptIdGenerator;
-        this.attributeMapValidator = attributeMapValidator;
     }
 
     public UniqueId process(final HttpServletRequest request,

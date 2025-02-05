@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 public interface AuthenticatorFilter {
 
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthenticatorFilter.class);
+
     /**
      * Filter that returns no identity, i.e. the request fails authentication.
      */
@@ -29,11 +31,21 @@ public interface AuthenticatorFilter {
 
     static AuthenticatorFilter wrap(final List<AuthenticatorFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
+            LOGGER.debug("Returning permissive instance");
             return NOT_AUTHENTICATED_FILTER;
-        } else if (attributeMapFilters.size() == 1 && attributeMapFilters.get(0) != null) {
-            return attributeMapFilters.get(0);
+        } else if (attributeMapFilters.size() == 1) {
+            final AuthenticatorFilter first = NullSafe.first(attributeMapFilters);
+            if (first != null) {
+                LOGGER.debug(() -> "Returning " + first.getClass().getSimpleName());
+                return first;
+            } else {
+                LOGGER.debug("Returning permissive instance");
+                return NOT_AUTHENTICATED_FILTER;
+            }
         } else {
-            return new MultiAuthenticatorFilter(attributeMapFilters);
+            final MultiAuthenticatorFilter filter = new MultiAuthenticatorFilter(attributeMapFilters);
+            LOGGER.debug("Returning {}", filter);
+            return filter;
         }
     }
 

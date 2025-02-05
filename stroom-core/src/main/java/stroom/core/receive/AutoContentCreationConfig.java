@@ -1,9 +1,8 @@
-package stroom.receive.common;
+package stroom.core.receive;
 
 import stroom.security.shared.User;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
-import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.UserType;
 
@@ -20,7 +19,7 @@ import jakarta.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class AutoContentCreationConfig
         extends AbstractConfig
-        implements IsStroomConfig, IsProxyConfig {
+        implements IsStroomConfig {
 
     public static final String DEFAULT_DESTINATION_PATH_PART = "Feeds";
     public static final String DEFAULT_TEMPLATES_PATH_PART = "Content Templates";

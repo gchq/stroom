@@ -1,6 +1,5 @@
 package stroom.core.receive;
 
-import stroom.receive.common.AutoContentCreationConfig;
 import stroom.util.NullSafe;
 import stroom.util.io.AbstractDirChangeMonitor;
 import stroom.util.io.SimplePathCreator;

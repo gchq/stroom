@@ -37,6 +37,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.core.receive.AutoContentCreationConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
@@ -77,12 +78,7 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.reflect.TypeToken;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.core.Configuration;
@@ -926,6 +922,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
@@ -988,6 +985,7 @@ class TestConfigMapper {
                     activityConfig,
                     analyticsConfig,
                     annotationConfig,
+                    autoContentCreationConfig,
                     byteBufferPoolConfig,
                     clusterConfig,
                     clusterLockConfig,

@@ -24,7 +24,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
@@ -68,7 +67,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final MetaService metaService;
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
-    private final AttributeMapValidator attributeMapValidator;
     private final ReceiptIdGenerator receiptIdGenerator;
 
     @Inject
@@ -79,7 +77,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final MetaService metaService,
                                      final RequestAuthenticator requestAuthenticator,
                                      final CertificateExtractor certificateExtractor,
-                                     final AttributeMapValidator attributeMapValidator,
                                      final ReceiptIdGenerator receiptIdGenerator) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
@@ -88,7 +85,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.metaService = metaService;
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
-        this.attributeMapValidator = attributeMapValidator;
         this.receiptIdGenerator = receiptIdGenerator;
     }
 
@@ -102,9 +98,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
             // Authenticate the request depending on the configured auth methods.
             // Adds sender details to the attributeMap
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
-
-            // Validate the supplied attributes.
-//            attributeMapValidator.validate(attributeMap, metaService::getTypes);
 
             // Create a new receiptId for the request, so we can track progress and report back the
             // receiptId to the sender

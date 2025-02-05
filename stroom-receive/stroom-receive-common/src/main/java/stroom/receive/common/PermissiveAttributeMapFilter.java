@@ -18,8 +18,12 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 public class PermissiveAttributeMapFilter implements AttributeMapFilter {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PermissiveAttributeMapFilter.class);
 
     public static final PermissiveAttributeMapFilter INSTANCE = new PermissiveAttributeMapFilter();
 
@@ -32,6 +36,7 @@ public class PermissiveAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
+        LOGGER.debug("{} returning true", PermissiveAttributeMapFilter.class);
         return true;
     }
 }
