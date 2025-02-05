@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.14] - 2025-02-04
+
+* Issue **#4754** : Fix server tasks display user related NPE.
+
+* Issue **#4759** : Fix `Updating IDP user info...` appearing repeatedly in the logs.
+
+* Issue **#4755** : Fix missing values from pipeline structure editor.
+
+* Add debug to LmdbDb to log bytebuffer info.
+
+
 ## [v7.7-beta.13] - 2025-02-03
 
 * Issue **#4626** : Add error messages to dashboard tables when sorting limited result data.
@@ -1146,7 +1157,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.14...HEAD
+[v7.7-beta.14]: https://github.com/gchq/stroom/compare/v7.7-beta.13...v7.7-beta.14
 [v7.7-beta.13]: https://github.com/gchq/stroom/compare/v7.7-beta.12...v7.7-beta.13
 [v7.7-beta.12]: https://github.com/gchq/stroom/compare/v7.7-beta.11...v7.7-beta.12
 [v7.7-beta.11]: https://github.com/gchq/stroom/compare/v7.7-beta.10...v7.7-beta.11

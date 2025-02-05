@@ -168,47 +168,48 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
-            if (docRef == null || GwtNullSafe.isBlankString(docRef.getName())) {
-                sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
 
+            final SafeHtml cellHtmlText;
+            if (cellTextFunction != null) {
+                cellHtmlText = cellTextFunction.apply(value);
+            } else if (docRef != null) {
+                cellHtmlText = SafeHtmlUtils.fromString(getTextFromDocRef(docRef, displayType));
             } else {
-                final SafeHtml cellHtmlText;
-                if (cellTextFunction != null) {
-                    cellHtmlText = cellTextFunction.apply(value);
-                } else {
-                    cellHtmlText = getTextFromDocRef(value);
+                cellHtmlText = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            }
+
+            String cssClasses = "docRefLinkText";
+            if (cssClassFunction != null) {
+                final String additionalClasses = cssClassFunction.apply(value.getRow());
+                if (additionalClasses != null) {
+                    cssClasses += " " + additionalClasses;
                 }
+            }
+            final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
 
-                String cssClasses = "docRefLinkText";
-                if (cssClassFunction != null) {
-                    final String additionalClasses = cssClassFunction.apply(value.getRow());
-                    if (additionalClasses != null) {
-                        cssClasses += " " + additionalClasses;
-                    }
+            final String containerClasses = String.join(
+                    " ",
+                    HOVER_ICON_CONTAINER_CLASS_NAME,
+                    "docRefLinkContainer");
+
+            sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
+            if (docRef != null && showIcon) {
+                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                if (documentType != null) {
+                    final SvgImage svgImage = documentType.getIcon();
+                    final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            svgImage,
+                            ICON_CLASS_NAME,
+                            "docRefLinkIcon");
+                    sb.append(iconDiv);
                 }
-                final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
+            }
 
-                final String containerClasses = String.join(
-                        " ",
-                        HOVER_ICON_CONTAINER_CLASS_NAME,
-                        "docRefLinkContainer");
+            sb.append(textDiv);
 
-                sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
-                if (showIcon) {
-                    final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                    if (documentType != null) {
-                        final SvgImage svgImage = documentType.getIcon();
-                        final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
-                                documentType.getDisplayType(),
-                                svgImage,
-                                ICON_CLASS_NAME,
-                                "docRefLinkIcon");
-                        sb.append(iconDiv);
-                    }
-                }
-
-                sb.append(textDiv);
-
+            // Add copy and open links.
+            if (docRef != null) {
                 // This DocRefCell gets used for pipeline props which sometimes are a docRef
                 // and other times just a simple string
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -230,18 +231,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
                 }
-                sb.appendHtmlConstant("</div>");
             }
-        }
-    }
 
-    private SafeHtml getTextFromDocRef(final DocRefProvider<T_ROW> docRefProvider) {
-        final DocRef docRef = docRefProvider.getDocRef();
-        return GwtNullSafe.getOrElseGet(
-                docRef,
-                docRef1 -> getTextFromDocRef(docRef1, displayType),
-                SafeHtmlUtils::fromString,
-                () -> SafeHtmlUtils.EMPTY_SAFE_HTML);
+            sb.appendHtmlConstant("</div>");
+        }
     }
 
     public static String getTextFromDocRef(final DocRef docRef) {
