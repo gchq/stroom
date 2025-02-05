@@ -108,10 +108,10 @@ class DbClusterLock implements Clearable {
                     // trying to get the lock. This means this thread/node will join the back of the queue
                     // so this lock mechanism does not ensure fairness.
                     if (e.getCause() != null
-                            && e.getCause() instanceof MySQLTransactionRollbackException
-                            && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
+                        && e.getCause() instanceof MySQLTransactionRollbackException
+                        && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
                         LOGGER.info("Still waiting for lock {}, waited {} so far. Will give up shortly after {}. " +
-                                        "Current configured lockTimeout is {}",
+                                    "Current configured lockTimeout is {}",
                                 lockName, Duration.between(startTime, Instant.now()), timeoutTime, lockTimeout);
                     } else {
                         LOGGER.error("Error getting lock {}: {}", lockName, e.getMessage(), e);
@@ -171,15 +171,13 @@ class DbClusterLock implements Clearable {
                 .orElse(null);
     }
 
-    private Integer create(final String name) {
-        return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
+    private void create(final String name) {
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(clusterLockDbConnProvider, context -> context
                         .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
                         .values(name)
-                        .onDuplicateKeyIgnore()
                         .returning(CLUSTER_LOCK.ID)
-                        .fetchOptional())
-                .map(r -> r.get(CLUSTER_LOCK.ID))
-                .orElseGet(() -> get(name));
+                        .fetchOptional()));
     }
 
     @Override

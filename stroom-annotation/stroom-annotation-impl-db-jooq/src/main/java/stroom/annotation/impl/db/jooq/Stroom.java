@@ -4,16 +4,16 @@
 package stroom.annotation.impl.db.jooq;
 
 
-import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 
 
 /**

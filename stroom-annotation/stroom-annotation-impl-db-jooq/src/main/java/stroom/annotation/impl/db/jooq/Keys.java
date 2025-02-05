@@ -4,18 +4,18 @@
 package stroom.annotation.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.annotation.impl.db.jooq.tables.Annotation;
 import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**
@@ -29,6 +29,7 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_ANNOTATION_UUID = Internal.createUniqueKey(Annotation.ANNOTATION, DSL.name("KEY_annotation_annotation_uuid"), new TableField[] { Annotation.ANNOTATION.UUID }, true);
     public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_PRIMARY = Internal.createUniqueKey(Annotation.ANNOTATION, DSL.name("KEY_annotation_PRIMARY"), new TableField[] { Annotation.ANNOTATION.ID }, true);
     public static final UniqueKey<AnnotationDataLinkRecord> KEY_ANNOTATION_DATA_LINK_FK_ANNOTATION_ID_STREAM_ID_EVENT_ID = Internal.createUniqueKey(AnnotationDataLink.ANNOTATION_DATA_LINK, DSL.name("KEY_annotation_data_link_fk_annotation_id_stream_id_event_id"), new TableField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.FK_ANNOTATION_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.STREAM_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.EVENT_ID }, true);
     public static final UniqueKey<AnnotationDataLinkRecord> KEY_ANNOTATION_DATA_LINK_PRIMARY = Internal.createUniqueKey(AnnotationDataLink.ANNOTATION_DATA_LINK, DSL.name("KEY_annotation_data_link_PRIMARY"), new TableField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.ID }, true);

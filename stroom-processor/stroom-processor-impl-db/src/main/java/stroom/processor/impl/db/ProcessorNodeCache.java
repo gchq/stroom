@@ -21,7 +21,6 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -84,13 +83,12 @@ class ProcessorNodeCache implements Clearable {
     }
 
     private Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+        return JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .insertInto(PROCESSOR_NODE, PROCESSOR_NODE.NAME)
                         .values(name)
-                        .onDuplicateKeyIgnore()
                         .returning(PROCESSOR_NODE.ID)
-                        .fetchOptional())
-                .map(ProcessorNodeRecord::getId);
+                        .fetchOptional(PROCESSOR_NODE.ID)));
     }
 
     @Override

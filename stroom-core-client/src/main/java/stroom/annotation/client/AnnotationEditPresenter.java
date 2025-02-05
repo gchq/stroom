@@ -252,8 +252,6 @@ public class AnnotationEditPresenter
     }
 
     private void changeAssignedTo(final UserRef selected) {
-        HidePopupRequestEvent.builder(assignedToPresenter).fire();
-
         if (hasChanged(currentAssignedTo, selected)) {
             setAssignedTo(selected);
 

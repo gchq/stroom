@@ -57,6 +57,10 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationFields.ID, Annotation::getId),
+            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
+            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
+            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
+            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
             nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
             nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
@@ -113,7 +117,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final Set<String> usedFields = new HashSet<>(Set.of(fieldIndex.getFields()));
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
-        if (filter == null && usedFields.size() == 0) {
+        if (filter == null && usedFields.isEmpty()) {
             return valuesConsumer;
         }
 
@@ -132,7 +136,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 }
             }
 
-            if (annotations.size() == 0) {
+            if (annotations.isEmpty()) {
                 final Long streamId = getLong(values, streamIdIndex);
                 final Long eventId = getLong(values, eventIdIndex);
                 if (streamId != null && eventId != null) {
@@ -141,7 +145,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 }
             }
 
-            if (annotations.size() == 0) {
+            if (annotations.isEmpty()) {
                 annotations.add(defaultAnnotation);
             }
 
@@ -185,11 +189,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final ExpressionOperator filteredExpression = expressionFilter.copy(expression);
 
         final List<String> expressionValues = ExpressionUtil.values(filteredExpression);
-        if (expressionValues == null || expressionValues.size() == 0) {
+        if (expressionValues == null || expressionValues.isEmpty()) {
             return null;
         }
         final Set<String> usedFields = new HashSet<>(ExpressionUtil.fields(filteredExpression));
-        if (usedFields.size() == 0) {
+        if (usedFields.isEmpty()) {
             return null;
         }
 
@@ -226,7 +230,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             if (values[index] == null) {
                 final Val val;
                 try {
-                    val = VALUE_MAPPING.get(field).apply(annotation);
+                    final Function<Annotation, Val> mapping = VALUE_MAPPING.get(field);
+                    if (mapping != null) {
+                        val = mapping.apply(annotation);
+                    } else {
+                        val = ValNull.INSTANCE;
+                    }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

@@ -20,14 +20,14 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
 
     @Override
     public void createIfNotExists(final OpenIdClient client) {
-        JooqUtil.context(identityDbConnProvider, context -> context
-                .insertInto(OauthClient.OAUTH_CLIENT)
-                .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())
-                .set(OauthClient.OAUTH_CLIENT.CLIENT_ID, client.getClientId())
-                .set(OauthClient.OAUTH_CLIENT.CLIENT_SECRET, client.getClientSecret())
-                .set(OauthClient.OAUTH_CLIENT.URI_PATTERN, client.getUriPattern())
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(identityDbConnProvider, context -> context
+                        .insertInto(OauthClient.OAUTH_CLIENT)
+                        .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())
+                        .set(OauthClient.OAUTH_CLIENT.CLIENT_ID, client.getClientId())
+                        .set(OauthClient.OAUTH_CLIENT.CLIENT_SECRET, client.getClientSecret())
+                        .set(OauthClient.OAUTH_CLIENT.URI_PATTERN, client.getUriPattern())
+                        .execute()));
     }
 
     @Override
