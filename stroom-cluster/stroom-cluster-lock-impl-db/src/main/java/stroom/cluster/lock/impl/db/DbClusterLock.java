@@ -17,6 +17,8 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
@@ -28,8 +30,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,7 +44,7 @@ import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
 @Singleton
 class DbClusterLock implements Clearable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DbClusterLock.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbClusterLock.class);
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ClusterLockDbConnProvider clusterLockDbConnProvider;
@@ -143,7 +143,7 @@ class DbClusterLock implements Clearable {
     }
 
     private void checkLockCreated(final String name) {
-        LOGGER.debug("Getting cluster lock: " + name);
+        LOGGER.debug("Getting cluster lock: {}", name);
 
         if (registeredLockSet.contains(name)) {
             return;
@@ -174,8 +174,8 @@ class DbClusterLock implements Clearable {
     private void create(final String name) {
         JooqUtil.onDuplicateKeyIgnore(() ->
                 JooqUtil.context(clusterLockDbConnProvider, context -> context
-                        .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
-                        .values(name)
+                        .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME, CLUSTER_LOCK.VERSION)
+                        .values(name, 0)
                         .returning(CLUSTER_LOCK.ID)
                         .fetchOptional()));
     }
