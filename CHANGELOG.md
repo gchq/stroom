@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4754** : Fix server tasks display user related NPE.
+
+* Issue **#4759** : Fix `Updating IDP user info...` appearing repeatedly in the logs.
+
+* Issue **#4755** : Fix missing values from pipeline structure editor.
+
+* Add debug to LmdbDb to log bytebuffer info.
+
+
 ## [v7.8-beta.13] - 2025-02-03
 
 * Issue **#4626** : Add error messages to dashboard tables when sorting limited result data.
@@ -429,13 +438,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Add Visualisations to the Query help and editor completions. Visualisation completion inserts a snippet containing all the data fields in the Visualisation, e.g. `TextValue(field = Field, gridSeries = Grid Series)`.
 
-
-## [v7.5-proxy-beta.2] - 2024-09-16
-
 * Issue **#4436** : Change the way API Keys are verified. Stroom now finds all valid api keys matching the api key prefix and compares the hash of the api key against the hash from each of the matching records. Support has also been added for using different hash algorithms.
-
-
-## [v7.5-beta.12] - 2024-09-06
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
@@ -444,9 +447,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4418** : Fix missing css for `/stroom/sessionList`.
 
 * Issue **#4435** : Fix for progress spinner getting stuck on.
-
-
-## [v7.5-proxy-beta.1] - 2024-09-06
 
 * Issue **#4424** : Fix alignment of _Current Tasks_ heading on the Jobs screen.
 
@@ -983,9 +983,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4056** : Fix display value of Error type values in query/dashboard. Now shows error message prefixed with `ERR: `.
 
 * Issue **#4055** : Fix parsing/formatting of durations in query/dashboard expressions.
-
-
-## [v7.3-proxy-beta.1] - 2024-01-29
 
 * Issue **#2201** : New proxy implementation.
 

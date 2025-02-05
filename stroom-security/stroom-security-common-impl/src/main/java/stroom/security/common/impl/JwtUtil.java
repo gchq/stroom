@@ -90,7 +90,7 @@ public final class JwtUtil {
         final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
-                                "but it is not there, jwtClaims: {}",
+                        "but it is not there, jwtClaims: {}",
                         uniqueIdentityClaim,
                         jwtClaims)));
 
@@ -104,7 +104,7 @@ public final class JwtUtil {
      * Maps to the 'name' column in stroom_user table.
      */
     public static Optional<String> getUserDisplayName(final OpenIdConfiguration openIdConfiguration,
-                                                  final JwtClaims jwtClaims) {
+                                                      final JwtClaims jwtClaims) {
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
         final String userDisplayNameClaim = openIdConfiguration.getUserDisplayNameClaim();

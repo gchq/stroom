@@ -37,6 +37,10 @@ public class LmdbEnvDirFactory {
         return new Builder(pathCreator);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private final PathCreator pathCreator;

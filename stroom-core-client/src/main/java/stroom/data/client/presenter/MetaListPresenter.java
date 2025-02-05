@@ -28,7 +28,6 @@ import stroom.util.shared.ModelStringUtil;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.function.Function;
 import javax.inject.Provider;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
@@ -109,7 +108,6 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
         addAttributeColumn(
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
-                Function.identity(),
                 ColumnSizeConstants.SMALL_COL);
 
         addEndColumn();

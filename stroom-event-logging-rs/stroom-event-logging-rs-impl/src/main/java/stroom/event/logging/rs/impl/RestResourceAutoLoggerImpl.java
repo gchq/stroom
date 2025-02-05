@@ -103,7 +103,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
                 final RequestInfo requestInfo = (RequestInfo) object;
                 if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                     if (!ThreadLocalLogState.hasLogged()) {
-                        LOGGER.error("Expected manual logging to have happened: "
+                        LOGGER.debug("Expected manual logging to have happened: "
                                      + NullSafe.get(requestInfo.getContainerResourceInfo(),
                                 ContainerResourceInfo::getRequestContext,
                                 ContainerRequestContext::getUriInfo,
@@ -142,7 +142,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
             final RequestInfo requestInfo = (RequestInfo) object;
             if (OperationType.MANUALLY_LOGGED.equals(requestInfo.getContainerResourceInfo().getOperationType())) {
                 if (!ThreadLocalLogState.hasLogged()) {
-                    LOGGER.error("Expected manual logging to have happened: "
+                    LOGGER.debug("Expected manual logging to have happened: "
                                  + NullSafe.get(requestInfo.getContainerResourceInfo(),
                             ContainerResourceInfo::getRequestContext,
                             ContainerRequestContext::getUriInfo,

@@ -1160,6 +1160,35 @@ public final class JooqUtil {
         hasAuditInfo.setCreateUser(record.get("update_user", String.class));
     }
 
+    public static void onDuplicateKeyIgnore(final Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (RuntimeException e) {
+            if (isDuplicateKeyException(e)) {
+                LOGGER.debug(e::getMessage, e);
+            } else {
+                // Some other error so just re-throw
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        }
+    }
+
+    public static <R> Optional<R> onDuplicateKeyIgnore(final Supplier<Optional<R>> supplier) {
+        try {
+            return supplier.get();
+        } catch (RuntimeException e) {
+            if (isDuplicateKeyException(e)) {
+                LOGGER.debug(e::getMessage, e);
+                return Optional.empty();
+            } else {
+                // Some other error so just re-throw
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        }
+    }
+
     private static boolean isDuplicateKeyException(final Throwable throwable) {
         // 1062 is a duplicate key exception so someone else has already inserted it
         return NullSafe.test(throwable, e ->

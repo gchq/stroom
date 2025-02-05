@@ -80,9 +80,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 } else if (IdpType.INTERNAL_IDP.equals(idpType)) {
                     // We are first thread on this node, but other nodes may beat us to it so,
                     // check the DB
-                    client = openIdClientDao.getClientByName(clientName)
-                            .orElseGet(() ->
-                                    createOauth2Client(clientName, openIdConfiguration));
+                    client = createOAuth2Client(clientName, openIdConfiguration);
                 }
             } else {
                 LOGGER.debug("Another thread beat us to it");
@@ -93,7 +91,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 oAuth2Client.getClientId());
     }
 
-    private OpenIdClient createOauth2Client(final String clientName,
+    private OpenIdClient createOAuth2Client(final String clientName,
                                             final OpenIdConfiguration openIdConfiguration) {
         return openIdClientDao.getClientByName(clientName)
                 .or(() -> {

@@ -4,6 +4,7 @@ import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.lmdb2.LmdbDb;
@@ -14,6 +15,7 @@ import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -98,21 +100,21 @@ class DuplicateCheckStore {
                     res.set(result);
                     if (result) {
                         LOGGER.debug(() -> "New row (row=" +
-                                duplicateCheckRow +
-                                ", lmdbKv=" +
-                                lmdbKV +
-                                ", lmdbEnvDir=" +
-                                lmdbEnv.getDir() +
-                                ")");
+                                           duplicateCheckRow +
+                                           ", " +
+                                           toString(lmdbKV) +
+                                           ", lmdbEnvDir=" +
+                                           lmdbEnv.getDir() +
+                                           ")");
                         uncommittedCount++;
                     } else {
                         LOGGER.debug(() -> "Duplicate row (row=" +
-                                duplicateCheckRow +
-                                ", lmdbKv=" +
-                                lmdbKV +
-                                ", lmdbEnvDir=" +
-                                lmdbEnv.getDir() +
-                                ")");
+                                           duplicateCheckRow +
+                                           ", " +
+                                           toString(lmdbKV) +
+                                           ", lmdbEnvDir=" +
+                                           lmdbEnv.getDir() +
+                                           ")");
                     }
                 } finally {
                     byteBufferFactory.release(lmdbKV.getRowKey());
@@ -235,5 +237,17 @@ class DuplicateCheckStore {
 
     private synchronized void commit() {
         writer.write(WriteTxn::commit);
+    }
+
+    private static String toString(final LmdbKV lmdbKV) {
+        if (lmdbKV == null) {
+            return "null";
+        } else {
+            return "Key: {"
+                   + NullSafe.get(lmdbKV.getRowKey(), ByteBufferUtils::byteBufferInfoAsLong)
+                   + "}, Value: {"
+                   + NullSafe.get(lmdbKV.getRowValue(), ByteBufferUtils::byteBufferInfo)
+                   + "}";
+        }
     }
 }

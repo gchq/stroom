@@ -48,6 +48,7 @@ import stroom.util.shared.ModelStringUtil;
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -372,6 +373,65 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                         "val2b",
                         "val3",
                         "val3");
+    }
+
+    @Test
+    void testDupSupport_noDupData() {
+        BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new StringSerde(),
+                new StringSerde(),
+                "dupDb",
+                DbiFlags.MDB_CREATE,
+                DbiFlags.MDB_DUPSORT);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            // Two entries with the same key
+            byteBufferPool.doWithBufferPair(10, 10, (keyBuffer, valBuffer) -> {
+                keyBuffer.clear();
+                db.serializeKey(keyBuffer, "key1");
+                valBuffer.clear();
+                db.serializeValue(valBuffer, "val1");
+                boolean didPut = db.getLmdbDbi().put(writeTxn, keyBuffer, valBuffer, PutFlags.MDB_NODUPDATA);
+                Assertions.assertThat(didPut)
+                        .isTrue();
+
+                keyBuffer.clear();
+                db.serializeKey(keyBuffer, "key2");
+                valBuffer.clear();
+                db.serializeValue(valBuffer, "val2a");
+                didPut = db.getLmdbDbi().put(writeTxn, keyBuffer, valBuffer, PutFlags.MDB_NODUPDATA);
+                Assertions.assertThat(didPut)
+                        .isTrue();
+
+                keyBuffer.clear();
+                db.serializeKey(keyBuffer, "key2");
+                valBuffer.clear();
+                db.serializeValue(valBuffer, "val2a");
+                didPut = db.getLmdbDbi().put(writeTxn, keyBuffer, valBuffer, PutFlags.MDB_NODUPDATA);
+                Assertions.assertThat(didPut)
+                        .isFalse();
+            });
+        });
+
+        db.logDatabaseContents();
+
+        final List<Entry<String, String>> entries = lmdbEnv.getWithReadTxn(readTxn ->
+                db.streamEntries(readTxn, KeyRange.all(), stream -> stream
+                        .collect(Collectors.toList())));
+
+        LOGGER.info("Entries:\n{}", AsciiTable.builder(entries)
+                .withColumn(Column.of("key", Entry::getKey))
+                .withColumn(Column.of("value", Entry::getValue))
+                .build());
+
+        assertThat(entries)
+                .satisfiesExactly(
+                        entry1 -> assertThat(entry1)
+                                .isEqualTo(Map.entry("key1", "val1")),
+                        entry2 -> assertThat(entry2)
+                                .isEqualTo(Map.entry("key2", "val2a")));
     }
 
     @Test
@@ -1490,9 +1550,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                             writeTxn,
                             Strings.padStart(Integer.toString(i), 6, '0'),
                             "val-"
-                                    + Strings.padStart(Integer.toString(i), 6, '0')
-                                    + "_run-"
-                                    + Strings.padStart(Integer.toString(run), 3, '0'),
+                            + Strings.padStart(Integer.toString(i), 6, '0')
+                            + "_run-"
+                            + Strings.padStart(Integer.toString(run), 3, '0'),
                             true);
 
                 }
