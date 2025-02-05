@@ -34,6 +34,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
 @Singleton
 class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
+
     private static final String REC_READ = MetaFields.REC_READ.getFldName();
     private static final String REC_WRITE = MetaFields.REC_WRITE.getFldName();
     private static final String REC_INFO = MetaFields.REC_INFO.getFldName();
@@ -128,11 +129,11 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     }
 
     private void create(final String name, final MetaType type) {
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
-                .values(name, type.getPrimitiveValue())
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(metaDbConnProvider, context -> context
+                        .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
+                        .values(name, type.getPrimitiveValue())
+                        .execute()));
     }
 
     @Override

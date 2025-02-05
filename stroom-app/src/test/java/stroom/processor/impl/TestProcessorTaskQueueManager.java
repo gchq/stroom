@@ -210,7 +210,7 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
                              final int count,
                              final int expected) {
         final ProcessorTaskList tasks = LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskQueueManager.assignTasks(new TaskId(), nodeName, count),
+                        processorTaskQueueManager.assignTasks(TaskId.createTestTaskId(), nodeName, count),
                 "assignTasks - " + callCount);
         assertThat(tasks.getList().size()).isEqualTo(expected);
     }

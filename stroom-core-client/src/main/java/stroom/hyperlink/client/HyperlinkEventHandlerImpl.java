@@ -79,70 +79,74 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     @Override
     public void onLink(final HyperlinkEvent event) {
-        final Hyperlink hyperlink = event.getHyperlink();
-        nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
+        try {
+            final Hyperlink hyperlink = event.getHyperlink();
+            nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
 
-        String href = hyperlink.getHref();
+            String href = hyperlink.getHref();
 //        if (namedUrls != null) {
 //            for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrls.entrySet()) {
 //                href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
 //            }
 //        }
 
-        String type = hyperlink.getType();
-        String customTitle = null;
-        if (type != null) {
-            int index = type.indexOf("|");
-            if (index != -1) {
-                customTitle = type.substring(index + 1);
-                type = type.substring(0, index);
+            String type = hyperlink.getType();
+            String customTitle = null;
+            if (type != null) {
+                int index = type.indexOf("|");
+                if (index != -1) {
+                    customTitle = type.substring(index + 1);
+                    type = type.substring(0, index);
+                }
             }
-        }
 
-        HyperlinkType hyperlinkType = null;
-        if (type != null) {
-            try {
-                hyperlinkType = HyperlinkType.valueOf(type.toUpperCase());
-            } catch (final RuntimeException e) {
-                GWT.log("Could not parse open type value of " + type);
+            HyperlinkType hyperlinkType = null;
+            if (type != null) {
+                try {
+                    hyperlinkType = HyperlinkType.valueOf(type.toUpperCase());
+                } catch (final RuntimeException e) {
+                    GWT.log("Could not parse open type value of " + type);
+                }
             }
-        }
 
-        if (hyperlinkType != null) {
-            switch (hyperlinkType) {
-                case DASHBOARD: {
-                    ShowDashboardEvent.fire(this, href);
-                    break;
+            if (hyperlinkType != null) {
+                switch (hyperlinkType) {
+                    case DASHBOARD: {
+                        ShowDashboardEvent.fire(this, href);
+                        break;
+                    }
+                    case TAB: {
+                        openTab(hyperlink, customTitle);
+                        break;
+                    }
+                    case DIALOG: {
+                        openDialog(hyperlink, customTitle);
+                        break;
+                    }
+                    case BROWSER: {
+                        Window.open(href, "_blank", "");
+                        break;
+                    }
+                    case STEPPING: {
+                        openStepping(href);
+                        break;
+                    }
+                    case DATA: {
+                        openData(href);
+                        break;
+                    }
+                    case ANNOTATION: {
+                        openAnnotation(href, event.getTaskMonitorFactory());
+                        break;
+                    }
+                    default:
+                        Window.open(href, "_blank", "");
                 }
-                case TAB: {
-                    openTab(hyperlink, customTitle);
-                    break;
-                }
-                case DIALOG: {
-                    openDialog(hyperlink, customTitle);
-                    break;
-                }
-                case BROWSER: {
-                    Window.open(href, "_blank", "");
-                    break;
-                }
-                case STEPPING: {
-                    openStepping(href);
-                    break;
-                }
-                case DATA: {
-                    openData(href);
-                    break;
-                }
-                case ANNOTATION: {
-                    openAnnotation(href, event.getTaskMonitorFactory());
-                    break;
-                }
-                default:
-                    Window.open(href, "_blank", "");
+            } else {
+                Window.open(href, "_blank", "");
             }
-        } else {
-            Window.open(href, "_blank", "");
+        } catch (final Exception e) {
+            GWT.log(e.getMessage(), e);
         }
     }
 

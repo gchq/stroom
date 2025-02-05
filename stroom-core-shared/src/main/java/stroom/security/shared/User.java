@@ -385,6 +385,11 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
             return this;
         }
 
+        public Builder fullName(final String fullName) {
+            this.fullName = fullName;
+            return this;
+        }
+
         /**
          * If value is true marks this {@link User} as a named user-group.
          */

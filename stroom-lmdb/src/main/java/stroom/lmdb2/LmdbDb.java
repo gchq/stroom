@@ -1,7 +1,9 @@
 package stroom.lmdb2;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -58,7 +60,16 @@ public class LmdbDb {
         try {
             return dbi.put(writeTxn.get(), key, val, flags);
         } catch (final RuntimeException e) {
-            error(e);
+            try {
+                final String msg = LogUtil.message(
+                        "Error putting key:\n{}\nval {}\nflags {}",
+                        ByteBufferUtils.byteBufferInfo(key),
+                        ByteBufferUtils.byteBufferInfo(val),
+                        flags);
+                error(msg, e);
+            } catch (final RuntimeException e2) {
+                error(e);
+            }
             throw e;
         }
     }
@@ -67,7 +78,12 @@ public class LmdbDb {
         try {
             return dbi.get(txn.get(), key);
         } catch (final RuntimeException e) {
-            error(e);
+            try {
+                final String msg = LogUtil.message("Error getting key: {}", ByteBufferUtils.byteBufferInfo(key));
+                error(msg, e);
+            } catch (final RuntimeException e2) {
+                error(e);
+            }
             throw e;
         }
     }
@@ -143,7 +159,13 @@ public class LmdbDb {
         try {
             return dbi.delete(txn.get(), key);
         } catch (final RuntimeException e) {
-            error(e);
+            try {
+                final String msg = LogUtil.message("Error deleting entry with key: {}",
+                        ByteBufferUtils.byteBufferInfo(key));
+                error(msg, e);
+            } catch (final RuntimeException e2) {
+                error(e);
+            }
             throw e;
         }
     }
@@ -152,7 +174,15 @@ public class LmdbDb {
         try {
             return dbi.delete(txn.get(), key, value);
         } catch (final RuntimeException e) {
-            error(e);
+            try {
+                final String msg = LogUtil.message(
+                        "Error deleting entry with key:\n{}\nval {}",
+                        ByteBufferUtils.byteBufferInfo(key),
+                        ByteBufferUtils.byteBufferInfo(value));
+                error(msg, e);
+            } catch (final RuntimeException e2) {
+                error(e);
+            }
             throw e;
         }
     }
@@ -179,12 +209,17 @@ public class LmdbDb {
         errorHandler.error(e);
     }
 
+    private void error(final String msg, final Throwable e) {
+        LOGGER.debug(msg, e);
+        errorHandler.error(e);
+    }
+
     @Override
     public String toString() {
         return "LmdbDb{" +
-                "env=" + env +
-                ", name='" + name + '\'' +
-                ", dbiFlags=" + dbiFlags +
-                '}';
+               "env=" + env +
+               ", name='" + name + '\'' +
+               ", dbiFlags=" + dbiFlags +
+               '}';
     }
 }

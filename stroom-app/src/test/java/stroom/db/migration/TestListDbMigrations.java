@@ -23,15 +23,19 @@ import stroom.util.shared.Version;
 
 import com.google.common.base.Strings;
 import jakarta.validation.constraints.NotNull;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,6 +52,7 @@ import static stroom.util.ConsoleColour.BLUE;
 import static stroom.util.ConsoleColour.RED;
 import static stroom.util.ConsoleColour.YELLOW;
 
+@Disabled // Manual running only as it is just listing stuff, not really a test
 @Isolated // This is walking the file tree so doesn't like it if another test is mutating
 // the file tree at the same time.
 public class TestListDbMigrations {
@@ -327,27 +332,58 @@ public class TestListDbMigrations {
         }
         final Path projectRootDirFinal = projectRootDir;
 
-        try (Stream<Path> stream = Files.walk(moduleDir)) {
-            stream
-                    .filter(Files::isRegularFile)
-                    .filter(path ->
-                            MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
-                    .map(path ->
-                            new Script(
-                                    moduleName,
-                                    path.getFileName().toString(),
-                                    projectRootDirFinal.relativize(path),
-                                    path.toAbsolutePath().normalize()))
-                    .filter(script ->
-                            MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(script.fileName()))
-                    .sorted(Comparator.comparing(Script::fileName, fileNameComparator))
-                    .forEach(tuple -> {
-                        moduleToScriptMap.computeIfAbsent(moduleName, k -> new ArrayList<>())
-                                .add(tuple);
-                    });
+        final List<Path> migrationFiles = new ArrayList<>();
+
+        // For some reason when we used Files.walk() it would fail with a NoSuchFileException
+        // on an .attach_pid file, so have to do this.
+        try {
+            Files.walkFileTree(moduleDir, new FileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                    if (Files.isRegularFile(file)
+                        && MIGRATION_PATH_REGEX_PATTERN.matcher(file.toString()).matches()
+                        && MIGRATION_FILE_REGEX_PATTERN.matcher(file.getFileName().toString()).matches()) {
+                        migrationFiles.add(file);
+                    } else {
+                        LOGGER.debug("No match {}", file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
+                    LOGGER.warn("Error visiting file {}", file, exc);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        migrationFiles.stream()
+                .map(path ->
+                        new Script(
+                                moduleName,
+                                path.getFileName().toString(),
+                                projectRootDirFinal.relativize(path),
+                                path.toAbsolutePath().normalize()))
+                .filter(script ->
+                        MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(script.fileName()))
+                .sorted(Comparator.comparing(Script::fileName, fileNameComparator))
+                .forEach(tuple -> {
+                    moduleToScriptMap.computeIfAbsent(moduleName, k -> new ArrayList<>())
+                            .add(tuple);
+                });
     }
 
     @NotNull
@@ -410,6 +446,15 @@ public class TestListDbMigrations {
             } catch (IllegalStateException e) {
                 throw new RuntimeException("Prefix not found for '" + fileName + "': " + e.getMessage());
             }
+        }
+    }
+
+    private boolean isNotAttachePidFile(final Path path) {
+        if (path.getFileName().toString().startsWith(".attach_pid")) {
+            LOGGER.info("Ignoring: {}", path);
+            return false;
+        } else {
+            return true;
         }
     }
 }

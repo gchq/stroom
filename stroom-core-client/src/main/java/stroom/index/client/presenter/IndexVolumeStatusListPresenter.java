@@ -102,7 +102,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
 
         // State.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(IndexVolume::getState, VolumeUseState::getDisplayValue)
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) -> indexVolume.getState().getDisplayValue())
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Status")
@@ -112,9 +112,8 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
 
         // Total.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(
-                                (IndexVolume vol) ->
-                                        vol.getCapacityInfo().getTotalCapacityBytes(), this::getSizeString)
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) ->
+                                getSizeString(indexVolume.getCapacityInfo().getTotalCapacityBytes()))
                         .enabledWhen(this::isEnabled)
                         .rightAligned()
                         .build(),
@@ -133,15 +132,14 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                 DataGridUtil.headingBuilder("Limit")
                         .rightAligned()
                         .withToolTip("The optional limit set on the volume. The volume will be considered full " +
-                                "when the limit is reached.")
+                                     "when the limit is reached.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
         // Used.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(
-                                (IndexVolume vol) ->
-                                        vol.getCapacityInfo().getCapacityUsedBytes(), this::getSizeString)
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) ->
+                                getSizeString(indexVolume.getCapacityInfo().getCapacityUsedBytes()))
                         .enabledWhen(this::isEnabled)
                         .rightAligned()
                         .build(),
@@ -153,16 +151,15 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
 
         // Free.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(
-                                (IndexVolume vol) ->
-                                        vol.getCapacityInfo().getFreeCapacityBytes(), this::getSizeString)
+                DataGridUtil.textColumnBuilder((IndexVolume indexVolume) ->
+                                getSizeString(indexVolume.getCapacityInfo().getFreeCapacityBytes()))
                         .enabledWhen(this::isEnabled)
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Free")
                         .rightAligned()
                         .withToolTip("The amount of the volume that is free. If a limit is set then only free " +
-                                "space up to the limit is considered.")
+                                     "space up to the limit is considered.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
@@ -176,7 +173,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                         .build(),
                 DataGridUtil.headingBuilder("Use%")
                         .withToolTip("The percentage of the volume that is in use. If a limit is set then the " +
-                                "percentage is relative to the limit.")
+                                     "percentage is relative to the limit.")
                         .build(),
                 ColumnSizeConstants.SMALL_COL);
 

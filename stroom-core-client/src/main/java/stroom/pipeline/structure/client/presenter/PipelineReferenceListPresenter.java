@@ -18,13 +18,15 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
+import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.DocRefCell.Builder;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.DisplayType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -39,6 +41,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -154,36 +157,54 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     private void addPipelineColumn() {
         // Pipeline.
-        final Column<PipelineReference, DocRefProvider<PipelineReference>> pipelineCol =
-                DataGridUtil.docRefColumnBuilder(
-                                (PipelineReference pipelineReference) -> {
-                                    if (pipelineReference.getPipeline() == null) {
-                                        return null;
-                                    } else {
-                                        return new DocRefProvider<>(pipelineReference, PipelineReference::getPipeline);
-                                    }
-                                },
-                                getEventBus(),
-                                false,
-                                this::getStateCssClass)
-                        .build();
+        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
+                .eventBus(getEventBus())
+                .showIcon(true)
+                .cssClassFunction(this::getStateCssClass)
+                .cellTextFunction(pipelineReference -> {
+                    if (pipelineReference == null || pipelineReference.getPipeline() == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        return SafeHtmlUtils.fromString(pipelineReference.getPipeline()
+                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                        DisplayType.AUTO,
+                                        DisplayType.AUTO)));
+                    }
+                })
+                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                        pipelineProperty,
+                        PipelineReference::getPipeline));
+
+        final Column<PipelineReference, PipelineReference> pipelineCol = DataGridUtil.docRefColumnBuilder(
+                        cellBuilder)
+                .build();
+
         dataGrid.addResizableColumn(pipelineCol, "Pipeline", 200);
     }
 
     private void addFeedColumn() {
         // Feed.
-        final Column<PipelineReference, DocRefProvider<PipelineReference>> feedCol = DataGridUtil.docRefColumnBuilder(
-                        (PipelineReference pipelineReference) -> {
-                            if (pipelineReference.getPipeline() == null) {
-                                return null;
-                            } else {
-                                return new DocRefProvider<>(pipelineReference, PipelineReference::getFeed);
-                            }
-                        },
-                        getEventBus(),
-                        false,
-                        this::getStateCssClass)
+        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
+                .eventBus(getEventBus())
+                .cssClassFunction(this::getStateCssClass)
+                .cellTextFunction(pipelineReference -> {
+                    if (pipelineReference == null || pipelineReference.getFeed() == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        return SafeHtmlUtils.fromString(pipelineReference.getFeed()
+                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                        DisplayType.AUTO,
+                                        DisplayType.AUTO)));
+                    }
+                })
+                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                        pipelineProperty,
+                        PipelineReference::getFeed));
+
+        final Column<PipelineReference, PipelineReference> feedCol = DataGridUtil.docRefColumnBuilder(
+                        cellBuilder)
                 .build();
+
         dataGrid.addResizableColumn(feedCol, "Feed", 350);
     }
 
@@ -203,18 +224,29 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private void addInheritedFromColumn() {
         // Default Value.
         @SuppressWarnings("checkstyle:LineLength") // cos GWT
-        final Column<PipelineReference, DocRefProvider<DocRef>> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
-                        (PipelineReference pipelineReference) -> {
-                            if (pipelineReference.getSourcePipeline() == null
-                                || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
-                                return null;
-                            } else {
-                                return pipelineReference.getSourcePipeline();
-                            }
-                        },
-                        getEventBus(),
-                        false)
+        final DocRefCell.Builder<PipelineReference> cellBuilder = new Builder<PipelineReference>()
+                .eventBus(getEventBus())
+                .cssClassFunction(this::getStateCssClass)
+                .cellTextFunction(pipelineReference -> {
+                    if (pipelineReference == null ||
+                        pipelineReference.getSourcePipeline() == null ||
+                        pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        return SafeHtmlUtils.fromString(pipelineReference.getSourcePipeline()
+                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                        DisplayType.AUTO,
+                                        DisplayType.AUTO)));
+                    }
+                })
+                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                        pipelineProperty,
+                        PipelineReference::getSourcePipeline));
+
+        final Column<PipelineReference, PipelineReference> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
+                        cellBuilder)
                 .build();
+
         dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
     }
 

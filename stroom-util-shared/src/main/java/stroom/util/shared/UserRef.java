@@ -242,8 +242,7 @@ public final class UserRef {
         UUID(UserRef::getUuid, "UUID"),
         SUBJECT_ID(UserRef::getSubjectId, "unique ID"),
         DISPLAY_NAME(UserRef::getDisplayName, "display name"),
-        FULL_NAME(UserRef::getFullName, "full name"),
-        ;
+        FULL_NAME(UserRef::getFullName, "full name");
 
         private final Function<UserRef, String> displayTextFunc;
         private final String typeName;

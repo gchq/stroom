@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import javax.inject.Provider;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
@@ -205,7 +204,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addAttributeColumn(
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
-                Function.identity(),
                 ColumnSizeConstants.SMALL_COL);
 
         addEndColumn();

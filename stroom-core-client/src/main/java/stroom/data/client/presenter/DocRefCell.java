@@ -1,7 +1,6 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.UrlParameters;
-import stroom.data.client.presenter.DocRefCell.DocRefProvider;
 import stroom.data.grid.client.EventCell;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
@@ -38,12 +37,11 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
-public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
+public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements HasHandlers, EventCell {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
@@ -55,31 +53,31 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     private final EventBus eventBus;
     private final boolean allowLinkByName;
     private final boolean showIcon;
-    private final DocRef.DisplayType displayType;
+    private final Function<T_ROW, SafeHtml> cellTextFunction;
+    private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
-    private final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction;
 
     private static volatile Template template;
 
     /**
      * @param showIcon         Set to true to show the type icon next to the text
-     * @param cssClassFunction Can be null. Function to provide additional css class names.
-     * @param cellTextFunction Can be null. Function to provide the cell 'text' in HTML form. If null
-     *                         then displayType will be used to derive the text from the {@link DocRef}.
+     * @param cellTextFunction Function to provide the cell 'text' in HTML form.
+     * @param docRefFunction   Function to provide a doc ref if the value can give us one.
+     * @param cssClassFunction Function to provide additional css class names.
      */
     private DocRefCell(final EventBus eventBus,
                        final boolean allowLinkByName,
                        final boolean showIcon,
-                       final DocRef.DisplayType displayType,
-                       final Function<T_ROW, String> cssClassFunction,
-                       final Function<DocRefProvider<T_ROW>, SafeHtml> cellTextFunction) {
+                       final Function<T_ROW, SafeHtml> cellTextFunction,
+                       final Function<T_ROW, DocRef> docRefFunction,
+                       final Function<T_ROW, String> cssClassFunction) {
         super(MOUSEDOWN);
         this.eventBus = eventBus;
         this.allowLinkByName = allowLinkByName;
         this.showIcon = showIcon;
-        this.displayType = displayType;
-        this.cssClassFunction = cssClassFunction;
         this.cellTextFunction = cellTextFunction;
+        this.docRefFunction = docRefFunction;
+        this.cssClassFunction = cssClassFunction;
 
         if (template == null) {
             template = GWT.create(Template.class);
@@ -100,38 +98,61 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     @Override
     public void onBrowserEvent(final Context context,
                                final Element parent,
-                               final DocRefProvider<T_ROW> value,
+                               final T_ROW value,
                                final NativeEvent event,
-                               final ValueUpdater<DocRefProvider<T_ROW>> valueUpdater) {
+                               final ValueUpdater<T_ROW> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (value.getDocRef() != null) {
+        final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
+        if (docRef != null) {
             if (MOUSEDOWN.equals(event.getType())) {
                 if (MouseUtil.isPrimary(event)) {
                     onEnterKeyDown(context, parent, value, event, valueUpdater);
                 } else {
-                    final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
-                    if (docRef != null) {
-                        final String type;
-                        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                        type = GwtNullSafe.getOrElse(documentType, DocumentType::getDisplayType,
-                                docRef.getType());
+                    final String type;
+                    final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                    type = GwtNullSafe.getOrElse(documentType, DocumentType::getDisplayType,
+                            docRef.getType());
 
-                        final List<Item> menuItems = new ArrayList<>();
-                        int priority = 1;
-                        menuItems.add(new IconMenuItem.Builder()
-                                .priority(priority++)
-                                .icon(SvgImage.OPEN)
-                                .text("Open " + type)
-                                .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                                .build());
-                        menuItems.add(createCopyAsMenuItem(docRef, priority++));
+                    final List<Item> menuItems = new ArrayList<>();
+                    int priority = 1;
+                    menuItems.add(new IconMenuItem.Builder()
+                            .priority(priority++)
+                            .icon(SvgImage.OPEN)
+                            .text("Open " + type)
+                            .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                            .build());
+                    menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
-                        ShowMenuEvent
-                                .builder()
-                                .items(menuItems)
-                                .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                                .fire(this);
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
+                            .fire(this);
+                }
+            }
+        } else {
+            final String text = cellTextFunction.apply(value).asString();
+            if (MOUSEDOWN.equals(event.getType())) {
+                if (MouseUtil.isPrimary(event)) {
+                    final Element element = event.getEventTarget().cast();
+                    if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                        if (text != null) {
+                            ClipboardUtil.copy(text);
+                        }
                     }
+                } else if (GwtNullSafe.isNonBlankString(text)) {
+                    final List<Item> menuItems = new ArrayList<>();
+                    menuItems.add(new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgImage.COPY)
+                            .text("Copy")
+                            .command(() -> ClipboardUtil.copy(text))
+                            .build());
+                    ShowMenuEvent
+                            .builder()
+                            .items(menuItems)
+                            .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
+                            .fire(this);
                 }
             }
         }
@@ -145,70 +166,67 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
     @Override
     protected void onEnterKeyDown(final Context context,
                                   final Element parent,
-                                  final DocRefProvider<T_ROW> value,
+                                  final T_ROW value,
                                   final NativeEvent event,
-                                  final ValueUpdater<DocRefProvider<T_ROW>> valueUpdater) {
+                                  final ValueUpdater<T_ROW> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
+        final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
         if (docRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
-                final String text = getTextFromDocRef(docRef);
+                final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
             } else if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
                 OpenDocumentEvent.fire(this, docRef, true);
             }
+        } else {
+            final String text = cellTextFunction.apply(value).asString();
+            if (ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5)) {
+                if (text != null) {
+                    ClipboardUtil.copy(text);
+                }
+            }
         }
     }
 
     @Override
-    public void render(final Context context, final DocRefProvider<T_ROW> value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final T_ROW value, final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final DocRef docRef = GwtNullSafe.get(value, DocRefProvider::getDocRef);
-            if (docRef == null || GwtNullSafe.isBlankString(docRef.getName())) {
-                sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
+            final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
+            final SafeHtml cellHtmlText = cellTextFunction.apply(value);
+            String cssClasses = "docRefLinkText";
+            final String additionalClasses = cssClassFunction.apply(value);
+            if (additionalClasses != null) {
+                cssClasses += " " + additionalClasses;
+            }
+            final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
 
-            } else {
-                final SafeHtml cellHtmlText;
-                if (cellTextFunction != null) {
-                    cellHtmlText = cellTextFunction.apply(value);
-                } else {
-                    cellHtmlText = getTextFromDocRef(value);
+            final String containerClasses = String.join(
+                    " ",
+                    HOVER_ICON_CONTAINER_CLASS_NAME,
+                    "docRefLinkContainer");
+
+            sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
+            if (docRef != null && showIcon) {
+                final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+                if (documentType != null) {
+                    final SvgImage svgImage = documentType.getIcon();
+                    final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
+                            documentType.getDisplayType(),
+                            svgImage,
+                            ICON_CLASS_NAME,
+                            "docRefLinkIcon");
+                    sb.append(iconDiv);
                 }
+            }
 
-                String cssClasses = "docRefLinkText";
-                if (cssClassFunction != null) {
-                    final String additionalClasses = cssClassFunction.apply(value.getRow());
-                    if (additionalClasses != null) {
-                        cssClasses += " " + additionalClasses;
-                    }
-                }
-                final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
+            sb.append(textDiv);
 
-                final String containerClasses = String.join(
-                        " ",
-                        HOVER_ICON_CONTAINER_CLASS_NAME,
-                        "docRefLinkContainer");
-
-                sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
-                if (showIcon) {
-                    final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                    if (documentType != null) {
-                        final SvgImage svgImage = documentType.getIcon();
-                        final SafeHtml iconDiv = SvgImageUtil.toSafeHtml(
-                                documentType.getDisplayType(),
-                                svgImage,
-                                ICON_CLASS_NAME,
-                                "docRefLinkIcon");
-                        sb.append(iconDiv);
-                    }
-                }
-
-                sb.append(textDiv);
-
+            // Add copy and open links.
+            if (docRef != null) {
                 // This DocRefCell gets used for pipeline props which sometimes are a docRef
                 // and other times just a simple string
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -230,29 +248,9 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
                 }
-                sb.appendHtmlConstant("</div>");
             }
-        }
-    }
 
-    private SafeHtml getTextFromDocRef(final DocRefProvider<T_ROW> docRefProvider) {
-        final DocRef docRef = docRefProvider.getDocRef();
-        return GwtNullSafe.getOrElseGet(
-                docRef,
-                docRef1 -> getTextFromDocRef(docRef1, displayType),
-                SafeHtmlUtils::fromString,
-                () -> SafeHtmlUtils.EMPTY_SAFE_HTML);
-    }
-
-    public static String getTextFromDocRef(final DocRef docRef) {
-        return getTextFromDocRef(docRef, DisplayType.AUTO);
-    }
-
-    public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
-        if (docRef == null) {
-            return null;
-        } else {
-            return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+            sb.appendHtmlConstant("</div>");
         }
     }
 
@@ -326,50 +324,15 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
         SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class DocRefProvider<T_ROW> {
-
-        private final T_ROW row;
-        private final Function<T_ROW, DocRef> docRefExtractor;
-
-        public DocRefProvider(final T_ROW row,
-                              final Function<T_ROW, DocRef> docRefExtractor) {
-            this.row = row;
-            this.docRefExtractor = Objects.requireNonNull(docRefExtractor);
-        }
-
-        /**
-         * For uses where the rendering of the cell doesn't need the original row value, so
-         * this essentially returns an identity function.
-         */
-        public static DocRefProvider<DocRef> forDocRef(final DocRef docRefRow) {
-            return new DocRefProvider<>(docRefRow, Function.identity());
-        }
-
-        public T_ROW getRow() {
-            return row;
-        }
-
-        public DocRef getDocRef() {
-            return GwtNullSafe.get(row, docRefExtractor);
-        }
-    }
-
-    public static <T> Builder<T> builder() {
-        return new Builder<>();
-    }
-
     public static class Builder<T> {
 
         private EventBus eventBus;
         private boolean allowLinkByName = false;
         private boolean showIcon = false;
         private DocRef.DisplayType displayType = DisplayType.NAME;
+        private Function<T, SafeHtml> cellTextFunction;
+        private Function<T, DocRef> docRefFunction;
         private Function<T, String> cssClassFunction;
-        private Function<DocRefProvider<T>, SafeHtml> cellTextFunction;
 
         public Builder<T> eventBus(final EventBus eventBus) {
             this.eventBus = eventBus;
@@ -391,24 +354,72 @@ public class DocRefCell<T_ROW> extends AbstractCell<DocRefProvider<T_ROW>>
             return this;
         }
 
+        public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
+            this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public Builder<T> docRefFunction(final Function<T, DocRef> docRefFunction) {
+            this.docRefFunction = docRefFunction;
+            return this;
+        }
+
         public Builder<T> cssClassFunction(final Function<T, String> cssClassFunction) {
             this.cssClassFunction = cssClassFunction;
             return this;
         }
 
-        public Builder<T> cellTextFunction(final Function<DocRefProvider<T>, SafeHtml> cellTextFunction) {
-            this.cellTextFunction = cellTextFunction;
-            return this;
-        }
-
         public DocRefCell<T> build() {
+            if (docRefFunction == null) {
+                docRefFunction = v -> null;
+            }
+            if (cellTextFunction == null) {
+                cellTextFunction = v -> {
+                    final DocRef docRef = docRefFunction.apply(v);
+                    if (docRef == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        return SafeHtmlUtils.fromString(docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                displayType,
+                                displayType)));
+                    }
+                };
+            }
+            if (cssClassFunction == null) {
+                cssClassFunction = v -> null;
+            }
+
+//
+//                public static String getTextFromDocRef(final DocRef docRef) {
+//                    return getTextFromDocRef(docRef, DisplayType.AUTO);
+//                }
+//
+//                public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
+//                    if (docRef == null) {
+//                        return null;
+//                    } else {
+//                        return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+//                    }
+//                }
+//
+//            }
+//
+//
+//
+//        } else if (docRef != null) {
+//            cellHtmlText = SafeHtmlUtils.fromString(getTextFromDocRef(docRef, displayType));
+//        } else {
+//            cellHtmlText = SafeHtmlUtils.EMPTY_SAFE_HTML;
+//        }
+
+
             return new DocRefCell<>(
                     eventBus,
                     allowLinkByName,
                     showIcon,
-                    displayType,
-                    cssClassFunction,
-                    cellTextFunction);
+                    cellTextFunction,
+                    docRefFunction,
+                    cssClassFunction);
         }
     }
 }
