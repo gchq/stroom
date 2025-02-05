@@ -141,6 +141,50 @@ public class ByteBufferUtils {
         }
     }
 
+    public static String byteBufferInfoAsInt(final ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return "null";
+        }
+
+        final String value = byteBufferToHexAll(byteBuffer);
+        String asInt;
+        try {
+            asInt = String.valueOf(byteBuffer.duplicate().getInt());
+        } catch (Exception e) {
+            LOGGER.debug("Unable to convert to long", e);
+            asInt = "CANT_CONVERT";
+        }
+        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asInt [{}]",
+                byteBuffer.capacity(),
+                byteBuffer.position(),
+                byteBuffer.limit(),
+                byteBuffer.remaining(),
+                value,
+                asInt);
+    }
+
+    public static String byteBufferInfoAsLong(final ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return "null";
+        }
+
+        final String value = byteBufferToHexAll(byteBuffer);
+        String asLong;
+        try {
+            asLong = String.valueOf(byteBuffer.duplicate().getLong());
+        } catch (Exception e) {
+            LOGGER.debug("Unable to convert to long", e);
+            asLong = "CANT_CONVERT";
+        }
+        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asLong [{}]",
+                byteBuffer.capacity(),
+                byteBuffer.position(),
+                byteBuffer.limit(),
+                byteBuffer.remaining(),
+                value,
+                asLong);
+    }
+
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return "null";

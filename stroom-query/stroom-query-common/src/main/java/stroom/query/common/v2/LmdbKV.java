@@ -33,9 +33,9 @@ public class LmdbKV implements LmdbQueueItem {
     @Override
     public String toString() {
         return "LmdbKV{" +
-                "currentDbState=" + currentDbState +
-                ", rowKey=" + ByteBufferUtils.byteBufferToString(rowKey) +
-                ", rowValue=" + ByteBufferUtils.byteBufferToString(rowValue) +
-                '}';
+               "currentDbState=" + currentDbState +
+               ", rowKey=" + ByteBufferUtils.byteBufferInfo(rowKey) +
+               ", rowValue=" + ByteBufferUtils.byteBufferInfo(rowValue) +
+               '}';
     }
 }
