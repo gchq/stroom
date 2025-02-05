@@ -29,11 +29,11 @@ class KeyTypeDaoImpl implements KeyTypeDao {
     }
 
     private void create(final String type) {
-        JooqUtil.context(identityDbConnProvider, context -> context
-                .insertInto(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.TYPE)
-                .values(type)
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(identityDbConnProvider, context -> context
+                        .insertInto(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.TYPE)
+                        .values(type)
+                        .execute()));
     }
 
     private Optional<Integer> get(final String type) {

@@ -73,7 +73,8 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.contextResult(indexDbConnProvider, context -> context
+        Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .insertInto(INDEX_VOLUME_GROUP,
                                 INDEX_VOLUME_GROUP.VERSION,
                                 INDEX_VOLUME_GROUP.CREATE_USER,
@@ -87,10 +88,8 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                                 indexVolumeGroup.getUpdateUser(),
                                 indexVolumeGroup.getUpdateTimeMs(),
                                 indexVolumeGroup.getName())
-                        .onDuplicateKeyIgnore()
                         .returning(INDEX_VOLUME_GROUP.ID)
-                        .fetchOptional())
-                .map(IndexVolumeGroupRecord::getId);
+                        .fetchOptional(INDEX_VOLUME_GROUP.ID)));
 
         return optional.map(id -> {
             indexVolumeGroup.setId(id);
@@ -113,14 +112,14 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             saved = genericDao.update(indexVolumeGroup);
         } catch (DataAccessException e) {
             if (e.getCause() != null
-                    && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                 final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                 if (sqlEx.getErrorCode() == 1062
-                        && sqlEx.getMessage().contains("Duplicate entry")
-                        && sqlEx.getMessage().contains("key")
-                        && sqlEx.getMessage().contains(INDEX_VOLUME_GROUP.NAME.getName())) {
+                    && sqlEx.getMessage().contains("Duplicate entry")
+                    && sqlEx.getMessage().contains("key")
+                    && sqlEx.getMessage().contains(INDEX_VOLUME_GROUP.NAME.getName())) {
                     throw new RuntimeException("An index volume group already exists with name '"
-                            + indexVolumeGroup.getName() + "'");
+                                               + indexVolumeGroup.getName() + "'");
                 }
             }
             throw e;
@@ -134,7 +133,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                 for (final DocRef docRef : indexes) {
                     final LuceneIndexDoc indexDoc = indexStore.readDocument(docRef);
                     if (indexDoc.getVolumeGroupName() != null &&
-                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
+                        indexDoc.getVolumeGroupName().equals(currentGroupName)) {
                         indexDoc.setVolumeGroupName(saved.getName());
                         LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
                                 indexDoc.getName(),

@@ -62,7 +62,8 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+        Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .insertInto(FS_VOLUME_GROUP,
                                 FS_VOLUME_GROUP.VERSION,
                                 FS_VOLUME_GROUP.CREATE_USER,
@@ -76,10 +77,8 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                                 fsVolumeGroup.getUpdateUser(),
                                 fsVolumeGroup.getUpdateTimeMs(),
                                 fsVolumeGroup.getName())
-                        .onDuplicateKeyIgnore()
                         .returning(FS_VOLUME_GROUP.ID)
-                        .fetchOptional())
-                .map(FsVolumeGroupRecord::getId);
+                        .fetchOptional(FS_VOLUME_GROUP.ID)));
 
         return optional.map(id -> {
             fsVolumeGroup.setId(id);
@@ -95,14 +94,14 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
             saved = genericDao.update(fsVolumeGroup);
         } catch (DataAccessException e) {
             if (e.getCause() != null
-                    && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
                 final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
                 if (sqlEx.getErrorCode() == 1062
-                        && sqlEx.getMessage().contains("Duplicate entry")
-                        && sqlEx.getMessage().contains("key")
-                        && sqlEx.getMessage().contains(FS_VOLUME_GROUP.NAME.getName())) {
+                    && sqlEx.getMessage().contains("Duplicate entry")
+                    && sqlEx.getMessage().contains("key")
+                    && sqlEx.getMessage().contains(FS_VOLUME_GROUP.NAME.getName())) {
                     throw new RuntimeException("A data volume group already exists with name '"
-                            + fsVolumeGroup.getName() + "'");
+                                               + fsVolumeGroup.getName() + "'");
                 }
             }
             throw e;

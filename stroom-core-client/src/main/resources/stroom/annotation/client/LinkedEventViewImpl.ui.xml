@@ -4,10 +4,10 @@
     <g:SimplePanel styleName="max default-min-sizes">
         <g:MySplitLayoutPanel styleName="max">
             <g:west size="300">
-                <g:SimplePanel ui:field="eventList" styleName="max stroom-control"/>
+                <g:SimplePanel ui:field="eventList" styleName="max form-control-border form-control-background"/>
             </g:west>
             <g:center>
-                <g:SimplePanel ui:field="data" styleName="max stroom-control"/>
+                <g:SimplePanel ui:field="data" styleName="max form-control-border form-control-background"/>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:SimplePanel>

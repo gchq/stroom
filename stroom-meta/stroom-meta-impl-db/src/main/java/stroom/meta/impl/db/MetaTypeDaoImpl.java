@@ -23,7 +23,6 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
-import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -165,13 +164,12 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
     }
 
     private Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+        return JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .insertInto(META_TYPE, META_TYPE.NAME)
                         .values(name)
-                        .onDuplicateKeyIgnore()
                         .returning(META_TYPE.ID)
-                        .fetchOptional())
-                .map(MetaTypeRecord::getId);
+                        .fetchOptional(META_TYPE.ID)));
     }
 
     @Override

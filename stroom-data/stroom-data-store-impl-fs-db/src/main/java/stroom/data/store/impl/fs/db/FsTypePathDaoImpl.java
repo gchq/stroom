@@ -58,18 +58,18 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                 .orElseThrow();
     }
 
-    private void createPath(final String name) {
+    void createPath(final String name) {
         final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
         if (!path.equals(name)) {
             LOGGER.debug(() -> LogUtil.message("A non standard type name was found when registering a file path '{}'",
                     name));
         }
 
-        JooqUtil.context(fsDataStoreDbConnProvider, context -> context
-                .insertInto(FS_TYPE_PATH, FS_TYPE_PATH.NAME, FS_TYPE_PATH.PATH)
-                .values(name, path)
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(fsDataStoreDbConnProvider, context -> context
+                        .insertInto(FS_TYPE_PATH, FS_TYPE_PATH.NAME, FS_TYPE_PATH.PATH)
+                        .values(name, path)
+                        .execute()));
     }
 
     private Optional<String> getPath(final String name) {
