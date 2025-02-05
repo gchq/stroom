@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.7-beta.15] - 2025-02-05
+
+* Issue **#4755** : Fix missing values from pipeline structure editor.
+
+* Issue **#4762** : Fix annotation NPE caused by null `AssignedTo`.
+
+* Issue **#4762** : Fix annotations.
+
+
 ## [v7.7-beta.14] - 2025-02-04
 
 * Issue **#4754** : Fix server tasks display user related NPE.
@@ -1157,7 +1166,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.7-beta.15...HEAD
+[v7.7-beta.15]: https://github.com/gchq/stroom/compare/v7.7-beta.14...v7.7-beta.15
 [v7.7-beta.14]: https://github.com/gchq/stroom/compare/v7.7-beta.13...v7.7-beta.14
 [v7.7-beta.13]: https://github.com/gchq/stroom/compare/v7.7-beta.12...v7.7-beta.13
 [v7.7-beta.12]: https://github.com/gchq/stroom/compare/v7.7-beta.11...v7.7-beta.12
