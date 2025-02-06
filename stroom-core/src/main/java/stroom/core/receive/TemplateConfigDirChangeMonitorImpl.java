@@ -30,14 +30,14 @@ public class TemplateConfigDirChangeMonitorImpl extends AbstractDirChangeMonitor
             final SimplePathCreator simplePathCreator,
             final Provider<ContentAutoCreationService> contentAutoCreationServiceProvider) {
         super(
-                getDataFeedDir(autoContentCreationConfigProvider, simplePathCreator),
+                getMonitoredDir(autoContentCreationConfigProvider, simplePathCreator),
                 FILE_INCLUDE_FILTER,
                 EnumSet.allOf(EventType.class));
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.contentAutoCreationServiceProvider = contentAutoCreationServiceProvider;
     }
 
-    private static Path getDataFeedDir(
+    private static Path getMonitoredDir(
             final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider,
             final SimplePathCreator simplePathCreator) {
 

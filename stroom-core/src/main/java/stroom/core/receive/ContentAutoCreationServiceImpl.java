@@ -12,6 +12,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.DataFormatNames;
+import stroom.receive.common.ContentTemplates;
+import stroom.receive.common.ContentTemplates.ContentTemplate;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
@@ -34,11 +36,15 @@ import stroom.util.shared.UserType;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ContentAutoCreationServiceImpl implements ContentAutoCreationService {
 
@@ -55,6 +61,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final ClusterLockService clusterLockService;
     private final MetaService metaService;
     private final SecurityContext securityContext;
+    private final Set<SourcedContentTemplate> contentTemplates = Collections.newSetFromMap(
+            new ConcurrentHashMap<>());
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -102,6 +110,28 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             LOGGER.debug("Not eligible for auto-creation");
             return Optional.empty();
         }
+    }
+
+    @Override
+    public void addContentTemplates(final ContentTemplates contentTemplates, final Path sourceFile) {
+        if (contentTemplates != null) {
+            Objects.requireNonNull(sourceFile);
+            final Set<SourcedContentTemplate> templatesFromFile = contentTemplates.getContentTemplates()
+                    .stream()
+                    .map(contentTemplate -> new SourcedContentTemplate(contentTemplate, sourceFile))
+                    .collect(Collectors.toSet());
+
+            for (final ContentTemplate contentTemplate : contentTemplates.getContentTemplates()) {
+
+
+            }
+        }
+
+    }
+
+    @Override
+    public void removeTemplatesForFile(final Path sourceFile) {
+
     }
 
     private boolean isEligibleForAutoCreation(final UserDesc userDesc,
@@ -325,5 +355,14 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                    final DocRef docRef,
                                    final DocumentPermission perm) {
         documentPermissionService.setPermission(docRef, user.asRef(), perm);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record SourcedContentTemplate(ContentTemplate contentTemplate,
+                                          Path sourceFile) {
+
     }
 }
