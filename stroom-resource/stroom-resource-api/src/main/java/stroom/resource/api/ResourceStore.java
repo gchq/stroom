@@ -27,7 +27,7 @@ import java.nio.file.Path;
 public interface ResourceStore {
 
     /**
-     * Create a temporary file and give it a string key.
+     * Create a temporary file and give it a UUID.
      */
     ResourceKey createTempFile(final String name);
 
