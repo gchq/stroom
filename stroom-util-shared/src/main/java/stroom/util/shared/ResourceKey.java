@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Class that represents a key to a resource. This key has a name and a string
@@ -31,19 +32,19 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class ResourceKey {
 
-    public static final String NAME = "name";
     public static final String KEY = "key";
+    public static final String NAME = "name";
 
-    @JsonProperty
-    private final String name;
     @JsonProperty
     private final String key;
+    @JsonProperty
+    private final String name;
 
     @JsonCreator
-    public ResourceKey(@JsonProperty("name") final String name,
-                       @JsonProperty("key") final String key) {
-        this.name = name;
+    public ResourceKey(@JsonProperty("key") final String key,
+                       @JsonProperty("name") final String name) {
         this.key = key;
+        this.name = name;
     }
 
     public ResourceKey(final Map<String, String> map) {
@@ -60,28 +61,24 @@ public class ResourceKey {
     }
 
     @Override
-    public int hashCode() {
-        return key.hashCode();
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ResourceKey that = (ResourceKey) o;
+        return Objects.equals(key, that.key);
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other == null) {
-            return false;
-        }
-        if (!(other instanceof ResourceKey)) {
-            return false;
-        }
-        return this.key.equals(((ResourceKey) other).key);
+    public int hashCode() {
+        return Objects.hashCode(key);
     }
 
     @Override
     public String toString() {
         return key;
-    }
-
-    public void write(Map<String, String> map) {
-        map.put(NAME, getName());
-        map.put(KEY, getKey());
     }
 }
