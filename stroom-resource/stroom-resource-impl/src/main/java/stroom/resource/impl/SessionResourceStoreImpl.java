@@ -17,7 +17,6 @@
 package stroom.resource.impl;
 
 import stroom.resource.api.ResourceStore;
-import stroom.util.io.FileUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourceKey;
@@ -39,11 +38,10 @@ import javax.servlet.http.HttpSession;
  */
 public class SessionResourceStoreImpl extends HttpServlet implements ResourceStore, IsServlet {
 
-    private static final long serialVersionUID = -4533441835216235920L;
     private static final Set<String> PATH_SPECS = Set.of("/resourcestore/*");
-    private static final String UUID_ARG = "UUID";
+    private static final String UUID_ARG = "uuid";
 
-    private final ResourceStore resourceStore;
+    private final ResourceStoreImpl resourceStore;
     private final HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
@@ -56,7 +54,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
     @Override
     public ResourceKey createTempFile(final String name) {
         final ResourceKey key = resourceStore.createTempFile(name);
-        final ResourceKey sessionKey = new ResourceKey(name, UUID.randomUUID().toString());
+        final ResourceKey sessionKey = new ResourceKey(UUID.randomUUID().toString(), name);
 
         getMap().put(sessionKey, key);
 
@@ -64,21 +62,25 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
     }
 
     @Override
+    public Path getTempFile(final ResourceKey key) {
+        final ResourceKey realKey = getRealKey(key);
+        if (realKey == null) {
+            return null;
+        }
+        return resourceStore.getTempFile(realKey);
+    }
+
+    @Override
     public void deleteTempFile(final ResourceKey key) {
-        final ResourceKey realKey = getMap().remove(key);
+        final ResourceKey realKey = getRealKey(key);
         if (realKey == null) {
             return;
         }
         resourceStore.deleteTempFile(realKey);
     }
 
-    @Override
-    public Path getTempFile(final ResourceKey key) {
-        final ResourceKey realKey = getMap().get(key);
-        if (realKey == null) {
-            return null;
-        }
-        return resourceStore.getTempFile(getMap().get(key));
+    private ResourceKey getRealKey(final ResourceKey key) {
+        return getMap().get(key);
     }
 
     private ResourceMap getMap() {
@@ -113,20 +115,22 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
             final String uuid = req.getParameter(UUID_ARG);
             boolean found = false;
             if (uuid != null) {
-                final ResourceKey resourceKey = new ResourceKey(null, uuid);
-                try {
-                    final Path file = getTempFile(resourceKey);
-                    if (file != null && Files.isRegularFile(file)) {
-                        if (FileUtil.getCanonicalPath(file).toLowerCase().endsWith(".zip")) {
-                            resp.setContentType("application/zip");
-                        } else {
-                            resp.setContentType("application/octet-stream");
+                final ResourceKey resourceKey = getRealKey(new ResourceKey(uuid, null));
+                if (resourceKey != null) {
+                    try {
+                        final Path file = resourceStore.getTempFile(resourceKey);
+                        if (file != null && Files.isRegularFile(file)) {
+                            if (resourceKey.getName().toLowerCase().endsWith(".zip")) {
+                                resp.setContentType("application/zip");
+                            } else {
+                                resp.setContentType("application/octet-stream");
+                            }
+                            resp.getOutputStream().write(Files.readAllBytes(file));
+                            found = true;
                         }
-                        resp.getOutputStream().write(Files.readAllBytes(file));
-                        found = true;
+                    } finally {
+                        deleteTempFile(resourceKey);
                     }
-                } finally {
-                    deleteTempFile(resourceKey);
                 }
             }
 

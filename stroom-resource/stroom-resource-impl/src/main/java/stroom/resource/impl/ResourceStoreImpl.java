@@ -20,31 +20,34 @@ import stroom.resource.api.ResourceStore;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourceKey;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * Simple Store that gives you 1 hour to use your temp file and then it deletes
- * it.
+ * Simple Store that gives you 1 hour to use your temp file before it deletes it.
  */
 @Singleton
 public class ResourceStoreImpl implements ResourceStore {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResourceStoreImpl.class);
+
     private final TempDirProvider tempDirProvider;
     private final TaskContextFactory taskContextFactory;
+    private final Map<String, ResourceItem> currentFiles = new ConcurrentHashMap<>();
 
-    private Set<ResourceKey> currentFiles = new HashSet<>();
-    private Set<ResourceKey> oldFiles = new HashSet<>();
-    private long sequence;
+    private volatile Instant lastCleanupTime;
 
     @Inject
     public ResourceStoreImpl(final TempDirProvider tempDirProvider,
@@ -72,47 +75,108 @@ public class ResourceStoreImpl implements ResourceStore {
     }
 
     @Override
-    public synchronized ResourceKey createTempFile(final String name) {
-        final String fileName = FileUtil.getCanonicalPath(getTempDir().resolve((sequence++) + name));
-        final ResourceKey resourceKey = new ResourceKey(name, fileName);
-        currentFiles.add(resourceKey);
-
+    public ResourceKey createTempFile(final String name) {
+        final String uuid = UUID.randomUUID().toString();
+        final Path path = getTempDir().resolve(uuid);
+        final ResourceKey resourceKey = new ResourceKey(uuid, name);
+        final ResourceItem resourceItem = new ResourceItem(resourceKey, path, Instant.now());
+        currentFiles.put(uuid, resourceItem);
         return resourceKey;
     }
 
     @Override
-    public synchronized void deleteTempFile(final ResourceKey resourceKey) {
-        currentFiles.remove(resourceKey);
-        oldFiles.remove(resourceKey);
-        final Path file = Paths.get(resourceKey.getKey());
-        try {
-            Files.deleteIfExists(file);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+    public void deleteTempFile(final ResourceKey resourceKey) {
+        final ResourceItem resourceItem = currentFiles.remove(resourceKey.getKey());
+        if (resourceItem != null) {
+            final Path file = resourceItem.getPath();
+            try {
+                Files.deleteIfExists(file);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 
     @Override
-    public synchronized Path getTempFile(final ResourceKey resourceKey) {
+    public Path getTempFile(final ResourceKey resourceKey) {
         // File gone !
-        if (!currentFiles.contains(resourceKey) && !oldFiles.contains(resourceKey)) {
+        final ResourceItem resourceItem = currentFiles.get(resourceKey.getKey());
+        if (resourceItem == null) {
             return null;
         }
-        return Paths.get(resourceKey.getKey());
+        resourceItem.setLastAccessTime(Instant.now());
+        return resourceItem.getPath();
     }
 
     void execute() {
         taskContextFactory.current().info(() -> "Deleting temp files");
-        flipStore();
+        cleanup();
     }
 
     /**
-     * Move the current files to the old files deleting the old ones.
+     * Delete files that haven't been accessed since the last cleanup.
+     * This allows us to choose the cleanup frequency.
      */
-    private synchronized void flipStore() {
-        final Set<ResourceKey> clonedOldFiles = new HashSet<>(oldFiles);
-        clonedOldFiles.forEach(this::deleteTempFile);
-        oldFiles = currentFiles;
-        currentFiles = new HashSet<>();
+    private synchronized void cleanup() {
+        if (lastCleanupTime != null) {
+            // Delete anything that hasn't been accessed since we were last asked to cleanup.
+            currentFiles.values().forEach(resourceItem -> {
+                try {
+                    if (resourceItem.getLastAccessTime().isBefore(lastCleanupTime)) {
+                        deleteTempFile(resourceItem.getResourceKey());
+                    }
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            });
+        }
+        lastCleanupTime = Instant.now();
+    }
+
+    private static class ResourceItem {
+
+        private final ResourceKey resourceKey;
+        private final Path path;
+        private final Instant createTime;
+        private volatile Instant lastAccessTime;
+
+        public ResourceItem(final ResourceKey resourceKey,
+                            final Path path,
+                            final Instant createTime) {
+            this.resourceKey = resourceKey;
+            this.path = path;
+            this.createTime = createTime;
+            this.lastAccessTime = createTime;
+        }
+
+        public ResourceKey getResourceKey() {
+            return resourceKey;
+        }
+
+        public Path getPath() {
+            return path;
+        }
+
+        public Instant getCreateTime() {
+            return createTime;
+        }
+
+        public Instant getLastAccessTime() {
+            return lastAccessTime;
+        }
+
+        public void setLastAccessTime(final Instant lastAccessTime) {
+            this.lastAccessTime = lastAccessTime;
+        }
+
+        @Override
+        public String toString() {
+            return "ResourceItem{" +
+                    "resourceKey=" + resourceKey +
+                    ", path=" + path +
+                    ", createTime=" + createTime +
+                    ", lastAccessTime=" + lastAccessTime +
+                    '}';
+        }
     }
 }
