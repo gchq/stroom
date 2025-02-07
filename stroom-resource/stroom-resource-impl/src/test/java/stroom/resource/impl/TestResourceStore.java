@@ -39,10 +39,10 @@ class TestResourceStore {
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");
-        assertThat(key1.toString().endsWith("TestResourceStore1.dat")).isTrue();
+        assertThat(key1.getName()).isEqualTo("TestResourceStore1.dat");
 
         final ResourceKey key2 = resourceStore.createTempFile("TestResourceStore2.dat");
-        assertThat(key2.toString().endsWith("TestResourceStore2.dat")).isTrue();
+        assertThat(key2.getName()).isEqualTo("TestResourceStore2.dat");
 
         Files.createFile(resourceStore.getTempFile(key1));
         Files.createFile(resourceStore.getTempFile(key2));
@@ -50,14 +50,36 @@ class TestResourceStore {
         assertThat(Files.isRegularFile(resourceStore.getTempFile(key1))).isTrue();
         assertThat(Files.isRegularFile(resourceStore.getTempFile(key2))).isTrue();
 
-        // Roll to Old
+        // Cleanup
         resourceStore.execute();
-        final Path file1 = resourceStore.getTempFile(key1);
+        Path file1 = resourceStore.getTempFile(key1);
         assertThat(Files.isRegularFile(file1)).isTrue();
-        final Path file2 = resourceStore.getTempFile(key2);
+        Path file2 = resourceStore.getTempFile(key2);
         assertThat(Files.isRegularFile(file2)).isTrue();
 
-        // Roll to Delete
+        // Cleanup
+        resourceStore.execute();
+
+        // Files should still exist as we have accessed them since last roll.
+        file1 = resourceStore.getTempFile(key1);
+        assertThat(Files.isRegularFile(file1)).isTrue();
+        file2 = resourceStore.getTempFile(key2);
+        assertThat(Files.isRegularFile(file2)).isTrue();
+
+        // Cleanup
+        resourceStore.execute();
+        file1 = resourceStore.getTempFile(key1);
+        assertThat(Files.isRegularFile(file1)).isTrue();
+        resourceStore.execute();
+
+        // We should have deleted file2 as we didn't access since last cleanup.
+        file1 = resourceStore.getTempFile(key1);
+        assertThat(Files.isRegularFile(file1)).isTrue();
+        assertThat(resourceStore.getTempFile(key2)).isNull();
+        assertThat(Files.isRegularFile(file2)).isFalse();
+
+        // Now delete everything.
+        resourceStore.execute();
         resourceStore.execute();
         assertThat(resourceStore.getTempFile(key1)).isNull();
         assertThat(Files.isRegularFile(file1)).isFalse();
