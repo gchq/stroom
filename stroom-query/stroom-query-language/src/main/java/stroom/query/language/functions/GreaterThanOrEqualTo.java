@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import java.util.Objects;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = GreaterThanOrEqualTo.NAME,
@@ -60,6 +62,13 @@ class GreaterThanOrEqualTo extends AbstractEqualityFunction {
 
         @Override
         protected Val evaluate(final Val a, final Val b) {
+            if (a.type().isNull() || b.type().isNull()) {
+                if (Objects.equals(a, b)) {
+                    return ValBoolean.TRUE;
+                }
+                return ValBoolean.FALSE;
+            }
+
             final int compareResult = ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(a, b);
             return compareResult >= 0
                     ? ValBoolean.TRUE

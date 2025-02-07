@@ -28,17 +28,17 @@ abstract class AbstractEqualityFunctionTest<T extends AbstractEqualityFunction>
                 .flatMap(values -> {
                     final Object param1 = values.param1;
                     final Object param2 = values.param2;
-                    if (!addInverseTest()) {
+                    if (!addInverseTest() || param1 == null || param2 == null) {
                         return Stream.of(values);
                     } else if (ValComparators.haveType(param1, param2, String.class)
-                            && String.CASE_INSENSITIVE_ORDER.compare(
+                               && String.CASE_INSENSITIVE_ORDER.compare(
                             param1.toString(),
                             param1.toString()) == 0) {
                         return Stream.of(values);
                     } else if (Objects.equals(param1, param2)) {
                         return Stream.of(values);
                     } else if ((param1 instanceof Number
-                            && DoubleMath.fuzzyEquals(
+                                && DoubleMath.fuzzyEquals(
                             ((Number) param1).doubleValue(),
                             ((Number) param2).doubleValue(),
                             Val.FLOATING_POINT_EQUALITY_TOLERANCE))) {
@@ -61,15 +61,22 @@ abstract class AbstractEqualityFunctionTest<T extends AbstractEqualityFunction>
                                  final boolean expectedOutcome) {
         return TestCase.convert(
                 param1
-                        + " (" + param1.getClass().getSimpleName() + ") "
-                        + getOperator() + " "
-                        + param2
-                        + " (" + param2.getClass().getSimpleName() + ")"
-                        + " => "
-                        + expectedOutcome,
+                + " (" + getParamType(param1) + ") "
+                + getOperator() + " "
+                + param2
+                + " (" + getParamType(param2) + ")"
+                + " => "
+                + expectedOutcome,
                 expectedOutcome,
                 param1,
                 param2);
+    }
+
+    private String getParamType(final Object param) {
+        if (param == null) {
+            return "null";
+        }
+        return param.getClass().getSimpleName();
     }
 
 

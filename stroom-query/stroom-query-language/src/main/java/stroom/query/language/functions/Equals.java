@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import java.util.Objects;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Equals.NAME,
@@ -59,6 +61,9 @@ class Equals extends AbstractEqualityFunction {
 
         @Override
         protected Val evaluate(final Val a, final Val b) {
+            if (Objects.equals(a, b)) {
+                return ValBoolean.TRUE;
+            }
 
             final int compareResult = ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(a, b);
             return compareResult == 0
