@@ -76,7 +76,8 @@ public final class ExportFileCompleteUtil {
     private static void download(final LocationManager locationManager, final ResourceGeneration result) {
         // Change the browser location to download the zip
         // file.
-        locationManager.replace(GWT.getHostPageBaseURL() + "resourcestore/" +
-                result.getResourceKey().getName() + "?UUID=" + result.getResourceKey().getKey());
+        locationManager.replace(GWT.getHostPageBaseURL() +
+                "resourcestore/?uuid=" +
+                result.getResourceKey().getKey());
     }
 }
