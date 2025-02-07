@@ -99,7 +99,8 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
             }
 
             propertyMap.setSuccess(true);
-            resourceKey.write(propertyMap);
+            propertyMap.put(ResourceKey.NAME, fileName);
+            propertyMap.put(ResourceKey.KEY, resourceKey.getKey());
             fileItem.delete();
 
         } catch (final RuntimeException e) {
