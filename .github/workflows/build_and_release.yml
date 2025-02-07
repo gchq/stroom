@@ -73,7 +73,7 @@ jobs:
         run: |
           "${ACTIONS_SCRIPTS_DIR}/echo_variables.sh" \
             "docker version" "$(docker --version)" \
-            "docker-compose version" "$(docker-compose --version)" \
+            "docker compose version" "$(docker compose version)" \
             "git version" "$(git --version)" \
             "GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" \
             "GITHUB_REF" "$GITHUB_REF" \
@@ -96,6 +96,10 @@ jobs:
           # https://github.com/gchq/stroom/settings/secrets/actions
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          #PAT_FOR_PUBLIC_REPOS: ${{ secrets.PAT_FOR_PUBLIC_REPOS }}
+          # The special auto created token, used for authenticating
+          # downloads prevent rate limiting
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pushd "${BUILD_DIR}" > /dev/null
           echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
