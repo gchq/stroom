@@ -96,6 +96,10 @@ jobs:
           # https://github.com/gchq/stroom/settings/secrets/actions
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          #PAT_FOR_PUBLIC_REPOS: ${{ secrets.PAT_FOR_PUBLIC_REPOS }}
+          # The special auto created token, used for authenticating
+          # downloads prevent rate limiting
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pushd "${BUILD_DIR}" > /dev/null
           echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
@@ -116,7 +120,7 @@ jobs:
 #
 #      - name: Upload Test Results
 #        if: always()
-#        uses: actions/upload-artifact@v3
+#        uses: actions/upload-artifact@v4
 #        with:
 #          name: Unit Test Results
 #          path: test-results.tar.gz
@@ -124,7 +128,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results
           path: "**/test-results/**/*.xml"
@@ -139,7 +143,7 @@ jobs:
 #
 #      - name: Upload Test Results
 #        if: always()
-#        uses: actions/upload-artifact@v3
+#        uses: actions/upload-artifact@v4
 #        with:
 #          name: Unit Test Results
 #          path: "**/test-results/**/*.xml"
