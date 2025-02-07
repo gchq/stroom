@@ -13,6 +13,7 @@ dependencies {
     implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
+    implementation libs.slf4j_api
 
     testImplementation libs.assertj.core
     testImplementation libs.mockito.core
