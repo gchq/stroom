@@ -32,6 +32,7 @@ class TestNotEquals extends AbstractEqualityFunctionTest<NotEquals> {
                 Values.of(2, 2.0D, false),
                 Values.of(2, 2F, false),
                 Values.of(2, 2.0F, false),
+                Values.of(2, null, true),
 
                 Values.of(2L, 1L, true),
                 Values.of(2L, 1, true),
@@ -43,6 +44,7 @@ class TestNotEquals extends AbstractEqualityFunctionTest<NotEquals> {
                 Values.of(2L, 2.0D, false),
                 Values.of(2L, 2F, false),
                 Values.of(2L, 2.0F, false),
+                Values.of(2L, null, true),
 
                 Values.of(1.2D, 1.1D, true),
                 Values.of(1.2D, 1, true),
@@ -53,6 +55,7 @@ class TestNotEquals extends AbstractEqualityFunctionTest<NotEquals> {
                 Values.of(1D, 1, false),
                 Values.of(1D, 1L, false),
                 Values.of(1.1D, 1.1F, false),
+                Values.of(1.1D, null, true),
 
                 Values.of(1.2F, 1.1F, true),
                 Values.of(1.2F, 1, true),
@@ -62,13 +65,18 @@ class TestNotEquals extends AbstractEqualityFunctionTest<NotEquals> {
                 Values.of(1F, 1, false),
                 Values.of(1F, 1L, false),
                 Values.of(1.1F, 1.1D, false),
+                Values.of(1.1F, null, true),
 
                 Values.of(true, false, true),
                 Values.of(true, true, false),
+                Values.of(true, null, true),
 
                 Values.of("dog", "cat", true),
                 Values.of("CAT", "cat", true),
-                Values.of("cat", "cat", false)
+                Values.of("cat", "cat", false),
+                Values.of("cat", null, true),
+
+                Values.of(null, null, false)
         );
     }
 }

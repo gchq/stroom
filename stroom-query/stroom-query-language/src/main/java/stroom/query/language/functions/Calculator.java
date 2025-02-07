@@ -21,8 +21,11 @@ abstract class Calculator {
 
     Val calc(final Val current, final Val value) {
         try {
-            if (value.type().isError()) {
+            if (value.type().isError() ||
+                current.type().isNull()) {
                 return value;
+            } else if (current.type().isError()) {
+                return current;
             }
 
             final Double cur = current.toDouble();

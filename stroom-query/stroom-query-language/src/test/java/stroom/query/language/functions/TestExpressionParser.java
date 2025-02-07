@@ -243,7 +243,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testIf_nullHandling() {
         compute("if(${val1}=null(), true(), false())",
                 Val.of(ValNull.INSTANCE),
-                ValAssertions.valErr());
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -650,28 +650,28 @@ class TestExpressionParser extends AbstractExpressionParserTest {
     void testEqualsNull1() {
         compute("${val1}=null()",
                 Val.of(ValNull.INSTANCE),
-                ValAssertions.valErr());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEqualsNull2() {
         compute("${val1}=null()",
                 Val.of("plop"),
-                ValAssertions.valErr());
+                ValAssertions.valFalse());
     }
 
     @Test
     void testEqualsNull3() {
         compute("null()=null()",
                 Val.of("plop"),
-                ValAssertions.valErr());
+                ValAssertions.valTrue());
     }
 
     @Test
     void testEqualsNull4() {
         compute("if(${val1}=null(), true(), false())",
                 Val.of(ValNull.INSTANCE),
-                ValAssertions.valErr());
+                ValAssertions.valTrue());
     }
 
     @Test
@@ -846,7 +846,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         final QuadList<Val, String, Val, Val> testCases = new QuadList<>();
 
         // null/error, equals
-        testCases.add(vNull, "=", vNull, vEror);
+        testCases.add(vNull, "=", vNull, vTrue);
         testCases.add(vNull, "=", vEror, vEror);
         testCases.add(vEror, "=", vEror, vEror);
 
@@ -856,32 +856,32 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vTrue, "=", vFals, vFals);
 
         // longs, equals
-        testCases.add(vLng1, "=", vNull, vEror);
-        testCases.add(vNull, "=", vLng1, vEror);
+        testCases.add(vLng1, "=", vNull, vFals);
+        testCases.add(vNull, "=", vLng1, vFals);
         testCases.add(vLng1, "=", vLng1, vTrue);
         testCases.add(vLng1, "=", vLng2, vFals);
         testCases.add(vLng1, "=", vTrue, vTrue); // true() cast to 1
         testCases.add(vLng1, "=", vFals, vFals);
 
         // integers, equals
-        testCases.add(vInt1, "=", vNull, vEror);
-        testCases.add(vNull, "=", vInt1, vEror);
+        testCases.add(vInt1, "=", vNull, vFals);
+        testCases.add(vNull, "=", vInt1, vFals);
         testCases.add(vInt1, "=", vInt1, vTrue);
         testCases.add(vInt1, "=", vInt2, vFals);
         testCases.add(vInt1, "=", vTrue, vTrue); // true() cast to 1
         testCases.add(vInt1, "=", vFals, vFals);
 
         // doubles, equals
-        testCases.add(vDbl1, "=", vNull, vEror);
-        testCases.add(vNull, "=", vDbl1, vEror);
+        testCases.add(vDbl1, "=", vNull, vFals);
+        testCases.add(vNull, "=", vDbl1, vFals);
         testCases.add(vDbl1, "=", vDbl1, vTrue);
         testCases.add(vDbl1, "=", vDbl2, vFals);
         testCases.add(vDbl1, "=", vTrue, vTrue); // true() cast to 1
         testCases.add(vDbl1, "=", vFals, vFals);
 
         // strings, equals
-        testCases.add(vStrA, "=", vNull, vEror);
-        testCases.add(vNull, "=", vStrA, vEror);
+        testCases.add(vStrA, "=", vNull, vFals);
+        testCases.add(vNull, "=", vStrA, vFals);
         testCases.add(vStrA, "=", vStrA, vTrue);
         testCases.add(vStrA, "=", vStrB, vFals);
         testCases.add(vStrA, "=", vTrue, vFals);
@@ -901,14 +901,19 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrT, "=", vTrue, vTrue); // true() cast to "true"
         testCases.add(vStrF, "=", vFals, vTrue); // false() cast to "false"
 
+        // null/error, equals
+        testCases.add(vNull, ">", vNull, vFals);
+        testCases.add(vNull, ">", vEror, vEror);
+        testCases.add(vEror, ">", vEror, vEror);
+
         // booleans, greater than
         testCases.add(vTrue, ">", vTrue, vFals);
         testCases.add(vFals, ">", vFals, vFals);
         testCases.add(vTrue, ">", vFals, vTrue);
 
         // longs, greater than
-        testCases.add(vLng1, ">", vNull, vEror);
-        testCases.add(vNull, ">", vLng1, vEror);
+        testCases.add(vLng1, ">", vNull, vFals);
+        testCases.add(vNull, ">", vLng1, vFals);
         testCases.add(vLng1, ">", vLng1, vFals);
         testCases.add(vLng1, ">", vLng2, vFals);
         testCases.add(vLng2, ">", vLng1, vTrue);
@@ -917,8 +922,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vLng2, ">", vStr1, vTrue);
 
         // longs, greater than
-        testCases.add(vInt1, ">", vNull, vEror);
-        testCases.add(vNull, ">", vInt1, vEror);
+        testCases.add(vInt1, ">", vNull, vFals);
+        testCases.add(vNull, ">", vInt1, vFals);
         testCases.add(vInt1, ">", vInt1, vFals);
         testCases.add(vInt1, ">", vInt2, vFals);
         testCases.add(vInt2, ">", vInt1, vTrue);
@@ -927,8 +932,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vInt2, ">", vStr1, vTrue);
 
         // doubles, greater than
-        testCases.add(vDbl1, ">", vNull, vEror);
-        testCases.add(vNull, ">", vDbl1, vEror);
+        testCases.add(vDbl1, ">", vNull, vFals);
+        testCases.add(vNull, ">", vDbl1, vFals);
         testCases.add(vDbl1, ">", vDbl1, vFals);
         testCases.add(vDbl1, ">", vDbl2, vFals);
         testCases.add(vDbl2, ">", vDbl1, vTrue);
@@ -942,19 +947,25 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrB, ">", vStrA, vTrue);
         testCases.add(vStrA, ">", vStr_, vTrue);
         testCases.add(vStrA, ">", vStr1, vTrue);
-        testCases.add(vStrA, ">", vNull, vEror);
+        testCases.add(vStrA, ">", vNull, vFals);
         testCases.add(vStrA, ">", vStra, vFals);
         testCases.add(vStra, ">", vStrA, vTrue);
 
+        // null/error, equals
+        testCases.add(vNull, ">=", vNull, vTrue);
+        testCases.add(vNull, ">=", vEror, vEror);
+        testCases.add(vEror, ">=", vEror, vEror);
+
         // booleans, greater than or equal to
+        testCases.add(vNull, ">=", vNull, vTrue);
         testCases.add(vTrue, ">=", vTrue, vTrue);
         testCases.add(vFals, ">=", vFals, vTrue);
         testCases.add(vTrue, ">=", vFals, vTrue);
         testCases.add(vFals, ">=", vTrue, vFals);
 
         // longs, greater than or equal to
-        testCases.add(vLng1, ">=", vNull, vEror);
-        testCases.add(vNull, ">=", vLng1, vEror);
+        testCases.add(vLng1, ">=", vNull, vFals);
+        testCases.add(vNull, ">=", vLng1, vFals);
         testCases.add(vLng1, ">=", vLng1, vTrue);
         testCases.add(vLng1, ">=", vLng2, vFals);
         testCases.add(vLng2, ">=", vLng1, vTrue);
@@ -963,8 +974,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vLng2, ">=", vStr1, vTrue);
 
         // integers, greater than or equal to
-        testCases.add(vInt1, ">=", vNull, vEror);
-        testCases.add(vNull, ">=", vInt1, vEror);
+        testCases.add(vInt1, ">=", vNull, vFals);
+        testCases.add(vNull, ">=", vInt1, vFals);
         testCases.add(vInt1, ">=", vInt1, vTrue);
         testCases.add(vInt1, ">=", vInt2, vFals);
         testCases.add(vInt2, ">=", vInt1, vTrue);
@@ -973,8 +984,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vInt2, ">=", vStr1, vTrue);
 
         // doubles, greater than or equal to
-        testCases.add(vDbl1, ">=", vNull, vEror);
-        testCases.add(vNull, ">=", vDbl1, vEror);
+        testCases.add(vDbl1, ">=", vNull, vFals);
+        testCases.add(vNull, ">=", vDbl1, vFals);
         testCases.add(vDbl1, ">=", vDbl1, vTrue);
         testCases.add(vDbl1, ">=", vDbl2, vFals);
         testCases.add(vDbl2, ">=", vDbl1, vTrue);
@@ -988,8 +999,12 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrB, ">=", vStrA, vTrue);
         testCases.add(vStrA, ">=", vStr_, vTrue);
         testCases.add(vStrA, ">=", vStr1, vTrue);
-        testCases.add(vStrA, ">=", vNull, vEror);
+        testCases.add(vStrA, ">=", vNull, vFals);
 
+        // null/error, equals
+        testCases.add(vNull, "<", vNull, vFals);
+        testCases.add(vNull, "<", vEror, vEror);
+        testCases.add(vEror, "<", vEror, vEror);
 
         // booleans, less than
         testCases.add(vTrue, "<", vTrue, vFals);
@@ -998,8 +1013,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vFals, "<", vTrue, vTrue);
 
         // longs, less than
-        testCases.add(vLng1, "<", vNull, vEror);
-        testCases.add(vNull, "<", vLng1, vEror);
+        testCases.add(vLng1, "<", vNull, vFals);
+        testCases.add(vNull, "<", vLng1, vFals);
         testCases.add(vLng1, "<", vLng1, vFals);
         testCases.add(vLng1, "<", vLng2, vTrue);
         testCases.add(vLng2, "<", vLng1, vFals);
@@ -1008,8 +1023,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vLng2, "<", vStr1, vFals);
 
         // integers, less than
-        testCases.add(vInt1, "<", vNull, vEror);
-        testCases.add(vNull, "<", vInt1, vEror);
+        testCases.add(vInt1, "<", vNull, vFals);
+        testCases.add(vNull, "<", vInt1, vFals);
         testCases.add(vInt1, "<", vInt1, vFals);
         testCases.add(vInt1, "<", vInt2, vTrue);
         testCases.add(vInt2, "<", vInt1, vFals);
@@ -1018,8 +1033,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vInt2, "<", vStr1, vFals);
 
         // doubles, less than
-        testCases.add(vDbl1, "<", vNull, vEror);
-        testCases.add(vNull, "<", vDbl1, vEror);
+        testCases.add(vDbl1, "<", vNull, vFals);
+        testCases.add(vNull, "<", vDbl1, vFals);
         testCases.add(vDbl1, "<", vDbl1, vFals);
         testCases.add(vDbl1, "<", vDbl2, vTrue);
         testCases.add(vDbl2, "<", vDbl1, vFals);
@@ -1033,7 +1048,12 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrB, "<", vStrA, vFals);
         testCases.add(vStrA, "<", vStr_, vFals);
         testCases.add(vStrA, "<", vStr1, vFals);
-        testCases.add(vStrA, "<", vNull, vEror);
+        testCases.add(vStrA, "<", vNull, vFals);
+
+        // null/error, equals
+        testCases.add(vNull, "<=", vNull, vTrue);
+        testCases.add(vNull, "<=", vEror, vEror);
+        testCases.add(vEror, "<=", vEror, vEror);
 
         // booleans, less than or equal to
         testCases.add(vTrue, "<=", vTrue, vTrue);
@@ -1042,8 +1062,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vFals, "<=", vTrue, vTrue);
 
         // longs, less than or equal to
-        testCases.add(vLng1, "<=", vNull, vEror);
-        testCases.add(vNull, "<=", vLng1, vEror);
+        testCases.add(vLng1, "<=", vNull, vFals);
+        testCases.add(vNull, "<=", vLng1, vFals);
         testCases.add(vLng1, "<=", vLng1, vTrue);
         testCases.add(vLng1, "<=", vLng2, vTrue);
         testCases.add(vLng2, "<=", vLng1, vFals);
@@ -1053,8 +1073,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vLng2, "<=", vStr1, vFals);
 
         // integers, less than or equal to
-        testCases.add(vInt1, "<=", vNull, vEror);
-        testCases.add(vNull, "<=", vInt1, vEror);
+        testCases.add(vInt1, "<=", vNull, vFals);
+        testCases.add(vNull, "<=", vInt1, vFals);
         testCases.add(vInt1, "<=", vInt1, vTrue);
         testCases.add(vInt1, "<=", vInt2, vTrue);
         testCases.add(vInt2, "<=", vInt1, vFals);
@@ -1065,8 +1085,8 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vInt1, "<=", vStr2, vTrue);
 
         // doubles, less than or equal to
-        testCases.add(vDbl1, "<=", vNull, vEror);
-        testCases.add(vNull, "<=", vDbl1, vEror);
+        testCases.add(vDbl1, "<=", vNull, vFals);
+        testCases.add(vNull, "<=", vDbl1, vFals);
         testCases.add(vDbl1, "<=", vDbl1, vTrue);
         testCases.add(vDbl1, "<=", vDbl2, vTrue);
         testCases.add(vDbl2, "<=", vDbl1, vFals);
@@ -1080,7 +1100,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         testCases.add(vStrB, "<=", vStrA, vFals);
         testCases.add(vStrA, "<=", vStr_, vFals);
         testCases.add(vStrA, "<=", vStr1, vFals);
-        testCases.add(vStrA, "<=", vNull, vEror);
+        testCases.add(vStrA, "<=", vNull, vFals);
 
         return testCases.stream()
                 .map(tuple4 -> {
@@ -1755,36 +1775,26 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         "(err()=${val1})",
                         "(err()=null())",
                         "(null()=err())",
-                        "(null()=${val1})",
-                        "(${val1}=null())",
 
                         "(${val1}>=err())",
                         "(err()>=${val1})",
                         "(err()>=null())",
                         "(null()>=err())",
-                        "(null()>=${val1})",
-                        "(${val1}>=null())",
 
                         "(${val1}>err())",
                         "(err()>${val1})",
                         "(err()>null())",
                         "(null()>err())",
-                        "(null()>${val1})",
-                        "(${val1}>null())",
 
                         "(${val1}<=err())",
                         "(err()<=${val1})",
                         "(err()<=null())",
                         "(null()<=err())",
-                        "(null()<=${val1})",
-                        "(${val1}<=null())",
 
                         "(${val1}<err())",
                         "(err()<${val1})",
                         "(err()<null())",
-                        "(null()<err())",
-                        "(null()<${val1})",
-                        "(${val1}<null())")
+                        "(null()<err())")
                 .map(expr ->
                         DynamicTest.dynamicTest(expr, () ->
                                 assertThatItEvaluatesToValErr(expr, valLong)));
