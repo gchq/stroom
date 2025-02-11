@@ -29,6 +29,7 @@ import jakarta.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +86,7 @@ public class HDFSFileAppender extends AbstractAppender {
         final Configuration conf = new Configuration();
         conf.set("fs.defaultFS", hdfsUri);
         conf.set("fs.automatic.close", "true");
-        conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+        conf.set("fs.hdfs.impl", DistributedFileSystem.class.getName());
         // conf.set("fs.file.impl",
         // org.apache.hadoop.fs.LocalFileSystem.class.getName());
         return conf;
@@ -280,14 +281,14 @@ public class HDFSFileAppender extends AbstractAppender {
      */
     @PipelineProperty(
             description = "One or more destination paths for output files separated with commas. Replacement " +
-                    "variables can be used in path strings such as ${feed}.",
+                          "variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
     @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. " +
-            "hdfs://mynamenode.mydomain.com:8020",
+                                    "hdfs://mynamenode.mydomain.com:8020",
             displayPriority = 2)
     public void setFileSystemUri(final String hdfsUri) {
         this.hdfsUri = hdfsUri;
@@ -301,7 +302,7 @@ public class HDFSFileAppender extends AbstractAppender {
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output file exceeds this size it will be closed " +
-            "and a new one created.",
+                                    "and a new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);

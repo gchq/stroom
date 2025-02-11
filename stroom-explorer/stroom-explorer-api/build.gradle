@@ -5,9 +5,9 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
     
-    testRuntimeOnly libs.jakarta_activation
-    testRuntimeOnly libs.jaxb_impl
+    testRuntimeOnly libs.jakarta.activation
+    testRuntimeOnly libs.jaxb.impl
 }

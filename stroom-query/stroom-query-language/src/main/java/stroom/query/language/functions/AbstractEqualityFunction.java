@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
 
     private static final ValErr CHILD_ERROR = ValErr.create("Error evaluating child generator");
-    private static final ValErr MISSING_VALUE = ValErr.create("Both values must have a value to test equality");
 
     private final boolean usingOperator;
 
@@ -91,8 +90,8 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
                     return CHILD_ERROR;
                 }
 
-                if (!val.type().isValue()) {
-                    return ValErr.wrap(val, MISSING_VALUE);
+                if (val.type().isError()) {
+                    return val;
                 }
 
                 values[i] = val;

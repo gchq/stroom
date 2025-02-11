@@ -3,11 +3,11 @@ apply plugin: 'nu.studer.jooq'
 ext.moduleName = 'stroom.explorer.impl.db.jooq'
 
 dependencies {
-    implementation libs.jakarta_annotation_api
+    implementation libs.jakarta.annotation.api
     implementation libs.jooq
 
-    runtimeOnly libs.mysql_connector_java
-    jooqGenerator libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
+    jooqGenerator libs.mysql.connector.java
 }
 
 // Configure jooq plugin to generate code
@@ -40,9 +40,9 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'explorer_node|explorer_path|explorer_favourite'
+                        includes = 'explorer.node|explorer.path|explorer.favourite'
                         // We don't want to include flyway versioning
-                        excludes = 'explorer_schema_version'
+                        excludes = 'explorer.schema.version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
                         // Treat some tinyint columns as booleans

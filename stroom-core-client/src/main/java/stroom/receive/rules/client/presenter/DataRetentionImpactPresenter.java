@@ -347,7 +347,8 @@ public class DataRetentionImpactPresenter
                 ExpanderCell.getColumnWidth(3)); // Need space for three expander levels
 
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
+                DataGridUtil.textColumnBuilder((DataRetentionImpactRow dataRetentionImpactRow) ->
+                                dataRetentionImpactRow.getRuleNumber().toString())
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),

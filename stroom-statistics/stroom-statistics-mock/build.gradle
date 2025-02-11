@@ -4,5 +4,5 @@ dependencies {
     implementation project(':stroom-statistics:stroom-statistics-api')
 
     implementation libs.guice
-//    implementation libs.jakarta_inject
+//    implementation libs.jakarta.inject
 }

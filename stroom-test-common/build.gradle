@@ -7,41 +7,41 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.assertj_core
+    implementation libs.assertj.core
     implementation libs.classgraph
-    implementation libs.commons_lang
-    implementation libs.data_faker
-    implementation libs.dropwizard_jersey
-    implementation libs.dropwizard_testing
-    implementation libs.dropwizard_validation
-    implementation libs.flyway_core
-    implementation libs.flyway_mysql
+    implementation libs.commons.compress
+    implementation libs.commons.lang
+    implementation libs.data.faker
+    implementation libs.dropwizard.jersey
+    implementation libs.dropwizard.testing
+    implementation libs.dropwizard.validation
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
     implementation libs.guava
     implementation libs.guice
     implementation libs.hikari
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
-    implementation libs.jackson_dataformat_yaml
-    implementation libs.jackson_datatype_jdk8
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jackson.dataformat.yaml
+    implementation libs.jackson.datatype.jdk8
     implementation libs.jgit
     implementation libs.jooq
-    implementation libs.junit_jupiter_api
-    implementation libs.junit_platform_launcher
-    implementation libs.mockito_core
-    implementation libs.mockito_junit_jupiter
-    implementation libs.slf4j_api
+    implementation libs.junit.jupiter.api
+    implementation libs.junit.platform.launcher
+    implementation libs.mockito.core
+    implementation libs.mockito.junit.jupiter
+    implementation libs.slf4j.api
     implementation libs.vavr
-    implementation libs.wix_embedded_mysql
 
-    runtimeOnly libs.mysql_connector_java
+    runtimeOnly libs.mysql.connector.java
 
     // The following logging libs are needed when running junits outside dropwizard
-    runtimeOnly libs.jcl_over_slf4j
-    runtimeOnly libs.jul_to_slf4j
-    runtimeOnly libs.log4j_over_slf4j
-    runtimeOnly libs.logback_classic
-    runtimeOnly libs.logback_core
+    runtimeOnly libs.jcl.over.slf4j
+    runtimeOnly libs.jul.to.slf4j
+    runtimeOnly libs.log4j.over.slf4j
+    runtimeOnly libs.logback.classic
+    runtimeOnly libs.logback.core
 
-    runtimeOnly libs.junit_jupiter_engine
-    runtimeOnly libs.jersey_test_framework_grizzly2
+    runtimeOnly libs.junit.jupiter.engine
+    runtimeOnly libs.jersey.test.framework.grizzly2
 }

@@ -33,7 +33,6 @@ import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
 import stroom.searchable.api.Searchable;
-import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -48,7 +47,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
-import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -70,39 +68,33 @@ class SearchableSearchProvider implements SearchProvider {
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
     private final UiConfig clientConfig;
-    private final SearchableProvider searchableProvider;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final SecurityContext securityContext;
+    private final Searchable searchable;
 
-    @Inject
     SearchableSearchProvider(final Executor executor,
                              final TaskManager taskManager,
                              final TaskContextFactory taskContextFactory,
                              final UiConfig clientConfig,
-                             final SearchableProvider searchableProvider,
                              final CoprocessorsFactory coprocessorsFactory,
                              final ResultStoreFactory resultStoreFactory,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final Searchable searchable) {
         this.executor = executor;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
         this.clientConfig = clientConfig;
-        this.searchableProvider = searchableProvider;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.securityContext = securityContext;
+        this.searchable = searchable;
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
-            final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
-            if (searchable != null) {
-                return Optional.ofNullable(searchable.getFieldInfo(criteria));
-            }
-            return Optional.empty();
-        });
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() ->
+                Optional.ofNullable(searchable.getFieldInfo(criteria)));
         return optional.orElseGet(() -> {
             final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
@@ -111,21 +103,17 @@ class SearchableSearchProvider implements SearchProvider {
 
     @Override
     public int getFieldCount(final DocRef docRef) {
-        return NullSafe.getOrElse(
-                searchableProvider.get(docRef),
-                searchable -> searchable.getFieldCount(docRef),
-                0);
+        return searchable.getFieldCount(docRef);
     }
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(searchableProvider.get(docRef))
-                .flatMap(searchable -> searchable.fetchDocumentation(docRef));
+        return searchable.fetchDocumentation(docRef);
     }
 
     @Override
-    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
-        return null;
+    public Optional<DocRef> fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return searchable.fetchDefaultExtractionPipeline(dataSourceRef);
     }
 
     @Override
@@ -135,7 +123,6 @@ class SearchableSearchProvider implements SearchProvider {
                                 Preconditions.checkNotNull(searchRequest)
                                         .getQuery())
                         .getDataSource());
-        final Searchable searchable = searchableProvider.get(docRef);
         Preconditions.checkNotNull(searchable, "Searchable could not be found for uuid " + docRef.getUuid());
 
         final String taskName = getTaskName(docRef);
@@ -174,7 +161,7 @@ class SearchableSearchProvider implements SearchProvider {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
-        final DocRef docRef = searchable.getDocRef();
+        final DocRef docRef = searchable.getDataSourceDocRefs().getFirst();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
@@ -294,17 +281,17 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public QueryField getTimeField(final DocRef docRef) {
-        return searchableProvider.get(docRef).getTimeField();
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return searchable.getTimeField(docRef);
     }
 
     @Override
-    public List<DocRef> list() {
-        return searchableProvider.list();
+    public List<DocRef> getDataSourceDocRefs() {
+        return searchable.getDataSourceDocRefs();
     }
 
     @Override
-    public String getType() {
-        return "Searchable";
+    public String getDataSourceType() {
+        return searchable.getDataSourceType();
     }
 }

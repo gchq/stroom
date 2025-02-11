@@ -100,11 +100,10 @@ class UserServiceImpl implements UserService, ContentPackUserService {
         return optional.orElseGet(() -> {
             final User user = new User();
             AuditUtil.stamp(securityContext, user);
-            user.setSubjectId(userDesc.getSubjectId());
+            final String subjectId = userDesc.getSubjectId();
+            user.setSubjectId(subjectId);
             // Make sure we set a display name even if it is the same as the subject id.
-            user.setDisplayName(NullSafe.isBlankString(userDesc.getDisplayName())
-                    ? userDesc.getSubjectId()
-                    : userDesc.getDisplayName());
+            user.setDisplayName(NullSafe.nonBlankStringElse(userDesc.getDisplayName(), subjectId));
             user.setFullName(userDesc.getFullName());
             user.setGroup(false);
             user.setEnabled(true);

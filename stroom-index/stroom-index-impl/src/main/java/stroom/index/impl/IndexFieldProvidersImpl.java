@@ -45,7 +45,7 @@ public class IndexFieldProvidersImpl implements IndexFieldProviders {
                             final SecurityContext securityContext) {
         this.securityContext = securityContext;
         for (final IndexFieldProvider provider : indexFieldProviders) {
-            providers.put(provider.getType(), provider);
+            providers.put(provider.getDataSourceType(), provider);
         }
     }
 

@@ -5,20 +5,20 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
 
-    implementation libs.commons_lang
-    implementation libs.dropwizard_client
-    implementation libs.dropwizard_core
-    implementation libs.dropwizard_jersey
-    implementation libs.dropwizard_jetty
-    implementation libs.dropwizard_lifecycle
-    implementation libs.dropwizard_metrics_healthchecks
-    //implementation libs.dropwizard_websockets
+    implementation libs.commons.lang
+    implementation libs.dropwizard.client
+    implementation libs.dropwizard.core
+    implementation libs.dropwizard.jersey
+    implementation libs.dropwizard.jetty
+    implementation libs.dropwizard.lifecycle
+    implementation libs.dropwizard.metrics.healthchecks
+    //implementation libs.dropwizard.websockets
     implementation libs.guice
-    implementation libs.jakarta_servlet_api
-    implementation libs.jakarta_inject
-    implementation libs.jetty_servlet
-    implementation libs.logback_classic
-    implementation libs.slf4j_api
+    implementation libs.jakarta.servlet.api
+    implementation libs.jakarta.inject
+    implementation libs.jetty.servlet
+    implementation libs.logback.classic
+    implementation libs.slf4j.api
     implementation libs.vavr
-    implementation libs.ws_rs_api
+    implementation libs.ws.rs.api
 }

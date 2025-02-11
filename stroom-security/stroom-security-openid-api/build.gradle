@@ -4,22 +4,22 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.dropwizard_validation
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_validation_api
+    implementation libs.dropwizard.validation
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.validation.api
     implementation libs.jose4j
-    implementation libs.ws_rs_api
+    implementation libs.ws.rs.api
 
-    testImplementation libs.assertj_core
-    testImplementation libs.jackson_core
-    testImplementation libs.jackson_databind
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.slf4j_api
+    testImplementation libs.assertj.core
+    testImplementation libs.jackson.core
+    testImplementation libs.jackson.databind
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.slf4j.api
 
-    testRuntimeOnly libs.jcl_over_slf4j
-    testRuntimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.log4j_over_slf4j
-    testRuntimeOnly libs.logback_classic
-    testRuntimeOnly libs.logback_core
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
 }

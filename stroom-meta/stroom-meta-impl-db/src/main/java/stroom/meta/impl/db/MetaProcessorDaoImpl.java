@@ -22,7 +22,6 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaServiceConfig;
-import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -89,13 +88,12 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
     }
 
     private Optional<Integer> create(final String processorUuid, final String pipelineUuid) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+        return JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PIPELINE_UUID)
                         .values(processorUuid, pipelineUuid)
-                        .onDuplicateKeyIgnore()
                         .returning(META_PROCESSOR.ID)
-                        .fetchOptional())
-                .map(MetaProcessorRecord::getId);
+                        .fetchOptional(META_PROCESSOR.ID)));
     }
 
     @Override
@@ -131,7 +129,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
             }
             final Key key = (Key) o;
             return Objects.equals(processorUuid, key.processorUuid) &&
-                    Objects.equals(pipelineUuid, key.pipelineUuid);
+                   Objects.equals(pipelineUuid, key.pipelineUuid);
         }
 
         @Override
@@ -142,9 +140,9 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
         @Override
         public String toString() {
             return "Key{" +
-                    "processorUuid='" + processorUuid + '\'' +
-                    ", pipelineUuid='" + pipelineUuid + '\'' +
-                    '}';
+                   "processorUuid='" + processorUuid + '\'' +
+                   ", pipelineUuid='" + pipelineUuid + '\'' +
+                   '}';
         }
     }
 }

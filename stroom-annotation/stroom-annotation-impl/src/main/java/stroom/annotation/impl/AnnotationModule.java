@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
+import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
@@ -42,6 +43,8 @@ public class AnnotationModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(AnnotationDetail.class, AnnotationEventInfoProvider.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(AnnotationService.class);
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(AnnotationService.class);
 

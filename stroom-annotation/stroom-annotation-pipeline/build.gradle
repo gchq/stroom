@@ -11,7 +11,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_inject
-    implementation libs.slf4j_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.slf4j.api
 }

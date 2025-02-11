@@ -34,7 +34,6 @@ import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
 @Singleton
 class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
-//    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
     private static final String REC_READ = MetaFields.REC_READ.getFldName();
     private static final String REC_WRITE = MetaFields.REC_WRITE.getFldName();
@@ -43,34 +42,15 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     private static final String REC_ERROR = MetaFields.REC_ERROR.getFldName();
     private static final String REC_FATAL = MetaFields.REC_FATAL.getFldName();
     private static final String DURATION = MetaFields.DURATION.getFldName();
-    //    private static final String NODE = StreamDataSource.NODE;
-//    private static final String FEED = StreamDataSource.FEED;
     private static final String FILE_SIZE = MetaFields.FILE_SIZE.getFldName();
     private static final String STREAM_SIZE = MetaFields.RAW_SIZE.getFldName();
-
-//    static {
-//        final HashMap<String, MetaFieldUse> map = new HashMap<>();
-//        map.put(REC_READ, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(REC_WRITE, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(REC_INFO, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(REC_WARN, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(REC_ERROR, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(REC_FATAL, MetaFieldUse.COUNT_IN_DURATION_FIELD);
-//        map.put(DURATION, MetaFieldUse.DURATION_FIELD);
-//        map.put(NODE, MetaFieldUse.FIELD);
-//        map.put(FEED, MetaFieldUse.FIELD);
-//        map.put(FILE_SIZE, MetaFieldUse.SIZE_FIELD);
-//        map.put(RAW_SIZE, MetaFieldUse.SIZE_FIELD);
-//
-//        SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP = Collections.unmodifiableMap(map);
-//    }
-//
-//
-//
 
     private final MetaDbConnProvider metaDbConnProvider;
     private final Map<Integer, String> idToNameCache = new HashMap<>();
     private final Map<String, Integer> nameToIdCache = new HashMap<>();
+
+    private int minId;
+    private int maxId;
 
     @Inject
     MetaKeyDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
@@ -90,24 +70,12 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
 
     @Override
     public Integer getMinId() {
-        return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        context
-                                .select(DSL.min(META_KEY.ID))
-                                .from(META_KEY)
-                                .fetchOptional())
-                .map(Record1::value1)
-                .orElse(1);
+        return minId;
     }
 
     @Override
     public Integer getMaxId() {
-        return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        context
-                                .select(DSL.max(META_KEY.ID))
-                                .from(META_KEY)
-                                .fetchOptional())
-                .map(Record1::value1)
-                .orElse(MetaFields.getExtendedFields().size());
+        return maxId;
     }
 
     private void setup() {
@@ -118,12 +86,13 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
         create(REC_ERROR, MetaType.COUNT_IN_DURATION_FIELD);
         create(REC_FATAL, MetaType.COUNT_IN_DURATION_FIELD);
         create(DURATION, MetaType.DURATION_FIELD);
-//        create(NODE, MetaFieldUse.FIELD);
-//        create(FEED, MetaFieldUse.FIELD);
         create(FILE_SIZE, MetaType.SIZE_FIELD);
         create(STREAM_SIZE, MetaType.SIZE_FIELD);
 
         fillCache();
+
+        minId = calculateMinId();
+        maxId = calculateMaxId();
     }
 
     private void fillCache() {
@@ -139,12 +108,32 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
                 });
     }
 
+    private int calculateMinId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                        context
+                                .select(DSL.min(META_KEY.ID))
+                                .from(META_KEY)
+                                .fetchOptional())
+                .map(Record1::value1)
+                .orElse(1);
+    }
+
+    private int calculateMaxId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                        context
+                                .select(DSL.max(META_KEY.ID))
+                                .from(META_KEY)
+                                .fetchOptional())
+                .map(Record1::value1)
+                .orElse(MetaFields.getExtendedFields().size());
+    }
+
     private void create(final String name, final MetaType type) {
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
-                .values(name, type.getPrimitiveValue())
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(metaDbConnProvider, context -> context
+                        .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
+                        .values(name, type.getPrimitiveValue())
+                        .execute()));
     }
 
     @Override

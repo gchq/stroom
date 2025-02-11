@@ -96,12 +96,23 @@ public final class PropertyUtil {
 
                     // process the prop
                     propConsumer.accept(prop);
-                    final Object childValue = prop.getValueFromConfigObject();
+                    final Object childValue;
+                    try {
+                        childValue = prop.getValueFromConfigObject();
+                    } catch (Exception e) {
+                        LOGGER.error("Error getting value for prop {}, object {}", prop, object, e);
+                        throw e;
+                    }
                     if (childValue == null) {
                         LOGGER.trace("{}Null value", indent + "  ");
                     } else if (childValue instanceof Enum<?>) {
                         // We don't want to recurse into enums
                         LOGGER.trace(() -> LogUtil.message("{}Ignoring Enum value of type {}",
+                                indent + "  ",
+                                childValue.getClass().getSimpleName()));
+                    } else if (childValue instanceof Collection<?>) {
+                        // We don't want to recurse into collection types
+                        LOGGER.trace(() -> LogUtil.message("{}Ignoring Collection value of type {}",
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));
                     } else {
@@ -177,6 +188,8 @@ public final class PropertyUtil {
         final Map<String, Prop> propMap = beanPropDefs.stream()
                 .filter(propDef ->
                         !((object instanceof Enum<?>) && propDef.getName().equals("declaringClass")))
+                .filter(propDef ->
+                        !((object instanceof List<?>)))
                 .map(propDef -> {
                     final Prop prop = new Prop(propDef.getName(), object);
                     if (propDef.getField() != null) {

@@ -4,18 +4,18 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function12;
+import org.jooq.Function13;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row12;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.SelectField;
 import org.jooq.Table;
@@ -26,7 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.function.Function;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
 /**
@@ -110,6 +112,11 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     public final TableField<AnnotationRecord, String> HISTORY = createField(DSL.name("history"), SQLDataType.CLOB, this, "");
 
+    /**
+     * The column <code>stroom.annotation.uuid</code>.
+     */
+    public final TableField<AnnotationRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private Annotation(Name alias, Table<AnnotationRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -159,6 +166,11 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     }
 
     @Override
+    public List<UniqueKey<AnnotationRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_ANNOTATION_ANNOTATION_UUID);
+    }
+
+    @Override
     public TableField<AnnotationRecord, Integer> getRecordVersion() {
         return VERSION;
     }
@@ -203,18 +215,18 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Long, Integer, Long, String, Long, String, String, String, String, String, String, String> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row13<Long, Integer, Long, String, Long, String, String, String, String, String, String, String, String> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function12<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function13<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -222,7 +234,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function12<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function13<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

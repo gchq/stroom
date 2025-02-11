@@ -153,8 +153,8 @@ class TestHDFSFileAppender extends StroomUnitTest {
         String dir = tempDir.toAbsolutePath().toString();
         provider.setOutputPaths(
                 dir + "/t1" + name + "," +
-                        dir + "/t2" + name + "," +
-                        dir + "/t3" + name);
+                dir + "/t2" + name + "," +
+                dir + "/t3" + name);
         provider.setFileSystemUri(FS_DEFAULT_FS);
         provider.setRunAsUser(RUN_AS_USER);
         provider.setConf(conf);

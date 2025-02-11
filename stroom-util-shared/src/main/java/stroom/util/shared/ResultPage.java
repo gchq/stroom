@@ -89,8 +89,10 @@ public class ResultPage<T> implements Serializable {
             }
             if (offset > fullList.size()) {
                 // The UI should not let this happen
-                throw new RuntimeException("Offset " + offset
-                        + " is greater than the number of results " + fullList.size());
+                throw new RuntimeException("Offset " +
+                                           offset
+                                           + " is greater than the number of results " +
+                                           fullList.size());
             }
 
             int length = fullList.size() - offset;
@@ -181,7 +183,7 @@ public class ResultPage<T> implements Serializable {
                     // or not applying the limit.
                     throw new IllegalStateException(
                             "For some reason we returned more rows that we were limited to. " +
-                                    "Did you apply the restriction criteria?");
+                            "Did you apply the restriction criteria?");
                 }
 
                 // All our queries are + 1 to we need to remove the last element
@@ -233,10 +235,9 @@ public class ResultPage<T> implements Serializable {
             public BiConsumer<List<T>, T> accumulator() {
                 return (accumulator, item) -> {
                     if (pageRequest == null
-                            || (
-                            counter >= pageRequest.getOffset()
-                                    && accumulator.size() < pageRequest.getLength())) {
-
+                        || (
+                                counter >= pageRequest.getOffset() &&
+                                accumulator.size() < pageRequest.getLength())) {
                         accumulator.add(item);
                     }
                     counter++;
@@ -377,7 +378,7 @@ public class ResultPage<T> implements Serializable {
         }
         final ResultPage<?> that = (ResultPage<?>) o;
         return Objects.equals(values, that.values) &&
-                Objects.equals(pageResponse, that.pageResponse);
+               Objects.equals(pageResponse, that.pageResponse);
     }
 
     @Override
@@ -388,15 +389,8 @@ public class ResultPage<T> implements Serializable {
     @Override
     public String toString() {
         return "ResultPage{" +
-                "values=" + values +
-                ", pageResponse=" + pageResponse +
-                '}';
-    }
-
-    public interface ResultConsumer<T> {
-
-        boolean add(T t);
-
-        void skip(int count);
+               "values=" + values +
+               ", pageResponse=" + pageResponse +
+               '}';
     }
 }

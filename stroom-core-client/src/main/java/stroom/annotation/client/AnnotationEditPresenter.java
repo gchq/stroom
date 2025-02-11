@@ -77,9 +77,9 @@ public class AnnotationEditPresenter
     private static final String HISTORY_INNER_START = "<div class=\"annotationHistoryInner\">";
     private static final String HISTORY_INNER_END = "</div>";
     private static final String HISTORY_LINE_START = "<div class=\"annotationHistoryLine\">" +
-            "<div class=\"annotationHistoryLineMargin\">" +
-            "<div class=\"annotationHistoryLineMarker\"></div>" +
-            "</div>";
+                                                     "<div class=\"annotationHistoryLineMargin\">" +
+                                                     "<div class=\"annotationHistoryLineMarker\"></div>" +
+                                                     "</div>";
     private static final String HISTORY_LINE_END = "</div>";
     private static final String HISTORY_COMMENT_BORDER_START = "<div class=\"annotationHistoryCommentBorder\">";
     private static final String HISTORY_COMMENT_BORDER_END = "</div>";
@@ -214,7 +214,7 @@ public class AnnotationEditPresenter
     }
 
     private boolean hasChanged(final UserRef oldValue, final UserRef newValue) {
-        GWT.log("oldName: " + oldValue.toDisplayString() + " newName: " + newValue.toDisplayString());
+//        Console.log(() -> "oldName: " + oldValue.toDisplayString() + " newName: " + newValue.toDisplayString());
         return !Objects.equals(oldValue, newValue);
     }
 
@@ -252,8 +252,6 @@ public class AnnotationEditPresenter
     }
 
     private void changeAssignedTo(final UserRef selected) {
-        HidePopupRequestEvent.builder(assignedToPresenter).fire();
-
         if (hasChanged(currentAssignedTo, selected)) {
             setAssignedTo(selected);
 
@@ -340,8 +338,8 @@ public class AnnotationEditPresenter
 
         // Set the initial comment if one has been provided and if this is a new annotation.
         if (annotationDetail == null
-                || annotationDetail.getAnnotation() == null
-                || annotationDetail.getAnnotation().getId() == null) {
+            || annotationDetail.getAnnotation() == null
+            || annotationDetail.getAnnotation().getId() == null) {
 
             if (initialComment != null) {
                 getView().setComment(initialComment);
@@ -492,7 +490,7 @@ public class AnnotationEditPresenter
             text.append("\n");
 
         } else if (Annotation.LINK.equals(entry.getEntryType())
-                || Annotation.UNLINK.equals(entry.getEntryType())) {
+                   || Annotation.UNLINK.equals(entry.getEntryType())) {
 
             text.append(dateTimeFormatter.format(entry.getEntryTime()));
             text.append(", ");
@@ -587,7 +585,7 @@ public class AnnotationEditPresenter
             html.appendHtmlConstant(HISTORY_LINE_END);
 
         } else if (Annotation.LINK.equals(entry.getEntryType())
-                || Annotation.UNLINK.equals(entry.getEntryType())) {
+                   || Annotation.UNLINK.equals(entry.getEntryType())) {
 
             html.appendHtmlConstant(HISTORY_LINE_START);
             html.appendHtmlConstant(HISTORY_ITEM_START);
@@ -885,8 +883,8 @@ public class AnnotationEditPresenter
     @Override
     public void showLinkedEvents() {
         if (annotationDetail != null
-                && annotationDetail.getAnnotation() != null
-                && annotationDetail.getAnnotation().getId() != null) {
+            && annotationDetail.getAnnotation() != null
+            && annotationDetail.getAnnotation().getId() != null) {
             linkedEventPresenter.edit(annotationDetail.getAnnotation(), refresh -> {
                 if (refresh) {
                     final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);

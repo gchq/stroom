@@ -7,28 +7,16 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
-import stroom.util.ConsoleColour;
 import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.exception.ThrowingConsumer;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import com.wix.mysql.EmbeddedMysql;
-import com.wix.mysql.config.Charset;
-import com.wix.mysql.config.DownloadConfig;
-import com.wix.mysql.config.MysqldConfig;
-import com.wix.mysql.distribution.Version;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -47,7 +35,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -60,10 +47,6 @@ public class DbTestUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbTestUtil.class);
 
-    private static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
-    private static final String USE_EMBEDDED_MYSQL_PROP_NAME = "useEmbeddedMySql";
-    private static final String EMBEDDED_MYSQL_DB_PASSWORD = "test";
-    private static final String EMBEDDED_MYSQL_DB_USERNAME = "test";
     private static final String FIND_TABLES = """
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
@@ -80,8 +63,6 @@ public class DbTestUtil {
 
     private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
     private static final Set<String> DB_NAMES_IN_USE = new ConcurrentSkipListSet<>();
-    private static volatile EmbeddedMysql EMBEDDED_MYSQL;
-    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
     // See createTestDbName
     private static final Pattern DB_NAME_PATTERN = Pattern.compile("^test_[0-9]+_[0-9]+_[0-9a-zA-Z]+$");
 
@@ -124,7 +105,7 @@ public class DbTestUtil {
             dbName = String.join("_",
                     "test",
                     getGradleWorker(),
-                    Long.toString(Thread.currentThread().getId()),
+                    Long.toString(Thread.currentThread().threadId()),
                     uuid);
 
             // Truncate to max 64 chars to ensure we don't blow db name limit
@@ -149,10 +130,6 @@ public class DbTestUtil {
         return createTestDataSource(new CommonDbConfig(), "test", false);
     }
 
-    public static DataSource resetTestDataSource() {
-        return createTestDataSource(new CommonDbConfig(), "test", false);
-    }
-
     private static <T> T getValueOrOverride(final String envVarName,
                                             final String propName,
                                             final Supplier<T> valueSupplier,
@@ -170,8 +147,6 @@ public class DbTestUtil {
 
     /**
      * Verify there is a connection to the database on the root account.
-     *
-     * @return
      */
     public static boolean isDbAvailable() {
         final ConnectionConfig connectionConfig = createConnectionConfig(new CommonDbConfig());
@@ -291,30 +266,6 @@ public class DbTestUtil {
 
 
     }
-
-//    private static String getThreadLocalDbName(final boolean isSharedDatabase) {
-//        final String dbName = isSharedDatabase
-//                ? THREAD_LOCAL_SHARED_DB_NAME.get()
-//                : THREAD_LOCAL_INDEPENDENT_DB_NAME.get();
-//        LOGGER.debug("Got dbName: {}, isSharedDatabase: {}", dbName, isSharedDatabase);
-//        return dbName;
-//    }
-//
-//    private static void setThreadLocalDbName(final String dbName, final boolean isSharedDatabase) {
-//        if (isSharedDatabase) {
-//            THREAD_LOCAL_SHARED_DB_NAME.set(dbName);
-//        } else {
-//            THREAD_LOCAL_INDEPENDENT_DB_NAME.set(dbName);
-//        }
-//    }
-//
-//    private static void removeThreadLocalDbName(final boolean isSharedDatabase) {
-//        if (isSharedDatabase) {
-//            THREAD_LOCAL_SHARED_DB_NAME.remove();
-//        } else {
-//            THREAD_LOCAL_INDEPENDENT_DB_NAME.remove();
-//        }
-//    }
 
     private static ThreadLocal<String> getDbNameThreadLocal(final boolean isSharedDatabase) {
         return isSharedDatabase
@@ -502,16 +453,16 @@ public class DbTestUtil {
         try (final Statement statement = connection.createStatement()) {
             LOGGER.debug("Creating database '{}'", dbName);
             statement.executeUpdate("CREATE DATABASE `" + dbName +
-                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+                                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
 
             LOGGER.debug("Creating DB user '{}'", username);
             statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-                    username + "'@'%' IDENTIFIED BY '" +
-                    password + "';");
+                                    username + "'@'%' IDENTIFIED BY '" +
+                                    password + "';");
 
             LOGGER.debug("Granting privileges to user '{}'", username);
             statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
-                    username + "'@'%' WITH GRANT OPTION;");
+                                    username + "'@'%' WITH GRANT OPTION;");
         }
     }
 
@@ -521,236 +472,48 @@ public class DbTestUtil {
         // Get a data source from a map to limit connections where connection details are common.
         LOGGER.debug("Creating datasource for name: {}, unique: {}, testDbConfig: {}", name, unique, testDbConfig);
         final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
-        final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
+        return DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
             LOGGER.debug("Creating new HikariConfig for name: {}", name);
             final HikariConfig hikariConfig = HikariUtil.createConfig(
                     k.getConfig(), null, null, null);
             return new HikariDataSource(hikariConfig);
         });
-        return dataSource;
     }
 
     private static ConnectionConfig createRootConnectionConfig(final ConnectionConfig connectionConfig) {
-        ConnectionConfig rootConnectionConfig;
-        if (isUseEmbeddedDb()) {
-            rootConnectionConfig = connectionConfig
-                    .copy()
-                    .user("root")
-                    .password("")
-                    .build();
-        } else {
-            final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
+        final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
 
-            // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
-            // from within a container so we need a different host to localhost
-            final String effectiveHost = getValueOrOverride(
-                    "STROOM_JDBC_DRIVER_HOST",
-                    "JDBC hostname",
-                    dbUrl::getHost,
-                    Function.identity());
-            final int effectivePort = getValueOrOverride(
-                    "STROOM_JDBC_DRIVER_PORT",
-                    "JDBC port",
-                    dbUrl::getPort,
-                    Integer::parseInt);
+        // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
+        // from within a container, so we need a different host to localhost
+        final String effectiveHost = getValueOrOverride(
+                "STROOM_JDBC_DRIVER_HOST",
+                "JDBC hostname",
+                dbUrl::getHost,
+                Function.identity());
+        final int effectivePort = getValueOrOverride(
+                "STROOM_JDBC_DRIVER_PORT",
+                "JDBC port",
+                dbUrl::getPort,
+                Integer::parseInt);
 
-            final String url = DbUrl
-                    .builder()
-                    .scheme(dbUrl.getScheme())
-                    .host(effectiveHost)
-                    .port(effectivePort)
-                    .query(dbUrl.getQuery())
-                    .build()
-                    .toString();
-            rootConnectionConfig = connectionConfig
-                    .copy()
-                    .url(url)
-                    .user("root")
-                    .password("my-secret-pw")
-                    .build();
-        }
-        return rootConnectionConfig;
+        final String url = DbUrl
+                .builder()
+                .scheme(dbUrl.getScheme())
+                .host(effectiveHost)
+                .port(effectivePort)
+                .query(dbUrl.getQuery())
+                .build()
+                .toString();
+        return connectionConfig
+                .copy()
+                .url(url)
+                .user("root")
+                .password("my-secret-pw")
+                .build();
     }
 
     private static ConnectionConfig createConnectionConfig(final AbstractDbConfig dbConfig) {
-        ConnectionConfig connectionConfig;
-        if (isUseEmbeddedDb()) {
-            connectionConfig = DbTestUtil.createEmbeddedMySqlInstance();
-        } else {
-            // Create a merged config using the common db config as a base.
-            connectionConfig = dbConfig.getConnectionConfig();
-        }
-        return connectionConfig;
-    }
-
-    private static boolean isUseEmbeddedDb() {
-        String useTestContainersEnvVarVal = System.getProperty(USE_EMBEDDED_MYSQL_PROP_NAME);
-        // This system prop allows a dev to use their own stroom-resources DB instead of test containers.
-        // This is useful when debugging a test that needs to access the DB as the embedded DB has to
-        // migrate the DB from scratch on each run which is very time consuming
-        boolean useEmbeddedDb = (useTestContainersEnvVarVal != null
-                && useTestContainersEnvVarVal.equalsIgnoreCase("true"));
-
-        if (!HAVE_ALREADY_SHOWN_DB_MSG) {
-            if (useEmbeddedDb) {
-                String msg = """
-                                           Using embedded MySQL
-                        To use an external DB for better performance add the following
-                          -D{}=false
-                        to Run Configurations -> Templates -> Junit -> VM Options
-                        You many need to restart IntelliJ for this to work""";
-                LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine(msg, USE_EMBEDDED_MYSQL_PROP_NAME)));
-            } else {
-                LOGGER.info(ConsoleColour.cyan(LogUtil.inBoxOnNewLine("Using external MySQL")));
-            }
-            HAVE_ALREADY_SHOWN_DB_MSG = true;
-        }
-        return useEmbeddedDb;
-    }
-
-    public static ConnectionConfig createEmbeddedMySqlInstance() {
-        EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
-        if (embeddedMysql == null) {
-            embeddedMysql = createEmbeddedMysql();
-        }
-
-        final MysqldConfig mysqlConfig = embeddedMysql.getConfig();
-        final String url = DbUrl
-                .builder()
-                .port(mysqlConfig.getPort())
-                .query("useUnicode=yes&characterEncoding=UTF-8")
-                .build()
-                .toString();
-
-        final ConnectionConfig connectionConfig = new ConnectionConfig(
-                DEFAULT_JDBC_DRIVER_CLASS_NAME,
-                url,
-                mysqlConfig.getUsername(),
-                mysqlConfig.getPassword());
-
-        return connectionConfig;
-
-
-//        Properties connectionProps = new Properties();
-//        connectionProps.put("user", EMBEDDED_MYSQL_DB_USERNAME);
-//        connectionProps.put("password", EMBEDDED_MYSQL_DB_PASSWORD);
-//
-//        // Try and create a new schema.
-//        try (final Connection connection = DriverManager.getConnection(url, connectionProps)) {
-//            try (final Statement statement = connection.createStatement()) {
-//                int result = 0;
-//                result = statement.executeUpdate("CREATE DATABASE `" + dbName +
-//                "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
-////                        result = statement.executeUpdate("CREATE USER IF NOT EXISTS '" +
-// connectionConfig.getJdbcDriverUsername() + "'@'%';");// IDENTIFIED BY '" +
-// connectionConfig.getJdbcDriverUsername() + "';");
-//                result = statement.executeUpdate("GRANT ALL PRIVILEGES ON *.* TO '" +
-//                EMBEDDED_MYSQL_DB_USERNAME + "'@'%' WITH GRANT OPTION;");
-//            }
-//        } catch (final SQLException e) {
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-//
-//
-//
-////        final SchemaConfig schemaConfig = SchemaConfig.aSchemaConfig(dbName).build();
-////        embeddedMysql.addSchema(schemaConfig);
-//
-//
-//        return createConnectionConfig(dbName, mysqlConfig);
-    }
-
-    private static synchronized EmbeddedMysql createEmbeddedMysql() {
-        final String systemTempDir = System.getProperty("java.io.tmpdir");
-        final Path parentDir = Paths.get(systemTempDir);
-        final Path lockFile = parentDir.resolve("embedmysql.lock");
-        final Path cacheDir = parentDir.resolve("embedmysql");
-
-        EmbeddedMysql embeddedMysql = EMBEDDED_MYSQL;
-
-        if (embeddedMysql == null) {
-            embeddedMysql = FileUtil.getUnderFileLock(lockFile, () -> {
-                try {
-                    return doCreateEmbeddedMysql(cacheDir);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error creating embedded mysql", e);
-                }
-            });
-        }
-
-        EMBEDDED_MYSQL = embeddedMysql;
-
-        return embeddedMysql;
-    }
-
-    private static EmbeddedMysql doCreateEmbeddedMysql(final Path cacheDir) {
-        try {
-            final Path tempDir = Files.createTempDirectory("embedmysql_");
-
-            LOGGER.info(() -> LogUtil.message("Embedded MySQL cache dir = {}", cacheDir.toString()));
-            LOGGER.info(() -> LogUtil.message("Embedded MySQL temp dir = {}", tempDir.toString()));
-
-            final DownloadConfig downloadConfig = DownloadConfig.aDownloadConfig()
-//                        .withProxy(aHttpProxy("remote.host", 8080))
-                    .withCacheDir(cacheDir.toString())
-                    .build();
-
-            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v8_0_17)
-                    .withCharset(Charset.UTF8)
-                    .withFreePort()
-                    .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
-                    .withTimeZone("Europe/London")
-                    .withTimeout(2, TimeUnit.MINUTES)
-                    .withServerVariable("max_connect_errors", 666)
-                    .withTempDir(tempDir.toAbsolutePath().toString())
-                    .build();
-
-            final EmbeddedMysql embeddedMysql = EmbeddedMysql.anEmbeddedMysql(config, downloadConfig)
-//                        .addSchema("aschema", ScriptResolver.classPathScript("db/001_init.sql"))
-//                        .addSchema("aschema2", ScriptResolver.classPathScripts("db/*.sql"))
-//                    .addSchema(schemaConfig)
-                    .start();
-
-            return embeddedMysql;
-
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
-        }
-    }
-
-    private static String getClassContainer(Class c) {
-        if (c == null) {
-            throw new NullPointerException("The Class passed to this method may not be null");
-        }
-        try {
-            while (c.isMemberClass() || c.isAnonymousClass()) {
-                c = c.getEnclosingClass();
-            }
-            if (c.getProtectionDomain().getCodeSource() == null) {
-                return null;
-            }
-            String packageRoot;
-            try {
-                final String thisClass = c.getResource(c.getSimpleName() + ".class").toString();
-                final String classPath = Pattern.quote(c.getName()
-                        .replaceAll("\\.", "/") + ".class");
-                packageRoot = thisClass.replaceAll(classPath, "");
-                packageRoot = packageRoot.replaceAll("!/$", "");
-                packageRoot = packageRoot.replaceAll("[^/\\\\]*$", "");
-                packageRoot = packageRoot.replaceAll("^[^/\\\\]*", "");
-            } catch (Exception e) {
-                packageRoot = Paths.get(c.getProtectionDomain().getCodeSource().getLocation().toURI())
-                        .toAbsolutePath().toString();
-            }
-            return packageRoot;
-        } catch (final Exception e) {
-            throw new RuntimeException("While interrogating " + c.getName() + ", an unexpected exception was thrown.",
-                    e);
-        }
+        return dbConfig.getConnectionConfig();
     }
 
     public static void clear() {

@@ -48,7 +48,14 @@ class TestSum extends AbstractFunctionTest<Sum> {
                         "date",
                         ValDate.create(DateUtil.parseNormalDateTimeString("2020-10-01T00:02:00.000Z")),
                         ValDate.create(DateUtil.parseNormalDateTimeString("2020-10-01T00:00:00.000Z")),
-                        ValDuration.create(Duration.ofMinutes(2).toMillis()))
+                        ValDuration.create(Duration.ofMinutes(2).toMillis())),
+                TestCase.of(
+                        "null",
+                        ValDouble.create(111),
+                        ValInteger.create(1),
+                        ValInteger.create(10),
+                        ValNull.INSTANCE,
+                        ValInteger.create(100))
         );
     }
 }

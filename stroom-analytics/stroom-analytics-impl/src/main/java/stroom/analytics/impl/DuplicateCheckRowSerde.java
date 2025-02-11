@@ -34,11 +34,16 @@ class DuplicateCheckRowSerde {
         return createLmdbKV(bytes);
     }
 
+    /**
+     * Allow this to be overridden for testing with a simpler hash algo
+     */
+    protected long createHash(final byte[] bytes) {
+        return LongHashFunction.xx3().hashBytes(bytes);
+    }
 
     private LmdbKV createLmdbKV(final byte[] bytes) {
         // Hash the value.
-        final long rowHash = LongHashFunction.xx3().hashBytes(bytes);
-
+        final long rowHash = createHash(bytes);
         final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES);
         keyByteBuffer.putLong(rowHash);
         keyByteBuffer.flip();

@@ -56,18 +56,18 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
         return cache.get(name);
     }
 
-    private void createPath(final String name) {
+    void createPath(final String name) {
         final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
         if (!path.equals(name)) {
             LOGGER.warn(() -> LogUtil.message("A non standard feed name was found when registering a file path '{}'",
                     name));
         }
 
-        JooqUtil.context(fsDataStoreDbConnProvider, context -> context
-                .insertInto(FS_FEED_PATH, FS_FEED_PATH.NAME, FS_FEED_PATH.PATH)
-                .values(name, path)
-                .onDuplicateKeyIgnore()
-                .execute());
+        JooqUtil.onDuplicateKeyIgnore(() ->
+                JooqUtil.context(fsDataStoreDbConnProvider, context -> context
+                        .insertInto(FS_FEED_PATH, FS_FEED_PATH.NAME, FS_FEED_PATH.PATH)
+                        .values(name, path)
+                        .execute()));
     }
 
     private Optional<String> getPath(final String name) {

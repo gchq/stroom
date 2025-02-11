@@ -33,12 +33,15 @@ public class CoprocessorsFactory {
 
     private final DataStoreFactory dataStoreFactory;
     private final ExpressionContextFactory expressionContextFactory;
+    private final SizesProvider sizesProvider;
 
     @Inject
     public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
-                               final ExpressionContextFactory expressionContextFactory) {
+                               final ExpressionContextFactory expressionContextFactory,
+                               final SizesProvider sizesProvider) {
         this.dataStoreFactory = dataStoreFactory;
         this.expressionContextFactory = expressionContextFactory;
+        this.sizesProvider = sizesProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -55,7 +58,7 @@ public class CoprocessorsFactory {
                 TableSettings tableSettings = resultRequest.getMappings().get(0);
                 if (tableSettings != null) {
                     if (tableSettings.getExtractionPipeline() == null
-                            && defaultExtractionPipeline != null) {
+                        && defaultExtractionPipeline != null) {
                         LOGGER.debug("Using defaultExtractionPipeline {} on tableSettings {}",
                                 defaultExtractionPipeline, tableSettings);
                         tableSettings = tableSettings.copy()
@@ -200,7 +203,13 @@ public class CoprocessorsFactory {
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
-        final Sizes maxResults = Sizes.create(tableSettings.getMaxResults());
+        final Sizes maxResults;
+        if (sizesProvider != null && tableSettings.getMaxResults() == null) {
+            maxResults = sizesProvider.getDefaultMaxResultsSizes();
+        } else {
+            maxResults = Sizes.create(tableSettings.getMaxResults());
+        }
+
         final DataStoreSettings modifiedSettings =
                 dataStoreSettings.copy()
                         .maxResults(maxResults)

@@ -4,7 +4,7 @@ def fatJarName = 'stroom-headless-all.jar'
 def releaseBuildDir = 'build/release'
 
 apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.gradleup.shadow'
 mainClassName = 'stroom.headless.Cli'
 
 dependencies {
@@ -43,16 +43,16 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.dropwizard_metrics_core
+    implementation libs.dropwizard.metrics.core
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_el
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
-    implementation libs.saxon_he
-    implementation libs.slf4j_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.el
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
+    implementation libs.saxon.he
+    implementation libs.slf4j.api
 
-    runtimeOnly libs.logback_classic
+    runtimeOnly libs.logback.classic
 }
 
 

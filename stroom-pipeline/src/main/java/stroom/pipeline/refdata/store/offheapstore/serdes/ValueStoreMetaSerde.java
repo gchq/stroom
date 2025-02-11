@@ -78,13 +78,14 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      */
     public boolean isLastReference(final ByteBuffer byteBuffer) {
         // Ever so slightly cheaper than extracting the count and checking the long value
-        return org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+        // TODO could maybe use ByteBufferUtils.equals
+        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
                 REF_COUNT_ONE, 0, REFERENCE_COUNT_BYTES,
                 byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L
-                ||
-                org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
-                        REF_COUNT_ZERO, 0, REFERENCE_COUNT_BYTES,
-                        byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L;
+               ||
+               stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
+                       REF_COUNT_ZERO, 0, REFERENCE_COUNT_BYTES,
+                       byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L;
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {

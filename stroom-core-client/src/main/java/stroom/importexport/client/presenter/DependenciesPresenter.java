@@ -199,7 +199,6 @@ public class DependenciesPresenter
         final ActionCell<DocRef> actionCell = new ActionCell<>(this::showActionMenu);
         final Column<Dependency, DocRef> actionColumn = DataGridUtil.columnBuilder(
                 docRefSelector,
-                Function.identity(),
                 () -> actionCell
         ).build();
         dataGrid.addColumn(actionColumn, name, width);

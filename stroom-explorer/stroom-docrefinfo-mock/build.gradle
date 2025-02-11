@@ -6,6 +6,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
 }

@@ -40,15 +40,18 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +67,7 @@ import java.util.function.Supplier;
 class SearchableTaskProgress implements Searchable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableTaskProgress.class);
-    private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("Searchable", "Task Manager", "Task Manager");
+    private static final DocRef TASK_MANAGER_PSEUDO_DOC_REF = new DocRef("TaskManager", "TaskManager", "Task Manager");
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -89,11 +92,21 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public DocRef getDocRef() {
+    public String getDataSourceType() {
+        return TASK_MANAGER_PSEUDO_DOC_REF.getType();
+    }
+
+    @Override
+    public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(AppPermission.MANAGE_TASKS_PERMISSION)) {
-            return TASK_MANAGER_PSEUDO_DOC_REF;
+            return Collections.singletonList(TASK_MANAGER_PSEUDO_DOC_REF);
         }
-        return null;
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Optional<QueryField> getTimeField(final DocRef docRef) {
+        return Optional.of(TaskManagerFields.SUBMIT_TIME);
     }
 
     @Override
@@ -116,16 +129,6 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.empty();
-    }
-
-    @Override
-    public QueryField getTimeField() {
-        return TaskManagerFields.SUBMIT_TIME;
-    }
-
-    @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
@@ -143,7 +146,8 @@ class SearchableTaskProgress implements Searchable {
                         final Map<String, Object> attributeMap = new HashMap<>();
                         attributeMap.put(TaskManagerFields.FIELD_NODE, taskProgress.getNodeName());
                         attributeMap.put(TaskManagerFields.FIELD_NAME, taskProgress.getTaskName());
-                        attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserRef().getDisplayName());
+                        attributeMap.put(TaskManagerFields.FIELD_USER, NullSafe
+                                .get(taskProgress, TaskProgress::getUserRef, UserRef::getDisplayName));
                         attributeMap.put(TaskManagerFields.FIELD_SUBMIT_TIME, taskProgress.getSubmitTimeMs());
                         attributeMap.put(TaskManagerFields.FIELD_AGE, taskProgress.getAgeMs());
                         attributeMap.put(TaskManagerFields.FIELD_INFO, taskProgress.getTaskInfo());

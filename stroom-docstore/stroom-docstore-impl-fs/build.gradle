@@ -9,15 +9,15 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jackson_core
-    implementation libs.jackson_databind
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
+    implementation libs.slf4j.api
 
-    testImplementation libs.junit_jupiter_api
-    testImplementation libs.assertj_core
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.assertj.core
 
-    testRuntimeOnly libs.junit_jupiter_engine
+    testRuntimeOnly libs.junit.jupiter.engine
 }

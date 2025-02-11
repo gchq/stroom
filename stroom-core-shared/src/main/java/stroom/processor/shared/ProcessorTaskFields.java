@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 public class ProcessorTaskFields {
 
     public static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef(
-            "Searchable",
-            "Processor Tasks",
+            "ProcessorTasks",
+            "ProcessorTasks",
             "Processor Tasks");
 
     private static final List<QueryField> FIELDS = new ArrayList<>();

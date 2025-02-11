@@ -160,7 +160,7 @@ public class StroomUserIdentityFactory
 
         return optUser
                 .flatMap(user -> {
-                    final User effectiveUser = updateUserInfo(user, jwtClaims);
+                    final User effectiveUser = updateUserInfo(subjectId, user, jwtClaims);
                     final UserIdentity userIdentity = createAuthFlowUserIdentity(
                             jwtClaims, request, tokenResponse, effectiveUser);
                     return Optional.of(userIdentity);
@@ -195,10 +195,15 @@ public class StroomUserIdentityFactory
      * them logging in though.
      * Each time we map their identity we check the cached info is up-to-date and if so update it.
      */
-    private User updateUserInfo(final User user, final JwtClaims jwtClaims) {
+    private User updateUserInfo(final String subjectId, final User user, final JwtClaims jwtClaims) {
         AtomicReference<User> userRef = new AtomicReference<>(user);
+
+        // We must default the displayName in the same way as happens when the DB record is created
+        // (in stroom.security.impl.UserServiceImpl.getOrCreateUser)
+        // else it will always detect a mismatch.
         final String displayName = JwtUtil.getUserDisplayName(openIdConfigProvider.get(), jwtClaims)
-                .orElse(null);
+                .filter(str -> !str.isBlank())
+                .orElse(subjectId);
 
         // Hopefully this one is enough of a standard to always be there.
         final String fullName = JwtUtil.getClaimValue(jwtClaims, OpenId.CLAIM__NAME)
@@ -326,8 +331,11 @@ public class StroomUserIdentityFactory
         return userIdentity;
     }
 
-    private Optional<UserIdentity> getApiUserIdentity(final JwtContext jwtContext,
-                                                      final HttpServletRequest request) {
+    /**
+     * Pkg private for testing
+     */
+    Optional<UserIdentity> getApiUserIdentity(final JwtContext jwtContext,
+                                              final HttpServletRequest request) {
         LOGGER.debug(() -> "Getting API user identity for uri: " + request.getRequestURI());
 
         try {
@@ -349,7 +357,7 @@ public class StroomUserIdentityFactory
                 User user = getOrCreateUserBySubjectId(subjectId).orElseThrow(() ->
                         new AuthenticationException("Unable to find user with id: " + subjectId
                                                     + "(displayName: " + optDisplayName + ")"));
-                user = updateUserInfo(user, jwtClaims);
+                user = updateUserInfo(subjectId, user, jwtClaims);
                 userUuid = user.getUuid();
             }
 

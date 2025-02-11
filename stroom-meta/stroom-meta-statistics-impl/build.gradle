@@ -9,6 +9,6 @@ dependencies {
 
     implementation libs.guava
     implementation libs.guice
-    implementation libs.jakarta_inject
-    implementation libs.slf4j_api
+    implementation libs.jakarta.inject
+    implementation libs.slf4j.api
 }

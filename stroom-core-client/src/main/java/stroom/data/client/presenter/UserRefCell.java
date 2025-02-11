@@ -1,6 +1,5 @@
 package stroom.data.client.presenter;
 
-import stroom.data.client.presenter.UserRefCell.UserRefProvider;
 import stroom.data.grid.client.EventCell;
 import stroom.security.client.UserTabPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -12,6 +11,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -31,12 +31,11 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
-public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
+public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements HasHandlers, EventCell {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
@@ -48,28 +47,28 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
     private final EventBus eventBus;
     private final ClientSecurityContext securityContext;
     private final boolean showIcon;
-    private final UserRef.DisplayType displayType;
+    private final Function<T_ROW, SafeHtml> cellTextFunction;
+    private final Function<T_ROW, UserRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
+    private final DisplayType displayType;
 
     private static volatile Template template;
 
-    public UserRefCell(final EventBus eventBus,
-                       final ClientSecurityContext securityContext,
-                       final UserRef.DisplayType displayType) {
-        this(eventBus, securityContext, false, displayType, null);
-    }
-
-    public UserRefCell(final EventBus eventBus,
-                       final ClientSecurityContext securityContext,
-                       final boolean showIcon,
-                       final UserRef.DisplayType displayType,
-                       final Function<T_ROW, String> cssClassFunction) {
+    private UserRefCell(final EventBus eventBus,
+                        final ClientSecurityContext securityContext,
+                        final boolean showIcon,
+                        final Function<T_ROW, SafeHtml> cellTextFunction,
+                        final Function<T_ROW, UserRef> docRefFunction,
+                        final Function<T_ROW, String> cssClassFunction,
+                        final DisplayType displayType) {
         super(MOUSEDOWN);
         this.eventBus = eventBus;
         this.securityContext = securityContext;
         this.showIcon = showIcon;
-        this.displayType = displayType;
+        this.cellTextFunction = cellTextFunction;
+        this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
+        this.displayType = displayType;
         if (template == null) {
             template = GWT.create(Template.class);
         }
@@ -89,11 +88,12 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
     @Override
     public void onBrowserEvent(final Context context,
                                final Element parent,
-                               final UserRefProvider<T_ROW> value,
+                               final T_ROW value,
                                final NativeEvent event,
-                               final ValueUpdater<UserRefProvider<T_ROW>> valueUpdater) {
+                               final ValueUpdater<T_ROW> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (value.getUserRef() != null) {
+        final UserRef userRef = docRefFunction.apply(value);
+        if (userRef != null) {
             if (MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
@@ -108,14 +108,14 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
     @Override
     protected void onEnterKeyDown(final Context context,
                                   final Element parent,
-                                  final UserRefProvider<T_ROW> value,
+                                  final T_ROW value,
                                   final NativeEvent event,
-                                  final ValueUpdater<UserRefProvider<T_ROW>> valueUpdater) {
+                                  final ValueUpdater<T_ROW> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        final UserRef userRef = GwtNullSafe.get(value, UserRefProvider::getUserRef);
+        final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
-                final String text = userRef.toDisplayString(displayType);
+                final String text = cellTextFunction.apply(value).asString();
                 if (text != null) {
                     ClipboardUtil.copy(text);
                 }
@@ -127,10 +127,9 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
 
     @Override
     public void render(final Context context,
-                       final UserRefProvider<T_ROW> value,
+                       final T_ROW value,
                        final SafeHtmlBuilder sb) {
-        final UserRef userRef = GwtNullSafe.get(value, UserRefProvider::getUserRef);
-
+        final UserRef userRef = docRefFunction.apply(value);
         if (userRef == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
@@ -144,7 +143,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
                 final SafeHtml cellHtmlText = SafeHtmlUtils.fromString(cellPlainText);
                 String cssClasses = "userRefLinkText";
                 if (cssClassFunction != null) {
-                    final String additionalClasses = cssClassFunction.apply(value.getRow());
+                    final String additionalClasses = cssClassFunction.apply(value);
                     if (additionalClasses != null) {
                         cssClasses += " " + additionalClasses;
                     }
@@ -210,35 +209,101 @@ public class UserRefCell<T_ROW> extends AbstractCell<UserRefProvider<T_ROW>>
         SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 
+    public static class Builder<T> {
 
-    // --------------------------------------------------------------------------------
+        private EventBus eventBus;
+        private boolean showIcon = false;
+        private DisplayType displayType = DisplayType.AUTO;
+        private Function<T, SafeHtml> cellTextFunction;
+        private Function<T, UserRef> userRefFunction;
+        private Function<T, String> cssClassFunction;
+        private ClientSecurityContext securityContext;
 
-
-    public static class UserRefProvider<T_ROW> {
-
-        private final T_ROW row;
-        private final Function<T_ROW, UserRef> userRefExtractor;
-
-        public UserRefProvider(final T_ROW row,
-                               final Function<T_ROW, UserRef> userRefExtractor) {
-            this.row = row;
-            this.userRefExtractor = Objects.requireNonNull(userRefExtractor);
+        public Builder<T> eventBus(final EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
         }
 
-        /**
-         * For uses where the rendering of the cell doesn't need the original row value, so
-         * this essentially returns an identity function.
-         */
-        public static UserRefProvider<UserRef> forUserRef(final UserRef userRef) {
-            return new UserRefProvider<>(userRef, Function.identity());
+        public Builder<T> showIcon(final boolean showIcon) {
+            this.showIcon = showIcon;
+            return this;
         }
 
-        public T_ROW getRow() {
-            return row;
+        public Builder<T> displayType(final DisplayType displayType) {
+            this.displayType = displayType;
+            return this;
         }
 
-        public UserRef getUserRef() {
-            return GwtNullSafe.get(row, userRefExtractor);
+        public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
+            this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public Builder<T> userRefFunction(final Function<T, UserRef> userRefFunction) {
+            this.userRefFunction = userRefFunction;
+            return this;
+        }
+
+        public Builder<T> cssClassFunction(final Function<T, String> cssClassFunction) {
+            this.cssClassFunction = cssClassFunction;
+            return this;
+        }
+
+        public Builder<T> securityContext(final ClientSecurityContext securityContext) {
+            this.securityContext = securityContext;
+            return this;
+        }
+
+        public UserRefCell<T> build() {
+            if (userRefFunction == null) {
+                userRefFunction = v -> null;
+            }
+            if (cellTextFunction == null) {
+                cellTextFunction = v -> {
+                    final UserRef userRef = userRefFunction.apply(v);
+                    if (userRef == null) {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
+                    } else {
+                        return SafeHtmlUtils.fromString(userRef.toDisplayString(displayType));
+                    }
+                };
+            }
+            if (cssClassFunction == null) {
+                cssClassFunction = v -> null;
+            }
+
+//
+//                public static String getTextFromDocRef(final DocRef docRef) {
+//                    return getTextFromDocRef(docRef, DisplayType.AUTO);
+//                }
+//
+//                public static String getTextFromDocRef(final DocRef docRef, final DisplayType displayType) {
+//                    if (docRef == null) {
+//                        return null;
+//                    } else {
+//                        return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+//                    }
+//                }
+//
+//            }
+//
+//
+//
+//        } else if (docRef != null) {
+//            cellHtmlText = SafeHtmlUtils.fromString(getTextFromDocRef(docRef, displayType));
+//        } else {
+//            cellHtmlText = SafeHtmlUtils.EMPTY_SAFE_HTML;
+//        }
+
+
+            return new UserRefCell<>(
+                    eventBus,
+                    securityContext,
+                    showIcon,
+                    cellTextFunction,
+                    userRefFunction,
+                    cssClassFunction,
+                    displayType);
         }
     }
 }

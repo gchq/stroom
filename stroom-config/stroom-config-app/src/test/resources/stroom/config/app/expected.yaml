@@ -1032,15 +1032,6 @@ appConfig:
       frameOptions: "sameorigin"
       strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
-  serviceDiscovery:
-    curatorBaseSleepTimeMs: 5000
-    curatorMaxRetries: 100
-    curatorMaxSleepTimeMs: 300000
-    enabled: false
-    servicesHostNameOrIpAddress: "localhost"
-    servicesPort: 8080
-    zookeeperBasePath: "/stroom-services"
-    zookeeperUrl: "localhost:2181"
   session:
     maxInactiveInterval: "P1D"
   sessionCookie:

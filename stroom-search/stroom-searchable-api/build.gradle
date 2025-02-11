@@ -8,6 +8,6 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
 }

@@ -75,26 +75,26 @@ dependencies {
 
     // These source deps are all needed for the GWT transpiling to javascript
     implementation libs.gin
-    implementation libs.guice__gwt
-    implementation libs.gwt_dev
-    implementation libs.gwt_user
-    implementation libs.gwtp_mvp_client
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api__gwt
-    implementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
-    implementation libs.ws_rs_api__gwt
+    implementation libs.guice.gwt
+    implementation libs.gwt.dev
+    implementation libs.gwt.user
+    implementation libs.gwtp.mvp.client
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api.gwt
+    implementation libs.swagger.annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.ws.rs.api.gwt
 
     gwtSourceImplementation libs.gin
-    gwtSourceImplementation libs.gwt_user
-    gwtSourceImplementation libs.gwtp_mvp_client
-    gwtSourceImplementation libs.jaxb_api__gwt
-    gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    gwtSourceImplementation libs.gwt.user
+    gwtSourceImplementation libs.gwtp.mvp.client
+    gwtSourceImplementation libs.jaxb.api.gwt
+    gwtSourceImplementation libs.swagger.annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
-    gwtSourceImplementation libs.ws_rs_api__gwt
+    gwtSourceImplementation libs.ws.rs.api.gwt
 
-    gwtDevSourceImplementation libs.gwt_dev
+    gwtDevSourceImplementation libs.gwt.dev
 
-    jakartaTransformerImplementation libs.eclipse_transformer_cli
+    jakartaTransformerImplementation libs.eclipse.transformer.cli
 }
 
 // Define a list of projects that contain the source code we want to compile with GWT.

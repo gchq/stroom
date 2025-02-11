@@ -28,7 +28,7 @@ import java.util.function.Supplier;
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
-                "'${field1}+${field2}'.",
+                            "'${field1}+${field2}'.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -64,9 +64,13 @@ class Add extends NumericFunction {
         Val calc(final Val current, final Val value) {
             try {
                 if (Type.DURATION.equals(value.type())) {
-                    if (!current.type().isValue() || value.type().isError()) {
+                    if (value.type().isError() ||
+                        current.type().isNull()) {
                         return value;
+                    } else if (current.type().isError()) {
+                        return current;
                     }
+
                     final long milliseconds = value.toLong();
                     final long diff = current.toLong() + milliseconds;
                     if (Type.DATE.equals(current.type())) {

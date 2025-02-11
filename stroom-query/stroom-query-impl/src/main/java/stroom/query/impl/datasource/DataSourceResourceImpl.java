@@ -55,7 +55,7 @@ class DataSourceResourceImpl implements DataSourceResource {
     @Override
     public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         try {
-            return queryServiceProvider.get().fetchDefaultExtractionPipeline(dataSourceRef);
+            return queryServiceProvider.get().fetchDefaultExtractionPipeline(dataSourceRef).orElse(null);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }

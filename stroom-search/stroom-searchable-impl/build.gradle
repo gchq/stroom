@@ -17,14 +17,14 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.dropwizard_metrics_annotation
+    implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
     implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson_annotations
-    implementation libs.jakarta_inject
-    implementation libs.jaxb_api
-    implementation libs.slf4j_api
-    implementation libs.swagger_annotations
-    implementation libs.ws_rs_api
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.jaxb.api
+    implementation libs.slf4j.api
+    implementation libs.swagger.annotations
+    implementation libs.ws.rs.api
 }

@@ -16,8 +16,9 @@
 
 package stroom.statistics.impl.sql.rollup;
 
+import stroom.bytebuffer.hbase.Bytes;
+
 import jakarta.xml.bind.DatatypeConverter;
-import org.apache.hadoop.hbase.util.Bytes;
 
 public class ByteArrayUtils {
 
@@ -70,6 +71,6 @@ public class ByteArrayUtils {
      */
     public static String byteArrayToAllForms(final byte[] arr) {
         return ByteArrayUtils.byteArrayToHex(arr) + " (hex) | " + ByteArrayUtils.byteArrayToString(arr) + " (dec) | "
-                + Bytes.toStringBinary(arr) + " (hbase)";
+               + Bytes.toStringBinary(arr) + " (hbase)";
     }
 }

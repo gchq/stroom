@@ -51,7 +51,6 @@ import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -117,7 +116,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_S3 = "s3";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SECURITY = "security";
-    public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
@@ -165,7 +163,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final S3Config s3Config;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
-    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
@@ -218,7 +215,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new S3Config(),
                 new SearchConfig(),
                 new SecurityConfig(),
-                new ServiceDiscoveryConfig(),
                 new SessionCookieConfig(),
                 new SessionConfig(),
                 new SolrConfig(),
@@ -270,7 +266,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
-                     @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
@@ -318,7 +313,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.s3Config = s3Config;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
-        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
@@ -549,11 +543,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_SECURITY)
     public SecurityConfig getSecurityConfig() {
         return securityConfig;
-    }
-
-    @JsonProperty(PROP_NAME_SERVICE_DISCOVERY)
-    public ServiceDiscoveryConfig getServiceDiscoveryConfig() {
-        return serviceDiscoveryConfig;
     }
 
     @JsonProperty(PROP_NAME_SESSION_COOKIE)

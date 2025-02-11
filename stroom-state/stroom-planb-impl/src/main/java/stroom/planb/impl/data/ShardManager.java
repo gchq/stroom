@@ -2,6 +2,7 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
@@ -77,14 +78,25 @@ public class ShardManager {
 
     public void condenseAll() {
         shardMap.values().forEach(shard -> {
-            final PlanBDoc doc = shard.getDoc();
-            final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
-            // If we can't get the doc then we must have deleted it so delete the shard.
-            if (loaded == null) {
-                shard.delete();
-                shardMap.remove(shard.getDoc().getUuid());
-            } else {
-                shard.condense(loaded);
+            try {
+                final PlanBDoc doc = shard.getDoc();
+                try {
+                    final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
+                    // If we can't get the doc then we must have deleted it so delete the shard.
+                    if (loaded == null) {
+                        shard.delete();
+                        shardMap.remove(shard.getDoc().getUuid());
+                    } else {
+                        shard.condense(loaded);
+                    }
+                } catch (final DocumentNotFoundException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    // If we can't get the doc then we must have deleted it so delete the shard.
+                    shard.delete();
+                    shardMap.remove(shard.getDoc().getUuid());
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
             }
         });
     }

@@ -3,6 +3,6 @@ ext.moduleName = 'stroom.collection.api'
 dependencies {
     implementation project(':stroom-docref')
 
-    implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api
 }

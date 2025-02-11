@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 
 import java.util.List;
 
-public interface HasDataSourceDocRefs {
+public interface IsSpecialExplorerDataSource {
 
     List<DocRef> getDataSourceDocRefs();
 }

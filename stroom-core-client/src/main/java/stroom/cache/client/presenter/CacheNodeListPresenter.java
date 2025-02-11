@@ -199,13 +199,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     private void addStatColumn(final String name,
                                final int width,
                                final Function<CacheInfo, String> valueExtractor) {
-
-        final Column<CacheInfo, String> col = DataGridUtil.columnBuilder(
-                        valueExtractor,
-                        Function.identity(),
-                        TextCell::new)
-                .rightAligned()
-                .build();
+        final Column<CacheInfo, String> col = DataGridUtil.textColumnBuilder(valueExtractor).rightAligned().build();
         columns.add(col);
         final int newWidth = width == -1
                 ? determineColumnWidth(name)
