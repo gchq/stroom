@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="ColumnValuesFilterViewImpl dock-container-vertical">
+        <g:FlowPanel styleName="dock-min bar">
+            <g:Label ui:field="selectAllLink" styleName="gwt-Label link" text="Select All"/>
+            <g:Label styleName="gwt-Label" text="-"/>
+            <g:Label ui:field="clearLink" styleName="gwt-Label link" text="Clear"/>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="listContainer" styleName="dock-max"/>
+    </g:FlowPanel>
+</ui:UiBinder>

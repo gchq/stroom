@@ -63,12 +63,6 @@ public class SuperDevUtil {
                     .withStrictTransportSecurity(SUPER_DEV_STRICT_TRANSPORT_SECURITY_VALUE);
             LOGGER.debug("newContentSecurityConfig: {}", newContentSecurityConfig);
             return newContentSecurityConfig;
-
-        } else if (config instanceof SessionCookieConfig && IS_IN_SUPER_DEV_MODE) {
-            final SessionCookieConfig newSessionCookieConfig = ((SessionCookieConfig) config)
-                    .withSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
-            LOGGER.debug("newSessionCookieConfig: {}", newSessionCookieConfig);
-            return newSessionCookieConfig;
         } else {
             return config;
         }

@@ -11,31 +11,34 @@ import stroom.util.date.DateUtil;
 import java.math.BigDecimal;
 import java.util.function.Function;
 
-public class ValFunctionFactory implements ValueFunctionFactory<Val> {
+public class ValArrayFunctionFactory implements ValueFunctionFactory<Val[]> {
 
     private final Column column;
+    private final int index;
 
-    public ValFunctionFactory(final Column column) {
+    public ValArrayFunctionFactory(final Column column, final int index) {
         this.column = column;
+        this.index = index;
     }
 
     @Override
-    public Function<Val, Boolean> createNullCheck() {
-        return values -> Type.NULL.equals(values.type());
+    public Function<Val[], Boolean> createNullCheck() {
+        return values -> stroom.query.language.functions.Type.NULL.equals(values[index].type());
     }
 
     @Override
-    public Function<Val, String> createStringExtractor() {
-        return Val::toString;
+    public Function<Val[], String> createStringExtractor() {
+        return values -> values[index].toString();
     }
 
     @Override
-    public Function<Val, Long> createDateExtractor() {
+    public Function<Val[], Long> createDateExtractor() {
         return values -> {
-            if (Type.LONG.equals(values.type()) || Type.DATE.equals(values.type())) {
-                return values.toLong();
+            final Val val = values[index];
+            if (Type.LONG.equals(val.type()) || Type.DATE.equals(val.type())) {
+                return val.toLong();
             } else {
-                String string = values.toString();
+                String string = val.toString();
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);
@@ -50,19 +53,20 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val> {
     }
 
     @Override
-    public Function<Val, BigDecimal> createNumberExtractor() {
+    public Function<Val[], BigDecimal> createNumberExtractor() {
         return values -> {
+            final Val val = values[index];
             try {
-                if (Type.LONG.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toLong());
-                } else if (Type.INTEGER.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toInteger());
-                } else if (Type.DOUBLE.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toDouble());
-                } else if (Type.FLOAT.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toFloat());
+                if (Type.LONG.equals(val.type())) {
+                    return BigDecimal.valueOf(val.toLong());
+                } else if (Type.INTEGER.equals(val.type())) {
+                    return BigDecimal.valueOf(val.toInteger());
+                } else if (Type.DOUBLE.equals(val.type())) {
+                    return BigDecimal.valueOf(val.toDouble());
+                } else if (Type.FLOAT.equals(val.type())) {
+                    return BigDecimal.valueOf(val.toFloat());
                 }
-                return new BigDecimal(values.toString());
+                return new BigDecimal(val.toString());
             } catch (final NumberFormatException e) {
                 return null;
 
