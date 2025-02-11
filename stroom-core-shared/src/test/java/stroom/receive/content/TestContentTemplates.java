@@ -1,18 +1,14 @@
-package stroom.receive.common;
+package stroom.receive.content;
 
-import stroom.meta.api.StandardHeaderArguments;
-import stroom.meta.shared.DataFormatNames;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.receive.common.ContentTemplates.ContentTemplate;
-import stroom.receive.common.ContentTemplates.TemplateType;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,27 +17,30 @@ class TestContentTemplates {
     @Test
     void testSerde() throws IOException {
 
-        ContentTemplates contentTemplates = new ContentTemplates(Set.of(
+        int templateNumber = 0;
+        ContentTemplates contentTemplates = new ContentTemplates(List.of(
                 new ContentTemplate(
-                        Map.of(
-                                StandardHeaderArguments.FORMAT, DataFormatNames.XML,
-                                StandardHeaderArguments.SCHEMA, "event-logging"
-                        ),
+                        true,
+                        ++templateNumber,
+                        ExpressionOperator.builder().build(),
                         TemplateType.PROCESSOR_FILTER,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe1")
                                 .uuid("uuid123")
-                                .build()),
+                                .build(),
+                        null,
+                        null),
                 new ContentTemplate(
-                        Map.of(
-                                StandardHeaderArguments.FORMAT, DataFormatNames.JSON,
-                                StandardHeaderArguments.SCHEMA, "event-logging-json"
-                        ),
-                        TemplateType.PROCESSOR_FILTER,
+                        true,
+                        ++templateNumber,
+                        ExpressionOperator.builder().build(),
+                        TemplateType.INHERIT_PIPELINE,
                         PipelineDoc.buildDocRef()
                                 .name("MyPipe2")
                                 .uuid("uuid456")
-                                .build())
+                                .build(),
+                        null,
+                        null)
         ));
 
         doSerdeTest(contentTemplates, ContentTemplates.class);

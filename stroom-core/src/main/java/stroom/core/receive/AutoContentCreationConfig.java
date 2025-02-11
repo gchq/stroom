@@ -1,6 +1,8 @@
 package stroom.core.receive;
 
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.IsStroomConfig;
@@ -15,6 +17,10 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class AutoContentCreationConfig
@@ -26,24 +32,18 @@ public class AutoContentCreationConfig
 
     @JsonProperty
     private final boolean enabled;
-
     @JsonProperty
     private final String destinationExplorerPath;
-
     @JsonProperty
     private final String templatesExplorerPath;
-
-    @JsonProperty
-    private final String templateConfigDir;
-
     @JsonProperty
     private final String additionalGroupSuffix;
-
     @JsonProperty
     private final String createAsSubjectId;
-
     @JsonProperty
     private final UserType createAsType;
+    @JsonProperty
+    private final Set<String> templateMatchFields;
 
     public AutoContentCreationConfig() {
         enabled = false;
@@ -51,37 +51,47 @@ public class AutoContentCreationConfig
                 .toString();
         templatesExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
-        templateConfigDir = "content_template_config";
         additionalGroupSuffix = " (sandbox)";
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
+        // TreeSet to ensure consistent order in the serialised json
+        templateMatchFields = new TreeSet<>(Set.of(
+                StandardHeaderArguments.FEED,
+                StandardHeaderArguments.ACCOUNT_ID,
+                StandardHeaderArguments.ACCOUNT_NAME,
+                StandardHeaderArguments.COMPONENT,
+                StandardHeaderArguments.FORMAT,
+                StandardHeaderArguments.SCHEMA,
+                StandardHeaderArguments.SCHEMA_VERSION));
     }
 
     @JsonCreator
-    public AutoContentCreationConfig(@JsonProperty("enabled") final boolean enabled,
-                                     @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
-                                     @JsonProperty("templatesExplorerPath") final String templatesExplorerPath,
-                                     @JsonProperty("templateConfigDir") final String templateConfigDir,
-                                     @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
-                                     @JsonProperty("createAsSubjectId") final String createAsSubjectId,
-                                     @JsonProperty("createAsType") final UserType createAsType) {
+    public AutoContentCreationConfig(
+            @JsonProperty("enabled") final boolean enabled,
+            @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
+            @JsonProperty("templatesExplorerPath") final String templatesExplorerPath,
+            @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
+            @JsonProperty("createAsSubjectId") final String createAsSubjectId,
+            @JsonProperty("createAsType") final UserType createAsType,
+            @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
+
         this.enabled = enabled;
         this.destinationExplorerPath = destinationExplorerPath;
         this.templatesExplorerPath = templatesExplorerPath;
-        this.templateConfigDir = templateConfigDir;
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
+        this.templateMatchFields = NullSafe.unmodifialbeSet(templateMatchFields);
     }
 
     private AutoContentCreationConfig(Builder builder) {
         this.enabled = builder.enabled;
         this.destinationExplorerPath = builder.destinationPath;
         this.templatesExplorerPath = builder.templatesPath;
-        this.templateConfigDir = builder.templateConfigDir;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
+        this.templateMatchFields = NullSafe.unmodifialbeSet(builder.templateMatchFields);
     }
 
     @JsonPropertyDescription(
@@ -102,17 +112,12 @@ public class AutoContentCreationConfig
         return destinationExplorerPath;
     }
 
+    @NotBlank
     @JsonPropertyDescription(
             "The path to a folder in the Stroom explorer tree where Stroom will look for content " +
             "to use as a template for auto-creating content.")
     public String getTemplatesExplorerPath() {
         return templatesExplorerPath;
-    }
-
-    @JsonPropertyDescription(
-            "The ")
-    public String getTemplateConfigDir() {
-        return templateConfigDir;
     }
 
     @JsonPropertyDescription(
@@ -126,15 +131,22 @@ public class AutoContentCreationConfig
     @NotNull
     @JsonPropertyDescription(
             "The subjectId of the user/group who will be the owner of any auto-created content. " +
-            "This user/group must have the permission to create all content required.")
+            "This user/group must have the permission to create all content required. It will also be the " +
+            "'run as' user for created pipeline processor filters.")
     public String getCreateAsSubjectId() {
         return createAsSubjectId;
     }
 
     @NotNull
-    @JsonPropertyDescription("The type of the entity represented by createAsSubjectId, i.g. 'USER' or 'GROUP'")
+    @JsonPropertyDescription("The type of the entity represented by createAsSubjectId, i.g. 'USER' or 'GROUP'. " +
+                             "It is possible for content to be owned by a group rather than individual users.")
     public UserType getCreateAsType() {
         return createAsType;
+    }
+
+    @JsonPropertyDescription("The header keys available for use when matching a request to a content template.")
+    public Set<String> getTemplateMatchFields() {
+        return templateMatchFields;
     }
 
     @SuppressWarnings("unused")
@@ -157,7 +169,11 @@ public class AutoContentCreationConfig
         return new Builder()
                 .enabled(enabled)
                 .destinationPath(destinationExplorerPath)
-                .templatesPath(templatesExplorerPath);
+                .templatesPath(templatesExplorerPath)
+                .additionalGroupSuffix(additionalGroupSuffix)
+                .createAsSubjectId(createAsSubjectId)
+                .createAsType(createAsType)
+                .templateMatchFields(templateMatchFields);
     }
 
 
@@ -169,10 +185,10 @@ public class AutoContentCreationConfig
         private boolean enabled;
         private String destinationPath;
         private String templatesPath;
-        public String templateConfigDir;
-        public String additionalGroupSuffix;
-        public String createAsSubjectId;
-        public UserType createAsType;
+        private String additionalGroupSuffix;
+        private String createAsSubjectId;
+        private UserType createAsType;
+        private Set<String> templateMatchFields;
 
         public Builder enabled(boolean enabled) {
             this.enabled = enabled;
@@ -186,11 +202,6 @@ public class AutoContentCreationConfig
 
         public Builder templatesPath(String templatesPath) {
             this.templatesPath = templatesPath;
-            return this;
-        }
-
-        public Builder templateConfigDir(String templateConfigDir) {
-            this.templateConfigDir = templateConfigDir;
             return this;
         }
 
@@ -209,15 +220,28 @@ public class AutoContentCreationConfig
             return this;
         }
 
+        public Builder templateMatchFields(Set<String> templateMatchFields) {
+            this.templateMatchFields = NullSafe.mutableSet(templateMatchFields);
+            return this;
+        }
+
+        public Builder addTemplateMatchFields(String templateMatchField) {
+            if (templateMatchFields == null) {
+                templateMatchFields = new HashSet<>();
+            }
+            templateMatchFields.add(templateMatchField);
+            return this;
+        }
+
         public Builder copy() {
             return new Builder()
                     .enabled(this.enabled)
                     .destinationPath(this.destinationPath)
                     .templatesPath(this.templatesPath)
-                    .templateConfigDir(this.templateConfigDir)
                     .additionalGroupSuffix(this.additionalGroupSuffix)
                     .createAsSubjectId(this.createAsSubjectId)
-                    .createAsType(this.createAsType);
+                    .createAsType(this.createAsType)
+                    .templateMatchFields(this.templateMatchFields);
         }
 
         public AutoContentCreationConfig build() {

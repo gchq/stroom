@@ -42,7 +42,10 @@ public class CIKeys {
     public static final CIKey EMPTY = internCommonKey("");
 
     // Upper camel case keys
-    public static final CIKey AUTHORIZATION = internCommonKey("Authorization");
+    public static final CIKey ACCOUNT_ID = internCommonKey("AccountId");
+    public static final CIKey ACCOUNT_NAME = internCommonKey("AccountName");
+    public static final CIKey CONTEXT_FORMAT = internCommonKey("ContextFormat");
+    public static final CIKey COMPONENT = internCommonKey("Component");
     public static final CIKey COMPRESSION = internCommonKey("Compression");
     public static final CIKey DURATION = internCommonKey("Duration");
     public static final CIKey EFFECTIVE_TIME = internCommonKey("EffectiveTime");
@@ -50,6 +53,7 @@ public class CIKeys {
     public static final CIKey EVENT_ID = internCommonKey("EventId");
     public static final CIKey EVENT_TIME = internCommonKey("EventTime");
     public static final CIKey FEED = internCommonKey("Feed");
+    public static final CIKey FORMAT = internCommonKey("Format");
     public static final CIKey FORWARD_ERROR = internCommonKey("ForwardError");
     public static final CIKey FILES = internCommonKey("Files");
     public static final CIKey GUID = internCommonKey("GUID");
@@ -72,6 +76,8 @@ public class CIKeys {
     public static final CIKey REMOTE_FILE = internCommonKey("RemoteFile");
     public static final CIKey REMOTE_HOST = internCommonKey("RemoteHost");
     public static final CIKey REMOTE_DN = internCommonKey("RemoteDn");
+    public static final CIKey SCHEMA = internCommonKey("Schema");
+    public static final CIKey SCHEMA_VERSION = internCommonKey("SchemaVersion");
     public static final CIKey START = internCommonKey("Start");
     public static final CIKey STATUS = internCommonKey("Status");
     public static final CIKey STREAM_ID = internCommonKey("StreamId");

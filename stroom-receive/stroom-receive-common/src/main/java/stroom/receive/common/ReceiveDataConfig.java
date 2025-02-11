@@ -1,6 +1,7 @@
 package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
@@ -22,7 +23,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 
@@ -55,6 +58,10 @@ public class ReceiveDataConfig
     private final Set<String> allowedCertificateProviders;
     @JsonProperty
     private final boolean feedNameGenerationEnabled;
+    @JsonProperty
+    private final String feedNameTemplate;
+    @JsonProperty
+    private final Set<String> feedNameGenerationMandatoryHeaders;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
@@ -71,6 +78,16 @@ public class ReceiveDataConfig
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
         allowedCertificateProviders = Collections.emptySet();
         feedNameGenerationEnabled = false;
+        feedNameTemplate = toTemplate(
+                StandardHeaderArguments.ACCOUNT_ID,
+                StandardHeaderArguments.COMPONENT,
+                StandardHeaderArguments.FORMAT,
+                StandardHeaderArguments.SCHEMA);
+        feedNameGenerationMandatoryHeaders = new TreeSet<>(Set.of(
+                StandardHeaderArguments.ACCOUNT_ID,
+                StandardHeaderArguments.COMPONENT,
+                StandardHeaderArguments.FORMAT,
+                StandardHeaderArguments.SCHEMA));
     }
 
     @SuppressWarnings("unused")
@@ -85,7 +102,9 @@ public class ReceiveDataConfig
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
             @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
-            @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled) {
+            @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled,
+            @JsonProperty("feedNameTemplate") final String feedNameTemplate,
+            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
@@ -99,6 +118,8 @@ public class ReceiveDataConfig
                 .filter(NullSafe::isNonBlankString)
                 .collect(Collectors.toSet());
         this.feedNameGenerationEnabled = feedNameGenerationEnabled;
+        this.feedNameTemplate = feedNameTemplate;
+        this.feedNameGenerationMandatoryHeaders = feedNameGenerationMandatoryHeaders;
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -112,6 +133,8 @@ public class ReceiveDataConfig
         x509CertificateDnHeader = builder.x509CertificateDnHeader;
         allowedCertificateProviders = builder.allowedCertificateProviders;
         feedNameGenerationEnabled = builder.feedNameGenerationEnabled;
+        feedNameTemplate = builder.feedNameTemplate;
+        feedNameGenerationMandatoryHeaders = NullSafe.unmodifialbeSet(builder.feedNameGenerationMandatoryHeaders);
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -212,6 +235,19 @@ public class ReceiveDataConfig
         return feedNameGenerationEnabled;
     }
 
+    @JsonPropertyDescription("A template for generating a feed name from a set of headers. The value of " +
+                             "each header referenced in the template will have any unsuitable characters " +
+                             "replaced with '_'.")
+    public String getFeedNameTemplate() {
+        return feedNameTemplate;
+    }
+
+    @JsonPropertyDescription("The set of header keys are mandatory if feedNameGenerationEnabled is set to true. " +
+                             "Should be set to complement the header keys used in 'feedNameTemplate'.")
+    public Set<String> getFeedNameGenerationMandatoryHeaders() {
+        return feedNameGenerationMandatoryHeaders;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -221,17 +257,67 @@ public class ReceiveDataConfig
                || !enabledAuthenticationTypes.isEmpty();
     }
 
+    private static String toTemplate(final String... parts) {
+        return NullSafe.stream(parts)
+                .map(part -> "${" + part.toLowerCase() + "}")
+                .collect(Collectors.joining("-"));
+    }
+
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +
                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-               ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
+               ", metaTypes=" + metaTypes +
                ", authenticationRequired=" + authenticationRequired +
-               ", dataFeedKeysDir=" + dataFeedKeysDir +
-               ", x509CertificateHeader=" + x509CertificateHeader +
-               ", x509CertificateDnHeader=" + x509CertificateDnHeader +
+               ", dataFeedKeysDir='" + dataFeedKeysDir + '\'' +
+               ", authenticatedDataFeedKeyCache=" + authenticatedDataFeedKeyCache +
+               ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
+               ", x509CertificateHeader='" + x509CertificateHeader + '\'' +
+               ", x509CertificateDnHeader='" + x509CertificateDnHeader + '\'' +
                ", allowedCertificateProviders=" + allowedCertificateProviders +
+               ", feedNameGenerationEnabled=" + feedNameGenerationEnabled +
+               ", feedNameTemplate='" + feedNameTemplate + '\'' +
+               ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ReceiveDataConfig that = (ReceiveDataConfig) o;
+        return authenticationRequired == that.authenticationRequired
+               && feedNameGenerationEnabled == that.feedNameGenerationEnabled
+               && Objects.equals(receiptPolicyUuid, that.receiptPolicyUuid)
+               && Objects.equals(metaTypes, that.metaTypes)
+               && Objects.equals(dataFeedKeysDir, that.dataFeedKeysDir)
+               && Objects.equals(authenticatedDataFeedKeyCache, that.authenticatedDataFeedKeyCache)
+               && Objects.equals(enabledAuthenticationTypes, that.enabledAuthenticationTypes)
+               && Objects.equals(x509CertificateHeader, that.x509CertificateHeader)
+               && Objects.equals(x509CertificateDnHeader, that.x509CertificateDnHeader)
+               && Objects.equals(allowedCertificateProviders, that.allowedCertificateProviders)
+               && Objects.equals(feedNameTemplate, that.feedNameTemplate)
+               && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(receiptPolicyUuid,
+                metaTypes,
+                authenticationRequired,
+                dataFeedKeysDir,
+                authenticatedDataFeedKeyCache,
+                enabledAuthenticationTypes,
+                x509CertificateHeader,
+                x509CertificateDnHeader,
+                allowedCertificateProviders,
+                feedNameGenerationEnabled,
+                feedNameTemplate,
+                feedNameGenerationMandatoryHeaders);
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
@@ -245,7 +331,9 @@ public class ReceiveDataConfig
         builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
         builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
         builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
-        builder.feedNameGenerationEnabled = receiveDataConfig.feedNameGenerationEnabled;
+        builder.feedNameGenerationEnabled = receiveDataConfig.isFeedNameGenerationEnabled();
+        builder.feedNameTemplate = receiveDataConfig.getFeedNameTemplate();
+        builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
         return builder;
     }
 
@@ -259,7 +347,6 @@ public class ReceiveDataConfig
 
     public static final class Builder {
 
-        private boolean feedNameGenerationEnabled;
         private String receiptPolicyUuid;
         private Set<String> metaTypes;
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
@@ -269,6 +356,9 @@ public class ReceiveDataConfig
         private String x509CertificateHeader;
         private String x509CertificateDnHeader;
         private Set<String> allowedCertificateProviders;
+        private boolean feedNameGenerationEnabled;
+        private String feedNameTemplate;
+        private Set<String> feedNameGenerationMandatoryHeaders;
 
         private Builder() {
         }
@@ -335,7 +425,17 @@ public class ReceiveDataConfig
         }
 
         public Builder withFeedNameGenerationEnabled(final boolean isEnabled) {
-            feedNameGenerationEnabled = isEnabled;
+            this.feedNameGenerationEnabled = isEnabled;
+            return this;
+        }
+
+        public Builder withFeedNameTemplate(final String feedNameTemplate) {
+            this.feedNameTemplate = feedNameTemplate;
+            return this;
+        }
+
+        public Builder withFeedNameGenerationMandatoryHeaders(final Set<String> feedNameGenerationMandatoryHeaders) {
+            this.feedNameGenerationMandatoryHeaders = NullSafe.mutableSet(feedNameGenerationMandatoryHeaders);
             return this;
         }
 

@@ -98,7 +98,14 @@ appConfig:
     createAsType: "GROUP"
     destinationExplorerPath: "/Feeds"
     enabled: false
-    templateConfigDir: "content_template_config"
+    templateMatchFields:
+    - "AccountId"
+    - "AccountName"
+    - "Component"
+    - "Feed"
+    - "Format"
+    - "Schema"
+    - "SchemaVersion"
     templatesExplorerPath: "/Feeds/Content Templates"
   byteBufferPool:
     blockOnExhaustedPool: false
@@ -778,6 +785,12 @@ appConfig:
     enabledAuthenticationTypes:
     - "CERTIFICATE"
     feedNameGenerationEnabled: false
+    feedNameGenerationMandatoryHeaders:
+    - "AccountId"
+    - "Component"
+    - "Format"
+    - "Schema"
+    feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
     metaTypes:
     - "Context"
     - "Raw Reference"

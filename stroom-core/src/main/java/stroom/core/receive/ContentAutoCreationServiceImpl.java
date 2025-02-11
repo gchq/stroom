@@ -1,10 +1,15 @@
 package stroom.core.receive;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.data.shared.StreamTypeNames;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.expression.matcher.ExpressionMatcher;
+import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
@@ -12,9 +17,18 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.DataFormatNames;
-import stroom.receive.common.ContentTemplates;
-import stroom.receive.common.ContentTemplates.ContentTemplate;
+import stroom.meta.shared.MetaFields;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.content.ContentTemplate;
+import stroom.receive.content.ContentTemplates;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -23,6 +37,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -35,17 +50,21 @@ import stroom.util.shared.UserType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
-import java.util.Collections;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Singleton
 public class ContentAutoCreationServiceImpl implements ContentAutoCreationService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentAutoCreationServiceImpl.class);
@@ -58,11 +77,14 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final UserService userService;
     private final FeedStore feedStore;
     private final ExplorerService explorerService;
+    private final ExplorerNodeService explorerNodeService;
     private final ClusterLockService clusterLockService;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final Set<SourcedContentTemplate> contentTemplates = Collections.newSetFromMap(
-            new ConcurrentHashMap<>());
+    private final ContentTemplatesStore contentTemplatesStore;
+    private final ProcessorFilterService processorFilterService;
+    private final PipelineService pipelineService;
+    private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -72,9 +94,14 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final UserService userService,
                                           final FeedStore feedStore,
                                           final ExplorerService explorerService,
+                                          final ExplorerNodeService explorerNodeService,
                                           final ClusterLockService clusterLockService,
                                           final MetaService metaService,
-                                          final SecurityContext securityContext) {
+                                          final SecurityContext securityContext,
+                                          final ContentTemplatesStore contentTemplatesStore,
+                                          final ProcessorFilterService processorFilterService,
+                                          final PipelineService pipelineService,
+                                          final ExpressionMatcherFactory expressionMatcherFactory) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -82,9 +109,30 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.userService = userService;
         this.feedStore = feedStore;
         this.explorerService = explorerService;
+        this.explorerNodeService = explorerNodeService;
         this.clusterLockService = clusterLockService;
         this.metaService = metaService;
         this.securityContext = securityContext;
+        this.contentTemplatesStore = contentTemplatesStore;
+        this.processorFilterService = processorFilterService;
+        this.pipelineService = pipelineService;
+        this.cachedExpressionMatcher = new CachedValue<>(
+                Duration.ofMinutes(1),
+                templateMatchFields ->
+                        createExpressionMatcher(expressionMatcherFactory, templateMatchFields),
+                () -> autoContentCreationConfigProvider.get().getTemplateMatchFields());
+    }
+
+    private ExpressionMatcher createExpressionMatcher(final ExpressionMatcherFactory expressionMatcherFactory,
+                                                      final Set<String> templateMatchFields) {
+        // ExpressionMatcher is currently case-sensitive so normalise to lower case
+        final Map<String, QueryField> fields = NullSafe.stream(templateMatchFields)
+                .filter(NullSafe::isNonBlankString)
+                .map(String::toLowerCase)
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        QueryField::createText));
+        return expressionMatcherFactory.create(fields);
     }
 
     @Override
@@ -110,28 +158,6 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             LOGGER.debug("Not eligible for auto-creation");
             return Optional.empty();
         }
-    }
-
-    @Override
-    public void addContentTemplates(final ContentTemplates contentTemplates, final Path sourceFile) {
-        if (contentTemplates != null) {
-            Objects.requireNonNull(sourceFile);
-            final Set<SourcedContentTemplate> templatesFromFile = contentTemplates.getContentTemplates()
-                    .stream()
-                    .map(contentTemplate -> new SourcedContentTemplate(contentTemplate, sourceFile))
-                    .collect(Collectors.toSet());
-
-            for (final ContentTemplate contentTemplate : contentTemplates.getContentTemplates()) {
-
-
-            }
-        }
-
-    }
-
-    @Override
-    public void removeTemplatesForFile(final Path sourceFile) {
-
     }
 
     private boolean isEligibleForAutoCreation(final UserDesc userDesc,
@@ -259,6 +285,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             setUpdateDocPerms(additionalGroup, feedDocRef, DocumentPermission.EDIT);
         });
 
+        createTemplatedContent(attributeMap, feedDocRef, destFolder);
+
         LOGGER.debug("feedDoc after configuration: {}", feedDoc);
 
         return feedDocRef;
@@ -356,6 +384,174 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                    final DocumentPermission perm) {
         documentPermissionService.setPermission(docRef, user.asRef(), perm);
     }
+
+    private Optional<ContentTemplate> getMatchingTemplate(final AttributeMap attributeMap) {
+
+        final ContentTemplates contentTemplates = contentTemplatesStore.getOrCreate();
+        final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
+        ContentTemplate matchingTemplate = null;
+        if (NullSafe.hasItems(activeTemplates)) {
+            for (ContentTemplate contentTemplate : activeTemplates) {
+                final ExpressionOperator expression = contentTemplate.getExpression();
+                if (expression == null) {
+                    matchingTemplate = contentTemplate;
+                    break;
+                } else {
+                    final Map<String, Object> attributes = attributeMap.asMap(true)
+                            .entrySet()
+                            .stream()
+                            .collect(Collectors.toMap(
+                                    Entry::getKey,
+                                    entry -> NullSafe.get(entry.getValue(), val -> (Object) val)));
+
+                    final boolean isMatch = cachedExpressionMatcher.getValue()
+                            .match(attributes, expression);
+                    if (isMatch) {
+                        matchingTemplate = contentTemplate;
+                        break;
+                    }
+                }
+            }
+        }
+        LOGGER.debug("matchingTemplate: {}", matchingTemplate);
+        return Optional.ofNullable(matchingTemplate);
+    }
+
+    private void createTemplatedContent(final AttributeMap attributeMap,
+                                        final DocRef feedDocRef,
+                                        final ExplorerNode destFolder) {
+
+        getMatchingTemplate(attributeMap)
+                .ifPresent(contentTemplate -> {
+                    final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
+                    PipelineDoc pipelineDoc;
+                    try {
+                        pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Unable to fetch the pipeline {} configured in content template {} '{}'.",
+                                pipelineDocRef,
+                                contentTemplate.getTemplateNumber(),
+                                contentTemplate.getName()), e);
+                    }
+
+                    switch (contentTemplate.getTemplateType()) {
+                        case PROCESSOR_FILTER -> createProcessorFilter(
+                                attributeMap.get(StandardHeaderArguments.TYPE),
+                                contentTemplate.getPipeline(),
+                                feedDocRef);
+                        case INHERIT_PIPELINE -> createPipelineFromParent(
+                                pipelineDoc,
+                                attributeMap.get(StandardHeaderArguments.TYPE),
+                                feedDocRef,
+                                destFolder);
+                    }
+                });
+    }
+
+    private void createProcessorFilter(final String streamType,
+                                       final DocRef pipelineDocRef,
+                                       final DocRef feedDocRef) {
+        final String type = NullSafe.nonBlankStringElse(streamType, StreamTypeNames.RAW_EVENTS);
+
+
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedDocRef)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
+                .build();
+        // We are currently running as the user defined in config
+        final UserRef runAsUser = securityContext.getUserRef();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest.builder()
+                .queryData(QueryData.builder()
+                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                        .expression(expression)
+                        .build())
+                .pipeline(pipelineDocRef)
+                .processorType(ProcessorType.PIPELINE)
+                .autoPriority(true)
+                .enabled(true)
+                .runAsUser(runAsUser)
+                .build();
+
+        processorFilterService.create(request);
+
+        LOGGER.info("Created processor filter for expression: {}, running as {}", expression, runAsUser);
+    }
+
+    private void createPipelineFromParent(final PipelineDoc parentPipelineDoc,
+                                          final String streamType,
+                                          final DocRef feedDocRef,
+                                          final ExplorerNode destFolder) {
+
+        explorerNodeService.getNode(parentPipelineDoc.asDocRef());
+        // Use feed name for the name of the new pipeline
+        final String pipeDocName = feedDocRef.getName();
+        final ExplorerNode newPipelineNode = explorerService.create(
+                PipelineDoc.TYPE,
+                pipeDocName,
+                destFolder,
+                PermissionInheritance.DESTINATION);
+
+        final String newPipelineUuid = newPipelineNode.getUuid();
+        final PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
+        newPipelineDoc.setParentPipeline(parentPipelineDoc.asDocRef());
+        pipelineService.update(newPipelineUuid, newPipelineDoc);
+
+        LOGGER.info("Created pipeline {} with parentPipeline {}",
+                newPipelineDoc.asDocRef(), parentPipelineDoc.asDocRef());
+
+        // Now create the proc filter for the new pipe
+        createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef);
+    }
+//    private Optional<ContentTemplate> getMatchingTemplate(final List<ContentTemplate> activeTemplates,
+//                                                          final AttributeMap attributeMap) {
+//        final Map<CIKey, String> caseInSenseAttributes = NullSafe.map(attributeMap)
+//                .entrySet()
+//                .stream()
+//                .collect(Collectors.toMap(
+//                        entry -> CIKey.of(entry.getKey()),
+//                        Entry::getValue));
+//
+//        return activeTemplates.stream()
+//                .filter(template -> isMatch(template, caseInSenseAttributes))
+//                .findFirst();
+//    }
+//
+//    private boolean isMatch(final ContentTemplate contentTemplate,
+//                            final Map<CIKey, String> attributeMap) {
+//        //T
+////        final ExpressionOperator expressionOperator = contentTemplate.getExpression();
+////
+////        e
+////        if (expressionOperator == n)
+////        if (expressionOperator instanceof )
+//
+//
+//    }
+
+//    private boolean isMatch(final ExpressionItem expressionItem,
+//                            final Map<CIKey, String> attributeMap) {
+//        if (expressionItem == null || !expressionItem.enabled()) {
+//            return false;
+//        } else if (expressionItem instanceof ExpressionTerm expressionTerm) {
+//
+//        } else if (expressionItem instanceof ExpressionOperator expressionOperator) {
+//            expressionOperator.op();
+//
+//        } else {
+//            throw new RuntimeException("Unexpected ExpressionItem " + expressionItem.getClass());
+//        }
+//
+//        final ExpressionOperator expressionOperator = contentTemplate.getExpression();
+//        if (expressionOperator instanceof )
+//
+//
+//    }
+//
+//    private boolean isMatch(final ExpressionTerm expressionTerm,
+//                            final Map<CIKey, String> attributeMap) {
+//
+//    }
 
 
     // --------------------------------------------------------------------------------

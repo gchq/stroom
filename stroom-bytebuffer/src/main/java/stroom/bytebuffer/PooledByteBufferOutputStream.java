@@ -231,9 +231,13 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     @Override
     public String toString() {
         return "PooledByteBufferOutputStream{" +
-                "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
-                '}';
+               "pooledByteBuffer=" + ByteBufferUtils.byteBufferInfo(pooledByteBuffer.getByteBuffer()) +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Factory {
 

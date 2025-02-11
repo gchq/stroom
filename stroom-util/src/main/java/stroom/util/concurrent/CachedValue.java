@@ -3,6 +3,7 @@ package stroom.util.concurrent;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -110,23 +111,21 @@ public class CachedValue<V, S> {
 
     /**
      * Gets the updatable value. If it has not been updated for longer than maxCheckInterval
-     * then the state will be fetched and the value updated if the state has changed.
+     * then the state will be fetched and, if the state has changed, the value will be
+     * updated synchronously.
      */
     public V getValue() {
-        final long oldNextCheck = nextCheckEpochMs.get();
-        LOGGER.debug("getValue(), value: {}, nextCheck: {}", value, oldNextCheck);
-
         // If uninitialised or we have passed the next check time then get the state
         // to see if it has changed. If it has then update the value.
-
         if (checkUpdateRequired().isUpdateRequired) {
             synchronized (this) {
                 // Recheck under lock
                 final CheckResult<S> checkResult = checkUpdateRequired();
                 if (checkResult.isUpdateRequired) {
                     final V newValue = valueSupplier.apply(checkResult.newState);
-                    LOGGER.debug("Updating value - nextCheck: {}, state: {}, newState: {}, value: {}, newValue: {}",
-                            oldNextCheck, state, checkResult.newState, value, newValue);
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Updating value - nextCheck: {}, state: {}, newState: {}, value: {}, newValue: {}",
+                            nextCheckEpochMs.get(), state, checkResult.newState, value, newValue));
                     state = checkResult.newState;
                     value = newValue;
                     nextCheckEpochMs.set(System.currentTimeMillis() + checkIntervalMs);

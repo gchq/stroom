@@ -94,6 +94,12 @@ proxyConfig:
     enabledAuthenticationTypes:
     - "CERTIFICATE"
     feedNameGenerationEnabled: false
+    feedNameGenerationMandatoryHeaders:
+    - "AccountId"
+    - "Component"
+    - "Format"
+    - "Schema"
+    feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
     metaTypes:
     - "Context"
     - "Raw Reference"
