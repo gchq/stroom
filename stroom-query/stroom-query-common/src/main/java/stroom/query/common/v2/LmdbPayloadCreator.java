@@ -8,7 +8,7 @@ import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
@@ -51,7 +51,7 @@ public class LmdbPayloadCreator {
      */
     void readPayload(final Input input) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_READ_PAYLOAD);
-        Metrics.measure("readPayload", () -> {
+        SimpleMetrics.measure("readPayload", () -> {
             // Determine how many bytes the payload contains.
             final int length = input.readInt();
             if (length > 0) {
@@ -91,7 +91,7 @@ public class LmdbPayloadCreator {
     void writePayload(final Output output) {
         try {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_WRITE_PAYLOAD);
-            Metrics.measure("writePayload", () -> {
+            SimpleMetrics.measure("writePayload", () -> {
                 try {
                     // Get the current payload.
                     final LmdbPayload payload = currentPayload.poll();
@@ -158,7 +158,7 @@ public class LmdbPayloadCreator {
                                       final LmdbDb db,
                                       final boolean complete) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
-        return Metrics.measure("createPayload", () -> {
+        return SimpleMetrics.measure("createPayload", () -> {
             if (maxPayloadSize > 0) {
                 final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize);
                 final AtomicBoolean finalPayload = new AtomicBoolean(complete);

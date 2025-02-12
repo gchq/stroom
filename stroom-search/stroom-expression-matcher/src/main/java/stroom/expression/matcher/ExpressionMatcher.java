@@ -158,8 +158,8 @@ public class ExpressionMatcher {
 
         final Object attribute = attributeMap.get(term.getField());
 
-        // Perform null/not null equality if required.
         if (Condition.IS_NULL.equals(condition)) {
+            // Perform null/not null equality if required.
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
             return attribute != null;

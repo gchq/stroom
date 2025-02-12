@@ -31,7 +31,6 @@ public class Aggregator {
 
     private Consumer<Path> destination;
 
-
     @Inject
     public Aggregator(final CleanupDirQueue deleteDirQueue,
                       final DataDirProvider dataDirProvider) {

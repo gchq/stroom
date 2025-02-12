@@ -139,13 +139,13 @@ public class CreateProcessFilterRequest {
         }
         final CreateProcessFilterRequest that = (CreateProcessFilterRequest) o;
         return priority == that.priority &&
-                autoPriority == that.autoPriority &&
-                reprocess == that.reprocess &&
-                enabled == that.enabled &&
-                Objects.equals(pipeline, that.pipeline) &&
-                Objects.equals(queryData, that.queryData) &&
-                Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
-                Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
+               autoPriority == that.autoPriority &&
+               reprocess == that.reprocess &&
+               enabled == that.enabled &&
+               Objects.equals(pipeline, that.pipeline) &&
+               Objects.equals(queryData, that.queryData) &&
+               Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
+               Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
     }
 
     @Override
@@ -163,16 +163,20 @@ public class CreateProcessFilterRequest {
     @Override
     public String toString() {
         return "CreateProcessFilterRequest{" +
-                "pipeline=" + pipeline +
-                ", queryData=" + queryData +
-                ", priority=" + priority +
-                ", autoPriority=" + autoPriority +
-                ", reprocess=" + reprocess +
-                ", enabled=" + enabled +
-                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
-                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
-                '}';
+               "pipeline=" + pipeline +
+               ", queryData=" + queryData +
+               ", priority=" + priority +
+               ", autoPriority=" + autoPriority +
+               ", reprocess=" + reprocess +
+               ", enabled=" + enabled +
+               ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
+               ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -188,7 +192,7 @@ public class CreateProcessFilterRequest {
         private Long maxMetaCreateTimeMs;
         private UserRef runAsUser;
 
-        public Builder() {
+        private Builder() {
         }
 
         public Builder(final CreateProcessFilterRequest request) {

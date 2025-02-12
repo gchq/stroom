@@ -8,11 +8,14 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
+import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresProxyRestart;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
@@ -32,6 +35,8 @@ import java.util.List;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyConfig.class);
 
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
@@ -222,16 +227,26 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     @JsonIgnore
     @SuppressWarnings("unused")
-    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if tokenAuthenticationEnabled " +
-                                "is true")
+    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if enabledAuthenticationTypes " +
+                                "contains 'TOKEN'")
     public boolean isTokenAuthenticationEnabledValid() {
-        if (NullSafe.test(receiveDataConfig, ReceiveDataConfig::isTokenAuthenticationEnabled)) {
+        LOGGER.info("enabledAuthenticationTypes: {}, idpType: {}",
+                NullSafe.get(receiveDataConfig, ReceiveDataConfig::getEnabledAuthenticationTypes),
+                NullSafe.get(proxySecurityConfig,
+                        ProxySecurityConfig::getAuthenticationConfig,
+                        ProxyAuthenticationConfig::getOpenIdConfig,
+                        AbstractOpenIdConfig::getIdentityProviderType));
+
+        if (NullSafe.test(
+                receiveDataConfig,
+                config -> config.isAuthenticationTypeEnabled(AuthenticationType.TOKEN))) {
+
             return NullSafe.test(
                     proxySecurityConfig,
                     ProxySecurityConfig::getAuthenticationConfig,
                     ProxyAuthenticationConfig::getOpenIdConfig,
                     AbstractOpenIdConfig::getIdentityProviderType,
-                    IdpType.EXTERNAL_IDP::equals);
+                    idpType -> idpType == IdpType.EXTERNAL_IDP);
         } else {
             return true;
         }

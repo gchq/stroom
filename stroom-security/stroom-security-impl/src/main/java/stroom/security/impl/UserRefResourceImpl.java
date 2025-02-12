@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.security.api.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;

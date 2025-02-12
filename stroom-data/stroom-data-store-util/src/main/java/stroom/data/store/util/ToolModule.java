@@ -31,8 +31,11 @@ import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StroomPathConfig;
+import stroom.util.metrics.Metrics;
+import stroom.util.metrics.MetricsImpl;
 import stroom.util.servlet.MockServletModule;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -66,6 +69,7 @@ public class ToolModule extends AbstractModule {
 
         bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);
+        bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
         install(new DirProvidersModule());
     }
 

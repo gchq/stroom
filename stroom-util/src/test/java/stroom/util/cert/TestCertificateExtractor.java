@@ -29,7 +29,8 @@ class TestCertificateExtractor {
 
 //        Assertions.assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo(
 //                "CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
-        assertThat(CertificateExtractor.extractCNFromDN(dn)).isEqualTo("John Smith (johnsmith)");
+        assertThat(CertificateExtractor.extractCNFromDN(dn))
+                .isEqualTo("John Smith (johnsmith)");
 //        assertThat(CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn))).isEqualTo("johnsmith");
 //
 //        final Pattern pattern = Pattern.compile("CN=[^ ]+ [^ ]+ \\(?([a-zA-Z0-9]+)\\)?");

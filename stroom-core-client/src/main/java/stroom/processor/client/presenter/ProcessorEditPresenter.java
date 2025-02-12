@@ -161,9 +161,9 @@ public class ProcessorEditPresenter
                                     ConfirmEvent.fire(
                                             ProcessorEditPresenter.this,
                                             "You are about to update an existing filter. Any streams that " +
-                                                    "might now be included by this filter but are older than the " +
-                                                    "current tracker position will not be processed. " +
-                                                    "Are you sure you wish to do this?",
+                                            "might now be included by this filter but are older than the " +
+                                            "current tracker position will not be processed. " +
+                                            "Are you sure you wish to do this?",
                                             result -> {
                                                 if (result) {
                                                     validateFeed(
@@ -234,8 +234,8 @@ public class ProcessorEditPresenter
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 
         if (streamIdCount == 0
-                && parentStreamIdCount == 0
-                && feedCount == 0) {
+            && parentStreamIdCount == 0
+            && feedCount == 0) {
             ConfirmEvent.fire(this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
@@ -259,8 +259,8 @@ public class ProcessorEditPresenter
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
 
         if (streamIdCount == 0
-                && parentStreamIdCount == 0
-                && streamTypeCount == 0) {
+            && parentStreamIdCount == 0
+            && streamTypeCount == 0) {
             ConfirmEvent.fire(this,
                     "You are about to process all stream types. Are you sure you wish to do this?",
                     result -> {
@@ -323,6 +323,10 @@ public class ProcessorEditPresenter
                     .exec();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ProcessorEditView extends View {
 

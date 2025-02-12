@@ -16,7 +16,6 @@
 
 package stroom.cache.client.presenter;
 
-import stroom.cache.shared.CacheIdentity;
 import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
@@ -31,6 +30,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.cache.CacheIdentity;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 

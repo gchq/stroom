@@ -58,6 +58,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "retentionDayAge",
         "reference",
         "streamType",
+        "dataFormat",
+        "contextFormat",
+        "schema",
+        "schemaVersion",
         "status",
         "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
@@ -80,6 +84,14 @@ public class FeedDoc extends Doc {
     private boolean reference;
     @JsonProperty
     private String streamType;
+    @JsonProperty
+    private String dataFormat;
+    @JsonProperty
+    private String contextFormat;
+    @JsonProperty
+    private String schema;
+    @JsonProperty
+    private String schemaVersion;
     @JsonProperty
     private FeedStatus status;
     @JsonProperty
@@ -108,6 +120,10 @@ public class FeedDoc extends Doc {
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
+                   @JsonProperty("dataFormat") final String dataFormat,
+                   @JsonProperty("contextFormat") final String contextFormat,
+                   @JsonProperty("schema") final String schema,
+                   @JsonProperty("schemaVersion") final String schemaVersion,
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
@@ -119,6 +135,10 @@ public class FeedDoc extends Doc {
         this.reference = reference;
         this.streamType = streamType;
         this.status = status;
+        this.dataFormat = dataFormat;
+        this.contextFormat = contextFormat;
+        this.schema = schema;
+        this.schemaVersion = schemaVersion;
         this.volumeGroup = volumeGroup;
     }
 
@@ -217,6 +237,38 @@ public class FeedDoc extends Doc {
 
     public void setReference(final boolean reference) {
         this.reference = reference;
+    }
+
+    public String getDataFormat() {
+        return dataFormat;
+    }
+
+    public void setDataFormat(final String dataFormat) {
+        this.dataFormat = dataFormat;
+    }
+
+    public String getContextFormat() {
+        return contextFormat;
+    }
+
+    public void setContextFormat(final String contextFormat) {
+        this.contextFormat = contextFormat;
+    }
+
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(final String schema) {
+        this.schema = schema;
+    }
+
+    public String getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    public void setSchemaVersion(final String schemaVersion) {
+        this.schemaVersion = schemaVersion;
     }
 
     public String getVolumeGroup() {

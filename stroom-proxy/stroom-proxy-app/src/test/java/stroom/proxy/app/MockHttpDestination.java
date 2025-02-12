@@ -542,7 +542,7 @@ public class MockHttpDestination {
                     .isLessThanOrEqualTo(maxItemsPerAggregate);
         }
 
-        final StroomDuration maxAggregateAge = aggregatorConfig.getMaxAggregateAge();
+        final StroomDuration aggregationFrequency = aggregatorConfig.getAggregationFrequency();
         final List<Duration> aggAges = forwardFiles.stream()
                 .map(DataFeedRequest::getDataFeedRequestItems)
                 .map(zipItems -> {
@@ -562,7 +562,7 @@ public class MockHttpDestination {
         // Each agg should have a receipt time range no wider than the configured max agg age
         for (final Duration aggAge : aggAges) {
             Assertions.assertThat(aggAge)
-                    .isLessThanOrEqualTo(maxAggregateAge.getDuration());
+                    .isLessThanOrEqualTo(aggregationFrequency.getDuration());
         }
     }
 

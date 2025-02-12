@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * String hash map that does not care about key case.
@@ -135,6 +136,19 @@ class CIStringHashMap implements Map<String, String> {
         return Objects.hash(map);
     }
 
+    /**
+     * @param normaliseKeys If true, all keys will be converted to lower case, else
+     *                      will be left in their original case.
+     */
+    public Map<String, String> asMap(final boolean normaliseKeys) {
+        final Function<Entry<CIString, String>, String> keyMapper = normaliseKeys
+                ? entry -> entry.getKey().lowerKey
+                : entry -> entry.getKey().key;
+
+        return map.entrySet()
+                .stream()
+                .collect(Collectors.toMap(keyMapper, Entry::getValue));
+    }
 
     // --------------------------------------------------------------------------------
 

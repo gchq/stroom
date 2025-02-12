@@ -62,6 +62,7 @@ dropwizard-jersey = { module = "io.dropwizard:dropwizard-jersey" } # version con
 dropwizard-jetty = { module = "io.dropwizard:dropwizard-jetty" } #was 1.0.6 now 1.1.0
 dropwizard-lifecycle = { module = "io.dropwizard:dropwizard-lifecycle" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-annotation = { module = "io.dropwizard.metrics:metrics-annotation" } # version controlled by dropwizard-dependencies
+dropwizard-metrics-caffeine3 = { module = "io.dropwizard.metrics:metrics-caffeine3" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-core = { module = "io.dropwizard.metrics:metrics-core" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-healthchecks = { module = "io.dropwizard.metrics:metrics-healthchecks" } # version controlled by dropwizard-dependencies
 dropwizard-servlets = { module = "io.dropwizard:dropwizard-servlets" } # version controlled by dropwizard-dependencies

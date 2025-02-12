@@ -4,6 +4,7 @@ import stroom.proxy.repo.LogStream;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.BuildInfo;
 
 import jakarta.inject.Inject;
@@ -26,15 +27,18 @@ public class HttpSenderFactory {
     private final String defaultUserAgent;
     private final UserIdentityFactory userIdentityFactory;
     private final HttpClientFactory httpClientFactory;
+    private final Metrics metrics;
 
     @Inject
     public HttpSenderFactory(final LogStream logStream,
                              final Provider<BuildInfo> buildInfoProvider,
                              final UserIdentityFactory userIdentityFactory,
-                             final HttpClientFactory httpClientFactory) {
+                             final HttpClientFactory httpClientFactory,
+                             final Metrics metrics) {
         this.logStream = logStream;
         this.userIdentityFactory = userIdentityFactory;
         this.httpClientFactory = httpClientFactory;
+        this.metrics = metrics;
 
         // Construct something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
@@ -64,6 +68,12 @@ public class HttpSenderFactory {
         name += "-" + UUID.randomUUID();
 
         final HttpClient httpClient = httpClientFactory.get(name, config.getHttpClient());
-        return new HttpSender(logStream, config, userAgentString, userIdentityFactory, httpClient);
+        return new HttpSender(
+                logStream,
+                config,
+                userAgentString,
+                userIdentityFactory,
+                httpClient,
+                metrics);
     }
 }

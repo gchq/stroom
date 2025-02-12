@@ -67,6 +67,7 @@ public final class SvgPresets {
     public static final Preset SETTINGS_BLUE = enabled(SvgImage.SETTINGS, "Settings");
     public static final Preset SHIELD = enabled(SvgImage.SHIELD, "Shield");
     public static final Preset SHARD_FLUSH = disabled(SvgImage.SHARD_FLUSH, "Flush Selected Shards");
+    public static final Preset STAMP = enabled(SvgImage.STAMP, "Stamp");
     public static final Preset STOP = enabled(SvgImage.STOP, "Stop");
     public static final Preset TABLE = enabled(SvgImage.TABLE, "Table");
     public static final Preset TABLE_NESTED = enabled(SvgImage.TABLE_NESTED, "Nested Table");

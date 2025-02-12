@@ -1,7 +1,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.StroomCache;
-import stroom.cache.shared.CacheInfo;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
 import stroom.util.cache.CacheConfig;
 import stroom.util.concurrent.ThreadUtil;
@@ -10,6 +10,7 @@ import stroom.util.exception.InterruptibleRunnable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.cache.CacheInfo;
 import stroom.util.time.StroomDuration;
 
 import org.assertj.core.api.Assertions;
@@ -73,7 +74,7 @@ class TestStroomCacheImpl {
                     if (removalConsumerRef.get() != null) {
                         removalConsumerRef.get().accept(k, v);
                     }
-                });
+                }, MockMetrics::new);
     }
 
     private void populateCache() {

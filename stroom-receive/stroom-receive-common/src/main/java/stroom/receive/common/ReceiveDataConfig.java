@@ -1,10 +1,15 @@
 package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.NullSafe;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSupersetOf;
+import stroom.util.shared.validation.ValidDirectoryPath;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,8 +20,13 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -24,18 +34,60 @@ public class ReceiveDataConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig {
 
+    public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
+    public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
+    public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
+
+    @JsonProperty
     private final String receiptPolicyUuid;
+    @JsonProperty
     private final Set<String> metaTypes;
-    private final boolean tokenAuthenticationEnabled;
-    private final boolean certificateAuthenticationEnabled;
+    @JsonProperty
     private final boolean authenticationRequired;
+    @JsonProperty
+    private final String dataFeedKeysDir;
+    @JsonProperty
+    private final CacheConfig authenticatedDataFeedKeyCache;
+    @JsonProperty
+    private final Set<AuthenticationType> enabledAuthenticationTypes;
+    @JsonProperty
+    private final String x509CertificateHeader;
+    @JsonProperty
+    private final String x509CertificateDnHeader;
+    @JsonProperty
+    private final Set<String> allowedCertificateProviders;
+    @JsonProperty
+    private final boolean feedNameGenerationEnabled;
+    @JsonProperty
+    private final String feedNameTemplate;
+    @JsonProperty
+    private final Set<String> feedNameGenerationMandatoryHeaders;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
         metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
-        tokenAuthenticationEnabled = false;
-        certificateAuthenticationEnabled = true;
+        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
+        dataFeedKeysDir = "data_feed_keys";
+        authenticatedDataFeedKeyCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(5))
+                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
+                .build();
+        x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
+        x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
+        allowedCertificateProviders = Collections.emptySet();
+        feedNameGenerationEnabled = false;
+        feedNameTemplate = toTemplate(
+                StandardHeaderArguments.ACCOUNT_ID,
+                StandardHeaderArguments.COMPONENT,
+                StandardHeaderArguments.FORMAT,
+                StandardHeaderArguments.SCHEMA);
+        feedNameGenerationMandatoryHeaders = new TreeSet<>(Set.of(
+                StandardHeaderArguments.ACCOUNT_ID,
+                StandardHeaderArguments.COMPONENT,
+                StandardHeaderArguments.FORMAT,
+                StandardHeaderArguments.SCHEMA));
     }
 
     @SuppressWarnings("unused")
@@ -43,25 +95,47 @@ public class ReceiveDataConfig
     public ReceiveDataConfig(
             @JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
             @JsonProperty("metaTypes") final Set<String> metaTypes,
-            @JsonProperty("tokenAuthenticationEnabled") final boolean tokenAuthenticationEnabled,
-            @JsonProperty("certificateAuthenticationEnabled") final boolean certificateAuthenticationEnabled,
-            @JsonProperty("authenticationRequired") final boolean authenticationRequired) {
+            @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
+            @JsonProperty("authenticationRequired") final boolean authenticationRequired,
+            @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
+            @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
+            @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
+            @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
+            @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
+            @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled,
+            @JsonProperty("feedNameTemplate") final String feedNameTemplate,
+            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
-        this.tokenAuthenticationEnabled = tokenAuthenticationEnabled;
-        this.certificateAuthenticationEnabled = certificateAuthenticationEnabled;
+        this.enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, enabledAuthenticationTypes);
         this.authenticationRequired = authenticationRequired;
+        this.dataFeedKeysDir = dataFeedKeysDir;
+        this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
+        this.x509CertificateHeader = x509CertificateHeader;
+        this.x509CertificateDnHeader = x509CertificateDnHeader;
+        this.allowedCertificateProviders = NullSafe.stream(allowedCertificateProviders)
+                .filter(NullSafe::isNonBlankString)
+                .collect(Collectors.toSet());
+        this.feedNameGenerationEnabled = feedNameGenerationEnabled;
+        this.feedNameTemplate = feedNameTemplate;
+        this.feedNameGenerationMandatoryHeaders = feedNameGenerationMandatoryHeaders;
     }
 
     private ReceiveDataConfig(final Builder builder) {
         receiptPolicyUuid = builder.receiptPolicyUuid;
         metaTypes = builder.metaTypes;
-        tokenAuthenticationEnabled = builder.tokenAuthenticationEnabled;
-        certificateAuthenticationEnabled = builder.certificateAuthenticationEnabled;
+        enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, builder.enabledAuthenticationTypes);
         authenticationRequired = builder.authenticationRequired;
+        dataFeedKeysDir = builder.dataFeedKeysDir;
+        authenticatedDataFeedKeyCache = builder.authenticatedDataFeedKeyCache;
+        x509CertificateHeader = builder.x509CertificateHeader;
+        x509CertificateDnHeader = builder.x509CertificateDnHeader;
+        allowedCertificateProviders = builder.allowedCertificateProviders;
+        feedNameGenerationEnabled = builder.feedNameGenerationEnabled;
+        feedNameTemplate = builder.feedNameTemplate;
+        feedNameGenerationMandatoryHeaders = NullSafe.unmodifialbeSet(builder.feedNameGenerationMandatoryHeaders);
     }
-
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
     public String getReceiptPolicyUuid() {
@@ -71,7 +145,7 @@ public class ReceiveDataConfig
     @NotNull
     @NotEmpty
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
-            "in the default value for this property but can contain additional names.")
+                             "in the default value for this property but can contain additional names.")
     @IsSupersetOf(requiredValues = {
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
@@ -85,80 +159,181 @@ public class ReceiveDataConfig
         return metaTypes;
     }
 
-    @JsonPropertyDescription("If true, the data receipt request headers will be checked for the presence of an " +
-            "Open ID access token. This token will be used to authenticate the sender.")
-    public boolean isTokenAuthenticationEnabled() {
-        return tokenAuthenticationEnabled;
+    @NotNull
+    @JsonPropertyDescription("The types of authentication that are enabled for data receipt.")
+    public Set<AuthenticationType> getEnabledAuthenticationTypes() {
+        return enabledAuthenticationTypes;
     }
 
-    @JsonPropertyDescription("If true, the data receipt request will be checked for the presence of a " +
-            "certificate. The certificate will be used to authenticate the sender.")
-    public boolean isCertificateAuthenticationEnabled() {
-        return certificateAuthenticationEnabled;
+    /**
+     * @return True if the passed {@link AuthenticationType} has been configured as enabled for use..
+     */
+    public boolean isAuthenticationTypeEnabled(final AuthenticationType authenticationType) {
+        return authenticationType != null
+               && enabledAuthenticationTypes.contains(authenticationType);
     }
 
     @JsonPropertyDescription(
             "If true, the sender will be authenticated using a certificate or token depending on the " +
             "state of tokenAuthenticationEnabled and certificateAuthenticationEnabled. If the sender " +
             "can't be authenticated an error will be returned to the client." +
-            "If false, then no authentication will be performed and data will be accepted without a sender identity.")
+            "If false, then authentication will be performed if a token/key/certificate " +
+            "is present, otherwise data will be accepted without a sender identity.")
     public boolean isAuthenticationRequired() {
         return authenticationRequired;
     }
 
+    @ValidDirectoryPath(ensureExistence = true)
+    @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
+                             "Only used if datafeedKeyAuthenticationEnabled is true." +
+                             "If the value is a relative path then it will be treated as being " +
+                             "relative to stroom.path.home. " +
+                             "Data feed key files must have the extension .json. Files in sub-directories" +
+                             "will be ignored.")
+    public String getDataFeedKeysDir() {
+        return dataFeedKeysDir;
+    }
+
+    @NotNull
+    public CacheConfig getAuthenticatedDataFeedKeyCache() {
+        return authenticatedDataFeedKeyCache;
+    }
+
+    @JsonPropertyDescription(
+            "The HTTP header key used to extract an X509 certificate. This is used when a load balancer does the " +
+            "SSL/mTLS termination and passes the client certificate though in a header. Only used for " +
+            "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
+    public String getX509CertificateHeader() {
+        return x509CertificateHeader;
+    }
+
+    @JsonPropertyDescription(
+            "The HTTP header key used to extract the distinguished name (DN) as obtained from an X509 certificate. " +
+            "This is used when a load balancer does the SSL/mTLS termination and passes the client DN though " +
+            "in a header. Only used for " +
+            "authentication if a value is set and 'enabledAuthenticationTypes' includes CERTIFICATE.")
+    public String getX509CertificateDnHeader() {
+        return x509CertificateDnHeader;
+    }
+
+    @JsonPropertyDescription(
+            "An allow-list containing IP addresses or fully qualified host names to verify that the direct sender " +
+            "of a request (e.g. a load balancer or reverse proxy) is trusted to supply certificate/DN headers " +
+            "as configured with 'x509CertificateHeader' and 'x509CertificateDnHeader'. " +
+            "If this list is null/empty then no check will be made on the client's " +
+            "address.")
+    public Set<String> getAllowedCertificateProviders() {
+        return allowedCertificateProviders;
+    }
+
+    @JsonPropertyDescription("If true the client is not required to set the 'Feed' header. If Feed is not present " +
+                             "a feed name will be generated based on the values of the following headers: " +
+                             "'AccountId', 'Component', 'Format', 'Schema', 'Type'. If there is insufficient " +
+                             "information to generate a Feed name, the request will be rejected. If false, " +
+                             "the default, a populated 'Feed' header will be required.")
+    public boolean isFeedNameGenerationEnabled() {
+        return feedNameGenerationEnabled;
+    }
+
+    @JsonPropertyDescription("A template for generating a feed name from a set of headers. The value of " +
+                             "each header referenced in the template will have any unsuitable characters " +
+                             "replaced with '_'.")
+    public String getFeedNameTemplate() {
+        return feedNameTemplate;
+    }
+
+    @JsonPropertyDescription("The set of header keys are mandatory if feedNameGenerationEnabled is set to true. " +
+                             "Should be set to complement the header keys used in 'feedNameTemplate'.")
+    public Set<String> getFeedNameGenerationMandatoryHeaders() {
+        return feedNameGenerationMandatoryHeaders;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
-    @ValidationMethod(message = "If authenticationRequired is true, then one of tokenAuthenticationEnabled " +
-            "or certificateAuthenticationEnabled must also be set to true.")
+    @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
+                                "contain at least one authentication type.")
     public boolean isAuthenticationRequiredValid() {
         return !authenticationRequired
-                || (tokenAuthenticationEnabled || certificateAuthenticationEnabled);
+               || !enabledAuthenticationTypes.isEmpty();
     }
 
-    public ReceiveDataConfig withTokenAuthenticationEnabled(final boolean isTokenAuthenticationEnabled) {
-        return new ReceiveDataConfig(
-                receiptPolicyUuid,
-                metaTypes,
-                isTokenAuthenticationEnabled,
-                certificateAuthenticationEnabled,
-                authenticationRequired);
-    }
-
-    public ReceiveDataConfig withCertificateAuthenticationEnabled(final boolean isCertificateAuthenticationEnabled) {
-        return new ReceiveDataConfig(
-                receiptPolicyUuid,
-                metaTypes,
-                tokenAuthenticationEnabled,
-                isCertificateAuthenticationEnabled,
-                authenticationRequired);
-    }
-
-    public ReceiveDataConfig withAuthenticationRequired(final boolean isAuthenticationRequired) {
-        return new ReceiveDataConfig(
-                receiptPolicyUuid,
-                metaTypes,
-                tokenAuthenticationEnabled,
-                certificateAuthenticationEnabled,
-                isAuthenticationRequired);
+    private static String toTemplate(final String... parts) {
+        return NullSafe.stream(parts)
+                .map(part -> "${" + part.toLowerCase() + "}")
+                .collect(Collectors.joining("-"));
     }
 
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +
-                "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
-                ", tokenAuthenticationEnabled=" + tokenAuthenticationEnabled +
-                ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
-                ", authenticationRequired=" + authenticationRequired +
-                '}';
+               "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
+               ", metaTypes=" + metaTypes +
+               ", authenticationRequired=" + authenticationRequired +
+               ", dataFeedKeysDir='" + dataFeedKeysDir + '\'' +
+               ", authenticatedDataFeedKeyCache=" + authenticatedDataFeedKeyCache +
+               ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
+               ", x509CertificateHeader='" + x509CertificateHeader + '\'' +
+               ", x509CertificateDnHeader='" + x509CertificateDnHeader + '\'' +
+               ", allowedCertificateProviders=" + allowedCertificateProviders +
+               ", feedNameGenerationEnabled=" + feedNameGenerationEnabled +
+               ", feedNameTemplate='" + feedNameTemplate + '\'' +
+               ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
+               '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ReceiveDataConfig that = (ReceiveDataConfig) o;
+        return authenticationRequired == that.authenticationRequired
+               && feedNameGenerationEnabled == that.feedNameGenerationEnabled
+               && Objects.equals(receiptPolicyUuid, that.receiptPolicyUuid)
+               && Objects.equals(metaTypes, that.metaTypes)
+               && Objects.equals(dataFeedKeysDir, that.dataFeedKeysDir)
+               && Objects.equals(authenticatedDataFeedKeyCache, that.authenticatedDataFeedKeyCache)
+               && Objects.equals(enabledAuthenticationTypes, that.enabledAuthenticationTypes)
+               && Objects.equals(x509CertificateHeader, that.x509CertificateHeader)
+               && Objects.equals(x509CertificateDnHeader, that.x509CertificateDnHeader)
+               && Objects.equals(allowedCertificateProviders, that.allowedCertificateProviders)
+               && Objects.equals(feedNameTemplate, that.feedNameTemplate)
+               && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(receiptPolicyUuid,
+                metaTypes,
+                authenticationRequired,
+                dataFeedKeysDir,
+                authenticatedDataFeedKeyCache,
+                enabledAuthenticationTypes,
+                x509CertificateHeader,
+                x509CertificateDnHeader,
+                allowedCertificateProviders,
+                feedNameGenerationEnabled,
+                feedNameTemplate,
+                feedNameGenerationMandatoryHeaders);
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
         Builder builder = new Builder();
         builder.receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
         builder.metaTypes = receiveDataConfig.getMetaTypes();
-        builder.tokenAuthenticationEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
-        builder.certificateAuthenticationEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
+        builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
+        builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
+        builder.authenticatedDataFeedKeyCache = receiveDataConfig.getAuthenticatedDataFeedKeyCache();
+        builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
+        builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
+        builder.allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
+        builder.feedNameGenerationEnabled = receiveDataConfig.isFeedNameGenerationEnabled();
+        builder.feedNameTemplate = receiveDataConfig.getFeedNameTemplate();
+        builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
         return builder;
     }
 
@@ -174,15 +349,18 @@ public class ReceiveDataConfig
 
         private String receiptPolicyUuid;
         private Set<String> metaTypes;
-        private boolean tokenAuthenticationEnabled;
-        private boolean certificateAuthenticationEnabled;
+        private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
         private boolean authenticationRequired;
+        private String dataFeedKeysDir;
+        private CacheConfig authenticatedDataFeedKeyCache;
+        private String x509CertificateHeader;
+        private String x509CertificateDnHeader;
+        private Set<String> allowedCertificateProviders;
+        private boolean feedNameGenerationEnabled;
+        private String feedNameTemplate;
+        private Set<String> feedNameGenerationMandatoryHeaders;
 
         private Builder() {
-        }
-
-        public static Builder builder() {
-            return new Builder();
         }
 
         public Builder withReceiptPolicyUuid(final String val) {
@@ -195,18 +373,69 @@ public class ReceiveDataConfig
             return this;
         }
 
-        public Builder withTokenAuthenticationEnabled(final boolean val) {
-            tokenAuthenticationEnabled = val;
-            return this;
-        }
-
-        public Builder withCertificateAuthenticationEnabled(final boolean val) {
-            certificateAuthenticationEnabled = val;
-            return this;
-        }
-
         public Builder withAuthenticationRequired(final boolean val) {
             authenticationRequired = val;
+            return this;
+        }
+
+        public Builder withEnabledAuthenticationTypes(final Set<AuthenticationType> val) {
+            enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, val);
+            return this;
+        }
+
+        public Builder withEnabledAuthenticationTypes(final AuthenticationType... values) {
+            enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, values);
+            return this;
+        }
+
+        public Builder addEnabledAuthenticationType(final AuthenticationType val) {
+            if (val != null) {
+                if (enabledAuthenticationTypes == null) {
+                    enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, val);
+                } else {
+                    enabledAuthenticationTypes.add(val);
+                }
+            }
+            return this;
+        }
+
+        public Builder withDataFeedKeysDir(final String val) {
+            dataFeedKeysDir = val;
+            return this;
+        }
+
+        public Builder withAuthenticatedDataFeedKeyCache(final CacheConfig val) {
+            authenticatedDataFeedKeyCache = val;
+            return this;
+        }
+
+        public Builder withX509CertificateHeader(final String val) {
+            x509CertificateHeader = val;
+            return this;
+        }
+
+        public Builder withX509CertificateDnHeader(final String val) {
+            x509CertificateDnHeader = val;
+            return this;
+        }
+
+        public Builder withAllowedCertificateProviders(final Set<String> val) {
+            allowedCertificateProviders = val;
+            return this;
+        }
+
+        public Builder withFeedNameGenerationEnabled(final boolean isEnabled) {
+            this.feedNameGenerationEnabled = isEnabled;
+            return this;
+        }
+
+        public Builder withFeedNameTemplate(final String feedNameTemplate) {
+            this.feedNameTemplate = feedNameTemplate;
+            return this;
+        }
+
+        public Builder withFeedNameGenerationMandatoryHeaders(final Set<String> feedNameGenerationMandatoryHeaders) {
+            this.feedNameGenerationMandatoryHeaders = NullSafe.mutableSet(feedNameGenerationMandatoryHeaders);
             return this;
         }
 

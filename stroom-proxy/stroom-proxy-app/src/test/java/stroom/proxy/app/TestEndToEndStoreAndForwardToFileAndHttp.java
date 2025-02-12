@@ -34,8 +34,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                         .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
-                        .maxAggregateAge(StroomDuration.ofSeconds(5))
-                        .aggregationFrequency(StroomDuration.ofSeconds(1))
+                        .aggregationFrequency(StroomDuration.ofSeconds(5))
                         .maxItemsPerAggregate(3)
                         .build())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
