@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  *     with inline SVGs in HTML.</li>
  * </ul>
  */
-public class SvgImageGen {
+public class GenerateSvgImages {
 
     static final String CORE_SHARED_DIR = "stroom-core-shared";
     static final String APP_DIR = "stroom-app";
@@ -82,7 +82,7 @@ public class SvgImageGen {
                 // Do not edit it directly!
                 // ================================================================================
 
-            """.replace("@@CLASS_NAME@@", SvgImageGen.class.getName());
+            """.replace("@@CLASS_NAME@@", GenerateSvgImages.class.getName());
 
     private static final String ENUM_FOOTER = """
 
@@ -125,7 +125,7 @@ public class SvgImageGen {
     private static final Path UI_RESOURCE_REL_PATH = Path.of(
             "src", "main", "resources", "ui");
 
-    private SvgImageGen() {
+    private GenerateSvgImages() {
     }
 
     public static void main(final String[] args) throws IOException {
@@ -168,7 +168,7 @@ public class SvgImageGen {
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
-                                + enumFieldName.toLowerCase().replace("_", "-");
+                                                 + enumFieldName.toLowerCase().replace("_", "-");
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);
                         if (!isNewName) {
                             System.err.println("Enum field name clash: " + enumFieldName);
@@ -271,10 +271,10 @@ public class SvgImageGen {
                             .replace(")", "");
                     if (!variable.equals("currentColor")) {
                         System.out.println("    "
-                                + variable
-                                + ": "
-                                + hex
-                                + ";");
+                                           + variable
+                                           + ": "
+                                           + hex
+                                           + ";");
                     }
                 });
 
