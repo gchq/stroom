@@ -19,6 +19,10 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_CACHE_PERMISSION(
             "Manage Cache",
             "Access the Caches screen to view and clear system caches."),
+    MANAGE_CONTENT_TEMPLATES_PERMISSION(
+            "Manage Content Templates",
+            "Access the Content Templates screen to view and manage the templates for auto-creating " +
+            "content."),
     VIEW_DATA_PERMISSION(
             "Data - View",
             "View stream data (e.g. in the Data Viewer or a Dashboard text pane)."),

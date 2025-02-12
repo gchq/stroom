@@ -31,18 +31,18 @@ import java.util.function.BiConsumer;
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
  */
-public class ContentTemplatesStoreImpl implements ContentTemplatesStore {
+public class ContentTemplateStoreImpl implements ContentTemplateStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentTemplatesStoreImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentTemplateStoreImpl.class);
     private static final String DOC_NAME = "Content Templates";
 
     private final Store<ContentTemplates> store;
     private final SecurityContext securityContext;
 
     @Inject
-    public ContentTemplatesStoreImpl(final StoreFactory storeFactory,
-                                     final Serialiser2Factory serialiser2Factory,
-                                     final SecurityContext securityContext) {
+    public ContentTemplateStoreImpl(final StoreFactory storeFactory,
+                                    final Serialiser2Factory serialiser2Factory,
+                                    final SecurityContext securityContext) {
         this.securityContext = securityContext;
         final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
                 ContentTemplates.class);

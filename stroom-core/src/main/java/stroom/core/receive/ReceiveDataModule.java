@@ -21,6 +21,7 @@ import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -33,6 +34,10 @@ public class ReceiveDataModule extends AbstractModule {
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
-        bind(ContentTemplatesStore.class).to(ContentTemplatesStoreImpl.class);
+        bind(ContentTemplateStore.class).to(ContentTemplateStoreImpl.class);
+        bind(ContentTemplateService.class).to(ContentTemplateServiceImpl.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(ContentTemplateResourceImpl.class);
     }
 }

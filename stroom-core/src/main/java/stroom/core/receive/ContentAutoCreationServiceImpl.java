@@ -81,7 +81,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final ClusterLockService clusterLockService;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final ContentTemplatesStore contentTemplatesStore;
+    private final ContentTemplateStore contentTemplateStore;
     private final ProcessorFilterService processorFilterService;
     private final PipelineService pipelineService;
     private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
@@ -98,7 +98,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ClusterLockService clusterLockService,
                                           final MetaService metaService,
                                           final SecurityContext securityContext,
-                                          final ContentTemplatesStore contentTemplatesStore,
+                                          final ContentTemplateStore contentTemplateStore,
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
                                           final ExpressionMatcherFactory expressionMatcherFactory) {
@@ -113,7 +113,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.clusterLockService = clusterLockService;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.contentTemplatesStore = contentTemplatesStore;
+        this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
         this.cachedExpressionMatcher = new CachedValue<>(
@@ -387,7 +387,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private Optional<ContentTemplate> getMatchingTemplate(final AttributeMap attributeMap) {
 
-        final ContentTemplates contentTemplates = contentTemplatesStore.getOrCreate();
+        final ContentTemplates contentTemplates = contentTemplateStore.getOrCreate();
         final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
         ContentTemplate matchingTemplate = null;
         if (NullSafe.hasItems(activeTemplates)) {
