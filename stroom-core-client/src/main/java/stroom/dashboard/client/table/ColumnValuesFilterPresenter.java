@@ -184,7 +184,8 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<ColumnValuesFilterPresenter> handler) {
+    public HandlerRegistration addDataSelectionHandler(
+            final DataSelectionHandler<ColumnValuesFilterPresenter> handler) {
         return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
     }
 

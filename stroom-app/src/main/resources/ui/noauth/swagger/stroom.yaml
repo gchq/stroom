@@ -1459,6 +1459,54 @@ paths:
       summary: Import content
       tags:
       - Content
+  /dashboard/v1/columnValues:
+    post:
+      operationId: getColumnValues
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ColumnValuesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ColumnValues"
+          description: default response
+      summary: Get unique column values so the user can filter table results more
+        easily
+      tags:
+      - Dashboards
+  /dashboard/v1/columnValues/{nodeName}:
+    post:
+      operationId: getColumnValues_1
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ColumnValuesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ColumnValues"
+          description: default response
+      summary: Get unique column values so the user can filter table results more
+        easily
+      tags:
+      - Dashboards
   /dashboard/v1/downloadQuery:
     post:
       operationId: downloadDashboardQuery
@@ -5094,6 +5142,54 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /query/v1/columnValues:
+    post:
+      operationId: getColumnValues_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryColumnValuesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ColumnValues"
+          description: default response
+      summary: Get unique column values so the user can filter table results more
+        easily
+      tags:
+      - Queries
+  /query/v1/columnValues/{nodeName}:
+    post:
+      operationId: getColumnValues_3
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryColumnValuesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ColumnValues"
+          description: default response
+      summary: Get unique column values so the user can filter table results more
+        easily
+      tags:
+      - Queries
   /query/v1/downloadSearchResults:
     post:
       operationId: downloadQuerySearchResultsLocal
@@ -8661,6 +8757,8 @@ components:
       properties:
         columnFilter:
           $ref: "#/components/schemas/ColumnFilter"
+        columnValueSelection:
+          $ref: "#/components/schemas/ColumnValueSelection"
         expression:
           type: string
           description: The expression to use to generate the value for this field
@@ -8690,6 +8788,36 @@ components:
           type: string
         name:
           type: string
+    ColumnValueSelection:
+      type: object
+      properties:
+        invert:
+          type: boolean
+        values:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    ColumnValues:
+      type: object
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            type: string
+    ColumnValuesRequest:
+      type: object
+      properties:
+        column:
+          $ref: "#/components/schemas/Column"
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        searchRequest:
+          $ref: "#/components/schemas/DashboardSearchRequest"
     CompletionItem:
       type: object
       discriminator:
@@ -9766,6 +9894,7 @@ components:
           - UPLOAD
           - USER
           - USERS
+          - VALUE_FILTER
           - VOLUMES
           - WARNING
         type:
@@ -12701,6 +12830,7 @@ components:
           - UPLOAD
           - USER
           - USERS
+          - VALUE_FILTER
           - VOLUMES
           - WARNING
         roles:
@@ -13303,6 +13433,17 @@ components:
       required:
       - dataSource
       - expression
+    QueryColumnValuesRequest:
+      type: object
+      properties:
+        column:
+          $ref: "#/components/schemas/Column"
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        searchRequest:
+          $ref: "#/components/schemas/QuerySearchRequest"
     QueryComponentSettings:
       type: object
       allOf:
