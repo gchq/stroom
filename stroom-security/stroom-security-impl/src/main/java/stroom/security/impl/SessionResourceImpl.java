@@ -66,7 +66,7 @@ public class SessionResourceImpl implements SessionResource {
         }
 
         if (!authenticationConfig.isAuthenticationRequired()) {
-            return new ValidateSessionResponse(true, "admin", null);
+            return createValidResponse("admin");
 
 //        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
 //            LOGGER.error("We are expecting requests that contain authenticated tokens");
@@ -77,24 +77,30 @@ public class SessionResourceImpl implements SessionResource {
             try {
                 LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
 
-                // If we have completed the front channel flow then we will have a state id.
-                final String code = getParam(postAuthRedirectUri, OpenId.CODE);
-                final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
-                final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
-
                 // We might have completed the back channel authentication now so see if we have a user session.
                 userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
                 return userIdentity
                         .map(identity ->
-                                new ValidateSessionResponse(true, identity.getId(), null))
-                        .orElseGet(() ->
-                                new ValidateSessionResponse(false, null, redirectUri));
+                                createValidResponse(identity.getId()))
+                        .orElseGet(() -> createRedirectResponse(request, postAuthRedirectUri));
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;
             }
         }
+    }
+
+    private ValidateSessionResponse createValidResponse(final String userId) {
+        return new ValidateSessionResponse(true, userId, null);
+    }
+
+    private ValidateSessionResponse createRedirectResponse(final HttpServletRequest request, final String url) {
+        final OpenIdManager openIdManager = openIdManagerProvider.get();
+        final String code = getParam(url, OpenId.CODE);
+        final String stateId = getParam(url, OpenId.STATE);
+        final String redirectUri = openIdManager.redirect(request, code, stateId, url);
+        return new ValidateSessionResponse(false, null, redirectUri);
     }
 
     private String getParam(final String url, final String param) {

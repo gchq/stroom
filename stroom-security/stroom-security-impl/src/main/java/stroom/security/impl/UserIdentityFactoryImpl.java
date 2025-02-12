@@ -134,7 +134,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
             nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
             nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret()));
-            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUri()));
+            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getRedirectUri()));
             setFormParams(httpPost, nvps);
 
         } else {
@@ -144,7 +144,7 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                         .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                         .clientId(resolvedOpenIdConfig.getClientId())
                         .clientSecret(resolvedOpenIdConfig.getClientSecret())
-                        .redirectUri(state.getUri())
+                        .redirectUri(state.getRedirectUri())
                         .build();
                 final String json = mapper.writeValueAsString(tokenRequest);
 
