@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.widget.tab.client.event;
+package stroom.dashboard.client.table;
 
-import com.google.gwt.event.shared.EventHandler;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface TabSelectorHandler extends EventHandler {
+public interface ColumnValuesFilterUiHandlers extends UiHandlers {
 
-    void onClick(TabSelectorEvent event);
+    void onSelectAll();
+
+    void onSelectNone();
 }

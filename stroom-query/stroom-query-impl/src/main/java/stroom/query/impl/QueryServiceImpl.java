@@ -16,12 +16,14 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.impl.GenericComparator;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
+import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.FindFieldCriteria;
@@ -44,22 +46,29 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.Key;
+import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.query.language.functions.Val;
 import stroom.query.language.token.Token;
 import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
@@ -73,6 +82,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.NullSafe;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
@@ -107,6 +117,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -136,6 +147,7 @@ class QueryServiceImpl implements QueryService {
     private final ExpressionContextFactory expressionContextFactory;
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final ValPredicateFactory valPredicateFactory;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -151,7 +163,8 @@ class QueryServiceImpl implements QueryService {
                      final SearchRequestFactory searchRequestFactory,
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
-                     final ExpressionPredicateFactory expressionPredicateFactory) {
+                     final ExpressionPredicateFactory expressionPredicateFactory,
+                     final ValPredicateFactory valPredicateFactory) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -166,6 +179,7 @@ class QueryServiceImpl implements QueryService {
         this.expressionContextFactory = expressionContextFactory;
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.valPredicateFactory = valPredicateFactory;
     }
 
     @Override
@@ -303,6 +317,93 @@ class QueryServiceImpl implements QueryService {
         });
     }
 
+    @Override
+    public ColumnValues getColumnValues(final QueryColumnValuesRequest request) {
+        final QuerySearchRequest searchRequest = request.getSearchRequest();
+        final QueryKey queryKey = searchRequest.getQueryKey();
+        final SearchRequest mappedRequest = mapRequest(searchRequest);
+
+        try {
+            if (queryKey == null) {
+                throw new EntityServiceException("No query is active");
+            }
+
+            final DateTimeSettings dateTimeSettings = searchRequest.getQueryContext().getDateTimeSettings();
+            final List<ResultRequest> resultRequests = mappedRequest
+                    .getResultRequests()
+                    .stream()
+                    .filter(req -> ResultStyle.TABLE.equals(req.getResultStyle()))
+                    .toList();
+
+            if (resultRequests.isEmpty()) {
+                throw new EntityServiceException("No tables specified for download");
+            }
+
+            final Set<String> dedupe = new HashSet<>();
+            final TrimmedSortedList<String> list = new TrimmedSortedList<>(
+                    request.getPageRequest(),
+                    new GenericComparator());
+            for (final ResultRequest resultRequest : resultRequests) {
+                try {
+                    final RequestAndStore requestAndStore = searchResponseCreatorManager
+                            .getResultStore(mappedRequest);
+                    final DataStore dataStore = requestAndStore
+                            .resultStore()
+                            .getData(resultRequest.getComponentId());
+
+                    final TimeFilter timeFilter = null;
+                    final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
+                            request.getColumn(),
+                            request.getFilter(),
+                            dateTimeSettings);
+
+                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+
+                    final int index = dataStore
+                            .getColumns()
+                            .stream()
+                            .map(Column::getId)
+                            .toList()
+                            .indexOf(request.getColumn().getId());
+                    if (index == -1) {
+                        throw new RuntimeException("Column not found");
+                    }
+
+                    dataStore.fetch(
+                            dataStore.getColumns(),
+                            OffsetRange.UNBOUNDED,
+                            new OpenGroupsImpl(openGroups),
+                            timeFilter,
+                            item -> {
+                                final Val val = item.getValue(index);
+                                if (predicate.test(val)) {
+                                    final String string = val.toString();
+                                    if (string != null && dedupe.add(string)) {
+                                        list.add(string);
+                                    }
+                                }
+                                return null;
+                            },
+                            row -> {
+
+                            },
+                            count -> {
+
+                            });
+                } catch (final Exception e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                }
+            }
+
+            final ResultPage<String> resultPage = list.getResultPage();
+            return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
+        }
+    }
+
     private String getResultsFilename(final DownloadQueryResultsRequest request) {
         final QuerySearchRequest searchRequest = request.getSearchRequest();
         final String basename = searchRequest.getQueryKey().getUuid();
@@ -314,7 +415,7 @@ class QueryServiceImpl implements QueryService {
         String fileName = baseName;
         fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
         fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-        fileName = fileName.replace(" ", "_");
+        fileName = fileName.replace(' ', '_');
         fileName = fileName + "." + extension;
         return fileName;
     }
@@ -485,6 +586,7 @@ class QueryServiceImpl implements QueryService {
                     if (pref != null) {
                         columnBuilder.filter(pref.getFilter());
                         columnBuilder.columnFilter(pref.getColumnFilter());
+                        columnBuilder.columnValueSelection(pref.getColumnValueSelection());
                         columnBuilder.width(pref.getWidth());
                         columnBuilder.format(pref.getFormat());
                         if (pref.getSort() != null) {

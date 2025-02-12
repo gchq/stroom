@@ -16,6 +16,7 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
@@ -25,6 +26,7 @@ import stroom.node.api.NodeService;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
@@ -255,8 +257,8 @@ class QueryResourceImpl implements QueryResource {
     private boolean isTypeIncluded(final CompletionsRequest request,
                                    final Set<QueryHelpType> contextualHelpTypes,
                                    final QueryHelpType queryHelpType) {
-        return request.isTypeIncluded(queryHelpType)
-                && contextualHelpTypes.contains(queryHelpType);
+        return request.isTypeIncluded(queryHelpType) &&
+               contextualHelpTypes.contains(queryHelpType);
     }
 
     @Override
@@ -284,5 +286,31 @@ class QueryResourceImpl implements QueryResource {
     private int reduceMaxCompletions(final AtomicInteger maxCompletions, final List<?> list) {
         final int newVal = maxCompletions.addAndGet(list.size() * -1);
         return Math.max(0, newVal);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public ColumnValues getColumnValues(final String nodeName,
+                                        final QueryColumnValuesRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return queryServiceProvider.get().getColumnValues(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            ColumnValues.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    QueryResource.BASE_PATH,
+                                    QueryResource.COLUMN_VALUES_PATH_PART,
+                                    nodeName),
+                            () -> queryServiceProvider.get().getColumnValues(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 }

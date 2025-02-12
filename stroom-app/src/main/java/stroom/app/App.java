@@ -75,6 +75,8 @@ import jakarta.inject.Inject;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
 import jakarta.validation.ValidatorFactory;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
@@ -385,13 +387,17 @@ public class App extends Application<Config> {
     private void configureSessionCookie(final Environment environment,
                                         final SessionCookieConfig sessionCookieConfig) {
         // Ensure the session cookie that provides JSESSIONID is secure.
-        final jakarta.servlet.SessionCookieConfig servletSessionCookieConfig = environment
+        final ContextHandler.Context context = environment
                 .getApplicationContext()
-                .getServletContext()
+                .getServletContext();
+
+        final jakarta.servlet.SessionCookieConfig servletSessionCookieConfig = context
                 .getSessionCookieConfig();
         servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
         servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
-        // TODO : Add `SameSite=Strict` when supported by JEE
+        context.setAttribute(
+                HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE,
+                sessionCookieConfig.getSameSite().getAttributeValue());
     }
 
     private static void configureCors(io.dropwizard.core.setup.Environment environment) {

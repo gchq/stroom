@@ -43,7 +43,7 @@ import java.util.Objects;
         "columnFilter"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
-        "e.g. SUM(), along with sorting, filtering, formatting and grouping")
+                      "e.g. SUM(), along with sorting, filtering, formatting and grouping")
 public final class Column implements HasDisplayValue {
 
     @JsonPropertyDescription("The internal id of the field for equality purposes")
@@ -69,7 +69,7 @@ public final class Column implements HasDisplayValue {
     private final Format format;
 
     @JsonPropertyDescription("If this field is to be grouped then this defines the level of grouping, with 0 being " +
-            "the top level of grouping, 1 being the next level down, etc.")
+                             "the top level of grouping, 1 being the next level down, etc.")
     @JsonProperty
     private final Integer group;
 
@@ -88,6 +88,8 @@ public final class Column implements HasDisplayValue {
     private final Boolean special;
     @JsonProperty
     private ColumnFilter columnFilter;
+    @JsonProperty
+    private ColumnValueSelection columnValueSelection;
 
     @JsonCreator
     public Column(@JsonProperty("id") final String id,
@@ -100,7 +102,8 @@ public final class Column implements HasDisplayValue {
                   @JsonProperty("width") final Integer width,
                   @JsonProperty("visible") final Boolean visible,
                   @JsonProperty("special") final Boolean special,
-                  @JsonProperty("columnFilter") final ColumnFilter columnFilter) {
+                  @JsonProperty("columnFilter") final ColumnFilter columnFilter,
+                  @JsonProperty("columnValueSelection") ColumnValueSelection columnValueSelection) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -124,6 +127,7 @@ public final class Column implements HasDisplayValue {
             this.special = false;
         }
         this.columnFilter = columnFilter;
+        this.columnValueSelection = columnValueSelection;
     }
 
     public String getId() {
@@ -175,6 +179,14 @@ public final class Column implements HasDisplayValue {
         this.columnFilter = columnFilter;
     }
 
+    public ColumnValueSelection getColumnValueSelection() {
+        return columnValueSelection;
+    }
+
+    public void setColumnValueSelection(final ColumnValueSelection columnValueSelection) {
+        this.columnValueSelection = columnValueSelection;
+    }
+
     @JsonIgnore
     @Override
     public String getDisplayValue() {
@@ -191,16 +203,17 @@ public final class Column implements HasDisplayValue {
         }
         final Column column = (Column) o;
         return Objects.equals(id, column.id) &&
-                Objects.equals(name, column.name) &&
-                Objects.equals(expression, column.expression) &&
-                Objects.equals(sort, column.sort) &&
-                Objects.equals(filter, column.filter) &&
-                Objects.equals(format, column.format) &&
-                Objects.equals(group, column.group) &&
-                Objects.equals(width, column.width) &&
-                Objects.equals(visible, column.visible) &&
-                Objects.equals(special, column.special) &&
-                Objects.equals(columnFilter, column.columnFilter);
+               Objects.equals(name, column.name) &&
+               Objects.equals(expression, column.expression) &&
+               Objects.equals(sort, column.sort) &&
+               Objects.equals(filter, column.filter) &&
+               Objects.equals(format, column.format) &&
+               Objects.equals(group, column.group) &&
+               Objects.equals(width, column.width) &&
+               Objects.equals(visible, column.visible) &&
+               Objects.equals(special, column.special) &&
+               Objects.equals(columnFilter, column.columnFilter) &&
+               Objects.equals(columnValueSelection, column.columnValueSelection);
     }
 
     @Override
@@ -215,7 +228,8 @@ public final class Column implements HasDisplayValue {
                 width,
                 visible,
                 special,
-                columnFilter);
+                columnFilter,
+                columnValueSelection);
     }
 
     public static Builder builder() {
@@ -242,6 +256,7 @@ public final class Column implements HasDisplayValue {
         private Boolean visible;
         private Boolean special;
         private ColumnFilter columnFilter;
+        private ColumnValueSelection columnValueSelection;
 
 //        /**
 //         * @param name       The name of the field for display purposes
@@ -271,6 +286,7 @@ public final class Column implements HasDisplayValue {
             this.visible = column.visible;
             this.special = column.special;
             this.columnFilter = column.columnFilter;
+            this.columnValueSelection = column.columnValueSelection;
         }
 
         /**
@@ -358,6 +374,11 @@ public final class Column implements HasDisplayValue {
             return this;
         }
 
+        public Builder columnValueSelection(final ColumnValueSelection columnValueSelection) {
+            this.columnValueSelection = columnValueSelection;
+            return this;
+        }
+
         public Column build() {
             return new Column(
                     id,
@@ -370,7 +391,8 @@ public final class Column implements HasDisplayValue {
                     width,
                     visible,
                     special,
-                    columnFilter);
+                    columnFilter,
+                    columnValueSelection);
         }
     }
 }

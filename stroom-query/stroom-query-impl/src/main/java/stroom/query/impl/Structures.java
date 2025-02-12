@@ -27,6 +27,7 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -396,7 +397,7 @@ class Structures {
             detail.appendLink(
                     uiConfig.getHelpUrl() +
                     uiConfig.getHelpSubPathStroomQueryLanguage() +
-                    "#" + structureElement.title.toLowerCase().replace(" ", "-"),
+                    "#" + structureElement.title.toLowerCase().replace(' ', '-'),
                     "Help Documentation");
             detail.append(".");
         }

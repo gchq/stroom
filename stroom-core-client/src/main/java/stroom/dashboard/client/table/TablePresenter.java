@@ -32,6 +32,8 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.dashboard.shared.ColumnValues;
+import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -49,6 +51,7 @@ import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -90,6 +93,8 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
@@ -106,7 +111,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -118,6 +122,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -126,6 +131,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
@@ -186,7 +192,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final TimeZones timeZones,
                           final UserPreferencesManager userPreferencesManager,
                           final DynamicColumnSelectionListModel columnSelectionListModel,
-                          final DataSourceClient dataSourceClient) {
+                          final DataSourceClient dataSourceClient,
+                          final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         super(eventBus, view, settingsPresenterProvider);
         this.pagerView = pagerView;
         this.locationManager = locationManager;
@@ -235,7 +242,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
-                tableFilterPresenter);
+                tableFilterPresenter,
+                columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get(result -> {
@@ -324,9 +332,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> {
-            setPause(!pause, true);
-        }));
+        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
     }
 
     @Override
@@ -512,7 +518,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 selectionModel.getSelectedItems());
         final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
                 selectionModel.getSelectedItems());
-        final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
+        final boolean enabled = !eventIdList.isEmpty() || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
 
@@ -757,8 +763,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (queryId != null) {
             final Component component = getComponents().get(queryId);
-            if (component instanceof QueryPresenter) {
-                final QueryPresenter queryPresenter = (QueryPresenter) component;
+            if (component instanceof final QueryPresenter queryPresenter) {
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
                     currentSearchModel.addComponent(getComponentConfig().getId(), this);
@@ -1081,10 +1086,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         getComponents().fireComponentChangeEvent(this);
     }
 
-    public TableSectionElement getTableHeadElement() {
-        return dataGrid.getTableHeadElement();
-    }
-
     public void setFocused(final boolean focused) {
         dataGrid.setFocused(focused);
     }
@@ -1105,10 +1106,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
         }
-    }
-
-    void clear() {
-        setDataInternal(null);
     }
 
     @Override
@@ -1172,5 +1169,102 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public interface TableView extends View {
 
         void setTableView(View view);
+    }
+
+    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+        return new TableColumnValuesDataSupplier(restFactory,
+                currentSearchModel,
+                column,
+                getTableSettings(),
+                getDateTimeSettings(),
+                getTableName(getId()));
+    }
+
+    public static class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
+
+        private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
+        private final RestFactory restFactory;
+        private final SearchModel searchModel;
+        private final DashboardSearchRequest searchRequest;
+
+        public TableColumnValuesDataSupplier(
+                final RestFactory restFactory,
+                final SearchModel searchModel,
+                final stroom.query.api.v2.Column column,
+                final TableSettings tableSettings,
+                final DateTimeSettings dateTimeSettings,
+                final String tableName) {
+            super(column.copy().build());
+            this.restFactory = restFactory;
+            this.searchModel = searchModel;
+
+            DashboardSearchRequest dashboardSearchRequest = null;
+            if (searchModel != null) {
+                final QueryKey queryKey = searchModel.getCurrentQueryKey();
+                final Search currentSearch = searchModel.getCurrentSearch();
+                if (queryKey != null && currentSearch != null) {
+                    final List<ComponentResultRequest> requests = new ArrayList<>();
+                    currentSearch.getComponentSettingsMap().entrySet()
+                            .stream()
+                            .filter(settings -> settings.getValue() instanceof TableComponentSettings)
+                            .forEach(componentSettings -> requests.add(TableResultRequest
+                                    .builder()
+                                    .componentId(componentSettings.getKey())
+                                    .requestedRange(OffsetRange.UNBOUNDED)
+                                    .tableName(tableName)
+                                    .tableSettings(tableSettings)
+                                    .fetch(Fetch.ALL)
+                                    .build()));
+
+                    final Search search = Search
+                            .builder()
+                            .dataSourceRef(currentSearch.getDataSourceRef())
+                            .expression(currentSearch.getExpression())
+                            .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                            .params(currentSearch.getParams())
+                            .timeRange(currentSearch.getTimeRange())
+                            .incremental(true)
+                            .queryInfo(currentSearch.getQueryInfo())
+                            .build();
+
+                    dashboardSearchRequest = DashboardSearchRequest
+                            .builder()
+                            .searchRequestSource(searchModel.getSearchRequestSource())
+                            .queryKey(queryKey)
+                            .search(search)
+                            .componentResultRequests(requests)
+                            .dateTimeSettings(dateTimeSettings)
+                            .build();
+                }
+            }
+
+            searchRequest = dashboardSearchRequest;
+        }
+
+        @Override
+        protected void exec(final Range range,
+                            final Consumer<ColumnValues> dataConsumer,
+                            final RestErrorHandler errorHandler) {
+            if (searchRequest == null) {
+                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+
+            } else {
+                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
+                        searchRequest,
+                        getColumn(),
+                        getNameFilter(),
+                        pageRequest);
+
+                restFactory
+                        .create(DASHBOARD_RESOURCE)
+                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
+                                columnValuesRequest))
+                        .onSuccess(dataConsumer)
+                        .taskMonitorFactory(getTaskMonitorFactory())
+                        .exec();
+            }
+        }
     }
 }

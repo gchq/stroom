@@ -1,5 +1,7 @@
 package stroom.dashboard.impl;
 
+import stroom.dashboard.shared.ColumnValues;
+import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
@@ -23,4 +25,6 @@ public interface DashboardService {
     DashboardSearchResponse search(DashboardSearchRequest request);
 
 //    Boolean destroy(DestroySearchRequest request);
+
+    ColumnValues getColumnValues(ColumnValuesRequest request);
 }

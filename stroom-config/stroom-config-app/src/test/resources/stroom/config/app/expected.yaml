@@ -942,6 +942,7 @@ appConfig:
     maxInactiveInterval: "P1D"
   sessionCookie:
     httpOnly: true
+    sameSite: "STRICT"
     secure: true
   solr:
     indexCache:

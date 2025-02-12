@@ -9,7 +9,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValFunctionFactory;
+import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
@@ -435,7 +435,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 

@@ -20,17 +20,21 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
+import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.cf.RulesPresenter;
+import stroom.dashboard.shared.ColumnValues;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -47,6 +51,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
@@ -56,6 +61,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -69,6 +76,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -134,6 +142,7 @@ public class QueryResultTablePresenter
                                      final FormatPresenter formatPresenter,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
                                      final ColumnFilterPresenter columnFilterPresenter,
+                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
         this.restFactory = restFactory;
@@ -157,7 +166,8 @@ public class QueryResultTablePresenter
                 this,
                 formatPresenter,
                 rulesPresenterProvider,
-                columnFilterPresenter);
+                columnFilterPresenter,
+                columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
 
@@ -525,7 +535,7 @@ public class QueryResultTablePresenter
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
-                if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
                     tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
@@ -806,9 +816,6 @@ public class QueryResultTablePresenter
         return currentSelectionFilter;
     }
 
-    // --------------------------------------------------------------------------------
-
-
     public interface QueryResultTableView extends View {
 
         void setTableView(View view);
@@ -822,6 +829,69 @@ public class QueryResultTablePresenter
         public ColAndPosition(final int position, final Column column) {
             this.position = position;
             this.column = column;
+        }
+    }
+
+    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+        return new QueryTableColumnValuesDataSupplier(restFactory,
+                currentSearchModel,
+                column);
+    }
+
+    public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
+
+        private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+
+        private final RestFactory restFactory;
+        private final QueryModel searchModel;
+        private final QuerySearchRequest searchRequest;
+
+
+        public QueryTableColumnValuesDataSupplier(
+                final RestFactory restFactory,
+                final QueryModel searchModel,
+                final stroom.query.api.v2.Column column) {
+            super(column.copy().build());
+            this.restFactory = restFactory;
+            this.searchModel = searchModel;
+
+            QuerySearchRequest querySearchRequest = null;
+            final QueryKey queryKey = searchModel.getCurrentQueryKey();
+            final QuerySearchRequest currentSearch = searchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
+                querySearchRequest = currentSearch
+                        .copy()
+                        .queryKey(queryKey)
+                        .storeHistory(false)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .build();
+            }
+            searchRequest = querySearchRequest;
+        }
+
+        @Override
+        protected void exec(final Range range,
+                            final Consumer<ColumnValues> dataConsumer,
+                            final RestErrorHandler errorHandler) {
+            if (searchRequest == null) {
+                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+
+            } else {
+                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                final QueryColumnValuesRequest columnValuesRequest = new QueryColumnValuesRequest(
+                        searchRequest,
+                        getColumn(),
+                        getNameFilter(),
+                        pageRequest);
+
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
+                                columnValuesRequest))
+                        .onSuccess(dataConsumer)
+                        .taskMonitorFactory(getTaskMonitorFactory())
+                        .exec();
+            }
         }
     }
 }

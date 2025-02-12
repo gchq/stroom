@@ -27,6 +27,7 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

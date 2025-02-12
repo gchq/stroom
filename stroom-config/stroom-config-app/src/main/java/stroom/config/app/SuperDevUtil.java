@@ -26,15 +26,15 @@ public class SuperDevUtil {
 
             LOGGER.warn("" + ConsoleColour.red(
                     "" +
-                            "\n                                      _                                  _      " +
-                            "\n                                     | |                                | |     " +
-                            "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
-                            "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
-                            "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
-                            "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
-                            "\n               | |                                                              " +
-                            "\n               |_|                                                              " +
-                            "\n"));
+                    "\n                                      _                                  _      " +
+                    "\n                                     | |                                | |     " +
+                    "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
+                    "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
+                    "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
+                    "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
+                    "\n               | |                                                              " +
+                    "\n               |_|                                                              " +
+                    "\n"));
 
             final String msg = new ColouredStringBuilder()
                     .appendRed("In GWT Super Dev Mode, overriding ")
@@ -63,12 +63,6 @@ public class SuperDevUtil {
                     .withStrictTransportSecurity(SUPER_DEV_STRICT_TRANSPORT_SECURITY_VALUE);
             LOGGER.debug("newContentSecurityConfig: {}", newContentSecurityConfig);
             return newContentSecurityConfig;
-
-        } else if (config instanceof SessionCookieConfig && IS_IN_SUPER_DEV_MODE) {
-            final SessionCookieConfig newSessionCookieConfig = ((SessionCookieConfig) config)
-                    .withSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
-            LOGGER.debug("newSessionCookieConfig: {}", newSessionCookieConfig);
-            return newSessionCookieConfig;
         } else {
             return config;
         }

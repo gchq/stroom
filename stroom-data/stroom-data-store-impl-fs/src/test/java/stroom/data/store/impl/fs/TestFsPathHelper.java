@@ -128,7 +128,7 @@ class TestFsPathHelper {
                 .toInstant(ZoneOffset.UTC)
                 .toEpochMilli();
         final String streamType = StreamTypeNames.RAW_EVENTS;
-        final String streamTypeAsPath = StreamTypeNames.RAW_EVENTS.toUpperCase().replace(" ", "_");
+        final String streamTypeAsPath = StreamTypeNames.RAW_EVENTS.toUpperCase().replace(' ', '_');
         final String feed = "FEED_ME";
         final long metaId = 123_456_789L;
         final SimpleMeta simpleMeta = new SimpleMetaImpl(

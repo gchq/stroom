@@ -16,6 +16,7 @@
 
 package stroom.query.shared;
 
+import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
@@ -50,6 +51,7 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
 
     String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
     String SEARCH_PATH_PART = "/search";
+    String COLUMN_VALUES_PATH_PART = "/columnValues";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
@@ -93,6 +95,27 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "request", required = true) DownloadQueryResultsRequest request) {
         return downloadSearchResults(null, request);
     }
+
+
+    @POST
+    @Path(COLUMN_VALUES_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Get unique column values so the user can filter table results more easily",
+            operationId = "getColumnValues")
+    ColumnValues getColumnValues(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "request", required = true) QueryColumnValuesRequest request);
+
+    @POST
+    @Path(COLUMN_VALUES_PATH_PART)
+    @Operation(
+            summary = "Get unique column values so the user can filter table results more easily",
+            operationId = "getColumnValues")
+    default ColumnValues getColumnValues(
+            @Parameter(description = "request", required = true) QueryColumnValuesRequest request) {
+        return getColumnValues(null, request);
+    }
+
 
     @POST
     @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)

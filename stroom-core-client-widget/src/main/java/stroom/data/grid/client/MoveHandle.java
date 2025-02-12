@@ -83,12 +83,17 @@ public class MoveHandle<R> extends Widget {
         }
     }
 
-    public void startMove(final NativeEvent event) {
+    public boolean isDragThresholdExceeded(final NativeEvent event) {
         if (heading != null && Math.abs(event.getClientX() - heading.getInitialX()) > 10) {
-            Event.setCapture(getElement());
-            showGlass();
-            moving = true;
+            return true;
         }
+        return false;
+    }
+
+    public void startMove(final NativeEvent event) {
+        Event.setCapture(getElement());
+        showGlass();
+        moving = true;
     }
 
     public void endMove(final NativeEvent event) {

@@ -16,12 +16,14 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
@@ -41,6 +43,8 @@ public interface QueryService {
     ResourceGeneration downloadSearchResults(DownloadQueryResultsRequest request);
 
     DashboardSearchResponse search(QuerySearchRequest request);
+
+    ColumnValues getColumnValues(QueryColumnValuesRequest request);
 
     List<String> fetchTimeZones();
 

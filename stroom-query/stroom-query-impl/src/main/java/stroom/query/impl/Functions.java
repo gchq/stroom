@@ -44,6 +44,7 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -626,7 +627,7 @@ public class Functions {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                signature.getPrimaryCategory().toLowerCase().replace(' ', '-') +
                 "#" +
                 functionSignatureToAnchor(signature),
                 "Help Documentation");
