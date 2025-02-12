@@ -17,16 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter.ColumnValuesFilterView;
 import stroom.dashboard.shared.ColumnValues;
-import stroom.dashboard.shared.ColumnValuesRequest;
-import stroom.dashboard.shared.ComponentResultRequest;
-import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.DashboardSearchRequest;
-import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -35,25 +27,20 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.TableSettings;
-import stroom.util.shared.PageRequest;
+import stroom.query.api.v2.ColumnValueSelection;
 import stroom.widget.dropdowntree.client.view.QuickFilterDialogView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -69,7 +56,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -84,31 +70,25 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         QuickFilterUiHandlers {
 
     private final Set<String> selected = new HashSet<>();
-
-    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
-
+    private final QuickFilterDialogView quickFilterPageView;
     private final PagerView pagerView;
     private final CellTable<String> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
-    private final RestFactory restFactory;
 
-    private SearchModel searchModel;
-    private stroom.query.api.v2.Column column;
-    private DashboardSearchRequest searchRequest;
+    private ColumnValuesDataSupplier dataSupplier;
     private boolean inverseSelection = true;
-    private String nameFilter;
     private RestDataProvider<String, ColumnValues> dataProvider;
+    private FilterCellManager filterCellManager;
 
     @Inject
     public ColumnValuesFilterPresenter(final EventBus eventBus,
                                        final ColumnValuesFilterView view,
                                        final QuickFilterDialogView quickFilterPageView,
-                                       final PagerView pagerView,
-                                       final RestFactory restFactory) {
+                                       final PagerView pagerView) {
         super(eventBus, view);
         view.setUiHandlers(this);
         quickFilterPageView.setUiHandlers(this);
-        this.restFactory = restFactory;
+        this.quickFilterPageView = quickFilterPageView;
         this.pagerView = pagerView;
 
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
@@ -117,9 +97,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         // Sink events.
         final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
         cellTable.sinkEvents(mouseMove);
-
-//        cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
-//        cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
 
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
@@ -135,68 +112,33 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     }
 
     public void show(final Element element,
-                     final stroom.query.api.v2.Column column,
-                     final SearchModel searchModel,
-                     final TableSettings tableSettings,
-                     final DateTimeSettings dateTimeSettings,
-                     final String tableName) {
-        this.searchModel = searchModel;
-        this.column = column;
+                     final ColumnValuesDataSupplier dataSupplier,
+                     final HidePopupEvent.Handler handler,
+                     final ColumnValueSelection currentSelection,
+                     final FilterCellManager filterCellManager) {
+        this.dataSupplier = dataSupplier;
+        this.filterCellManager = filterCellManager;
+        dataSupplier.setTaskMonitorFactory(pagerView);
 
-        final QueryKey queryKey = searchModel.getCurrentQueryKey();
-        final Search currentSearch = searchModel.getCurrentSearch();
-        final List<ComponentResultRequest> requests = new ArrayList<>();
-        currentSearch.getComponentSettingsMap().entrySet()
-                .stream()
-                .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                .forEach(componentSettings -> requests.add(TableResultRequest
-                        .builder()
-                        .componentId(componentSettings.getKey())
-                        .requestedRange(OffsetRange.UNBOUNDED)
-                        .tableName(tableName)
-                        .tableSettings(tableSettings)
-                        .fetch(Fetch.ALL)
-                        .build()));
-
-        final Search search = Search
-                .builder()
-                .dataSourceRef(currentSearch.getDataSourceRef())
-                .expression(currentSearch.getExpression())
-                .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                .params(currentSearch.getParams())
-                .timeRange(currentSearch.getTimeRange())
-                .incremental(true)
-                .queryInfo(currentSearch.getQueryInfo())
-                .build();
-
-        searchRequest = DashboardSearchRequest
-                .builder()
-                .searchRequestSource(searchModel.getSearchRequestSource())
-                .queryKey(queryKey)
-                .search(search)
-                .componentResultRequests(requests)
-                .dateTimeSettings(dateTimeSettings)
-                .build();
+        if (currentSelection != null) {
+            inverseSelection = currentSelection.isInvert();
+            selected.clear();
+            selected.addAll(currentSelection.getValues());
+        }
 
         clear();
         refresh();
 
-//        this.filterStateConsumer = filterStateConsumer;
         Rect relativeRect = new Rect(element);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
-
-        //                    if (filterStateConsumer != null) {
-        //                        filterStateConsumer.accept(hasActiveFilter());
-        //                    }
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
+                .popupSize(PopupSize.resizable(400, 400))
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
-//                .onShow(e -> {
-//
-//                }
-//                .onHide(handler)
+                .onShow(e -> quickFilterPageView.focus())
+                .onHide(handler)
                 .fire();
     }
 
@@ -209,16 +151,23 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectAll() {
         selected.clear();
         this.inverseSelection = true;
+        filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
         refresh();
-        updateTable();
     }
 
     @Override
     public void onClear() {
         selected.clear();
         inverseSelection = false;
+        filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
         refresh();
-        updateTable();
+    }
+
+    private ColumnValueSelection createSelection() {
+        if (inverseSelection && selected.isEmpty()) {
+            return null;
+        }
+        return new ColumnValueSelection(new HashSet<>(selected), inverseSelection);
     }
 
     private void clear() {
@@ -247,13 +196,9 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                 selected.add(value);
             }
 
+            filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
             refresh();
-            updateTable();
         }
-    }
-
-    private void updateTable() {
-
     }
 
     @Override
@@ -280,18 +225,11 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
 
     @Override
     public void onFilterChange(final String text) {
-        nameFilter = text;
-        if (nameFilter != null) {
-            nameFilter = nameFilter.trim();
-            if (nameFilter.isEmpty()) {
-                nameFilter = null;
-            }
-        }
+        dataSupplier.setNameFilter(text);
         refresh();
     }
 
     private void refresh() {
-
         if (dataProvider == null) {
             //noinspection Convert2Diamond
             dataProvider = new RestDataProvider<String, ColumnValues>(getEventBus()) {
@@ -299,27 +237,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                 protected void exec(final Range range,
                                     final Consumer<ColumnValues> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                    final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
-                            searchRequest,
-                            column,
-                            nameFilter,
-                            pageRequest);
-
-                    restFactory
-                            .create(DASHBOARD_RESOURCE)
-                            .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                                    columnValuesRequest))
-                            .onSuccess(dataConsumer)
-                            .taskMonitorFactory(pagerView)
-                            .exec();
-
-
-//                    CacheNodeListPresenter.this.range = range;
-//                    CacheNodeListPresenter.this.dataConsumer = dataConsumer;
-//                    delayedUpdate.reset();
-//                    nodeManager.listAllNodes(nodeNames ->
-//                            fetchTasksForNodes(dataConsumer, errorHandler, nodeNames), errorHandler, getView());
+                    dataSupplier.exec(range, dataConsumer, errorHandler);
                 }
             };
             dataProvider.addDataDisplay(cellTable);

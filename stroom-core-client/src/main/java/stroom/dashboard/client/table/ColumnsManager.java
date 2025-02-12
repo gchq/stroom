@@ -22,6 +22,7 @@ import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
+import stroom.query.api.v2.ColumnValueSelection;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.shared.SvgImage;
@@ -31,6 +32,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.ElementUtil;
@@ -50,27 +52,31 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ColumnsManager implements HeadingListener, HasValueFilter {
+public class ColumnsManager implements HeadingListener, FilterCellManager {
 
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final TableFilterPresenter tableFilterPresenter;
+    private final ColumnValuesFilterPresenter columnValuesFilterPresenter;
     private int columnsStartIndex;
-    private int currentColIndex = -1;
+    private int currentMenuColIndex = -1;
+    private int currentFilterColIndex = -1;
     private boolean ignoreNext;
 
     public ColumnsManager(final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
-                          final TableFilterPresenter tableFilterPresenter) {
+                          final TableFilterPresenter tableFilterPresenter,
+                          final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
         this.tableFilterPresenter = tableFilterPresenter;
+        this.columnValuesFilterPresenter = columnValuesFilterPresenter;
     }
 
     @Override
@@ -84,7 +90,8 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             }
         }
 
-        ignoreNext = currentColIndex == colIndex;
+        ignoreNext = currentMenuColIndex == colIndex ||
+                     currentFilterColIndex == colIndex;
         HideMenuEvent
                 .builder()
                 .fire(tablePresenter);
@@ -100,13 +107,29 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 new Timer() {
                     @Override
                     public void run() {
-                        if (currentColIndex == colIndex) {
+                        final Element parent = heading.getElement();
+                        final Element button = ElementUtil.findChild(parent, "column-valueFilterIcon");
+                        final Element target = event.getEventTarget().cast();
+                        final boolean isFilterButton = button.isOrHasChild(target);
+
+                        if (currentFilterColIndex == colIndex) {
+                            HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
+
+                        } else if (isFilterButton) {
+                            currentFilterColIndex = colIndex;
+                            columnValuesFilterPresenter.show(
+                                    button,
+                                    tablePresenter.getDataSupplier(column),
+                                    hideEvent -> currentFilterColIndex = -1,
+                                    column.getColumnValueSelection(),
+                                    ColumnsManager.this);
+                        }
+
+                        if (currentMenuColIndex == colIndex) {
                             HideMenuEvent.builder().fire(tablePresenter);
 
-                        } else {
-                            currentColIndex = colIndex;
-                            final Element target = heading.getElement();
-
+                        } else if (!isFilterButton) {
+                            currentMenuColIndex = colIndex;
                             final List<Item> menuItems = getMenuItems(column);
 
                             Element element = event.getEventTarget().cast();
@@ -116,14 +139,15 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
 
                             Rect relativeRect = new Rect(element);
                             relativeRect = relativeRect.grow(3);
-                            final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
+                            final PopupPosition popupPosition = new PopupPosition(relativeRect,
+                                    PopupLocation.BELOW);
 
                             ShowMenuEvent
                                     .builder()
                                     .items(menuItems)
                                     .popupPosition(popupPosition)
                                     .addAutoHidePartner(element)
-                                    .onHide(e2 -> currentColIndex = -1)
+                                    .onHide(e2 -> currentMenuColIndex = -1)
                                     .fire(tablePresenter);
                         }
                     }
@@ -375,6 +399,20 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
         }
     }
 
+    @Override
+    public void setValueSelection(final Column column, final ColumnValueSelection columnValueSelection) {
+        if (!Objects.equals(column.getColumnValueSelection(), columnValueSelection)) {
+            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // focus from column filter textbox.
+            column.setColumnValueSelection(columnValueSelection);
+
+            replaceColumn(column, column.copy().columnValueSelection(columnValueSelection).build());
+            tablePresenter.setFocused(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.onColumnFilterChange();
+        }
+    }
+
     private List<Column> getColumns() {
         if (tablePresenter.getSettings() != null && tablePresenter.getTableComponentSettings().getColumns() != null) {
             return new ArrayList<>(tablePresenter.getTableComponentSettings().getColumns());
@@ -484,7 +522,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             String expression = column.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
             expression = expression.trim();
-            if (expression.length() > 0) {
+            if (!expression.isEmpty()) {
                 highlight = true;
             }
         }
@@ -646,13 +684,13 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 .text("Filter")
                 .command(() -> filterColumn(column))
                 .highlight((column.getFilter() != null
-                           && ((column.getFilter().getIncludes() != null
-                                && column.getFilter().getIncludes().trim().length() > 0)
-                               || (column.getFilter().getExcludes() != null
-                                   && column.getFilter().getExcludes().trim().length() > 0))) ||
-                               (column.getColumnFilter() != null
-                           && ((column.getColumnFilter().getFilter() != null
-                                && column.getColumnFilter().getFilter().trim().length() > 0))))
+                            && ((column.getFilter().getIncludes() != null
+                                 && !column.getFilter().getIncludes().trim().isEmpty())
+                                || (column.getFilter().getExcludes() != null
+                                    && !column.getFilter().getExcludes().trim().isEmpty()))) ||
+                           (column.getColumnFilter() != null
+                            && ((column.getColumnFilter().getFilter() != null
+                                 && !column.getColumnFilter().getFilter().trim().isEmpty()))))
                 .build();
     }
 
@@ -719,7 +757,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
             }
         }
 
-        if (menuItems.size() == 0) {
+        if (menuItems.isEmpty()) {
             return null;
         }
 

@@ -428,6 +428,7 @@
 
 .column-top {
     display: flex;
+    width: 100%;
     flex-direction: row;
 	cursor: pointer;
 	opacity: 0.9;
@@ -462,6 +463,13 @@
 	font-size: var(--font-size-8);
 	vertical-align: top;
 	text-decoration: none;
+}
+
+.column-valueFilter {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: row-reverse;
+    padding-right: 5px;
 }
 
 .TablePresenter input {

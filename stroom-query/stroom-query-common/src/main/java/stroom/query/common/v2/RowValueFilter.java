@@ -18,7 +18,12 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnFilter;
+import stroom.query.api.v2.ColumnValueSelection;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
 import java.util.List;
@@ -26,14 +31,55 @@ import java.util.Optional;
 
 public class RowValueFilter {
 
-    public static Optional<ExpressionOperator> create(final List<Column> columns) {
+    public static Optional<ExpressionOperator> create(final List<Column> columns,
+                                                      final boolean applyValueFilters) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
-            if (column.getColumnFilter() != null) {
+            final ColumnFilter columnFilter = column.getColumnFilter();
+            if (applyValueFilters && columnFilter != null) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
                         new SingleFieldProvider(column.getId()),
-                        column.getColumnFilter().getFilter());
+                        columnFilter.getFilter());
                 operator.ifPresent(valueFilterBuilder::addOperator);
+            }
+
+            final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
+            if (columnValueSelection != null && columnValueSelection.isEnabled()) {
+                final List<ExpressionTerm> terms = columnValueSelection
+                        .getValues()
+                        .stream()
+                        .map(value -> ExpressionTerm
+                                .builder()
+                                .field(column.getId())
+                                .condition(Condition.EQUALS)
+                                .value(value)
+                                .build())
+                        .toList();
+
+                ExpressionOperator expressionOperator = ExpressionOperator
+                        .builder()
+                        .op(Op.OR)
+                        .addTerms(terms)
+                        .build();
+                if (columnValueSelection.isInvert()) {
+                    expressionOperator = ExpressionOperator
+                            .builder()
+                            .op(Op.NOT)
+                            .addOperators(expressionOperator)
+                            .build();
+                } else if (terms.isEmpty()) {
+                    expressionOperator = ExpressionOperator
+                            .builder()
+                            .op(Op.AND)
+                            .addTerm(ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.IN)
+                                    .value("")
+                                    .build())
+                            .build();
+                }
+                valueFilterBuilder.addOperator(expressionOperator);
             }
         });
         final ExpressionOperator valueFilter = valueFilterBuilder.build();

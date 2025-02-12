@@ -4695,6 +4695,15 @@ public enum SvgImage {
             " 181t-181 75-181-75-75-181 75-181 181-75 181 75 75 181z\"/></svg> \n" +
             ""),
 
+    VALUE_FILTER("value-filter.svg", "svg-image__value-filter", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" xmlns=\"htt" +
+            "p://www.w3.org/2000/svg\"><path style=\"stroke:currentColor;stroke-width:170;strok" +
+            "e-linecap:round\" d=\"M 253.74713,562.14586 H 1561.6726\"/><path style=\"stroke:curr" +
+            "entColor;stroke-width:170;stroke-linecap:round\" d=\"M 528.07529,863.17473 H 1287." +
+            "3444\"/><path style=\"stroke:currentColor;stroke-width:170;stroke-linecap:round\" d" +
+            "=\"m 799.6554,1164.2036 h 216.1089\"/></svg> \n" +
+            ""),
+
     VOLUMES("volumes.svg", "svg-image__volumes", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M1168 1216q0 33-23.5 56.5t-56.5 23" +

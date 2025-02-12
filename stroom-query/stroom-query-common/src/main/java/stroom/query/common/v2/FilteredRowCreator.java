@@ -76,21 +76,17 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                                                                    final DateTimeSettings dateTimeSettings,
                                                                    final ExpressionPredicateFactory
                                                                            expressionPredicateFactory) {
-        Optional<Predicate<Val[]>> valuesPredicate = Optional.empty();
-
-        // Apply value filters.
-        if (applyValueFilters) {
-            // Create column value filter expression.
-            final Optional<ExpressionOperator> optionalExpressionOperator = RowValueFilter.create(newColumns);
-            valuesPredicate = optionalExpressionOperator.flatMap(expressionOperator -> {
-                // Create the field position map for the new columns.
-                final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(newColumns);
-                return expressionPredicateFactory.create(
-                        expressionOperator,
-                        queryFieldIndex,
-                        dateTimeSettings);
-            });
-        }
+        // Create column value filter expression.
+        final Optional<ExpressionOperator> optionalExpressionOperator =
+                RowValueFilter.create(newColumns, applyValueFilters);
+        final Optional<Predicate<Val[]>> valuesPredicate = optionalExpressionOperator.flatMap(expressionOperator -> {
+            // Create the field position map for the new columns.
+            final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(newColumns);
+            return expressionPredicateFactory.create(
+                    expressionOperator,
+                    queryFieldIndex,
+                    dateTimeSettings);
+        });
 
         // Apply having filters.
         final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);

@@ -1,12 +1,11 @@
 package stroom.dashboard.client.table;
 
 import stroom.query.api.v2.Column;
-
-import com.google.gwt.dom.client.NativeEvent;
+import stroom.query.api.v2.ColumnValueSelection;
 
 public interface FilterCellManager {
 
     void setValueFilter(Column column, String valueFilter);
 
-    void onSelectionPopup(Column column, NativeEvent event);
+    void setValueSelection(Column column, ColumnValueSelection columnValueSelection);
 }

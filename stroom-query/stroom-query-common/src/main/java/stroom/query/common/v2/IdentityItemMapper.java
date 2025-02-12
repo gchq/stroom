@@ -12,9 +12,4 @@ public class IdentityItemMapper implements ItemMapper<Item> {
     public Item create(final Item item) {
         return item;
     }
-
-    @Override
-    public boolean hidesRows() {
-        return false;
-    }
 }

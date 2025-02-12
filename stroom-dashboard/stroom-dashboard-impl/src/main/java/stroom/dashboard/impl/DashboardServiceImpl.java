@@ -20,6 +20,8 @@ import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
+import stroom.dashboard.shared.ColumnValues;
+import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -36,6 +38,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -45,17 +48,23 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResultBuilder;
+import stroom.query.api.v2.TimeFilter;
+import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.Key;
+import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
+import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.Val;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -65,6 +74,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.NullSafe;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -72,6 +82,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
 
 import jakarta.inject.Inject;
@@ -86,11 +97,14 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -116,6 +130,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final ValPredicateFactory valPredicateFactory;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -130,7 +145,8 @@ class DashboardServiceImpl implements DashboardService {
                          final TaskContextFactory taskContextFactory,
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
-                         final ExpressionPredicateFactory expressionPredicateFactory) {
+                         final ExpressionPredicateFactory expressionPredicateFactory,
+                         final ValPredicateFactory valPredicateFactory) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -144,6 +160,7 @@ class DashboardServiceImpl implements DashboardService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.valPredicateFactory = valPredicateFactory;
     }
 
     @Override
@@ -274,8 +291,7 @@ class DashboardServiceImpl implements DashboardService {
                     throw new EntityServiceException("No tables specified for download");
                 }
 
-                final RequestAndStore requestAndStore = searchResponseCreatorManager
-                        .getResultStore(mappedRequest);
+                final RequestAndStore requestAndStore = searchResponseCreatorManager.getResultStore(mappedRequest);
 
                 // Import file.
                 final String fileName = getResultsFilename(request);
@@ -512,6 +528,102 @@ class DashboardServiceImpl implements DashboardService {
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
+        }
+    }
+
+    @Override
+    public ColumnValues getColumnValues(final ColumnValuesRequest request) {
+        final DashboardSearchRequest searchRequest = request.getSearchRequest();
+        final QueryKey queryKey = searchRequest.getQueryKey();
+        try {
+            if (queryKey == null) {
+                throw new EntityServiceException("No query is active");
+            }
+
+//            final Map<String, TableResultRequest> tableRequestMap = request
+//                    .getSearchRequest()
+//                    .getComponentResultRequests()
+//                    .stream()
+//                    .filter(req -> req instanceof TableResultRequest)
+//                    .collect(Collectors.toMap(
+//                            ComponentResultRequest::getComponentId,
+//                            req -> (TableResultRequest) req));
+
+            SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
+            final List<ResultRequest> resultRequests = mappedRequest
+                    .getResultRequests()
+                    .stream()
+                    .filter(req -> ResultStyle.TABLE.equals(req.getResultStyle()))
+                    .toList();
+
+            if (resultRequests.isEmpty()) {
+                throw new EntityServiceException("No tables specified for download");
+            }
+
+            final Set<String> dedupe = new HashSet<>();
+            final TrimmedSortedList<String> list = new TrimmedSortedList<>(
+                    request.getPageRequest(),
+                    new GenericComparator());
+            for (final ResultRequest resultRequest : resultRequests) {
+//                final TableResultRequest tableResultRequest =
+//                        tableRequestMap.get(resultRequest.getComponentId());
+                try {
+                    final RequestAndStore requestAndStore = searchResponseCreatorManager
+                            .getResultStore(mappedRequest);
+                    final DataStore dataStore = requestAndStore
+                            .resultStore()
+                            .getData(resultRequest.getComponentId());
+
+                    final TimeFilter timeFilter = null;
+                    final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
+                            request.getColumn(),
+                            request.getFilter(),
+                            request.getSearchRequest().getDateTimeSettings());
+
+                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+
+                    final int index = dataStore
+                            .getColumns()
+                            .stream()
+                            .map(Column::getId)
+                            .toList()
+                            .indexOf(request.getColumn().getId());
+                    if (index == -1) {
+                        throw new RuntimeException("Column not found");
+                    }
+
+                    dataStore.fetch(
+                            dataStore.getColumns(),
+                            OffsetRange.UNBOUNDED,
+                            new OpenGroupsImpl(openGroups),
+                            timeFilter,
+                            item -> {
+                                final Val val = item.getValue(index);
+                                if (predicate.test(val)) {
+                                    final String string = val.toString();
+                                    if (string != null && dedupe.add(string)) {
+                                        list.add(string);
+                                    }
+                                }
+                                return null;
+                            },
+                            row -> {
+
+                            },
+                            count -> {
+
+                            });
+                } catch (final Exception e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                }
+            }
+
+            final ResultPage<String> resultPage = list.getResultPage();
+            return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
         }
     }
 }

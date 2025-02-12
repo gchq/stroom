@@ -7,6 +7,6 @@
             <g:Label styleName="gwt-Label" text="-"/>
             <g:Label ui:field="clearLink" styleName="gwt-Label link" text="Clear"/>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="listContainer" styleName="dock-max"/>
+        <g:SimplePanel ui:field="listContainer" styleName="dock-max dock-container-vertical"/>
     </g:FlowPanel>
 </ui:UiBinder>

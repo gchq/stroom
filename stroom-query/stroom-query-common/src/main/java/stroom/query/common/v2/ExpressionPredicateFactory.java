@@ -211,24 +211,7 @@ public class ExpressionPredicateFactory {
             try {
                 return createNumericTermPredicate(term, valueFunctionFactory, wordListProvider);
             } catch (final RuntimeException e2) {
-                final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
-                return switch (term.getCondition()) {
-                    case EQUALS -> StringEquals.create(term, stringExtractor);
-                    case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
-                    case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
-                    case CONTAINS -> StringContains.create(term, stringExtractor);
-                    case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
-                    case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
-                    case STARTS_WITH_CASE_SENSITIVE -> StringStartsWithCaseSensitive.create(term, stringExtractor);
-                    case ENDS_WITH -> StringEndsWith.create(term, stringExtractor);
-                    case ENDS_WITH_CASE_SENSITIVE -> StringEndsWithCaseSensitive.create(term, stringExtractor);
-                    case MATCHES_REGEX -> StringRegex.create(term, stringExtractor);
-                    case MATCHES_REGEX_CASE_SENSITIVE -> StringRegexCaseSensitive.create(term, stringExtractor);
-                    case WORD_BOUNDARY -> StringWordBoundary.create(term, stringExtractor);
-                    case IN -> StringIn.create(term, stringExtractor);
-                    case IN_DICTIONARY -> StringInDictionary.create(term, stringExtractor, wordListProvider);
-                    default -> throw e2;
-                };
+                return createTextTermPredicate(term, valueFunctionFactory, wordListProvider);
             }
         }
     }
@@ -249,11 +232,7 @@ public class ExpressionPredicateFactory {
             case BETWEEN -> DateBetween.create(term, dateExtractor, dateTimeSettings);
             case IN -> DateIn.create(term, dateExtractor, dateTimeSettings);
             case IN_DICTIONARY -> DateInDictionary.create(term, dateExtractor, dateTimeSettings, wordListProvider);
-            default -> throw new MatchException("Unexpected condition '" +
-                                                term.getCondition().getDisplayValue() +
-                                                "' for " +
-                                                valueFunctionFactory.getFieldType() +
-                                                " field type");
+            default -> createTextTermPredicate(term, valueFunctionFactory, wordListProvider);
         };
     }
 
@@ -272,6 +251,30 @@ public class ExpressionPredicateFactory {
             case BETWEEN -> NumericBetween.create(term, numExtractor);
             case IN -> NumericIn.create(term, numExtractor);
             case IN_DICTIONARY -> NumericInDictionary.create(term, numExtractor, wordListProvider);
+            default -> createTextTermPredicate(term, valueFunctionFactory, wordListProvider);
+        };
+    }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private <T> Optional<Predicate<T>> createTextTermPredicate(final ExpressionTerm term,
+                                                               final ValueFunctionFactory<T> valueFunctionFactory,
+                                                               final WordListProvider wordListProvider) {
+        final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
+        return switch (term.getCondition()) {
+            case EQUALS -> StringEquals.create(term, stringExtractor);
+            case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
+            case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
+            case CONTAINS -> StringContains.create(term, stringExtractor);
+            case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
+            case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
+            case STARTS_WITH_CASE_SENSITIVE -> StringStartsWithCaseSensitive.create(term, stringExtractor);
+            case ENDS_WITH -> StringEndsWith.create(term, stringExtractor);
+            case ENDS_WITH_CASE_SENSITIVE -> StringEndsWithCaseSensitive.create(term, stringExtractor);
+            case MATCHES_REGEX -> StringRegex.create(term, stringExtractor);
+            case MATCHES_REGEX_CASE_SENSITIVE -> StringRegexCaseSensitive.create(term, stringExtractor);
+            case WORD_BOUNDARY -> StringWordBoundary.create(term, stringExtractor);
+            case IN -> StringIn.create(term, stringExtractor);
+            case IN_DICTIONARY -> StringInDictionary.create(term, stringExtractor, wordListProvider);
             default -> throw new MatchException("Unexpected condition '" +
                                                 term.getCondition().getDisplayValue() +
                                                 "' for " +
@@ -279,7 +282,6 @@ public class ExpressionPredicateFactory {
                                                 " field type");
         };
     }
-
 
     private static BigDecimal getTermNumber(final ExpressionTerm term,
                                             final String value) {

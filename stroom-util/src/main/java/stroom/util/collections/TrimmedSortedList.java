@@ -24,7 +24,7 @@ public class TrimmedSortedList<T> {
         this.pageRequest = pageRequest;
         this.comparator = comparator;
         maxSize = Math.max(0, pageRequest.getOffset() + pageRequest.getLength() + 1);
-        trimSize = maxSize + 1000;
+        trimSize = maxSize + 10000;
     }
 
     public void add(final T t) {
@@ -55,6 +55,7 @@ public class TrimmedSortedList<T> {
                     .build());
         }
 
+        list.sort(comparator);
         final List<T> trimmed = list
                 .subList(
                         pageRequest.getOffset(),

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical columnFunctionEditorViewImpl">
-        <g:ThinSplitLayoutPanel styleName="dock-max columnFunctionEditorViewImpl-editorContainer">
+        <g:ThinSplitLayoutPanel styleName="dock-max columnFunctionEditorViewImpl-editorContainer form-control-border form-control-background">
             <g:west size="300">
                 <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
             </g:west>

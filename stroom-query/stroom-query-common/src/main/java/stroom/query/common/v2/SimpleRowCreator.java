@@ -49,9 +49,4 @@ public class SimpleRowCreator implements ItemMapper<Row> {
                 .depth(item.getKey().getDepth())
                 .build();
     }
-
-    @Override
-    public boolean hidesRows() {
-        return false;
-    }
 }

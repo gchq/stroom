@@ -16,6 +16,8 @@
 
 package stroom.dashboard.impl;
 
+import stroom.dashboard.shared.ColumnValues;
+import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -126,6 +128,32 @@ class DashboardResourceImpl implements DashboardResource {
                                     DashboardResource.SEARCH_PATH_PART,
                                     nodeName),
                             () -> dashboardServiceProvider.get().search(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public ColumnValues getColumnValues(final String nodeName,
+                                        final ColumnValuesRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return dashboardServiceProvider.get().getColumnValues(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            ColumnValues.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    DashboardResource.BASE_PATH,
+                                    DashboardResource.COLUMN_VALUES_PATH_PART,
+                                    nodeName),
+                            () -> dashboardServiceProvider.get().getColumnValues(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
