@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.1] - 2025-02-12
+
+* Issue **#4768** : Fix import file path issue.
+
+* Issue **#4767** : Improve null equality treatment in expressions.
+
+* Issue **#4772** : Uplift GWT to version 2.12.1.
+
+* Issue **#4773** : Improve cookie config.
+
+* Issue **#4692** : Add table column filtering by unique value selection.
+
+
 ## [v7.8-beta.14] - 2025-02-05
 
 * Issue **#4755** : Fix missing values from pipeline structure editor.
@@ -1236,7 +1249,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.1...HEAD
+[v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
 [v7.8-beta.14]: https://github.com/gchq/stroom/compare/v7.8-beta.13...v7.8-beta.14
 [v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
 [v7.8-beta.12]: https://github.com/gchq/stroom/compare/v7.8-beta.11...v7.8-beta.12
