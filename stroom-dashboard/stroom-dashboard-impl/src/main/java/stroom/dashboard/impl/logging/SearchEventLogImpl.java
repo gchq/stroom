@@ -178,6 +178,11 @@ public class SearchEventLogImpl implements SearchEventLog {
                                                                 .withName("percent")
                                                                 .withValue(String.valueOf(request.getPercent()))
                                                                 .build())
+                                                        .addData(Data.builder()
+                                                                .withName("allTables")
+                                                                .withValue(String.valueOf(
+                                                                        request.isDownloadAllTables()))
+                                                                .build())
                                                         .build())
                                                 .build())
                                 .withOutcome(EventLoggingUtil.createOutcome(e))
