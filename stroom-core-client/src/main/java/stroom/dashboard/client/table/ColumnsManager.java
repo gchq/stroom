@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ColumnsManager implements HeadingListener, FilterCellManager {
@@ -63,7 +64,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
-    private boolean ignoreNext;
+    private boolean moving;
 
     public ColumnsManager(final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
@@ -80,82 +81,98 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     }
 
     @Override
-    public void onMouseDown(NativeEvent event, Heading heading) {
-        int colIndex = -1;
-        if (heading != null) {
-            final Element element = Element.as(event.getEventTarget());
-            final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
-            if (columnTop != null) {
-                colIndex = heading.getColIndex();
+    public void onMoveStart(final NativeEvent event, final Supplier<Heading> headingSupplier) {
+        moving = true;
+
+        if (currentMenuColIndex != -1 || currentFilterColIndex != -1) {
+            final Heading heading = headingSupplier.get();
+            if (heading != null) {
+                final Element element = Element.as(event.getEventTarget());
+                final Element columnTop = ElementUtil.findParent(element, "column-top", 3);
+                if (columnTop != null) {
+                    int colIndex = heading.getColIndex();
+                    if (currentMenuColIndex == colIndex) {
+                        HideMenuEvent
+                                .builder()
+                                .fire(tablePresenter);
+                    }
+                    if (currentFilterColIndex == colIndex) {
+                        columnValuesFilterPresenter.hide();
+                    }
+                }
             }
         }
-
-        ignoreNext = currentMenuColIndex == colIndex ||
-                     currentFilterColIndex == colIndex;
-        HideMenuEvent
-                .builder()
-                .fire(tablePresenter);
     }
 
     @Override
-    public void onMouseUp(final NativeEvent event, final Heading heading) {
-        if (heading != null && heading.getColIndex() >= columnsStartIndex) {
-            final int colIndex = heading.getColIndex();
+    public void onMoveEnd(final NativeEvent event, final Supplier<Heading> headingSupplier) {
+        moving = false;
+    }
 
-            final Column column = getColumn(colIndex);
-            if (column != null && !ignoreNext) {
-                new Timer() {
-                    @Override
-                    public void run() {
-                        final Element parent = heading.getElement();
-                        final Element button = ElementUtil.findChild(parent, "column-valueFilterIcon");
-                        final Element target = event.getEventTarget().cast();
-                        final boolean isFilterButton = button.isOrHasChild(target);
+    @Override
+    public void onShowMenu(final NativeEvent event, final Supplier<Heading> headingSupplier) {
+        if (!moving) {
+            final Heading heading = headingSupplier.get();
+            if (heading != null && heading.getColIndex() >= columnsStartIndex) {
+                final int colIndex = heading.getColIndex();
 
-                        if (currentFilterColIndex == colIndex) {
-                            HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
+                final Column column = getColumn(colIndex);
+                if (column != null) {
+                    new Timer() {
+                        @Override
+                        public void run() {
+                            final Element th = heading.getElement();
+                            final Element button = ElementUtil.findChild(th, "column-valueFilterIcon");
+                            final Element target = event.getEventTarget().cast();
+                            final boolean isFilterButton = button.isOrHasChild(target);
 
-                        } else if (isFilterButton) {
-                            currentFilterColIndex = colIndex;
-                            columnValuesFilterPresenter.show(
-                                    button,
-                                    tablePresenter.getDataSupplier(column),
-                                    hideEvent -> currentFilterColIndex = -1,
-                                    column.getColumnValueSelection(),
-                                    ColumnsManager.this);
-                        }
+                            if (currentFilterColIndex == colIndex) {
+                                HidePopupRequestEvent.builder(columnValuesFilterPresenter).fire();
 
-                        if (currentMenuColIndex == colIndex) {
-                            HideMenuEvent.builder().fire(tablePresenter);
-
-                        } else if (!isFilterButton) {
-                            currentMenuColIndex = colIndex;
-                            final List<Item> menuItems = getMenuItems(column);
-
-                            Element element = event.getEventTarget().cast();
-                            while (!element.getTagName().equalsIgnoreCase("th")) {
-                                element = element.getParentElement();
+                            } else if (isFilterButton) {
+                                currentFilterColIndex = colIndex;
+                                columnValuesFilterPresenter.show(
+                                        button,
+                                        th,
+                                        tablePresenter.getDataSupplier(column),
+                                        hideEvent -> resetFilterColIndex(),
+                                        column.getColumnValueSelection(),
+                                        ColumnsManager.this);
                             }
 
-                            Rect relativeRect = new Rect(element);
-                            relativeRect = relativeRect.grow(3);
-                            final PopupPosition popupPosition = new PopupPosition(relativeRect,
-                                    PopupLocation.BELOW);
+                            if (currentMenuColIndex == colIndex) {
+                                HideMenuEvent.builder().fire(tablePresenter);
 
-                            ShowMenuEvent
-                                    .builder()
-                                    .items(menuItems)
-                                    .popupPosition(popupPosition)
-                                    .addAutoHidePartner(element)
-                                    .onHide(e2 -> currentMenuColIndex = -1)
-                                    .fire(tablePresenter);
+                            } else if (!isFilterButton) {
+                                currentMenuColIndex = colIndex;
+                                final List<Item> menuItems = getMenuItems(column);
+
+                                Rect relativeRect = new Rect(th);
+                                relativeRect = relativeRect.grow(3);
+                                final PopupPosition popupPosition = new PopupPosition(relativeRect,
+                                        PopupLocation.BELOW);
+
+                                ShowMenuEvent
+                                        .builder()
+                                        .items(menuItems)
+                                        .popupPosition(popupPosition)
+                                        .addAutoHidePartner(th)
+                                        .onHide(e2 -> resetMenuColIndex())
+                                        .fire(tablePresenter);
+                            }
                         }
-                    }
-                }.schedule(0);
+                    }.schedule(0);
+                }
             }
         }
+    }
 
-        ignoreNext = false;
+    private void resetFilterColIndex() {
+        currentFilterColIndex = -1;
+    }
+
+    private void resetMenuColIndex() {
+        currentMenuColIndex = -1;
     }
 
     @Override
@@ -409,6 +426,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
             replaceColumn(column, column.copy().columnValueSelection(columnValueSelection).build());
             tablePresenter.setFocused(false);
             tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
         }
     }

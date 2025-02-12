@@ -627,7 +627,7 @@ public class Functions {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                signature.getPrimaryCategory().toLowerCase().replace(' ', '-') +
                 "#" +
                 functionSignatureToAnchor(signature),
                 "Help Documentation");

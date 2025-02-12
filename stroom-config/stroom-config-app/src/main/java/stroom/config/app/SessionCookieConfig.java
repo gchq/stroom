@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.http.HttpCookie.SameSite;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -23,20 +25,20 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
     private final boolean httpOnly;
 
     @JsonProperty
-    @JsonPropertyDescription("The same site attribute for the cookie, e.g. \"None\", \"Strict\" or \"Lax\".")
-    private final String sameSite;
+    @JsonPropertyDescription("The same site attribute for the cookie, e.g. \"Strict\", \"Lax\" or \"None\".")
+    private final SameSite sameSite;
 
     public SessionCookieConfig() {
         secure = true;
         httpOnly = true;
-        sameSite = "Strict";
+        sameSite = SameSite.STRICT;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public SessionCookieConfig(@JsonProperty("secure") final boolean secure,
                                @JsonProperty("httpOnly") final boolean httpOnly,
-                               @JsonProperty("sameSite") final String sameSite) {
+                               @JsonProperty("sameSite") final SameSite sameSite) {
         this.secure = secure;
         this.httpOnly = httpOnly;
         this.sameSite = sameSite;
@@ -50,7 +52,7 @@ public class SessionCookieConfig extends AbstractConfig implements IsStroomConfi
         return httpOnly;
     }
 
-    public String getSameSite() {
+    public SameSite getSameSite() {
         return sameSite;
     }
 

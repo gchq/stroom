@@ -415,7 +415,7 @@ class QueryServiceImpl implements QueryService {
         String fileName = baseName;
         fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
         fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-        fileName = fileName.replace(" ", "_");
+        fileName = fileName.replace(' ', '_');
         fileName = fileName + "." + extension;
         return fileName;
     }

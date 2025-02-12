@@ -395,7 +395,9 @@ public class App extends Application<Config> {
                 .getSessionCookieConfig();
         servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
         servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
-        context.setAttribute(HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE, sessionCookieConfig.getSameSite());
+        context.setAttribute(
+                HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE,
+                sessionCookieConfig.getSameSite().getAttributeValue());
     }
 
     private static void configureCors(io.dropwizard.core.setup.Environment environment) {

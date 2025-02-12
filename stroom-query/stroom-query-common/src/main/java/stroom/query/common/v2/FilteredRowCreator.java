@@ -38,15 +38,15 @@ public class FilteredRowCreator implements ItemMapper<Row> {
         this.rowFilter = rowFilter;
     }
 
-    public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final List<Column> newColumns,
-                                                   final boolean applyValueFilters,
-                                                   final FormatterFactory formatterFactory,
-                                                   final KeyFactory keyFactory,
-                                                   final ExpressionOperator rowFilterExpression,
-                                                   final DateTimeSettings dateTimeSettings,
-                                                   final ErrorConsumer errorConsumer,
-                                                   final ExpressionPredicateFactory expressionPredicateFactory) {
+    public static ItemMapper<Row> create(final List<Column> originalColumns,
+                                         final List<Column> newColumns,
+                                         final boolean applyValueFilters,
+                                         final FormatterFactory formatterFactory,
+                                         final KeyFactory keyFactory,
+                                         final ExpressionOperator rowFilterExpression,
+                                         final DateTimeSettings dateTimeSettings,
+                                         final ErrorConsumer errorConsumer,
+                                         final ExpressionPredicateFactory expressionPredicateFactory) {
         // Combine filters.
         final Optional<Predicate<Val[]>> optionalCombinedPredicate = createValuesPredicate(
                 newColumns,
@@ -54,20 +54,26 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                 rowFilterExpression,
                 dateTimeSettings,
                 expressionPredicateFactory);
-        // If we have no predicate then return an empty optional.
+
+        // If we have no predicate then return a simple row creator.
         if (optionalCombinedPredicate.isEmpty()) {
-            return Optional.empty();
+            return SimpleRowCreator.create(
+                    originalColumns,
+                    newColumns,
+                    formatterFactory,
+                    keyFactory,
+                    errorConsumer);
         }
 
         final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
         final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
 
-        return Optional.of(new FilteredRowCreator(
+        return new FilteredRowCreator(
                 columnIndexMapping,
                 keyFactory,
                 errorConsumer,
                 formatters,
-                optionalCombinedPredicate.get()));
+                optionalCombinedPredicate.get());
     }
 
     public static Optional<Predicate<Val[]>> createValuesPredicate(final List<Column> newColumns,
@@ -77,16 +83,11 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                                                                    final ExpressionPredicateFactory
                                                                            expressionPredicateFactory) {
         // Create column value filter expression.
-        final Optional<ExpressionOperator> optionalExpressionOperator =
-                RowValueFilter.create(newColumns, applyValueFilters);
-        final Optional<Predicate<Val[]>> valuesPredicate = optionalExpressionOperator.flatMap(expressionOperator -> {
-            // Create the field position map for the new columns.
-            final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(newColumns);
-            return expressionPredicateFactory.create(
-                    expressionOperator,
-                    queryFieldIndex,
-                    dateTimeSettings);
-        });
+        final Optional<Predicate<Val[]>> valuesPredicate = RowValueFilter.create(
+                newColumns,
+                applyValueFilters,
+                dateTimeSettings,
+                expressionPredicateFactory);
 
         // Apply having filters.
         final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
@@ -112,8 +113,6 @@ public class FilteredRowCreator implements ItemMapper<Row> {
         if (rowFilter.test(values)) {
             // Now apply formatting choices.
             final List<String> stringValues = RowUtil.convertValues(values, columnFormatters);
-
-
             try {
                 row = Row.builder()
                         .groupKey(keyFactory.encode(item.getKey(), errorConsumer))

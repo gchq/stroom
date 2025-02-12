@@ -193,7 +193,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
      * @return The name formatted as a markdown anchor, i.e. "My Job" => "#my-job"
      */
     private String formatAnchor(String name) {
-        return "#" + name.replace(" ", "-")
+        return "#" + name.replace(' ', '-')
                 .toLowerCase();
     }
 

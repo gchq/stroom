@@ -141,7 +141,7 @@ public class ForwardHttpPostDestination {
             final StringBuilder sb = new StringBuilder(e.getClass().getSimpleName());
             if (e.getMessage() != null) {
                 sb.append(" ");
-                sb.append(e.getMessage().replaceAll("\n", " "));
+                sb.append(e.getMessage().replace('\n', ' '));
             }
             sb.append("\n");
             final Path errorPath = dir.resolve(ERROR_LOG);

@@ -62,6 +62,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -534,7 +535,7 @@ public class QueryResultTablePresenter
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
-                if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
                     tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
@@ -854,34 +855,43 @@ public class QueryResultTablePresenter
             this.restFactory = restFactory;
             this.searchModel = searchModel;
 
+            QuerySearchRequest querySearchRequest = null;
             final QueryKey queryKey = searchModel.getCurrentQueryKey();
             final QuerySearchRequest currentSearch = searchModel.getCurrentSearch();
-            searchRequest = currentSearch
-                    .copy()
-                    .queryKey(queryKey)
-                    .storeHistory(false)
-                    .requestedRange(OffsetRange.UNBOUNDED)
-                    .build();
+            if (queryKey != null && currentSearch != null) {
+                querySearchRequest = currentSearch
+                        .copy()
+                        .queryKey(queryKey)
+                        .storeHistory(false)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .build();
+            }
+            searchRequest = querySearchRequest;
         }
 
         @Override
         protected void exec(final Range range,
                             final Consumer<ColumnValues> dataConsumer,
                             final RestErrorHandler errorHandler) {
-            final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-            final QueryColumnValuesRequest columnValuesRequest = new QueryColumnValuesRequest(
-                    searchRequest,
-                    getColumn(),
-                    getNameFilter(),
-                    pageRequest);
+            if (searchRequest == null) {
+                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
 
-            restFactory
-                    .create(QUERY_RESOURCE)
-                    .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                            columnValuesRequest))
-                    .onSuccess(dataConsumer)
-                    .taskMonitorFactory(getTaskMonitorFactory())
-                    .exec();
+            } else {
+                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                final QueryColumnValuesRequest columnValuesRequest = new QueryColumnValuesRequest(
+                        searchRequest,
+                        getColumn(),
+                        getNameFilter(),
+                        pageRequest);
+
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
+                                columnValuesRequest))
+                        .onSuccess(dataConsumer)
+                        .taskMonitorFactory(getTaskMonitorFactory())
+                        .exec();
+            }
         }
     }
 }

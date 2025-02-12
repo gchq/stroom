@@ -78,7 +78,7 @@ public final class EditorPreferencesViewImpl
     public void setEditorTheme(final String editorTheme) {
         String localDisplayName = editorTheme;
         if (localDisplayName != null) {
-            localDisplayName = localDisplayName.replace("_", " ");
+            localDisplayName = localDisplayName.replace('_', ' ');
             localDisplayName = Character.toUpperCase(localDisplayName.charAt(0))
                     + localDisplayName.substring(1);
         }
@@ -111,7 +111,7 @@ public final class EditorPreferencesViewImpl
     private EditorThemeName createEditorThemeItem(final String editorTheme) {
         String displayName = editorTheme;
         if (displayName != null) {
-            displayName = displayName.replace("_", " ");
+            displayName = displayName.replace('_', ' ');
             displayName = Character.toUpperCase(displayName.charAt(0))
                     + displayName.substring(1);
         }

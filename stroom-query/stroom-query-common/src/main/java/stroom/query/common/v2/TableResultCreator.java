@@ -28,13 +28,11 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -89,10 +87,9 @@ public class TableResultCreator implements ResultCreator {
                     NullSafe.get(tableSettings, TableSettings::getColumns)));
             resultBuilder.columns(columns);
 
-            // Create the row creator.
-            Optional<ItemMapper<Row>> optionalRowCreator = Optional.empty();
-            if (tableSettings != null) {
-                optionalRowCreator = ConditionalFormattingRowCreator.create(
+            if (RowValueFilter.matches(columns)) {
+                // Create the row creator.
+                final ItemMapper<Row> rowCreator = ConditionalFormattingRowCreator.create(
                         dataStore.getColumns(),
                         columns,
                         tableSettings.applyValueFilters(),
@@ -103,42 +100,20 @@ public class TableResultCreator implements ResultCreator {
                         dataStore.getDateTimeSettings(),
                         expressionPredicateFactory,
                         errorConsumer);
-                if (optionalRowCreator.isEmpty()) {
-                    optionalRowCreator = FilteredRowCreator.create(
-                            dataStore.getColumns(),
-                            columns,
-                            tableSettings.applyValueFilters(),
-                            formatterFactory,
-                            keyFactory,
-                            tableSettings.getAggregateFilter(),
-                            dataStore.getDateTimeSettings(),
-                            errorConsumer,
-                            expressionPredicateFactory);
-                }
-            }
 
-            if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = SimpleRowCreator.create(
-                        dataStore.getColumns(),
+                final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
+                dataStore.fetch(
                         columns,
-                        formatterFactory,
-                        keyFactory,
-                        errorConsumer);
+                        range,
+                        new OpenGroupsImpl(openGroups),
+                        resultRequest.getTimeFilter(),
+                        rowCreator,
+                        row -> {
+                            resultBuilder.addRow(row);
+                            pageLength.incrementAndGet();
+                        },
+                        resultBuilder::totalResults);
             }
-
-            final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
-            final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
-            dataStore.fetch(
-                    columns,
-                    range,
-                    new OpenGroupsImpl(openGroups),
-                    resultRequest.getTimeFilter(),
-                    rowCreator,
-                    row -> {
-                        resultBuilder.addRow(row);
-                        pageLength.incrementAndGet();
-                    },
-                    resultBuilder::totalResults);
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             errorConsumer.add(e);

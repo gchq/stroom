@@ -5,7 +5,7 @@
         <g:FlowPanel styleName="dock-min bar">
             <g:Label ui:field="selectAllLink" styleName="gwt-Label link" text="Select All"/>
             <g:Label styleName="gwt-Label" text="-"/>
-            <g:Label ui:field="clearLink" styleName="gwt-Label link" text="Clear"/>
+            <g:Label ui:field="selectNoneLink" styleName="gwt-Label link" text="Select None"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="listContainer" styleName="dock-max dock-container-vertical"/>
     </g:FlowPanel>

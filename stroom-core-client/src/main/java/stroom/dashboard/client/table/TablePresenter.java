@@ -94,6 +94,7 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
@@ -121,6 +122,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1197,60 +1199,72 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             this.restFactory = restFactory;
             this.searchModel = searchModel;
 
-            final QueryKey queryKey = searchModel.getCurrentQueryKey();
-            final Search currentSearch = searchModel.getCurrentSearch();
-            final List<ComponentResultRequest> requests = new ArrayList<>();
-            currentSearch.getComponentSettingsMap().entrySet()
-                    .stream()
-                    .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                    .forEach(componentSettings -> requests.add(TableResultRequest
+            DashboardSearchRequest dashboardSearchRequest = null;
+            if (searchModel != null) {
+                final QueryKey queryKey = searchModel.getCurrentQueryKey();
+                final Search currentSearch = searchModel.getCurrentSearch();
+                if (queryKey != null && currentSearch != null) {
+                    final List<ComponentResultRequest> requests = new ArrayList<>();
+                    currentSearch.getComponentSettingsMap().entrySet()
+                            .stream()
+                            .filter(settings -> settings.getValue() instanceof TableComponentSettings)
+                            .forEach(componentSettings -> requests.add(TableResultRequest
+                                    .builder()
+                                    .componentId(componentSettings.getKey())
+                                    .requestedRange(OffsetRange.UNBOUNDED)
+                                    .tableName(tableName)
+                                    .tableSettings(tableSettings)
+                                    .fetch(Fetch.ALL)
+                                    .build()));
+
+                    final Search search = Search
                             .builder()
-                            .componentId(componentSettings.getKey())
-                            .requestedRange(OffsetRange.UNBOUNDED)
-                            .tableName(tableName)
-                            .tableSettings(tableSettings)
-                            .fetch(Fetch.ALL)
-                            .build()));
+                            .dataSourceRef(currentSearch.getDataSourceRef())
+                            .expression(currentSearch.getExpression())
+                            .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                            .params(currentSearch.getParams())
+                            .timeRange(currentSearch.getTimeRange())
+                            .incremental(true)
+                            .queryInfo(currentSearch.getQueryInfo())
+                            .build();
 
-            final Search search = Search
-                    .builder()
-                    .dataSourceRef(currentSearch.getDataSourceRef())
-                    .expression(currentSearch.getExpression())
-                    .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                    .params(currentSearch.getParams())
-                    .timeRange(currentSearch.getTimeRange())
-                    .incremental(true)
-                    .queryInfo(currentSearch.getQueryInfo())
-                    .build();
+                    dashboardSearchRequest = DashboardSearchRequest
+                            .builder()
+                            .searchRequestSource(searchModel.getSearchRequestSource())
+                            .queryKey(queryKey)
+                            .search(search)
+                            .componentResultRequests(requests)
+                            .dateTimeSettings(dateTimeSettings)
+                            .build();
+                }
+            }
 
-            searchRequest = DashboardSearchRequest
-                    .builder()
-                    .searchRequestSource(searchModel.getSearchRequestSource())
-                    .queryKey(queryKey)
-                    .search(search)
-                    .componentResultRequests(requests)
-                    .dateTimeSettings(dateTimeSettings)
-                    .build();
+            searchRequest = dashboardSearchRequest;
         }
 
         @Override
         protected void exec(final Range range,
                             final Consumer<ColumnValues> dataConsumer,
                             final RestErrorHandler errorHandler) {
-            final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-            final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
-                    searchRequest,
-                    getColumn(),
-                    getNameFilter(),
-                    pageRequest);
+            if (searchRequest == null) {
+                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
 
-            restFactory
-                    .create(DASHBOARD_RESOURCE)
-                    .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                            columnValuesRequest))
-                    .onSuccess(dataConsumer)
-                    .taskMonitorFactory(getTaskMonitorFactory())
-                    .exec();
+            } else {
+                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+                final ColumnValuesRequest columnValuesRequest = new ColumnValuesRequest(
+                        searchRequest,
+                        getColumn(),
+                        getNameFilter(),
+                        pageRequest);
+
+                restFactory
+                        .create(DASHBOARD_RESOURCE)
+                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
+                                columnValuesRequest))
+                        .onSuccess(dataConsumer)
+                        .taskMonitorFactory(getTaskMonitorFactory())
+                        .exec();
+            }
         }
     }
 }

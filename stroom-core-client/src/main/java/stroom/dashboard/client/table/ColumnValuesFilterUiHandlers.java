@@ -22,5 +22,5 @@ public interface ColumnValuesFilterUiHandlers extends UiHandlers {
 
     void onSelectAll();
 
-    void onClear();
+    void onSelectNone();
 }

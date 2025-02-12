@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.ColumnValueSelection;
@@ -25,14 +26,47 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.language.functions.Val;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class RowValueFilter {
 
-    public static Optional<ExpressionOperator> create(final List<Column> columns,
-                                                      final boolean applyValueFilters) {
+    public static boolean matches(final List<Column> columns) {
+        // If any columns have a value filter that is not inverted but empty then reject everything.
+        final Optional<Column> optional = columns
+                .stream()
+                .filter(column -> Objects.nonNull(column.getColumnValueSelection()))
+                .filter(column -> !column.getColumnValueSelection().isInvert())
+                .filter(column -> column.getColumnValueSelection().getValues() == null ||
+                                  column.getColumnValueSelection().getValues().isEmpty())
+                .findAny();
+        return optional.isEmpty();
+    }
+
+    public static Optional<Predicate<Val[]>> create(final List<Column> columns,
+                                                    final boolean applyValueFilters,
+                                                    final DateTimeSettings dateTimeSettings,
+                                                    final ExpressionPredicateFactory expressionPredicateFactory) {
+        // Create column value filter expression.
+        final Optional<ExpressionOperator> optionalExpressionOperator =
+                create(columns, applyValueFilters);
+        return optionalExpressionOperator.flatMap(expressionOperator -> {
+            // Create the field position map for the new columns.
+            final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(columns);
+            return expressionPredicateFactory.create(
+                    expressionOperator,
+                    queryFieldIndex,
+                    dateTimeSettings);
+        });
+    }
+
+    private static Optional<ExpressionOperator> create(final List<Column> columns,
+                                                       final boolean applyValueFilters) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
             final ColumnFilter columnFilter = column.getColumnFilter();
@@ -66,17 +100,6 @@ public class RowValueFilter {
                             .builder()
                             .op(Op.NOT)
                             .addOperators(expressionOperator)
-                            .build();
-                } else if (terms.isEmpty()) {
-                    expressionOperator = ExpressionOperator
-                            .builder()
-                            .op(Op.AND)
-                            .addTerm(ExpressionTerm
-                                    .builder()
-                                    .field(column.getId())
-                                    .condition(Condition.IN)
-                                    .value("")
-                                    .build())
                             .build();
                 }
                 valueFilterBuilder.addOperator(expressionOperator);

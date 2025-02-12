@@ -48,7 +48,7 @@ import stroom.query.common.v2.KeyFactory;
 import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
-import stroom.query.common.v2.SimpleRowCreator;
+import stroom.query.common.v2.RowValueFilter;
 import stroom.query.common.v2.ValFilter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
@@ -74,7 +74,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -274,37 +273,28 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                         final FormatterFactory formatterFactory =
                                 new FormatterFactory(sampleRequest.getDateTimeSettings());
 
-                        // Create the row creator.
-                        Optional<ItemMapper<Row>> optionalRowCreator = FilteredRowCreator.create(
-                                dataStore.getColumns(),
-                                columns,
-                                false,
-                                formatterFactory,
-                                keyFactory,
-                                tableSettings.getAggregateFilter(),
-                                expressionContext.getDateTimeSettings(),
-                                errorConsumer,
-                                expressionPredicateFactory);
-
-                        if (optionalRowCreator.isEmpty()) {
-                            optionalRowCreator = SimpleRowCreator.create(
+                        if (RowValueFilter.matches(columns)) {
+                            // Create the row creator.
+                            final ItemMapper<Row> rowCreator = FilteredRowCreator.create(
                                     dataStore.getColumns(),
                                     columns,
+                                    false,
                                     formatterFactory,
                                     keyFactory,
-                                    errorConsumer);
+                                    tableSettings.getAggregateFilter(),
+                                    expressionContext.getDateTimeSettings(),
+                                    errorConsumer,
+                                    expressionPredicateFactory);
+
+                            dataStore.fetch(
+                                    columns,
+                                    OffsetRange.UNBOUNDED,
+                                    OpenGroups.NONE,
+                                    resultRequest.getTimeFilter(),
+                                    rowCreator,
+                                    itemConsumer,
+                                    countConsumer);
                         }
-
-                        final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);
-
-                        dataStore.fetch(
-                                columns,
-                                OffsetRange.UNBOUNDED,
-                                OpenGroups.NONE,
-                                resultRequest.getTimeFilter(),
-                                rowCreator,
-                                itemConsumer,
-                                countConsumer);
 
                     } finally {
                         final List<String> errors = errorConsumer.getErrors();

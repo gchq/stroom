@@ -75,6 +75,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     private final CellTable<String> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
 
+    private Element filterButton;
     private ColumnValuesDataSupplier dataSupplier;
     private boolean inverseSelection = true;
     private RestDataProvider<String, ColumnValues> dataProvider;
@@ -111,35 +112,42 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         view.setList(quickFilterPageView);
     }
 
-    public void show(final Element element,
+    public void show(final Element filterButton,
+                     final Element autoHidePartner,
                      final ColumnValuesDataSupplier dataSupplier,
                      final HidePopupEvent.Handler handler,
                      final ColumnValueSelection currentSelection,
                      final FilterCellManager filterCellManager) {
+        this.filterButton = filterButton;
         this.dataSupplier = dataSupplier;
         this.filterCellManager = filterCellManager;
         dataSupplier.setTaskMonitorFactory(pagerView);
 
+        inverseSelection = true;
+        selected.clear();
         if (currentSelection != null) {
             inverseSelection = currentSelection.isInvert();
-            selected.clear();
             selected.addAll(currentSelection.getValues());
         }
 
         clear();
         refresh();
 
-        Rect relativeRect = new Rect(element);
+        Rect relativeRect = new Rect(filterButton);
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
                 .popupSize(PopupSize.resizable(400, 400))
                 .popupPosition(popupPosition)
-                .addAutoHidePartner(element)
+                .addAutoHidePartner(autoHidePartner)
                 .onShow(e -> quickFilterPageView.focus())
                 .onHide(handler)
                 .fire();
+    }
+
+    public void hide() {
+        HidePopupRequestEvent.builder(this).fire();
     }
 
     private void hideSelf() {
@@ -151,16 +159,14 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void onSelectAll() {
         selected.clear();
         this.inverseSelection = true;
-        filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
-        refresh();
+        updateTable();
     }
 
     @Override
-    public void onClear() {
+    public void onSelectNone() {
         selected.clear();
         inverseSelection = false;
-        filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
-        refresh();
+        updateTable();
     }
 
     private ColumnValueSelection createSelection() {
@@ -197,8 +203,19 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                 selected.add(value);
             }
 
-            filterCellManager.setValueSelection(dataSupplier.getColumn(), createSelection());
-            refresh();
+            updateTable();
+        }
+    }
+
+    private void updateTable() {
+        final ColumnValueSelection columnValueSelection = createSelection();
+        filterCellManager.setValueSelection(dataSupplier.getColumn(), columnValueSelection);
+        cellTable.redraw();
+
+        if (columnValueSelection != null && columnValueSelection.isEnabled()) {
+            filterButton.addClassName("icon-colour__blue");
+        } else {
+            filterButton.removeClassName("icon-colour__blue");
         }
     }
 

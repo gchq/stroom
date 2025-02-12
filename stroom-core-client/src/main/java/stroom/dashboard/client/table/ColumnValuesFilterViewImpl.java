@@ -22,7 +22,7 @@ public class ColumnValuesFilterViewImpl
     @UiField
     Label selectAllLink;
     @UiField
-    Label clearLink;
+    Label selectNoneLink;
     @UiField
     SimplePanel listContainer;
 
@@ -48,10 +48,10 @@ public class ColumnValuesFilterViewImpl
         }
     }
 
-    @UiHandler(value = "clearLink")
-    void onClearLink(final ClickEvent e) {
+    @UiHandler(value = "selectNoneLink")
+    void onSelectNoneLink(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onClear();
+            getUiHandlers().onSelectNone();
         }
     }
 

@@ -180,11 +180,15 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
                 } else if (allowMove) {
                     // Try and start moving the current column.
-                    moveHandle.startMove(event);
+                    if (moveHandle.isDragThresholdExceeded(event)) {
+                        moveHandle.startMove(event);
 
-                    // Hide the resize handle if we are dragging a column.
-                    if (moveHandle.isMoving()) {
+                        // Hide the resize handle if we are dragging a column.
                         resizeHandle.hide();
+
+                        if (headingListener != null) {
+                            headingListener.onMoveStart(event, () -> getHeading(event));
+                        }
 
                     } else {
                         // Update the resize handle position.
@@ -205,18 +209,17 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
                 moveHeading = null;
 
-                final Heading heading = getHeading(event);
-                if (headingListener != null) {
-                    headingListener.onMouseDown(event, heading);
-                }
-
                 if (allowResize &&
                     !resizeHandle.isResizing() &&
                     MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
                     resizeHandle.startResize(event);
 
+                    if (headingListener != null) {
+                        headingListener.onMoveStart(event, () -> getHeading(event));
+                    }
+
                 } else {
-                    moveHeading = heading;
+                    moveHeading = getHeading(event);
                 }
 
                 // Set the heading that the move handle will use.
@@ -268,13 +271,22 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                             hideResizeHandle();
                         }
                     }
+
+                    if (headingListener != null) {
+                        headingListener.onMoveEnd(event, () -> getHeading(event));
+                    }
+
                 } else if (moveHandle.isMoving()) {
                     // Stop moving column.
                     moveHandle.endMove(event);
+
+                    if (headingListener != null) {
+                        headingListener.onMoveEnd(event, () -> getHeading(event));
+                    }
+
                 } else {
                     if (allowHeaderSelection && headingListener != null) {
-                        final Heading heading = getHeading(event);
-                        headingListener.onMouseUp(event, heading);
+                        headingListener.onShowMenu(event, () -> getHeading(event));
 
                         // Detach event preview handler.
                         resizeHandle.hide();
