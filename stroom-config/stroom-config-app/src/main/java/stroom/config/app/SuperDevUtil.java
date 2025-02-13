@@ -1,6 +1,6 @@
 package stroom.config.app;
 
-import stroom.security.impl.ContentSecurityConfig;
+import stroom.security.common.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.AbstractConfig;

@@ -56,15 +56,11 @@ import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.FilterRegistration;
 import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.Objects;
 
 public class App extends Application<Config> {
@@ -164,9 +160,6 @@ public class App extends Application<Config> {
         // Set up a session handler for Jetty
         environment.servlets().setSessionHandler(new SessionHandler());
 
-        // Configure Cross-Origin Resource Sharing.
-        configureCors(environment);
-
         LOGGER.info("Starting Stroom Proxy");
 
         final ProxyModule proxyModule = new ProxyModule(configuration, environment, configFile);
@@ -234,14 +227,6 @@ public class App extends Application<Config> {
                         "\n  ---------------------------------------------------------------------------------------" +
                         "");
         }
-    }
-
-    private static void configureCors(io.dropwizard.core.setup.Environment environment) {
-        FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "*");
     }
 
     private void registerLogConfiguration(final Environment environment) {

@@ -15,9 +15,10 @@
  * you may not use this file except in compliance with the License.
  */
 
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 @JsonPropertyOrder(alphabetic = true)
-public class ContentSecurityConfig extends AbstractConfig implements IsStroomConfig {
+public class ContentSecurityConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
     public static final String PROP_NAME_CONTENT_SECURITY_POLICY = "contentSecurityPolicy";
     public static final String PROP_NAME_STRICT_TRANSPORT_SECURITY = "strictTransportSecurity";
@@ -44,7 +45,6 @@ public class ContentSecurityConfig extends AbstractConfig implements IsStroomCon
                 "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
                 "img-src 'self' data:; " +
                 "style-src 'self' 'unsafe-inline'; " +
-                "connect-src 'self' wss:; " +
                 "frame-ancestors 'self';";
         contentTypeOptions = "nosniff";
         frameOptions = "sameorigin";

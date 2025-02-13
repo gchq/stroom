@@ -76,12 +76,7 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.reflect.TypeToken;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.core.Configuration;
@@ -930,6 +925,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+//                @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
                 @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -991,6 +987,7 @@ class TestConfigMapper {
                     clusterLockConfig,
                     commonDbConfig,
                     contentPackImportConfig,
+//                    corsConfig,
                     legacyConfig,
                     dashboardConfig,
                     dataConfig,
