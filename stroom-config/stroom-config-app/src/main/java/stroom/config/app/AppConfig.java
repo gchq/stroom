@@ -50,7 +50,6 @@ import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.security.common.impl.CorsConfig;
 import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -137,7 +136,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
-//    private final CorsConfig corsConfig;
+    //    private final CorsConfig corsConfig;
     private final LegacyConfig legacyConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
