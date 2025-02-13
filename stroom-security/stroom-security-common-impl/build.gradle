@@ -11,6 +11,7 @@ dependencies {
     implementation libs.caffeine
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.lifecycle
+    implementation libs.guava
     implementation libs.http.client
     implementation libs.jackson.core
     implementation libs.jackson.databind

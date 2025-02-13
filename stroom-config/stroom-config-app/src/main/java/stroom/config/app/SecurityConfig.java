@@ -1,10 +1,10 @@
 package stroom.config.app;
 
 import stroom.search.elastic.CryptoConfig;
+import stroom.security.common.impl.ContentSecurityConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;
-import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

@@ -50,6 +50,7 @@ import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
+import stroom.security.common.impl.CorsConfig;
 import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -87,6 +88,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
+    public static final String PROP_NAME_CORS = "cors";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DOCSTORE = "docstore";
@@ -135,6 +137,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
+    private final CorsConfig corsConfig;
     private final LegacyConfig legacyConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
@@ -186,6 +189,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
+                new CorsConfig(),
                 new LegacyConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
@@ -236,6 +240,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
                      @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -282,6 +287,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
+        this.corsConfig = corsConfig;
         this.legacyConfig = legacyConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
@@ -379,6 +385,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CORS)
+    public CorsConfig getCorsConfig() {
+        return corsConfig;
     }
 
     @JsonProperty(PROP_NAME_CORE)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;

@@ -41,6 +41,7 @@ import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
+import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
@@ -59,6 +60,8 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import java.nio.file.Path;
 
 public class ProxyModule extends AbstractModule {
+
+    private static final String MATCH_ALL_PATHS = "/*";
 
     private final Config configuration;
     private final Environment environment;
@@ -95,7 +98,9 @@ public class ProxyModule extends AbstractModule {
                 .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
-                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
+                .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
+                        ContentSecurityFilter.class)
+                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         ProxySecurityFilter.class);
 
         ServletBinder.create(binder())

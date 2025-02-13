@@ -25,6 +25,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.handler.ProxyId;
+import stroom.security.common.impl.CorsConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
@@ -165,7 +166,7 @@ public class App extends Application<Config> {
         environment.servlets().setSessionHandler(new SessionHandler());
 
         // Configure Cross-Origin Resource Sharing.
-        configureCors(environment);
+        configureCors(environment, configuration.getProxyConfig().getCorsConfig());
 
         LOGGER.info("Starting Stroom Proxy");
 
@@ -236,12 +237,29 @@ public class App extends Application<Config> {
         }
     }
 
-    private static void configureCors(io.dropwizard.core.setup.Environment environment) {
-        FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+    private static void configureCors(final Environment environment,
+                                      final CorsConfig corsConfig) {
+        // Enable CORS headers
+        final FilterRegistration.Dynamic cors =
+                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+
+        // Configure CORS parameters
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
+                "*"); // Same as default.
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM,
+                "X-Requested-With,Content-Type,Accept,Origin"); // Same as default.
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM,
+                "GET,POST,HEAD"); // Same as default.
+
+        // Add other overrides from config.
+        if (corsConfig != null && corsConfig.getParameters() != null && !corsConfig.getParameters().isEmpty()) {
+            corsConfig.getParameters().forEach(param -> {
+                cors.setInitParameter(param.getName(), param.getValue());
+            });
+        }
+
+        // Add URL mapping
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "*");
     }
 
     private void registerLogConfiguration(final Environment environment) {

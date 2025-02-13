@@ -15,7 +15,7 @@
  * you may not use this file except in compliance with the License.
  */
 
-package stroom.security.impl;
+package stroom.security.common.impl;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -44,7 +44,6 @@ public class ContentSecurityConfig extends AbstractConfig implements IsStroomCon
                 "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
                 "img-src 'self' data:; " +
                 "style-src 'self' 'unsafe-inline'; " +
-                "connect-src 'self' wss:; " +
                 "frame-ancestors 'self';";
         contentTypeOptions = "nosniff";
         frameOptions = "sameorigin";
