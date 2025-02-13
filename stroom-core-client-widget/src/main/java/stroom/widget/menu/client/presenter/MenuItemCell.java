@@ -125,7 +125,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         public void render(final MenuItemCell cell, final Context context, final MenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
-                sb.append(SafeHtmlUtils.fromTrustedString(value.getText()));
+                sb.append(value.getText());
             }
         }
     }
@@ -172,7 +172,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
 
                 inner.append(
-                        TEMPLATE.inner("menuItem-text", SafeHtmlUtils.fromTrustedString(value.getText())));
+                        TEMPLATE.inner("menuItem-text", value.getText()));
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
@@ -184,7 +184,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 // If this is a parent menu item, render an arrow to the right-hand side
                 if ((value instanceof IconParentMenuItem || value instanceof KeyedParentMenuItem)
-                        && value.isEnabled()) {
+                    && value.isEnabled()) {
                     inner.append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_RIGHT, "menuItem-expandArrow"));
                 }
 
@@ -235,7 +235,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 inner.append(
                         TEMPLATE.inner(
                                 "menuItem-simpleText",
-                                SafeHtmlUtils.fromTrustedString(value.getText())));
+                                value.getText()));
 
                 if (value.getAction() != null) {
                     final String shortcut = KeyBinding.getShortcut(value.getAction());
@@ -288,12 +288,12 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final Context context,
                            final InfoMenuItem value,
                            final SafeHtmlBuilder sb) {
-            if (value.getSafeHtml() != null) {
+            if (value.getText() != null) {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
                         "menuItem-simpleText",
-                        value.getSafeHtml()));
+                        value.getText()));
 
                 sb.append(TEMPLATE.outer(
                         "menuItem-outer infoMenuItem",

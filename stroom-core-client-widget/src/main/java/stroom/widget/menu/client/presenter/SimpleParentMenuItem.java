@@ -19,7 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
-import com.google.gwt.user.client.Command;
+import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.List;
 
@@ -28,17 +28,9 @@ public class SimpleParentMenuItem extends SimpleMenuItem implements HasChildren 
     private final List<Item> children;
 
     public SimpleParentMenuItem(final int priority,
-                                final String text,
+                                final SafeHtml text,
                                 final List<Item> children) {
         super(priority, text, null, true, null);
-        this.children = children;
-    }
-
-    public SimpleParentMenuItem(final int priority,
-                                final String text,
-                                final List<Item> children,
-                                final Command command) {
-        super(priority, text, null, true, command);
         this.children = children;
     }
 
