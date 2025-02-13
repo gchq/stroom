@@ -163,8 +163,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  cors:
-    parameters: []
   crossModule:
     db:
       connection:

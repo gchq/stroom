@@ -41,7 +41,6 @@ import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
-import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
@@ -98,8 +97,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
-                .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
-                        ContentSecurityFilter.class)
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         ProxySecurityFilter.class);
 

@@ -9,8 +9,6 @@ import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.security.common.impl.ContentSecurityConfig;
-import stroom.security.common.impl.CorsConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
@@ -40,8 +38,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_PROXY_ID = "proxyId";
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
-    public static final String PROP_NAME_CORS = "cors";
-    public static final String PROP_NAME_CSP = "csp";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
@@ -63,8 +59,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final String proxyId;
     private final String contentDir;
 
-    private final ContentSecurityConfig contentSecurityConfig;
-    private final CorsConfig corsConfig;
     private final ProxyPathConfig pathConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final EventStoreConfig eventStoreConfig;
@@ -82,8 +76,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this(DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE,
                 null,
                 DEFAULT_CONTENT_DIR,
-                new CorsConfig(),
-                new ContentSecurityConfig(),
                 new ProxyPathConfig(),
                 new ReceiveDataConfig(),
                 new EventStoreConfig(),
@@ -104,8 +96,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
             @JsonProperty(PROP_NAME_PROXY_ID) final String proxyId,
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
-            @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
-            @JsonProperty(PROP_NAME_CSP) final ContentSecurityConfig contentSecurityConfig,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
@@ -122,8 +112,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.proxyId = proxyId;
         this.contentDir = contentDir;
-        this.corsConfig = corsConfig;
-        this.contentSecurityConfig = contentSecurityConfig;
         this.pathConfig = pathConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.eventStoreConfig = eventStoreConfig;
@@ -165,16 +153,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     public String getContentDir() {
         return contentDir;
-    }
-
-    @JsonProperty(PROP_NAME_CORS)
-    public CorsConfig getCorsConfig() {
-        return corsConfig;
-    }
-
-    @JsonProperty(PROP_NAME_CSP)
-    public ContentSecurityConfig getContentSecurityConfig() {
-        return contentSecurityConfig;
     }
 
     @JsonProperty(PROP_NAME_PATH)
@@ -278,8 +256,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private String proxyId;
         private String contentDir = DEFAULT_CONTENT_DIR;
 
-        private CorsConfig corsConfig = new CorsConfig();
-        private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
@@ -309,16 +285,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder contentDir(final String contentDir) {
             this.contentDir = contentDir;
-            return this;
-        }
-
-        public Builder corsConfig(final CorsConfig corsConfig) {
-            this.corsConfig = corsConfig;
-            return this;
-        }
-
-        public Builder setContentSecurityConfig(final ContentSecurityConfig contentSecurityConfig) {
-            this.contentSecurityConfig = contentSecurityConfig;
             return this;
         }
 
@@ -387,8 +353,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     haltBootOnConfigValidationFailure,
                     proxyId,
                     contentDir,
-                    corsConfig,
-                    contentSecurityConfig,
                     pathConfig,
                     receiveDataConfig,
                     eventStoreConfig,

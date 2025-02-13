@@ -37,7 +37,6 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.security.common.impl.CorsConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -73,19 +72,15 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.FilterRegistration;
 import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.http.HttpCookie;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.EnumSet;
 import java.util.Objects;
 
 public class App extends Application<Config> {
@@ -231,15 +226,15 @@ public class App extends Application<Config> {
         // and configuration only holds the YAML view of the config, not the DB view.
         final ConfigMapper configMapper = bootStrapInjector.getInstance(ConfigMapper.class);
         final SessionCookieConfig sessionCookieConfig = configMapper.getConfigObject(SessionCookieConfig.class);
-        final CorsConfig corsConfig = configMapper.getConfigObject(CorsConfig.class);
+//        final CorsConfig corsConfig = configMapper.getConfigObject(CorsConfig.class);
         final SessionConfig sessionConfig = configMapper.getConfigObject(SessionConfig.class);
 
         // Set up a session handler for Jetty
         configureSessionHandling(environment, sessionConfig);
         configureSessionCookie(environment, sessionCookieConfig);
 
-        // Configure Cross-Origin Resource Sharing.
-        configureCors(environment, corsConfig);
+//        // Configure Cross-Origin Resource Sharing.
+//        configureCors(environment, corsConfig);
 
         LOGGER.info("Starting Stroom Application");
 
@@ -402,30 +397,30 @@ public class App extends Application<Config> {
                 sessionCookieConfig.getSameSite().getAttributeValue());
     }
 
-    private static void configureCors(final Environment environment,
-                                      final CorsConfig corsConfig) {
-        // Enable CORS headers
-        final FilterRegistration.Dynamic cors =
-                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-
-        // Configure CORS parameters
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
-                "*"); // Same as default.
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM,
-                "X-Requested-With,Content-Type,Accept,Origin"); // Same as default.
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM,
-                "GET,POST,HEAD"); // Same as default.
-
-        // Add other overrides from config.
-        if (corsConfig != null && corsConfig.getParameters() != null && !corsConfig.getParameters().isEmpty()) {
-            corsConfig.getParameters().forEach(param -> {
-                cors.setInitParameter(param.getName(), param.getValue());
-            });
-        }
-
-        // Add URL mapping
-        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-    }
+//    private static void configureCors(final Environment environment,
+//                                      final CorsConfig corsConfig) {
+//        // Enable CORS headers
+//        final FilterRegistration.Dynamic cors =
+//                environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+//
+//        // Configure CORS parameters
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM,
+//                "*"); // Same as default.
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM,
+//                "X-Requested-With,Content-Type,Accept,Origin"); // Same as default.
+//        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM,
+//                "GET,POST,HEAD"); // Same as default.
+//
+//        // Add other overrides from config.
+//        if (corsConfig != null && corsConfig.getParameters() != null && !corsConfig.getParameters().isEmpty()) {
+//            corsConfig.getParameters().forEach(param -> {
+//                cors.setInitParameter(param.getName(), param.getValue());
+//            });
+//        }
+//
+//        // Add URL mapping
+//        cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
+//    }
 
     private void registerLogConfiguration(final Environment environment) {
         // Task to allow configuration of log levels at runtime
