@@ -13,6 +13,15 @@ proxyConfig:
     contentSyncEnabled: false
     syncFrequency: "PT1M"
     upstreamUrl: null
+  cors:
+    parameters: []
+  csp:
+    contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline';\
+      \ img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self';"
+    contentTypeOptions: "nosniff"
+    frameOptions: "sameorigin"
+    strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
+    xssProtection: "1; mode=block"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"

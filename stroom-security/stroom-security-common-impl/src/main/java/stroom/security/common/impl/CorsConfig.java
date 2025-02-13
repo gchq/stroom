@@ -1,6 +1,7 @@
 package stroom.security.common.impl;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -12,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 @JsonPropertyOrder(alphabetic = true)
-public class CorsConfig extends AbstractConfig implements IsStroomConfig {
+public class CorsConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
     @JsonProperty
     @JsonPropertyDescription("A list of CORS parameters to set if users want to alter the defaults.")
