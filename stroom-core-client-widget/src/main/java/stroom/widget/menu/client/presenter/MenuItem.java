@@ -17,18 +17,20 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.widget.util.client.KeyBinding.Action;
+import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
 public abstract class MenuItem extends Item {
 
-    private final String text;
+    private final SafeHtml text;
     private final Action action;
     private final Command command;
     private final boolean enabled;
 
     protected MenuItem(final int priority,
-                       final String text,
+                       final SafeHtml text,
                        final Action action,
                        final boolean enabled,
                        final Command command) {
@@ -39,7 +41,7 @@ public abstract class MenuItem extends Item {
         this.command = command;
     }
 
-    public String getText() {
+    public SafeHtml getText() {
         return text;
     }
 
@@ -62,13 +64,18 @@ public abstract class MenuItem extends Item {
     protected abstract static class AbstractBuilder<T extends MenuItem, B extends MenuItem.AbstractBuilder<T, ?>>
             extends Item.AbstractBuilder<T, B> {
 
-        protected String text;
+        protected SafeHtml text;
         protected Action action;
         protected Command command;
         protected boolean enabled = true;
 
-        public B text(final String text) {
+        public B text(final SafeHtml text) {
             this.text = text;
+            return self();
+        }
+
+        public B text(final String text) {
+            this.text = SafeHtmlUtil.from(text);
             return self();
         }
 

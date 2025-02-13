@@ -115,12 +115,10 @@ public class JobNodeListHelper {
                 "\n\nThe job will execute shortly, likely within ten seconds. " +
                 "You can check it has run by refreshing the table until the 'Last Executed' " +
                 "column has been updated.",
-                ok -> {
-                    restFactory.create(JOB_NODE_RESOURCE)
-                            .call(resource -> resource.execute(jobNode.getId()))
-                            .taskMonitorFactory(taskMonitorFactory)
-                            .exec();
-                });
+                ok -> restFactory.create(JOB_NODE_RESOURCE)
+                        .call(resource -> resource.execute(jobNode.getId()))
+                        .taskMonitorFactory(taskMonitorFactory)
+                        .exec());
     }
 
     public void showSchedule(final JobNodeAndInfo jobNodeAndInfo) {
@@ -389,18 +387,14 @@ public class JobNodeListHelper {
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (" + jobNode.getNodeName() + ")")
-                        .command(() -> {
-                            OpenTaskManagerEvent.fire(
-                                    hasHandlers,
-                                    jobNode.getNodeName(),
-                                    jobNode.getJobName());
-                        }))
+                        .command(() -> OpenTaskManagerEvent.fire(
+                                hasHandlers,
+                                jobNode.getNodeName(),
+                                jobNode.getJobName())))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (All Nodes)")
-                        .command(() -> {
-                            OpenTaskManagerEvent.fire(hasHandlers, jobNode.getJobName());
-                        }))
+                        .command(() -> OpenTaskManagerEvent.fire(hasHandlers, jobNode.getJobName())))
                 .build();
     }
 

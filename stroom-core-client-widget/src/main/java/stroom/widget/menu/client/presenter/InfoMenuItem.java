@@ -3,22 +3,23 @@ package stroom.widget.menu.client.presenter;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 
 public class InfoMenuItem extends MenuItem {
 
-    private final SafeHtml safeHtml;
+    private final SafeHtml text;
 
-    public InfoMenuItem(final SafeHtml safeHtml,
+    public InfoMenuItem(final SafeHtml text,
                         final Action action,
                         final Boolean enabled,
                         final Command command) {
-        super(0, "", action, enabled, command);
-        this.safeHtml = safeHtml;
+        super(0, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
+        this.text = text;
     }
 
-    public SafeHtml getSafeHtml() {
-        return safeHtml;
+    public SafeHtml getText() {
+        return text;
     }
 
     public static Builder builder() {
@@ -27,7 +28,7 @@ public class InfoMenuItem extends MenuItem {
 
     public static class Builder {
 
-        private SafeHtml safeHtml = null;
+        private SafeHtml text = SafeHtmlUtils.EMPTY_SAFE_HTML;
         private Action action = null;
         private Command command = null;
         private boolean enabled = true;
@@ -35,8 +36,8 @@ public class InfoMenuItem extends MenuItem {
         Builder() {
         }
 
-        public Builder withSafeHtml(final SafeHtml safeHtml) {
-            this.safeHtml = safeHtml;
+        public Builder text(final SafeHtml text) {
+            this.text = text;
             return this;
         }
 
@@ -45,12 +46,12 @@ public class InfoMenuItem extends MenuItem {
             return this;
         }
 
-        public Builder withCommand(final Command command) {
+        public Builder command(final Command command) {
             this.command = command;
             return this;
         }
 
-        public Builder withEnabledState(final boolean enabled) {
+        public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
@@ -62,7 +63,7 @@ public class InfoMenuItem extends MenuItem {
 
         public Item build() {
             return new InfoMenuItem(
-                    safeHtml,
+                    text,
                     action,
                     enabled,
                     command);

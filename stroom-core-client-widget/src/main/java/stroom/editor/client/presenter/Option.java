@@ -16,6 +16,9 @@
 
 package stroom.editor.client.presenter;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+
 public class Option {
 
     private ChangeHandler changeHandler;
@@ -94,11 +97,17 @@ public class Option {
         this.changeHandler = changeHandler;
     }
 
-    public String getText() {
+    public SafeHtml getText() {
         if (on) {
-            return text + " (<span class=\"editor-menu-option-on\">ON</span>)";
+            return new SafeHtmlBuilder()
+                    .appendEscaped(text)
+                    .appendHtmlConstant(" (<span class=\"editor-menu-option-on\">ON</span>)")
+                    .toSafeHtml();
         } else {
-            return text + " (<span class=\"editor-menu-option-off\">OFF</span>)";
+            return new SafeHtmlBuilder()
+                    .appendEscaped(text)
+                    .appendHtmlConstant(" (<span class=\"editor-menu-option-off\">OFF</span>)")
+                    .toSafeHtml();
         }
     }
 

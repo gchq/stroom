@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
 public class IconMenuItem extends MenuItem {
@@ -35,7 +36,7 @@ public class IconMenuItem extends MenuItem {
                            final SvgImage enabledIcon,
                            final SvgImage disabledIcon,
                            final IconColour iconColour,
-                           final String text,
+                           final SafeHtml text,
                            final Action action,
                            final boolean enabled,
                            final Command command,

@@ -22,6 +22,8 @@ import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -34,7 +36,7 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                         final SvgImage enabledIcon,
                         final SvgImage disabledIcon,
                         final IconColour iconColour,
-                        final String text,
+                        final SafeHtml text,
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
