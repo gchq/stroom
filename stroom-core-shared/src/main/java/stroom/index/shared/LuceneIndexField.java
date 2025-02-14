@@ -311,6 +311,16 @@ public class LuceneIndexField implements IndexField {
         private Builder() {
         }
 
+        public Builder(final IndexFieldImpl indexField) {
+            this.fldName = indexField.getFldName();
+            this.fldType = indexField.getFldType();
+            this.analyzerType = indexField.getAnalyzerType();
+            this.indexed = indexField.isIndexed();
+            this.stored = indexField.isStored();
+            this.termPositions = indexField.isTermPositions();
+            this.caseSensitive = indexField.isCaseSensitive();
+        }
+
         private Builder(final LuceneIndexField indexField) {
             this.fldName = indexField.fldName;
             this.fldType = indexField.fldType;

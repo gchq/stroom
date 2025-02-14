@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -25,17 +26,22 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +82,9 @@ public class IndexStoreImpl implements IndexStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+        final DocRef copy = store.copyDocument(docRef.getUuid(), newName);
+        indexFieldServiceProvider.get().copyAll(docRef, copy);
+        return copy;
     }
 
     @Override
@@ -92,6 +100,7 @@ public class IndexStoreImpl implements IndexStore {
     @Override
     public void deleteDocument(final DocRef docRef) {
         store.deleteDocument(docRef);
+        indexFieldServiceProvider.get().deleteAll(docRef);
     }
 
     @Override
@@ -138,11 +147,12 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public LuceneIndexDoc writeDocument(final LuceneIndexDoc document) {
-        final LuceneIndexDoc luceneIndexDoc = store.writeDocument(document);
-        if (document != null) {
-            indexFieldServiceProvider.get().transferFieldsToDB(document.asDocRef());
-        }
-        return luceneIndexDoc;
+        return store.writeDocument(document);
+//        final LuceneIndexDoc luceneIndexDoc = store.writeDocument(document);
+//        if (document != null) {
+//            indexFieldServiceProvider.get().transferFieldsToDB(document.asDocRef());
+//        }
+//        return luceneIndexDoc;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -199,6 +209,25 @@ public class IndexStoreImpl implements IndexStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
+        // Update fields in the written index first.
+        try {
+            final LuceneIndexDoc document = readDocument(docRef);
+            // Limited to 100 fields.
+            final FindFieldCriteria findFieldCriteria =
+                    new FindFieldCriteria(PageRequest.createDefault(), Collections.emptyList(), docRef);
+            final ResultPage<IndexFieldImpl> indexFields =
+                    indexFieldServiceProvider.get().findFields(findFieldCriteria);
+            document.setFields(indexFields
+                    .getValues()
+                    .stream()
+                    .map(indexField -> new LuceneIndexField.Builder(indexField)
+                            .build())
+                    .toList());
+            writeDocument(document);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
         if (omitAuditFields) {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }

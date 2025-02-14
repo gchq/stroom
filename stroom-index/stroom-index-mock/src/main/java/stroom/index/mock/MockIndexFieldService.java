@@ -22,7 +22,11 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.UpdateField;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Singleton
 public class MockIndexFieldService implements IndexFieldService {
@@ -47,7 +52,7 @@ public class MockIndexFieldService implements IndexFieldService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockIndexFieldService.class);
 
     private final Provider<IndexStore> indexStoreProvider;
-    private final Map<DocRef, Set<IndexField>> map = new ConcurrentHashMap<>();
+    private final Map<DocRef, Set<IndexFieldImpl>> map = new ConcurrentHashMap<>();
 
     private final Set<DocRef> loadedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -58,17 +63,21 @@ public class MockIndexFieldService implements IndexFieldService {
 
     @Override
     public void addFields(final DocRef docRef, final Collection<IndexField> fields) {
-        map.computeIfAbsent(docRef, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).addAll(fields);
+        map.computeIfAbsent(docRef, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                .addAll(fields
+                        .stream()
+                        .map(indexField -> (IndexFieldImpl) indexField)
+                        .collect(Collectors.toSet()));
     }
 
     @Override
-    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
+    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
         final DocRef dataSourceRef = criteria.getDataSourceRef();
         ensureLoaded(dataSourceRef);
 
         final StringMatcher stringMatcher = new StringMatcher(criteria.getStringMatch());
-        final Set<IndexField> set = map.get(dataSourceRef);
-        final List<IndexField> filtered = set
+        final Set<IndexFieldImpl> set = map.get(dataSourceRef);
+        final List<IndexFieldImpl> filtered = set
                 .stream()
                 .filter(field -> {
                     if (criteria.getQueryable() == null || criteria.getQueryable().equals(field.isIndexed())) {
@@ -122,7 +131,7 @@ public class MockIndexFieldService implements IndexFieldService {
                 docRef,
                 StringMatch.equals(fieldName),
                 null);
-        final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
+        final ResultPage<IndexFieldImpl> resultPage = findFields(findIndexFieldCriteria);
         if (resultPage.size() > 0) {
             return resultPage.getFirst();
         }
@@ -132,5 +141,30 @@ public class MockIndexFieldService implements IndexFieldService {
     @Override
     public String getDataSourceType() {
         return LuceneIndexDoc.TYPE;
+    }
+
+    @Override
+    public Boolean addField(final AddField addField) {
+        return null;
+    }
+
+    @Override
+    public Boolean updateField(final UpdateField updateField) {
+        return null;
+    }
+
+    @Override
+    public Boolean deleteField(final DeleteField deleteField) {
+        return null;
+    }
+
+    @Override
+    public void deleteAll(final DocRef docRef) {
+
+    }
+
+    @Override
+    public void copyAll(final DocRef source, final DocRef dest) {
+
     }
 }

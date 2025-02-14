@@ -19,6 +19,10 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
+import stroom.index.shared.IndexFieldImpl;
+import stroom.index.shared.UpdateField;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.util.shared.ResultPage;
 
@@ -28,9 +32,19 @@ public interface IndexFieldService extends IndexFieldProvider {
 
     void addFields(DocRef docRef, Collection<IndexField> fields);
 
-    ResultPage<IndexField> findFields(FindFieldCriteria criteria);
+    ResultPage<IndexFieldImpl> findFields(FindFieldCriteria criteria);
+
+    Boolean addField(AddField addField);
+
+    Boolean updateField(UpdateField updateField);
+
+    Boolean deleteField(DeleteField deleteField);
 
     void transferFieldsToDB(DocRef docRef);
 
     int getFieldCount(DocRef docRef);
+
+    void deleteAll(DocRef docRef);
+
+    void copyAll(DocRef source, DocRef dest);
 }

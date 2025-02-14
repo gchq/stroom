@@ -24,7 +24,10 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
+import stroom.index.shared.UpdateField;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -35,6 +38,8 @@ import stroom.util.shared.StringUtil;
 import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -44,6 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,6 +61,15 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexFieldDaoImpl.class);
     public static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
+
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindFieldCriteria.FIELD_NAME, INDEX_FIELD.NAME,
+            FindFieldCriteria.FIELD_TYPE, INDEX_FIELD.TYPE,
+            FindFieldCriteria.FIELD_STORE, INDEX_FIELD.STORED,
+            FindFieldCriteria.FIELD_INDEX, INDEX_FIELD.INDEXED,
+            FindFieldCriteria.FIELD_POSITIONS, INDEX_FIELD.TERM_POSITIONS,
+            FindFieldCriteria.FIELD_ANALYSER, INDEX_FIELD.ANALYZER,
+            FindFieldCriteria.FIELD_CASE_SENSITIVE, INDEX_FIELD.CASE_SENSITIVE);
 
     private final IndexDbConnProvider queryDatasourceDbConnProvider;
 
@@ -165,7 +180,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         }
                         LOGGER.debug("{} fields to upsert on {}", fieldCount, docRef);
                         if (fieldCount > 0) {
-                            // The update part doesn't update anything, intentiaonally
+                            // The update part doesn't update anything, intentionally
                             c.onDuplicateKeyUpdate()
                                     .set(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID, fieldSourceId)
                                     .execute();
@@ -176,11 +191,11 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     // Deadlocks are likely as the upsert will create gap locks in the ID idx which has
                     // fields from different indexes all mixed in together.
                     if (e instanceof DataAccessException
-                            && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
-                            && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+                        && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                        && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
                         LOGGER.warn(() -> LogUtil.message(
                                 "Deadlock trying to upsert {} {} into {}. Attempt: {}. Will retry. " +
-                                        "Enable DEBUG for full stacktrace.",
+                                "Enable DEBUG for full stacktrace.",
                                 fields.size(),
                                 StringUtil.plural("field", fields.size()),
                                 INDEX_FIELD.getName(),
@@ -195,7 +210,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     }
 
     @Override
-    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
+    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
         final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
 
         if (optional.isEmpty()) {
@@ -209,10 +224,12 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
             conditions.add(INDEX_FIELD.INDEXED.eq(criteria.getQueryable()));
         }
 
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria, INDEX_FIELD.NAME);
+
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
-        final List<IndexField> fieldInfoList = JooqUtil
+        final List<IndexFieldImpl> fieldInfoList = JooqUtil
                 .contextResult(queryDatasourceDbConnProvider, context -> context
                         .select(INDEX_FIELD.TYPE,
                                 INDEX_FIELD.NAME,
@@ -223,7 +240,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 INDEX_FIELD.CASE_SENSITIVE)
                         .from(INDEX_FIELD)
                         .where(conditions)
-                        .orderBy(INDEX_FIELD.NAME)
+                        .orderBy(orderFields)
                         .limit(offset, limit)
                         .fetch())
                 .map(r -> {
@@ -263,6 +280,138 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public void addField(final AddField addField) {
+        final DocRef docRef = addField.getIndexDocRef();
+        final IndexFieldImpl field = addField.getIndexField();
+
+        // Do this outside the txn so other threads can see it asap
+        ensureFieldSource(docRef);
+
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+            // Get a record lock on the field source, so we are the only thread
+            // that can mutate the index fields for that source, else we can get a deadlock.
+            final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+            txnContext
+                    .insertInto(INDEX_FIELD,
+                            INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
+                            INDEX_FIELD.TYPE,
+                            INDEX_FIELD.NAME,
+                            INDEX_FIELD.ANALYZER,
+                            INDEX_FIELD.INDEXED,
+                            INDEX_FIELD.STORED,
+                            INDEX_FIELD.TERM_POSITIONS,
+                            INDEX_FIELD.CASE_SENSITIVE)
+                    .values(fieldSourceId,
+                            (byte) field.getFldType().getIndex(),
+                            field.getFldName(),
+                            field.getAnalyzerType().getDisplayValue(),
+                            field.isIndexed(),
+                            field.isStored(),
+                            field.isTermPositions(),
+                            field.isCaseSensitive())
+                    .execute();
+        });
+    }
+
+    @Override
+    public void updateField(final UpdateField updateField) {
+        final DocRef docRef = updateField.getIndexDocRef();
+        final IndexFieldImpl field = updateField.getIndexField();
+
+        // Do this outside the txn so other threads can see it asap
+        ensureFieldSource(docRef);
+
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+            // Get a record lock on the field source, so we are the only thread
+            // that can mutate the index fields for that source, else we can get a deadlock.
+            final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+            txnContext
+                    .update(INDEX_FIELD)
+                    .set(INDEX_FIELD.TYPE, (byte) field.getFldType().getIndex())
+                    .set(INDEX_FIELD.NAME, field.getFldName())
+                    .set(INDEX_FIELD.ANALYZER, field.getAnalyzerType().getDisplayValue())
+                    .set(INDEX_FIELD.INDEXED, field.isIndexed())
+                    .set(INDEX_FIELD.STORED, field.isStored())
+                    .set(INDEX_FIELD.TERM_POSITIONS, field.isTermPositions())
+                    .set(INDEX_FIELD.CASE_SENSITIVE, field.isCaseSensitive())
+                    .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
+                    .and(INDEX_FIELD.NAME.eq(updateField.getFieldName()))
+                    .execute();
+        });
+    }
+
+    @Override
+    public void deleteField(final DeleteField deleteField) {
+        final DocRef docRef = deleteField.getIndexDocRef();
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+            // Get a record lock on the field source, so we are the only thread
+            // that can mutate the index fields for that source, else we can get a deadlock.
+            final int fieldSourceId = getFieldSource(txnContext, docRef, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
+            txnContext
+                    .deleteFrom(INDEX_FIELD)
+                    .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
+                    .and(INDEX_FIELD.NAME.eq(deleteField.getFieldName()))
+                    .execute();
+        });
+    }
+
+    @Override
+    public void deleteAll(final DocRef docRef) {
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> getFieldSource(txnContext, docRef, true)
+                .ifPresent(fieldSourceId -> {
+                    txnContext
+                            .deleteFrom(INDEX_FIELD)
+                            .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
+                            .execute();
+                    txnContext
+                            .deleteFrom(INDEX_FIELD_SOURCE)
+                            .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
+                            .and(INDEX_FIELD_SOURCE.UUID.eq(docRef.getUuid()))
+                            .execute();
+                }));
+    }
+
+    @Override
+    public void copyAll(final DocRef source, final DocRef dest) {
+        // Do this outside the txn so other threads can see it asap
+        ensureFieldSource(dest);
+
+        JooqUtil.transaction(queryDatasourceDbConnProvider, txnContext -> {
+            // Get a record lock on the field source, so we are the only thread
+            // that can mutate the index fields for that source, else we can get a deadlock.
+            final int sourceId = getFieldSource(txnContext, source, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + source));
+            final int destId = getFieldSource(txnContext, dest, true)
+                    .orElseThrow(() -> new RuntimeException("No field source found for " + dest));
+            txnContext
+                    .insertInto(INDEX_FIELD)
+                    .columns(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
+                            INDEX_FIELD.TYPE,
+                            INDEX_FIELD.NAME,
+                            INDEX_FIELD.ANALYZER,
+                            INDEX_FIELD.INDEXED,
+                            INDEX_FIELD.STORED,
+                            INDEX_FIELD.TERM_POSITIONS,
+                            INDEX_FIELD.CASE_SENSITIVE)
+                    .select(DSL.select(
+                                    DSL.val(destId),
+                                    INDEX_FIELD.TYPE,
+                                    INDEX_FIELD.NAME,
+                                    INDEX_FIELD.ANALYZER,
+                                    INDEX_FIELD.INDEXED,
+                                    INDEX_FIELD.STORED,
+                                    INDEX_FIELD.TERM_POSITIONS,
+                                    INDEX_FIELD.CASE_SENSITIVE)
+                            .from(INDEX_FIELD)
+                            .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(sourceId)))
+                    .execute();
+        });
     }
 }
 
