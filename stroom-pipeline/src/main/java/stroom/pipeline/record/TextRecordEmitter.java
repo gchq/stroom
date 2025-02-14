@@ -20,6 +20,7 @@ import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilterAdaptor;
+import stroom.util.CharBuffer;
 import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -35,7 +36,7 @@ import java.util.List;
 public class TextRecordEmitter extends XMLFilterAdaptor {
 
     private final List<DestinationProvider> destinationProviders;
-    private final StringBuilder builder = new StringBuilder();
+    private final CharBuffer content = new CharBuffer();
     @Inject
     private ErrorReceiverProxy errorReceiverProxy;
     private int depth;
@@ -53,10 +54,10 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (depth == 2) {
-            final String content = builder.toString();
-            builder.setLength(0);
+            final String string = content.toString();
+            content.clear();
 
-            final ByteSlice body = StreamUtil.getByteSlice(content);
+            final ByteSlice body = StreamUtil.getByteSlice(string);
             final Rec record = new Rec(null, null, body);
             for (final DestinationProvider destinationProvider : destinationProviders) {
                 try {
@@ -76,7 +77,7 @@ public class TextRecordEmitter extends XMLFilterAdaptor {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (depth > 2) {
-            builder.append(ch, start, length);
+            content.append(ch, start, length);
         }
     }
 

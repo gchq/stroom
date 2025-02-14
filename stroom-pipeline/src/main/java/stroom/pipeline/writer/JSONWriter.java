@@ -25,6 +25,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.svg.shared.SvgImage;
+import stroom.util.CharBuffer;
 import stroom.util.io.IgnoreCloseWriter;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -59,7 +60,7 @@ public class JSONWriter extends AbstractWriter {
     private final boolean addTrailingRootValueSeparator = true;
     private final String rootValueSeparator = "\n";
     private final Deque<String> elements = new ArrayDeque<>();
-    private final StringBuilder buffer = new StringBuilder();
+    private final CharBuffer content = new CharBuffer();
     private final JsonFactory jsonFactory = new JsonFactory();
     private JsonGenerator jsonGenerator;
     private boolean doneElement;
@@ -73,8 +74,7 @@ public class JSONWriter extends AbstractWriter {
     }
 
     private JsonGenerator createGenerator() {
-        JsonGenerator jsonGenerator = null;
-
+        JsonGenerator jsonGenerator;
         try {
             jsonGenerator = jsonFactory.createGenerator(new IgnoreCloseWriter(getWriter()));
             if (indentOutput) {
@@ -170,7 +170,7 @@ public class JSONWriter extends AbstractWriter {
         } catch (final IOException | RuntimeException e) {
             error(e);
         } finally {
-            buffer.setLength(0);
+            content.clear();
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -200,8 +200,8 @@ public class JSONWriter extends AbstractWriter {
                     jsonGenerator.writeEndArray();
                     elements.pop();
                 } else if (localName.equals(JSONParser.XML_ELEMENT_STRING)) {
-                    final String value = buffer.toString();
-                    if (value.length() > 0) {
+                    final String value = content.toString();
+                    if (!value.isEmpty()) {
                         if (inMap) {
                             if (writeKey()) {
                                 jsonGenerator.writeString(value);
@@ -211,8 +211,8 @@ public class JSONWriter extends AbstractWriter {
                         }
                     }
                 } else if (localName.equals(JSONParser.XML_ELEMENT_NUMBER)) {
-                    final String value = buffer.toString();
-                    if (value.length() > 0) {
+                    final String value = content.toString();
+                    if (!value.isEmpty()) {
                         if (inMap) {
                             if (writeKey()) {
                                 jsonGenerator.writeNumber(value);
@@ -222,8 +222,8 @@ public class JSONWriter extends AbstractWriter {
                         }
                     }
                 } else if (localName.equals(JSONParser.XML_ELEMENT_BOOLEAN)) {
-                    final String value = buffer.toString();
-                    if (value.length() > 0) {
+                    final String value = content.toString();
+                    if (!value.isEmpty()) {
                         if (inMap) {
                             if (writeKey()) {
                                 jsonGenerator.writeBoolean(Boolean.parseBoolean(value));
@@ -258,7 +258,9 @@ public class JSONWriter extends AbstractWriter {
                         }
                     }
 
-                    jsonGenerator.flush();
+                    if (jsonGenerator != null) {
+                        jsonGenerator.flush();
+                    }
                     returnDestinations();
                 } catch (final IOException e) {
                     throw new SAXException(e);
@@ -269,7 +271,7 @@ public class JSONWriter extends AbstractWriter {
             error(e);
         } finally {
             clearKey();
-            buffer.setLength(0);
+            content.clear();
             super.endElement(uri, localName, qName);
         }
     }
@@ -286,7 +288,7 @@ public class JSONWriter extends AbstractWriter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        buffer.append(ch, start, length);
+        content.append(ch, start, length);
         super.characters(ch, start, length);
     }
 

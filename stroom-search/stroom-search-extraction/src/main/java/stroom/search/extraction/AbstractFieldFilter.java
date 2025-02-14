@@ -24,6 +24,7 @@ import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.query.language.functions.Val;
+import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
 import org.xml.sax.Attributes;
@@ -48,22 +49,19 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final CharBuffer content = new CharBuffer();
 
     private Locator locator;
 
-
-    private IndexFieldImpl.Builder currentFieldBuilder;
-    private String currentElement;
-    private String currentValue;
-
-    private List<FieldValue> currentFieldValues;
+    private final List<FieldValue> currentFieldValues = new ArrayList<>();
+    private IndexFieldImpl.Builder currentFieldBuilder = IndexFieldImpl.builder();
+    private Val currentVal;
 
     public AbstractFieldFilter(final LocationFactoryProxy locationFactory,
                                final ErrorReceiverProxy errorReceiverProxy) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
     }
-
 
     /**
      * Sets the locator to use when reporting errors.
@@ -79,13 +77,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        currentElement = localName;
-        if (DOCUMENT.equals(localName)) {
-            currentFieldValues = new ArrayList<>();
-        } else if (FIELD.equals(localName)) {
-            currentFieldBuilder = IndexFieldImpl.builder();
-            currentValue = null;
-        }
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
@@ -95,50 +87,48 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
             if (!currentFieldValues.isEmpty()) {
                 processFields(currentFieldValues);
             }
-            currentFieldValues = null;
-            currentFieldBuilder = null;
-            currentValue = null;
+            currentFieldValues.clear();
+            currentFieldBuilder = IndexFieldImpl.builder();
+            currentVal = null;
 
         } else if (FIELD.equals(localName)) {
-            if (currentFieldBuilder != null && currentValue != null) {
+            if (currentFieldBuilder != null && currentVal != null) {
                 final IndexFieldImpl indexField = currentFieldBuilder.build();
-                final Val val = convertValue(indexField, currentValue);
-                if (val != null) {
-                    final FieldValue fieldValue = new FieldValue(indexField, val);
-                    currentFieldValues.add(fieldValue);
-                }
+                final FieldValue fieldValue = new FieldValue(indexField, currentVal);
+                currentFieldValues.add(fieldValue);
             }
 
-            currentFieldBuilder = null;
-            currentValue = null;
+            currentFieldBuilder = IndexFieldImpl.builder();
+            currentVal = null;
+
+        } else if (NAME.equals(localName)) {
+            currentFieldBuilder.fldName(content.toString());
+        } else if (TYPE.equals(localName)) {
+            final FieldType type = FieldType.fromDisplayValue(content.toString());
+            currentFieldBuilder.fldType(type);
+        } else if (ANALYSER.equals(localName)) {
+            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(content.toString());
+            currentFieldBuilder.analyzerType(analyzerType);
+        } else if (INDEXED.equals(localName)) {
+            currentFieldBuilder.indexed(Boolean.parseBoolean(content.toString()));
+        } else if (STORED.equals(localName)) {
+            currentFieldBuilder.stored(Boolean.parseBoolean(content.toString()));
+        } else if (TERM_POSITIONS.equals(localName)) {
+            currentFieldBuilder.termPositions(Boolean.parseBoolean(content.toString()));
+        } else if (CASE_SENSITIVE.equals(localName)) {
+            currentFieldBuilder.caseSensitive(Boolean.parseBoolean(content.toString()));
+        } else if (VALUE.equals(localName)) {
+            final IndexFieldImpl indexField = currentFieldBuilder.build();
+            currentVal = convertValue(indexField, content.toString());
         }
 
+        content.clear();
         super.endElement(uri, localName, qName);
     }
 
     @Override
-    public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        final String string = new String(ch, start, length);
-        if (NAME.equals(currentElement)) {
-            currentFieldBuilder.fldName(string);
-        } else if (TYPE.equals(currentElement)) {
-            final FieldType type = FieldType.fromDisplayValue(string);
-            currentFieldBuilder.fldType(type);
-        } else if (ANALYSER.equals(currentElement)) {
-            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(string);
-            currentFieldBuilder.analyzerType(analyzerType);
-        } else if (INDEXED.equals(currentElement)) {
-            currentFieldBuilder.indexed(Boolean.parseBoolean(string));
-        } else if (STORED.equals(currentElement)) {
-            currentFieldBuilder.stored(Boolean.parseBoolean(string));
-        } else if (TERM_POSITIONS.equals(currentElement)) {
-            currentFieldBuilder.termPositions(Boolean.parseBoolean(string));
-        } else if (CASE_SENSITIVE.equals(currentElement)) {
-            currentFieldBuilder.caseSensitive(Boolean.parseBoolean(string));
-        } else if (VALUE.equals(currentElement)) {
-            currentValue = string;
-        }
-
+    public final void characters(final char[] ch, final int start, final int length) throws SAXException {
+        content.append(ch, start, length);
         super.characters(ch, start, length);
     }
 
