@@ -203,7 +203,6 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         super.characters(ch, start, length);
-
         content.append(ch, start, length);
     }
 
@@ -256,7 +255,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     private void writeln(final CharBuffer cb) {
         try {
             // Output content first if we have any.
-            if (content.length() > 0) {
+            if (!content.isEmpty()) {
                 String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
                 output.write(out.getBytes());
                 output.write(NEW_LINE.getBytes());
@@ -276,7 +275,7 @@ public class TestSAXEventFilter extends AbstractXMLFilter {
     private void writeln(final String type) {
         try {
             // Output content first if we have any.
-            if (content.length() > 0) {
+            if (!content.isEmpty()) {
                 String out = NEW_LINE_PATTERN.matcher(content).replaceAll(SPACE);
                 output.write(out.getBytes());
                 output.write(NEW_LINE.getBytes());

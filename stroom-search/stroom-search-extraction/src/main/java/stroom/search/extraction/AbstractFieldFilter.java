@@ -49,7 +49,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final CharBuffer contentBuffer = new CharBuffer(20);
+    private final CharBuffer content = new CharBuffer();
 
     private Locator locator;
 
@@ -77,7 +77,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        contentBuffer.clear();
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
@@ -102,33 +102,33 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
             currentVal = null;
 
         } else if (NAME.equals(localName)) {
-            currentFieldBuilder.fldName(contentBuffer.toString());
+            currentFieldBuilder.fldName(content.toString());
         } else if (TYPE.equals(localName)) {
-            final FieldType type = FieldType.fromDisplayValue(contentBuffer.toString());
+            final FieldType type = FieldType.fromDisplayValue(content.toString());
             currentFieldBuilder.fldType(type);
         } else if (ANALYSER.equals(localName)) {
-            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(contentBuffer.toString());
+            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(content.toString());
             currentFieldBuilder.analyzerType(analyzerType);
         } else if (INDEXED.equals(localName)) {
-            currentFieldBuilder.indexed(Boolean.parseBoolean(contentBuffer.toString()));
+            currentFieldBuilder.indexed(Boolean.parseBoolean(content.toString()));
         } else if (STORED.equals(localName)) {
-            currentFieldBuilder.stored(Boolean.parseBoolean(contentBuffer.toString()));
+            currentFieldBuilder.stored(Boolean.parseBoolean(content.toString()));
         } else if (TERM_POSITIONS.equals(localName)) {
-            currentFieldBuilder.termPositions(Boolean.parseBoolean(contentBuffer.toString()));
+            currentFieldBuilder.termPositions(Boolean.parseBoolean(content.toString()));
         } else if (CASE_SENSITIVE.equals(localName)) {
-            currentFieldBuilder.caseSensitive(Boolean.parseBoolean(contentBuffer.toString()));
+            currentFieldBuilder.caseSensitive(Boolean.parseBoolean(content.toString()));
         } else if (VALUE.equals(localName)) {
             final IndexFieldImpl indexField = currentFieldBuilder.build();
-            currentVal = convertValue(indexField, contentBuffer.toString());
+            currentVal = convertValue(indexField, content.toString());
         }
 
-        contentBuffer.clear();
+        content.clear();
         super.endElement(uri, localName, qName);
     }
 
     @Override
     public final void characters(final char[] ch, final int start, final int length) throws SAXException {
-        contentBuffer.append(ch, start, length);
+        content.append(ch, start, length);
         super.characters(ch, start, length);
     }
 

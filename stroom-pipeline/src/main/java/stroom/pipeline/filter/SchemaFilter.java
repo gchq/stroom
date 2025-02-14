@@ -354,7 +354,6 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         try {
             colNo += length;
-
             if (validator != null) {
                 validator.characters(ch, start, length);
             }
@@ -397,13 +396,13 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
         final String validLocations = schemaSet.getLocations();
 
         // Check that the root has a URI.
-        if (rootURI == null || rootURI.trim().length() == 0) {
+        if (rootURI == null || rootURI.trim().isEmpty()) {
             noNamespace(validLocations, schemaConstraint);
             return false;
         }
 
         // Make sure we have some schema locations.
-        if (schemaLocations == null || schemaLocations.size() == 0) {
+        if (schemaLocations == null || schemaLocations.isEmpty()) {
             noSchemaLocations(validLocations, schemaConstraint);
             return false;
         }
@@ -484,7 +483,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
 
         if (schemaConstraint != null) {
             if (!Strings.isNullOrEmpty(schemaConstraint.getSchemaGroup())) {
-                if (where.length() == 0) {
+                if (where.isEmpty()) {
                     where.append(" where ");
                 } else {
                     where.append(" and ");
@@ -494,7 +493,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 where.append("'");
             }
             if (!Strings.isNullOrEmpty(schemaConstraint.getNamespaceURI())) {
-                if (where.length() == 0) {
+                if (where.isEmpty()) {
                     where.append(" where ");
                 } else {
                     where.append(" and ");
@@ -504,7 +503,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 where.append("'");
             }
             if (!Strings.isNullOrEmpty(schemaConstraint.getSystemId())) {
-                if (where.length() == 0) {
+                if (where.isEmpty()) {
                     where.append(" where ");
                 } else {
                     where.append(" and ");
@@ -559,7 +558,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 final String location = schemaLocations.get(namespace);
                 if (location != null) {
                     namespaces.append(" xmlns");
-                    if (prefix.length() > 0) {
+                    if (!prefix.isEmpty()) {
                         namespaces.append(":");
                         namespaces.append(prefix);
                     }
@@ -676,7 +675,7 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             if (t.getMessage() != null) {
                 message = t.getMessage();
             }
-            if (message == null || message.trim().length() == 0) {
+            if (message == null || message.trim().isEmpty()) {
                 message = t.getClass().getName();
             }
         }

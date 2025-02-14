@@ -142,7 +142,6 @@ public class ResultLocator extends AbstractXMLFilter implements Locator {
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         colNo += length;
-
         super.characters(ch, start, length);
     }
 

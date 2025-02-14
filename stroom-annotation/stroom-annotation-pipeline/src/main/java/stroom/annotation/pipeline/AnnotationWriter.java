@@ -27,6 +27,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.svg.shared.SvgImage;
+import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -90,20 +91,19 @@ class AnnotationWriter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final AnnotationCreator annotationCreator;
+    private final CharBuffer content = new CharBuffer();
     private Locator locator;
 
-    private String lastTag = null;
-    private Annotation currentAnnotation = null;
+    private Annotation currentAnnotation = new Annotation();
     private String lastEventId = null;
     private String lastStreamId = null;
 
-    private ArrayList<EventId> currentEventIds = null;
+    private ArrayList<EventId> currentEventIds = new ArrayList<>();
 
     @Inject
     AnnotationWriter(final AnnotationCreator annotationCreator,
                      final ErrorReceiverProxy errorReceiverProxy,
-                     final LocationFactoryProxy locationFactory
-    ) {
+                     final LocationFactoryProxy locationFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.annotationCreator = annotationCreator;
@@ -124,37 +124,12 @@ class AnnotationWriter extends AbstractXMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-
-        lastTag = localName;
-
-        if (ANNOTATION_TAG.equals(localName)) {
-            currentAnnotation = new Annotation();
-            currentEventIds = new ArrayList<>();
-        }
-
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
-        String val = new String(ch, start, length);
-
-        if (TITLE_TAG.equals(lastTag)) {
-            currentAnnotation.setTitle(val);
-        } else if (DESCRIPTION_TAG.equals(lastTag)) {
-            currentAnnotation.setSubject(val);
-        } else if (EVENTID_TAG.equals(lastTag)) {
-            lastEventId = val;
-        } else if (STREAMID_TAG.equals(lastTag)) {
-            lastStreamId = val;
-        }
-
-        super.characters(ch, start, length);
-    }
-
-    @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-
         if (EVENT_TAG.equals(localName)) {
             if (lastStreamId == null) {
                 log(Severity.ERROR, "StreamId must be a long integer, but none provided ", null);
@@ -177,13 +152,7 @@ class AnnotationWriter extends AbstractXMLFilter {
                     }
                 }
             }
-        } else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null) {
-            CreateEntryRequest request = new CreateEntryRequest(
-                    currentAnnotation,
-                    Annotation.COMMENT,
-                    (StringEntryValue) null,
-                    currentEventIds);
-
+        } else if (ANNOTATION_TAG.equals(localName)) {
             try {
                 annotationCreator.createEntry(new CreateEntryRequest(
                         currentAnnotation,
@@ -194,13 +163,27 @@ class AnnotationWriter extends AbstractXMLFilter {
             } catch (final RuntimeException e) {
                 log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject(), e);
             }
-            currentAnnotation = null;
-            currentEventIds = null;
+            currentAnnotation = new Annotation();
+            currentEventIds = new ArrayList<>();
+        } else if (TITLE_TAG.equals(localName)) {
+            currentAnnotation.setTitle(content.toString());
+        } else if (DESCRIPTION_TAG.equals(localName)) {
+            currentAnnotation.setSubject(content.toString());
+        } else if (EVENTID_TAG.equals(localName)) {
+            lastEventId = content.toString();
+        } else if (STREAMID_TAG.equals(localName)) {
+            lastStreamId = content.toString();
         }
 
+        content.clear();
         super.endElement(uri, localName, qName);
     }
 
+    @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        content.append(ch, start, length);
+        super.characters(ch, start, length);
+    }
 
     private void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
