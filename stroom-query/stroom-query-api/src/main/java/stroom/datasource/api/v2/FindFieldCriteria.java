@@ -19,7 +19,13 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class FindFieldCriteria extends BaseCriteria {
 
-    public static final String SORT_BY_NAME = "name";
+    public static final String FIELD_NAME = "Name";
+    public static final String FIELD_TYPE = "Type";
+    public static final String FIELD_STORE = "Store";
+    public static final String FIELD_INDEX = "Index";
+    public static final String FIELD_POSITIONS = "Positions";
+    public static final String FIELD_ANALYSER = "Analyser";
+    public static final String FIELD_CASE_SENSITIVE = "Case Sensitive";
 
     @JsonProperty
     private final DocRef dataSourceRef;

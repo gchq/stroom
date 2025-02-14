@@ -90,7 +90,7 @@ public class DynamicQueryHelpSelectionListModel
 
         final StringMatch stringMatch = StringMatch.contains(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
-                FindFieldCriteria.SORT_BY_NAME,
+                FindFieldCriteria.FIELD_NAME,
                 false,
                 true);
         final QueryHelpRequest request = new QueryHelpRequest(

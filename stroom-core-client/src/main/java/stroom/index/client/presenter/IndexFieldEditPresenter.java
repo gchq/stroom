@@ -19,7 +19,7 @@ package stroom.index.client.presenter;
 import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
-import stroom.index.shared.LuceneIndexField;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -31,20 +31,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Set;
 import javax.validation.ValidationException;
 
 public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditView> {
-
-    private Set<String> otherFieldNames;
 
     @Inject
     public IndexFieldEditPresenter(final EventBus eventBus, final IndexFieldEditView view) {
         super(eventBus, view);
     }
 
-    public void read(final LuceneIndexField indexField, final Set<String> otherFieldNames) {
-        this.otherFieldNames = otherFieldNames;
+    public void read(final IndexFieldImpl indexField) {
         getView().setType(indexField.getFldType());
         getView().setFieldName(indexField.getFldName());
         getView().setStored(indexField.isStored());
@@ -54,18 +50,15 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         getView().setCaseSensitive(indexField.isCaseSensitive());
     }
 
-    public LuceneIndexField write() {
+    public IndexFieldImpl write() {
         String name = getView().getFieldName();
         name = name.trim();
 
         if (name.length() == 0) {
             throw new ValidationException("An index field must have a name");
         }
-        if (otherFieldNames.contains(name)) {
-            throw new ValidationException("An index field with this name already exists");
-        }
 
-        return LuceneIndexField
+        return IndexFieldImpl
                 .builder()
                 .fldType(getView().getType())
                 .fldName(name)

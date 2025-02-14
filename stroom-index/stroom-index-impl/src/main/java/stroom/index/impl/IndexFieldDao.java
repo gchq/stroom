@@ -20,6 +20,10 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
+import stroom.index.shared.IndexFieldImpl;
+import stroom.index.shared.UpdateField;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -28,7 +32,17 @@ public interface IndexFieldDao {
 
     void addFields(DocRef docRef, Collection<IndexField> fields);
 
-    ResultPage<IndexField> findFields(FindFieldCriteria criteria);
+    ResultPage<IndexFieldImpl> findFields(FindFieldCriteria criteria);
 
     int getFieldCount(DocRef docRef);
+
+    void addField(AddField addField);
+
+    void updateField(UpdateField updateField);
+
+    void deleteField(DeleteField deleteField);
+
+    void deleteAll(DocRef docRef);
+
+    void copyAll(DocRef source, DocRef dest);
 }

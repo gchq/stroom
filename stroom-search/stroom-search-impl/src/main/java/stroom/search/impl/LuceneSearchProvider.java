@@ -18,13 +18,13 @@ package stroom.search.impl;
 
 import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneProviderFactory;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
@@ -96,7 +96,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
 
-            final ResultPage<IndexField> resultPage = indexFieldService.findFields(criteria);
+            final ResultPage<IndexFieldImpl> resultPage = indexFieldService.findFields(criteria);
             final List<QueryField> queryFields = resultPage
                     .getValues()
                     .stream()

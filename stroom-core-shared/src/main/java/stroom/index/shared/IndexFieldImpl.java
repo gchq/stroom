@@ -21,25 +21,39 @@ import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.IndexField;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class IndexFieldImpl implements IndexField {
 
+    @JsonProperty
     private final String fldName;
+    @JsonProperty
     private final FieldType fldType;
+    @JsonProperty
     private final AnalyzerType analyzerType;
+    @JsonProperty
     private final boolean indexed;
+    @JsonProperty
     private final boolean stored;
+    @JsonProperty
     private final boolean termPositions;
+    @JsonProperty
     private final boolean caseSensitive;
 
-    public IndexFieldImpl(final String fldName,
-                          final FieldType fldType,
-                          final AnalyzerType analyzerType,
-                          final boolean indexed,
-                          final boolean stored,
-                          final boolean termPositions,
-                          final boolean caseSensitive) {
+    @JsonCreator
+    public IndexFieldImpl(@JsonProperty("fldName") final String fldName,
+                          @JsonProperty("fldType") final FieldType fldType,
+                          @JsonProperty("analyzerType") final AnalyzerType analyzerType,
+                          @JsonProperty("indexed") final boolean indexed,
+                          @JsonProperty("stored") final boolean stored,
+                          @JsonProperty("termPositions") final boolean termPositions,
+                          @JsonProperty("caseSensitive") final boolean caseSensitive) {
         this.fldName = fldName;
         this.fldType = fldType;
         this.analyzerType = analyzerType;
@@ -102,12 +116,12 @@ public class IndexFieldImpl implements IndexField {
         }
         final IndexFieldImpl that = (IndexFieldImpl) o;
         return indexed == that.indexed &&
-                stored == that.stored &&
-                termPositions == that.termPositions &&
-                caseSensitive == that.caseSensitive &&
-                Objects.equals(fldName, that.fldName) &&
-                fldType == that.fldType &&
-                analyzerType == that.analyzerType;
+               stored == that.stored &&
+               termPositions == that.termPositions &&
+               caseSensitive == that.caseSensitive &&
+               Objects.equals(fldName, that.fldName) &&
+               fldType == that.fldType &&
+               analyzerType == that.analyzerType;
     }
 
     @Override
