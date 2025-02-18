@@ -45,6 +45,7 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
 
@@ -448,20 +449,20 @@ public class QueryTableColumnsManager implements HeadingListener, HasValueFilter
         menuItems.add(
                 createSortOption(column,
                         0,
-                        SvgImage.FIELDS_SORTAZ,
-                        "Sort A to Z",
+                        SortIcon.SORT_ASCENDING_ICON,
+                        SortIcon.SORT_ASCENDING,
                         SortDirection.ASCENDING));
         menuItems.add(
                 createSortOption(column,
                         1,
-                        SvgImage.FIELDS_SORTZA,
-                        "Sort Z to A",
+                        SortIcon.SORT_DESCENDING_ICON,
+                        SortIcon.SORT_DESCENDING,
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(column, 2, null, "Unsorted", null));
+        menuItems.add(createSortOption(column, 2, SortIcon.SORT_NONE, SortIcon.UNSORTED, null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
-                .icon(SvgImage.FIELDS_SORTAZ)
-                .text("Sort")
+                .icon(SortIcon.SORT_ASCENDING_ICON)
+                .text(SortIcon.SORT)
                 .children(menuItems)
                 .highlight(column.getSort() != null)
                 .build();

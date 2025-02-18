@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -283,7 +282,7 @@ class TestIndexFieldDaoImpl {
         final ResultPage<IndexFieldImpl> resultPage = indexFieldDao.findFields(
                 new FindFieldCriteria(
                         new PageRequest(),
-                        Collections.emptyList(),
+                        FindFieldCriteria.DEFAULT_SORT_LIST,
                         docRef));
         return resultPage.getValues();
     }

@@ -71,7 +71,7 @@ public class DynamicColumnSelectionListModel
             final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
                     stringMatch,
                     null);

@@ -19,7 +19,7 @@ package stroom.security.client.presenter;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
@@ -124,6 +124,12 @@ public class AppUserPermissionsListPresenter
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
     public void onFilterChange(String text) {
         if (text != null) {
             text = text.trim();
@@ -175,7 +181,8 @@ public class AppUserPermissionsListPresenter
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<AppUserPermissions>> dataConsumer,
                                         final RestErrorHandler errorHandler) {
-                        requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                        requestBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
+                        requestBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                         restFactory
                                 .create(APP_PERMISSION_RESOURCE)
                                 .method(res -> res.fetchAppUserPermissions(requestBuilder.build()))
@@ -203,9 +210,6 @@ public class AppUserPermissionsListPresenter
     }
 
     private void setupColumns() {
-
-        DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
-
         // Permissions col contains a lot of text, so we need multiline rows
         dataGrid.setMultiLine(true);
 
@@ -243,7 +247,7 @@ public class AppUserPermissionsListPresenter
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
 
         // Show it as the default sort
-        dataGrid.getColumnSortList().push(displayNameCol);
+        dataGrid.sort(displayNameCol);
 
         // Permissions
         dataGrid.addAutoResizableColumn(

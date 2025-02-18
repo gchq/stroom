@@ -45,7 +45,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,7 +84,7 @@ public class Fields {
                 if (optional.isPresent()) {
                     final FindFieldCriteria criteria = new FindFieldCriteria(
                             PageRequest.oneRow(),
-                            Collections.emptyList(),
+                            FindFieldCriteria.DEFAULT_SORT_LIST,
                             optional.get(),
                             request.getStringMatch(),
                             null);
@@ -104,7 +103,7 @@ public class Fields {
                 final FindFieldCriteria criteria = new FindFieldCriteria(
                         new PageRequest(request.getPageRequest().getOffset(),
                                 request.getPageRequest().getLength() + 1),
-                        request.getSortList(),
+                        FindFieldCriteria.DEFAULT_SORT_LIST,
                         optional.get(),
                         request.getStringMatch(),
                         null);
@@ -154,7 +153,7 @@ public class Fields {
                     // More fields than the client wants so push down the filtering
                     final List<QueryField> fields = queryService.findFields(new FindFieldCriteria(
                                     pageRequest,
-                                    null,
+                                    FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     new StringMatch(MatchType.CHARS_ANYWHERE, false, pattern),
                                     null))
@@ -180,7 +179,7 @@ public class Fields {
                     // Datasource has fewer fields than the limit so just get them all
                     final List<QueryField> fields = queryService.findFields(new FindFieldCriteria(
                                     PageRequest.unlimited(),
-                                    null,
+                                    FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     StringMatch.any(),
                                     null))

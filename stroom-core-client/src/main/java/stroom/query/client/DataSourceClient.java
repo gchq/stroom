@@ -48,7 +48,7 @@ public class DataSourceClient {
         if (dataSourceRef != null) {
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     PageRequest.oneRow(),
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
                     StringMatch.equals(fieldName, true),
                     queryable);

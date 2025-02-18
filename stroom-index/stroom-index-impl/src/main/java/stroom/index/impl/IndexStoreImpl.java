@@ -29,6 +29,7 @@ import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -41,7 +42,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,17 +142,12 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public LuceneIndexDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        return transferFieldsToDb(store.readDocument(docRef));
     }
 
     @Override
     public LuceneIndexDoc writeDocument(final LuceneIndexDoc document) {
-        return store.writeDocument(document);
-//        final LuceneIndexDoc luceneIndexDoc = store.writeDocument(document);
-//        if (document != null) {
-//            indexFieldServiceProvider.get().transferFieldsToDB(document.asDocRef());
-//        }
-//        return luceneIndexDoc;
+        return transferFieldsToDb(store.writeDocument(document));
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -201,8 +196,23 @@ public class IndexStoreImpl implements IndexStore {
         }
 
         final DocRef ref = store.importDocument(docRef, effectiveDataMap, importState, importSettings);
-        indexFieldServiceProvider.get().transferFieldsToDB(ref);
-        return ref;
+        LuceneIndexDoc doc = null;
+        if (ref != null) {
+            doc = store.readDocument(ref);
+            doc = transferFieldsToDb(doc);
+        }
+        return NullSafe.get(doc, LuceneIndexDoc::asDocRef);
+    }
+
+    private LuceneIndexDoc transferFieldsToDb(final LuceneIndexDoc doc) {
+        if (doc == null || NullSafe.isEmptyCollection(doc.getFields())) {
+            return doc;
+        }
+
+        // Make sure we transfer all fields to the DB and remove them from the doc.
+        indexFieldServiceProvider.get().transferFieldsToDB(doc.asDocRef());
+        doc.setFields(null);
+        return store.writeDocument(doc);
     }
 
     @Override
@@ -212,9 +222,10 @@ public class IndexStoreImpl implements IndexStore {
         // Update fields in the written index first.
         try {
             final LuceneIndexDoc document = readDocument(docRef);
-            // Limited to 100 fields.
+            // Limited to 1000 fields.
+            final PageRequest pageRequest = new PageRequest(0, 1000);
             final FindFieldCriteria findFieldCriteria =
-                    new FindFieldCriteria(PageRequest.createDefault(), Collections.emptyList(), docRef);
+                    new FindFieldCriteria(pageRequest, FindFieldCriteria.DEFAULT_SORT_LIST, docRef);
             final ResultPage<IndexFieldImpl> indexFields =
                     indexFieldServiceProvider.get().findFields(findFieldCriteria);
             document.setFields(indexFields

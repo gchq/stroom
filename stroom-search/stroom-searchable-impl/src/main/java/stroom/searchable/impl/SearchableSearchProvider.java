@@ -183,7 +183,7 @@ class SearchableSearchProvider implements SearchProvider {
 
         final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                 new PageRequest(0, 1000),
-                null,
+                FindFieldCriteria.DEFAULT_SORT_LIST,
                 docRef);
         final ResultPage<QueryField> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {

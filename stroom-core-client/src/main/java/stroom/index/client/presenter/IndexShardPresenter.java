@@ -100,9 +100,6 @@ public class IndexShardPresenter
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        // Sort by partition ascending by default.
-        queryCriteria.setSort(FindIndexShardCriteria.FIELD_PARTITION);
-
         dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
 
@@ -138,14 +135,7 @@ public class IndexShardPresenter
                 }
             }));
         }
-
-        registerHandler(dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                queryCriteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                dataProvider.refresh();
-            }
-        }));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void enableButtons() {
@@ -308,7 +298,7 @@ public class IndexShardPresenter
         dataGrid.addResizableColumn(col, FindIndexShardCriteria.FIELD_PARTITION, 100);
 
         // Sort by partition ascending by default.
-        //  dataGrid.getColumnSortList().push(col); // Uncomment if we want visual indication.
+        dataGrid.sort(col);
     }
 
     private void addPathColumn() {
@@ -416,7 +406,34 @@ public class IndexShardPresenter
 
     @Override
     public void refresh() {
-        dataProvider.refresh();
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<IndexShard>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    CriteriaUtil.setRange(queryCriteria, range);
+                    CriteriaUtil.setSortList(queryCriteria, dataGrid.getColumnSortList());
+                    restFactory
+                            .create(INDEX_RESOURCE)
+                            .method(res -> res.find(queryCriteria))
+                            .onSuccess(dataConsumer)
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(getView())
+                            .exec();
+                }
+
+                @Override
+                protected void changeData(final ResultPage<IndexShard> data) {
+                    super.changeData(data);
+                    onChangeData(data);
+                }
+            };
+            dataProvider.addDataDisplay(dataGrid);
+
+        } else {
+            dataProvider.refresh();
+        }
     }
 
     @Override
@@ -430,30 +447,7 @@ public class IndexShardPresenter
             selectionCriteria.getIndexUuidSet().add(docRef.getUuid());
             selectionCriteria.getIndexShardIdSet().clear();
 
-            if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus()) {
-                    @Override
-                    protected void exec(final Range range,
-                                        final Consumer<ResultPage<IndexShard>> dataConsumer,
-                                        final RestErrorHandler errorHandler) {
-                        CriteriaUtil.setRange(queryCriteria, range);
-                        restFactory
-                                .create(INDEX_RESOURCE)
-                                .method(res -> res.find(queryCriteria))
-                                .onSuccess(dataConsumer)
-                                .onFailure(errorHandler)
-                                .taskMonitorFactory(getView())
-                                .exec();
-                    }
-
-                    @Override
-                    protected void changeData(final ResultPage<IndexShard> data) {
-                        super.changeData(data);
-                        onChangeData(data);
-                    }
-                };
-                dataProvider.addDataDisplay(dataGrid);
-            }
+            refresh();
 
             securityContext.hasDocumentPermission(
                     docRef,
@@ -488,7 +482,7 @@ public class IndexShardPresenter
                 if (result) {
                     ConfirmEvent.fire(IndexShardPresenter.this,
                             "You have selected to flush all filtered index shards! Are you absolutely " +
-                                    "sure you want to do this?",
+                            "sure you want to do this?",
                             result1 -> {
                                 if (result1) {
                                     doFlush();
@@ -521,7 +515,7 @@ public class IndexShardPresenter
                         if (result) {
                             ConfirmEvent.fire(IndexShardPresenter.this,
                                     "You have selected to delete all filtered index shards! Are you " +
-                                            "absolutely sure you want to do this?",
+                                    "absolutely sure you want to do this?",
                                     result1 -> {
                                         if (result1) {
                                             doDelete();

@@ -3263,6 +3263,66 @@ paths:
       summary: Updates a data volume group
       tags:
       - Data Volume Groups
+  /index/v2/addField:
+    post:
+      operationId: addField
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddField"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Add field
+      tags:
+      - Indexes (v2)
+  /index/v2/deleteField:
+    delete:
+      operationId: deleteField
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteField"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete field
+      tags:
+      - Indexes (v2)
+  /index/v2/findFields:
+    post:
+      operationId: findFields
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindFieldCriteria"
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageIndexFieldImpl"
+          description: default response
+      summary: Find index fields
+      tags:
+      - Indexes (v2)
   /index/v2/shard/delete:
     post:
       operationId: deleteIndexShards
@@ -3333,6 +3393,26 @@ paths:
                 format: int64
           description: default response
       summary: Flush matching index shards
+      tags:
+      - Indexes (v2)
+  /index/v2/updateField:
+    put:
+      operationId: updateField
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateField"
+        description: change
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Update field
       tags:
       - Indexes (v2)
   /index/v2/{uuid}:
@@ -7679,6 +7759,13 @@ components:
             type: string
           userRef:
             $ref: "#/components/schemas/UserRef"
+    AddField:
+      type: object
+      properties:
+        indexDocRef:
+          $ref: "#/components/schemas/DocRef"
+        indexField:
+          $ref: "#/components/schemas/IndexFieldImpl"
     AddRemoveTagsRequest:
       type: object
       properties:
@@ -9234,6 +9321,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DuplicateCheckRow"
+    DeleteField:
+      type: object
+      properties:
+        fieldName:
+          type: string
+        indexDocRef:
+          $ref: "#/components/schemas/DocRef"
     Dependency:
       type: object
       properties:
@@ -9487,8 +9581,9 @@ components:
           - FIELDS_FILTER
           - FIELDS_FORMAT
           - FIELDS_GROUP
-          - FIELDS_SORTAZ
-          - FIELDS_SORTZA
+          - FIELDS_SORT_ASCENDING
+          - FIELDS_SORT_DESCENDING
+          - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
           - FILE_RAW
@@ -11405,6 +11500,46 @@ components:
           type: string
           description: Only results matching this filter will be included
           example: "^[0-9]{3}$"
+    IndexFieldImpl:
+      type: object
+      properties:
+        analyzerType:
+          type: string
+          enum:
+          - KEYWORD
+          - ALPHA
+          - NUMERIC
+          - ALPHA_NUMERIC
+          - WHITESPACE
+          - STOP
+          - STANDARD
+        caseSensitive:
+          type: boolean
+        displayValue:
+          type: string
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+          - USER_REF
+        indexed:
+          type: boolean
+        stored:
+          type: boolean
+        termPositions:
+          type: boolean
     IndexShard:
       type: object
       properties:
@@ -12420,8 +12555,9 @@ components:
           - FIELDS_FILTER
           - FIELDS_FORMAT
           - FIELDS_GROUP
-          - FIELDS_SORTAZ
-          - FIELDS_SORTZA
+          - FIELDS_SORT_ASCENDING
+          - FIELDS_SORT_DESCENDING
+          - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
           - FILE_RAW
@@ -13861,6 +13997,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/HashedApiKey"
+    ResultPageIndexFieldImpl:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexFieldImpl"
     ResultPageIndexShard:
       type: object
       description: A page of results.
@@ -15952,6 +16098,15 @@ components:
           type: string
         password:
           type: string
+    UpdateField:
+      type: object
+      properties:
+        fieldName:
+          type: string
+        indexDocRef:
+          $ref: "#/components/schemas/DocRef"
+        indexField:
+          $ref: "#/components/schemas/IndexFieldImpl"
     UpdateStatusRequest:
       type: object
       properties:

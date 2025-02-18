@@ -224,8 +224,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
             conditions.add(INDEX_FIELD.INDEXED.eq(criteria.getQueryable()));
         }
 
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria, INDEX_FIELD.NAME);
-
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 

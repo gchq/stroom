@@ -12,12 +12,18 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FindFieldCriteria extends BaseCriteria {
+
+    public static final CriteriaFieldSort DEFAULT_SORT =
+            new CriteriaFieldSort(FindFieldCriteria.FIELD_NAME, false, true);
+    public static final List<CriteriaFieldSort> DEFAULT_SORT_LIST =
+            Collections.singletonList(DEFAULT_SORT);
 
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_TYPE = "Type";

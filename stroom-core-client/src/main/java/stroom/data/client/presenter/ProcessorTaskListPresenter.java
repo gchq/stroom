@@ -73,9 +73,8 @@ public class ProcessorTaskListPresenter
     private final MyDataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
-    private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
     private final ExpressionCriteria criteria;
-    private boolean initialised;
+    private RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
@@ -93,24 +92,12 @@ public class ProcessorTaskListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<ProcessorTask>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                if (criteria.getExpression() != null) {
-                    CriteriaUtil.setRange(criteria, range);
-                    restFactory
-                            .create(PROCESSOR_TASK_RESOURCE)
-                            .method(res -> res.find(criteria))
-                            .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
-                            .taskMonitorFactory(view)
-                            .exec();
-                }
-            }
-        };
         addColumns();
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {
@@ -220,14 +207,6 @@ public class ProcessorTaskListPresenter
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                refresh();
-            }
-        });
     }
 
     private void showTooltip(final PopupPosition popupPosition,
@@ -322,8 +301,25 @@ public class ProcessorTaskListPresenter
     }
 
     public void refresh() {
-        if (!initialised) {
-            initialised = true;
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<ProcessorTask>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    if (criteria.getExpression() != null) {
+                        CriteriaUtil.setRange(criteria, range);
+                        CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                        restFactory
+                                .create(PROCESSOR_TASK_RESOURCE)
+                                .method(res -> res.find(criteria))
+                                .onSuccess(dataConsumer)
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(getView())
+                                .exec();
+                    }
+                }
+            };
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();

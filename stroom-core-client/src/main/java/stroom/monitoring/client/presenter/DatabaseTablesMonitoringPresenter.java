@@ -48,16 +48,19 @@ public class DatabaseTablesMonitoringPresenter
 
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
+    private final RestFactory restFactory;
+    private final MyDataGrid<DBTableStatus> dataGrid;
     private final FindDBTableCriteria criteria;
-    private final RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
+    private RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
     @Inject
     public DatabaseTablesMonitoringPresenter(final EventBus eventBus,
                                              final PagerView view,
                                              final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
-        final MyDataGrid<DBTableStatus> dataGrid = new MyDataGrid<>(1000);
+        dataGrid = new MyDataGrid<>(1000);
         view.setDataWidget(dataGrid);
 
         dataGrid.addResizableColumn(new OrderByColumn<DBTableStatus, String>(
@@ -103,32 +106,37 @@ public class DatabaseTablesMonitoringPresenter
         dataGrid.addEndColumn(new EndColumn<>());
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<DBTableStatus>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setRange(criteria, range);
-                restFactory
-                        .create(DB_STATUS_RESOURCE)
-                        .method(res -> res.findSystemTableStatus(criteria))
-                        .onSuccess(dataConsumer)
-                        .onFailure(errorHandler)
-                        .taskMonitorFactory(view)
-                        .exec();
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
-//        dataProvider.refresh();
+        refresh();
+    }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
 
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                dataProvider.refresh();
-            }
-        });
+    private void refresh() {
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<DBTableStatus>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    CriteriaUtil.setRange(criteria, range);
+                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                    restFactory
+                            .create(DB_STATUS_RESOURCE)
+                            .method(res -> res.findSystemTableStatus(criteria))
+                            .onSuccess(dataConsumer)
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(getView())
+                            .exec();
+                }
+            };
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            dataProvider.refresh();
+        }
     }
 
     @Override

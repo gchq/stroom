@@ -60,12 +60,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
+    private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
     private final MyDataGrid<ProcessorTaskSummary> dataGrid;
     private final MultiSelectionModelImpl<ProcessorTaskSummary> selectionModel;
-    private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
+    private RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
-    private boolean initialised;
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
@@ -73,6 +73,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                                          final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter) {
         super(eventBus, view);
+        this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
 
         dataGrid = new MyDataGrid<>();
@@ -80,36 +81,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         view.setDataWidget(dataGrid);
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                CriteriaUtil.setRange(criteria, range);
-                restFactory
-                        .create(PROCESSOR_TASK_RESOURCE)
-                        .method(res -> res.findSummary(criteria))
-                        .onSuccess(dataConsumer)
-                        .onFailure(errorHandler)
-                        .taskMonitorFactory(view)
-                        .exec();
-            }
-
-            @Override
-            protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
-                final ProcessorTaskSummary selected = selectionModel.getSelected();
-                if (selected != null) {
-                    // Reselect the task set.
-                    selectionModel.clear();
-                    if (data != null && data.getValues().contains(selected)) {
-                        selectionModel.setSelected(selected);
-                    }
-                }
-                super.changeData(data);
-            }
-        };
-
         addColumns();
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {
@@ -175,14 +152,6 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                 }, "Count", ColumnSizeConstants.SMALL_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                refresh();
-            }
-        });
     }
 
     public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {
@@ -223,8 +192,36 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
     }
 
     public void refresh() {
-        if (!initialised) {
-            initialised = true;
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    CriteriaUtil.setRange(criteria, range);
+                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                    restFactory
+                            .create(PROCESSOR_TASK_RESOURCE)
+                            .method(res -> res.findSummary(criteria))
+                            .onSuccess(dataConsumer)
+                            .onFailure(errorHandler)
+                            .taskMonitorFactory(getView())
+                            .exec();
+                }
+
+                @Override
+                protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
+                    final ProcessorTaskSummary selected = selectionModel.getSelected();
+                    if (selected != null) {
+                        // Reselect the task set.
+                        selectionModel.clear();
+                        if (data != null && data.getValues().contains(selected)) {
+                            selectionModel.setSelected(selected);
+                        }
+                    }
+                    super.changeData(data);
+                }
+            };
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();

@@ -166,7 +166,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
             final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
                     PageRequest.oneRow(),
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     docRef,
                     StringMatch.equals(fieldName, true),
                     null);

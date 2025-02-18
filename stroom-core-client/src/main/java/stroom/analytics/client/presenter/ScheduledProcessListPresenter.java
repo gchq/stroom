@@ -70,7 +70,7 @@ public class ScheduledProcessListPresenter
     private final MyDataGrid<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager;
-    private final RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
+    private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
     private final ClientSecurityContext securityContext;
@@ -78,7 +78,6 @@ public class ScheduledProcessListPresenter
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private ExecutionScheduleRequest request;
-    private boolean initialised;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
     @Inject
@@ -104,24 +103,6 @@ public class ScheduledProcessListPresenter
         editButton = view.addButton(SvgPresets.EDIT);
         removeButton = view.addButton(SvgPresets.DELETE);
 
-        dataProvider = new RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<ExecutionSchedule>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                if (request != null) {
-                    CriteriaUtil.setRange(request, range);
-                    restFactory
-                            .create(EXECUTION_SCHEDULE_RESOURCE)
-                            .method(res -> res.fetchExecutionSchedule(request))
-                            .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
-                            .taskMonitorFactory(view)
-                            .exec();
-                }
-            }
-        };
-
         addColumns();
         enableButtons();
     }
@@ -137,6 +118,7 @@ public class ScheduledProcessListPresenter
                 scheduledProcessingPresenter.edit();
             }
         }));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {
@@ -246,14 +228,6 @@ public class ScheduledProcessListPresenter
                 }, ExecutionScheduleFields.BOUNDS, ColumnSizeConstants.MEDIUM_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                request.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                refresh();
-            }
-        });
     }
 
     private void enableButtons() {
@@ -276,8 +250,25 @@ public class ScheduledProcessListPresenter
     }
 
     public void refresh() {
-        if (!initialised) {
-            initialised = true;
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<ExecutionSchedule>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    if (request != null) {
+                        CriteriaUtil.setRange(request, range);
+                        CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
+                        restFactory
+                                .create(EXECUTION_SCHEDULE_RESOURCE)
+                                .method(res -> res.fetchExecutionSchedule(request))
+                                .onSuccess(dataConsumer)
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(getView())
+                                .exec();
+                    }
+                }
+            };
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();

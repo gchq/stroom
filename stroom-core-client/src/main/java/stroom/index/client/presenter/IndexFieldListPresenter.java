@@ -19,11 +19,10 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -40,18 +39,17 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -69,7 +67,6 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
     private RestDataProvider<IndexFieldImpl, ResultPage<IndexFieldImpl>> dataProvider;
 
     private FindFieldCriteria criteria;
-    private final List<CriteriaFieldSort> sortList = new ArrayList<>();
     private DocRef docRef;
     private boolean readOnly = true;
 
@@ -128,6 +125,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                 }
             }
         }));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void enableButtons() {
@@ -162,31 +160,16 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
         addAnalyzerColumn();
         addCaseSensitiveColumn();
         dataGrid.addEndColumn(new EndColumn<>());
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                //noinspection PatternVariableCanBeUsed // cos GWT
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-
-                sortList.clear();
-                sortList.add(new CriteriaFieldSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase()));
-                refresh();
-            }
-        });
-
-        dataGrid.getColumnSortList().push(dataGrid.getColumn(0));
     }
 
     private void addNameColumn() {
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(IndexFieldImpl::getFldName)
-                        .withSorting(FindFieldCriteria.FIELD_NAME)
-                        .build(),
+        final Column<IndexFieldImpl, String> column = DataGridUtil.textColumnBuilder(IndexFieldImpl::getFldName)
+                .withSorting(FindFieldCriteria.FIELD_NAME)
+                .build();
+        dataGrid.addResizableColumn(column,
                 FindFieldCriteria.FIELD_NAME,
                 150);
+        dataGrid.sort(column);
     }
 
     private void addTypeColumn() {
@@ -354,8 +337,8 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                                     final Consumer<ResultPage<IndexFieldImpl>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     criteria = new FindFieldCriteria(
-                            PageRequestUtil.createPageRequest(range),
-                            sortList,
+                            CriteriaUtil.createPageRequest(range),
+                            CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
                             docRef);
 
                     restFactory

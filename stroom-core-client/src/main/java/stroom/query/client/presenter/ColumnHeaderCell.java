@@ -32,7 +32,7 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.SortIcon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,36 +58,24 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
 
                         // Show group icon.
                         if (column.getGroup() != null) {
-                            // Show group icon.
-                            sb.append(getSafeHtml(SvgImage.FIELDS_GROUP));
-
-                            // Show group depth.
-                            sb.append(SafeHtmlUtils
-                                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                            (column.getGroup() + 1) +
-                                            "</div>"));
+                            SortIcon.append(sb,
+                                    SvgImage.FIELDS_GROUP,
+                                    "Group Level " + (column.getGroup() + 1),
+                                    column.getGroup() + 1);
                         }
 
                         // Add sort icon.
                         if (column.getSort() != null) {
-                            if (Sort.SortDirection.ASCENDING == column.getSort().getDirection()) {
-                                sb.append(getSafeHtml(SvgImage.FIELDS_SORTAZ));
-                            } else {
-                                sb.append(getSafeHtml(SvgImage.FIELDS_SORTZA));
-                            }
-
-                            // Add sort order.
-                            sb.append(SafeHtmlUtils
-                                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                            (column.getSort().getOrder() + 1) +
-                                            "</div>"));
+                            SortIcon.append(sb,
+                                    Sort.SortDirection.ASCENDING == column.getSort().getDirection(),
+                                    column.getSort().getOrder() + 1);
                         }
 
                         // Add filter icon.
                         final IncludeExcludeFilter filter = column.getFilter();
                         if (filter != null) {
                             if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
-                                    (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
+                                (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
                                 sb.append(getSafeHtml(SvgImage.FIELDS_FILTER));
                             }
                         }

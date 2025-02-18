@@ -21,12 +21,9 @@ import stroom.data.grid.client.ColumnBuilder;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
@@ -42,17 +39,14 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -258,77 +252,8 @@ public class DataGridUtil {
                 ColumnSizeConstants.ICON_COL);
     }
 
-//    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableColumn(
-//            final T_VIEW view,
-//            final Column<T_ROW, ?> column,
-//            final String name,
-//            final int width) {
-//        view.addResizableColumn(column, name, width);
-//    }
-
     public static void addEndColumn(final MyDataGrid<?> view) {
         view.addEndColumn(new EndColumn<>());
-    }
-
-    private static CriteriaFieldSort getSortFromEvent(final ColumnSortEvent event) {
-        final Column<?, ?> column = GwtNullSafe.get(event, ColumnSortEvent::getColumn);
-        if (column instanceof OrderByColumn<?, ?> && column.isSortable()) {
-            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            return new CriteriaFieldSort(
-                    orderByColumn.getField(),
-                    !event.isSortAscending(),
-                    orderByColumn.isIgnoreCase());
-        } else {
-            return null;
-        }
-    }
-
-    public static void addColumnSortHandler(final MyDataGrid<?> view,
-                                            final BaseCriteria criteria,
-                                            final Runnable onSortChange) {
-        view.addColumnSortHandler(event -> {
-            final CriteriaFieldSort sort = getSortFromEvent(event);
-            if (sort != null) {
-                criteria.setSort(sort);
-                onSortChange.run();
-            }
-        });
-    }
-
-    public static void addColumnSortHandler(final MyDataGrid<?> view,
-                                            final BaseCriteria.AbstractBuilder<?, ?> criteria,
-                                            final Runnable onSortChange) {
-        view.addColumnSortHandler(event -> {
-            final CriteriaFieldSort sort = getSortFromEvent(event);
-            if (sort != null) {
-                criteria.sortList(List.of(sort));
-                onSortChange.run();
-            }
-        });
-    }
-
-    public static void addColumnSortHandler(final MyDataGrid<?> view,
-                                            final Consumer<List<CriteriaFieldSort>> fieldSortConsumer,
-                                            final Runnable onSortChange) {
-        view.addColumnSortHandler(event -> {
-            final CriteriaFieldSort sort = getSortFromEvent(event);
-            if (sort != null) {
-                fieldSortConsumer.accept(List.of(sort));
-                onSortChange.run();
-            }
-        });
-    }
-
-    public static void addColumnSortHandler(final DataGrid<?> view,
-                                            final BaseCriteria criteria,
-                                            final Runnable onSortChange) {
-        view.addColumnSortHandler(event -> {
-            final CriteriaFieldSort sort = getSortFromEvent(event);
-            if (sort != null) {
-                criteria.setSort(sort);
-                onSortChange.run();
-            }
-        });
     }
 
     public static void addEndColumn(final DataGrid<?> view) {

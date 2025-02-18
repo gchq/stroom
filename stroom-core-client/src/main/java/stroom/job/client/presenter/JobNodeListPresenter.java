@@ -18,6 +18,7 @@ package stroom.job.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.valuespinner.shared.EditableInteger;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerViewWithHeading;
@@ -192,6 +193,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         }
                     }
                 }));
+
+        registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> buildDataProvider(
@@ -205,6 +208,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
             protected void exec(final Range range,
                                 final Consumer<JobNodeAndInfoListResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                CriteriaUtil.setSortList(findJobNodeCriteria, dataGrid.getColumnSortList());
 
                 // ON is show enabled only, OFF is show all states
                 findJobNodeCriteria.setJobNodeEnabled(showEnabledToggleBtn.isOn()
@@ -275,8 +279,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
      * Add the columns to the table.
      */
     private void initTable() {
-        DataGridUtil.addColumnSortHandler(dataGrid, findJobNodeCriteria, this::internalRefresh);
-
         // JobNode Enabled tick box
         jobNodeListHelper.addEnabledTickBoxColumn(dataGrid, true);
 
@@ -378,7 +380,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 return new CommandLink(
                         nodeName,
                         "Open node '" + nodeName + "' and job '" + jobName
-                                + "' on the Nodes screen.",
+                        + "' on the Nodes screen.",
                         () -> OpenNodeEvent.fire(
                                 JobNodeListPresenter.this, jobNodeAndInfo.getJobNode()));
             } else {
