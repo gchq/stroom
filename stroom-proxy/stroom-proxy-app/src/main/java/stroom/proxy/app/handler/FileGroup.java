@@ -29,4 +29,9 @@ public class FileGroup {
     public Path getEntries() {
         return entries;
     }
+
+    @Override
+    public String toString() {
+        return zip.getParent().toString();
+    }
 }

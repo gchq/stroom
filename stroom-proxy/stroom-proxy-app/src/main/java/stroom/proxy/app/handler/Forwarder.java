@@ -5,10 +5,12 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -26,24 +28,25 @@ public class Forwarder {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Forwarder.class);
 
     private final List<Consumer<Path>> destinations = new ArrayList<>();
+    //    private final List<Destin> destinations = new ArrayList<>();
     private final NumberedDirProvider copiesDirProvider;
 
     @Inject
     public Forwarder(final CleanupDirQueue cleanupDirQueue,
                      final DataDirProvider dataDirProvider,
-                     final ProxyConfig proxyConfig,
+                     final Provider<ProxyConfig> proxyConfigProvider,
                      final HttpSenderFactory httpSenderFactory,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ProxyServices proxyServices,
-                     final DirQueueFactory sequentialDirQueueFactory) {
+                     final DirQueueFactory sequentialDirQueueFactory,
+                     final SimplePathCreator simplePathCreator) {
 
         // Find out how many forward destinations are enabled.
+        final ProxyConfig proxyConfig = proxyConfigProvider.get();
         final long enabledForwardCount = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
-                                .stream()
+                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
                                 .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations())
-                                .stream()
+                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
                                 .filter(ForwardFileConfig::isEnabled))
                 .count();
 
@@ -59,13 +62,12 @@ public class Forwarder {
                         forwardHttpPostConfig.getName(),
                         streamDestination,
                         cleanupDirQueue,
-                        forwardHttpPostConfig.getRetryDelay(),
-                        forwardHttpPostConfig.getMaxRetries(),
+                        forwardHttpPostConfig,
                         proxyServices,
                         sequentialDirQueueFactory,
-                        proxyConfig.getThreadConfig().getForwardThreadCount(),
-                        proxyConfig.getThreadConfig().getForwardRetryThreadCount(),
-                        dataDirProvider);
+                        proxyConfig.getThreadConfig(),
+                        dataDirProvider,
+                        simplePathCreator);
                 this.destinations.add(forwardDestination::add);
             }
         });

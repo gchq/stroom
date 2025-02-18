@@ -7,8 +7,10 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import java.io.BufferedInputStream;
@@ -18,7 +20,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Objects;
 
 public class ForwardHttpPostDestination {
 
@@ -30,32 +31,37 @@ public class ForwardHttpPostDestination {
     private final DirQueue forwardQueue;
     private final DirQueue retryQueue;
     private final CleanupDirQueue cleanupDirQueue;
-    private final StroomDuration retryDelay;
-    private final int maxRetries;
+    private final ForwardHttpPostConfig forwardHttpPostConfig;
+    //    private final StroomDuration retryDelay;
+//    private final Integer maxRetries;
     private final String destinationName;
     private final ForwardFileDestination failureDestination;
 
     public ForwardHttpPostDestination(final String destinationName,
                                       final StreamDestination destination,
                                       final CleanupDirQueue cleanupDirQueue,
-                                      final StroomDuration retryDelay,
-                                      final Integer maxRetries,
+                                      final ForwardHttpPostConfig forwardHttpPostConfig,
+//                                      final StroomDuration retryDelay,
+//                                      final Integer maxRetries,
                                       final ProxyServices proxyServices,
                                       final DirQueueFactory sequentialDirQueueFactory,
-                                      final int forwardThreads,
-                                      final int retryThreads,
-                                      final DataDirProvider dataDirProvider) {
+                                      final ThreadConfig threadConfig,
+//                                      final int forwardThreads,
+//                                      final int retryThreads,
+                                      final DataDirProvider dataDirProvider,
+                                      final SimplePathCreator simplePathCreator) {
         this.destination = destination;
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
-        this.retryDelay = retryDelay;
-        this.maxRetries = maxRetries;
+        this.forwardHttpPostConfig = forwardHttpPostConfig;
+//        this.retryDelay = forwardHttpPostConfig.getRetryDelay();
+//        this.maxRetries = forwardHttpPostConfig.getMaxRetries();
 
-        Objects.requireNonNull(retryDelay, "Null retry delay");
-        Objects.requireNonNull(maxRetries, "Null max retries");
+//        Objects.requireNonNull(retryDelay, "Null retry delay");
 
         final String safeDirName = DirUtil.makeSafeName(destinationName);
-        final Path forwardingDir = dataDirProvider.get().resolve(DirNames.FORWARDING).resolve(safeDirName);
+        final Path forwardingDir = dataDirProvider.get()
+                .resolve(DirNames.FORWARDING).resolve(safeDirName);
         DirUtil.ensureDirExists(forwardingDir);
 
         forwardQueue = sequentialDirQueueFactory.create(
@@ -71,16 +77,44 @@ public class ForwardHttpPostDestination {
         proxyServices.addParallelExecutor(
                 "forward - " + destinationName,
                 () -> forwarding,
-                forwardThreads);
+                threadConfig.getForwardThreadCount());
         proxyServices.addParallelExecutor(
                 "retry - " + destinationName,
                 () -> retrying,
-                retryThreads);
+                threadConfig.getForwardRetryThreadCount());
 
         // Create failure destination.
-        final Path failureDir = forwardingDir.resolve("03_failure");
+        failureDestination = setupFailureDestination(
+                forwardHttpPostConfig, simplePathCreator, forwardingDir);
+    }
+
+    private ForwardFileDestination setupFailureDestination(final ForwardHttpPostConfig forwardHttpPostConfig,
+                                                           final SimplePathCreator simplePathCreator,
+                                                           final Path forwardingDir) {
+        final ForwardFileDestination failureDestination;
+        Path failureDir = forwardingDir.resolve("03_failure");
+        final String errorSubPathTemplate = forwardHttpPostConfig.getErrorSubPathTemplate();
+//        if (NullSafe.isNonBlankString(errorSubPathTemplate)) {
+//            final Path errorSubPath = Path.of(simplePathCreator.replaceAll(errorSubPathTemplate))
+//                    .normalize()
+//                    .toAbsolutePath();
+//            LOGGER.debug("errorSubPath: '{}'", errorSubPath);
+//            if (errorSubPath.isAbsolute()) {
+//                throw new IllegalArgumentException(LogUtil.message(
+//                        "The value ('{}') of property {} must resolve to a relative path.",
+//                        errorSubPath, ForwardHttpPostConfig.PROP_NAME_ERROR_SUB_PATH_TEMPLATE));
+//            } else if (!failureDir.normalize().toAbsolutePath().endsWith(errorSubPath)) {
+//                // Stop people doing things like ../../../another/path
+//                throw new IllegalArgumentException(LogUtil.message(
+//                        "The value ('{}') of property {} must be a child of property {} ('{}')",
+//                        errorSubPath, failureDir));
+//            }
+//            failureDir = failureDir.resolve(errorSubPath);
+//        }
         DirUtil.ensureDirExists(failureDir);
-        failureDestination = new ForwardFileDestinationImpl(failureDir);
+        failureDestination = new ForwardFileDestinationImpl(
+                failureDir, errorSubPathTemplate, simplePathCreator);
+        return failureDestination;
     }
 
     public void add(final Path sourceDir) {
@@ -112,20 +146,35 @@ public class ForwardHttpPostDestination {
             } catch (final Exception e) {
                 LOGGER.error(() ->
                         "Error sending '" + FileUtil.getCanonicalPath(dir)
-                        + "' to '" + destinationName + "'.");
+                        + "' to '" + destinationName + "': "
+                        + LogUtil.exceptionMessage(getCause(e)) + ". " +
+                        "(Enable DEBUG for stack trace.)");
                 LOGGER.debug(e::getMessage, e);
 
                 // Add to the errors
                 addError(dir, e);
 
+                // Have to assume we can retry
+                boolean canRetry = true;
+                if (e instanceof ForwardException forwardException) {
+                    canRetry = forwardException.isRecoverable();
+                }
+
                 // Count errors.
-                final int errorCount = countErrors(dir);
-                if (errorCount >= maxRetries) {
+                final int maxRetries = forwardHttpPostConfig.getMaxRetries();
+                if (canRetry && !isInfiniteRetries(maxRetries)) {
+                    final int errorCount = countErrors(dir);
+                    LOGGER.debug("'{}' - maxRetries: {}, errorCount: {}",
+                            destinationName, maxRetries, errorCount);
+                    canRetry = errorCount < maxRetries;
+                }
+                if (canRetry) {
+                    LOGGER.debug("Retrying {}", dir);
+                    addToRetryQueue(dir);
+                } else {
+                    LOGGER.debug("Adding {} to failure queue", dir);
                     // If we exceeded the max number of retries then move the data to the failure destination.
                     failureDestination.add(dir);
-                } else {
-                    // Add the dir to the retry queue ready to be tried again.
-                    retryQueue.add(dir);
                 }
             }
         } catch (final Throwable t) {
@@ -136,12 +185,28 @@ public class ForwardHttpPostDestination {
         return false;
     }
 
+    private void addToRetryQueue(final Path dir) {
+        // Add the dir to the retry queue ready to be tried again.
+        retryQueue.add(dir);
+    }
+
+    private boolean isInfiniteRetries(final int maxRetries) {
+        return maxRetries == ForwardHttpPostConfig.INFINITE_RETRIES_VALUE;
+    }
+
+    private Throwable getCause(final Throwable e) {
+        return e instanceof ForwardException forwardException
+               && forwardException.getCause() != null
+                ? forwardException.getCause()
+                : e;
+    }
+
     private void addError(final Path dir, final Exception e) {
         try {
-            final StringBuilder sb = new StringBuilder(e.getClass().getSimpleName());
+            final StringBuilder sb = new StringBuilder(getCause(e).getClass().getSimpleName());
             if (e.getMessage() != null) {
                 sb.append(" ");
-                sb.append(e.getMessage().replaceAll("\n", " "));
+                sb.append(e.getMessage().replace('\n', ' '));
             }
             sb.append("\n");
             final Path errorPath = dir.resolve(ERROR_LOG);
@@ -174,6 +239,7 @@ public class ForwardHttpPostDestination {
     private void retryDir(final Path dir) {
         if (!forwardDir(dir)) {
             // If we failed to send then wait for a bit.
+            final StroomDuration retryDelay = forwardHttpPostConfig.getRetryDelay();
             if (!retryDelay.isZero()) {
                 LOGGER.trace("'{}' - adding delay {}", destinationName, retryDelay);
                 ThreadUtil.sleep(retryDelay);

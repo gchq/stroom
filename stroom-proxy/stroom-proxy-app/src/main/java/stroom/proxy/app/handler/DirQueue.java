@@ -6,6 +6,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,7 +25,13 @@ public class DirQueue {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirQueue.class);
     private final Path rootDir;
 
+    /**
+     * ID last written to
+     */
     private long writeId;
+    /**
+     * ID to read from next
+     */
     private long readId;
 
     private final Lock lock = new ReentrantLock();
@@ -48,10 +55,16 @@ public class DirQueue {
         final long maxId = DirUtil.getMaxDirId(this.rootDir);
         final long minId = DirUtil.getMinDirId(this.rootDir);
 
+        if (minId > maxId) {
+            throw new IllegalStateException(LogUtil.message("minId {} is greater than maxId {}", minId, maxId));
+        }
+
         writeId = maxId;
         readId = Math.max(1, minId);
         queueMonitor.setWritePos(maxId);
         queueMonitor.setReadPos(minId);
+        LOGGER.info("Initialising queue {} in {} with readId {} and writeId {}",
+                name, LogUtil.path(rootDir), readId, writeId);
     }
 
     /**
@@ -149,9 +162,9 @@ public class DirQueue {
     }
 
     /**
-     * When we have finished with a dir we should be in a position where the dir has been moved so can try to delete the
-     * parent directories. We never want to delete the dir itself as it should have been moved and any failure to do so
-     * is an error.
+     * When we have finished with a dir we should be in a position where the dir has been
+     * moved so can try to delete the parent directories. We never want to delete the dir
+     * itself as it should have been moved and any failure to do so is an error.
      *
      * @param dir The dir to close.
      */

@@ -109,7 +109,7 @@ public class MockHttpDestination {
                         } finally {
                             final long startTime = responseTimes.get();
                             responseTimes.remove();
-                            LOGGER.info(() -> "Responding " +
+                            LOGGER.info(() -> "Responding with " +
                                               serveEvent.getResponse().getStatus() +
                                               " after " +
                                               Duration.ofMillis(System.currentTimeMillis() - startTime).toString() +

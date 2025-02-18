@@ -23,6 +23,6 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
         final Path storeDir = pathCreator.toAppPath(config.getPath());
         DirUtil.ensureDirExists(storeDir);
 
-        return new ForwardFileDestinationImpl(storeDir);
+        return new ForwardFileDestinationImpl(storeDir, config.getSubPathTemplate(), pathCreator);
     }
 }
