@@ -17,12 +17,12 @@
 package stroom.contentindex;
 
 import stroom.datasource.api.v2.AnalyzerType;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
+import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.DocContentMatch;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
-import stroom.docref.StringMatch.MatchType;
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatch;
+import stroom.explorer.shared.StringMatch.MatchType;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.shared.DocRefUtil;

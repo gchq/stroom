@@ -21,7 +21,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.StringMatch;
+import stroom.explorer.shared.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.event.ShowFindInContentEvent;

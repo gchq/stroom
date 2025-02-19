@@ -1,8 +1,8 @@
 package stroom.contentindex;
 
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.DocContentMatch;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.ContentIndexable;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -10,7 +10,6 @@ import stroom.explorer.shared.FindInContentRequest;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 

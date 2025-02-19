@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.docref.DocContentMatch;
+import stroom.explorer.shared.DocContentMatch;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.shared.FindInContentResult;

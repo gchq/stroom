@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docref;
+package stroom.explorer.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

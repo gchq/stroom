@@ -1,6 +1,6 @@
 package stroom.contentindex;
 
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatchLocation;
 
 import java.util.List;
 

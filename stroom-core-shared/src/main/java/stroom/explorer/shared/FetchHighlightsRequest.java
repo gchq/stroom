@@ -1,7 +1,6 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

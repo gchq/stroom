@@ -1,6 +1,6 @@
 package stroom.util.client;
 
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;

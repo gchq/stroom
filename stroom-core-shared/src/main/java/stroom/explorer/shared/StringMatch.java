@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.docref;
+package stroom.explorer.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,22 +39,6 @@ public class StringMatch {
         return new StringMatch(MatchType.ANY, false, null);
     }
 
-    public static StringMatch createNull() {
-        return new StringMatch(MatchType.NULL, false, null);
-    }
-
-    public static StringMatch nonNull() {
-        return new StringMatch(MatchType.NON_NULL, false, null);
-    }
-
-    public static StringMatch blank() {
-        return new StringMatch(MatchType.BLANK, false, null);
-    }
-
-    public static StringMatch nullOrBlank() {
-        return new StringMatch(MatchType.NULL_OR_BLANK, false, null);
-    }
-
     public static StringMatch contains(final String pattern) {
         return contains(pattern, false);
     }
@@ -64,22 +48,6 @@ public class StringMatch {
             return StringMatch.any();
         }
         return new StringMatch(MatchType.CONTAINS, caseSensitive, pattern);
-    }
-
-    public static StringMatch equals(final String pattern) {
-        return equals(pattern, false);
-    }
-
-    public static StringMatch equals(final String pattern, final boolean caseSensitive) {
-        return new StringMatch(MatchType.EQUALS, caseSensitive, pattern);
-    }
-
-    public static StringMatch notEquals(final String pattern) {
-        return notEquals(pattern, false);
-    }
-
-    public static StringMatch notEquals(final String pattern, final boolean caseSensitive) {
-        return new StringMatch(MatchType.NOT_EQUALS, caseSensitive, pattern);
     }
 
     public static StringMatch regex(final String pattern) {

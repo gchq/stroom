@@ -16,7 +16,6 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;

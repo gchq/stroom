@@ -17,7 +17,7 @@
 
 package stroom.explorer.api;
 
-import stroom.docref.DocContentHighlights;
+import stroom.explorer.shared.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;

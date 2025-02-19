@@ -16,10 +16,10 @@
 
 package stroom.contentindex;
 
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
+import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.DocContentMatch;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
+import stroom.explorer.shared.StringMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.pipeline.shared.XsltDoc;
