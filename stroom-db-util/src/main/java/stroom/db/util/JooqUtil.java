@@ -910,6 +910,15 @@ public final class JooqUtil {
         }
     }
 
+    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
+                                                           final BaseCriteria criteria) {
+        return NullSafe.list(criteria.getSortList())
+                .stream()
+                .map(s -> getOrderField(fieldMap, s))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
     private static OrderField<?> getOrderField(final Map<String, Field<?>> fieldMap,
                                                final CriteriaFieldSort sort) {
         final Field<?> field = GwtNullSafe.map(fieldMap)

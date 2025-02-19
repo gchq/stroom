@@ -30,7 +30,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
@@ -72,6 +72,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     private final SolrIndexStore solrIndexStore;
     private final SolrSearchExecutor solrSearchExecutor;
     private final IndexFieldCache indexFieldCache;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public SolrSearchProvider(final WordListProvider wordListProvider,
@@ -81,7 +82,8 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
                               final SolrIndexStore solrIndexStore,
                               final SecurityContext securityContext,
                               final SolrSearchExecutor solrSearchExecutor,
-                              final IndexFieldCache indexFieldCache) {
+                              final IndexFieldCache indexFieldCache,
+                              final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.wordListProvider = wordListProvider;
         this.searchConfig = searchConfig;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -90,18 +92,19 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
         this.securityContext = securityContext;
         this.solrSearchExecutor = solrSearchExecutor;
         this.indexFieldCache = indexFieldCache;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final SolrIndexDoc index = solrIndexStore.readDocument(criteria.getDataSourceRef());
-            if (index != null) {
-                final List<QueryField> fields = SolrIndexDataSourceFieldUtil.getDataSourceFields(index);
-                builder.addAll(fields);
+            if (index == null) {
+                return ResultPage.empty();
             }
-            return builder.build();
+
+            final List<QueryField> fields = SolrIndexDataSourceFieldUtil.getDataSourceFields(index);
+            return fieldInfoResultPageFactory.create(criteria, fields);
         });
     }
 

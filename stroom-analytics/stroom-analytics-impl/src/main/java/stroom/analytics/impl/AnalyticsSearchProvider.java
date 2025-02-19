@@ -29,7 +29,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
@@ -51,26 +51,24 @@ public class AnalyticsSearchProvider implements SearchProvider, IsSpecialExplore
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public AnalyticsSearchProvider(final CoprocessorsFactory coprocessorsFactory,
                                    final ResultStoreFactory resultStoreFactory,
                                    final FederatedSearchExecutor federatedSearchExecutor,
-                                   final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator) {
+                                   final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator,
+                                   final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
         this.nodeSearchTaskCreator = nodeSearchTaskCreator;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-//        if (!getType().equals(criteria.getDataSourceRef().getType())) {
-//            return ResultPage.empty();
-//        }
-        return FieldInfoResultPageBuilder.builder(criteria)
-                .addAll(AnalyticFields.getFields())
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, AnalyticFields.getFields());
     }
 
     @Override

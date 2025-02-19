@@ -1,19 +1,19 @@
 package stroom.index.lucene553;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PathCreator;
@@ -37,7 +37,6 @@ import org.apache.lucene553.search.TopDocs;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
@@ -47,21 +46,21 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
 
     private final IndexShardWriterCache indexShardWriterCache;
     private final MetaService metaService;
-    private final IndexStore indexStore;
     private final NodeInfo nodeInfo;
     private final PathCreator pathCreator;
+    private final IndexFieldCache indexFieldCache;
 
     @Inject
     public Lucene553SystemInfoProvider(final IndexShardWriterCache indexShardWriterCache,
                                        final MetaService metaService,
-                                       final IndexStore indexStore,
                                        final NodeInfo nodeInfo,
-                                       final PathCreator pathCreator) {
+                                       final PathCreator pathCreator,
+                                       final IndexFieldCache indexFieldCache) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.metaService = metaService;
-        this.indexStore = indexStore;
         this.nodeInfo = nodeInfo;
         this.pathCreator = pathCreator;
+        this.indexFieldCache = indexFieldCache;
     }
 
     @Override
@@ -150,17 +149,16 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
     private Query buildQuery(final IndexShard indexShard, final Long streamId) {
         if (streamId == null) {
             return new MatchAllDocsQuery();
+
         } else {
-            final LuceneIndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
+            final DocRef docRef = DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
                     .type(LuceneIndexDoc.TYPE)
-                    .build());
-            Objects.requireNonNull(indexDoc);
-
-            LuceneIndexField streamIdField = indexDoc.getFields().stream()
-                    .filter(indexField -> indexField.getFldName().equals(IndexConstants.STREAM_ID))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
+                    .build();
+            final IndexField streamIdField = indexFieldCache.get(docRef, IndexConstants.STREAM_ID);
+            if (streamIdField == null) {
+                throw new RuntimeException("Can't find field " + IndexConstants.STREAM_ID);
+            }
 
             if (FieldType.ID.equals(streamIdField.getFldType())) {
                 return NumericRangeQuery.newLongRange(

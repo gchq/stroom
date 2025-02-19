@@ -3,7 +3,6 @@ package stroom.query.client.presenter;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.query.client.DataSourceClient;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
@@ -46,12 +45,11 @@ public class DynamicFieldSelectionListModel
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         consumeDataSource(dataSourceRef -> {
-            final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
-                    stringMatch,
+                    filter,
                     queryable);
 
             // Only fetch if the request has changed.

@@ -85,6 +85,10 @@ public abstract class BaseCriteria {
         }
     }
 
+    public void setSortList(final List<CriteriaFieldSort> sortList) {
+        this.sortList = sortList;
+    }
+
     public void setSort(final String field) {
         setSort(new CriteriaFieldSort(field, false, false));
     }

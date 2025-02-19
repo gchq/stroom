@@ -476,6 +476,10 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         setColumnWidth(colSpec.getColumn(), colSpec.getWidth(), Unit.PX);
     }
 
+    public void sort(final Column<R, ?> column) {
+        getColumnSortList().push(column);
+    }
+
     /**
      * Add a resizable column that will initially expand so that the table fills the available space.
      * Unless manually resized, it will expand to fill but not go below the initialMinimumWidth.
@@ -611,7 +615,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         // If the outer width is greater than the table with then see if we can expand the columns and table to fit the
         // space.
         if (redistribute && outerWidth > 0 && outerWidth > tableWidth) {
-            int totalWeight = 0;
+            double totalWeight = 0;
             int totalColWidth = 0;
             for (int i = 0; i < super.getColumnCount() && i < colSettings.size(); i++) {
                 final Column<R, ?> col = super.getColumn(i);
@@ -662,7 +666,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private int resizeColumnsAndFill(final double remaining, final double totalWeight) {
         int totalWidth = 0;
-        final double delta = (double) remaining / (double) totalWeight;
+        final double delta = remaining / totalWeight;
         for (int i = 0; i < super.getColumnCount(); i++) {
             final Column<R, ?> col = super.getColumn(i);
             final String stringWidth = super.getColumnWidth(col);

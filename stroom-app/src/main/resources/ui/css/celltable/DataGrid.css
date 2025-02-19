@@ -163,7 +163,6 @@
 .dataGridSortableHeader {
 	cursor: pointer;
 	cursor: hand;
-	text-decoration: underline;
 }
 
 .dataGridSortableHeader:hover {
@@ -354,12 +353,13 @@ table .dataGridOddRow.dataGridSelectedRow {
 }
 
 .dataGridSortableHeaderNameHolder {
+	text-decoration: underline;
 }
 
 .dataGridSortableHeaderImageHolder {
 }
 
 .dataGridSortableHeaderImageHolder svg {
-    width: 10px;
-    height: 10px;
+/*    width: 10px;
+    height: 10px;*/
 }

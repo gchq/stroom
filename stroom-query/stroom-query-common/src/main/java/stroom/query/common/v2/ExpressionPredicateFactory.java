@@ -18,6 +18,7 @@
 package stroom.query.common.v2;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -25,6 +26,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.NullSafe;
 import stroom.util.filter.StringPredicateFactory;
 import stroom.util.logging.LambdaLogger;
@@ -56,6 +58,27 @@ public class ExpressionPredicateFactory {
     @Inject
     public ExpressionPredicateFactory(final WordListProvider wordListProvider) {
         this.wordListProvider = wordListProvider;
+    }
+
+    public Optional<Predicate<String>> createSimpleStringPredicate(final String filter) {
+        return createSimpleStringPredicate(filter, Function.identity());
+    }
+
+    public <T> Optional<Predicate<T>> createSimpleStringPredicate(final String filter,
+                                                                  final Function<T, String> function) {
+        final String fieldName = "name";
+        final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
+        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                .create(fieldProvider, filter);
+        if (optionalExpressionOperator.isPresent()) {
+            final Optional<Predicate<String>> predicateOptional = create(
+                    optionalExpressionOperator.get(),
+                    StringValueFunctionFactory.create(QueryField.createText(fieldName)),
+                    DateTimeSettings.builder().build());
+            return predicateOptional
+                    .map(predicate -> queryField -> predicate.test(function.apply(queryField)));
+        }
+        return Optional.empty();
     }
 
     public <T> Optional<Predicate<T>> create(final ExpressionOperator operator,

@@ -31,6 +31,7 @@ public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDis
         setSortable(true);
         this.field = field.getDisplayValue();
         this.ignoreCase = false;
+        setDataStoreName(this.field);
     }
 
     public OrderByColumn(final Cell<C> cell, final String field, final boolean ignoreCase) {
@@ -38,6 +39,7 @@ public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDis
         setSortable(true);
         this.field = field;
         this.ignoreCase = ignoreCase;
+        setDataStoreName(this.field);
     }
 
     public String getField() {

@@ -1,7 +1,6 @@
 package stroom.datasource.api.v2;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -12,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,12 +19,15 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class FindFieldCriteria extends BaseCriteria {
 
-    public static final String SORT_BY_NAME = "name";
+    public static final CriteriaFieldSort DEFAULT_SORT =
+            new CriteriaFieldSort(FieldFields.NAME, false, true);
+    public static final List<CriteriaFieldSort> DEFAULT_SORT_LIST =
+            Collections.singletonList(DEFAULT_SORT);
 
     @JsonProperty
     private final DocRef dataSourceRef;
     @JsonProperty
-    private final StringMatch stringMatch;
+    private final String filter;
     @JsonProperty
     private final Boolean queryable;
 
@@ -38,11 +41,11 @@ public class FindFieldCriteria extends BaseCriteria {
     public FindFieldCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                              @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-                             @JsonProperty("stringMatch") final StringMatch stringMatch,
+                             @JsonProperty("filter") final String filter,
                              @JsonProperty("queryable") final Boolean queryable) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
-        this.stringMatch = stringMatch;
+        this.filter = filter;
         this.queryable = queryable;
     }
 
@@ -50,8 +53,8 @@ public class FindFieldCriteria extends BaseCriteria {
         return dataSourceRef;
     }
 
-    public StringMatch getStringMatch() {
-        return stringMatch;
+    public String getFilter() {
+        return filter;
     }
 
     public Boolean getQueryable() {
@@ -71,12 +74,12 @@ public class FindFieldCriteria extends BaseCriteria {
         }
         final FindFieldCriteria that = (FindFieldCriteria) o;
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
-                Objects.equals(stringMatch, that.stringMatch) &&
-                Objects.equals(queryable, that.queryable);
+               Objects.equals(filter, that.filter) &&
+               Objects.equals(queryable, that.queryable);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, stringMatch, queryable);
+        return Objects.hash(super.hashCode(), dataSourceRef, filter, queryable);
     }
 }

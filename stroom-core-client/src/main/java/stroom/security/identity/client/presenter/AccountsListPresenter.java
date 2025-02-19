@@ -4,7 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
@@ -119,6 +119,12 @@ public class AccountsListPresenter
         view.setUiHandlers(this);
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
     private void initButtons() {
         addButton.setSvg(SvgImage.ADD);
         addButton.setTitle("Add new account");
@@ -179,9 +185,6 @@ public class AccountsListPresenter
     }
 
     private void initTableColumns() {
-
-        DataGridUtil.addColumnSortHandler(dataGrid, requestBuilder, this::refresh);
-
         // User Id
         final Column<Account, CommandLink> userIdCol = DataGridUtil.commandLinkColumnBuilder(buildOpenUserCommandLink())
                 .enabledWhen(Account::isEnabled)
@@ -193,8 +196,7 @@ public class AccountsListPresenter
                         .withToolTip("The unique identifier for both the account and the corresponding user.")
                         .build(),
                 200);
-
-        dataGrid.getColumnSortList().push(userIdCol);
+        dataGrid.sort(userIdCol);
 
         // First Name
         final Column<Account, String> firstNameColumn = DataGridUtil.textColumnBuilder(Account::getFirstName)
@@ -260,8 +262,6 @@ public class AccountsListPresenter
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
 
         DataGridUtil.addEndColumn(dataGrid);
-
-        dataGrid.getColumnSortList().push(userIdCol);
     }
 
     private Function<Account, CommandLink> buildOpenUserCommandLink() {
@@ -300,7 +300,8 @@ public class AccountsListPresenter
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<Account>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    requestBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                    requestBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
+                    requestBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                     restFactory
                             .create(ACCOUNT_RESOURCE)
                             .method(res -> res.find(requestBuilder.build()))

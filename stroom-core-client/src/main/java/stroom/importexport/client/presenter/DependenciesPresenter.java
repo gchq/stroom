@@ -108,6 +108,7 @@ public class DependenciesPresenter
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
+                CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
                 restFactory
                         .create(CONTENT_RESOURCE)
                         .method(res -> res.fetchDependencies(criteria))
@@ -120,6 +121,11 @@ public class DependenciesPresenter
         dataProvider.addDataDisplay(dataGrid);
         this.menuPresenter = menuPresenter;
         initColumns();
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> dataProvider.refresh()));
     }
 
     private void initColumns() {
@@ -190,7 +196,6 @@ public class DependenciesPresenter
                 60);
 
         DataGridUtil.addEndColumn(dataGrid);
-        DataGridUtil.addColumnSortHandler(dataGrid, criteria, dataProvider::refresh);
     }
 
     private void addActionButtonColumn(final Function<Dependency, DocRef> docRefSelector,

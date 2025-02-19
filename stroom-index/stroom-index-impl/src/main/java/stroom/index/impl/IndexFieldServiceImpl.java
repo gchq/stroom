@@ -19,8 +19,11 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.UpdateField;
+import stroom.query.api.v2.StringExpressionUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
@@ -65,8 +68,47 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
     @Override
     public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
-        ensureLoaded(criteria.getDataSourceRef());
+        final DocRef docRef = criteria.getDataSourceRef();
+
+        // Check for read permission.
+        if (docRef == null || !securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            // If there is no read permission then return no fields.
+            return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
+        }
+
+        ensureLoaded(docRef);
         return indexFieldDao.findFields(criteria);
+    }
+
+    @Override
+    public Boolean addField(final AddField addField) {
+        if (checkEditPermission(addField.getIndexDocRef())) {
+            indexFieldDao.addField(addField);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean updateField(final UpdateField updateField) {
+        if (checkEditPermission(updateField.getIndexDocRef())) {
+            indexFieldDao.updateField(updateField);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    @Override
+    public Boolean deleteField(final DeleteField deleteField) {
+        if (checkEditPermission(deleteField.getIndexDocRef())) {
+            indexFieldDao.deleteField(deleteField);
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    private boolean checkEditPermission(final DocRef docRef) {
+        return docRef != null && securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
     }
 
     private void ensureLoaded(final DocRef dataSourceRef) {
@@ -76,8 +118,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
         }
     }
 
-    @Override
-    public void transferFieldsToDB(final DocRef docRef) {
+    private void transferFieldsToDB(final DocRef docRef) {
         try {
             // Load fields.
             final IndexStore indexStore = indexStoreProvider.get();
@@ -123,16 +164,30 @@ public class IndexFieldServiceImpl implements IndexFieldService {
 
             final FindFieldCriteria findIndexFieldCriteria = new FindFieldCriteria(
                     PageRequest.oneRow(),
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     docRef,
-                    StringMatch.equals(fieldName, true),
+                    StringExpressionUtil.equalsCaseSensitive(fieldName),
                     null);
             final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
-            if (resultPage.size() > 0) {
+            if (!resultPage.isEmpty()) {
                 return resultPage.getFirst();
             }
             return null;
         });
+    }
+
+    @Override
+    public void deleteAll(final DocRef docRef) {
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
+            indexFieldDao.deleteAll(docRef);
+        }
+    }
+
+    @Override
+    public void copyAll(final DocRef source, final DocRef dest) {
+        if (securityContext.hasDocumentPermission(source, DocumentPermission.VIEW)) {
+            indexFieldDao.copyAll(source, dest);
+        }
     }
 
     @Override
