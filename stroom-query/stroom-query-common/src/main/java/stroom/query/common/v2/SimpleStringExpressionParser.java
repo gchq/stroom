@@ -297,14 +297,38 @@ public class SimpleStringExpressionParser {
         }
 
         Condition condition = null;
-        String value;
         final AbstractToken token = tokens.getFirst();
 
         if (TokenType.STRING.equals(token.getTokenType())) {
             final String string = token.getUnescapedText();
 
+            // Get the field prefix.
+            final String fieldPrefix = getFieldPrefix(string);
+
+            // Resolve all fields.
+            List<String> fields;
+            String fieldName = fieldPrefix;
+            // Remove field prefix delimiter.
+            if (fieldName.endsWith(":")) {
+                fieldName = fieldName.substring(0, fieldName.length() - 1);
+            }
+            if (fieldName.isEmpty()) {
+                fields = fieldProvider.getDefaultFields();
+            } else {
+                final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
+                if (qualifiedField.isEmpty()) {
+//                        throw new RuntimeException("Unexpected field: " + fieldName);
+                    return Optional.empty();
+                }
+                fields = Collections.singletonList(qualifiedField.get());
+            }
+
+            // Resolve the field value.
+            String fieldValue = string.substring(fieldPrefix.length());
+            fieldValue = fieldValue + concatStringTokens(tokens.subList(1, tokens.size()));
+
             // See if the condition is negated.
-            if (string.length() > 1 && string.startsWith("!")) {
+            if (fieldValue.length() > 1 && fieldValue.startsWith("!")) {
                 final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
                 final Token t = new Token(TokenType.STRING, token.getChars(), token.getStart() + 1, token.getEnd());
                 final List<AbstractToken> remaining = new ArrayList<>(tokens.size());
@@ -319,75 +343,45 @@ public class SimpleStringExpressionParser {
                 return Optional.of(builder.build());
 
             } else {
-                if (NullSafe.isEmptyString(string)) {
+                if (NullSafe.isEmptyString(fieldValue)) {
                     return Optional.empty();
                 }
 
-                value = string;
-
                 for (Condition c : SUPPORTED_CONDITIONS) {
                     final String operator = c.getOperator();
-                    if (string.startsWith(operator)) {
+                    if (fieldValue.startsWith(operator)) {
                         condition = c;
-                        value = string.substring(operator.length());
+                        fieldValue = fieldValue.substring(operator.length());
                         break;
                     }
                 }
 
                 if (condition == null) {
-                    if (string.startsWith("~")) {
+                    if (fieldValue.startsWith("~")) {
                         // Characters Anywhere Matching.
                         condition = Condition.MATCHES_REGEX;
-                        value = string.substring(1);
-                        char[] chars = value.toCharArray();
+                        fieldValue = fieldValue.substring(1);
+                        char[] chars = fieldValue.toCharArray();
                         final StringBuilder sb = new StringBuilder();
                         for (final char c : chars) {
                             sb.append(".*?");
-
-                            if (c == '*') {
-                                // TODO @AT Why is this * block here
-                                sb.append(".*?");
-                            } else if (Character.isLetterOrDigit(c)) {
+                            if (Character.isLetterOrDigit(c)) {
                                 sb.append(c);
                             } else {
                                 // Might be a special char so escape it
                                 sb.append(Pattern.quote(String.valueOf(c)));
                             }
                         }
-                        value = sb.toString();
-                    } else if (string.startsWith("\\")) {
+                        fieldValue = sb.toString();
+                    } else if (fieldValue.startsWith("\\")) {
                         // Escaped contains
                         condition = Condition.CONTAINS;
-                        value = string.substring(1);
+                        fieldValue = fieldValue.substring(1);
                     } else {
                         // Contains.
                         condition = Condition.CONTAINS;
                     }
                 }
-
-                // Get the field prefix.
-                final String fieldPrefix = getFieldPrefix(value);
-
-                // Resolve all fields.
-                List<String> fields;
-                String fieldName = fieldPrefix;
-                // Remove field prefix delimiter.
-                if (fieldName.endsWith(":")) {
-                    fieldName = fieldName.substring(0, fieldName.length() - 1);
-                }
-                if (fieldName.isEmpty()) {
-                    fields = fieldProvider.getDefaultFields();
-                } else {
-                    final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                    if (qualifiedField.isEmpty()) {
-                        throw new RuntimeException("Unexpected field: " + fieldName);
-                    }
-                    fields = Collections.singletonList(qualifiedField.get());
-                }
-
-                // Resolve the field value.
-                String fieldValue = value.substring(fieldPrefix.length());
-                fieldValue = fieldValue + concatStringTokens(tokens.subList(1, tokens.size()));
 
                 return createExpressionItem(fields, condition, fieldValue);
             }

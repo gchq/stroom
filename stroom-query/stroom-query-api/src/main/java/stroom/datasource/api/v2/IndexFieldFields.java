@@ -6,7 +6,7 @@ public class IndexFieldFields extends FieldFields {
     public static final String INDEX = "Index";
     public static final String POSITIONS = "Positions";
     public static final String ANALYSER = "Analyser";
-    public static final String CASE_SENSITIVE = "Case Sensitive";
+    public static final String CASE_SENSITIVE = "CaseSensitive";
 
     public static final QueryField STORE_FIELD = QueryField.createBoolean(STORE);
     public static final QueryField INDEX_FIELD = QueryField.createBoolean(INDEX);

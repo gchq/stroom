@@ -229,11 +229,11 @@ public class StringPredicateFactory {
         if (userInput == null) {
             return String.CASE_INSENSITIVE_ORDER;
         } else if (userInput.startsWith(REGEX_PREFIX)
-                || userInput.startsWith(STARTS_WITH_PREFIX)
-                || userInput.startsWith(ENDS_WITH_PREFIX)
-                || userInput.startsWith(EXACT_MATCH_PREFIX)
-                || userInput.startsWith(WORD_BOUNDARY_PREFIX)
-                || userInput.startsWith(NOT_OPERATOR_STR)) {
+                   || userInput.startsWith(STARTS_WITH_PREFIX)
+                   || userInput.startsWith(ENDS_WITH_PREFIX)
+                   || userInput.startsWith(EXACT_MATCH_PREFIX)
+                   || userInput.startsWith(WORD_BOUNDARY_PREFIX)
+                   || userInput.startsWith(NOT_OPERATOR_STR)) {
             return String.CASE_INSENSITIVE_ORDER;
         } else {
             // TODO @AT Need to consider how to rank word boundary matches
@@ -615,7 +615,7 @@ public class StringPredicateFactory {
             char chr = userInput.charAt(i);
 
             if (Character.isUpperCase(chr)
-                    || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
+                || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
                 if (i == 0) {
                     // First letter so is either preceded by ^ or by a separator
                     patternBuilder
@@ -706,12 +706,8 @@ public class StringPredicateFactory {
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < lowerCaseInput.length(); i++) {
             patternBuilder.append(".*?"); // no-greedy match all
-
             char chr = lowerCaseInput.charAt(i);
-            if (chr == '*') {
-                // TODO @AT Why is this * block here
-                patternBuilder.append(".*?"); // no-greedy match all
-            } else if (Character.isLetterOrDigit(chr)) {
+            if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
                 // Might be a special char so escape it

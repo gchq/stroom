@@ -13,7 +13,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
@@ -24,7 +23,6 @@ import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.InlineSvgButton;
@@ -41,8 +39,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -55,7 +51,6 @@ public class AccountsListPresenter
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final ClientSecurityContext securityContext;
     private final Provider<EditAccountPresenter> editAccountPresenterProvider;
     private final MultiSelectionModelImpl<Account> selectionModel;
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
@@ -66,23 +61,18 @@ public class AccountsListPresenter
     private final PagerView pagerView;
     private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
 
-    private List<CriteriaFieldSort> sortList = Collections.singletonList(
-            new CriteriaFieldSort(AccountFields.FIELD_NAME_USER_ID, false, true));
-
     @Inject
     public AccountsListPresenter(final EventBus eventBus,
                                  final QuickFilterPageView view,
                                  final PagerView pagerView,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
-                                 final ClientSecurityContext securityContext,
                                  final Provider<EditAccountPresenter> editAccountPresenterProvider,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.securityContext = securityContext;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
         this.dataGrid = new MyDataGrid<>(1000);
         this.selectionModel = new MultiSelectionModelImpl<>(dataGrid);

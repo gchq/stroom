@@ -238,7 +238,7 @@ public class IndexFieldListPresenter
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> String.valueOf(row.isCaseSensitive()))
                         .withSorting(IndexFieldFields.CASE_SENSITIVE)
                         .build(),
-                IndexFieldFields.CASE_SENSITIVE,
+                "Case Sensitive",
                 100);
     }
 

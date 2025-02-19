@@ -85,18 +85,11 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 return getCondition(term, field::eq);
             }
             case CONTAINS -> {
-                // TODO : Currently equality is used for wild carding with `*` but should probably use the
-                //  `MATCHES_REGEX` condition.
-                //  Also `is null` is being assumed if the value is null when we probably want to change this to
-                //  use the `IS_NULL` condition. Keeping this the same for now to reduce the change of breaking
-                //  backward compatibility.
-                return eq(term);
-
-//                if (fieldIsCaseSensitive) {
-//                    return getCondition(term, field::containsIgnoreCase);
-//                } else {
-//                    return getCondition(term, field::contains);
-//                }
+                if (fieldIsCaseSensitive) {
+                    return getCondition(term, field::containsIgnoreCase);
+                } else {
+                    return getCondition(term, field::contains);
+                }
             }
             case CONTAINS_CASE_SENSITIVE -> {
                 return getCondition(term, field::contains);

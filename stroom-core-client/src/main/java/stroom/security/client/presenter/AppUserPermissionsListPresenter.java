@@ -80,7 +80,6 @@ public class AppUserPermissionsListPresenter
     private final ClientSecurityContext securityContext;
     private RestDataProvider<AppUserPermissions, ResultPage<AppUserPermissions>> dataProvider;
     private final MultiSelectionModelImpl<AppUserPermissions> selectionModel;
-    private ResultPage<AppUserPermissions> currentData = null;
     private boolean isExternalIdp = false;
     private boolean resetSelection = false;
 
@@ -195,7 +194,6 @@ public class AppUserPermissionsListPresenter
                     @Override
                     protected void changeData(final ResultPage<AppUserPermissions> data) {
                         super.changeData(data);
-                        currentData = data;
                         if (!data.isEmpty()) {
                             if (resetSelection) {
                                 selectionModel.setSelected(data.getFirst());
