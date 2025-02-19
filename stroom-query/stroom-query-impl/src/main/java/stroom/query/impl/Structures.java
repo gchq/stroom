@@ -16,7 +16,6 @@
 
 package stroom.query.impl;
 
-import stroom.docref.StringMatch.MatchType;
 import stroom.query.language.token.TokenType;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
@@ -34,7 +33,6 @@ import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -293,20 +292,19 @@ class Structures {
 
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
-                        final StringMatcher stringMatcher,
+                        final Predicate<String> predicate,
                         final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         if (parentPath.isBlank()) {
-            final boolean hasChildren = hasChildren(stringMatcher);
+            final boolean hasChildren = hasChildren(predicate);
             if (hasChildren ||
-                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                stringMatcher.match(root.getTitle()).isPresent()) {
+                predicate.test(root.getTitle())) {
                 resultPageBuilder.add(root.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(SECTION_ID + ".")) {
             final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
                     new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
             for (final QueryHelpRow row : list) {
-                if (stringMatcher.match(row.getTitle()).isPresent()) {
+                if (predicate.test(row.getTitle())) {
                     trimmedSortedList.add(row);
                 }
             }
@@ -318,9 +316,9 @@ class Structures {
         }
     }
 
-    private boolean hasChildren(final StringMatcher stringMatcher) {
+    private boolean hasChildren(final Predicate<String> predicate) {
         for (final QueryHelpRow row : list) {
-            if (stringMatcher.match(row.getTitle()).isPresent()) {
+            if (predicate.test(row.getTitle())) {
                 return true;
             }
         }

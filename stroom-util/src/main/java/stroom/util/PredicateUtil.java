@@ -5,6 +5,7 @@ import stroom.util.string.PatternUtil;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -105,7 +106,7 @@ public class PredicateUtil {
         } else {
             final List<Predicate<String>> predicates = Arrays.stream(filters)
                     .map(String::trim)
-                    .filter(part -> part.length() > 0)
+                    .filter(part -> !part.isEmpty())
                     .map(part -> createWildCardedFilterPredicate(part, true, isCaseSensitive))
                     .collect(Collectors.toList());
             return orPredicates(predicates, str -> false);
@@ -121,7 +122,7 @@ public class PredicateUtil {
         final int count = NullSafe.size(predicates);
         Predicate<T> combinedPredicate = null;
         if (count == 1) {
-            combinedPredicate = predicates.get(0);
+            combinedPredicate = predicates.getFirst();
         } else if (count == 2) {
             combinedPredicate = andPredicates(predicates.get(0), predicates.get(1));
         } else if (count > 2) {
@@ -141,7 +142,7 @@ public class PredicateUtil {
         final int count = NullSafe.size(predicates);
         Predicate<T> combinedPredicate = null;
         if (count == 1) {
-            combinedPredicate = predicates.get(0);
+            combinedPredicate = predicates.getFirst();
         } else if (count == 2) {
             combinedPredicate = orPredicates(predicates.get(0), predicates.get(1));
         } else if (count > 2) {
@@ -191,5 +192,9 @@ public class PredicateUtil {
                 return predicate1.or(predicate2);
             }
         }
+    }
+
+    public static <T> Predicate<T> get(final Optional<Predicate<T>> optionalPredicate) {
+        return optionalPredicate.orElse(x -> true);
     }
 }

@@ -23,7 +23,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
@@ -43,12 +43,15 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     private final SecurityContext securityContext;
     private final IndexShardDao indexShardDao;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
-                          final IndexShardDao indexShardDao) {
+                          final IndexShardDao indexShardDao,
+                          final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.securityContext = securityContext;
         this.indexShardDao = indexShardDao;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -72,7 +75,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
         if (!IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(getFields()).build();
+        return fieldInfoResultPageFactory.create(criteria, getFields());
     }
 
     private List<QueryField> getFields() {

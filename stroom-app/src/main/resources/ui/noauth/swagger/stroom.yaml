@@ -10895,6 +10895,8 @@ components:
       properties:
         dataSourceRef:
           $ref: "#/components/schemas/DocRef"
+        filter:
+          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         queryable:
@@ -10906,8 +10908,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
-        stringMatch:
-          $ref: "#/components/schemas/StringMatch"
     FindFsVolumeCriteria:
       type: object
       properties:
@@ -11515,8 +11515,6 @@ components:
           - STANDARD
         caseSensitive:
           type: boolean
-        displayValue:
-          type: string
         fldName:
           type: string
         fldType:
@@ -13444,6 +13442,8 @@ components:
       properties:
         dataSourceRef:
           $ref: "#/components/schemas/DocRef"
+        filter:
+          type: string
         includedTypes:
           type: array
           items:
@@ -13470,8 +13470,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
-        stringMatch:
-          $ref: "#/components/schemas/StringMatch"
     QueryHelpRow:
       type: object
       properties:

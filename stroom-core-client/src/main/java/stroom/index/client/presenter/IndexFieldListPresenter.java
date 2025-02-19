@@ -25,6 +25,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexFieldFields;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -41,6 +42,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
+import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -53,10 +56,13 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, LuceneIndexDoc> {
+public class IndexFieldListPresenter
+        extends DocumentEditPresenter<QuickFilterPageView, LuceneIndexDoc>
+        implements QuickFilterUiHandlers {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
+    private final PagerView pagerView;
     private final RestFactory restFactory;
     private final MyDataGrid<IndexFieldImpl> dataGrid;
     private final MultiSelectionModelImpl<IndexFieldImpl> selectionModel;
@@ -66,27 +72,31 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
     private final ButtonView removeButton;
     private RestDataProvider<IndexFieldImpl, ResultPage<IndexFieldImpl>> dataProvider;
 
-    private FindFieldCriteria criteria;
+    private String filter;
     private DocRef docRef;
     private boolean readOnly = true;
 
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
-                                   final PagerView view,
+                                   final QuickFilterPageView view,
+                                   final PagerView pagerView,
                                    final RestFactory restFactory,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
         super(eventBus, view);
+        this.pagerView = pagerView;
         this.restFactory = restFactory;
+        view.setDataView(pagerView);
+        view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
-        view.setDataWidget(dataGrid);
+        pagerView.setDataWidget(dataGrid);
 
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
-        newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        editButton = getView().addButton(SvgPresets.EDIT);
-        removeButton = getView().addButton(SvgPresets.DELETE);
+        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
+        editButton = pagerView.addButton(SvgPresets.EDIT);
+        removeButton = pagerView.addButton(SvgPresets.DELETE);
 
         addColumns();
         enableButtons();
@@ -128,6 +138,12 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
+    @Override
+    public void onFilterChange(final String text) {
+        filter = text;
+        refresh();
+    }
+
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
         if (!readOnly) {
@@ -164,10 +180,10 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
 
     private void addNameColumn() {
         final Column<IndexFieldImpl, String> column = DataGridUtil.textColumnBuilder(IndexFieldImpl::getFldName)
-                .withSorting(FindFieldCriteria.FIELD_NAME)
+                .withSorting(IndexFieldFields.NAME)
                 .build();
         dataGrid.addResizableColumn(column,
-                FindFieldCriteria.FIELD_NAME,
+                IndexFieldFields.NAME,
                 150);
         dataGrid.sort(column);
     }
@@ -175,54 +191,54 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
     private void addTypeColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> row.getFldType().getDisplayValue())
-                        .withSorting(FindFieldCriteria.FIELD_TYPE)
+                        .withSorting(IndexFieldFields.TYPE)
                         .build(),
-                FindFieldCriteria.FIELD_TYPE,
+                IndexFieldFields.TYPE,
                 100);
     }
 
     private void addStoreColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> getYesNoString(row.isStored()))
-                        .withSorting(FindFieldCriteria.FIELD_STORE)
+                        .withSorting(IndexFieldFields.STORE)
                         .build(),
-                FindFieldCriteria.FIELD_STORE,
+                IndexFieldFields.STORE,
                 100);
     }
 
     private void addIndexColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> getYesNoString(row.isIndexed()))
-                        .withSorting(FindFieldCriteria.FIELD_INDEX)
+                        .withSorting(IndexFieldFields.INDEX)
                         .build(),
-                FindFieldCriteria.FIELD_INDEX,
+                IndexFieldFields.INDEX,
                 100);
     }
 
     private void addTermVectorColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> getYesNoString(row.isTermPositions()))
-                        .withSorting(FindFieldCriteria.FIELD_POSITIONS)
+                        .withSorting(IndexFieldFields.POSITIONS)
                         .build(),
-                FindFieldCriteria.FIELD_POSITIONS,
+                IndexFieldFields.POSITIONS,
                 100);
     }
 
     private void addAnalyzerColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> row.getAnalyzerType().getDisplayValue())
-                        .withSorting(FindFieldCriteria.FIELD_ANALYSER)
+                        .withSorting(IndexFieldFields.ANALYSER)
                         .build(),
-                FindFieldCriteria.FIELD_ANALYSER,
+                IndexFieldFields.ANALYSER,
                 100);
     }
 
     private void addCaseSensitiveColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((IndexFieldImpl row) -> String.valueOf(row.isCaseSensitive()))
-                        .withSorting(FindFieldCriteria.FIELD_CASE_SENSITIVE)
+                        .withSorting(IndexFieldFields.CASE_SENSITIVE)
                         .build(),
-                FindFieldCriteria.FIELD_CASE_SENSITIVE,
+                IndexFieldFields.CASE_SENSITIVE,
                 100);
     }
 
@@ -248,7 +264,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                             DirtyEvent.fire(IndexFieldListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
-                        .taskMonitorFactory(getView())
+                        .taskMonitorFactory(pagerView)
                         .exec();
             } else {
                 e.hide();
@@ -277,7 +293,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                                     DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
-                                .taskMonitorFactory(getView())
+                                .taskMonitorFactory(pagerView)
                                 .exec();
                     } catch (final RuntimeException ex) {
                         AlertEvent.fireError(IndexFieldListPresenter.this, ex.getMessage(), e::reset);
@@ -308,7 +324,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                                     refresh();
                                     DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
-                                .taskMonitorFactory(getView())
+                                .taskMonitorFactory(pagerView)
                                 .exec();
                     }
                 }
@@ -336,17 +352,19 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<IndexFieldImpl>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    criteria = new FindFieldCriteria(
+                    final FindFieldCriteria criteria = new FindFieldCriteria(
                             CriteriaUtil.createPageRequest(range),
                             CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
-                            docRef);
+                            docRef,
+                            filter,
+                            null);
 
                     restFactory
                             .create(INDEX_RESOURCE)
                             .method(res -> res.findFields(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
-                            .taskMonitorFactory(getView())
+                            .taskMonitorFactory(pagerView)
                             .exec();
                 }
             };

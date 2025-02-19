@@ -17,6 +17,7 @@
 package stroom.index.impl;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -26,7 +27,6 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.api.IndexVolumeGroupService;
-import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.util.NullSafe;
@@ -169,12 +169,13 @@ public class IndexStoreImpl implements IndexStore {
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
 
-        // If the imported feed's vol grp doesn't exist in this env use our default
-        // or null it out
         Map<String, byte[]> effectiveDataMap = dataMap;
         try {
+            boolean altered = false;
             final LuceneIndexDoc doc = serialiser.read(dataMap);
 
+            // If the imported feed's vol grp doesn't exist in this env use our default
+            // or null it out
             final String volumeGroup = doc.getVolumeGroupName();
             if (volumeGroup != null) {
                 final IndexVolumeGroupService fsVolumeGroupService = indexVolumeGroupServiceProvider.get();
@@ -186,22 +187,33 @@ public class IndexStoreImpl implements IndexStore {
                             .ifPresentOrElse(
                                     doc::setVolumeGroupName,
                                     () -> doc.setVolumeGroupName(null));
-
-                    effectiveDataMap = serialiser.write(doc);
+                    altered = true;
                 }
             }
+
+            // Transfer fields to the database.
+            if (!NullSafe.isEmptyCollection(doc.getFields())) {
+                // Make sure we transfer all fields to the DB and remove them from the doc.
+                final List<IndexField> fields = doc
+                        .getFields()
+                        .stream()
+                        .map(field -> (IndexField) field)
+                        .toList();
+                indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
+                doc.setFields(null);
+                altered = true;
+            }
+
+            if (altered) {
+                effectiveDataMap = serialiser.write(doc);
+            }
+
         } catch (IOException e) {
             throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
                     docRef, e.getMessage()), e);
         }
 
-        final DocRef ref = store.importDocument(docRef, effectiveDataMap, importState, importSettings);
-        LuceneIndexDoc doc = null;
-        if (ref != null) {
-            doc = store.readDocument(ref);
-            doc = transferFieldsToDb(doc);
-        }
-        return NullSafe.get(doc, LuceneIndexDoc::asDocRef);
+        return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
     }
 
     private LuceneIndexDoc transferFieldsToDb(final LuceneIndexDoc doc) {
@@ -210,7 +222,12 @@ public class IndexStoreImpl implements IndexStore {
         }
 
         // Make sure we transfer all fields to the DB and remove them from the doc.
-        indexFieldServiceProvider.get().transferFieldsToDB(doc.asDocRef());
+        final List<IndexField> fields = doc
+                .getFields()
+                .stream()
+                .map(field -> (IndexField) field)
+                .toList();
+        indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
         doc.setFields(null);
         return store.writeDocument(doc);
     }
@@ -219,30 +236,39 @@ public class IndexStoreImpl implements IndexStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        // Update fields in the written index first.
+        // Get the first 1000 fields.
+        final List<LuceneIndexField> fields = getFieldsForExport(docRef);
+        if (omitAuditFields) {
+            return store.exportDocument(docRef, messageList, d -> {
+                new AuditFieldFilter<>().apply(d);
+                d.setFields(fields);
+                return d;
+            });
+        }
+        return store.exportDocument(docRef, messageList, d -> {
+            d.setFields(fields);
+            return d;
+        });
+    }
+
+    private List<LuceneIndexField> getFieldsForExport(final DocRef docRef) {
         try {
-            final LuceneIndexDoc document = readDocument(docRef);
             // Limited to 1000 fields.
             final PageRequest pageRequest = new PageRequest(0, 1000);
             final FindFieldCriteria findFieldCriteria =
                     new FindFieldCriteria(pageRequest, FindFieldCriteria.DEFAULT_SORT_LIST, docRef);
-            final ResultPage<IndexFieldImpl> indexFields =
+            final ResultPage<IndexField> indexFields =
                     indexFieldServiceProvider.get().findFields(findFieldCriteria);
-            document.setFields(indexFields
+            return indexFields
                     .getValues()
                     .stream()
                     .map(indexField -> new LuceneIndexField.Builder(indexField)
                             .build())
-                    .toList());
-            writeDocument(document);
+                    .toList();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
-
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return null;
     }
 
     @Override

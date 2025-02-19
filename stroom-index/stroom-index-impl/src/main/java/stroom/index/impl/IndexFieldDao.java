@@ -22,7 +22,6 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
-import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.UpdateField;
 import stroom.util.shared.ResultPage;
 
@@ -32,7 +31,7 @@ public interface IndexFieldDao {
 
     void addFields(DocRef docRef, Collection<IndexField> fields);
 
-    ResultPage<IndexFieldImpl> findFields(FindFieldCriteria criteria);
+    ResultPage<IndexField> findFields(FindFieldCriteria criteria);
 
     int getFieldCount(DocRef docRef);
 

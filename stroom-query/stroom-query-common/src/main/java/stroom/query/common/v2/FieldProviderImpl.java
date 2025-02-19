@@ -5,6 +5,7 @@ import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class FieldProviderImpl implements FieldProvider {
 
@@ -14,6 +15,11 @@ public class FieldProviderImpl implements FieldProvider {
     public FieldProviderImpl(final List<String> defaultFields, final Map<String, String> qualifiedFields) {
         this.defaultFields = defaultFields;
         this.qualifiedFields = qualifiedFields;
+    }
+
+    public FieldProviderImpl(final List<String> defaultFields, final List<String> qualifiedFields) {
+        this.defaultFields = defaultFields;
+        this.qualifiedFields = qualifiedFields.stream().collect(Collectors.toMap(name -> name, name -> name));
     }
 
     @Override

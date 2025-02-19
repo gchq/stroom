@@ -19,12 +19,11 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
-import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.v2.StringExpressionUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
@@ -68,7 +67,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
     }
 
     @Override
-    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
+    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
         final DocRef docRef = criteria.getDataSourceRef();
 
         // Check for read permission.
@@ -119,8 +118,7 @@ public class IndexFieldServiceImpl implements IndexFieldService {
         }
     }
 
-    @Override
-    public void transferFieldsToDB(final DocRef docRef) {
+    private void transferFieldsToDB(final DocRef docRef) {
         try {
             // Load fields.
             final IndexStore indexStore = indexStoreProvider.get();
@@ -168,9 +166,9 @@ public class IndexFieldServiceImpl implements IndexFieldService {
                     PageRequest.oneRow(),
                     FindFieldCriteria.DEFAULT_SORT_LIST,
                     docRef,
-                    StringMatch.equals(fieldName, true),
+                    StringExpressionUtil.equalsCaseSensitive(fieldName),
                     null);
-            final ResultPage<IndexFieldImpl> resultPage = findFields(findIndexFieldCriteria);
+            final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
             if (!resultPage.isEmpty()) {
                 return resultPage.getFirst();
             }

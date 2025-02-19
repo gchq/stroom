@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -80,7 +79,7 @@ class TestIndexFieldDaoImpl {
     IndexDbConnProvider indexDbConnProvider;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         final Injector injector = Guice.createInjector(
                 new IndexDbModule(),
                 new IndexDaoModule(),
@@ -101,7 +100,7 @@ class TestIndexFieldDaoImpl {
 
     @Test
     void addFields() {
-        List<IndexFieldImpl> fields = getFields(DOC_REF_1);
+        List<IndexField> fields = getFields(DOC_REF_1);
 
         assertThat(fields.size())
                 .isEqualTo(0);
@@ -129,41 +128,36 @@ class TestIndexFieldDaoImpl {
 
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        CompletableFuture.runAsync(() -> {
-            JooqUtil.context(indexDbConnProvider, context -> {
-                try {
-                    startLatch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        CompletableFuture.runAsync(() -> JooqUtil.context(indexDbConnProvider, context -> {
+            try {
+                startLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
-                final Record1<Integer> rec = context
-                        .select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
-                        .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
-                        .fetchOne();
+            final Record1<Integer> rec = context
+                    .select(INDEX_FIELD_SOURCE.ID)
+                    .from(INDEX_FIELD_SOURCE)
+                    .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
+                    .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
+                    .fetchOne();
 
-                final Integer id = rec.get(INDEX_FIELD_SOURCE.ID);
+            final Integer id = rec.get(INDEX_FIELD_SOURCE.ID);
+            LOGGER.info("id {}", id);
+        }));
 
-                LOGGER.info("id {}", id);
-            });
-        });
+        CompletableFuture.runAsync(() -> JooqUtil.context(indexDbConnProvider, context -> {
+            context.select(INDEX_FIELD_SOURCE.ID)
+                    .from(INDEX_FIELD_SOURCE)
+                    .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
+                    .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
+                    .forUpdate()
+                    .fetch();
+            LOGGER.info("Done lock");
+            startLatch.countDown();
 
-        CompletableFuture.runAsync(() -> {
-            JooqUtil.context(indexDbConnProvider, context -> {
-                context.select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
-                        .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
-                        .forUpdate()
-                        .fetch();
-                LOGGER.info("Done lock");
-                startLatch.countDown();
-
-                ThreadUtil.sleepIgnoringInterrupts(5_000);
-            });
-        }).get();
+            ThreadUtil.sleepIgnoringInterrupts(5_000);
+        })).get();
     }
 
     /**
@@ -175,10 +169,8 @@ class TestIndexFieldDaoImpl {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        JooqUtil.context(indexDbConnProvider, context -> {
-            assertThat(count(context, INDEX_FIELD))
-                    .isEqualTo(0);
-        });
+        JooqUtil.context(indexDbConnProvider, context -> assertThat(count(context, INDEX_FIELD))
+                .isEqualTo(0));
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < threads; i++) {
@@ -202,7 +194,7 @@ class TestIndexFieldDaoImpl {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                 .get();
 
-        List<IndexFieldImpl> fields = getFields(DOC_REF_1);
+        List<IndexField> fields = getFields(DOC_REF_1);
         assertThat(fields.size())
                 .isEqualTo(3);
 
@@ -213,7 +205,7 @@ class TestIndexFieldDaoImpl {
 
     @Test
     void findFields() {
-        List<IndexFieldImpl> fields = getFields(DOC_REF_1);
+        List<IndexField> fields = getFields(DOC_REF_1);
         assertThat(fields.size())
                 .isEqualTo(0);
 
@@ -231,7 +223,7 @@ class TestIndexFieldDaoImpl {
 
     @Test
     void addUpdateDeleteFields() {
-        List<IndexFieldImpl> fields = getFields(DOC_REF_1);
+        List<IndexField> fields = getFields(DOC_REF_1);
         assertThat(fields.size())
                 .isEqualTo(0);
 
@@ -278,8 +270,8 @@ class TestIndexFieldDaoImpl {
         assertThat(indexFieldDao.getFieldCount(DOC_REF_2)).isEqualTo(3);
     }
 
-    private List<IndexFieldImpl> getFields(final DocRef docRef) {
-        final ResultPage<IndexFieldImpl> resultPage = indexFieldDao.findFields(
+    private List<IndexField> getFields(final DocRef docRef) {
+        final ResultPage<IndexField> resultPage = indexFieldDao.findFields(
                 new FindFieldCriteria(
                         new PageRequest(),
                         FindFieldCriteria.DEFAULT_SORT_LIST,

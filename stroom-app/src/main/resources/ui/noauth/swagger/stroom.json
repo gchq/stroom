@@ -15101,6 +15101,9 @@
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "filter" : {
+            "type" : "string"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
@@ -15116,9 +15119,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
-          },
-          "stringMatch" : {
-            "$ref" : "#/components/schemas/StringMatch"
           }
         }
       },
@@ -15944,9 +15944,6 @@
           },
           "caseSensitive" : {
             "type" : "boolean"
-          },
-          "displayValue" : {
-            "type" : "string"
           },
           "fldName" : {
             "type" : "string"
@@ -18198,6 +18195,9 @@
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "filter" : {
+            "type" : "string"
+          },
           "includedTypes" : {
             "type" : "array",
             "items" : {
@@ -18224,9 +18224,6 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
-          },
-          "stringMatch" : {
-            "$ref" : "#/components/schemas/StringMatch"
           }
         }
       },

@@ -20,14 +20,20 @@ import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
+import stroom.datasource.api.v2.IndexFieldFields;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
-import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,19 +69,35 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     public static final int MAX_DEADLOCK_RETRY_ATTEMPTS = 20;
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-            FindFieldCriteria.FIELD_NAME, INDEX_FIELD.NAME,
-            FindFieldCriteria.FIELD_TYPE, INDEX_FIELD.TYPE,
-            FindFieldCriteria.FIELD_STORE, INDEX_FIELD.STORED,
-            FindFieldCriteria.FIELD_INDEX, INDEX_FIELD.INDEXED,
-            FindFieldCriteria.FIELD_POSITIONS, INDEX_FIELD.TERM_POSITIONS,
-            FindFieldCriteria.FIELD_ANALYSER, INDEX_FIELD.ANALYZER,
-            FindFieldCriteria.FIELD_CASE_SENSITIVE, INDEX_FIELD.CASE_SENSITIVE);
+            IndexFieldFields.NAME, INDEX_FIELD.NAME,
+            IndexFieldFields.TYPE, INDEX_FIELD.TYPE,
+            IndexFieldFields.STORE, INDEX_FIELD.STORED,
+            IndexFieldFields.INDEX, INDEX_FIELD.INDEXED,
+            IndexFieldFields.POSITIONS, INDEX_FIELD.TERM_POSITIONS,
+            IndexFieldFields.ANALYSER, INDEX_FIELD.ANALYZER,
+            IndexFieldFields.CASE_SENSITIVE, INDEX_FIELD.CASE_SENSITIVE);
 
     private final IndexDbConnProvider queryDatasourceDbConnProvider;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
-    IndexFieldDaoImpl(final IndexDbConnProvider queryDatasourceDbConnProvider) {
+    IndexFieldDaoImpl(final IndexDbConnProvider queryDatasourceDbConnProvider,
+                      final ExpressionMapperFactory expressionMapperFactory) {
         this.queryDatasourceDbConnProvider = queryDatasourceDbConnProvider;
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(IndexFieldFields.NAME_FIELD, INDEX_FIELD.NAME, string -> string);
+        expressionMapper.map(IndexFieldFields.TYPE_FIELD, INDEX_FIELD.TYPE, string -> {
+            final FieldType fieldType = FieldType.fromDisplayValue(string);
+            if (fieldType == null) {
+                return null;
+            }
+            return (byte) fieldType.getIndex();
+        });
+        expressionMapper.map(IndexFieldFields.STORE_FIELD, INDEX_FIELD.STORED, Boolean::valueOf);
+        expressionMapper.map(IndexFieldFields.INDEX_FIELD, INDEX_FIELD.INDEXED, Boolean::valueOf);
+        expressionMapper.map(IndexFieldFields.POSITIONS_FIELD, INDEX_FIELD.TERM_POSITIONS, Boolean::valueOf);
+        expressionMapper.map(IndexFieldFields.ANALYSER_FIELD, INDEX_FIELD.ANALYZER, string -> string);
+        expressionMapper.map(IndexFieldFields.CASE_SENSITIVE_FIELD, INDEX_FIELD.CASE_SENSITIVE, Boolean::valueOf);
     }
 
     private void ensureFieldSource(final DocRef docRef) {
@@ -210,7 +232,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     }
 
     @Override
-    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
+    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
         final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef(), false);
 
         if (optional.isEmpty()) {
@@ -219,7 +241,21 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
 
         final List<Condition> conditions = new ArrayList<>();
         conditions.add(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optional.get()));
-        conditions.add(StringMatchConditionUtil.getCondition(INDEX_FIELD.NAME, criteria.getStringMatch()));
+
+        final FieldProvider fieldProvider = new FieldProviderImpl(
+                List.of(IndexFieldFields.NAME),
+                List.of(IndexFieldFields.NAME,
+                        IndexFieldFields.TYPE,
+                        IndexFieldFields.STORE,
+                        IndexFieldFields.INDEX,
+                        IndexFieldFields.POSITIONS,
+                        IndexFieldFields.ANALYSER,
+                        IndexFieldFields.CASE_SENSITIVE));
+        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                .create(fieldProvider, criteria.getFilter());
+        optionalExpressionOperator.ifPresent(expressionOperator ->
+                conditions.add(expressionMapper.apply(expressionOperator)));
+
         if (criteria.getQueryable() != null) {
             conditions.add(INDEX_FIELD.INDEXED.eq(criteria.getQueryable()));
         }
@@ -228,7 +264,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
-        final List<IndexFieldImpl> fieldInfoList = JooqUtil
+        final List<IndexField> fieldInfoList = JooqUtil
                 .contextResult(queryDatasourceDbConnProvider, context -> context
                         .select(INDEX_FIELD.TYPE,
                                 INDEX_FIELD.NAME,

@@ -17,7 +17,6 @@
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.GwtNullSafe;
@@ -44,7 +43,7 @@ public class QueryHelpRequest extends BaseCriteria {
     @JsonProperty
     private final String parentPath;
     @JsonProperty
-    private final StringMatch stringMatch;
+    private final String filter;
     @JsonProperty
     private final Set<QueryHelpType> includedTypes;
 
@@ -54,13 +53,13 @@ public class QueryHelpRequest extends BaseCriteria {
                             @JsonProperty("query") final String query,
                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                             @JsonProperty("parentPath") final String parentPath,
-                            @JsonProperty("stringMatch") final StringMatch stringMatch,
+                            @JsonProperty("filter") final String filter,
                             @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes) {
         super(pageRequest, sortList);
         this.query = query;
         this.dataSourceRef = dataSourceRef;
         this.parentPath = parentPath;
-        this.stringMatch = stringMatch;
+        this.filter = filter;
         this.includedTypes = includedTypes;
     }
 
@@ -76,8 +75,8 @@ public class QueryHelpRequest extends BaseCriteria {
         return parentPath;
     }
 
-    public StringMatch getStringMatch() {
-        return stringMatch;
+    public String getFilter() {
+        return filter;
     }
 
     public Set<QueryHelpType> getIncludedTypes() {
@@ -105,14 +104,14 @@ public class QueryHelpRequest extends BaseCriteria {
         }
         final QueryHelpRequest request = (QueryHelpRequest) o;
         return includedTypes == request.includedTypes &&
-                Objects.equals(query, request.query) &&
-                Objects.equals(dataSourceRef, request.dataSourceRef) &&
-                Objects.equals(parentPath, request.parentPath) &&
-                Objects.equals(stringMatch, request.stringMatch);
+               Objects.equals(query, request.query) &&
+               Objects.equals(dataSourceRef, request.dataSourceRef) &&
+               Objects.equals(parentPath, request.parentPath) &&
+               Objects.equals(filter, request.filter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), query, dataSourceRef, parentPath, stringMatch, includedTypes);
+        return Objects.hash(super.hashCode(), query, dataSourceRef, parentPath, filter, includedTypes);
     }
 }

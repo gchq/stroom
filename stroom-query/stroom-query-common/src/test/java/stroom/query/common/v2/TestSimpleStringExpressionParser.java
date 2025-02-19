@@ -30,7 +30,7 @@ public class TestSimpleStringExpressionParser extends AbstractQueryTest {
     private ExpressionOperator getExpression(final String string) {
         final FieldProvider fieldProvider = new FieldProviderImpl(
                 List.of("defaultField"),
-                Map.of("field1", "field1", "field2", "field2"));
+                List.of("field1", "field2"));
         return SimpleStringExpressionParser
                 .create(fieldProvider, string)
                 .orElseThrow();

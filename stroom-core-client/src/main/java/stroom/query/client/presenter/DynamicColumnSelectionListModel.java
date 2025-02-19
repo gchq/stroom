@@ -5,8 +5,6 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
-import stroom.docref.StringMatch.MatchType;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
 import stroom.query.api.v2.Column;
@@ -68,12 +66,11 @@ public class DynamicColumnSelectionListModel
                               final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
         final String parentPath = getParentPath(parent);
         if (dataSourceRef != null) {
-            final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     pageRequest,
                     FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
-                    stringMatch,
+                    filter,
                     null);
 
             // Only fetch if the request has changed.
@@ -83,7 +80,7 @@ public class DynamicColumnSelectionListModel
                 // Only update if the request is still current.
                 if (findFieldInfoCriteria == lastCriteria) {
                     final ResultPage<ColumnSelectionItem> resultPage =
-                            createResults(stringMatch, parentPath, pageRequest, response);
+                            createResults(filter, parentPath, pageRequest, response);
                     consumer.accept(resultPage);
                 }
             }, taskMonitorFactory);
@@ -102,7 +99,7 @@ public class DynamicColumnSelectionListModel
         return parentPath;
     }
 
-    private ResultPage<ColumnSelectionItem> createResults(final StringMatch filter,
+    private ResultPage<ColumnSelectionItem> createResults(final String filter,
                                                           final String parentPath,
                                                           final PageRequest pageRequest,
                                                           final ResultPage<QueryField> response) {
@@ -148,7 +145,7 @@ public class DynamicColumnSelectionListModel
         return resultPage;
     }
 
-    private ResultPage<ColumnSelectionItem> getCounts(final StringMatch filter,
+    private ResultPage<ColumnSelectionItem> getCounts(final String filter,
                                                       final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column count = Column.builder()
@@ -173,15 +170,15 @@ public class DynamicColumnSelectionListModel
         return builder.build();
     }
 
-    private ResultPage<ColumnSelectionItem> getAnnotations(final StringMatch filter,
+    private ResultPage<ColumnSelectionItem> getAnnotations(final String filter,
                                                            final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         if (dataSourceRef != null &&
-                dataSourceRef.getType() != null &&
-                clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
+            dataSourceRef.getType() != null &&
+            clientSecurityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             if ("Index".equals(dataSourceRef.getType()) ||
-                    "SolrIndex".equals(dataSourceRef.getType()) ||
-                    "ElasticIndex".equals(dataSourceRef.getType())) {
+                "SolrIndex".equals(dataSourceRef.getType()) ||
+                "ElasticIndex".equals(dataSourceRef.getType())) {
                 AnnotationFields.FIELDS.forEach(field -> {
                     final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
@@ -191,13 +188,13 @@ public class DynamicColumnSelectionListModel
         return builder.build();
     }
 
-    private void add(final StringMatch filter,
+    private void add(final String filter,
                      final ColumnSelectionItem item,
                      final ExactResultPageBuilder<ColumnSelectionItem> resultPageBuilder) {
         if (item.isHasChildren()) {
             resultPageBuilder.add(item);
-        } else if (filter != null && filter.getPattern() != null && MatchType.CONTAINS.equals(filter.getMatchType())) {
-            if (item.getLabel().toLowerCase().contains(filter.getPattern().toLowerCase(Locale.ROOT))) {
+        } else if (GwtNullSafe.isNonBlankString(filter)) {
+            if (item.getLabel().toLowerCase().contains(filter.toLowerCase(Locale.ROOT))) {
                 resultPageBuilder.add(item);
             }
         } else {
@@ -375,9 +372,9 @@ public class DynamicColumnSelectionListModel
                 return false;
             }
             final ColumnSelectionItem that = (ColumnSelectionItem) o;
-            return hasChildren == that.hasChildren && Objects.equals(column, that.column) && Objects.equals(
-                    label,
-                    that.label);
+            return hasChildren == that.hasChildren &&
+                   Objects.equals(column, that.column) &&
+                   Objects.equals(label, that.label);
         }
 
         @Override
@@ -388,10 +385,10 @@ public class DynamicColumnSelectionListModel
         @Override
         public String toString() {
             return "ColumnSelectionItem{" +
-                    "column=" + column +
-                    ", label='" + label + '\'' +
-                    ", hasChildren=" + hasChildren +
-                    '}';
+                   "column=" + column +
+                   ", label='" + label + '\'' +
+                   ", hasChildren=" + hasChildren +
+                   '}';
         }
     }
 }

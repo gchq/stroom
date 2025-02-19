@@ -43,7 +43,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -143,6 +143,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final NodeService nodeService;
     private final WordListProvider wordListProvider;
     private final DocRefInfoService docRefInfoService;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -156,7 +157,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final ByteBufferPool byteBufferPool,
                                     final NodeService nodeService,
                                     final WordListProvider wordListProvider,
-                                    final DocRefInfoService docRefInfoService) {
+                                    final DocRefInfoService docRefInfoService,
+                                    final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
@@ -170,6 +172,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.nodeService = nodeService;
         this.wordListProvider = wordListProvider;
         this.docRefInfoService = docRefInfoService;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -704,9 +707,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (!ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria)
-                .addAll(getFields())
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, getFields());
     }
 
     private List<QueryField> getFields() {

@@ -406,7 +406,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                         documentPermissionService.setPermission(destDocRef, userRef, DocumentPermission.OWNER));
             }
             // User should now be in a position to add other perms
-            documentPermissionService.addDocumentPermissions(source, destDocRef);
+            if (source != null) {
+                documentPermissionService.addDocumentPermissions(source, destDocRef);
+            }
         };
 
         if (cascade && isFolder) {

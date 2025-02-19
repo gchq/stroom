@@ -17,7 +17,6 @@
 package stroom.query.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch.MatchType;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
@@ -34,7 +33,6 @@ import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -43,6 +41,7 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @Singleton
 public class DataSources {
@@ -68,13 +67,12 @@ public class DataSources {
 
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
-                        final StringMatcher stringMatcher,
+                        final Predicate<String> predicate,
                         final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         if (parentPath.isBlank()) {
-            final boolean hasChildren = hasChildren(stringMatcher);
+            final boolean hasChildren = hasChildren(predicate);
             if (hasChildren ||
-                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                predicate.test(ROOT.getTitle())) {
                 resultPageBuilder.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(DATA_SOURCE_ID + ".")) {
@@ -83,7 +81,7 @@ public class DataSources {
             final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
                     new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
             for (final DocRef docRef : dataSourceProviderRegistry.getDataSourceDocRefs()) {
-                if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
+                if (predicate.test(docRef.getDisplayValue())) {
                     final QueryHelpRow row = QueryHelpRow
                             .builder()
                             .type(QueryHelpType.DATA_SOURCE)
@@ -196,11 +194,11 @@ public class DataSources {
         return detail.build();
     }
 
-    private boolean hasChildren(final StringMatcher stringMatcher) {
+    private boolean hasChildren(final Predicate<String> predicate) {
         final DataSourceProviderRegistry dataSourceProviderRegistry =
                 dataSourceProviderRegistryProvider.get();
         for (final DocRef docRef : dataSourceProviderRegistry.getDataSourceDocRefs()) {
-            if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
+            if (predicate.test(docRef.getDisplayValue())) {
                 return true;
             }
         }

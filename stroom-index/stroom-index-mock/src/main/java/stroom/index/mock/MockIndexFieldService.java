@@ -19,32 +19,34 @@ package stroom.index.mock;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
-import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.v2.StringExpressionUtil;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.util.NullSafe;
+import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 @Singleton
 public class MockIndexFieldService implements IndexFieldService {
@@ -52,39 +54,40 @@ public class MockIndexFieldService implements IndexFieldService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockIndexFieldService.class);
 
     private final Provider<IndexStore> indexStoreProvider;
-    private final Map<DocRef, Set<IndexFieldImpl>> map = new ConcurrentHashMap<>();
+    private final Map<DocRef, Set<IndexField>> map = new ConcurrentHashMap<>();
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final Set<DocRef> loadedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
-    MockIndexFieldService(final Provider<IndexStore> indexStoreProvider) {
+    MockIndexFieldService(final Provider<IndexStore> indexStoreProvider,
+                          final ExpressionPredicateFactory expressionPredicateFactory) {
         this.indexStoreProvider = indexStoreProvider;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
     public void addFields(final DocRef docRef, final Collection<IndexField> fields) {
-        map.computeIfAbsent(docRef, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                .addAll(fields
-                        .stream()
-                        .map(indexField -> (IndexFieldImpl) indexField)
-                        .collect(Collectors.toSet()));
+        map.computeIfAbsent(docRef, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).addAll(fields);
     }
 
     @Override
-    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
+    public ResultPage<IndexField> findFields(final FindFieldCriteria criteria) {
         final DocRef dataSourceRef = criteria.getDataSourceRef();
         ensureLoaded(dataSourceRef);
 
-        final StringMatcher stringMatcher = new StringMatcher(criteria.getStringMatch());
-        final Set<IndexFieldImpl> set = map.get(dataSourceRef);
-        final List<IndexFieldImpl> filtered = set
+        final Optional<Predicate<IndexField>> optionalNamePredicate = expressionPredicateFactory
+                .createSimpleStringPredicate(criteria.getFilter(), IndexField::getFldName);
+        final List<Predicate<IndexField>> predicates = new ArrayList<>(2);
+        optionalNamePredicate.ifPresent(predicates::add);
+        if (criteria.getQueryable() != null) {
+            predicates.add(queryField -> queryField.isIndexed() == criteria.getQueryable());
+        }
+        final Predicate<IndexField> predicate = PredicateUtil.andPredicates(predicates, name -> true);
+        final Set<IndexField> set = map.get(dataSourceRef);
+        final List<IndexField> filtered = set
                 .stream()
-                .filter(field -> {
-                    if (criteria.getQueryable() == null || criteria.getQueryable().equals(field.isIndexed())) {
-                        return stringMatcher.match(field.getFldName()).isPresent();
-                    }
-                    return false;
-                })
+                .filter(predicate)
                 .toList();
         return ResultPage.createPageLimitedList(filtered, criteria.getPageRequest());
     }
@@ -96,8 +99,7 @@ public class MockIndexFieldService implements IndexFieldService {
         }
     }
 
-    @Override
-    public void transferFieldsToDB(final DocRef docRef) {
+    private void transferFieldsToDB(final DocRef docRef) {
         try {
             // Load fields.
             final IndexStore indexStore = indexStoreProvider.get();
@@ -129,10 +131,10 @@ public class MockIndexFieldService implements IndexFieldService {
                 PageRequest.oneRow(),
                 null,
                 docRef,
-                StringMatch.equals(fieldName),
+                StringExpressionUtil.equalsCaseSensitive(fieldName),
                 null);
-        final ResultPage<IndexFieldImpl> resultPage = findFields(findIndexFieldCriteria);
-        if (resultPage.size() > 0) {
+        final ResultPage<IndexField> resultPage = findFields(findIndexFieldCriteria);
+        if (!resultPage.isEmpty()) {
             return resultPage.getFirst();
         }
         return null;

@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -133,7 +134,13 @@ class IndexResourceImpl implements IndexResource {
     @AutoLogged(OperationType.UNLOGGED)
     @Override
     public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
-        return indexFieldServiceProvider.get().findFields(criteria);
+        final ResultPage<IndexField> resultPage = indexFieldServiceProvider.get().findFields(criteria);
+        return new ResultPage<>(resultPage
+                .getValues()
+                .stream()
+                .map(indexField -> new IndexFieldImpl.Builder(indexField).build())
+                .toList(),
+                resultPage.getPageResponse());
     }
 
     @AutoLogged(OperationType.UNLOGGED)

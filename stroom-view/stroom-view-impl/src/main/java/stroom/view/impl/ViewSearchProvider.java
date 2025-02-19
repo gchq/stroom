@@ -90,7 +90,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
                         criteria.getPageRequest(),
                         criteria.getSortList(),
                         docRef,
-                        criteria.getStringMatch(),
+                        criteria.getFilter(),
                         criteria.getQueryable());
                 final Optional<DataSourceProvider> delegate =
                         dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());

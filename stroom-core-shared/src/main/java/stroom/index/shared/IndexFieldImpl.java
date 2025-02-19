@@ -22,6 +22,7 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -101,6 +102,7 @@ public class IndexFieldImpl implements IndexField {
         return termPositions;
     }
 
+    @JsonIgnore
     @Override
     public String getDisplayValue() {
         return fldName;
@@ -164,14 +166,14 @@ public class IndexFieldImpl implements IndexField {
         private Builder() {
         }
 
-        private Builder(final IndexFieldImpl indexField) {
-            this.fldName = indexField.fldName;
-            this.fldType = indexField.fldType;
-            this.analyzerType = indexField.analyzerType;
-            this.indexed = indexField.indexed;
-            this.stored = indexField.stored;
-            this.termPositions = indexField.termPositions;
-            this.caseSensitive = indexField.caseSensitive;
+        public Builder(final IndexField indexField) {
+            this.fldName = indexField.getFldName();
+            this.fldType = indexField.getFldType();
+            this.analyzerType = indexField.getAnalyzerType();
+            this.indexed = indexField.isIndexed();
+            this.stored = indexField.isStored();
+            this.termPositions = indexField.isTermPositions();
+            this.caseSensitive = indexField.isCaseSensitive();
         }
 
         public Builder fldName(final String fldName) {
