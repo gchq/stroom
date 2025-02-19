@@ -11,7 +11,6 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.db.util.JooqUtil;
-import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -64,8 +63,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 Optional.ofNullable(request.getOwnerDocRef())
                         .map(DocRef::getUuid)
                         .map(EXECUTION_SCHEDULE.DOC_UUID::eq),
-                Optional.ofNullable(StringMatchConditionUtil
-                        .getCondition(EXECUTION_SCHEDULE.NODE_NAME, request.getNodeName())),
+                Optional.ofNullable(request.getNodeName())
+                        .map(EXECUTION_SCHEDULE.NODE_NAME::eq),
                 Optional.ofNullable(request.getEnabled())
                         .map(EXECUTION_SCHEDULE.ENABLED::eq));
         final Collection<OrderField<?>> orderFields = createExecutionScheduleOrderFields(request);

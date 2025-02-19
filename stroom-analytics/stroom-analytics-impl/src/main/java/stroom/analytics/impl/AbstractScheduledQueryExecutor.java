@@ -24,7 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -162,7 +161,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                 .builder()
                 .ownerDocRef(docRef)
                 .enabled(true)
-                .nodeName(StringMatch.equals(nodeInfo.getThisNodeName(), true))
+                .nodeName(nodeInfo.getThisNodeName())
                 .build();
 
         final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);

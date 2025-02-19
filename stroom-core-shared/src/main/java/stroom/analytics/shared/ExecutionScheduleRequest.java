@@ -1,7 +1,6 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -28,7 +27,7 @@ public class ExecutionScheduleRequest extends BaseCriteria {
     @JsonProperty
     private final DocRef ownerDocRef;
     @JsonProperty
-    private final StringMatch nodeName;
+    private final String nodeName;
     @JsonProperty
     private final Boolean enabled;
 
@@ -36,7 +35,7 @@ public class ExecutionScheduleRequest extends BaseCriteria {
     public ExecutionScheduleRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                     @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                     @JsonProperty("ownerDocRef") final DocRef ownerDocRef,
-                                    @JsonProperty("nodeName") final StringMatch nodeName,
+                                    @JsonProperty("nodeName") final String nodeName,
                                     @JsonProperty("enabled") final Boolean enabled) {
         super(pageRequest, sortList);
         this.ownerDocRef = ownerDocRef;
@@ -48,7 +47,7 @@ public class ExecutionScheduleRequest extends BaseCriteria {
         return ownerDocRef;
     }
 
-    public StringMatch getNodeName() {
+    public String getNodeName() {
         return nodeName;
     }
 
@@ -80,10 +79,10 @@ public class ExecutionScheduleRequest extends BaseCriteria {
     @Override
     public String toString() {
         return "ExecutionScheduleRequest{" +
-                "ownerDocRef=" + ownerDocRef +
-                ", nodeName=" + nodeName +
-                ", enabled=" + enabled +
-                '}';
+               "ownerDocRef=" + ownerDocRef +
+               ", nodeName=" + nodeName +
+               ", enabled=" + enabled +
+               '}';
     }
 
     public Builder copy() {
@@ -99,7 +98,7 @@ public class ExecutionScheduleRequest extends BaseCriteria {
         private PageRequest pageRequest;
         private List<CriteriaFieldSort> sortList;
         private DocRef ownerDocRef;
-        private StringMatch nodeName;
+        private String nodeName;
         private Boolean enabled;
 
         private Builder() {
@@ -129,7 +128,7 @@ public class ExecutionScheduleRequest extends BaseCriteria {
             return this;
         }
 
-        public Builder nodeName(final StringMatch nodeName) {
+        public Builder nodeName(final String nodeName) {
             this.nodeName = nodeName;
             return this;
         }
