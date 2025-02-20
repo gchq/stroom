@@ -609,6 +609,8 @@ public class StringPredicateFactory {
         // A digit after a letter means the start of a word
         // A digit after a digit means the continuation of a word.
 
+        final String separator = "\\W";
+
         final StringBuilder patternBuilder = new StringBuilder();
         char lastChr = 0;
         for (int i = 0; i < userInput.length(); i++) {
@@ -620,15 +622,16 @@ public class StringPredicateFactory {
                     // First letter so is either preceded by ^ or by a separator
                     patternBuilder
                             .append("(?:^|") // non-capturing
-                            .append(separatorCharacterClass)
+                            .append(separator)
+                            .append("+")
                             .append(")");
                 } else {
                     // Not the first letter so need the end of the previous word
                     // and a word separator
                     patternBuilder
-                            .append(CASE_INSENS_WORD_LETTER_CHAR_CLASS)
-                            .append("*")
-                            .append(separatorCharacterClass)
+//                            .append(CASE_INSENS_WORD_LETTER_CHAR_CLASS)
+                            .append(".*?")
+                            .append(separator)
                             .append("+"); // one of more separators
                 }
                 // Start of a word
@@ -645,7 +648,7 @@ public class StringPredicateFactory {
         final Pattern pattern = Pattern.compile(
                 patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
         LOGGER.trace("Using separated word pattern: {} with separators {}",
-                pattern, separatorCharacterClass);
+                pattern, separator);
 
         return pattern.asPredicate();
     }
