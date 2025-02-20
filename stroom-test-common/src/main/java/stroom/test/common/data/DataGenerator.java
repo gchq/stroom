@@ -672,7 +672,7 @@ public class DataGenerator {
                 List<String> classNames = ClassPath.from(loader).getAllClasses().stream()
                         .filter(classInfo -> classInfo.getPackageName().startsWith("java."))
                         .map(ClassPath.ClassInfo::getSimpleName)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 if (classNames.isEmpty()) {
                     return NOT_FOUND_LIST;

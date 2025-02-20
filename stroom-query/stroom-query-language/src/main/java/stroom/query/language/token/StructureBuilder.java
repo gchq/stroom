@@ -37,15 +37,33 @@ public class StructureBuilder {
 
         final List<Token> cleansed = new ArrayList<>();
         for (final Token token : tokens) {
-            builder.chars(token.getChars())
-                    .end(token.getEnd());
+            builder.chars(token.getChars()).end(token.getEnd());
 
             // Remove whitespace and comments.
             if (!TokenType.WHITESPACE.equals(token.getTokenType()) &&
-                    !TokenType.COMMENT.equals(token.getTokenType()) &&
-                    !TokenType.BLOCK_COMMENT.equals(token.getTokenType())) {
+                !TokenType.COMMENT.equals(token.getTokenType()) &&
+                !TokenType.BLOCK_COMMENT.equals(token.getTokenType())) {
                 cleansed.add(token);
             }
+        }
+
+        // Create structure.
+        createStructure(cleansed, builder, 0);
+
+        return builder.build();
+    }
+
+    public static TokenGroup createBasic(final List<Token> tokens) {
+        Objects.requireNonNull(tokens, "Null tokens");
+
+        final TokenGroup.Builder builder = new Builder()
+                .tokenType(TokenType.TOKEN_GROUP)
+                .start(0);
+
+        final List<Token> cleansed = new ArrayList<>();
+        for (final Token token : tokens) {
+            builder.chars(token.getChars()).end(token.getEnd());
+            cleansed.add(token);
         }
 
         // Create structure.

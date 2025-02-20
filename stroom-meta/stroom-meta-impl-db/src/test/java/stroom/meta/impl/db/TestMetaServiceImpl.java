@@ -681,7 +681,7 @@ class TestMetaServiceImpl {
                 .getValues()
                 .stream()
                 .sorted(Comparator.comparing(Meta::getCreateMs))
-                .collect(Collectors.toList());
+                .toList();
 
         LOGGER.info("meta:\n\n{}\n", AsciiTable.builder(metaList)
                 .withColumn(Column.of("ID", Meta::getId))

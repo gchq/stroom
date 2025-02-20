@@ -1,7 +1,10 @@
 package stroom.query.common.v2;
 
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -12,6 +15,17 @@ public class FieldProviderImpl implements FieldProvider {
 
     private final List<String> defaultFields;
     private final Map<String, String> qualifiedFields;
+
+    public FieldProviderImpl(final List<FilterFieldDefinition> fieldDefinitions) {
+        defaultFields = new ArrayList<>();
+        qualifiedFields = new HashMap<>();
+        for (final FilterFieldDefinition fieldDefinition : fieldDefinitions) {
+            if (fieldDefinition.isDefaultField()) {
+                defaultFields.add(fieldDefinition.getFilterQualifier());
+            }
+            qualifiedFields.put(fieldDefinition.getFilterQualifier(), fieldDefinition.getFilterQualifier());
+        }
+    }
 
     public FieldProviderImpl(final List<String> defaultFields, final Map<String, String> qualifiedFields) {
         this.defaultFields = defaultFields;

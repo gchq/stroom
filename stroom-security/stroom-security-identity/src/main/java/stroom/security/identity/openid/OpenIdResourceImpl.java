@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @AutoLogged
 class OpenIdResourceImpl implements OpenIdResource {
@@ -188,7 +187,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                     final List<Map<String, Object>> maps = list.stream()
                             .map(jwk ->
                                     jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
-                            .collect(Collectors.toList());
+                            .toList();
 
                     final Map<String, List<Map<String, Object>>> keys = new HashMap<>();
                     keys.put("keys", maps);

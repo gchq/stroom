@@ -518,7 +518,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         for (final String element : elements) {
             if (element.length() > 0) {
                 List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
-                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).collect(Collectors.toList());
+                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).toList();
 
                 if (nodes.size() == 0) {
                     // No parent node can be found for this element so create one if possible.
@@ -639,7 +639,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 List<ExplorerNode> path = explorerNodeService.getPath(explorerDocRef);
                 List<String> pathElements = path.stream()
                         .filter(p -> ExplorerConstants.FOLDER_TYPE.equals(p.getType()))
-                        .map(ExplorerNode::getName).collect(Collectors.toList());
+                        .map(ExplorerNode::getName).toList();
 
                 // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.
 
@@ -681,7 +681,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     final List<Message> errors = localMessageList.stream()
                             .filter(message -> Severity.FATAL_ERROR.equals(message.getSeverity())
                                                || Severity.ERROR.equals(message.getSeverity()))
-                            .collect(Collectors.toList());
+                            .toList();
 
                     if (errors.isEmpty()) {
                         importExportDocumentEventLog.exportDocument(docRef, null);

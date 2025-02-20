@@ -554,7 +554,7 @@ public class DbTestUtil {
     public static void clearTables(final Connection connection, final List<String> tableNames) {
         List<String> deleteStatements = tableNames.stream()
                 .map(tableName -> "DELETE FROM " + tableName)
-                .collect(Collectors.toList());
+                .toList();
 
         executeStatementsWithNoConstraints(connection, deleteStatements);
     }

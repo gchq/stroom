@@ -132,19 +132,19 @@ class TestDocRefInfoServiceImpl {
                 .extracting(DocRef::getUuid)
                 .containsExactlyElementsOf(DOC_REFS.stream()
                         .map(DocRef::getUuid)
-                        .collect(Collectors.toList()));
+                        .toList());
 
         assertThat(outputDocRefs)
                 .extracting(DocRef::getType)
                 .containsExactlyElementsOf(DOC_REFS.stream()
                         .map(DocRef::getType)
-                        .collect(Collectors.toList()));
+                        .toList());
 
         assertThat(outputDocRefs)
                 .extracting(DocRef::getName)
                 .containsExactlyElementsOf(DOC_REFS.stream()
                         .map(DocRef::getName)
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     @Test

@@ -93,9 +93,7 @@ public class Fields {
                     hasChildren = !queryService.findFields(criteria).isEmpty();
                 }
 
-                final Predicate<String> predicate = expressionPredicateFactory
-                        .createSimpleStringPredicate(request.getFilter())
-                        .orElse(name -> true);
+                final Predicate<String> predicate = expressionPredicateFactory.create(request.getFilter());
 
                 if (hasChildren ||
                     predicate.test(ROOT.getTitle())) {

@@ -258,12 +258,12 @@ public class Functions {
             final List<Arg> args = Arrays.stream(functionSignature.args())
                     .filter(Objects::nonNull)
                     .map(Functions::convertArg)
-                    .collect(Collectors.toList());
+                    .toList();
 
             final List<String> aliases = Arrays.stream(functionDef.aliases())
                     .filter(Objects::nonNull)
                     .filter(alias -> !alias.isEmpty())
-                    .collect(Collectors.toList());
+                    .toList();
 
             final List<String> categoryPath = buildCategoryPath(functionDef, functionSignature);
 

@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Singleton
 public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
@@ -157,7 +156,7 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
                                 JsonWebKey.ALGORITHM_PARAMETER,
                                 jsonWebKey.getAlgorithm());
                     })
-                    .collect(Collectors.toList());
+                    .toList();
             return LogUtil.toPaddedMultiLine("  ", lines);
         }
     }

@@ -16,7 +16,6 @@
 
 package stroom.explorer.impl;
 
-import stroom.explorer.shared.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -35,6 +34,7 @@ import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DecorateRequest;
+import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
@@ -292,7 +292,9 @@ class ExplorerResourceImpl implements ExplorerResource {
 
                     final ExplorerTreeFilter requestFilter = request.getFilter();
                     final ExplorerTreeFilter qualifiedFilter = requestFilter.withNameFilter(
-                            result.getQualifiedFilterInput());
+                            NullSafe.get(request,
+                                    FetchExplorerNodesRequest::getFilter,
+                                    ExplorerTreeFilter::getNameFilter));
 
                     // Ignore the previous searchEventAction as it didn't have anything useful on it
                     final SearchEventAction newSearchEventAction = SearchEventAction.builder()

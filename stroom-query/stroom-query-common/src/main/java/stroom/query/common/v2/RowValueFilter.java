@@ -58,7 +58,7 @@ public class RowValueFilter {
         return optionalExpressionOperator.flatMap(expressionOperator -> {
             // Create the field position map for the new columns.
             final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(columns);
-            return expressionPredicateFactory.create(
+            return expressionPredicateFactory.createOptional(
                     expressionOperator,
                     queryFieldIndex,
                     dateTimeSettings);

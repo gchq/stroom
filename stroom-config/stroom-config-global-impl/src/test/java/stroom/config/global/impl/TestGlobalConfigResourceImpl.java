@@ -10,6 +10,7 @@ import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
@@ -17,7 +18,6 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
@@ -33,6 +33,7 @@ import org.mockito.quality.Strictness;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -67,8 +68,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
     private static final ListConfigResponse FULL_PROP_LIST = new ListConfigResponse(
             List.of(CONFIG_PROPERTY_1, CONFIG_PROPERTY_2, CONFIG_PROPERTY_3),
-            "node1a",
-            "");
+            "node1a");
 
     private static final int BASE_PORT = 7000;
 
@@ -104,7 +104,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final ListConfigResponse expectedResponse = new ListConfigResponse(List.of(
                 configProperty
-        ), "node1a", "");
+        ), "node1a");
 
         final GlobalConfigCriteria criteria = new GlobalConfigCriteria("some");
 
@@ -323,19 +323,18 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     System.out.println("list called");
                     try {
                         GlobalConfigCriteria criteria = invocation.getArgument(0);
-
-                        final ListConfigResponse response = new ListConfigResponse(
-                                QuickFilterPredicateFactory.filterStream(
-                                                criteria.getQuickFilterInput(),
-                                                fieldMappers,
-                                                FULL_PROP_LIST.stream())
-                                        .peek(configProperty ->
-                                                configProperty.setYamlOverrideValue(node.getNodeName()))
-                                        .collect(Collectors.toList()),
-                                "node1a",
-                                QuickFilterPredicateFactory.fullyQualifyInput(
+                        final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
+                        final Predicate<ConfigProperty> predicate =
+                                expressionPredicateFactory.create(
                                         criteria.getQuickFilterInput(),
-                                        fieldMappers));
+                                        ConfigProperty::getNameAsString);
+                        final ListConfigResponse response = new ListConfigResponse(
+                                FULL_PROP_LIST
+                                        .stream()
+                                        .filter(predicate)
+                                        .peek(configProperty -> configProperty.setYamlOverrideValue(node.getNodeName()))
+                                        .collect(Collectors.toList()),
+                                "node1a");
                         return response;
                     } catch (Exception e) {
                         e.printStackTrace(System.err);

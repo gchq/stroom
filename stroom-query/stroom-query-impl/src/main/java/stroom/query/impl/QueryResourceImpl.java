@@ -190,9 +190,7 @@ class QueryResourceImpl implements QueryResource {
     public ResultPage<QueryHelpRow> fetchQueryHelpItems(final QueryHelpRequest request) {
         final String parentPath = request.getParentPath();
 
-        final Predicate<String> predicate = expressionPredicateFactoryProvider.get()
-                .createSimpleStringPredicate(request.getFilter())
-                .orElse(name -> true);
+        final Predicate<String> predicate = expressionPredicateFactoryProvider.get().create(request.getFilter());
         final ResultPageBuilder<QueryHelpRow> resultPageBuilder =
                 new ResultPageBuilder<>(request.getPageRequest());
         PageRequest pageRequest = request.getPageRequest();

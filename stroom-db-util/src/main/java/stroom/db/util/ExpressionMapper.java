@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class ExpressionMapper implements Function<ExpressionItem, Condition> {
 
@@ -124,7 +123,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     return values.stream()
                             .filter(val -> !NullSafe.isBlankString(val))
                             .flatMap(val -> converter.apply(val).stream())
-                            .collect(Collectors.toList());
+                            .toList();
                 }
             };
         }
@@ -141,7 +140,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                             .filter(val -> !NullSafe.isBlankString(val))
                             .map(converter::apply)
                             .filter(Objects::nonNull) // Null items would NPE on Collectors.toList
-                            .collect(Collectors.toList());
+                            .toList();
                 }
             };
         }

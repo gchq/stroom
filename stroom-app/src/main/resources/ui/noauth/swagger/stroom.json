@@ -12037,9 +12037,6 @@
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
-          "qualifiedFilterInput" : {
-            "type" : "string"
-          },
           "values" : {
             "type" : "array",
             "items" : {
@@ -14616,7 +14613,7 @@
             "type" : "boolean"
           },
           "nodeName" : {
-            "$ref" : "#/components/schemas/StringMatch"
+            "type" : "string"
           },
           "ownerDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
@@ -16865,9 +16862,6 @@
           },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
-          },
-          "qualifiedFilterInput" : {
-            "type" : "string"
           },
           "values" : {
             "type" : "array",

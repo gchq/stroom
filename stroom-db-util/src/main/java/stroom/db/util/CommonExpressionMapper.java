@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Condition> {
 
@@ -118,7 +117,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         .map(this::innerApply)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 if (children.size() == 1) {
                     final Condition child = children.getFirst();

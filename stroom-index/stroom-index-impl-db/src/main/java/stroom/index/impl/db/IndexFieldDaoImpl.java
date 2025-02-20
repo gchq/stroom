@@ -251,10 +251,15 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         IndexFieldFields.POSITIONS,
                         IndexFieldFields.ANALYSER,
                         IndexFieldFields.CASE_SENSITIVE));
-        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                .create(fieldProvider, criteria.getFilter());
-        optionalExpressionOperator.ifPresent(expressionOperator ->
-                conditions.add(expressionMapper.apply(expressionOperator)));
+        try {
+            final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                    .create(fieldProvider, criteria.getFilter());
+            optionalExpressionOperator.ifPresent(expressionOperator ->
+                    conditions.add(expressionMapper.apply(expressionOperator)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.empty();
+        }
 
         if (criteria.getQueryable() != null) {
             conditions.add(INDEX_FIELD.INDEXED.eq(criteria.getQueryable()));

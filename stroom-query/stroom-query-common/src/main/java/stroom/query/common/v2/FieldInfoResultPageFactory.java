@@ -26,7 +26,7 @@ public class FieldInfoResultPageFactory {
                                          final List<QueryField> fields) {
         final ResultPageBuilder<QueryField> resultPageBuilder = new ResultPageBuilder<>(criteria.getPageRequest());
         final Optional<Predicate<QueryField>> optionalNamePredicate = expressionPredicateFactory
-                .createSimpleStringPredicate(criteria.getFilter(), QueryField::getFldName);
+                .createOptional(criteria.getFilter(), QueryField::getFldName);
         final List<Predicate<QueryField>> predicates = new ArrayList<>(2);
         optionalNamePredicate.ifPresent(predicates::add);
         if (criteria.getQueryable() != null) {

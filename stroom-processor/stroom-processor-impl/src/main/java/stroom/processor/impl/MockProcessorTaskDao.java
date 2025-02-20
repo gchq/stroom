@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
@@ -181,7 +180,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                     }
                     return true;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return ResultPage.createCriterialBasedList(list, criteria);
     }

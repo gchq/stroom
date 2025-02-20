@@ -91,7 +91,7 @@ public class FilteredRowCreator implements ItemMapper<Row> {
 
         // Apply having filters.
         final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnNameValExtractor(newColumns);
-        final Optional<Predicate<Val[]>> optionalRowFilterPredicate = expressionPredicateFactory.create(
+        final Optional<Predicate<Val[]>> optionalRowFilterPredicate = expressionPredicateFactory.createOptional(
                 rowFilterExpression,
                 queryFieldIndex,
                 dateTimeSettings);

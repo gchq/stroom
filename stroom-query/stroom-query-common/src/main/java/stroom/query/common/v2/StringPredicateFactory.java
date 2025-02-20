@@ -1,4 +1,4 @@
-package stroom.util.filter;
+package stroom.query.common.v2;
 
 import stroom.util.ConsoleColour;
 import stroom.util.logging.LambdaLogger;

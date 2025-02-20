@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
 
@@ -146,7 +145,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     final List<String> partsList = Arrays.stream(parts)
                             .map(String::trim)
                             .filter(part -> !part.isEmpty())
-                            .collect(Collectors.toList());
+                            .toList();
                     final List<T> values = getValues(partsList);
                     return field.in(values);
                 } else {
@@ -308,7 +307,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     final List<String> values = descendants.stream()
                             .map(descendant ->
                                     getDocValue(term, descendant))
-                            .collect(Collectors.toList());
+                            .toList();
                     final Set<T> set = new HashSet<>(converter.apply(values));
                     condition = field.in(set);
                 }

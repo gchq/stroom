@@ -6,19 +6,19 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -32,17 +32,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DependencyServiceImpl implements DependencyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DependencyServiceImpl.class);
-
-    private final ImportExportActionHandlers importExportActionHandlers;
-    private final DocRefInfoService docRefInfoService;
-    private final TaskContextFactory taskContextFactory;
-    private final ExplorerDecorator explorerDecorator;
 
     private static final Comparator<Dependency> FROM_TYPE_COMPARATOR =
             CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getType);
@@ -67,33 +63,49 @@ public class DependencyServiceImpl implements DependencyService {
             DependencyCriteria.FIELD_STATUS, Comparator.comparing(Dependency::isOk)
     );
 
-    private static final FilterFieldMappers<Dependency> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_NAME, Dependency::getFrom, DocRef::getName),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_UUID, Dependency::getFrom, DocRef::getUuid),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_TYPE, Dependency::getTo, DocRef::getType),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_NAME, Dependency::getTo, DocRef::getName),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_UUID, Dependency::getTo, DocRef::getUuid),
-            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS,
-                    Dependency::isOk,
-                    bool -> bool
-                            ? "OK"
-                            : "Missing")
-    );
+    private static final ValueFunctionFactoriesImpl<Dependency>
+            VALUE_FUNCTION_FACTORY_MAP = new ValueFunctionFactoriesImpl<Dependency>()
+            .put(DependencyCriteria.FIELD_DEF_FROM_TYPE, dep ->
+                    NullSafe.get(dep, Dependency::getFrom, DocRef::getType))
+            .put(DependencyCriteria.FIELD_DEF_FROM_NAME, dep ->
+                    NullSafe.get(dep, Dependency::getFrom, DocRef::getName))
+            .put(DependencyCriteria.FIELD_DEF_FROM_UUID, dep ->
+                    NullSafe.get(dep, Dependency::getFrom, DocRef::getUuid))
+            .put(DependencyCriteria.FIELD_DEF_TO_TYPE, dep ->
+                    NullSafe.get(dep, Dependency::getTo, DocRef::getType))
+            .put(DependencyCriteria.FIELD_DEF_TO_NAME, dep ->
+                    NullSafe.get(dep, Dependency::getTo, DocRef::getName))
+            .put(DependencyCriteria.FIELD_DEF_TO_UUID, dep ->
+                    NullSafe.get(dep, Dependency::getTo, DocRef::getUuid))
+            .put(DependencyCriteria.FIELD_DEF_STATUS, dep ->
+                    NullSafe.get(dep,
+                            Dependency::isOk,
+                            bool -> bool
+                                    ? "OK"
+                                    : "Missing"));
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(DependencyCriteria.FIELD_DEFINITIONS);
+
+    private final ImportExportActionHandlers importExportActionHandlers;
+    private final DocRefInfoService docRefInfoService;
+    private final TaskContextFactory taskContextFactory;
+    private final ExplorerDecorator explorerDecorator;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
                                  final DocRefInfoService docRefInfoService,
                                  final TaskContextFactory taskContextFactory,
-                                 final ExplorerDecorator explorerDecorator) {
+                                 final ExplorerDecorator explorerDecorator,
+                                 final ExpressionPredicateFactory expressionPredicateFactory) {
         this.importExportActionHandlers = importExportActionHandlers;
         this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
         this.explorerDecorator = explorerDecorator;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
-    public QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
         return taskContextFactory.contextResult(
                         "Get Dependencies",
                         taskContext -> {
@@ -122,8 +134,8 @@ public class DependencyServiceImpl implements DependencyService {
                 .get();
     }
 
-    private QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
-                                                              final TaskContext parentTaskContext) {
+    private ResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
+                                                   final TaskContext parentTaskContext) {
         // Build a map of deps (parent to children)
         final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
 
@@ -141,15 +153,11 @@ public class DependencyServiceImpl implements DependencyService {
                 additionalRefs,
                 optSortListComparator);
 
-        final ResultPage<Dependency> resultPage = ResultPage.createPageLimitedList(
+        return ResultPage.createPageLimitedList(
                 flatDependencies,
                 Optional.ofNullable(criteria)
                         .map(DependencyCriteria::getPageRequest)
                         .orElse(new PageRequest()));
-
-        return new QuickFilterResultPage<>(
-                resultPage,
-                QuickFilterPredicateFactory.fullyQualifyInput(criteria.getPartialName(), FIELD_MAPPERS));
     }
 
     private Map<DocRef, Set<DocRef>> buildMissingDependencies(final TaskContext parentTaskContext) {
@@ -172,7 +180,7 @@ public class DependencyServiceImpl implements DependencyService {
                     // Find ones where the child does not exist, i.e. broken dep
                     final DocRef childDocRef = entry.getValue();
                     return !allDependencies.containsKey(childDocRef)
-                            && !additionalRefs.contains(childDocRef);
+                           && !additionalRefs.contains(childDocRef);
                 })
                 .collect(Collectors.groupingBy(
                         Entry::getKey,
@@ -184,36 +192,34 @@ public class DependencyServiceImpl implements DependencyService {
                                                    final Set<DocRef> pseudoDocRefs,
                                                    final Optional<Comparator<Dependency>> optSortListComparator) {
         final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
-        Stream<Dependency> filteredStream = QuickFilterPredicateFactory.filterStream(
-                criteria.getPartialName(),
-                FIELD_MAPPERS,
-                allDependencies.entrySet()
-                        .stream()
-                        .flatMap(entry -> {
-                            final DocRef parentDocRef = entry.getKey();
-                            final Set<DocRef> childDocRefs = entry.getValue();
-                            return childDocRefs.stream()
-                                    .map(childDocRef -> {
-                                        // Resolve doc info.
-                                        final Optional<DocRefInfo> parentInfo = docRefInfoCache
-                                                .computeIfAbsent(parentDocRef, docRefInfoService::info);
-                                        final Optional<DocRefInfo> childInfo = docRefInfoCache
-                                                .computeIfAbsent(childDocRef, docRefInfoService::info);
+        final Predicate<Dependency> predicate = expressionPredicateFactory
+                .create(criteria.getPartialName(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORY_MAP);
+        Stream<Dependency> filteredStream = allDependencies.entrySet()
+                .stream()
+                .flatMap(entry -> {
+                    final DocRef parentDocRef = entry.getKey();
+                    final Set<DocRef> childDocRefs = entry.getValue();
+                    return childDocRefs.stream()
+                            .map(childDocRef -> {
+                                // Resolve doc info.
+                                final Optional<DocRefInfo> parentInfo = docRefInfoCache
+                                        .computeIfAbsent(parentDocRef, docRefInfoService::info);
+                                final Optional<DocRefInfo> childInfo = docRefInfoCache
+                                        .computeIfAbsent(childDocRef, docRefInfoService::info);
 
-                                        return new Dependency(
-                                                parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
-                                                childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
-                                                pseudoDocRefs.contains(childDocRef) ||
-                                                        allDependencies.containsKey(childDocRef));
-                                    });
-                        }),
-                optSortListComparator.orElse(null));
-
+                                return new Dependency(
+                                        parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
+                                        childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
+                                        pseudoDocRefs.contains(childDocRef) ||
+                                        allDependencies.containsKey(childDocRef));
+                            });
+                })
+                .filter(predicate);
         if (optSortListComparator.isPresent()) {
             filteredStream = filteredStream.sorted(optSortListComparator.get());
         }
 
-        return filteredStream.collect(Collectors.toList());
+        return filteredStream.toList();
     }
 
     private Map<DocRef, Set<DocRef>> buildDependencyMap(final TaskContext parentTaskContext) {
@@ -256,8 +262,8 @@ public class DependencyServiceImpl implements DependencyService {
         // Make the sort comparator base on the criteria sort list
         final Optional<Comparator<Dependency>> sortListComparator;
         if (criteria != null
-                && criteria.getSortList() != null
-                && !criteria.getSortList().isEmpty()) {
+            && criteria.getSortList() != null
+            && !criteria.getSortList().isEmpty()) {
             sortListComparator = buildComparatorFromSortList(criteria);
         } else {
             sortListComparator = Optional.empty();

@@ -65,7 +65,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 for (final ConditionalFormattingRule rule : activeRules) {
                     try {
                         final Optional<Predicate<Val[]>> optionalValuesPredicate =
-                                expressionPredicateFactory.create(
+                                expressionPredicateFactory.createOptional(
                                         rule.getExpression(),
                                         queryFieldIndex,
                                         dateTimeSettings);

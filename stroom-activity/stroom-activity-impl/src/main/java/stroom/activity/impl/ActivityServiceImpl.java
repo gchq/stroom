@@ -20,18 +20,21 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -42,9 +45,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ActivityServiceImpl implements ActivityService {
@@ -53,12 +57,15 @@ public class ActivityServiceImpl implements ActivityService {
 
     private final SecurityContext securityContext;
     private final ActivityDao dao;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     public ActivityServiceImpl(final SecurityContext securityContext,
-                               final ActivityDao dao) {
+                               final ActivityDao dao,
+                               final ExpressionPredicateFactory expressionPredicateFactory) {
         this.securityContext = securityContext;
         this.dao = dao;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -132,41 +139,34 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public QuickFilterResultPage<Activity> find(final String filter) {
+    public ResultPage<Activity> find(final String filter) {
         return securityContext.secureResult(() -> {
             // We have to deser all the activities to be able to search them but hopefully
             // there are not that many to worry about
             final List<Activity> allActivities = getAllUserActivities();
 
             final List<Activity> filteredActivities;
-            final String fullyQualifiedInput;
             if (!Strings.isNullOrEmpty(filter)) {
-
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
-
-                final FilterFieldMappers<Activity> fieldMappers = buildFieldMappers(fieldDefinitions);
-
-                filteredActivities = QuickFilterPredicateFactory.filterStream(
-                                filter, fieldMappers, allActivities.stream())
-                        .collect(Collectors.toList());
-
-                fullyQualifiedInput = QuickFilterPredicateFactory.fullyQualifyInput(filter, fieldMappers);
+                final FieldProvider fieldProvider = new FieldProviderImpl(fieldDefinitions);
+                final ValueFunctionFactories<Activity> valueFunctionFactories =
+                        buildValueFunctionFactories(fieldDefinitions);
+                final Optional<Predicate<Activity>> optionalPredicate = expressionPredicateFactory
+                        .createOptional(filter, fieldProvider, valueFunctionFactories);
+                filteredActivities = allActivities.stream().filter(PredicateUtil.get(optionalPredicate))
+                        .toList();
             } else {
                 filteredActivities = allActivities;
-                fullyQualifiedInput = filter;
             }
 
-            return QuickFilterResultPage.createCriterialBasedList(
+            return ResultPage.createCriterialBasedList(
                     filteredActivities,
-                    new FindActivityCriteria(),
-                    filteredActivities.size(),
-                    fullyQualifiedInput);
+                    new FindActivityCriteria());
         });
     }
 
     @Override
     public List<FilterFieldDefinition> listFieldDefinitions() {
-
         return securityContext.secureResult(() -> {
             final List<Activity> allActivities = getAllUserActivities();
 
@@ -191,7 +191,7 @@ public class ActivityServiceImpl implements ActivityService {
                     }
                 })
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<Activity> getAllUserActivities() {
@@ -240,26 +240,22 @@ public class ActivityServiceImpl implements ActivityService {
         return new ActivityValidationResult(valid, String.join("\n", messages));
     }
 
-    private FilterFieldMappers<Activity> buildFieldMappers(final List<FilterFieldDefinition> fieldDefinitions) {
+    private ValueFunctionFactories<Activity> buildValueFunctionFactories(
+            final List<FilterFieldDefinition> fieldDefinitions) {
         // Extracting the value out of the json details is not very efficient.  May be better to use
         // something like jsoniter on the raw json.
-        final FilterFieldMappers<Activity> fieldMappers = FilterFieldMappers.of(fieldDefinitions.stream()
-                .map(fieldDefinition ->
-                        FilterFieldMapper.of(fieldDefinition, (Activity activity) -> {
-
-                            // Use the field displayname to look up the matching prop in the activity details
-                            final String value = Optional.ofNullable(activity)
-                                    .flatMap(activity2 ->
-                                            Optional.ofNullable(activity2.getDetails()))
-                                    .map(details ->
-                                            details.valueByName(fieldDefinition.getDisplayName()))
-                                    .orElse(null);
-
-                            LOGGER.trace("FilterFieldDefinition: {}, value {}",
-                                    fieldDefinition, value);
-                            return value;
-                        }))
-                .collect(Collectors.toList()));
-        return fieldMappers;
+        final ValueFunctionFactoriesImpl valueFunctionFactories = new ValueFunctionFactoriesImpl();
+        fieldDefinitions.stream().forEach(fieldDefinition -> {
+            final Function<Activity, String> function = activity -> {
+                return Optional.ofNullable(activity)
+                        .flatMap(activity2 ->
+                                Optional.ofNullable(activity2.getDetails()))
+                        .map(details ->
+                                details.valueByName(fieldDefinition.getDisplayName()))
+                        .orElse(null);
+            };
+            valueFunctionFactories.put(fieldDefinition, function);
+        });
+        return valueFunctionFactories;
     }
 }

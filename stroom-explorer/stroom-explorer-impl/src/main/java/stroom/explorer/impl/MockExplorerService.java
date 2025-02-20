@@ -17,13 +17,13 @@
 
 package stroom.explorer.impl;
 
-import stroom.explorer.shared.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;

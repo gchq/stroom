@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,7 +63,7 @@ class TestMetaSecurityFilterImpl {
                                 .uuid(feed + UUID_SUFFIX)
                                 .name(feed)
                                 .build())
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     @Test

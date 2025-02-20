@@ -23,7 +23,6 @@ import stroom.query.api.v2.SearchResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
 
@@ -56,7 +55,7 @@ public class SearchResponseMapper {
             errors = errors
                     .stream()
                     .filter(error -> !error.startsWith(SearchResponse.TIMEOUT_MESSAGE))
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         return new DashboardSearchResponse(

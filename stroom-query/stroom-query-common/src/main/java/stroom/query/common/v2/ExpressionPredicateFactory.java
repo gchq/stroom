@@ -28,7 +28,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.NullSafe;
-import stroom.util.filter.StringPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
@@ -55,35 +54,89 @@ public class ExpressionPredicateFactory {
 
     private final WordListProvider wordListProvider;
 
+    public ExpressionPredicateFactory() {
+        this.wordListProvider = null;
+    }
+
     @Inject
-    public ExpressionPredicateFactory(final WordListProvider wordListProvider) {
+    ExpressionPredicateFactory(final WordListProvider wordListProvider) {
         this.wordListProvider = wordListProvider;
     }
 
-    public Optional<Predicate<String>> createSimpleStringPredicate(final String filter) {
-        return createSimpleStringPredicate(filter, Function.identity());
+    public Predicate<String> create(final String filter) {
+        return create(filter, Function.identity());
     }
 
-    public <T> Optional<Predicate<T>> createSimpleStringPredicate(final String filter,
-                                                                  final Function<T, String> function) {
-        final String fieldName = "name";
-        final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
-        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                .create(fieldProvider, filter);
-        if (optionalExpressionOperator.isPresent()) {
-            final Optional<Predicate<String>> predicateOptional = create(
-                    optionalExpressionOperator.get(),
-                    StringValueFunctionFactory.create(QueryField.createText(fieldName)),
-                    DateTimeSettings.builder().build());
-            return predicateOptional
-                    .map(predicate -> queryField -> predicate.test(function.apply(queryField)));
+    public Optional<Predicate<String>> createOptional(final String filter) {
+        return createOptional(filter, Function.identity());
+    }
+
+    public <T> Predicate<T> create(final String filter,
+                                   final Function<T, String> function) {
+        return createOptional(filter, function).orElse(o -> true);
+    }
+
+    public <T> Optional<Predicate<T>> createOptional(final String filter,
+                                                     final Function<T, String> function) {
+        try {
+            final String fieldName = "name";
+            final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
+            final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                    .create(fieldProvider, filter);
+            if (optionalExpressionOperator.isPresent()) {
+                final Optional<Predicate<String>> predicateOptional = createOptional(
+                        optionalExpressionOperator.get(),
+                        StringValueFunctionFactory.create(QueryField.createText(fieldName)));
+                return predicateOptional
+                        .map(predicate -> queryField -> predicate.test(function.apply(queryField)));
+            }
+            return Optional.empty();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Optional.of(o -> false);
         }
-        return Optional.empty();
     }
 
-    public <T> Optional<Predicate<T>> create(final ExpressionOperator operator,
-                                             final ValueFunctionFactories<T> queryFieldIndex,
-                                             final DateTimeSettings dateTimeSettings) {
+    public <T> Predicate<T> create(final String filter,
+                                   final FieldProvider fieldProvider,
+                                   final ValueFunctionFactories<T> queryFieldIndex) {
+        return createOptional(filter, fieldProvider, queryFieldIndex).orElse(o -> true);
+    }
+
+    public <T> Optional<Predicate<T>> createOptional(final String filter,
+                                                     final FieldProvider fieldProvider,
+                                                     final ValueFunctionFactories<T> queryFieldIndex) {
+        try {
+            final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                    .create(fieldProvider, filter);
+            return optionalExpressionOperator.flatMap(expressionOperator -> {
+                return createOptional(expressionOperator, queryFieldIndex, DateTimeSettings.builder().build());
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return Optional.of(o -> false);
+        }
+    }
+
+    public <T> Predicate<T> create(final ExpressionOperator operator,
+                                   final ValueFunctionFactories<T> queryFieldIndex) {
+        return create(operator, queryFieldIndex, DateTimeSettings.builder().build());
+    }
+
+    public <T> Optional<Predicate<T>> createOptional(final ExpressionOperator operator,
+                                                     final ValueFunctionFactories<T> queryFieldIndex) {
+        return createOptional(operator, queryFieldIndex, DateTimeSettings.builder().build());
+    }
+
+    public <T> Predicate<T> create(final ExpressionOperator operator,
+                                   final ValueFunctionFactories<T> queryFieldIndex,
+                                   final DateTimeSettings dateTimeSettings) {
+        return createOptional(operator, queryFieldIndex, dateTimeSettings).orElse(o -> true);
+    }
+
+    public <T> Optional<Predicate<T>> createOptional(final ExpressionOperator operator,
+                                                     final ValueFunctionFactories<T> queryFieldIndex,
+                                                     final DateTimeSettings dateTimeSettings) {
         if (operator == null) {
             return Optional.empty();
         }

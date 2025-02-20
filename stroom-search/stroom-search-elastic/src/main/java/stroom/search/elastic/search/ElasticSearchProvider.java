@@ -80,7 +80,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
@@ -264,7 +263,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     }
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

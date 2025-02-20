@@ -74,7 +74,7 @@ public class AccountServiceImpl implements AccountService {
 //            final List<UserName> list = result.getValues()
 //                    .stream()
 //                    .map(this::mapAccountToUserName)
-//                    .collect(Collectors.toList());
+//                    .toList();
 //
 //            return new ResultPage<>(list, result.getPageResponse());
 //        } else {

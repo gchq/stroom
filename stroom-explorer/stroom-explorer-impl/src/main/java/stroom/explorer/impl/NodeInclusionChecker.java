@@ -4,13 +4,14 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -38,11 +39,14 @@ class NodeInclusionChecker {
 
     // TODO: 19/09/2023 FilterFieldMappers ought to support List/Sets of things so it does the test
     //  on each item in the list/set. This may be ok for now.
-    private static final FilterFieldMappers<ExplorerNode> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, ExplorerNode::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, ExplorerNode::getType),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, ExplorerNode::getUuid),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TAG, NodeInclusionChecker::nodeToTagsString));
+    private static final ValueFunctionFactoriesImpl<ExplorerNode> VALUE_FUNCTION_FACTORIES =
+            new ValueFunctionFactoriesImpl<ExplorerNode>()
+                    .put(ExplorerTreeFilter.FIELD_DEF_NAME, ExplorerNode::getName)
+                    .put(ExplorerTreeFilter.FIELD_DEF_TYPE, ExplorerNode::getType)
+                    .put(ExplorerTreeFilter.FIELD_DEF_UUID, ExplorerNode::getUuid)
+                    .put(ExplorerTreeFilter.FIELD_DEF_TAG, NodeInclusionChecker::nodeToTagsString);
+
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(ExplorerTreeFilter.FIELD_DEFINITIONS);
 
     private final SecurityContext securityContext;
     private final ExplorerTreeFilter filter;
@@ -51,14 +55,17 @@ class NodeInclusionChecker {
     // Cache the outcome of perm checks as the favourites mean we have repeated tests for same docref
     private final Map<DocRef, Boolean> permCheckOutcomeMap = new HashMap<>();
     private final boolean hasNameFilter;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     private final Predicate<FilterableNode> combinedPredicate;
     private Predicate<ExplorerNode> fuzzyMatchPredicate = null;
 
 
     NodeInclusionChecker(final SecurityContext securityContext,
-                         final ExplorerTreeFilter filter) {
+                         final ExplorerTreeFilter filter,
+                         final ExpressionPredicateFactory expressionPredicateFactory) {
         this.securityContext = securityContext;
+        this.expressionPredicateFactory = expressionPredicateFactory;
 
         this.filter = Objects.requireNonNull(filter);
         this.hasNameFilter = !NullSafe.isBlankString(filter.getNameFilter());
@@ -142,7 +149,7 @@ class NodeInclusionChecker {
 
     private boolean testWithNameFilter(final FilterableNode filterableNode) {
         return filterableNode.ignoreNameFilter
-                || doFuzzyMatchTest(filterableNode.node);
+               || doFuzzyMatchTest(filterableNode.node);
     }
 
     private boolean doFuzzyMatchTest(final ExplorerNode explorerNode) {
@@ -155,22 +162,20 @@ class NodeInclusionChecker {
         // We may have a nameFilter but not a fuzzyMatchPredicate if the user has selected no types
         // in the type filter
         return !hasNameFilter || fuzzyMatchPredicate == null
-                || filterOutcomeMap.computeIfAbsent(node.getDocRef(), docRef ->
+               || filterOutcomeMap.computeIfAbsent(node.getDocRef(), docRef ->
                 FilterOutcome.fromPredicateResult(fuzzyMatchPredicate.test(node)))
-                .isMatch;
+                       .isMatch;
     }
 
     Predicate<ExplorerNode> getFuzzyMatchPredicate() {
         if (fuzzyMatchPredicate == null) {
             // Create the predicate for the current filter value, lazily as there may not be one
-            fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    filter.getNameFilter(), FIELD_MAPPERS);
+            fuzzyMatchPredicate = expressionPredicateFactory.create(
+                    filter.getNameFilter(),
+                    FIELD_PROVIDER,
+                    VALUE_FUNCTION_FACTORIES);
         }
         return fuzzyMatchPredicate;
-    }
-
-    String getQualifiedNameFilterInput() {
-        return QuickFilterPredicateFactory.fullyQualifyInput(filter.getNameFilter(), FIELD_MAPPERS);
     }
 
     private boolean hasPermission(final FilterableNode filterableNode) {

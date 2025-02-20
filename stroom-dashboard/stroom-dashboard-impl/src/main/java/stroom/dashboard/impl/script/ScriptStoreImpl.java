@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
@@ -123,7 +122,7 @@ class ScriptStoreImpl implements ScriptStore {
                 doc.setDependencies(doc.getDependencies()
                         .stream()
                         .map(dependencyRemapper::remap)
-                        .collect(Collectors.toList()));
+                        .toList());
             }
         };
     }

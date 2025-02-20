@@ -30,7 +30,7 @@ public class ValFilter {
         final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil
                 .createColumnNameValExtractor(compiledColumns.getColumns());
         final Optional<Predicate<Val[]>> optionalRowExpressionMatcher =
-                expressionPredicateFactory.create(rowExpression, queryFieldIndex, dateTimeSettings);
+                expressionPredicateFactory.createOptional(rowExpression, queryFieldIndex, dateTimeSettings);
 
         final Set<String> fieldsUsed = new HashSet<>(ExpressionUtil.fields(rowExpression));
         final List<UsedColumn> usedColumns = new ArrayList<>();

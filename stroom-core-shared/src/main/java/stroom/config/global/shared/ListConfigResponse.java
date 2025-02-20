@@ -1,7 +1,7 @@
 package stroom.config.global.shared;
 
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,24 +13,22 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "List of config properties")
-public class ListConfigResponse extends QuickFilterResultPage<ConfigProperty> {
+public class ListConfigResponse extends ResultPage<ConfigProperty> {
 
     @JsonProperty
     private final String nodeName;
 
     public ListConfigResponse(final List<ConfigProperty> values,
-                              final String nodeName,
-                              final String qualifiedFilterInput) {
-        super(values, qualifiedFilterInput);
+                              final String nodeName) {
+        super(values);
         this.nodeName = nodeName;
     }
 
     @JsonCreator
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values,
                               @JsonProperty("pageResponse") final PageResponse pageResponse,
-                              @JsonProperty("nodeName") final String nodeName,
-                              @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
-        super(values, pageResponse, qualifiedFilterInput);
+                              @JsonProperty("nodeName") final String nodeName) {
+        super(values, pageResponse);
         this.nodeName = nodeName;
     }
 

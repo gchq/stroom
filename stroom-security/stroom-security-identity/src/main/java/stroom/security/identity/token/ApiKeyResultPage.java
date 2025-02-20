@@ -1,7 +1,7 @@
 package stroom.security.identity.token;
 
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,12 +12,11 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @Deprecated // Keeping it else it breaks the React code
-public class ApiKeyResultPage extends QuickFilterResultPage<ApiKey> {
+public class ApiKeyResultPage extends ResultPage<ApiKey> {
 
     @JsonCreator
     public ApiKeyResultPage(@JsonProperty("values") final List<ApiKey> values,
-                            @JsonProperty("pageResponse") final PageResponse pageResponse,
-                            @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
-        super(values, pageResponse, qualifiedFilterInput);
+                            @JsonProperty("pageResponse") final PageResponse pageResponse) {
+        super(values, pageResponse);
     }
 }

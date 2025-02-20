@@ -112,7 +112,7 @@ class TestState2 {
             fieldIndex.create(StateFields.VALUE_TYPE);
             fieldIndex.create(StateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,

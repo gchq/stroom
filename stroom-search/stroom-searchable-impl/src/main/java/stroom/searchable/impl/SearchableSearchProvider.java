@@ -57,7 +57,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 class SearchableSearchProvider implements SearchProvider {
@@ -272,7 +271,7 @@ class SearchableSearchProvider implements SearchProvider {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Long::valueOf)
-                        .collect(Collectors.toList()));
+                        .toList());
             } catch (final Exception e) {
                 LOGGER.warn(e.getMessage());
             }

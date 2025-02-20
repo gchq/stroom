@@ -8313,8 +8313,6 @@ components:
       properties:
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
-        qualifiedFilterInput:
-          type: string
         values:
           type: array
           items:
@@ -10482,7 +10480,7 @@ components:
         enabled:
           type: boolean
         nodeName:
-          $ref: "#/components/schemas/StringMatch"
+          type: string
         ownerDocRef:
           $ref: "#/components/schemas/DocRef"
         pageRequest:
@@ -12186,8 +12184,6 @@ components:
           type: string
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
-        qualifiedFilterInput:
-          type: string
         values:
           type: array
           items:

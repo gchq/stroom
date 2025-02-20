@@ -215,7 +215,7 @@ class AccountDaoImpl implements AccountDao {
                         .fetch())
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply);
         return ResultPageFactory.createUnboundedList(list, (accounts, pageResponse) ->
-                new AccountResultPage(accounts, pageResponse, null));
+                new AccountResultPage(accounts, pageResponse));
     }
 
     @Override

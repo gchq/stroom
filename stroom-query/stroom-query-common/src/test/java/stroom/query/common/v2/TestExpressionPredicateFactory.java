@@ -7,7 +7,6 @@ import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.util.date.DateUtil;
-import stroom.util.filter.StringPredicateFactory;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -252,6 +251,14 @@ class TestExpressionPredicateFactory {
                                 "IS_THIS_IS_a99_FEED"),
                         List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
 
+// See gh-4553
+//                makeStringMatchTest("Word boundary match (numbers) 2",
+//                        "?TIM",
+//                        List.of("THIS_IS_MY_FEED_a99",
+//                                "a99_this_is_my_feed",
+//                                "IS_THIS_IS_a99_MY_FEED"),
+//                        List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
+
                 makeStringMatchTest("Single letter (lower case)",
                         "b",
                         List.of("B", "BCD", "ABC", "b", "bcd", "abc"),
@@ -415,8 +422,8 @@ class TestExpressionPredicateFactory {
             return string -> true;
         }
 
-        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory(null)
-                .create(simpleStringExpressionParser.orElseThrow(), TEXT_VALUE_FUNCTION_FACTORIES, null);
+        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory()
+                .createOptional(simpleStringExpressionParser.orElseThrow(), TEXT_VALUE_FUNCTION_FACTORIES);
         return string -> optionalValuesPredicate.orElseThrow().test(string);
     }
 
@@ -465,8 +472,10 @@ class TestExpressionPredicateFactory {
                 .referenceTime(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"))
                 .timeZone(UserTimeZone.utc())
                 .build();
-        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory(null)
-                .create(simpleStringExpressionParser.orElseThrow(), DATE_VALUE_FUNCTION_FACTORIES, dateTimeSettings);
+        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory()
+                .createOptional(simpleStringExpressionParser.orElseThrow(),
+                        DATE_VALUE_FUNCTION_FACTORIES,
+                        dateTimeSettings);
         return string -> optionalValuesPredicate.orElseThrow().test(string);
     }
 

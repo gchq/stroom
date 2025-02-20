@@ -17,8 +17,6 @@
 package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
-import stroom.explorer.shared.DocContentHighlights;
-import stroom.explorer.shared.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.shared.DocumentType;
@@ -31,6 +29,8 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFields;
@@ -55,6 +55,7 @@ import stroom.expression.matcher.TermMatcher;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
@@ -131,6 +132,7 @@ class ExplorerServiceImpl
     private final EntityEventBus entityEventBus;
     private final DocumentPermissionService documentPermissionService;
     private final ContentIndex contentIndex;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -142,7 +144,8 @@ class ExplorerServiceImpl
                         final Provider<ExplorerFavService> explorerFavService,
                         final EntityEventBus entityEventBus,
                         final DocumentPermissionService documentPermissionService,
-                        final ContentIndex contentIndex) {
+                        final ContentIndex contentIndex,
+                        final ExpressionPredicateFactory expressionPredicateFactory) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -153,6 +156,7 @@ class ExplorerServiceImpl
         this.entityEventBus = entityEventBus;
         this.documentPermissionService = documentPermissionService;
         this.contentIndex = contentIndex;
+        this.expressionPredicateFactory = expressionPredicateFactory;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -216,7 +220,8 @@ class ExplorerServiceImpl
                 masterTreeModelClone.getCreationTime());
 
         // A transient holder for the filter, predicate
-        final NodeInclusionChecker nodeInclusionChecker = new NodeInclusionChecker(securityContext, filter);
+        final NodeInclusionChecker nodeInclusionChecker =
+                new NodeInclusionChecker(securityContext, filter, expressionPredicateFactory);
 
         // Recurse down the tree adding items that should be included
         final NodeStates nodeStates = addDescendants(
@@ -264,7 +269,7 @@ class ExplorerServiceImpl
         rootNodes = ensureRootNodes(rootNodes, filter);
 
         final FetchExplorerNodeResult result = new FetchExplorerNodeResult(
-                rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getQualifiedNameFilterInput());
+                rootNodes, openedItems, temporaryOpenItems, nodeInclusionChecker.getFilter().getNameFilter());
 
         if (LOGGER.isTraceEnabled()) {
             logOpenItems(

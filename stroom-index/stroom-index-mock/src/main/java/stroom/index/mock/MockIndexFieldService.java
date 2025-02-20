@@ -77,7 +77,7 @@ public class MockIndexFieldService implements IndexFieldService {
         ensureLoaded(dataSourceRef);
 
         final Optional<Predicate<IndexField>> optionalNamePredicate = expressionPredicateFactory
-                .createSimpleStringPredicate(criteria.getFilter(), IndexField::getFldName);
+                .createOptional(criteria.getFilter(), IndexField::getFldName);
         final List<Predicate<IndexField>> predicates = new ArrayList<>(2);
         optionalNamePredicate.ifPresent(predicates::add);
         if (criteria.getQueryable() != null) {
