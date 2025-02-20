@@ -1,6 +1,8 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -9,6 +11,8 @@ import java.nio.file.Path;
 
 @Singleton
 public class ForwardFileDestinationFactoryImpl implements ForwardFileDestinationFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestinationFactoryImpl.class);
 
     private final PathCreator pathCreator;
 
@@ -23,6 +27,19 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
         final Path storeDir = pathCreator.toAppPath(config.getPath());
         DirUtil.ensureDirExists(storeDir);
 
-        return new ForwardFileDestinationImpl(storeDir, config.getSubPathTemplate(), pathCreator);
+        final ForwardFileDestinationImpl forwardFileDestination = new ForwardFileDestinationImpl(
+                storeDir,
+                config.getName(),
+                config.getSubPathTemplate(),
+                config.getTemplatingMode(),
+                pathCreator);
+
+        LOGGER.info("Created forward file destination {} at {} with getSubPathTemplate '{}' (isInstant: {})",
+                config.getName(),
+                config.getPath(),
+                config.getSubPathTemplate(),
+                config.isInstant());
+
+        return forwardFileDestination;
     }
 }

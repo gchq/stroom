@@ -21,7 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-public class ForwardHttpPostDestination {
+public class ForwardHttpPostDestination implements ForwardDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardHttpPostDestination.class);
 
@@ -41,23 +41,15 @@ public class ForwardHttpPostDestination {
                                       final StreamDestination destination,
                                       final CleanupDirQueue cleanupDirQueue,
                                       final ForwardHttpPostConfig forwardHttpPostConfig,
-//                                      final StroomDuration retryDelay,
-//                                      final Integer maxRetries,
                                       final ProxyServices proxyServices,
                                       final DirQueueFactory sequentialDirQueueFactory,
                                       final ThreadConfig threadConfig,
-//                                      final int forwardThreads,
-//                                      final int retryThreads,
                                       final DataDirProvider dataDirProvider,
                                       final SimplePathCreator simplePathCreator) {
         this.destination = destination;
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
-//        this.retryDelay = forwardHttpPostConfig.getRetryDelay();
-//        this.maxRetries = forwardHttpPostConfig.getMaxRetries();
-
-//        Objects.requireNonNull(retryDelay, "Null retry delay");
 
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get()
@@ -113,12 +105,33 @@ public class ForwardHttpPostDestination {
 //        }
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(
-                failureDir, errorSubPathTemplate, simplePathCreator);
+                failureDir,
+                getName() + " (failure)",
+                errorSubPathTemplate,
+                ForwardFileConfig.DEFAULT_TEMPLATING_MODE,
+                simplePathCreator);
         return failureDestination;
     }
 
+    @Override
     public void add(final Path sourceDir) {
         forwardQueue.add(sourceDir);
+    }
+
+    @Override
+    public String getName() {
+        return forwardHttpPostConfig.getName();
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        return forwardHttpPostConfig.getForwardUrl()
+               + " (instant=" + forwardHttpPostConfig.isInstant() + ")";
+    }
+
+    @Override
+    public String toString() {
+        return asString();
     }
 
     private boolean forwardDir(final Path dir) {

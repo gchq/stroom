@@ -255,10 +255,14 @@ public class HttpSender implements StreamDestination {
             LOGGER.debug("'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}",
                     forwarderName, stroomStatusCode, receiptId, contentLength);
 
+            final EventType eventType = stroomStatusCode == StroomStatusCode.OK
+                    ? EventType.SEND
+                    : EventType.ERROR;
+
             logStream.log(
                     SEND_LOG,
                     attributeMap,
-                    EventType.SEND,
+                    eventType,
                     forwardUrl,
                     stroomStatusCode,
                     receiptId,
@@ -374,7 +378,10 @@ public class HttpSender implements StreamDestination {
             }
 
             // Response payload should be a plain text receipt ID
-            receiptId = getResponseContent(response);
+            // TODO Should we get receiptId from content or from a resp header?
+            receiptId = readResponseContent(response);
+//            consumeAndCloseResponseContent(response);
+//            receiptId = getHeader(response, StandardHeaderArguments.RECEIPT_ID);
 
             LOGGER.debug("httpResponseCode: {}, stroomStatusCode: {}, receiptId: {}, responseMessage: {}",
                     httpResponseCode, stroomStatusCode, receiptId, responseMessage);
@@ -402,7 +409,20 @@ public class HttpSender implements StreamDestination {
         }
     }
 
-    private String getResponseContent(final ClassicHttpResponse response) {
+    private void consumeAndCloseResponseContent(final ClassicHttpResponse response) {
+        final byte[] buffer = new byte[1024];
+        try (final InputStream inputStream = response.getEntity().getContent()) {
+            if (inputStream != null) {
+                //noinspection StatementWithEmptyBody
+                while (inputStream.read(buffer) > 0) {
+                }
+            }
+        } catch (final IOException ioex) {
+            LOGGER.debug(ioex.getMessage(), ioex);
+        }
+    }
+
+    private String readResponseContent(final ClassicHttpResponse response) {
 
         try (final InputStream inputStream = response.getEntity().getContent()) {
             if (inputStream != null) {

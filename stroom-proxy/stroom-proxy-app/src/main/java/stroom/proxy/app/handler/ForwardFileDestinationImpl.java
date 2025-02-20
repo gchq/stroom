@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyValue;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,26 +16,61 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestinationImpl.class);
+    private static final int MAX_MOVE_ATTEMPTS = 1_000;
     private final Path storeDir;
+    private final String name;
     private final String subPathTemplate;
+    private final TemplatingMode templatingMode;
+    private final Set<String> varsInTemplate;
     private final PathCreator pathCreator;
+    private final Path staticBaseDir;
 
     private final AtomicLong writeId = new AtomicLong();
 
     public ForwardFileDestinationImpl(final Path storeDir,
-                                      final String subPathTemplate,
+                                      final String name,
                                       final PathCreator pathCreator) {
-        this.storeDir = storeDir;
+        this(storeDir, name, null, null, pathCreator);
+    }
+
+    public ForwardFileDestinationImpl(final Path storeDir,
+                                      final String name,
+                                      final String subPathTemplate,
+                                      final TemplatingMode templatingMode,
+                                      final PathCreator pathCreator) {
+        this.storeDir = Objects.requireNonNull(storeDir);
+        this.name = name;
         this.subPathTemplate = subPathTemplate;
+        this.templatingMode = Objects.requireNonNullElse(
+                templatingMode, ForwardFileConfig.DEFAULT_TEMPLATING_MODE);
         this.pathCreator = pathCreator;
 
+        // Bake in the method for getting the baseDir to use, based on the subPathTemplate,
+        // so we don't have work it out on each call to add
+        if (NullSafe.isNonEmptyString(subPathTemplate)) {
+            final String[] vars = pathCreator.findVars(subPathTemplate);
+            if (NullSafe.hasItems(vars)) {
+                staticBaseDir = null;
+                varsInTemplate = Set.of(vars);
+            } else {
+                staticBaseDir = resolveSubPath(subPathTemplate);
+                FileUtil.ensureDirExists(staticBaseDir);
+                varsInTemplate = null;
+            }
+        } else {
+            staticBaseDir = storeDir;
+            varsInTemplate = null;
+        }
+
         // Initialise the store id.
+        FileUtil.ensureDirExists(storeDir);
         final long maxId = DirUtil.getMaxDirId(storeDir);
         writeId.set(maxId);
     }
@@ -43,14 +79,32 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     public void add(final Path sourceDir) {
         // Record the sequence id for future use.
         final long commitId = writeId.incrementAndGet();
-
-        final Path targetDir = createTargetDir(commitId, () -> getAttributeMap(sourceDir));
+        final Path targetDir = createTargetDir(commitId, sourceDir);
         try {
             move(sourceDir, targetDir);
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        String str = storeDir.toString();
+        if (NullSafe.isNonBlankString(subPathTemplate)) {
+            str += "/" + subPathTemplate;
+        }
+        return str;
+    }
+
+    @Override
+    public String toString() {
+        return asString();
     }
 
     private AttributeMap getAttributeMap(final Path dir) {
@@ -64,26 +118,69 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         }
     }
 
-    private Path createTargetDir(final long commitId,
-                                 final Supplier<AttributeMap> attributeMapSupplier) {
+    private String replaceAllUnusedVars(final String path, final String replacement) {
+        Objects.requireNonNull(replacement);
+        String str = path;
+        for (final String var : varsInTemplate) {
+            str = pathCreator.replace(str, var, () -> replacement);
+        }
+        // Replacement with empty string may have made the path absolute, so remove any leading /
+        if (str.startsWith("/")) {
+            str = str.substring(1);
+        }
+        return str;
+    }
+
+    private Path getBaseDirWithTemplatedSubDir(final Path sourceDir) {
         String subPathStr = pathCreator.replaceTimeVars(subPathTemplate);
         // Wrap the attributeMapSupplier in a LazyValue as we don't want to supply it multiple times
         // in case it is costly, and we don't know if we even need the attributeMap
-        final LazyValue<AttributeMap> lazyAttributeMap = LazyValue.initialisedBy(attributeMapSupplier);
+        final LazyValue<AttributeMap> lazyAttributeMap = LazyValue.initialisedBy(() ->
+                getAttributeMap(sourceDir));
         subPathStr = replaceAttribute(subPathStr, "feed", lazyAttributeMap);
         subPathStr = replaceAttribute(subPathStr, "type", lazyAttributeMap);
+
+        subPathStr = switch (templatingMode) {
+            case IGNORE_UNKNOWN -> subPathStr;
+            case REPLACE_UNKNOWN -> replaceAllUnusedVars(subPathStr, "XXX");
+            // If that means we get a/path////sub/dir, then Path with remove the extra slashes
+            case REMOVE_UNKNOWN -> replaceAllUnusedVars(subPathStr, "");
+        };
+
+        return resolveSubPath(subPathStr);
+    }
+
+    /**
+     * @param subPathStr AFTER template resolution
+     */
+    private Path resolveSubPath(final String subPathStr) {
         final Path subPath = Path.of(subPathStr);
-        final Path targetDir = DirUtil.createPath(storeDir, commitId).resolve(subPath);
+        final Path resolvedDir = storeDir.resolve(subPath).normalize().toAbsolutePath();
         if (subPath.isAbsolute()) {
             throw new IllegalArgumentException(
                     LogUtil.message("subPath '{}' cannot be an absolute path", subPath));
-        } else if (!targetDir.normalize().toAbsolutePath().endsWith(subPath)) {
-            // Stop people doing things like ../../../another/path
+        } else if (!resolvedDir.endsWith(subPath)) {
+            // Stop people abusing the params to break out of the storeDir and do
+            // stuff like ../../../another/path
             throw new IllegalArgumentException(LogUtil.message(
-                    "The value ('{}') of property {} must be a child of property {} ('{}')",
-                    subPathTemplate, targetDir));
+                    "The path '{}' resolved from template '{}' must be a child of path '{}'",
+                    resolvedDir,
+                    subPathTemplate,
+                    storeDir));
         }
-        LOGGER.debug("Using targetDir '{}', subPathStr '{}'", targetDir, subPathStr);
+        return resolvedDir;
+    }
+
+    private Path createTargetDir(final long commitId,
+                                 final Path sourceDir) {
+        final Path baseDir;
+        // dynamic templating of the subdir
+        baseDir = Objects.requireNonNullElseGet(
+                staticBaseDir,
+                () -> getBaseDirWithTemplatedSubDir(sourceDir));
+        final Path targetDir = DirUtil.createPath(baseDir, commitId);
+        LOGGER.debug("Using targetDir '{}' (subPathTemplate: '{}', commitId: {})",
+                targetDir, subPathTemplate, commitId);
         return targetDir;
     }
 
@@ -107,12 +204,13 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         int tryCount = 0;
         // It is possible other processes will be deleting parts of the dest path
         // so use a loop to keep trying.
-        while (!success) {
+        while (tryCount++ < MAX_MOVE_ATTEMPTS) {
             try {
                 Files.move(source,
                         target,
                         StandardCopyOption.ATOMIC_MOVE);
                 success = true;
+                break;
             } catch (final NoSuchFileException e) {
                 if (!Files.exists(source)) {
                     throw e;
@@ -120,17 +218,9 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                 DirUtil.ensureDirExists(target.getParent());
             }
         }
-
-
-        try {
-            Files.move(source,
-                    target,
-                    StandardCopyOption.ATOMIC_MOVE);
-        } catch (final NoSuchFileException e) {
-            DirUtil.ensureDirExists(target.getParent());
-            Files.move(source,
-                    target,
-                    StandardCopyOption.ATOMIC_MOVE);
+        if (!success) {
+            throw new RuntimeException(LogUtil.message("Unable to move {} to {} after {} attempts {}",
+                    source, target, tryCount));
         }
     }
 }

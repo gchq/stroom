@@ -56,7 +56,7 @@ public class LogStream {
                 receiptId,
                 bytes,
                 duration,
-                null);
+                stroomStatusCode.getMessage());
     }
 
     public void log(final Logger logger,

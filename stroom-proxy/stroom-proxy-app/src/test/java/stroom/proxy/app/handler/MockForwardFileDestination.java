@@ -53,6 +53,16 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         }
     }
 
+    @Override
+    public String getName() {
+        return "Mock File Destination";
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        return "Mock File Destination";
+    }
+
     private void move(final Path source, final Path target) throws IOException {
         try {
             Files.move(source,

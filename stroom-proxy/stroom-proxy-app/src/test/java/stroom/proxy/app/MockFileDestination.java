@@ -56,6 +56,7 @@ public class MockFileDestination {
                 false,
                 "My forward file",
                 "forward_dest",
+                null,
                 null);
     }
 

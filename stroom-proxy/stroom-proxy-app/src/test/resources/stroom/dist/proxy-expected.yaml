@@ -35,12 +35,13 @@ proxyConfig:
     instant: false
     name: null
     path: null
-    subPathTemplate: "${feed}"
+    subPathTemplate: "${year}${month}${day}/${feed}"
+    templatingMode: "REPLACE_UNKNOWN"
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
-    errorSubPathTemplate: "${feed}"
+    errorSubPathTemplate: "${year}${month}${day}/${feed}"
     forwardDelay: "PT0S"
     forwardUrl: null
     httpClient:

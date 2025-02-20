@@ -230,6 +230,14 @@ class TestStringPredicateFactory {
                                 "IS_THIS_IS_a99_FEED"),
                         List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
 
+                makeFuzzyMatchTest("Word boundary match (numbers) 2",
+                        "?TIM",
+                        List.of("THIS_IS_MY_FEED_a99",
+                                "a99_this_is_my_feed",
+                                "IS_THIS_IS_a99_MY_FEED",
+                                "THIS_BLAH_IS_BLAH_MY"),
+                        List.of("timf", "TIMF")),
+
                 makeFuzzyMatchTest("Single letter (lower case)",
                         "b",
                         List.of("B", "BCD", "ABC", "b", "bcd", "abc"),

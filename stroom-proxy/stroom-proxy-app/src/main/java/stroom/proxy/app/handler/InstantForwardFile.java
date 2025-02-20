@@ -54,6 +54,7 @@ public class InstantForwardFile {
         DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
+        LOGGER.info("Deleting contents of {}", receivingDir);
         if (!FileUtil.deleteContents(receivingDir)) {
             LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivingDir));
         }

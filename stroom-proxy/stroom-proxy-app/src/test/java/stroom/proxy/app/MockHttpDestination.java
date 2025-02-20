@@ -78,7 +78,7 @@ public class MockHttpDestination {
     private final ThreadLocal<Long> responseTimes = new ThreadLocal<>();
     private final AtomicInteger count = new AtomicInteger();
 
-    WireMockExtension createExtension() {
+    public WireMockExtension createExtension() {
         return WireMockExtension.newInstance()
                 .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
                 .options(WireMockConfiguration.wireMockConfig().extensions(new ServeEventListener() {
@@ -345,7 +345,7 @@ public class MockHttpDestination {
                 .isEqualTo(value);
     }
 
-    void clear() {
+    public void clear() {
         dataFeedRequests.clear();
     }
 
@@ -438,14 +438,14 @@ public class MockHttpDestination {
 //        isRequestLoggingEnabled = requestLoggingEnabled;
 //    }
 
-    static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
+    public static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
         return ForwardHttpPostConfig.builder()
                 .enabled(true)
                 .instant(instant)
                 .forwardUrl("http://localhost:"
                             + MockHttpDestination.DEFAULT_STROOM_PORT
                             + getDataFeedPath())
-                .name("Stroom datafeed")
+                .name("Mock Stroom datafeed")
                 .build();
     }
 

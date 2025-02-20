@@ -127,6 +127,7 @@ class TestInnerProcessEndToEnd {
                                 false,
                                 "test",
                                 "test",
+                                null,
                                 null))
                         .build();
 
