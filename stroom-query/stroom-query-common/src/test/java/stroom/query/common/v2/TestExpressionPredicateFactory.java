@@ -251,13 +251,12 @@ class TestExpressionPredicateFactory {
                                 "IS_THIS_IS_a99_FEED"),
                         List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
 
-// See gh-4553
-//                makeStringMatchTest("Word boundary match (numbers) 2",
-//                        "?TIM",
-//                        List.of("THIS_IS_MY_FEED_a99",
-//                                "a99_this_is_my_feed",
-//                                "IS_THIS_IS_a99_MY_FEED"),
-//                        List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
+                makeStringMatchTest("Word boundary match (numbers) 2",
+                        "?TIM",
+                        List.of("THIS_IS_MY_FEED_a99",
+                                "a99_this_is_my_feed",
+                                "TXHIS_IS_MY_FEED"),
+                        List.of("IS_THIS_IS_a99_MY_FEED", "timf", "TIMF")),
 
                 makeStringMatchTest("Single letter (lower case)",
                         "b",
