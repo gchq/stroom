@@ -381,13 +381,18 @@ class DashboardServiceImpl implements DashboardService {
 
     private String getQueryFileName(final DashboardSearchRequest request) {
         final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-        final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
-        final String dashboardName = NullSafe.getOrElse(
-                dashDocRefInfo,
-                DocRefInfo::getDocRef,
-                DocRef::getName,
-                searchRequestSource.getOwnerDocRef().getName());
-        final String basename = dashboardName + "__" + searchRequestSource.getComponentId();
+        String basename = searchRequestSource.getComponentId();
+        if (searchRequestSource.getOwnerDocRef() != null) {
+            final DocRefInfo dashDocRefInfo = dashboardStore.info(searchRequestSource.getOwnerDocRef());
+            final String dashboardName = NullSafe.getOrElse(
+                    dashDocRefInfo,
+                    DocRefInfo::getDocRef,
+                    DocRef::getName,
+                    searchRequestSource.getOwnerDocRef().getName());
+            if (dashboardName != null) {
+                basename = dashboardName + "__" + searchRequestSource.getComponentId();
+            }
+        }
         return getFileName(basename, "json");
     }
 
@@ -520,7 +525,8 @@ class DashboardServiceImpl implements DashboardService {
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
                 final StoredQuery storedQuery = new StoredQuery();
                 storedQuery.setName("History");
-                storedQuery.setDashboardUuid(searchRequestSource.getOwnerDocRef().getUuid());
+                storedQuery.setDashboardUuid(NullSafe
+                        .get(searchRequestSource, SearchRequestSource::getOwnerDocRef, DocRef::getUuid));
                 storedQuery.setComponentId(searchRequestSource.getComponentId());
                 storedQuery.setQuery(query);
                 queryService.create(storedQuery);
@@ -588,31 +594,29 @@ class DashboardServiceImpl implements DashboardService {
                             .map(Column::getId)
                             .toList()
                             .indexOf(request.getColumn().getId());
-                    if (index == -1) {
-                        throw new RuntimeException("Column not found");
-                    }
-
-                    dataStore.fetch(
-                            dataStore.getColumns(),
-                            OffsetRange.UNBOUNDED,
-                            new OpenGroupsImpl(openGroups),
-                            timeFilter,
-                            item -> {
-                                final Val val = item.getValue(index);
-                                if (predicate.test(val)) {
-                                    final String string = val.toString();
-                                    if (string != null && dedupe.add(string)) {
-                                        list.add(string);
+                    if (index != -1) {
+                        dataStore.fetch(
+                                dataStore.getColumns(),
+                                OffsetRange.UNBOUNDED,
+                                new OpenGroupsImpl(openGroups),
+                                timeFilter,
+                                item -> {
+                                    final Val val = item.getValue(index);
+                                    if (predicate.test(val)) {
+                                        final String string = val.toString();
+                                        if (string != null && dedupe.add(string)) {
+                                            list.add(string);
+                                        }
                                     }
-                                }
-                                return null;
-                            },
-                            row -> {
+                                    return null;
+                                },
+                                row -> {
 
-                            },
-                            count -> {
+                                },
+                                count -> {
 
-                            });
+                                });
+                    }
                 } catch (final Exception e) {
                     LOGGER.debug(e::getMessage, e);
                     throw e;

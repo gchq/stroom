@@ -16,7 +16,7 @@
 
 package stroom.db.util;
 
-import stroom.docref.StringMatch;
+import stroom.explorer.shared.StringMatch;
 
 import org.jooq.Condition;
 import org.jooq.Field;

@@ -38,7 +38,7 @@ public class ValPredicateFactory {
                 // Create the field position map for the new columns.
                 final ValueFunctionFactory<Val> valValFunctionFactory = new ValFunctionFactory(column);
                 final ValueFunctionFactories<Val> valueFunctionFactories = name -> valValFunctionFactory;
-                valuesPredicate = expressionPredicateFactory.create(
+                valuesPredicate = expressionPredicateFactory.createOptional(
                         valueFilter,
                         valueFunctionFactories,
                         dateTimeSettings);

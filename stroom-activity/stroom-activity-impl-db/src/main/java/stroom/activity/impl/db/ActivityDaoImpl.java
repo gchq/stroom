@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
@@ -161,7 +160,7 @@ public class ActivityDaoImpl implements ActivityDao {
                         .fetch())
                 .stream()
                 .map(RECORD_TO_ACTIVITY_MAPPER)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -187,7 +186,7 @@ public class ActivityDaoImpl implements ActivityDao {
                 return streamFunction.apply(activityStream)
                         .skip(offset)
                         .limit(limit)
-                        .collect(Collectors.toList());
+                        .toList();
             }
         });
     }

@@ -1,13 +1,19 @@
 package stroom.index.impl;
 
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.UpdateField;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -34,6 +40,7 @@ class IndexResourceImpl implements IndexResource {
     private final Provider<IndexStore> indexStoreProvider;
     private final Provider<IndexShardService> indexShardServiceProvider;
     private final Provider<IndexShardManager> indexShardManagerProvider;
+    private final Provider<IndexFieldService> indexFieldServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<WebTargetFactory> webTargetFactoryProvider;
@@ -42,12 +49,14 @@ class IndexResourceImpl implements IndexResource {
     IndexResourceImpl(final Provider<IndexStore> indexStoreProvider,
                       final Provider<IndexShardService> indexShardServiceProvider,
                       final Provider<IndexShardManager> indexShardManagerProvider,
+                      final Provider<IndexFieldService> indexFieldServiceProvider,
                       final Provider<NodeService> nodeServiceProvider,
                       final Provider<NodeInfo> nodeInfoProvider,
                       final Provider<WebTargetFactory> webTargetFactoryProvider) {
         this.indexStoreProvider = indexStoreProvider;
         this.indexShardServiceProvider = indexShardServiceProvider;
         this.indexShardManagerProvider = indexShardManagerProvider;
+        this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.nodeServiceProvider = nodeServiceProvider;
         this.nodeInfoProvider = nodeInfoProvider;
         this.webTargetFactoryProvider = webTargetFactoryProvider;
@@ -100,8 +109,8 @@ class IndexResourceImpl implements IndexResource {
             return indexShardManagerProvider.get().performAction(criteria, action);
         } else {
             final String url = NodeCallUtil
-                    .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(IndexResource.BASE_PATH, subPath);
+                                       .getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
+                               + ResourcePaths.buildAuthenticatedApiPath(IndexResource.BASE_PATH, subPath);
             try {
                 // A different node to make a rest call to the required node
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
@@ -120,5 +129,35 @@ class IndexResourceImpl implements IndexResource {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public ResultPage<IndexFieldImpl> findFields(final FindFieldCriteria criteria) {
+        final ResultPage<IndexField> resultPage = indexFieldServiceProvider.get().findFields(criteria);
+        return new ResultPage<>(resultPage
+                .getValues()
+                .stream()
+                .map(indexField -> new IndexFieldImpl.Builder(indexField).build())
+                .toList(),
+                resultPage.getPageResponse());
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean addField(final AddField addField) {
+        return indexFieldServiceProvider.get().addField(addField);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean updateField(final UpdateField updateField) {
+        return indexFieldServiceProvider.get().updateField(updateField);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean deleteField(final DeleteField deleteField) {
+        return indexFieldServiceProvider.get().deleteField(deleteField);
     }
 }

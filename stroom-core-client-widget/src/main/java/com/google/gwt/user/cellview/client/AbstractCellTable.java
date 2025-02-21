@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
@@ -44,6 +45,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiChild;
+import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
@@ -127,8 +129,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 int oldRow = table.getKeyboardSelectedRow();
                 int oldColumn = table.getKeyboardSelectedColumn();
                 boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
-                int keyCodeLineEnd = isRtl ? KeyCodes.KEY_LEFT : KeyCodes.KEY_RIGHT;
-                int keyCodeLineStart = isRtl ? KeyCodes.KEY_RIGHT : KeyCodes.KEY_LEFT;
+                int keyCodeLineEnd = isRtl
+                        ? KeyCodes.KEY_LEFT
+                        : KeyCodes.KEY_RIGHT;
+                int keyCodeLineStart = isRtl
+                        ? KeyCodes.KEY_RIGHT
+                        : KeyCodes.KEY_LEFT;
                 int keyCode = nativeEvent.getKeyCode();
                 if (keyCode == keyCodeLineEnd) {
                     int nextColumn = findInteractiveColumn(oldColumn, false);
@@ -176,8 +182,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 int relRow = event.getIndex() - table.getPageStart();
                 int subrow = event.getContext().getSubIndex();
                 if ((table.getKeyboardSelectedColumn() != col)
-                        || (table.getKeyboardSelectedRow() != relRow)
-                        || (table.getKeyboardSelectedSubRow() != subrow)) {
+                    || (table.getKeyboardSelectedRow() != relRow)
+                    || (table.getKeyboardSelectedSubRow() != subrow)) {
                     boolean stealFocus = false;
                     if (BrowserEvents.CLICK.equals(eventType)) {
                         // If a natively focusable element was just clicked, then do not
@@ -206,7 +212,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
          * interactive, 0 is returned. If the start index is the only interactive
          * column, it is returned.
          *
-         * @param start the start index, exclusive unless it is the only option
+         * @param start   the start index, exclusive unless it is the only option
          * @param reverse true to do a reverse search
          * @return the interactive column index, or 0 if not interactive
          */
@@ -246,6 +252,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * A ClientBundle that provides images for this widget.
      */
     public interface Resources {
+
         /**
          * Icon used when a column is sorted in ascending order.
          */
@@ -266,6 +273,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Styles used by this widget.
      */
     public interface Style {
+
         /**
          * Applied to every cell.
          */
@@ -399,26 +407,31 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * will be returned.
      */
     protected interface TableSectionChangeHandler {
+
         /**
          * Notify that a table body section has been changed.
+         *
          * @param newTBody the new body section
          */
         void onTableBodyChange(TableSectionElement newTBody);
 
         /**
          * Notify that a table body section has been changed.
+         *
          * @param newTFoot the new foot section
          */
         void onTableFootChange(TableSectionElement newTFoot);
 
         /**
          * Notify that a table head section has been changed.
+         *
          * @param newTHead the new head section
          */
         void onTableHeadChange(TableSectionElement newTHead);
     }
 
     interface Template extends SafeHtmlTemplates {
+
         @SafeHtmlTemplates.Template("<div style=\"outline:none;\">{0}</div>")
         SafeHtml div(SafeHtml contents);
 
@@ -457,9 +470,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         /**
          * Convert the rowHtml into Elements wrapped by the specified table section.
          *
-         * @param table the {@link AbstractCellTable}
+         * @param table      the {@link AbstractCellTable}
          * @param sectionTag the table section tag
-         * @param rowHtml the Html for the rows
+         * @param rowHtml    the Html for the rows
          * @return the section element
          */
         public TableSectionElement convertToSectionElement(AbstractCellTable<?> table,
@@ -505,9 +518,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         /**
          * Render a table section in the table.
          *
-         * @param table the {@link AbstractCellTable}
+         * @param table   the {@link AbstractCellTable}
          * @param section the {@link TableSectionElement} to replace
-         * @param html the html of a table section element containing the rows
+         * @param html    the html of a table section element containing the rows
          */
         public final void replaceAllRows(AbstractCellTable<?> table, TableSectionElement section,
                                          SafeHtml html) {
@@ -539,14 +552,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
         /**
          * Replace a set of row values with newly rendered values.
-         *
+         * <p>
          * This method does not necessarily perform a one to one replacement. Some
          * row values may be rendered as multiple row elements, while others are
          * rendered as only one row element.
          *
-         * @param table the {@link AbstractCellTable}
-         * @param section the {@link TableSectionElement} to replace
-         * @param html the html of a table section element containing the rows
+         * @param table      the {@link AbstractCellTable}
+         * @param section    the {@link TableSectionElement} to replace
+         * @param html       the html of a table section element containing the rows
          * @param startIndex the start index to replace
          * @param childCount the number of row values to replace
          */
@@ -572,15 +585,19 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 while (insertBefore != null && count < childCount) {
                     Element next = insertBefore.getNextSiblingElement();
                     section.removeChild(insertBefore);
-                    insertBefore = (next == null) ? null : next.<TableRowElement> cast();
+                    insertBefore = (next == null)
+                            ? null
+                            : next.<TableRowElement>cast();
                     count++;
                 }
             } else {
                 while (insertBefore != null
-                        && table.tableBuilder.getRowValueIndex(insertBefore) < absEndIndex) {
+                       && table.tableBuilder.getRowValueIndex(insertBefore) < absEndIndex) {
                     Element next = insertBefore.getNextSiblingElement();
                     section.removeChild(insertBefore);
-                    insertBefore = (next == null) ? null : next.<TableRowElement> cast();
+                    insertBefore = (next == null)
+                            ? null
+                            : next.<TableRowElement>cast();
                 }
             }
 
@@ -617,8 +634,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         /**
          * Reattach a table section element from its parent.
          *
-         * @param parent the parent element
-         * @param section the element to reattach
+         * @param parent      the parent element
+         * @param section     the element to reattach
          * @param nextSection the next section
          */
         protected void reattachSectionElement(Element parent, TableSectionElement section,
@@ -629,9 +646,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         /**
          * Render a table section in the table.
          *
-         * @param table the {@link AbstractCellTable}
+         * @param table   the {@link AbstractCellTable}
          * @param section the {@link TableSectionElement} to replace
-         * @param html the html of a table section element containing the rows
+         * @param html    the html of a table section element containing the rows
          */
         protected void replaceAllRowsImpl(AbstractCellTable<?> table, TableSectionElement section,
                                           SafeHtml html) {
@@ -644,6 +661,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     @SuppressWarnings("unused")
     private static class ImplMozilla extends Impl {
+
         /**
          * Firefox 3.6 and earlier convert td elements to divs if the tbody is
          * removed from the table element.
@@ -736,9 +754,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
          * element, and then swap the table section with the corresponding element in the DIV. This
          * method is used in IE since the normal optimizations are not feasible.
          *
-         * @param table the {@link AbstractCellTable}
+         * @param table   the {@link AbstractCellTable}
          * @param section the {@link TableSectionElement} to replace
-         * @param html the html of a table section element containing the rows
+         * @param html    the html of a table section element containing the rows
          */
         private void replaceTableSection(AbstractCellTable<?> table, TableSectionElement section,
                                          SafeHtml html) {
@@ -762,7 +780,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     private static final String MALFORMED_HTML_SECTION =
             "Malformed HTML: The table section returned by HeaderBuilder or FooterBuilder must use the "
-                    + "tag name thead or tfoot, as appropriate, and cannot contain any attributes or styles.";
+            + "tag name thead or tfoot, as appropriate, and cannot contain any attributes or styles.";
 
     /*
      * The table specific {@link Impl}.
@@ -869,11 +887,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Constructs a table with the given page size, the specified {@link Style},
      * and the given key provider.
      *
-     * @param elem the parent {@link Element}
-     * @param pageSize the page size
-     * @param resources the resources to apply to the widget
+     * @param elem        the parent {@link Element}
+     * @param pageSize    the page size
+     * @param resources   the resources to apply to the widget
      * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-     *          object should act as its own key
+     *                    object should act as its own key
      */
     public AbstractCellTable(Element elem, final int pageSize, Resources resources,
                              ProvidesKey<T> keyProvider) {
@@ -887,11 +905,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Constructs a table with the given page size, the specified {@link Style},
      * and the given key provider.
      *
-     * @param widget the parent widget
-     * @param pageSize the page size
-     * @param resources the resources to apply to the widget
+     * @param widget      the parent widget
+     * @param pageSize    the page size
+     * @param resources   the resources to apply to the widget
      * @param keyProvider an instance of ProvidesKey<T>, or null if the record
-     *          object should act as its own key
+     *                    object should act as its own key
      */
     public AbstractCellTable(Widget widget, final int pageSize, Resources resources,
                              ProvidesKey<T> keyProvider) {
@@ -913,7 +931,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Adds a column to the end of the table with an associated header.
      *
-     * @param col the column to be added
+     * @param col    the column to be added
      * @param header the associated {@link Header}
      */
     public void addColumn(Column<T, ?> col, Header<?> header) {
@@ -923,7 +941,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Adds a column to the end of the table with an associated header and footer.
      *
-     * @param col the column to be added
+     * @param col    the column to be added
      * @param header the associated {@link Header}
      * @param footer the associated footer (as a {@link Header} object)
      */
@@ -934,7 +952,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Adds a column to the end of the table with an associated String header.
      *
-     * @param col the column to be added
+     * @param col          the column to be added
      * @param headerString the associated header text, as a String
      */
     public void addColumn(Column<T, ?> col, String headerString) {
@@ -945,7 +963,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Adds a column to the end of the table with an associated {@link SafeHtml}
      * header.
      *
-     * @param col the column to be added
+     * @param col        the column to be added
      * @param headerHtml the associated header text, as safe HTML
      */
     public void addColumn(Column<T, ?> col, SafeHtml headerHtml) {
@@ -956,7 +974,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Adds a column to the end of the table with an associated String header and
      * footer.
      *
-     * @param col the column to be added
+     * @param col          the column to be added
      * @param headerString the associated header text, as a String
      * @param footerString the associated footer text, as a String
      */
@@ -968,7 +986,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Adds a column to the end of the table with an associated {@link SafeHtml}
      * header and footer.
      *
-     * @param col the column to be added
+     * @param col        the column to be added
      * @param headerHtml the associated header text, as safe HTML
      * @param footerHtml the associated footer text, as safe HTML
      */
@@ -990,7 +1008,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Add a style name to the <code>col</code> element at the specified index,
      * creating it if necessary.
      *
-     * @param index the column index
+     * @param index     the column index
      * @param styleName the style name to add
      */
     public abstract void addColumnStyleName(int index, String styleName);
@@ -1153,7 +1171,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @return the currently selected column, or -1 if none selected
      */
     public int getKeyboardSelectedColumn() {
-        return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy() ? -1
+        return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy()
+                ? -1
                 : keyboardSelectedColumn;
     }
 
@@ -1164,7 +1183,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @return the currently selected subrow, or -1 if none selected
      */
     public int getKeyboardSelectedSubRow() {
-        return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy() ? -1
+        return KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy()
+                ? -1
                 : keyboardSelectedSubrow;
     }
 
@@ -1191,7 +1211,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @param row the row index
      * @return the row element, or null if it doesn't exists
      * @throws IndexOutOfBoundsException if the row index is outside of the
-     *           current page
+     *                                   current page
      */
     public TableRowElement getRowElement(int row) {
         flush();
@@ -1211,7 +1231,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Inserts a column into the table at the specified index.
      *
      * @param beforeIndex the index to insert the column
-     * @param col the column to be added
+     * @param col         the column to be added
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col) {
         insertColumn(beforeIndex, col, (Header<?>) null, (Header<?>) null);
@@ -1222,8 +1242,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * header.
      *
      * @param beforeIndex the index to insert the column
-     * @param col the column to be added
-     * @param header the associated {@link Header}
+     * @param col         the column to be added
+     * @param header      the associated {@link Header}
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col, Header<?> header) {
         insertColumn(beforeIndex, col, header, null);
@@ -1234,9 +1254,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * header and footer.
      *
      * @param beforeIndex the index to insert the column
-     * @param col the column to be added
-     * @param header the associated {@link Header}
-     * @param footer the associated footer (as a {@link Header} object)
+     * @param col         the column to be added
+     * @param header      the associated {@link Header}
+     * @param footer      the associated footer (as a {@link Header} object)
      * @throws IndexOutOfBoundsException if the index is out of range
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col, Header<?> header, Header<?> footer) {
@@ -1257,7 +1277,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         // Move the keyboard selected column if the current column is not
         // interactive.
         if (isColumnInteractive(col)
-                && ((keyboardSelectedColumn >= columns.size()) || !isColumnInteractive(columns
+            && ((keyboardSelectedColumn >= columns.size()) || !isColumnInteractive(columns
                 .get(keyboardSelectedColumn)))) {
             keyboardSelectedColumn = beforeIndex;
         }
@@ -1292,8 +1312,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Inserts a column into the table at the specified index with an associated
      * String header.
      *
-     * @param beforeIndex the index to insert the column
-     * @param col the column to be added
+     * @param beforeIndex  the index to insert the column
+     * @param col          the column to be added
      * @param headerString the associated header text, as a String
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col, String headerString) {
@@ -1305,8 +1325,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * {@link SafeHtml} header.
      *
      * @param beforeIndex the index to insert the column
-     * @param col the column to be added
-     * @param headerHtml the associated header text, as safe HTML
+     * @param col         the column to be added
+     * @param headerHtml  the associated header text, as safe HTML
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col, SafeHtml headerHtml) {
         insertColumn(beforeIndex, col, new SafeHtmlHeader(headerHtml), null);
@@ -1316,8 +1336,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Inserts a column into the table at the specified index with an associated
      * String header and footer.
      *
-     * @param beforeIndex the index to insert the column
-     * @param col the column to be added
+     * @param beforeIndex  the index to insert the column
+     * @param col          the column to be added
      * @param headerString the associated header text, as a String
      * @param footerString the associated footer text, as a String
      */
@@ -1331,9 +1351,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * {@link SafeHtml} header and footer.
      *
      * @param beforeIndex the index to insert the column
-     * @param col the column to be added
-     * @param headerHtml the associated header text, as safe HTML
-     * @param footerHtml the associated footer text, as safe HTML
+     * @param col         the column to be added
+     * @param headerHtml  the associated header text, as safe HTML
+     * @param footerHtml  the associated footer text, as safe HTML
      */
     public void insertColumn(int beforeIndex, Column<T, ?> col, SafeHtml headerHtml,
                              SafeHtml footerHtml) {
@@ -1446,7 +1466,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Remove a style from the <code>col</code> element at the specified index.
      *
-     * @param index the column index
+     * @param index     the column index
      * @param styleName the style name to remove
      */
     public abstract void removeColumnStyleName(int index, String styleName);
@@ -1487,7 +1507,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * {@link #setColumnWidth(int, String)}.
      *
      * @param column the column
-     * @param width the width of the column
+     * @param width  the width of the column
      */
     public void setColumnWidth(Column<T, ?> column, String width) {
         columnWidths.put(column, width);
@@ -1500,8 +1520,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * {@link #setColumnWidth(int, double, Unit)}.
      *
      * @param column the column
-     * @param width the width of the column
-     * @param unit the {@link Unit} of measurement
+     * @param width  the width of the column
+     * @param unit   the {@link Unit} of measurement
      */
     public void setColumnWidth(Column<T, ?> column, double width, Unit unit) {
         setColumnWidth(column, width + unit.getType());
@@ -1511,8 +1531,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Set the width of a {@link Column}.
      *
      * @param column the column
-     * @param width the width of the column
-     * @param unit the {@link Unit} of measurement
+     * @param width  the width of the column
+     * @param unit   the {@link Unit} of measurement
      */
     public void setColumnWidth(int column, double width, Unit unit) {
         setColumnWidth(column, width + unit.getType());
@@ -1522,7 +1542,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Set the width of a {@link Column}.
      *
      * @param column the column
-     * @param width the width of the column
+     * @param width  the width of the column
      */
     public void setColumnWidth(int column, String width) {
         columnWidthsByIndex.put(column, width);
@@ -1587,7 +1607,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Set the keyboard selected column index and optionally focus on the new
      * cell.
      *
-     * @param column the column index, greater than or equal to zero
+     * @param column     the column index, greater than or equal to zero
      * @param stealFocus true to focus on the new column
      * @see #setKeyboardSelectedColumn(int)
      */
@@ -1611,8 +1631,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Set the keyboard selected row and subrow, optionally focus on the new row.
      *
-     * @param row the row index relative to the page start
-     * @param subrow the row index of the child row
+     * @param row        the row index relative to the page start
+     * @param subrow     the row index of the child row
      * @param stealFocus true to focus on the new row
      * @see #setKeyboardSelectedRow(int)
      */
@@ -1695,14 +1715,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Set the width of a column.
      *
      * @param column the column index
-     * @param width the width, or null to clear the width
+     * @param width  the width, or null to clear the width
      */
     protected abstract void doSetColumnWidth(int column, String width);
 
     /**
      * Show or hide a header section.
      *
-     * @param isFooter true for the footer, false for the header
+     * @param isFooter  true for the footer, false for the header
      * @param isVisible true to show, false to hide
      */
     protected abstract void doSetHeaderVisible(boolean isFooter, boolean isVisible);
@@ -1723,7 +1743,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @param row the row index, relative to the page start
      * @return the row element, or null if it doesn't exists
      * @throws IndexOutOfBoundsException if the row index is outside of the
-     *           current page
+     *                                   current page
      */
     @Override
     protected TableRowElement getChildElement(int row) {
@@ -1803,7 +1823,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
              * to handle it as if it happened within the table cell.
              */
             if (TableCellElement.TAG_TD.equalsIgnoreCase(cur.getTagName()) &&
-                    tableBuilder.isColumn(cur.getFirstChildElement())) {
+                tableBuilder.isColumn(cur.getFirstChildElement())) {
                 cur = cur.getFirstChildElement();
             }
 
@@ -1823,7 +1843,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 // Look for a table cell.
                 String tagName = cur.getTagName();
                 if (TableCellElement.TAG_TD.equalsIgnoreCase(tagName)
-                        || TableCellElement.TAG_TH.equalsIgnoreCase(tagName)) {
+                    || TableCellElement.TAG_TH.equalsIgnoreCase(tagName)) {
                     /*
                      * Found a table cell, but we can't return yet because it may be part
                      * of a sub table within the a CellTable cell.
@@ -1878,24 +1898,32 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         TableRowElement targetTableRow = targetTableCell.getParentElement().cast();
         String eventType = event.getType();
         boolean isSelect = BrowserEvents.CLICK.equals(eventType)
-                || (BrowserEvents.KEYDOWN.equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER);
+                           || (BrowserEvents.KEYDOWN.equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER);
 
         int col = targetTableCell.getCellIndex();
         if (targetTableSection == thead || targetTableSection == tfoot) {
             boolean isHeader = (targetTableSection == thead);
-            headerParent = isHeader ? headerParent : footerParent;
-            Element columnParent = isHeader ? headerColumnParent : footerColumnParent;
+            headerParent = isHeader
+                    ? headerParent
+                    : footerParent;
+            Element columnParent = isHeader
+                    ? headerColumnParent
+                    : footerColumnParent;
 
             boolean shouldSortColumn = true;
             // Fire the event to the header.
             if (headerParent != null) {
                 Header<?> header =
-                        isHeader ? headerBuilder.getHeader(headerParent) : footerBuilder
-                                .getHeader(footerParent);
+                        isHeader
+                                ? headerBuilder.getHeader(headerParent)
+                                : footerBuilder
+                                        .getHeader(footerParent);
 
                 if (header != null) {
-                    int headerIndex = isHeader ? headerBuilder.getRowIndex(targetTableRow) :
-                            footerBuilder.getRowIndex(targetTableRow);
+                    int headerIndex = isHeader
+                            ? headerBuilder.getRowIndex(targetTableRow)
+                            :
+                                    footerBuilder.getRowIndex(targetTableRow);
                     Context context = new Context(headerIndex, col, header.getKey());
 
                     if (cellConsumesEventType(header.getCell(), eventType)) {
@@ -1913,18 +1941,67 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             // Sort the header.
             if (isSelect && shouldSortColumn && columnParent != null) {
                 Column<T, ?> column =
-                        isHeader ? headerBuilder.getColumn(columnParent) : footerBuilder
-                                .getColumn(columnParent);
+                        isHeader
+                                ? headerBuilder.getColumn(columnParent)
+                                : footerBuilder
+                                        .getColumn(columnParent);
                 if (column != null && column.isSortable()) {
+
+                    updatingSortList = true;
+
+                    // Get current col sort state.
+                    final List<ColumnSortInfo> list = new ArrayList<>(sortList.size());
+                    int index = -1;
+                    ColumnSortInfo currentColumnSortInfo = null;
+                    for (int i = 0; i < sortList.size(); i++) {
+                        final ColumnSortInfo columnSortInfo = sortList.get(i);
+                        list.add(columnSortInfo);
+                        if (columnSortInfo.getColumn().equals(column)) {
+                            index = i;
+                            currentColumnSortInfo = columnSortInfo;
+                        }
+                    }
+
+                    // Change the list.
+                    if (index != -1) {
+                        if (!event.getCtrlKey()) {
+                            list.clear();
+                        } else {
+                            list.remove(index);
+                        }
+
+                        // If we are already non default then remove.
+                        if (column.isDefaultSortAscending() == currentColumnSortInfo.isAscending()) {
+                            final ColumnSortInfo newColumnSortInfo = new ColumnSortInfo(
+                                    column,
+                                    !currentColumnSortInfo.isAscending());
+                            list.add(newColumnSortInfo);
+                        }
+                    } else {
+                        if (!event.getCtrlKey()) {
+                            list.clear();
+                        }
+
+                        final ColumnSortInfo newColumnSortInfo = new ColumnSortInfo(
+                                column,
+                                column.isDefaultSortAscending());
+                        list.add(newColumnSortInfo);
+                    }
+
+                    // Push the list items backwards.
+                    sortList.clear();
+                    for (int i = list.size() - 1; i >= 0; i--) {
+                        sortList.push(list.get(i));
+                    }
+
                     /*
                      * Force the headers to refresh the next time data is pushed so we
                      * update the sort icon in the header.
                      */
                     headersDirty = true;
-
-                    updatingSortList = true;
-                    sortList.push(column);
+//                    sortList.push(column);
                     updatingSortList = false;
+
                     ColumnSortEvent.fire(this, sortList);
                 }
             }
@@ -1982,7 +2059,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
              */
             boolean isSelectionHandled =
                     handlesSelection
-                            || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
+                    || KeyboardSelectionPolicy.BOUND_TO_SELECTION == getKeyboardSelectionPolicy();
             T value = getVisibleItem(relRow);
 
             /*
@@ -2031,9 +2108,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     }
 
     /**
-     * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
-     *             table structure instead
      * @see #renderRowValuesLegacy(SafeHtmlBuilder, List, int, SelectionModel)
+     * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
+     * table structure instead
      */
     @Override
     @Deprecated
@@ -2050,12 +2127,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}.
      * </p>
      *
-     * @param sb the {@link SafeHtmlBuilder} to render into
-     * @param values the row values
-     * @param start the absolute start index of the values
+     * @param sb             the {@link SafeHtmlBuilder} to render into
+     * @param values         the row values
+     * @param start          the absolute start index of the values
      * @param selectionModel the {@link SelectionModel}
      * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
-     *             table structure instead
+     * table structure instead
      */
     @Deprecated
     protected final void renderRowValuesLegacy(SafeHtmlBuilder sb, List<T> values, int start,
@@ -2076,9 +2153,13 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         for (int i = start; i < end; i++) {
             T value = values.get(i - start);
             boolean isSelected =
-                    (selectionModel == null || value == null) ? false : selectionModel.isSelected(value);
+                    (selectionModel == null || value == null)
+                            ? false
+                            : selectionModel.isSelected(value);
             boolean isEven = i % 2 == 0;
-            String trClasses = isEven ? evenRowStyle : oddRowStyle;
+            String trClasses = isEven
+                    ? evenRowStyle
+                    : oddRowStyle;
             if (isSelected) {
                 trClasses += selectedRowStyle;
             }
@@ -2095,7 +2176,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             int curColumn = 0;
             for (Column<T, ?> column : columns) {
                 String tdClasses = cellStyle;
-                tdClasses += isEven ? evenCellStyle : oddCellStyle;
+                tdClasses += isEven
+                        ? evenCellStyle
+                        : oddCellStyle;
                 if (curColumn == 0) {
                     tdClasses += firstColumnStyle;
                 }
@@ -2208,7 +2291,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @Override
     protected void setKeyboardSelected(int index, boolean selected, boolean stealFocus) {
         if (KeyboardSelectionPolicy.DISABLED == getKeyboardSelectionPolicy()
-                || !isRowWithinBounds(index)) {
+            || !isRowWithinBounds(index)) {
             return;
         }
 
@@ -2343,8 +2426,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Build a list of row values.
      *
-     * @param values the row values to render
-     * @param start the absolute start index
+     * @param values              the row values to render
+     * @param start               the absolute start index
      * @param isRebuildingAllRows is this going to rebuild all rows
      * @return a {@link SafeHtml} string containing the row values
      */
@@ -2404,10 +2487,18 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     private void createHeaders(boolean isFooter) {
         TableSectionBuilder section =
-                isFooter ? footerBuilder.buildFooter() : headerBuilder.buildHeader();
+                isFooter
+                        ? footerBuilder.buildFooter()
+                        : headerBuilder.buildHeader();
         if (section != null) {
-            TABLE_IMPL.replaceAllRows(this, isFooter ? getTableFootElement() : getTableHeadElement(),
-                    tableSectionToSafeHtml(section, isFooter ? "tfoot" : "thead"));
+            TABLE_IMPL.replaceAllRows(this,
+                    isFooter
+                            ? getTableFootElement()
+                            : getTableHeadElement(),
+                    tableSectionToSafeHtml(section,
+                            isFooter
+                                    ? "tfoot"
+                                    : "thead"));
             doSetHeaderVisible(isFooter, true);
         } else {
             // If the section isn't used, hide it.
@@ -2439,12 +2530,14 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             // Create a FieldUpdater.
             final FieldUpdater<T, C> fieldUpdater = column.getFieldUpdater();
             final int index = context.getIndex();
-            ValueUpdater<C> valueUpdater = (fieldUpdater == null) ? null : new ValueUpdater<C>() {
-                @Override
-                public void update(C value) {
-                    fieldUpdater.update(index, rowValue, value);
-                }
-            };
+            ValueUpdater<C> valueUpdater = (fieldUpdater == null)
+                    ? null
+                    : new ValueUpdater<C>() {
+                        @Override
+                        public void update(C value) {
+                            fieldUpdater.update(index, rowValue, value);
+                        }
+                    };
 
             // Fire the event to the cell.
             cell.onBrowserEvent(context, parentElem, cellValue, event, valueUpdater);
@@ -2489,7 +2582,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
          */
         Element firstChild = td.getFirstChildElement();
         if (firstChild != null && td.getChildCount() == 1
-                && "div".equalsIgnoreCase(firstChild.getTagName())) {
+            && "div".equalsIgnoreCase(firstChild.getTagName())) {
             return firstChild;
         }
 
@@ -2590,11 +2683,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     /**
      * Set a row's hovering style and fire a {@link RowHoverEvent}
      *
-     * @param tr the row element
-     * @param event the original event
-     * @param isHovering false if this is an unhover event
+     * @param tr          the row element
+     * @param event       the original event
+     * @param isHovering  false if this is an unhover event
      * @param isRowChange true if the hover event is a full row change, false if it is a hover on a
-     *     cell. Row style update is called only on full row change.
+     *                    cell. Row style update is called only on full row change.
      */
     private void setRowHover(TableRowElement tr, Event event, boolean isHovering,
                              boolean isRowChange) {
@@ -2602,17 +2695,18 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
             setRowStyleName(tr, style.hoveredRow(), style.hoveredRowCell(), isHovering);
         }
         RowHoverEvent.fire(this, tr, event, !isHovering,
-                isRowChange ? RowHoverEvent.HoveringScope.ROW_HOVER
+                isRowChange
+                        ? RowHoverEvent.HoveringScope.ROW_HOVER
                         : RowHoverEvent.HoveringScope.CELL_HOVER);
     }
 
     /**
      * Apply a style to a row and all cells in the row.
      *
-     * @param tr the row element
-     * @param rowStyle the style to apply to the row
+     * @param tr        the row element
+     * @param rowStyle  the style to apply to the row
      * @param cellStyle the style to apply to the cells
-     * @param add true to add the style, false to remove
+     * @param add       true to add the style, false to remove
      */
     private void setRowStyleName(TableRowElement tr, String rowStyle, String cellStyle, boolean add) {
         setStyleName(tr, rowStyle, add);
@@ -2627,7 +2721,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * instance may appear multiple times in the table.
      *
      * @param column the column to update
-     * @param width the width of the column, or null to clear the width
+     * @param width  the width of the column, or null to clear the width
      */
     private void updateColumnWidthImpl(Column<T, ?> column, String width) {
         int columnCount = getColumnCount();

@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -249,9 +248,9 @@ class TestStroomEventLoggingServiceImpl {
         assertThat(allData).noneMatch(data -> data.getValue().equals("xyzzy"));
         assertThat(allData).noneMatch(data -> data.getValue().equals("open-sesame"));
         assertThat(allData.stream().filter(data -> data.getValue().equals("test"))
-                .collect(Collectors.toList()).size()).isEqualTo(0);
+                .toList().size()).isEqualTo(0);
         assertThat(allData.stream().filter(data -> data.getValue().equals("false"))
-                .collect(Collectors.toList()).size()).isEqualTo(1);
+                .toList().size()).isEqualTo(1);
     }
 
     @Test

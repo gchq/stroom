@@ -68,7 +68,7 @@ class TestTemporalStateDb {
             fieldIndex.create(TemporalStateFields.VALUE_TYPE);
             fieldIndex.create(TemporalStateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,

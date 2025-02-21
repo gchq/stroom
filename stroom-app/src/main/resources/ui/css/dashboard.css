@@ -458,6 +458,17 @@
     text-decoration: underline;
 }
 
+.column-sortIcon {
+    display: flex;
+    flex-direction: row;
+	cursor: pointer;
+	opacity: 0.9;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
 .column-sortOrder {
 	display: inline-block;
 	font-size: var(--font-size-8);

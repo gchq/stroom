@@ -16,10 +16,9 @@
 
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexFieldFields;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.item.client.SelectionList;
 import stroom.item.client.SelectionListModel;
 import stroom.query.shared.QueryHelpRequest;
@@ -88,9 +87,8 @@ public class DynamicQueryHelpSelectionListModel
             parentId = "";
         }
 
-        final StringMatch stringMatch = StringMatch.contains(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
-                FindFieldCriteria.SORT_BY_NAME,
+                IndexFieldFields.NAME,
                 false,
                 true);
         final QueryHelpRequest request = new QueryHelpRequest(
@@ -99,7 +97,7 @@ public class DynamicQueryHelpSelectionListModel
                 query,
                 dataSourceRef,
                 parentId,
-                stringMatch,
+                filter,
                 includedTypes);
 
         // Only fetch if the request has changed.

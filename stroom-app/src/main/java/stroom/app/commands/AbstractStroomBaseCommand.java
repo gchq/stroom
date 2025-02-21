@@ -270,7 +270,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
         if (values != null) {
             return values.stream()
                     .map(argsMapper)
-                    .collect(Collectors.toList());
+                    .toList();
         } else {
             return Collections.emptyList();
         }

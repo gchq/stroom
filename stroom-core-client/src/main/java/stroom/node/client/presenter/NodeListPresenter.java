@@ -4,6 +4,7 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -113,6 +114,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
             protected void exec(final Range range,
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                CriteriaUtil.setSortList(findNodeStatusCriteria, dataGrid.getColumnSortList());
                 nodeManager.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
                         NodeListPresenter.this);
             }
@@ -175,6 +177,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                 }
             }
         }));
+
+        registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
 
     private void scheduleDataGridRedraw() {
@@ -210,8 +214,6 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        DataGridUtil.addColumnSortHandler(dataGrid, findNodeStatusCriteria, this::internalRefresh);
-
         // Info column.
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override

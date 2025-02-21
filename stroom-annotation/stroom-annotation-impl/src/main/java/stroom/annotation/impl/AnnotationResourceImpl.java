@@ -26,15 +26,16 @@ import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
@@ -44,14 +45,17 @@ class AnnotationResourceImpl implements AnnotationResource {
     private final Provider<AnnotationService> annotationService;
     private final Provider<DocumentEventLog> documentEventLog;
     private final Provider<AnnotationConfig> annotationConfig;
+    private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
 
     @Inject
     AnnotationResourceImpl(final Provider<AnnotationService> annotationService,
                            final Provider<DocumentEventLog> documentEventLog,
-                           final Provider<AnnotationConfig> annotationConfig) {
+                           final Provider<AnnotationConfig> annotationConfig,
+                           final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider) {
         this.annotationService = annotationService;
         this.documentEventLog = documentEventLog;
         this.annotationConfig = annotationConfig;
+        this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
     }
 
     @Override
@@ -139,8 +143,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         if (allValues == null || allValues.isEmpty()) {
             return allValues;
         } else {
-            return QuickFilterPredicateFactory.filterStream(quickFilterInput, allValues.stream())
-                    .collect(Collectors.toList());
+            return expressionPredicateFactoryProvider.get()
+                    .filterAndSortStream(allValues.stream(),
+                            quickFilterInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .toList();
         }
     }
 }

@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,7 +103,7 @@ class TestFunctionSignatureUtil {
                         "my desc",
                         null,
                         null))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static List<Arg> optionalArgs(final String... argNames) {
@@ -117,7 +116,7 @@ class TestFunctionSignatureUtil {
                         "my desc",
                         null,
                         null))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @SafeVarargs

@@ -19,12 +19,9 @@ package stroom.query.client.presenter;
 import stroom.dashboard.client.table.FilterCell;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.v2.Column;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.safehtml.shared.SafeHtml;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,9 +55,5 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
         list.add(filterInput);
 
         return new ColumnHeaderCell(list);
-    }
-
-    private static SafeHtml getSafeHtml(final SvgImage svgImage) {
-        return SvgImageUtil.toSafeHtml(svgImage, "svgIcon");
     }
 }

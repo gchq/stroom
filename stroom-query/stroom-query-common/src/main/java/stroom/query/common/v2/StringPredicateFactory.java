@@ -1,4 +1,4 @@
-package stroom.util.filter;
+package stroom.query.common.v2;
 
 import stroom.util.ConsoleColour;
 import stroom.util.logging.LambdaLogger;
@@ -74,21 +74,6 @@ public class StringPredicateFactory {
      */
     public static Predicate<String> createFuzzyMatchPredicate(final String userInput) {
         return createFuzzyMatchPredicate(userInput, DEFAULT_SEPARATOR_CHAR_CLASS);
-    }
-
-    public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
-                                                             final Function<T, String> valueExtractor) {
-
-        final Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
-        return toNullSafePredicate(false,
-                (T obj) -> {
-                    final String valueUnderTest = valueExtractor.apply(obj);
-                    if (valueUnderTest == null) {
-                        return false;
-                    } else {
-                        return stringPredicate.test(valueUnderTest);
-                    }
-                });
     }
 
     /**
@@ -229,11 +214,11 @@ public class StringPredicateFactory {
         if (userInput == null) {
             return String.CASE_INSENSITIVE_ORDER;
         } else if (userInput.startsWith(REGEX_PREFIX)
-                || userInput.startsWith(STARTS_WITH_PREFIX)
-                || userInput.startsWith(ENDS_WITH_PREFIX)
-                || userInput.startsWith(EXACT_MATCH_PREFIX)
-                || userInput.startsWith(WORD_BOUNDARY_PREFIX)
-                || userInput.startsWith(NOT_OPERATOR_STR)) {
+                   || userInput.startsWith(STARTS_WITH_PREFIX)
+                   || userInput.startsWith(ENDS_WITH_PREFIX)
+                   || userInput.startsWith(EXACT_MATCH_PREFIX)
+                   || userInput.startsWith(WORD_BOUNDARY_PREFIX)
+                   || userInput.startsWith(NOT_OPERATOR_STR)) {
             return String.CASE_INSENSITIVE_ORDER;
         } else {
             // TODO @AT Need to consider how to rank word boundary matches
@@ -609,26 +594,29 @@ public class StringPredicateFactory {
         // A digit after a letter means the start of a word
         // A digit after a digit means the continuation of a word.
 
+        final String separator = "\\W";
+
         final StringBuilder patternBuilder = new StringBuilder();
         char lastChr = 0;
         for (int i = 0; i < userInput.length(); i++) {
             char chr = userInput.charAt(i);
 
             if (Character.isUpperCase(chr)
-                    || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
+                || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
                 if (i == 0) {
                     // First letter so is either preceded by ^ or by a separator
                     patternBuilder
                             .append("(?:^|") // non-capturing
-                            .append(separatorCharacterClass)
+                            .append(separator)
+                            .append("+")
                             .append(")");
                 } else {
                     // Not the first letter so need the end of the previous word
                     // and a word separator
                     patternBuilder
-                            .append(CASE_INSENS_WORD_LETTER_CHAR_CLASS)
-                            .append("*")
-                            .append(separatorCharacterClass)
+//                            .append(CASE_INSENS_WORD_LETTER_CHAR_CLASS)
+                            .append(".*?")
+                            .append(separator)
                             .append("+"); // one of more separators
                 }
                 // Start of a word
@@ -645,7 +633,7 @@ public class StringPredicateFactory {
         final Pattern pattern = Pattern.compile(
                 patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
         LOGGER.trace("Using separated word pattern: {} with separators {}",
-                pattern, separatorCharacterClass);
+                pattern, separator);
 
         return pattern.asPredicate();
     }
@@ -706,12 +694,8 @@ public class StringPredicateFactory {
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < lowerCaseInput.length(); i++) {
             patternBuilder.append(".*?"); // no-greedy match all
-
             char chr = lowerCaseInput.charAt(i);
-            if (chr == '*') {
-                // TODO @AT Why is this * block here
-                patternBuilder.append(".*?"); // no-greedy match all
-            } else if (Character.isLetterOrDigit(chr)) {
+            if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
                 // Might be a special char so escape it

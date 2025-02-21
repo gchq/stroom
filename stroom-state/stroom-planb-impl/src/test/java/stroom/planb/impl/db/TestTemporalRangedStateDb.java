@@ -95,7 +95,7 @@ class TestTemporalRangedStateDb {
             fieldIndex.create(TemporalRangedStateFields.VALUE_TYPE);
             fieldIndex.create(TemporalRangedStateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,

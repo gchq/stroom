@@ -365,31 +365,29 @@ class QueryServiceImpl implements QueryService {
                             .map(Column::getId)
                             .toList()
                             .indexOf(request.getColumn().getId());
-                    if (index == -1) {
-                        throw new RuntimeException("Column not found");
-                    }
-
-                    dataStore.fetch(
-                            dataStore.getColumns(),
-                            OffsetRange.UNBOUNDED,
-                            new OpenGroupsImpl(openGroups),
-                            timeFilter,
-                            item -> {
-                                final Val val = item.getValue(index);
-                                if (predicate.test(val)) {
-                                    final String string = val.toString();
-                                    if (string != null && dedupe.add(string)) {
-                                        list.add(string);
+                    if (index != -1) {
+                        dataStore.fetch(
+                                dataStore.getColumns(),
+                                OffsetRange.UNBOUNDED,
+                                new OpenGroupsImpl(openGroups),
+                                timeFilter,
+                                item -> {
+                                    final Val val = item.getValue(index);
+                                    if (predicate.test(val)) {
+                                        final String string = val.toString();
+                                        if (string != null && dedupe.add(string)) {
+                                            list.add(string);
+                                        }
                                     }
-                                }
-                                return null;
-                            },
-                            row -> {
+                                    return null;
+                                },
+                                row -> {
 
-                            },
-                            count -> {
+                                },
+                                count -> {
 
-                            });
+                                });
+                    }
                 } catch (final Exception e) {
                     LOGGER.debug(e::getMessage, e);
                     throw e;

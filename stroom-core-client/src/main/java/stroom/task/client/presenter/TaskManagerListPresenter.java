@@ -25,10 +25,10 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
@@ -177,6 +177,7 @@ public class TaskManagerListPresenter
             protected void exec(final Range range,
                                 final Consumer<TaskProgressResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
+                CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
                 TaskManagerListPresenter.this.range = range;
                 TaskManagerListPresenter.this.dataConsumer = dataConsumer;
                 delayedUpdate.reset();
@@ -187,17 +188,6 @@ public class TaskManagerListPresenter
 
         // Handle use of the expander column.
         dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                // As we get data async from all nodes we can't be sure when we have finished so
-                // need to clear the expandAllRequestState prior to fetching
-                treeAction.resetExpandAllRequestState();
-                dataProvider.refresh();
-            }
-        });
     }
 
     @Override
@@ -244,6 +234,13 @@ public class TaskManagerListPresenter
                 }
 //                internalRefresh();
             }
+        }));
+
+        registerHandler(dataGrid.addColumnSortHandler(event -> {
+            // As we get data async from all nodes we can't be sure when we have finished so
+            // need to clear the expandAllRequestState prior to fetching
+            treeAction.resetExpandAllRequestState();
+            dataProvider.refresh();
         }));
     }
 

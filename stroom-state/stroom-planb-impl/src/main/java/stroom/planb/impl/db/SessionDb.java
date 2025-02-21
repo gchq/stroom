@@ -49,7 +49,7 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                        final ValuesConsumer consumer) {
         final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
-                .create(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
+                .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
         final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
         final Function<KeyVal<ByteBuffer>, Val>[] valExtractors = serde.getValExtractors(fieldIndex);
 

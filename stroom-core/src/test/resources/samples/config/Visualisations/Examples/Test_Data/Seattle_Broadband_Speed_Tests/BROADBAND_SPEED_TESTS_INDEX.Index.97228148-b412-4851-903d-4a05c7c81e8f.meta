@@ -8,46 +8,6 @@
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
   "fields" : [ {
-    "fldName" : "StreamId",
-    "fldType" : "ID",
-    "analyzerType" : "KEYWORD",
-    "indexed" : true,
-    "stored" : true,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "EventId",
-    "fldType" : "ID",
-    "analyzerType" : "KEYWORD",
-    "indexed" : true,
-    "stored" : true,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "Feed",
-    "fldType" : "TEXT",
-    "analyzerType" : "ALPHA_NUMERIC",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "Feed (Keyword)",
-    "fldType" : "TEXT",
-    "analyzerType" : "KEYWORD",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "timestamp",
-    "fldType" : "DATE",
-    "analyzerType" : "KEYWORD",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
     "fldName" : "actual_download",
     "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
@@ -88,6 +48,30 @@
     "termPositions" : false,
     "caseSensitive" : false
   }, {
+    "fldName" : "EventId",
+    "fldType" : "ID",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "Feed",
+    "fldType" : "TEXT",
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "Feed (Keyword)",
+    "fldType" : "TEXT",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
     "fldName" : "isp",
     "fldType" : "TEXT",
     "analyzerType" : "STANDARD",
@@ -107,6 +91,22 @@
     "fldName" : "min_rtt",
     "fldType" : "LONG",
     "analyzerType" : "NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "StreamId",
+    "fldType" : "ID",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "timestamp",
+    "fldType" : "DATE",
+    "analyzerType" : "KEYWORD",
     "indexed" : true,
     "stored" : false,
     "termPositions" : false,

@@ -25,7 +25,7 @@ import stroom.widget.util.client.SvgImageUtil;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.SortIcon;
 
 public class ColumnTitleCell extends AbstractCell<Column> {
 
@@ -42,46 +42,33 @@ public class ColumnTitleCell extends AbstractCell<Column> {
 
         // Show group icon.
         if (column.getGroup() != null) {
-            // Show group icon.
-            sb.append(getSafeHtml(SvgImage.FIELDS_GROUP));
-
-            // Show group depth.
-            sb.append(SafeHtmlUtils
-                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                       (column.getGroup() + 1) +
-                                       "</div>"));
+            SortIcon.append(sb,
+                    SvgImage.FIELDS_GROUP,
+                    "Group Level " + (column.getGroup() + 1),
+                    column.getGroup() + 1);
         }
 
         // Add sort icon.
         if (column.getSort() != null) {
-            if (Sort.SortDirection.ASCENDING == column.getSort().getDirection()) {
-                sb.append(getSafeHtml(SvgImage.FIELDS_SORTAZ));
-            } else {
-                sb.append(getSafeHtml(SvgImage.FIELDS_SORTZA));
-            }
-
-            // Add sort order.
-            sb.append(SafeHtmlUtils
-                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                       (column.getSort().getOrder() + 1) +
-                                       "</div>"));
+            SortIcon.append(sb,
+                    Sort.SortDirection.ASCENDING == column.getSort().getDirection(),
+                    column.getSort().getOrder() + 1);
         }
 
         // Add filter icon.
         final IncludeExcludeFilter filter = column.getFilter();
         if (filter != null) {
-            if ((filter.getIncludes() != null && !filter.getIncludes().trim().isEmpty()) ||
-                (filter.getExcludes() != null && !filter.getExcludes().trim().isEmpty())) {
+            if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
+                (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
                 sb.append(getSafeHtml(SvgImage.FIELDS_FILTER));
             }
         }
 
+        // Add value filter button.
         String className = "svgIcon column-valueFilterIcon";
         if (column.getColumnValueSelection() != null && column.getColumnValueSelection().isEnabled()) {
             className += " icon-colour__blue";
         }
-
-        // Add value filter button.
         sb.appendHtmlConstant("<div class=\"column-valueFilter\">");
         sb.append(SvgImageUtil.toSafeHtml(SvgImage.VALUE_FILTER, className));
         sb.appendHtmlConstant("</div>");

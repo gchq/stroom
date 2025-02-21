@@ -7,7 +7,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 import stroom.util.shared.UserDesc;
@@ -26,7 +25,6 @@ import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.Query.Builder;
 import event.logging.ResultPage;
-import event.logging.SearchEventAction;
 import event.logging.SimpleQuery;
 import event.logging.Term;
 import event.logging.TermCondition;
@@ -37,7 +35,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class StroomEventLoggingUtil {
@@ -208,15 +205,6 @@ public class StroomEventLoggingUtil {
         }
     }
 
-    public static <T> SearchEventAction createSearchEventAction(final QuickFilterResultPage<T> resultPage,
-                                                                final Supplier<Query> querySupplier) {
-        return SearchEventAction.builder()
-                .withQuery(querySupplier.get())
-                .withResultPage(StroomEventLoggingUtil.createResultPage(resultPage))
-                .withTotalResults(BigInteger.valueOf(resultPage.size()))
-                .build();
-    }
-
     private static AdvancedQueryItem convertItem(final ExpressionItem expressionItem) {
         if (expressionItem != null && expressionItem.enabled()) {
             if (expressionItem instanceof final ExpressionTerm expressionTerm) {
@@ -250,7 +238,7 @@ public class StroomEventLoggingUtil {
 
     private static AdvancedQueryItem convertTerm(final ExpressionTerm expressionTerm) {
         if (expressionTerm.getField() == null ||
-                expressionTerm.getCondition() == null) {
+            expressionTerm.getCondition() == null) {
             return null;
         }
 

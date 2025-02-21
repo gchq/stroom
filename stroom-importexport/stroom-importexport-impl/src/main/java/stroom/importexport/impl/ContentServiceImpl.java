@@ -36,9 +36,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
@@ -145,7 +145,7 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
-    public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
     }
 
@@ -201,7 +201,7 @@ class ContentServiceImpl implements ContentService {
                 .map(docType -> Tuple.of(docType,
                         Objects.requireNonNullElse(exportSummary.getSuccessCountsByType().get(docType), 0),
                         Objects.requireNonNullElse(exportSummary.getFailedCountsByType().get(docType), 0)))
-                .collect(Collectors.toList());
+                .toList();
 
         final String typeCountsText = AsciiTable.builder(tableData)
                 .withColumn(Column.of("Type", Tuple3::_1))

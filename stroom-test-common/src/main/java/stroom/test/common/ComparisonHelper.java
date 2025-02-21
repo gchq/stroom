@@ -128,7 +128,7 @@ public final class ComparisonHelper {
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
                 final Stream<String> actualStream = Files.lines(actualFile)) {
 
-            final List<String> expectedLines = expectedStream.collect(Collectors.toList());
+            final List<String> expectedLines = expectedStream.toList();
             final List<String> actualLines = actualStream.collect(Collectors.toList());
 
             final Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);

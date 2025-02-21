@@ -100,8 +100,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return new ListConfigResponse(
                 values,
                 list.getPageResponse(),
-                nodeInfoProvider.get().getThisNodeName(),
-                list.getQualifiedFilterInput());
+                nodeInfoProvider.get().getThisNodeName());
     }
 
     private ListConfigResponse listWithLogging(final GlobalConfigCriteria criteria) {
@@ -121,7 +120,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
                     // Ignore the previous searchEventAction as it didn't have anything useful on it
                     final SearchEventAction newSearchEventAction = SearchEventAction.builder()
-                            .withQuery(buildRawQuery(sanitisedResult.getQualifiedFilterInput()))
+                            .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
                             .withResultPage(StroomEventLoggingUtil.createResultPage(sanitisedResult))
                             .withTotalResults(BigInteger.valueOf(sanitisedResult.size()))
                             .build();
@@ -296,8 +295,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 ? new Query()
                 : Query.builder()
                         .withRaw("Configuration property matches \""
-                                + Objects.requireNonNullElse(userInput, "")
-                                + "\"")
+                                 + Objects.requireNonNullElse(userInput, "")
+                                 + "\"")
                         .build();
     }
 }

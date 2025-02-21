@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg version="1.1"
+     id="svg622"
+     width="16"
+     height="16"
+     viewBox="0 0 16 16"
+     xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <path style="stroke:#010101;stroke-width:2;stroke-linecap:round"
+              d="M 2.9805078,12.97533 H 6.9743201"/>
+        <path style="stroke:#010101;stroke-width:2;stroke-linecap:round"
+              d="m 2.9805078,6.3275299 1.0182013,0"/>
+        <path style="stroke:#010101;stroke-width:2;stroke-linecap:round"
+              d="M 2.9805078,9.6514299 H 12.98399"/>
+        <path style="stroke:#010101;stroke-width:2;stroke-linecap:round"
+              d="m 2.9805078,3.0036298 7.0168126,0"/>
+    </g>
+</svg>

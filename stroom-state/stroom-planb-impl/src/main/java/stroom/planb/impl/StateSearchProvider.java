@@ -34,7 +34,7 @@ import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -78,6 +78,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final ShardManager shardManager;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final SecurityContext securityContext;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public StateSearchProvider(final Executor executor,
@@ -89,7 +90,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final TaskContextFactory taskContextFactory,
                                final ShardManager shardManager,
                                final ExpressionPredicateFactory expressionPredicateFactory,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
         this.stateDocCache = stateDocCache;
@@ -100,6 +102,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.shardManager = shardManager;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.securityContext = securityContext;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     private PlanBDoc getPlanBDoc(final DocRef docRef) {
@@ -132,10 +135,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final PlanBDoc doc = getPlanBDoc(criteria.getDataSourceRef());
         final List<QueryField> fields = StateFieldUtil.getQueryableFields(doc.getStateType());
-        return FieldInfoResultPageBuilder
-                .builder(criteria)
-                .addAll(fields)
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, fields);
     }
 
     @Override

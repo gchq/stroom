@@ -35,6 +35,6 @@ public class TermHandlerFactory {
                                      final boolean useName) {
         return new TermHandler<T>(dataSourceField,
                 field,
-                converter, wordListProvider, collectionService, docRefInfoService, useName);
+                converter, wordListProvider, collectionService, docRefInfoService, useName, false);
     }
 }

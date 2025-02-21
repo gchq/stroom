@@ -29,7 +29,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.ExpressionFilter;
@@ -57,12 +57,15 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.annotationDao = annotationDao;
         this.securityContext = securityContext;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -88,7 +91,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         if (!ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(AnnotationFields.FIELDS).build();
+        return fieldInfoResultPageFactory.create(criteria, AnnotationFields.FIELDS);
     }
 
     @Override

@@ -136,7 +136,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         .getImports()
                         .stream()
                         .map(dependencyRemapper::remap)
-                        .collect(Collectors.toList());
+                        .toList();
                 doc.setImports(replacedDocRefImports);
             }
         };

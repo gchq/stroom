@@ -22,7 +22,6 @@ import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.dashboard.impl.visualisation.VisualisationDocCache;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch.MatchType;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
@@ -42,7 +41,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
-import stroom.util.string.StringMatcher;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
@@ -52,6 +50,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @Singleton
 public class Visualisations {
@@ -81,24 +80,22 @@ public class Visualisations {
     private List<VisualisationDoc> getVisualisationDocs() {
         // TODO not ideal having to hit the DB to list all the docRefs then load
         //  each doc (albeit the load will probably be a cache hit)
-        final List<VisualisationDoc> list = visualisationStore.list()
+        return visualisationStore.list()
                 .stream()
                 .filter(Objects::nonNull)
                 .map(visualisationDocCache::get)
                 .toList();
-        return list;
     }
 
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
-                        final StringMatcher stringMatcher,
+                        final Predicate<String> predicate,
                         final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final List<VisualisationDoc> docs = getVisualisationDocs();
         if (parentPath.isBlank()) {
-            final boolean hasChildren = hasChildren(docs, stringMatcher);
+            final boolean hasChildren = hasChildren(docs, predicate);
             if (hasChildren ||
-                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                predicate.test(ROOT.getTitle())) {
                 resultPageBuilder.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(VISUALISATION_ID + ".")) {
@@ -107,7 +104,7 @@ public class Visualisations {
 
             for (final VisualisationDoc doc : docs) {
                 final DocRef docRef = doc.asDocRef();
-                if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
+                if (predicate.test(docRef.getDisplayValue())) {
                     final QueryHelpRow row = QueryHelpRow
                             .builder()
                             .type(QueryHelpType.VISUALISATION)
@@ -188,10 +185,10 @@ public class Visualisations {
         return Optional.empty();
     }
 
-    private boolean hasChildren(final List<VisualisationDoc> docs, final StringMatcher stringMatcher) {
+    private boolean hasChildren(final List<VisualisationDoc> docs, final Predicate<String> predicate) {
         return docs.stream()
                 .map(VisualisationDoc::asDocRef)
-                .anyMatch(docRef -> stringMatcher.match(docRef.getDisplayValue()).isPresent());
+                .anyMatch(docRef -> predicate.test(docRef.getDisplayValue()));
     }
 
     private CompletionItem createCompletionSnippet(final VisualisationDoc doc, final int score) {

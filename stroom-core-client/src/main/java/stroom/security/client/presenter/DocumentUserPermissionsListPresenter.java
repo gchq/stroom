@@ -17,7 +17,7 @@
 package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -59,7 +59,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -135,6 +134,12 @@ public class DocumentUserPermissionsListPresenter
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
     public void onFilterChange(String text) {
         text = GwtNullSafe.trim(text);
         if (text.isEmpty()) {
@@ -157,7 +162,8 @@ public class DocumentUserPermissionsListPresenter
                         protected void exec(final Range range,
                                             final Consumer<ResultPage<DocumentUserPermissions>> dataConsumer,
                                             final RestErrorHandler errorHandler) {
-                            criteriaBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                            criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
+                            criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                             final FetchDocumentUserPermissionsRequest request = criteriaBuilder.build();
                             restFactory
                                     .create(DOC_PERMISSION_RESOURCE)
@@ -194,8 +200,6 @@ public class DocumentUserPermissionsListPresenter
     }
 
     private void setupColumns(final DocumentTypes documentTypes) {
-        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
-
         // Icon
         dataGrid.addColumn(
                 DataGridUtil.svgPresetColumnBuilder(false, (DocumentUserPermissions row) ->
@@ -222,6 +226,7 @@ public class DocumentUserPermissionsListPresenter
                         .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
                         .enabledWhen(this::isUserEnabled)
                         .build();
+        dataGrid.sort(displayNameCol);
 
         dataGrid.addResizableColumn(
                 displayNameCol,
@@ -289,8 +294,6 @@ public class DocumentUserPermissionsListPresenter
         }
 
         DataGridUtil.addEndColumn(dataGrid);
-
-        dataGrid.getColumnSortList().push(new ColumnSortInfo(displayNameCol, true));
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {

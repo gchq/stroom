@@ -19,20 +19,23 @@ package stroom.search;
 
 
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.search.impl.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -55,6 +58,8 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private PathCreator pathCreator;
+    @Inject
+    private IndexFieldService indexFieldService;
 
     private boolean doneSetup;
 
@@ -68,20 +73,23 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Test
     void testFindIndexedFields() {
-        final DocRef indexRef = indexStore.list().get(0);
+        final DocRef indexRef = indexStore.list().getFirst();
         final LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
-        final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index)
+        final FindFieldCriteria findFieldCriteria =
+                new FindFieldCriteria(PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, indexRef);
+        final Map<String, IndexField> dataSourceFieldsMap = indexFieldService.findFields(findFieldCriteria)
+                .getValues()
                 .stream()
-                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
-        final QueryField actual = dataSourceFieldsMap.get("Action");
-        final QueryField expected = QueryField
+                .collect(Collectors.toMap(IndexField::getFldName, Function.identity()));
+        final IndexField actual = dataSourceFieldsMap.get("Action");
+        final IndexField expected = IndexFieldImpl
                 .builder()
                 .fldName("Action")
                 .fldType(FieldType.TEXT)
-                .conditionSet(actual.getConditionSet())
-                .queryable(true)
+                .analyzerType(actual.getAnalyzerType())
+                .indexed(true)
                 .build();
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }

@@ -1,4 +1,4 @@
-package stroom.util.filter;
+package stroom.query.common.v2;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -24,7 +24,6 @@ class TestStringPredicateFactory {
 
         // Each test is run in normal ("foorbar") and negated form ("!foorbar")
         tests.addAll(List.of(
-
                 makeFuzzyMatchTest("Contains",
                         "map",
                         List.of("map",
@@ -188,8 +187,19 @@ class TestStringPredicateFactory {
                 makeFuzzyMatchTest("Word boundary match 5",
                         "?CPSP",
                         List.of("CountPipelineSQLPipe",
-                                "CountPipelineSwimPipe"),
-                        List.of("CountPipelineSoQueueLongPipe")),
+                                "CountPipelineSwimPipe",
+                                "CountPipelineSoQueueLongPipe"),
+                        List.of("CountPipelineSoQueueLong")),
+
+                makeFuzzyMatchTest("Word boundary match 5b",
+                        "?TIMF",
+                        List.of("THIS_IS_MY_OTHER_FEED"),
+                        List.of("timf", "TIMF")),
+
+                makeFuzzyMatchTest("Word boundary match 5c",
+                        "?TIMF",
+                        List.of("THIS_IS_MY_a99_FEED"),
+                        List.of("timf", "TIMF")),
 
                 makeFuzzyMatchTest("Word boundary match 6 (camel + delimited) ",
                         "?JDCN",

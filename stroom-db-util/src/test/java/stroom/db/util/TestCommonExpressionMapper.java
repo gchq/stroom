@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +58,7 @@ class TestCommonExpressionMapper {
 
                     assertThat(condition).isEqualTo(DSL.noCondition());
                 }))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @TestFactory
@@ -79,7 +78,7 @@ class TestCommonExpressionMapper {
 
                     assertThat(condition).isEqualTo(DSL.noCondition());
                 }))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Test
@@ -227,7 +226,7 @@ class TestCommonExpressionMapper {
                     assertThat(condition.toString())
                             .isEqualTo(conditionString(DB_FIELD_NAME_1, FIELD_1_VALUE));
                 }))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @TestFactory
@@ -255,7 +254,7 @@ class TestCommonExpressionMapper {
                     assertThat(condition.toString())
                             .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
                 }))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Test

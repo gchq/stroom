@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
-    private static final int REFRESH_ALL_NODES_TIMER_DELAY_MS = 500;
+    private static final int DEBOUNCE_DELAY_MS = 500;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold(hb -> hb.append("Quick Filter"))
             .br()
@@ -121,7 +121,7 @@ public class QuickFilter extends FlowPanel
                 // Add in a slight delay to give the user a chance to type a few chars before we fire off
                 // a rest call. This helps to reduce the logging too
                 if (!filterRefreshTimer.isRunning()) {
-                    filterRefreshTimer.schedule(REFRESH_ALL_NODES_TIMER_DELAY_MS);
+                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
                 }
             }
         }

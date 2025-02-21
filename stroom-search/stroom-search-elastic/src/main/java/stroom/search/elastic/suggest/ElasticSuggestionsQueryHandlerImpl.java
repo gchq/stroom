@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 @Singleton
 public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQueryHandler {
@@ -114,7 +113,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
 
             return new Suggestions(termSuggestion.getFirst().term().options().stream()
                     .map(TermSuggestOption::text)
-                    .collect(Collectors.toList()));
+                    .toList());
         } catch (IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
                     ". " + e.getMessage(), e);

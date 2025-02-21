@@ -123,7 +123,7 @@ class TestSearchResultCreation {
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory());
     }
 
     @AfterEach
@@ -176,7 +176,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -311,7 +311,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -392,7 +392,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -507,7 +507,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory());
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 

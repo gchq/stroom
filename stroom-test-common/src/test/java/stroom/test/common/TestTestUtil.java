@@ -17,7 +17,6 @@ import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -170,7 +169,7 @@ class TestTestUtil {
                 .boxed()
                 .map(i ->
                         Month.of(i).getDisplayName(TextStyle.FULL, Locale.ENGLISH))
-                .collect(Collectors.toList());
+                .toList();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputTypes(Integer.class, Integer.class)

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.util.string;
+package stroom.contentindex;
 
-import stroom.docref.StringMatch;
-import stroom.docref.StringMatch.MatchType;
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatch;
+import stroom.explorer.shared.StringMatch.MatchType;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.util.NullSafe;
 
 import java.util.ArrayList;

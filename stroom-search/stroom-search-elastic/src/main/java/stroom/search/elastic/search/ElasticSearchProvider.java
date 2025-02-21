@@ -29,7 +29,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -80,7 +80,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
@@ -96,6 +95,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticSearchExecutor elasticSearchExecutor;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public ElasticSearchProvider(
@@ -109,7 +109,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final ElasticClusterStore elasticClusterStore,
             final ElasticIndexStore elasticIndexStore,
             final SecurityContext securityContext,
-            final ElasticSearchExecutor elasticSearchExecutor) {
+            final ElasticSearchExecutor elasticSearchExecutor,
+            final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.elasticIndexCache = elasticIndexCache;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -118,6 +119,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.elasticSearchExecutor = elasticSearchExecutor;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -165,13 +167,12 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final ElasticIndexDoc index = elasticIndexStore.readDocument(criteria.getDataSourceRef());
-            if (index != null) {
-                final List<QueryField> fields = getDataSourceFields(index);
-                builder.addAll(fields);
+            if (index == null) {
+                return ResultPage.empty();
             }
-            return builder.build();
+            final List<QueryField> fields = getDataSourceFields(index);
+            return fieldInfoResultPageFactory.create(criteria, fields);
         });
     }
 
@@ -262,7 +263,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     }
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

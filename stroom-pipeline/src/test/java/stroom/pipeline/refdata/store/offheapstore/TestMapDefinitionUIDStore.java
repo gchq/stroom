@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -185,7 +184,7 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
                     return new MapDefinition(refStreamDefinition, "MyMapName");
 
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         final Map<UID, MapDefinition> loadedEntries = loadEntries(mapDefinitions);
 
@@ -195,7 +194,7 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
                 .map(Map.Entry::getKey)
                 .map(UID::getValue)
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
 
         // convert the UIDs back to values and check we have all we expect
         assertThat(values)

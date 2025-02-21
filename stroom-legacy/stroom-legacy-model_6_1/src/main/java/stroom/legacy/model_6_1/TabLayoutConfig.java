@@ -26,7 +26,6 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tabLayout", propOrder = {"tabs", "selected"})
@@ -56,7 +55,7 @@ public class TabLayoutConfig extends LayoutConfig {
         if (tabs == null) {
             return Collections.emptyList();
         }
-        return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
+        return tabs.stream().filter(TabConfig::isVisible).toList();
     }
 
     public TabConfig get(final int index) {

@@ -85,7 +85,7 @@ class TestSessionDb {
             final ValDate minTime = ValDate.create(outerRange.min());
             final ValDate maxTime = ValDate.create(outerRange.max());
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     criteria,
                     fieldIndex,

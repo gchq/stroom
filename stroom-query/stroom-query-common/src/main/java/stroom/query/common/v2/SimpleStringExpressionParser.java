@@ -13,7 +13,6 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
-import stroom.util.NullSafe;
 import stroom.util.shared.GwtNullSafe;
 
 import java.util.ArrayList;
@@ -71,7 +70,7 @@ public class SimpleStringExpressionParser {
         // Tag everything else as a string.
         tokens = Tokeniser.categorise(TokenType.STRING, tokens);
 
-        final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+        final TokenGroup tokenGroup = StructureBuilder.createBasic(tokens);
         return Optional.of(processLogic(tokenGroup.getChildren(), fieldProvider));
     }
 
@@ -118,7 +117,12 @@ public class SimpleStringExpressionParser {
         // Gather terms.
         final List<AbstractToken> termTokens = new ArrayList<>();
         for (final AbstractToken token : tokens) {
-            if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
+            if (token.getTokenType().equals(TokenType.WHITESPACE)) {
+                if (!termTokens.isEmpty()) {
+                    createTerm(termTokens, fieldProvider).ifPresent(out::add);
+                    termTokens.clear();
+                }
+            } else if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
                 out.add(processLogic(keywordGroup.getChildren(), fieldProvider));
             } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
                 out.add(processLogic(tokenGroup.getChildren(), fieldProvider));
@@ -214,13 +218,12 @@ public class SimpleStringExpressionParser {
     private static Optional<ExpressionItem> createTerm(final List<AbstractToken> tokens,
                                                        final FieldProvider fieldProvider) {
         // Split tokens into whitespace separated groups and apply AND between them.
-        final List<ExpressionItem> operators = new ArrayList<>();
+        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         final List<AbstractToken> current = new ArrayList<>();
         for (final AbstractToken token : tokens) {
             if (TokenType.WHITESPACE.equals(token.getTokenType())) {
                 if (!current.isEmpty()) {
-                    final Optional<ExpressionItem> optional = createInnerTerm(current, fieldProvider);
-                    optional.ifPresent(operators::add);
+                    createInnerTerm(current, fieldProvider, builder);
                     current.clear();
                 }
             } else {
@@ -229,212 +232,155 @@ public class SimpleStringExpressionParser {
         }
         // Add remaining.
         if (!current.isEmpty()) {
-            final Optional<ExpressionItem> optional = createInnerTerm(current, fieldProvider);
-            optional.ifPresent(operators::add);
+            createInnerTerm(current, fieldProvider, builder);
         }
 
-        if (operators.isEmpty()) {
+        final ExpressionOperator operator = builder.build();
+        if (!operator.hasChildren()) {
             return Optional.empty();
-        } else if (operators.size() == 1) {
-            return Optional.of(operators.getFirst());
+        } else if (operator.getChildren().size() == 1) {
+            return Optional.of(operator.getChildren().getFirst());
         } else {
-            return Optional.of(ExpressionOperator.builder().children(operators).build());
+            return Optional.of(operator);
         }
     }
 
-    private static List<AbstractToken> collapseTokenGroups(final List<AbstractToken> tokens) {
-        // Collapse remaining token groups.
-        final List<AbstractToken> collapsed = new ArrayList<>();
-        for (final AbstractToken token : tokens) {
-            if (TokenType.isString(token)) {
-                collapsed.add(token);
-            } else if (token instanceof final TokenGroup tokenGroup) {
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getStart(), token.getStart()));
-                collapsed.addAll(collapseTokenGroups(tokenGroup.getChildren()));
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getEnd(), token.getEnd()));
-            } else {
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getStart(), token.getEnd()));
-            }
-        }
-        return collapsed;
-    }
+    private static void createInnerTerm(final List<AbstractToken> in,
+                                        final FieldProvider fieldProvider,
+                                        final ExpressionOperator.Builder parent) {
+        final List<AbstractToken> remaining = new ArrayList<>(in);
+        while (!remaining.isEmpty()) {
+            final AbstractToken token = remaining.removeFirst();
 
-    private static List<AbstractToken> mergeTokenGroups(final List<AbstractToken> tokens) {
-        // Collapse remaining token groups.
-        AbstractToken lastToken = null;
-        final List<AbstractToken> merged = new ArrayList<>();
-        for (final AbstractToken token : tokens) {
-            if (lastToken != null) {
-                if (lastToken.getTokenType().equals(token.getTokenType())) {
-                    // Expand token.
-                    lastToken = new Token(
-                            lastToken.getTokenType(),
-                            lastToken.getChars(),
-                            lastToken.getStart(),
-                            token.getEnd());
-                } else {
-                    merged.add(lastToken);
-                    lastToken = token;
-                }
-            } else {
-                lastToken = token;
-            }
-        }
-        if (lastToken != null) {
-            merged.add(lastToken);
-        }
-        return merged;
-    }
+            Condition condition = null;
+            boolean charsAnywhere = false;
+            boolean not = false;
+            String fieldName = "";
+            String fieldValue = "";
+            List<String> fields = fieldProvider.getDefaultFields();
 
-    private static Optional<ExpressionItem> createInnerTerm(final List<AbstractToken> in,
-                                                            final FieldProvider fieldProvider) {
-        // Collapse remaining token groups.
-        List<AbstractToken> tokens = collapseTokenGroups(in);
-        tokens = mergeTokenGroups(tokens);
-
-        if (tokens.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Condition condition = null;
-        String value;
-        final AbstractToken token = tokens.getFirst();
-
-        if (TokenType.STRING.equals(token.getTokenType())) {
-            final String string = token.getUnescapedText();
-
-            // See if the condition is negated.
-            if (string.length() > 1 && string.startsWith("!")) {
-                final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
-                final Token t = new Token(TokenType.STRING, token.getChars(), token.getStart() + 1, token.getEnd());
-                final List<AbstractToken> remaining = new ArrayList<>(tokens.size());
-                remaining.add(t);
-                remaining.addAll(tokens.subList(1, tokens.size()));
-
-                final Optional<ExpressionItem> child = createInnerTerm(remaining, fieldProvider);
-                if (child.isEmpty()) {
-                    return Optional.empty();
-                }
-                builder.children(Collections.singletonList(child.get()));
-                return Optional.of(builder.build());
-
-            } else {
-                if (NullSafe.isEmptyString(string)) {
-                    return Optional.empty();
-                }
-
-                value = string;
-
-                for (Condition c : SUPPORTED_CONDITIONS) {
-                    final String operator = c.getOperator();
-                    if (string.startsWith(operator)) {
-                        condition = c;
-                        value = string.substring(operator.length());
-                        break;
-                    }
-                }
-
-                if (condition == null) {
-                    if (string.startsWith("~")) {
-                        // Characters Anywhere Matching.
-                        condition = Condition.MATCHES_REGEX;
-                        value = string.substring(1);
-                        char[] chars = value.toCharArray();
-                        final StringBuilder sb = new StringBuilder();
-                        for (final char c : chars) {
-                            sb.append(".*?");
-
-                            if (c == '*') {
-                                // TODO @AT Why is this * block here
-                                sb.append(".*?");
-                            } else if (Character.isLetterOrDigit(c)) {
-                                sb.append(c);
-                            } else {
-                                // Might be a special char so escape it
-                                sb.append(Pattern.quote(String.valueOf(c)));
-                            }
-                        }
-                        value = sb.toString();
-                    } else if (string.startsWith("\\")) {
-                        // Escaped contains
-                        condition = Condition.CONTAINS;
-                        value = string.substring(1);
-                    } else {
-                        // Contains.
-                        condition = Condition.CONTAINS;
-                    }
-                }
+            // See if this is a qualifier to get a field name,
+            if (TokenType.STRING.equals(token.getTokenType())) {
+                fieldValue = token.getUnescapedText();
 
                 // Get the field prefix.
-                final String fieldPrefix = getFieldPrefix(value);
+                final String fieldPrefix = getFieldPrefix(fieldValue);
+                fieldValue = fieldValue.substring(fieldPrefix.length());
 
-                // Resolve all fields.
-                List<String> fields;
-                String fieldName = fieldPrefix;
+                fieldName = fieldPrefix;
                 // Remove field prefix delimiter.
                 if (fieldName.endsWith(":")) {
                     fieldName = fieldName.substring(0, fieldName.length() - 1);
                 }
-                if (fieldName.isEmpty()) {
-                    fields = fieldProvider.getDefaultFields();
-                } else {
+
+                // Resolve all fields.
+                if (!fieldName.isEmpty()) {
                     final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                    if (qualifiedField.isEmpty()) {
-                        throw new RuntimeException("Unexpected field: " + fieldName);
+                    if (!qualifiedField.isEmpty()) {
+                        fields = Collections.singletonList(qualifiedField.get());
+                    } else {
+                        throw new RuntimeException("Unknown field: " + fieldName);
                     }
-                    fields = Collections.singletonList(qualifiedField.get());
                 }
 
-                // Resolve the field value.
-                String fieldValue = value.substring(fieldPrefix.length());
-                fieldValue = fieldValue + concatStringTokens(tokens.subList(1, tokens.size()));
+                // See if the condition is negated.
+                if (fieldValue.length() > 1 && fieldValue.startsWith("!")) {
+                    not = true;
+                    fieldValue = fieldValue.substring(1);
+                }
 
-                return createExpressionItem(fields, condition, fieldValue);
+                // Resolve condition.
+                for (Condition c : SUPPORTED_CONDITIONS) {
+                    final String operator = c.getOperator();
+                    if (fieldValue.startsWith(operator)) {
+                        condition = c;
+                        fieldValue = fieldValue.substring(operator.length());
+                        break;
+                    }
+                }
+                if (condition == null) {
+                    if (fieldValue.startsWith("~")) {
+                        // Characters Anywhere Matching.
+                        condition = Condition.MATCHES_REGEX;
+                        fieldValue = fieldValue.substring(1);
+                        charsAnywhere = true;
+                    } else if (fieldValue.startsWith("\\")) {
+                        // Escaped contains
+                        condition = Condition.CONTAINS;
+                        fieldValue = fieldValue.substring(1);
+                    }
+                }
+            } else {
+                fieldValue += token.getUnescapedText();
             }
 
-        } else {
-            final List<String> fields = fieldProvider.getDefaultFields();
-            final String fieldValue = concatStringTokens(tokens);
+            // Add remaining to field value until we hit whitespace.
+            while (!remaining.isEmpty() && !remaining.getFirst().getTokenType().equals(TokenType.WHITESPACE)) {
+                final AbstractToken next = remaining.removeFirst();
+                fieldValue += next.getUnescapedText();
+            }
 
-            return createExpressionItem(fields, Condition.CONTAINS, fieldValue);
+            // If this is a chars anywhere condition then we need to alter the value so that we can use a regex for
+            // chars anywhere matching.
+            if (charsAnywhere) {
+                char[] chars = fieldValue.toCharArray();
+                final StringBuilder sb = new StringBuilder();
+                for (final char c : chars) {
+                    if (sb.length() > 0) {
+                        sb.append(".*?");
+                    }
+                    if (Character.isLetterOrDigit(c)) {
+                        sb.append(c);
+                    } else {
+                        // Might be a special char so escape it
+                        sb.append(Pattern.quote(String.valueOf(c)));
+                    }
+                }
+                fieldValue = sb.toString();
+            }
+
+            if (!fields.isEmpty()) {
+                if (condition == null) {
+                    condition = Condition.CONTAINS;
+                }
+
+                if (not) {
+                    final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
+                    addTerms(fields, condition, fieldValue, builder);
+                    ExpressionOperator notOperator = builder.build();
+                    if (notOperator.hasChildren()) {
+                        parent.addOperator(notOperator);
+                    }
+                } else {
+                    addTerms(fields, condition, fieldValue, parent);
+                }
+            }
         }
     }
 
-    private static Optional<ExpressionItem> createExpressionItem(final List<String> fields,
-                                                                 final Condition condition,
-                                                                 final String fieldValue) {
-        if (fields.isEmpty()) {
-            throw new RuntimeException("No fields");
-        }
-
+    private static void addTerms(final List<String> fields,
+                                 final Condition condition,
+                                 final String fieldValue,
+                                 final ExpressionOperator.Builder parent) {
         if (fields.size() == 1) {
-            return Optional.of(ExpressionTerm
+            parent.addTerm(ExpressionTerm
                     .builder()
                     .field(fields.getFirst())
                     .condition(condition)
                     .value(fieldValue)
                     .build());
+        } else {
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
+            for (final String field : fields) {
+                builder.addTerm(ExpressionTerm
+                        .builder()
+                        .field(field)
+                        .condition(condition)
+                        .value(fieldValue)
+                        .build());
+            }
+            parent.addOperator(builder.build());
         }
-
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        for (final String field : fields) {
-            builder.addTerm(ExpressionTerm
-                    .builder()
-                    .field(field)
-                    .condition(condition)
-                    .value(fieldValue)
-                    .build());
-        }
-
-        return Optional.of(builder.build());
-    }
-
-    private static String concatStringTokens(final List<AbstractToken> tokens) {
-        final StringBuilder sb = new StringBuilder();
-        for (final AbstractToken token : tokens) {
-            sb.append(token.getUnescapedText());
-        }
-        return sb.toString();
     }
 
     private static String getFieldPrefix(final String string) {

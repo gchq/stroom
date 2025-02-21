@@ -110,11 +110,11 @@ public final class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator, null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, null).stream().map(ExpressionTerm::getField).toList();
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator, final String field) {
-        return terms(expressionOperator, field).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, field).stream().map(ExpressionTerm::getField).toList();
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {

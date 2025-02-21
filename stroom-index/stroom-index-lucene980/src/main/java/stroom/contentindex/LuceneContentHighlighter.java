@@ -16,7 +16,7 @@
 
 package stroom.contentindex;
 
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

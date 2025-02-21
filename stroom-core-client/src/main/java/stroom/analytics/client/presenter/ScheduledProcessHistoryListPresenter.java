@@ -57,13 +57,13 @@ public class ScheduledProcessHistoryListPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
+    private final RestFactory restFactory;
     private final MyDataGrid<ExecutionHistory> dataGrid;
     private final MultiSelectionModelImpl<ExecutionHistory> selectionModel;
     private final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager;
-    private final RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
+    private RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
     private final DateTimeFormatter dateTimeFormatter;
     private ExecutionHistoryRequest request;
-    private boolean initialised;
     private final ButtonView replayButton;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
@@ -73,6 +73,7 @@ public class ScheduledProcessHistoryListPresenter
                                                 final RestFactory restFactory,
                                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
         final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionHistoryFields.ID, true, true);
@@ -85,26 +86,6 @@ public class ScheduledProcessHistoryListPresenter
 
         replayButton = view.addButton(SvgPresets.UNDO);
 
-        dataProvider = new RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<ExecutionHistory>> dataConsumer,
-                                final RestErrorHandler errorHandler) {
-                if (request != null && request.getExecutionSchedule() != null) {
-                    CriteriaUtil.setRange(request, range);
-                    restFactory
-                            .create(EXECUTION_SCHEDULE_RESOURCE)
-                            .method(res -> res.fetchExecutionHistory(request))
-                            .onSuccess(dataConsumer)
-                            .onFailure(errorHandler)
-                            .taskMonitorFactory(view)
-                            .exec();
-                } else {
-                    dataConsumer.accept(ResultPage.empty());
-                }
-            }
-        };
-
         addColumns();
         enableButtons();
     }
@@ -113,6 +94,7 @@ public class ScheduledProcessHistoryListPresenter
     protected void onBind() {
         registerHandler(replayButton.addClickHandler(e -> replay()));
         registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     private void addColumns() {
@@ -161,14 +143,6 @@ public class ScheduledProcessHistoryListPresenter
                 }, ExecutionHistoryFields.MESSAGE, ColumnSizeConstants.BIG_COL);
 
         dataGrid.addEndColumn(new EndColumn<>());
-
-        dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                request.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                refresh();
-            }
-        });
     }
 
     private void replay() {
@@ -189,8 +163,27 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     public void refresh() {
-        if (!initialised) {
-            initialised = true;
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<ExecutionHistory>> dataConsumer,
+                                    final RestErrorHandler errorHandler) {
+                    if (request != null && request.getExecutionSchedule() != null) {
+                        CriteriaUtil.setRange(request, range);
+                        CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
+                        restFactory
+                                .create(EXECUTION_SCHEDULE_RESOURCE)
+                                .method(res -> res.fetchExecutionHistory(request))
+                                .onSuccess(dataConsumer)
+                                .onFailure(errorHandler)
+                                .taskMonitorFactory(getView())
+                                .exec();
+                    } else {
+                        dataConsumer.accept(ResultPage.empty());
+                    }
+                }
+            };
             dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
