@@ -114,6 +114,32 @@ class TestExpressionPredicateFactory {
                                 "this_is_my_feed"),
                         List.of("NOT_THIS_IS_MY_FEED", "NOT_THIS_IS_MY_FEED_NOT", "THIS_IS_MY_FEED_NOT")),
 
+                makeStringMatchTest("Greater than",
+                        ">DD",
+                        List.of("EE",
+                                "FF"),
+                        List.of("CC", "DD")),
+
+                makeStringMatchTest("Greater than or equals",
+                        ">=DD",
+                        List.of("DD",
+                                "EE",
+                                "FF"),
+                        List.of("CC")),
+
+                makeStringMatchTest("Less than",
+                        "<DD",
+                        List.of("BB",
+                                "CC"),
+                        List.of("DD", "EE")),
+
+                makeStringMatchTest("Less than or equals",
+                        "<=DD",
+                        List.of("BB",
+                                "DD",
+                                "DD"),
+                        List.of("EE")),
+
                 makeStringMatchTest("Exact match (case sensitive)",
                         "==this_is_my_feed",
                         List.of("this_is_my_feed"),

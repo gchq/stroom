@@ -431,6 +431,10 @@ public class ExpressionPredicateFactory {
             case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
             case CONTAINS -> StringContains.create(term, stringExtractor);
             case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
+            case GREATER_THAN -> StringGreaterThan.create(term, stringExtractor);
+            case GREATER_THAN_OR_EQUAL_TO -> StringGreaterThanOrEqual.create(term, stringExtractor);
+            case LESS_THAN -> StringLessThan.create(term, stringExtractor);
+            case LESS_THAN_OR_EQUAL_TO -> StringLessThanOrEqual.create(term, stringExtractor);
             case STARTS_WITH -> StringStartsWith.create(term, stringExtractor);
             case STARTS_WITH_CASE_SENSITIVE -> StringStartsWithCaseSensitive.create(term, stringExtractor);
             case ENDS_WITH -> StringEndsWith.create(term, stringExtractor);
@@ -1310,6 +1314,89 @@ public class ExpressionPredicateFactory {
         }
     }
 
+    private static class StringGreaterThan<T> extends StringExpressionTermPredicate<T> {
+
+        private StringGreaterThan(final ExpressionTerm term,
+                                  final String value,
+                                  final Function<T, String> extractionFunction) {
+            super(term, value, extractionFunction);
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
+            return ifValue(term, () -> {
+                return new StringGreaterThan<T>(term, term.getValue(), extractionFunction);
+            });
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return value.compareTo(extractionFunction.apply(values)) < 0;
+        }
+    }
+
+    private static class StringGreaterThanOrEqual<T> extends StringExpressionTermPredicate<T> {
+
+        private StringGreaterThanOrEqual(final ExpressionTerm term,
+                                         final String value,
+                                         final Function<T, String> extractionFunction) {
+            super(term, value, extractionFunction);
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
+            return ifValue(term, () -> {
+                return new StringGreaterThanOrEqual<T>(term, term.getValue(), extractionFunction);
+            });
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return value.compareTo(extractionFunction.apply(values)) <= 0;
+        }
+    }
+
+    private static class StringLessThan<T> extends StringExpressionTermPredicate<T> {
+
+        private StringLessThan(final ExpressionTerm term,
+                               final String value,
+                               final Function<T, String> extractionFunction) {
+            super(term, value, extractionFunction);
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
+            return ifValue(term, () -> {
+                return new StringLessThan<T>(term, term.getValue(), extractionFunction);
+            });
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return value.compareTo(extractionFunction.apply(values)) > 0;
+        }
+    }
+
+    private static class StringLessThanOrEqual<T> extends StringExpressionTermPredicate<T> {
+
+        private StringLessThanOrEqual(final ExpressionTerm term,
+                                      final String value,
+                                      final Function<T, String> extractionFunction) {
+            super(term, value, extractionFunction);
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
+            return ifValue(term, () -> {
+                return new StringLessThanOrEqual<T>(term, term.getValue(), extractionFunction);
+            });
+        }
+
+        @Override
+        public boolean test(final T values) {
+            return value.compareTo(extractionFunction.apply(values)) >= 0;
+        }
+    }
 
     private static class StringStartsWith<T> extends ExpressionTermPredicate<T> {
 
