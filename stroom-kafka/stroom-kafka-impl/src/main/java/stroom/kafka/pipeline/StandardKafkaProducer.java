@@ -30,6 +30,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.svg.shared.SvgImage;
+import stroom.util.CharBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -51,6 +52,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
@@ -94,6 +96,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final KafkaProducerFactory stroomKafkaProducerFactory;
     private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
+    private final CharBuffer content = new CharBuffer();
 
     private Locator locator = null;
     private DocRef configRef = null;
@@ -143,7 +146,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
             kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
                 log(Severity.FATAL_ERROR, "No Kafka produce exists for config " + configRef, null);
-                throw LoggedException.create("Unable to create Kafka Producer using config " + configRef);
+                return LoggedException.create("Unable to create Kafka Producer using config " + configRef);
             });
         } catch (KafkaException ex) {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
@@ -210,19 +213,19 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             if (xmlValueDepth == -1) {
                 final ErrorListener errorListener = new ErrorListener() {
                     @Override
-                    public void warning(TransformerException exception) throws TransformerException {
+                    public void warning(TransformerException exception) {
                         errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
 
                     @Override
-                    public void error(TransformerException exception) throws TransformerException {
+                    public void error(TransformerException exception) {
                         errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
 
                     @Override
-                    public void fatalError(TransformerException exception) throws TransformerException {
+                    public void fatalError(TransformerException exception) {
                         errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(locator), getElementId(),
                                 "Kafka XML value parse error", exception);
                     }
@@ -271,48 +274,39 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 }
             }
 
-            if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
-                state.inHeader = true;
-            }
-
             if (state != null) {
+                if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
+                    state.inHeader = true;
+                }
                 state.lastElement = localName;
             }
         }
 
-
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
-        String val = new String(ch, start, length);
-        String element = state.lastElement;
-        if (KEY_ELEMENT_LOCAL_NAME.equals(element)) {
-            if (state.inHeader) {
-                state.headerNames.add(val);
-            } else {
-                state.key = val;
-            }
-        } else if (VALUE_ELEMENT_LOCAL_NAME.equals(element)) {
-            if (state.inHeader) {
-                state.headerVals.add(val);
-            } else if (xmlValueDepth >= 0) {
-                xmlValueHandler.characters(ch, start, length);
-            } else {
-                state.messageValue = val.getBytes(StandardCharsets.UTF_8);
+    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        if (state != null) {
+            if (KEY_ELEMENT_LOCAL_NAME.equals(localName)) {
+                if (state.inHeader) {
+                    state.headerNames.add(content.toString());
+                } else {
+                    state.key = content.toString();
+                }
+            } else if (VALUE_ELEMENT_LOCAL_NAME.equals(localName)) {
+                if (state.inHeader) {
+                    state.headerVals.add(content.toString());
+                } else if (xmlValueDepth < 0) {
+                    state.messageValue = content.toString().getBytes(StandardCharsets.UTF_8);
+                }
             }
         }
-        super.characters(ch, start, length);
-    }
-
-
-    @Override
-    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
 
         if (xmlValueDepth == 0) {
             if (VALUE_ELEMENT_LOCAL_NAME.equals(localName)) {
-                //Create the val from the contents of XML handler buffer
+                // Create the val from the contents of XML handler buffer
                 xmlValueHandler.endDocument();
                 state.messageValue = outputStream.toByteArray();
                 xmlValueDepth = -1;
@@ -320,14 +314,12 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 throw new SAXException("Unexpected tag " + localName + " in kafka message value.");
             }
         } else if (xmlValueDepth > 0) {
-            //Closing an XML value element
+            // Closing an XML value element
             xmlValueHandler.endElement(uri, localName, qName);
             xmlValueDepth--;
-        } else {
-            if (state != null) {
-                state.lastElement = null;
-            }
 
+        } else if (state != null) {
+            state.lastElement = null;
             if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
                 state.inHeader = false;
             } else if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
@@ -335,7 +327,21 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 state = null;
             }
         }
+
+        content.clear();
         super.endElement(uri, localName, qName);
+    }
+
+    @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals(state.lastElement)) {
+            if (!state.inHeader && xmlValueDepth >= 0) {
+                xmlValueHandler.characters(ch, start, length);
+            }
+        }
+
+        content.append(ch, start, length);
+        super.characters(ch, start, length);
     }
 
     private void createKafkaMessage(KafkaMessageState state) {
@@ -384,7 +390,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         }
         stringBuilder
                 .append(" Value: ")
-                .append(state.messageValue);
+                .append(Arrays.toString(state.messageValue));
 
         log(Severity.INFO, stringBuilder.toString(), null);
     }
@@ -400,7 +406,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     @SuppressWarnings("unused")
     @PipelineProperty(
             description = "At the end of the stream, wait for acknowledgement from the Kafka broker for all " +
-                    "the messages sent. This ensures errors are caught in the pipeline process.",
+                          "the messages sent. This ensures errors are caught in the pipeline process.",
             defaultValue = "true",
             displayPriority = 2)
     public void setFlushOnSend(final boolean flushOnSend) {

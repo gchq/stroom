@@ -35,6 +35,7 @@ import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.svg.shared.SvgImage;
+import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -89,7 +90,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private final StatisticStoreStore statisticStoreStore;
     private final Statistics statistics;
     private final List<StatisticEvent> statisticEventList = new ArrayList<>(EVENT_BUFFER_SIZE);
-    private final StringBuilder textBuffer = new StringBuilder();
+    private final CharBuffer content = new CharBuffer();
     private final Map<String, String> emptyTagToValueMap = new HashMap<>();
     private DocRef statisticStoreRef;
     private StatisticStoreDoc statisticStoreEntity;
@@ -158,7 +159,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
 
     private void flush() {
         // Have we any events to write?
-        if (statisticEventList.size() > 0) {
+        if (!statisticEventList.isEmpty()) {
             if (statisticEventStore == null) {
                 statisticEventStore = getStatisticEventStore();
             }
@@ -199,8 +200,6 @@ public class StatisticsFilter extends AbstractXMLFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        textBuffer.setLength(0);
-
         try {
             if (STATISTIC.equals(localName)) {
                 // reset all the variables holding current values
@@ -231,6 +230,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
             error(e);
         }
 
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
@@ -276,7 +276,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         try {
             if (TIME.equals(localName)) {
-                processTime(textBuffer.toString());
+                processTime(content.toString());
             } else if (TAG.equals(localName)) {
                 currentTagToValueMap.put(currentTagName, currentTagValue);
                 clearCurrentTagNameAndValue();
@@ -286,25 +286,25 @@ public class StatisticsFilter extends AbstractXMLFilter {
                             statisticStoreEntity.getStatisticType()));
                 }
                 try {
-                    currentStatisticValue = Double.valueOf(textBuffer.toString());
+                    currentStatisticValue = Double.valueOf(content.toString());
                 } catch (final RuntimeException e) {
                     throw new RuntimeException(String.format("Statistic value [%s] cannot be converted to a double",
-                            textBuffer.toString()), e);
+                            content), e);
                 }
             } else if (COUNT.equals(localName)) {
                 if (!StatisticType.COUNT.equals(statisticStoreEntity.getStatisticType())) {
                     throw new RuntimeException(String.format("Found <%s> XML element for a statistic type of %s", COUNT,
                             statisticStoreEntity.getStatisticType()));
                 }
-                if (textBuffer.length() == 0) {
+                if (content.isEmpty()) {
                     // no value supplied so assume 1
                     currentStatisticCount = 1L;
                 } else {
                     try {
-                        currentStatisticCount = Long.valueOf(textBuffer.toString());
+                        currentStatisticCount = Long.valueOf(content.toString());
                     } catch (final RuntimeException e) {
                         throw new RuntimeException(String.format("Statistic count [%s] cannot be converted to a long",
-                                textBuffer.toString()), e);
+                                content), e);
                     }
                 }
             } else if (STATISTIC.equals(localName)) {
@@ -363,13 +363,13 @@ public class StatisticsFilter extends AbstractXMLFilter {
             error(e);
         }
 
-        textBuffer.setLength(0);
+        content.clear();
         super.endElement(uri, localName, qName);
     }
 
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        textBuffer.append(ch, start, length);
+        content.append(ch, start, length);
         super.characters(ch, start, length);
     }
 
