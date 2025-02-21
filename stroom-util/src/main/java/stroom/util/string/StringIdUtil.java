@@ -1,22 +1,30 @@
 package stroom.util.string;
 
-import java.util.Arrays;
+import stroom.util.logging.LogUtil;
 
 public class StringIdUtil {
 
+    /**
+     * Convert id into a zero padded string that has a length that is divisible by three.
+     * The length will be the shortest possible to fit the id value.
+     */
     public static String idToString(final long id) {
-        final String string = String.valueOf(id);
-        if (string.length() % 3 == 0) {
-            return string;
+        if (id < 0) {
+            throw new IllegalArgumentException("Negative IDs not supported");
         }
-
-        final char[] chars = string.toCharArray();
-        final int len = (int) Math.ceil(chars.length / 3D) * 3;
-        final char[] arr = new char[len];
-        final int pos = len - chars.length;
-        Arrays.fill(arr, 0, pos, '0');
-        System.arraycopy(chars, 0, arr, pos, chars.length);
-        return String.valueOf(arr);
+        final String idStr = String.valueOf(id);
+        final int remainder = idStr.length() % 3;
+        return switch (remainder) {
+            case 0 -> idStr; // Length is OK as is
+            case 1 -> "00" + idStr;
+            case 2 -> "0" + idStr;
+            default -> {
+                // Should never happen
+                throw new IllegalStateException(
+                        LogUtil.message("Unexpected remainder {}, id {}, idStr {}, len {}",
+                                remainder, id, idStr, idStr.length()));
+            }
+        };
     }
 
     public static boolean isValidIdString(final String idString) {

@@ -3,23 +3,35 @@ package stroom.util.string;
 import stroom.test.common.TestUtil;
 
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class TestStringIdUtil {
 
-    @Test
-    void test() {
-        assertThat(StringIdUtil.idToString(0)).isEqualTo("000");
-        assertThat(StringIdUtil.idToString(1)).isEqualTo("001");
-        assertThat(StringIdUtil.idToString(999)).isEqualTo("999");
-        assertThat(StringIdUtil.idToString(1000)).isEqualTo("001000");
-        assertThat(StringIdUtil.idToString(999999)).isEqualTo("999999");
-        assertThat(StringIdUtil.idToString(1000000)).isEqualTo("001000000");
+    @TestFactory
+    Stream<DynamicTest> testIdToString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(long.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(StringIdUtil::idToString)
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(-1L, IllegalArgumentException.class)
+                .addCase(0L, "000")
+                .addCase(1L, "001")
+                .addCase(12L, "012")
+                .addCase(123L, "123")
+                .addCase(1_234L, "001234")
+                .addCase(12_345L, "012345")
+                .addCase(123_456L, "123456")
+                .addCase(1_234_567L, "001234567")
+                .addCase(12_345_678L, "012345678")
+                .addCase(123_456_789L, "123456789")
+                .addCase(999L, "999")
+                .addCase(1_000L, "001000")
+                .addCase(999_999L, "999999")
+                .addCase(1_000_000L, "001000000")
+                .build();
     }
 
     @TestFactory

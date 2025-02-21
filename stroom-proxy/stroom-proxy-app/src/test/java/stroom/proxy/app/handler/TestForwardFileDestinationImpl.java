@@ -3,6 +3,8 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.test.common.DirectorySnapshot;
+import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
@@ -54,6 +56,7 @@ class TestForwardFileDestinationImpl {
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
+        final Snapshot source1Snapshot = DirectorySnapshot.of(source1);
 
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
@@ -73,9 +76,14 @@ class TestForwardFileDestinationImpl {
         Assertions.assertThat(source1)
                 .doesNotExist();
 
+        final Path destPath = DirUtil.createPath(dirs.getStoreDir(), 1);
+        final Snapshot destSnapshot = DirectorySnapshot.of(destPath);
         Assertions.assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
-                .contains(DirUtil.createPath(dirs.getStoreDir(), 1));
+                .contains(destPath);
+
+        Assertions.assertThat(destSnapshot)
+                .isEqualTo(source1Snapshot);
     }
 
     private ForwardFileDestination createForwardFileDest() {
@@ -142,6 +150,53 @@ class TestForwardFileDestinationImpl {
     }
 
     @Test
+    void testAdd_staticSubPath() {
+        final String subPathStr = "staticSubPath";
+        final Path subPath = dirs.getStoreDir().resolve(subPathStr);
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                subPathStr,
+                null,
+                pathCreator);
+
+        Assertions.assertThat(subPath)
+                .exists()
+                .isDirectory()
+                .isEmptyDirectory();
+
+        final Path source1 = createSourceDir(1);
+        final Snapshot source1Snapshot = DirectorySnapshot.of(source1);
+
+        dumpContents(dirs.getSourcesDir());
+        dumpContents(subPath);
+
+        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+                .containsExactlyInAnyOrder(source1);
+
+        Assertions.assertThat(source1)
+                .isDirectory()
+                .exists();
+
+        forwardFileDest.add(source1);
+
+        dumpContents(dirs.getSourcesDir());
+        dumpContents(subPath);
+
+        Assertions.assertThat(source1)
+                .doesNotExist();
+
+        final Path destPath = DirUtil.createPath(subPath, 1);
+        final Snapshot destSnapshot = DirectorySnapshot.of(destPath);
+        Assertions.assertThat(deepListContent(subPath))
+                .extracting(TypedFile::path)
+                .contains(destPath);
+
+        Assertions.assertThat(destSnapshot)
+                .isEqualTo(source1Snapshot);
+    }
+
+    @Test
     void testAdd_templated() {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
@@ -176,6 +231,11 @@ class TestForwardFileDestinationImpl {
                 .isDirectory()
                 .exists();
 
+        final Snapshot source1Snapshot = DirectorySnapshot.of(source1);
+        final Snapshot source2Snapshot = DirectorySnapshot.of(source2);
+        final Snapshot source3Snapshot = DirectorySnapshot.of(source3);
+        final Snapshot source4Snapshot = DirectorySnapshot.of(source4);
+
         forwardFileDest.add(source1);
         forwardFileDest.add(source2);
         forwardFileDest.add(source3);
@@ -189,13 +249,31 @@ class TestForwardFileDestinationImpl {
 
         final String year = String.valueOf(ZonedDateTime.now().getYear());
 
+
+        final Path dest1 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 1);
+        final Snapshot dest1Snapshot = DirectorySnapshot.of(dest1);
+        final Path dest2 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 2);
+        final Snapshot dest2Snapshot = DirectorySnapshot.of(dest2);
+        final Path dest3 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 3);
+        final Snapshot dest3Snapshot = DirectorySnapshot.of(dest3);
+        final Path dest4 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 4);
+        final Snapshot dest4Snapshot = DirectorySnapshot.of(dest4);
+
         Assertions.assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
-                .contains(
-                        DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 1),
-                        DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 2),
-                        DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 3),
-                        DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 4));
+                .contains(dest1,
+                        dest2,
+                        dest3,
+                        dest4);
+
+        Assertions.assertThat(dest1Snapshot)
+                .isEqualTo(source1Snapshot);
+        Assertions.assertThat(dest2Snapshot)
+                .isEqualTo(source2Snapshot);
+        Assertions.assertThat(dest3Snapshot)
+                .isEqualTo(source3Snapshot);
+        Assertions.assertThat(dest4Snapshot)
+                .isEqualTo(source4Snapshot);
     }
 
     @Test

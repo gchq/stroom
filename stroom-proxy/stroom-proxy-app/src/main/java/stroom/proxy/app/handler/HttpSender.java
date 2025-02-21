@@ -171,6 +171,7 @@ public class HttpSender implements StreamDestination {
             });
 
             // There is no point retrying with these
+            // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
             return switch (responseStatus.stroomStatusCode) {
                 case OK -> responseStatus;
                 case FEED_IS_NOT_SET_TO_RECEIVE_DATA,

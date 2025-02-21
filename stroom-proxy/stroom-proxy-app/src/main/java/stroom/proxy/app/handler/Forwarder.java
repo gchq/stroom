@@ -103,17 +103,30 @@ public class Forwarder {
     // --------------------------------------------------------------------------------
 
 
-    private record MultiForwardDestination(
-            List<ForwardDestination> destinations,
-            NumberedDirProvider copiesDirProvider) implements ForwardDestination {
+    /**
+     * Forwards each sourceDir to more than one destination.
+     */
+    private static final class MultiForwardDestination implements ForwardDestination {
+
+        private final List<ForwardDestination> destinations;
+        private final NumberedDirProvider copiesDirProvider;
+        private final int destinationCount;
+
+        private MultiForwardDestination(
+                List<ForwardDestination> destinations,
+                NumberedDirProvider copiesDirProvider) {
+            this.destinations = destinations;
+            this.copiesDirProvider = copiesDirProvider;
+            this.destinationCount = destinations.size();
+        }
 
         @Override
         public void add(final Path sourceDir) {
             try {
-                final List<Path> paths = new ArrayList<>(destinations.size());
+                final List<Path> paths = new ArrayList<>(destinationCount);
 
                 // Create copies for all but the last destination
-                for (int i = 0; i < destinations.size() - 1; i++) {
+                for (int i = 0; i < destinationCount - 1; i++) {
                     final Path copy = copiesDirProvider.get();
                     copyContents(sourceDir, copy);
                     paths.add(copy);
@@ -123,16 +136,33 @@ public class Forwarder {
                 paths.add(sourceDir);
 
                 // Add all items to outgoing queues.
-                for (int i = 0; i < destinations.size(); i++) {
+                final List<Exception> exceptions = new ArrayList<>(destinationCount);
+                for (int i = 0; i < destinationCount; i++) {
                     final ForwardDestination destination = destinations.get(i);
                     final Path path = paths.get(i);
                     try {
+                        // The dest is only going to move the path into its own location, either
+                        // permanently in the case of ForwardFileDestination or for another thread
+                        // to pick up in the case of ForwardHttpPostDestination. Thus, any failure here
+                        // is likely to be IO based, i.e. running out of disk or no perms on the dest path.
                         destination.add(path);
                     } catch (Exception e) {
-                        throw new RuntimeException(LogUtil.message(
+                        LOGGER.debug("Error adding '{}' to destination {}: {}",
+                                path, destination.asString(), LogUtil.exceptionMessage(e), e);
+                        exceptions.add(new RuntimeException(LogUtil.message(
                                 "Error adding {} to destination {}",
-                                path, destination.getDestinationDescription()));
+                                path, destination.asString())));
                     }
+                }
+                if (!exceptions.isEmpty()) {
+                    // Wrap all the exceptions encountered
+                    throw new RuntimeException(LogUtil.message(
+                            "Error adding to {} destinations:\n{}",
+                            exceptions.size(),
+                            exceptions.stream()
+                                    .map(Exception::getMessage)
+                                    .collect(Collectors.joining("\n"))),
+                            exceptions.getFirst());
                 }
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);

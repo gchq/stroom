@@ -45,6 +45,12 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                                       final String subPathTemplate,
                                       final TemplatingMode templatingMode,
                                       final PathCreator pathCreator) {
+
+        // TODO Create another impl that has a forward+retry queue and error file dest
+        //  like the ForwardHttpPostDestination. This is to allow for a file dest on a remote
+        //  file system that may fail. Keep this impl for destinations that are local. Add
+        //  a config prop let the factory decide which to create.
+
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
         this.subPathTemplate = subPathTemplate;
@@ -52,8 +58,6 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                 templatingMode, ForwardFileConfig.DEFAULT_TEMPLATING_MODE);
         this.pathCreator = pathCreator;
 
-        // Bake in the method for getting the baseDir to use, based on the subPathTemplate,
-        // so we don't have work it out on each call to add
         if (NullSafe.isNonEmptyString(subPathTemplate)) {
             final String[] vars = pathCreator.findVars(subPathTemplate);
             if (NullSafe.hasItems(vars)) {

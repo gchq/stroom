@@ -42,7 +42,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
                                       final CleanupDirQueue cleanupDirQueue,
                                       final ForwardHttpPostConfig forwardHttpPostConfig,
                                       final ProxyServices proxyServices,
-                                      final DirQueueFactory sequentialDirQueueFactory,
+                                      final DirQueueFactory dirQueueFactory,
                                       final ThreadConfig threadConfig,
                                       final DataDirProvider dataDirProvider,
                                       final SimplePathCreator simplePathCreator) {
@@ -51,16 +51,20 @@ public class ForwardHttpPostDestination implements ForwardDestination {
         this.destinationName = destinationName;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
 
+        // TODO Add a health URL to check the forward dest every minute or so
+        //  If it returns false we stop consuming from the forwardQueue/retryQueue until
+        //  it returns true.
+
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get()
                 .resolve(DirNames.FORWARDING).resolve(safeDirName);
         DirUtil.ensureDirExists(forwardingDir);
 
-        forwardQueue = sequentialDirQueueFactory.create(
+        forwardQueue = dirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
                 50,
                 "forward - " + destinationName);
-        retryQueue = sequentialDirQueueFactory.create(
+        retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
                 51,
                 "retry - " + destinationName);
@@ -84,29 +88,12 @@ public class ForwardHttpPostDestination implements ForwardDestination {
                                                            final SimplePathCreator simplePathCreator,
                                                            final Path forwardingDir) {
         final ForwardFileDestination failureDestination;
-        Path failureDir = forwardingDir.resolve("03_failure");
+        final Path failureDir = forwardingDir.resolve("03_failure");
         final String errorSubPathTemplate = forwardHttpPostConfig.getErrorSubPathTemplate();
-//        if (NullSafe.isNonBlankString(errorSubPathTemplate)) {
-//            final Path errorSubPath = Path.of(simplePathCreator.replaceAll(errorSubPathTemplate))
-//                    .normalize()
-//                    .toAbsolutePath();
-//            LOGGER.debug("errorSubPath: '{}'", errorSubPath);
-//            if (errorSubPath.isAbsolute()) {
-//                throw new IllegalArgumentException(LogUtil.message(
-//                        "The value ('{}') of property {} must resolve to a relative path.",
-//                        errorSubPath, ForwardHttpPostConfig.PROP_NAME_ERROR_SUB_PATH_TEMPLATE));
-//            } else if (!failureDir.normalize().toAbsolutePath().endsWith(errorSubPath)) {
-//                // Stop people doing things like ../../../another/path
-//                throw new IllegalArgumentException(LogUtil.message(
-//                        "The value ('{}') of property {} must be a child of property {} ('{}')",
-//                        errorSubPath, failureDir));
-//            }
-//            failureDir = failureDir.resolve(errorSubPath);
-//        }
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
-                getName() + " (failure)",
+                getName() + " (failures)",
                 errorSubPathTemplate,
                 ForwardFileConfig.DEFAULT_TEMPLATING_MODE,
                 simplePathCreator);
@@ -183,6 +170,9 @@ public class ForwardHttpPostDestination implements ForwardDestination {
                 }
                 if (canRetry) {
                     LOGGER.debug("Retrying {}", dir);
+                    // TODO write a state file that holds the failureTime and the attemptsCount
+
+                    // TODO Make a LoopingDirQueue that can
                     addToRetryQueue(dir);
                 } else {
                     LOGGER.debug("Adding {} to failure queue", dir);
