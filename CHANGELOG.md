@@ -13,6 +13,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.2] - 2025-02-21
+
+* Issue **#4778** : Improve menu text rendering.
+
+* Issue **#4781** : Fix NPE.
+
+* Issue **#4784** : Fix DynamicIndexingFilter values.
+
+* Issue **#4552** : Update dynamic index fields via the UI.
+
+* Issue **#3921** : Make QuickFilterPredicateFactory produce an expression tree.
+
+* Issue **#3820** : Add OR conditions to quick filter.
+
+* Issue **#3551** : Fix character escape in quick filter.
+
+* Issue **#4553** : Fix word boundary matching.
+
+* Issue **#4776** : Fix column value `>`, `>=`, `<`, `<=`, filtering.
+
+
 ## [v7.9-beta.1] - 2025-02-12
 
 * Issue **#4768** : Fix import file path issue.
@@ -1249,7 +1270,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.2...HEAD
+[v7.9-beta.2]: https://github.com/gchq/stroom/compare/v7.9-beta.1...v7.9-beta.2
 [v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
 [v7.8-beta.14]: https://github.com/gchq/stroom/compare/v7.8-beta.13...v7.8-beta.14
 [v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
