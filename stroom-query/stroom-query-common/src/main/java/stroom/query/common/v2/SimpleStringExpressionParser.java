@@ -245,50 +245,6 @@ public class SimpleStringExpressionParser {
         }
     }
 
-    private static List<AbstractToken> collapseTokenGroups(final List<AbstractToken> tokens) {
-        // Collapse remaining token groups.
-        final List<AbstractToken> collapsed = new ArrayList<>();
-        for (final AbstractToken token : tokens) {
-            if (TokenType.isString(token)) {
-                collapsed.add(token);
-            } else if (token instanceof final TokenGroup tokenGroup) {
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getStart(), token.getStart()));
-                collapsed.addAll(collapseTokenGroups(tokenGroup.getChildren()));
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getEnd(), token.getEnd()));
-            } else {
-                collapsed.add(new Token(TokenType.STRING, token.getChars(), token.getStart(), token.getEnd()));
-            }
-        }
-        return collapsed;
-    }
-
-    private static List<AbstractToken> mergeTokenGroups(final List<AbstractToken> tokens) {
-        // Collapse remaining token groups.
-        AbstractToken lastToken = null;
-        final List<AbstractToken> merged = new ArrayList<>();
-        for (final AbstractToken token : tokens) {
-            if (lastToken != null) {
-                if (lastToken.getTokenType().equals(token.getTokenType())) {
-                    // Expand token.
-                    lastToken = new Token(
-                            lastToken.getTokenType(),
-                            lastToken.getChars(),
-                            lastToken.getStart(),
-                            token.getEnd());
-                } else {
-                    merged.add(lastToken);
-                    lastToken = token;
-                }
-            } else {
-                lastToken = token;
-            }
-        }
-        if (lastToken != null) {
-            merged.add(lastToken);
-        }
-        return merged;
-    }
-
     private static void createInnerTerm(final List<AbstractToken> in,
                                         final FieldProvider fieldProvider,
                                         final ExpressionOperator.Builder parent) {
@@ -370,7 +326,9 @@ public class SimpleStringExpressionParser {
                 char[] chars = fieldValue.toCharArray();
                 final StringBuilder sb = new StringBuilder();
                 for (final char c : chars) {
-                    sb.append(".*?");
+                    if (sb.length() > 0) {
+                        sb.append(".*?");
+                    }
                     if (Character.isLetterOrDigit(c)) {
                         sb.append(c);
                     } else {
@@ -423,14 +381,6 @@ public class SimpleStringExpressionParser {
             }
             parent.addOperator(builder.build());
         }
-    }
-
-    private static String concatStringTokens(final List<AbstractToken> tokens) {
-        final StringBuilder sb = new StringBuilder();
-        for (final AbstractToken token : tokens) {
-            sb.append(token.getUnescapedText());
-        }
-        return sb.toString();
     }
 
     private static String getFieldPrefix(final String string) {

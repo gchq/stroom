@@ -33,8 +33,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Optional;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
@@ -142,8 +143,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         if (allValues == null || allValues.isEmpty()) {
             return allValues;
         } else {
-            final Predicate<String> predicate = expressionPredicateFactoryProvider.get().create(quickFilterInput);
-            return allValues.stream().filter(predicate).toList();
+            return expressionPredicateFactoryProvider.get()
+                    .filterAndSortStream(allValues.stream(),
+                            quickFilterInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .toList();
         }
     }
 }

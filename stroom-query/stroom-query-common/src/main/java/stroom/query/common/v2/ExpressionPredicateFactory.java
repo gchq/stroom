@@ -38,6 +38,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -45,12 +46,17 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class ExpressionPredicateFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExpressionPredicateFactory.class);
     private static final String DELIMITER = ",";
+    private static final Comparator<Score> SCORE_COMPARATOR = Comparator
+            .comparingInt(Score::length)
+            .thenComparing(Score::index);
 
     private final WordListProvider wordListProvider;
 
@@ -63,17 +69,75 @@ public class ExpressionPredicateFactory {
         this.wordListProvider = wordListProvider;
     }
 
+    public Stream<String> filterAndSortStream(final Stream<String> stream,
+                                              final String filter,
+                                              final Optional<Comparator<String>> optionalSecondComparator) {
+        final String fieldName = "name";
+        final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
+        final ValueFunctionFactories<String> valueFunctionFactory =
+                StringValueFunctionFactory.create(QueryField.createText(fieldName));
+        return filterAndSortStream(
+                stream,
+                filter,
+                fieldProvider,
+                valueFunctionFactory,
+                DateTimeSettings.builder().build(),
+                optionalSecondComparator);
+    }
+
+    public <T> Stream<T> filterAndSortStream(final Stream<T> stream,
+                                             final String filter,
+                                             final FieldProvider fieldProvider,
+                                             final ValueFunctionFactories<T> valueFunctionFactories,
+                                             final Optional<Comparator<T>> optionalSecondComparator) {
+        return filterAndSortStream(
+                stream,
+                filter,
+                fieldProvider,
+                valueFunctionFactories,
+                DateTimeSettings.builder().build(),
+                optionalSecondComparator);
+    }
+
+    public <T> Stream<T> filterAndSortStream(final Stream<T> stream,
+                                             final String filter,
+                                             final FieldProvider fieldProvider,
+                                             final ValueFunctionFactories<T> valueFunctionFactories,
+                                             final DateTimeSettings dateTimeSettings,
+                                             final Optional<Comparator<T>> optionalSecondComparator) {
+        final Optional<ScoringPredicate<T>> optionalScoringPredicate =
+                createOptionalScoringPredicate(filter, fieldProvider, valueFunctionFactories, dateTimeSettings);
+
+        // If we have no predicate then just sort and return.
+        if (optionalScoringPredicate.isEmpty()) {
+            return optionalSecondComparator
+                    .map(comparator -> stream.sorted(comparator))
+                    .orElse(stream);
+        }
+
+        // Create combined comparator.
+        final ScoringPredicate<T> scoringPredicate = optionalScoringPredicate.get();
+        final Comparator<ScoredObject<T>> scoreComparator = Comparator
+                .comparing(ScoredObject::score, SCORE_COMPARATOR);
+        final Comparator<ScoredObject<T>> comparator = optionalSecondComparator
+                .map(secondComparator -> scoreComparator.thenComparing(scoredObject -> scoredObject.t,
+                        secondComparator))
+                .orElse(scoreComparator);
+
+        return stream
+                .map(t -> new ScoredObject<T>(t, scoringPredicate.score(t))) // Wrap and score
+                .filter(scoredObject -> scoredObject.score.matches) // Filter scored
+                .sorted(comparator) // Sort by score.
+                .map(scoredObject -> scoredObject.t); // Unwrap
+    }
+
     public Predicate<String> create(final String filter) {
         return create(filter, Function.identity());
     }
 
-    public Optional<Predicate<String>> createOptional(final String filter) {
-        return createOptional(filter, Function.identity());
-    }
-
     public <T> Predicate<T> create(final String filter,
                                    final Function<T, String> function) {
-        return createOptional(filter, function).orElse(o -> true);
+        return createOptional(filter, function).orElse(matchAll());
     }
 
     public <T> Optional<Predicate<T>> createOptional(final String filter,
@@ -84,70 +148,94 @@ public class ExpressionPredicateFactory {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, filter);
             if (optionalExpressionOperator.isPresent()) {
+                final ValueFunctionFactories<String> valueFunctionFactory =
+                        StringValueFunctionFactory.create(QueryField.createText(fieldName));
                 final Optional<Predicate<String>> predicateOptional = createOptional(
                         optionalExpressionOperator.get(),
-                        StringValueFunctionFactory.create(QueryField.createText(fieldName)));
+                        valueFunctionFactory);
                 return predicateOptional
                         .map(predicate -> queryField -> predicate.test(function.apply(queryField)));
             }
             return Optional.empty();
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            return Optional.of(o -> false);
+            return Optional.of(matchNone());
         }
     }
 
     public <T> Predicate<T> create(final String filter,
                                    final FieldProvider fieldProvider,
-                                   final ValueFunctionFactories<T> queryFieldIndex) {
-        return createOptional(filter, fieldProvider, queryFieldIndex).orElse(o -> true);
+                                   final ValueFunctionFactories<T> valueFunctionFactories,
+                                   final DateTimeSettings dateTimeSettings) {
+        return createOptionalScoringPredicate(
+                filter,
+                fieldProvider,
+                valueFunctionFactories,
+                dateTimeSettings).orElse(matchAll());
     }
 
-    public <T> Optional<Predicate<T>> createOptional(final String filter,
-                                                     final FieldProvider fieldProvider,
-                                                     final ValueFunctionFactories<T> queryFieldIndex) {
+    @SuppressWarnings("checkstyle:linelength")
+    private <T> Optional<ScoringPredicate<T>> createOptionalScoringPredicate(final String filter,
+                                                                             final FieldProvider fieldProvider,
+                                                                             final ValueFunctionFactories<T> valueFunctionFactories,
+                                                                             final DateTimeSettings dateTimeSettings) {
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, filter);
             return optionalExpressionOperator.flatMap(expressionOperator -> {
-                return createOptional(expressionOperator, queryFieldIndex, DateTimeSettings.builder().build());
+                return createOptionalScoringPredicate(expressionOperator,
+                        valueFunctionFactories,
+                        dateTimeSettings);
             });
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            return Optional.of(o -> false);
+            return Optional.of(matchNone());
         }
     }
 
-    public <T> Predicate<T> create(final ExpressionOperator operator,
-                                   final ValueFunctionFactories<T> queryFieldIndex) {
-        return create(operator, queryFieldIndex, DateTimeSettings.builder().build());
+    private <T> Predicate<T> create(final ExpressionOperator operator,
+                                    final ValueFunctionFactories<T> valueFunctionFactories) {
+        return create(operator, valueFunctionFactories, DateTimeSettings.builder().build());
+    }
+
+    <T> Optional<Predicate<T>> createOptional(final ExpressionOperator operator,
+                                              final ValueFunctionFactories<T> valueFunctionFactories) {
+        return createOptional(operator, valueFunctionFactories, DateTimeSettings.builder().build());
+    }
+
+    private <T> Predicate<T> create(final ExpressionOperator operator,
+                                    final ValueFunctionFactories<T> valueFunctionFactories,
+                                    final DateTimeSettings dateTimeSettings) {
+        return createOptionalScoringPredicate(operator, valueFunctionFactories, dateTimeSettings).orElse(matchAll());
+    }
+
+    @SuppressWarnings("checkstyle:linelength")
+    private <T> Optional<ScoringPredicate<T>> createOptionalScoringPredicate(final ExpressionOperator operator,
+                                                                             final ValueFunctionFactories<T> valueFunctionFactories,
+                                                                             final DateTimeSettings dateTimeSettings) {
+        if (operator == null) {
+            return Optional.empty();
+        }
+
+        return createScoringPredicate(operator, valueFunctionFactories, dateTimeSettings, wordListProvider);
     }
 
     public <T> Optional<Predicate<T>> createOptional(final ExpressionOperator operator,
-                                                     final ValueFunctionFactories<T> queryFieldIndex) {
-        return createOptional(operator, queryFieldIndex, DateTimeSettings.builder().build());
-    }
-
-    public <T> Predicate<T> create(final ExpressionOperator operator,
-                                   final ValueFunctionFactories<T> queryFieldIndex,
-                                   final DateTimeSettings dateTimeSettings) {
-        return createOptional(operator, queryFieldIndex, dateTimeSettings).orElse(o -> true);
-    }
-
-    public <T> Optional<Predicate<T>> createOptional(final ExpressionOperator operator,
-                                                     final ValueFunctionFactories<T> queryFieldIndex,
+                                                     final ValueFunctionFactories<T> valueFunctionFactories,
                                                      final DateTimeSettings dateTimeSettings) {
         if (operator == null) {
             return Optional.empty();
         }
 
-        return createPredicate(operator, queryFieldIndex, dateTimeSettings, wordListProvider);
+        return createScoringPredicate(operator, valueFunctionFactories, dateTimeSettings, wordListProvider)
+                .map(p -> (Predicate<T>) p);
     }
 
-    private <T> Optional<Predicate<T>> createPredicate(final ExpressionItem item,
-                                                       final ValueFunctionFactories<T> queryFieldIndex,
-                                                       final DateTimeSettings dateTimeSettings,
-                                                       final WordListProvider wordListProvider) {
+    @SuppressWarnings("checkstyle:linelength")
+    private <T> Optional<ScoringPredicate<T>> createScoringPredicate(final ExpressionItem item,
+                                                                     final ValueFunctionFactories<T> valueFunctionFactories,
+                                                                     final DateTimeSettings dateTimeSettings,
+                                                                     final WordListProvider wordListProvider) {
         if (!item.enabled()) {
             return Optional.empty();
         }
@@ -155,13 +243,13 @@ public class ExpressionPredicateFactory {
         if (item instanceof final ExpressionOperator expressionOperator) {
             return createOperatorPredicate(
                     expressionOperator,
-                    queryFieldIndex,
+                    valueFunctionFactories,
                     dateTimeSettings,
                     wordListProvider);
         } else if (item instanceof final ExpressionTerm expressionTerm) {
             return createTermPredicate(
                     expressionTerm,
-                    queryFieldIndex,
+                    valueFunctionFactories,
                     dateTimeSettings,
                     wordListProvider);
         } else {
@@ -169,23 +257,24 @@ public class ExpressionPredicateFactory {
         }
     }
 
-    private <T> Optional<Predicate<T>> createOperatorPredicate(final ExpressionOperator operator,
-                                                               final ValueFunctionFactories<T> queryFieldIndex,
-                                                               final DateTimeSettings dateTimeSettings,
-                                                               final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createOperatorPredicate(final ExpressionOperator operator,
+                                                                      final ValueFunctionFactories<T>
+                                                                              valueFunctionFactories,
+                                                                      final DateTimeSettings dateTimeSettings,
+                                                                      final WordListProvider wordListProvider) {
         // If the operator is not enabled then ignore this branch.
         if (!operator.enabled()) {
             return Optional.empty();
         }
 
         // Create child predicates.
-        final List<Predicate<T>> predicates;
+        final List<ScoringPredicate<T>> predicates;
         if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
             predicates = new ArrayList<>(operator.getChildren().size());
             for (final ExpressionItem child : operator.getChildren()) {
-                Optional<Predicate<T>> optional = createPredicate(
+                Optional<ScoringPredicate<T>> optional = createScoringPredicate(
                         child,
-                        queryFieldIndex,
+                        valueFunctionFactories,
                         dateTimeSettings,
                         wordListProvider);
                 optional.ifPresent(predicates::add);
@@ -218,7 +307,7 @@ public class ExpressionPredicateFactory {
                     throw new MatchException("Unexpected number of child terms in NOT");
                 }
                 if (predicates.isEmpty()) {
-                    yield Optional.of(t -> false);
+                    yield Optional.of(matchNone());
                 }
                 yield NotPredicate.create(predicates.getFirst());
             }
@@ -226,10 +315,10 @@ public class ExpressionPredicateFactory {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private <T> Optional<Predicate<T>> createTermPredicate(final ExpressionTerm term,
-                                                           final ValueFunctionFactories<T> valueFunctionFactories,
-                                                           final DateTimeSettings dateTimeSettings,
-                                                           final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createTermPredicate(final ExpressionTerm term,
+                                                                  final ValueFunctionFactories<T> valueFunctionFactories,
+                                                                  final DateTimeSettings dateTimeSettings,
+                                                                  final WordListProvider wordListProvider) {
         if (!term.enabled()) {
             return Optional.empty();
         }
@@ -277,10 +366,10 @@ public class ExpressionPredicateFactory {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private <T> Optional<Predicate<T>> createGeneralTermPredicate(final ExpressionTerm term,
-                                                                  final ValueFunctionFactory<T> valueFunctionFactory,
-                                                                  final DateTimeSettings dateTimeSettings,
-                                                                  final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createGeneralTermPredicate(final ExpressionTerm term,
+                                                                         final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                         final DateTimeSettings dateTimeSettings,
+                                                                         final WordListProvider wordListProvider) {
         try {
             return createDateTermPredicate(term, valueFunctionFactory, dateTimeSettings, wordListProvider);
         } catch (final RuntimeException e) {
@@ -293,10 +382,10 @@ public class ExpressionPredicateFactory {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private <T> Optional<Predicate<T>> createDateTermPredicate(final ExpressionTerm term,
-                                                               final ValueFunctionFactory<T> valueFunctionFactory,
-                                                               final DateTimeSettings dateTimeSettings,
-                                                               final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createDateTermPredicate(final ExpressionTerm term,
+                                                                      final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                      final DateTimeSettings dateTimeSettings,
+                                                                      final WordListProvider wordListProvider) {
         final Function<T, Long> dateExtractor = valueFunctionFactory.createDateExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> DateEquals.create(term, dateExtractor, dateTimeSettings);
@@ -313,9 +402,9 @@ public class ExpressionPredicateFactory {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private <T> Optional<Predicate<T>> createNumericTermPredicate(final ExpressionTerm term,
-                                                                  final ValueFunctionFactory<T> valueFunctionFactory,
-                                                                  final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createNumericTermPredicate(final ExpressionTerm term,
+                                                                         final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                         final WordListProvider wordListProvider) {
         final Function<T, BigDecimal> numExtractor = valueFunctionFactory.createNumberExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> NumericEquals.create(term, numExtractor);
@@ -332,9 +421,9 @@ public class ExpressionPredicateFactory {
     }
 
     @SuppressWarnings("checkstyle:LineLength")
-    private <T> Optional<Predicate<T>> createTextTermPredicate(final ExpressionTerm term,
-                                                               final ValueFunctionFactory<T> valueFunctionFactory,
-                                                               final WordListProvider wordListProvider) {
+    private <T> Optional<ScoringPredicate<T>> createTextTermPredicate(final ExpressionTerm term,
+                                                                      final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                      final WordListProvider wordListProvider) {
         final Function<T, String> stringExtractor = valueFunctionFactory.createStringExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> StringEquals.create(term, stringExtractor);
@@ -447,15 +536,15 @@ public class ExpressionPredicateFactory {
         FieldType getFieldType();
     }
 
-    private static class AndPredicate<T> implements Predicate<T> {
+    private static class AndPredicate<T> implements ScoringPredicate<T> {
 
-        private final List<Predicate<T>> subPredicates;
+        private final List<ScoringPredicate<T>> subPredicates;
 
-        public AndPredicate(final List<Predicate<T>> subPredicates) {
+        public AndPredicate(final List<ScoringPredicate<T>> subPredicates) {
             this.subPredicates = subPredicates;
         }
 
-        private static <T> Optional<Predicate<T>> create(final List<Predicate<T>> subPredicates) {
+        private static <T> Optional<ScoringPredicate<T>> create(final List<ScoringPredicate<T>> subPredicates) {
             return Optional.of(new AndPredicate<>(subPredicates));
         }
 
@@ -468,44 +557,86 @@ public class ExpressionPredicateFactory {
             }
             return true;
         }
+
+        @Override
+        public Score score(final T t) {
+            // Get the best score.
+            Score currentScore = null;
+            for (final ScoringPredicate<T> valuesPredicate : subPredicates) {
+                final Score score = valuesPredicate.score(t);
+                // If we get no match then return early.
+                if (!score.matches) {
+                    return score;
+                }
+                if (currentScore != null) {
+                    if (SCORE_COMPARATOR.compare(currentScore, score) < 0) {
+                        currentScore = score;
+                    }
+                } else {
+                    currentScore = score;
+                }
+            }
+            return currentScore;
+        }
     }
 
-    private static class OrPredicate<T> implements Predicate<T> {
+    private static class OrPredicate<T> implements ScoringPredicate<T> {
 
-        private final List<Predicate<T>> subPredicates;
+        private final List<ScoringPredicate<T>> subPredicates;
 
-        public OrPredicate(final List<Predicate<T>> subPredicates) {
+        public OrPredicate(final List<ScoringPredicate<T>> subPredicates) {
             this.subPredicates = subPredicates;
         }
 
-        private static <T> Optional<Predicate<T>> create(final List<Predicate<T>> subPredicates) {
+        private static <T> Optional<ScoringPredicate<T>> create(final List<ScoringPredicate<T>> subPredicates) {
             return Optional.of(new OrPredicate<>(subPredicates));
         }
 
         @Override
-        public boolean test(final T values) {
-            for (final Predicate<T> valuesPredicate : subPredicates) {
-                if (valuesPredicate.test(values)) {
+        public boolean test(final T t) {
+            for (final ScoringPredicate<T> valuesPredicate : subPredicates) {
+                if (valuesPredicate.test(t)) {
                     return true;
                 }
             }
             return false;
         }
+
+        @Override
+        public Score score(final T t) {
+            // Get the best score.
+            Score currentScore = null;
+            for (final ScoringPredicate<T> valuesPredicate : subPredicates) {
+                final Score score = valuesPredicate.score(t);
+                if (score.matches) {
+                    if (currentScore != null) {
+                        if (SCORE_COMPARATOR.compare(currentScore, score) < 0) {
+                            currentScore = score;
+                        }
+                    } else {
+                        currentScore = score;
+                    }
+                }
+            }
+            return currentScore == null
+                    ? Score.NONE
+                    : currentScore;
+        }
     }
 
-    private static class NotPredicate<T> implements Predicate<T> {
+    private static class NotPredicate<T> implements ScoringPredicate<T> {
 
-        private final Predicate<T> subPredicate;
+        private final ScoringPredicate<T> subPredicate;
 
-        public NotPredicate(final Predicate<T> subPredicate) {
+        public NotPredicate(final ScoringPredicate<T> subPredicate) {
             this.subPredicate = subPredicate;
         }
 
-        private static <T> Optional<Predicate<T>> create(final Predicate<T> subPredicate) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ScoringPredicate<T> subPredicate) {
             return Optional.of(new NotPredicate<>(subPredicate));
         }
 
-        private static <T> Optional<Predicate<T>> create(final Optional<Predicate<T>> subPredicate) {
+        private static <T> Optional<ScoringPredicate<T>> create(final Optional<ScoringPredicate<T>> subPredicate) {
             return subPredicate.map(NotPredicate::new);
         }
 
@@ -513,9 +644,19 @@ public class ExpressionPredicateFactory {
         public boolean test(final T values) {
             return !subPredicate.test(values);
         }
+
+        @Override
+        public Score score(final T t) {
+            // Invert the score.
+            final Score score = subPredicate.score(t);
+            return new Score(
+                    !score.matches,
+                    Integer.MAX_VALUE - score.length,
+                    Integer.MAX_VALUE - score.index);
+        }
     }
 
-    private abstract static class ExpressionTermPredicate<T> implements Predicate<T> {
+    private abstract static class ExpressionTermPredicate<T> implements ScoringPredicate<T> {
 
         final ExpressionTerm term;
 
@@ -526,6 +667,13 @@ public class ExpressionPredicateFactory {
         @Override
         public String toString() {
             return term.toString();
+        }
+
+        @Override
+        public Score score(final T t) {
+            return test(t)
+                    ? Score.MATCH
+                    : Score.NONE;
         }
     }
 
@@ -539,8 +687,8 @@ public class ExpressionPredicateFactory {
             this.nullCheckFunction = nullCheckFunction;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Boolean> nullCheckFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Boolean> nullCheckFunction) {
             return Optional.of(new IsNullPredicate<>(term, nullCheckFunction));
         }
 
@@ -563,8 +711,8 @@ public class ExpressionPredicateFactory {
         }
     }
 
-    private static <T> Optional<Predicate<T>> ifValue(final ExpressionTerm term,
-                                                      final Supplier<Predicate<T>> supplier) {
+    private static <T> Optional<ScoringPredicate<T>> ifValue(final ExpressionTerm term,
+                                                             final Supplier<ScoringPredicate<T>> supplier) {
         if (NullSafe.isBlankString(term.getValue())) {
             return Optional.empty();
         }
@@ -578,8 +726,8 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> new NumericEquals<>(term, extractionFunction));
         }
 
@@ -597,8 +745,8 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> new NumericGreaterThan<>(term, extractionFunction));
         }
 
@@ -617,8 +765,8 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> new NumericGreaterThanOrEqualTo<>(term, extractionFunction));
         }
 
@@ -637,8 +785,8 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> new NumericLessThan<>(term, extractionFunction));
         }
 
@@ -657,8 +805,8 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> new NumericLessThanOrEqualTo<>(term, extractionFunction));
         }
 
@@ -683,8 +831,8 @@ public class ExpressionPredicateFactory {
             this.extractionFunction = extractionFunction;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             return ifValue(term, () -> {
                 final BigDecimal[] between = getTermNumbers(term, term.getValue());
                 if (between.length != 2) {
@@ -718,12 +866,12 @@ public class ExpressionPredicateFactory {
             this.extractionFunction = extractionFunction;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction) {
             final BigDecimal[] in = getTermNumbers(term, term.getValue());
             // If there are no terms then always a false match.
             if (in.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
             return Optional.of(new NumericIn<>(term, extractionFunction, in));
         }
@@ -753,9 +901,9 @@ public class ExpressionPredicateFactory {
             this.in = in;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction,
-                                                         final WordListProvider wordListProvider) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, BigDecimal> extractionFunction,
+                                                                final WordListProvider wordListProvider) {
             final String[] words;
             if (term.getDocRef() != null) {
                 words = wordListProvider.getWords(term.getDocRef());
@@ -763,7 +911,7 @@ public class ExpressionPredicateFactory {
                 words = loadDictionary(wordListProvider, term.getValue());
             }
             if (words.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
 
             final BigDecimal[] in = new BigDecimal[words.length];
@@ -809,9 +957,9 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> new DateEquals<>(term, extractionFunction, dateTimeSettings));
         }
 
@@ -830,9 +978,9 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> new DateGreaterThan<>(term, extractionFunction, dateTimeSettings));
         }
 
@@ -851,9 +999,9 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> new DateGreaterThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
@@ -872,9 +1020,9 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> new DateLessThan<>(term, extractionFunction, dateTimeSettings));
         }
 
@@ -893,9 +1041,9 @@ public class ExpressionPredicateFactory {
             super(term, extractionFunction, dateTimeSettings);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> new DateLessThanOrEqualTo<>(term, extractionFunction, dateTimeSettings));
         }
 
@@ -919,9 +1067,9 @@ public class ExpressionPredicateFactory {
             this.between = between;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             return ifValue(term, () -> {
                 final long[] between = getTermDates(term, term.getValue(), dateTimeSettings);
                 if (between.length != 2) {
@@ -955,13 +1103,13 @@ public class ExpressionPredicateFactory {
             this.in = in;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings) {
             final long[] in = getTermDates(term, term.getValue(), dateTimeSettings);
             // If there are no terms then always a false match.
             if (in.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
             return Optional.of(new DateIn<>(term, extractionFunction, in));
         }
@@ -991,10 +1139,10 @@ public class ExpressionPredicateFactory {
             this.in = in;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, Long> extractionFunction,
-                                                         final DateTimeSettings dateTimeSettings,
-                                                         final WordListProvider wordListProvider) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final DateTimeSettings dateTimeSettings,
+                                                                final WordListProvider wordListProvider) {
             final String[] words;
             if (term.getDocRef() != null) {
                 words = wordListProvider.getWords(term.getDocRef());
@@ -1002,7 +1150,7 @@ public class ExpressionPredicateFactory {
                 words = loadDictionary(wordListProvider, term.getValue());
             }
             if (words.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
 
             final long[] in = new long[words.length];
@@ -1047,8 +1195,8 @@ public class ExpressionPredicateFactory {
             super(term, value, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard equals.
                 final String replaced = makePattern(term.getValue());
@@ -1075,8 +1223,8 @@ public class ExpressionPredicateFactory {
             super(term, value, extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard equals.
                 final String replaced = makePattern(term.getValue());
@@ -1107,8 +1255,8 @@ public class ExpressionPredicateFactory {
             value = term.getValue().toLowerCase();
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard contains.
                 final String replaced = makePattern(term.getValue());
@@ -1138,8 +1286,8 @@ public class ExpressionPredicateFactory {
             super(term, term.getValue(), extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard contains.
                 final String replaced = makePattern(term.getValue());
@@ -1175,8 +1323,8 @@ public class ExpressionPredicateFactory {
             string = term.getValue().toLowerCase();
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> new StringStartsWith<>(term, extractionFunction));
         }
 
@@ -1197,8 +1345,8 @@ public class ExpressionPredicateFactory {
             super(term, term.getValue(), extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> new StringStartsWithCaseSensitive<>(term, extractionFunction));
         }
 
@@ -1224,8 +1372,8 @@ public class ExpressionPredicateFactory {
             string = term.getValue().toLowerCase();
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> new StringEndsWith<>(term, extractionFunction));
         }
 
@@ -1246,8 +1394,8 @@ public class ExpressionPredicateFactory {
             super(term, term.getValue(), extractionFunction);
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> new StringEndsWithCaseSensitive<>(term, extractionFunction));
         }
 
@@ -1275,8 +1423,8 @@ public class ExpressionPredicateFactory {
             this.pattern = pattern;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 final Pattern pattern = Pattern.compile(term.getValue(), Pattern.CASE_INSENSITIVE);
                 return new StringRegex<>(term, extractionFunction, pattern);
@@ -1290,6 +1438,16 @@ public class ExpressionPredicateFactory {
                 return false;
             }
             return pattern.matcher(val).find();
+        }
+
+        @Override
+        public Score score(final T t) {
+            final String val = extractionFunction.apply(t);
+            if (val != null) {
+                final Matcher matcher = pattern.matcher(val);
+                return regexScore(matcher);
+            }
+            return Score.NONE;
         }
     }
 
@@ -1306,8 +1464,8 @@ public class ExpressionPredicateFactory {
             this.pattern = pattern;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 final Pattern pattern = Pattern.compile(term.getValue());
                 return new StringRegexCaseSensitive<>(term, extractionFunction, pattern);
@@ -1321,6 +1479,36 @@ public class ExpressionPredicateFactory {
                 return false;
             }
             return pattern.matcher(val).find();
+        }
+
+        @Override
+        public Score score(final T t) {
+            final String val = extractionFunction.apply(t);
+            if (val != null) {
+                final Matcher matcher = pattern.matcher(val);
+                return regexScore(matcher);
+            }
+            return Score.NONE;
+        }
+    }
+
+    private static Score regexScore(final Matcher matcher) {
+        int bestMatchLen = -1;
+        int bestMatchIdx = -1;
+
+        while (matcher.find()) {
+            final int matchLen = matcher.end() - matcher.start();
+            final int matchIdx = matcher.start();
+            if (bestMatchLen == -1 || matchLen < bestMatchLen) {
+                bestMatchLen = matchLen;
+                bestMatchIdx = matchIdx;
+            }
+        }
+
+        if (bestMatchLen == -1) {
+            return Score.NONE;
+        } else {
+            return new Score(true, bestMatchLen, bestMatchIdx);
         }
     }
 
@@ -1337,8 +1525,8 @@ public class ExpressionPredicateFactory {
             this.predicate = predicate;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 final Predicate<String> predicate = StringPredicateFactory.createWordBoundaryPredicate(term.getValue());
                 return new StringWordBoundary<>(term, extractionFunction, predicate);
@@ -1368,12 +1556,12 @@ public class ExpressionPredicateFactory {
             this.in = in;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction) {
             final String[] in = term.getValue().split(" ");
             // If there are no terms then always a false match.
             if (in.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
             return Optional.of(new StringIn<>(term, extractionFunction, in));
         }
@@ -1403,9 +1591,9 @@ public class ExpressionPredicateFactory {
             this.in = in;
         }
 
-        private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, String> extractionFunction,
-                                                         final WordListProvider wordListProvider) {
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, String> extractionFunction,
+                                                                final WordListProvider wordListProvider) {
             final String[] words;
             if (term.getDocRef() != null) {
                 words = wordListProvider.getWords(term.getDocRef());
@@ -1415,7 +1603,7 @@ public class ExpressionPredicateFactory {
 
             // If there are no terms then always a false match.
             if (words.length == 0) {
-                return Optional.of(values -> false);
+                return Optional.of(matchNone());
             }
             return Optional.of(new StringIn<>(term, extractionFunction, words));
         }
@@ -1431,7 +1619,6 @@ public class ExpressionPredicateFactory {
             return false;
         }
     }
-
 
     public static String makePattern(final String value) {
         int index = 0;
@@ -1498,5 +1685,61 @@ public class ExpressionPredicateFactory {
         } else {
             return wordListProvider.getWords(docRef);
         }
+    }
+
+    private static <T> ScoringPredicate<T> matchAll() {
+        return ScoringPredicate.matchAll();
+    }
+
+    private static <T> ScoringPredicate<T> matchNone() {
+        return ScoringPredicate.matchNone();
+    }
+
+    private static record Score(boolean matches, int length, int index) {
+
+        private static final Score NONE = new Score(false, 0, 0);
+        private static final Score MATCH = new Score(true, 0, 0);
+    }
+
+    private interface ScoringPredicate<T> extends Predicate<T> {
+
+        @SuppressWarnings("rawtypes")
+        static final ScoringPredicate MATCH_NONE = new ScoringPredicate<>() {
+            @Override
+            public Score score(final Object t) {
+                return Score.NONE;
+            }
+
+            @Override
+            public boolean test(final Object t) {
+                return false;
+            }
+        };
+        @SuppressWarnings("rawtypes")
+        static final ScoringPredicate MATCH_ALL = new ScoringPredicate<>() {
+            @Override
+            public Score score(final Object t) {
+                return Score.MATCH;
+            }
+
+            @Override
+            public boolean test(final Object t) {
+                return true;
+            }
+        };
+
+        Score score(T t);
+
+        public static <T> ScoringPredicate<T> matchAll() {
+            return ScoringPredicate.MATCH_ALL;
+        }
+
+        public static <T> ScoringPredicate<T> matchNone() {
+            return ScoringPredicate.MATCH_NONE;
+        }
+    }
+
+    private static record ScoredObject<T>(T t, Score score) {
+
     }
 }

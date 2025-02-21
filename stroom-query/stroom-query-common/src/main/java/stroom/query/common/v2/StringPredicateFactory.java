@@ -76,21 +76,6 @@ public class StringPredicateFactory {
         return createFuzzyMatchPredicate(userInput, DEFAULT_SEPARATOR_CHAR_CLASS);
     }
 
-    public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
-                                                             final Function<T, String> valueExtractor) {
-
-        final Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
-        return toNullSafePredicate(false,
-                (T obj) -> {
-                    final String valueUnderTest = valueExtractor.apply(obj);
-                    if (valueUnderTest == null) {
-                        return false;
-                    } else {
-                        return stringPredicate.test(valueUnderTest);
-                    }
-                });
-    }
-
     /**
      * Creates a fuzzy match {@link Predicate<String>} for userInput.
      * Null userInput results in an always true predicate.

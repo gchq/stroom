@@ -4,7 +4,6 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.UserTimeZone;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.util.date.DateUtil;
 
@@ -20,7 +19,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -209,8 +207,9 @@ class TestExpressionPredicateFactory {
                 makeStringMatchTest("Word boundary match 5",
                         "?CPSP",
                         List.of("CountPipelineSQLPipe",
-                                "CountPipelineSwimPipe"),
-                        List.of("CountPipelineSoQueueLongPipe")),
+                                "CountPipelineSwimPipe",
+                                "CountPipelineSoQueueLongPipe"),
+                        List.of("CountPipelineSoQueueLong")),
 
                 makeStringMatchTest("Word boundary match 6 (camel + delimited) ",
                         "?JDCN",
@@ -255,8 +254,9 @@ class TestExpressionPredicateFactory {
                         "?TIM",
                         List.of("THIS_IS_MY_FEED_a99",
                                 "a99_this_is_my_feed",
-                                "TXHIS_IS_MY_FEED"),
-                        List.of("IS_THIS_IS_a99_MY_FEED", "timf", "TIMF")),
+                                "TXHIS_IS_MY_FEED",
+                                "IS_THIS_IS_a99_MY_FEED"),
+                        List.of("IS_THIS_IS_a99_A_FEED", "timf", "TIMF")),
 
                 makeStringMatchTest("Single letter (lower case)",
                         "b",
@@ -395,10 +395,10 @@ class TestExpressionPredicateFactory {
                                    final List<String> expectedNonMatches) {
 
         LOGGER.info("Testing input [{}]", userInput);
-        final List<String> actualMatches = Stream.concat(expectedMatches.stream(),
-                        expectedNonMatches.stream())
-                .filter(createStringFieldPredicate(userInput))
-                .collect(Collectors.toList());
+        final List<String> actualMatches = filterAndSortStrings(
+                userInput,
+                Stream.concat(expectedMatches.stream(), expectedNonMatches.stream()))
+                .toList();
 
         assertThat(actualMatches)
                 .containsExactlyInAnyOrderElementsOf(expectedMatches);
@@ -406,24 +406,18 @@ class TestExpressionPredicateFactory {
         final String negatedInput = StringPredicateFactory.NOT_OPERATOR_STR + userInput;
 
         LOGGER.info("Testing negated input [{}]", negatedInput);
-        final List<String> actualNegatedMatches = Stream.concat(expectedMatches.stream(), expectedNonMatches.stream())
-                .filter(createStringFieldPredicate(negatedInput))
-                .collect(Collectors.toList());
+        final List<String> actualNegatedMatches = filterAndSortStrings(
+                negatedInput,
+                Stream.concat(expectedMatches.stream(), expectedNonMatches.stream()))
+                .toList();
 
         assertThat(actualNegatedMatches)
                 .containsExactlyInAnyOrderElementsOf(expectedNonMatches);
     }
 
-    private Predicate<String> createStringFieldPredicate(final String userInput) {
-        final Optional<ExpressionOperator> simpleStringExpressionParser = SimpleStringExpressionParser
-                .create(new SingleFieldProvider("test"), userInput);
-        if (simpleStringExpressionParser.isEmpty()) {
-            return string -> true;
-        }
-
-        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory()
-                .createOptional(simpleStringExpressionParser.orElseThrow(), TEXT_VALUE_FUNCTION_FACTORIES);
-        return string -> optionalValuesPredicate.orElseThrow().test(string);
+    private Stream<String> filterAndSortStrings(final String userInput, final Stream<String> stream) {
+        return new ExpressionPredicateFactory()
+                .filterAndSortStream(stream, userInput, Optional.of(Comparator.nullsFirst(Comparator.naturalOrder())));
     }
 
     private DynamicTest makeDateMatchTest(final String testName,
@@ -440,10 +434,10 @@ class TestExpressionPredicateFactory {
                                  final List<String> expectedNonMatches) {
 
         LOGGER.info("Testing input [{}]", userInput);
-        final List<String> actualMatches = Stream.concat(expectedMatches.stream(),
-                        expectedNonMatches.stream())
-                .filter(createDateFieldPredicate(userInput))
-                .collect(Collectors.toList());
+        final List<String> actualMatches = filterAndSortDates(
+                userInput,
+                Stream.concat(expectedMatches.stream(), expectedNonMatches.stream()))
+                .toList();
 
         assertThat(actualMatches)
                 .containsExactlyInAnyOrderElementsOf(expectedMatches);
@@ -451,31 +445,28 @@ class TestExpressionPredicateFactory {
         final String negatedInput = StringPredicateFactory.NOT_OPERATOR_STR + userInput;
 
         LOGGER.info("Testing negated input [{}]", negatedInput);
-        final List<String> actualNegatedMatches = Stream.concat(expectedMatches.stream(), expectedNonMatches.stream())
-                .filter(createDateFieldPredicate(negatedInput))
-                .collect(Collectors.toList());
+        final List<String> actualNegatedMatches = filterAndSortDates(
+                negatedInput,
+                Stream.concat(expectedMatches.stream(), expectedNonMatches.stream()))
+                .toList();
 
         assertThat(actualNegatedMatches)
                 .containsExactlyInAnyOrderElementsOf(expectedNonMatches);
     }
 
-    private Predicate<String> createDateFieldPredicate(final String userInput) {
-        final Optional<ExpressionOperator> simpleStringExpressionParser = SimpleStringExpressionParser
-                .create(new SingleFieldProvider("test"), userInput);
-        if (simpleStringExpressionParser.isEmpty()) {
-            return string -> true;
-        }
-
+    private Stream<String> filterAndSortDates(final String userInput, final Stream<String> stream) {
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
                 .referenceTime(DateUtil.parseNormalDateTimeString("2000-01-01T00:00:00.000Z"))
                 .timeZone(UserTimeZone.utc())
                 .build();
-        final Optional<Predicate<String>> optionalValuesPredicate = new ExpressionPredicateFactory()
-                .createOptional(simpleStringExpressionParser.orElseThrow(),
-                        DATE_VALUE_FUNCTION_FACTORIES,
-                        dateTimeSettings);
-        return string -> optionalValuesPredicate.orElseThrow().test(string);
+        return new ExpressionPredicateFactory().filterAndSortStream(
+                stream,
+                userInput,
+                new SingleFieldProvider("test"),
+                DATE_VALUE_FUNCTION_FACTORIES,
+                dateTimeSettings,
+                Optional.of(Comparator.naturalOrder()));
     }
 
     private void doComparatorTest(final String userInput,

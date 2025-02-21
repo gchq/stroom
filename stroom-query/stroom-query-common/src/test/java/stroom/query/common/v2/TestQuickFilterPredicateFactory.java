@@ -1,6 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.ConsoleColour;
@@ -8,12 +9,12 @@ import stroom.util.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -335,10 +336,10 @@ class TestQuickFilterPredicateFactory {
                 "Black Bear",
                 "Red Dragon");
 
-        final List<String> filteredData = data
-                .stream()
-                .filter(expressionPredicateFactory.create("bear"))
-                .sorted()
+        final List<String> filteredData = expressionPredicateFactory.filterAndSortStream(
+                        data.stream(),
+                        "bear",
+                        Optional.of(Comparator.naturalOrder()))
                 .toList();
 
         Assertions.assertThat(filteredData)
@@ -347,8 +348,6 @@ class TestQuickFilterPredicateFactory {
                         "Brown Bear");
     }
 
-    // FIXME: Add scoring and sorting to results.
-    @Disabled
     @Test
     void testFilterStream_string_charsAnywhere() {
         List<String> data = List.of(
@@ -359,9 +358,10 @@ class TestQuickFilterPredicateFactory {
                 "Black Bear",
                 "Red Dragon");
 
-        final List<String> filteredData = data
-                .stream()
-                .filter(expressionPredicateFactory.create("~ea"))
+        final List<String> filteredData = expressionPredicateFactory.filterAndSortStream(
+                        data.stream(),
+                        "~ea",
+                        Optional.of(Comparator.naturalOrder()))
                 .toList();
 
         // ea closest together in bEAr, furthest in rEd drAgon
@@ -374,8 +374,6 @@ class TestQuickFilterPredicateFactory {
                         "Red Dragon");
     }
 
-    // FIXME: Add scoring and sorting to results.
-    @Disabled
     @Test
     void testFilterStream_string_regex() {
         List<String> data = List.of(
@@ -386,9 +384,10 @@ class TestQuickFilterPredicateFactory {
                 "Black Bear",
                 "Red Dragon");
 
-        final List<String> filteredData = data
-                .stream()
-                .filter(expressionPredicateFactory.create("/e.*a"))
+        final List<String> filteredData = expressionPredicateFactory.filterAndSortStream(
+                        data.stream(),
+                        "/e.*a",
+                        Optional.of(Comparator.naturalOrder()))
                 .toList();
 
         // ea closest together in bEAr, furthest in rEd drAgon
@@ -485,15 +484,13 @@ class TestQuickFilterPredicateFactory {
 
         LOGGER.info("Testing input [{}]", ConsoleColour.cyan(input));
 
-        final Predicate<Pojo> predicate = expressionPredicateFactory.create(
-                input,
-                FIELD_PROVIDER,
-                VALUE_FUNCTION_FACTORIES);
-
-        final List<Pojo> matched = Stream
-                .concat(shouldMatch.stream(), shouldNotMatch.stream())
-                .filter(predicate)
-                .collect(Collectors.toList());
+        final List<Pojo> matched = expressionPredicateFactory.filterAndSortStream(
+                        Stream.concat(shouldMatch.stream(), shouldNotMatch.stream()),
+                        input,
+                        FIELD_PROVIDER,
+                        VALUE_FUNCTION_FACTORIES,
+                        Optional.empty())
+                .toList();
 
         LOGGER.info("Should match:\n{}",
                 ConsoleColour.green(shouldMatch.stream()
@@ -513,7 +510,11 @@ class TestQuickFilterPredicateFactory {
                 .containsExactlyInAnyOrderElementsOf(shouldMatch);
 
         // Now test it as a stream
-
+        final Predicate<Pojo> predicate = expressionPredicateFactory.create(
+                input,
+                FIELD_PROVIDER,
+                VALUE_FUNCTION_FACTORIES,
+                DateTimeSettings.builder().build());
         final List<Pojo> streamMatched = Stream
                 .concat(shouldMatch.stream(), shouldNotMatch.stream())
                 .filter(predicate)

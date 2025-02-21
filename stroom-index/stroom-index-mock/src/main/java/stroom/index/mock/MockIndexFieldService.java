@@ -76,10 +76,10 @@ public class MockIndexFieldService implements IndexFieldService {
         final DocRef dataSourceRef = criteria.getDataSourceRef();
         ensureLoaded(dataSourceRef);
 
-        final Optional<Predicate<IndexField>> optionalNamePredicate = expressionPredicateFactory
-                .createOptional(criteria.getFilter(), IndexField::getFldName);
+        final Predicate<IndexField> namePredicate = expressionPredicateFactory
+                .create(criteria.getFilter(), IndexField::getFldName);
         final List<Predicate<IndexField>> predicates = new ArrayList<>(2);
-        optionalNamePredicate.ifPresent(predicates::add);
+        predicates.add(namePredicate);
         if (criteria.getQueryable() != null) {
             predicates.add(queryField -> queryField.isIndexed() == criteria.getQueryable());
         }

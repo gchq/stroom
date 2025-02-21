@@ -54,13 +54,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 public class GlobalConfigService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
-    private static final ValueFunctionFactoriesImpl<ConfigProperty> VALUE_FUNCTION_FACTORIES =
+    public static final ValueFunctionFactoriesImpl<ConfigProperty> VALUE_FUNCTION_FACTORIES =
             new ValueFunctionFactoriesImpl<ConfigProperty>()
                     .put(GlobalConfigResource.FIELD_DEF_NAME, ConfigProperty::getNameAsString)
                     .put(GlobalConfigResource.FIELD_DEF_VALUE, configProperty ->
@@ -68,7 +67,7 @@ public class GlobalConfigService {
                     .put(GlobalConfigResource.FIELD_DEF_SOURCE, configProperty ->
                             configProperty.getSource().getName())
                     .put(GlobalConfigResource.FIELD_DEF_DESCRIPTION, ConfigProperty::getDescription);
-    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(GlobalConfigResource.FIELD_DEFINITIONS);
+    public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(GlobalConfigResource.FIELD_DEFINITIONS);
 
     private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
             GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
@@ -139,13 +138,10 @@ public class GlobalConfigService {
 
             // Extracting the value out of the json details is not very efficient.  May be better to use
             // something like jsoniter on the raw json.
-            final Predicate<ConfigProperty> predicate = expressionPredicateFactory
-                    .create(criteria.getQuickFilterInput(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES);
-
-            return configMapper
-                    .getGlobalProperties()
-                    .stream()
-                    .filter(predicate)
+            return expressionPredicateFactory.filterAndSortStream(
+                            configMapper.getGlobalProperties().stream(),
+                            criteria.getQuickFilterInput(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES,
+                            optConfigPropertyComparator)
                     .collect(ListConfigResponse.collector(
                             pageRequest,
                             (configProperties, pageResponse) ->

@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -223,9 +224,11 @@ class TaskManagerImpl implements TaskManager {
         final String nameFilter = NullSafe.get(findTaskProgressCriteria, FindTaskProgressCriteria::getNameFilter);
         if (!NullSafe.isBlankString(nameFilter)) {
             LOGGER.debug("Using nameFilter: '{}'", nameFilter);
-            fuzzyMatchPredicate = expressionPredicateFactory.create(nameFilter,
+            fuzzyMatchPredicate = expressionPredicateFactory.create(
+                    nameFilter,
                     FIELD_PROVIDER,
-                    VALUE_FUNCTION_FACTORIES);
+                    VALUE_FUNCTION_FACTORIES,
+                    DateTimeSettings.builder().build());
         } else {
             LOGGER.debug("No nameFilter, match all");
             fuzzyMatchPredicate = taskProgress -> true;

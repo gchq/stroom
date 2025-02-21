@@ -29,13 +29,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -132,21 +133,24 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     @NotNull
     private List<String> createPipelineList(final String userInput) {
-        return pipelineStore.list()
-                .stream()
-                .map(DocRef::getName)
-                .filter(expressionPredicateFactory.create(userInput))
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(
+                        pipelineStore
+                                .list()
+                                .stream()
+                                .map(DocRef::getName),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
                 .toList();
     }
 
     @NotNull
     private List<String> createStatusList(final String userInput) {
-        return Arrays.stream(Status.values())
-                .map(Status::getDisplayValue)
-                .filter(expressionPredicateFactory.create(userInput))
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(
+                        Arrays.stream(Status.values())
+                                .map(Status::getDisplayValue),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
                 .toList();
     }
@@ -179,16 +183,16 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
         try {
             // Make async calls to get the two lists then combine
-            final Predicate<String> predicate = expressionPredicateFactory.create(userInput);
-            return metaFeedsFuture.thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) -> Stream
-                            .concat(metaFeedNames.stream(), docFeedNames.stream())
-                            .parallel()
-                            .filter(predicate)
-                            .distinct()
-                            .sorted()
-                            .limit(LIMIT)
-                            .toList())
-                    .get();
+            return expressionPredicateFactory.filterAndSortStream(
+                            metaFeedsFuture.thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) -> Stream
+                                            .concat(metaFeedNames.stream(), docFeedNames.stream())
+                                            .parallel()
+                                            .distinct())
+                                    .get(),
+                            userInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .limit(LIMIT)
+                    .toList();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Thread interrupted", e);
@@ -199,23 +203,21 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     }
 
     private List<String> createStreamTypeList(final String userInput) {
-        return metaService
-                .getTypes()
-                .stream()
-                .filter(expressionPredicateFactory.create(userInput))
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(metaService.getTypes().stream(),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
                 .toList();
     }
 
     private List<String> getNonUniqueDocRefNames(final String docRefType,
                                                  final String userInput) {
-        return docRefInfoService
-                .findByType(docRefType)
-                .stream()
-                .map(DocRef::getName)
-                .filter(expressionPredicateFactory.create(userInput))
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(docRefInfoService
+                                .findByType(docRefType)
+                                .stream()
+                                .map(DocRef::getName),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
                 .toList();
     }

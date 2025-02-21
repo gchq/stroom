@@ -20,6 +20,7 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -28,7 +29,6 @@ import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
-import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -42,11 +42,11 @@ import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
@@ -151,9 +151,10 @@ public class ActivityServiceImpl implements ActivityService {
                 final FieldProvider fieldProvider = new FieldProviderImpl(fieldDefinitions);
                 final ValueFunctionFactories<Activity> valueFunctionFactories =
                         buildValueFunctionFactories(fieldDefinitions);
-                final Optional<Predicate<Activity>> optionalPredicate = expressionPredicateFactory
-                        .createOptional(filter, fieldProvider, valueFunctionFactories);
-                filteredActivities = allActivities.stream().filter(PredicateUtil.get(optionalPredicate))
+                filteredActivities = expressionPredicateFactory.filterAndSortStream(
+                                allActivities.stream(),
+                                filter, fieldProvider, valueFunctionFactories,
+                                Optional.of(Comparator.comparingInt((Activity activity) -> activity.getId())))
                         .toList();
             } else {
                 filteredActivities = allActivities;

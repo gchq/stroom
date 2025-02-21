@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerDecorator;
+import stroom.expression.api.DateTimeSettings;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -32,7 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -192,34 +192,31 @@ public class DependencyServiceImpl implements DependencyService {
                                                    final Set<DocRef> pseudoDocRefs,
                                                    final Optional<Comparator<Dependency>> optSortListComparator) {
         final Map<DocRef, Optional<DocRefInfo>> docRefInfoCache = new ConcurrentHashMap<>();
-        final Predicate<Dependency> predicate = expressionPredicateFactory
-                .create(criteria.getPartialName(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORY_MAP);
-        Stream<Dependency> filteredStream = allDependencies.entrySet()
-                .stream()
-                .flatMap(entry -> {
-                    final DocRef parentDocRef = entry.getKey();
-                    final Set<DocRef> childDocRefs = entry.getValue();
-                    return childDocRefs.stream()
-                            .map(childDocRef -> {
-                                // Resolve doc info.
-                                final Optional<DocRefInfo> parentInfo = docRefInfoCache
-                                        .computeIfAbsent(parentDocRef, docRefInfoService::info);
-                                final Optional<DocRefInfo> childInfo = docRefInfoCache
-                                        .computeIfAbsent(childDocRef, docRefInfoService::info);
+        return expressionPredicateFactory.filterAndSortStream(
+                        allDependencies.entrySet()
+                                .stream()
+                                .flatMap(entry -> {
+                                    final DocRef parentDocRef = entry.getKey();
+                                    final Set<DocRef> childDocRefs = entry.getValue();
+                                    return childDocRefs.stream().map(childDocRef -> {
+                                        // Resolve doc info.
+                                        final Optional<DocRefInfo> parentInfo = docRefInfoCache
+                                                .computeIfAbsent(parentDocRef, docRefInfoService::info);
+                                        final Optional<DocRefInfo> childInfo = docRefInfoCache
+                                                .computeIfAbsent(childDocRef, docRefInfoService::info);
 
-                                return new Dependency(
-                                        parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
-                                        childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
-                                        pseudoDocRefs.contains(childDocRef) ||
-                                        allDependencies.containsKey(childDocRef));
-                            });
-                })
-                .filter(predicate);
-        if (optSortListComparator.isPresent()) {
-            filteredStream = filteredStream.sorted(optSortListComparator.get());
-        }
-
-        return filteredStream.toList();
+                                        return new Dependency(
+                                                parentInfo.map(DocRefInfo::getDocRef).orElse(parentDocRef),
+                                                childInfo.map(DocRefInfo::getDocRef).orElse(childDocRef),
+                                                pseudoDocRefs.contains(childDocRef) ||
+                                                allDependencies.containsKey(childDocRef));
+                                    });
+                                }),
+                        criteria.getPartialName(),
+                        FIELD_PROVIDER,
+                        VALUE_FUNCTION_FACTORY_MAP,
+                        optSortListComparator)
+                .toList();
     }
 
     private Map<DocRef, Set<DocRef>> buildDependencyMap(final TaskContext parentTaskContext) {
