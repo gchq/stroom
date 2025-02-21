@@ -53,17 +53,26 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         }
     }
 
+    @Override
+    public String getName() {
+        return "Mock File Destination";
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        return "Mock File Destination";
+    }
+
     private void move(final Path source, final Path target) throws IOException {
-        boolean success = false;
-        while (!success) {
-            try {
-                Files.move(source,
-                        target,
-                        StandardCopyOption.ATOMIC_MOVE);
-                success = true;
-            } catch (final NoSuchFileException e) {
-                DirUtil.ensureDirExists(target.getParent());
-            }
+        try {
+            Files.move(source,
+                    target,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } catch (final NoSuchFileException e) {
+            DirUtil.ensureDirExists(target.getParent());
+            Files.move(source,
+                    target,
+                    StandardCopyOption.ATOMIC_MOVE);
         }
     }
 

@@ -28,6 +28,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
@@ -40,10 +41,14 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -71,14 +76,14 @@ public final class FileUtil {
         if (Files.exists(file)) {
             if (Files.isDirectory(file)) {
                 throw new FileUtilException("Path is directory not file \""
-                        + FileUtil.getCanonicalPath(file) + "\"");
+                                            + FileUtil.getCanonicalPath(file) + "\"");
             }
 
             try {
                 Files.deleteIfExists(file);
             } catch (final IOException e) {
                 throw new FileUtilException("Unable to delete \""
-                        + FileUtil.getCanonicalPath(file) + "\"");
+                                            + FileUtil.getCanonicalPath(file) + "\"");
             }
         }
     }
@@ -286,7 +291,7 @@ public final class FileUtil {
         } catch (final IOException e) {
             throw new FileUtilException(
                     "Unable to rename file \"" + FileUtil.getCanonicalPath(src)
-                            + "\" to \"" + FileUtil.getCanonicalPath(dest) + "\"");
+                    + "\" to \"" + FileUtil.getCanonicalPath(dest) + "\"");
         }
     }
 
@@ -433,6 +438,73 @@ public final class FileUtil {
             Files.copy(source, dest);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Recursively list the contents of path, acquiring the file attributes at the same time to
+     * avoid subsequent calls down to the file system for things like {@link Files#isDirectory(Path, LinkOption...)}.
+     *
+     * <p>
+     * Only use this if you need the file attributes of most of the files or you want to filter
+     * on the file attributes.
+     * </p>
+     * <p>
+     * Includes path in the output
+     * </p>
+     */
+    public static List<PathWithAttributes> deepListContents(final Path path,
+                                                            final boolean parallel,
+                                                            final FileVisitOption... fileVisitOptions) {
+        return deepListContents(path, parallel, null, fileVisitOptions);
+    }
+
+    /**
+     * Recursively list the contents of path, acquiring the file attributes at the same time to
+     * avoid subsequent calls down to the file system for things like {@link Files#isDirectory(Path, LinkOption...)}.
+     *
+     * <p>
+     * Only use this if you need the file attributes of most of the files or you want to filter
+     * on the file attributes.
+     * </p>
+     * <p>
+     * Includes path in the output
+     * </p>
+     *
+     * @param filter Optional filter to limit the results.
+     */
+    public static List<PathWithAttributes> deepListContents(final Path path,
+                                                            final boolean parallel,
+                                                            final Predicate<PathWithAttributes> filter,
+                                                            final FileVisitOption... fileVisitOptions) {
+        Objects.requireNonNull(path);
+
+        final Map<Path, BasicFileAttributes> pathToTypeMap = new ConcurrentHashMap<>();
+        // Stateful predicate to hold onto the file type
+        final BiPredicate<Path, BasicFileAttributes> predicate = (aPath, basicFileAttributes) -> {
+            pathToTypeMap.put(aPath, basicFileAttributes);
+            return true;
+        };
+
+        try (final Stream<Path> stream = Files.find(path, Integer.MAX_VALUE, predicate, fileVisitOptions)) {
+            Stream<Path> stream2 = parallel
+                    ? stream.parallel()
+                    : stream;
+
+            Stream<PathWithAttributes> fileWithAttributesStream = stream2
+                    .map(aPath -> {
+                        // Remove it from the map now we have mapped it
+                        final BasicFileAttributes attributes = Objects.requireNonNull(pathToTypeMap.remove(aPath));
+                        return new PathWithAttributes(aPath, attributes);
+                    });
+            if (filter != null) {
+                return fileWithAttributesStream.filter(filter)
+                        .toList();
+            } else {
+                return fileWithAttributesStream.toList();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

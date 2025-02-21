@@ -9,6 +9,7 @@
     </appender>
 
     <logger name="stroom" level="info" />
+    <logger name="stroom.proxy.app.handler.DirUtil" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

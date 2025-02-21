@@ -123,7 +123,12 @@ class TestInnerProcessEndToEnd {
                                 .maxAggregateAge(StroomDuration.ofSeconds(5))
                                 .aggregationFrequency(StroomDuration.ofSeconds(1))
                                 .build())
-                        .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
+                        .addForwardFileDestination(new ForwardFileConfig(true,
+                                false,
+                                "test",
+                                "test",
+                                null,
+                                null))
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);

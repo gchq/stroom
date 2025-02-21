@@ -28,6 +28,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -315,8 +316,24 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder forwardFileDestinations(final Collection<ForwardFileConfig> forwarderFileConfigs) {
+            this.forwardFileDestinations.clear();
+            if (forwarderFileConfigs != null) {
+                this.forwardFileDestinations.addAll(forwarderFileConfigs);
+            }
+            return this;
+        }
+
         public Builder addForwardHttpDestination(final ForwardHttpPostConfig forwarderHttpConfig) {
             this.forwardHttpDestinations.add(forwarderHttpConfig);
+            return this;
+        }
+
+        public Builder forwardHttpDestinations(final Collection<ForwardHttpPostConfig> forwarderHttpConfigs) {
+            this.forwardHttpDestinations.clear();
+            if (forwarderHttpConfigs != null) {
+                this.forwardHttpDestinations.addAll(forwarderHttpConfigs);
+            }
             return this;
         }
 

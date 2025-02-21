@@ -387,11 +387,23 @@ class DynamicTestBuilder {
         private Function<TestCase<I, O>, String> nameFunction = null;
         private Runnable beforeCaseAction = null;
         private Runnable afterCaseAction = null;
+        private Consumer<String> actualOutputConsumer = null;
+        private boolean logActualOutput = false;
 
         private CasesBuilder(final Function<TestCase<I, O>, O> testAction,
                              final Consumer<TestOutcome<I, O>> testOutcomeConsumer) {
             this.testAction = Objects.requireNonNull(testAction);
             this.testOutcomeConsumer = Objects.requireNonNull(testOutcomeConsumer);
+        }
+
+        public CasesBuilder<I, O> withActualOutputConsumer(final Consumer<String> actualOutputConsumer) {
+            this.actualOutputConsumer = actualOutputConsumer;
+            return this;
+        }
+
+        public CasesBuilder<I, O> withActualOutputDebugLogging() {
+            this.logActualOutput = true;
+            return this;
         }
 
         /**
@@ -630,6 +642,12 @@ class DynamicTestBuilder {
                                             "Not expecting test to throw an exception but it threw {} '{}'",
                                             t, t.getMessage()), t);
                                 }
+                            }
+                            if (actualOutputConsumer != null) {
+                                actualOutputConsumer.accept(LogUtil.message("Actual output: '{}'", actualOutput));
+                            }
+                            if (logActualOutput) {
+                                LOGGER.debug("Actual output: '{}'", actualOutput);
                             }
 
                             final TestOutcome<I, O> testOutcome = new TestOutcome<>(

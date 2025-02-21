@@ -35,10 +35,13 @@ proxyConfig:
     instant: false
     name: null
     path: null
+    subPathTemplate: "${year}${month}${day}/${feed}"
+    templatingMode: "REPLACE_UNKNOWN"
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    errorSubPathTemplate: "${year}${month}${day}/${feed}"
     forwardDelay: "PT0S"
     forwardUrl: null
     httpClient:
@@ -56,7 +59,7 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
-    maxRetries: 3
+    maxRetries: -1
     name: null
     retryDelay: "PT10S"
   haltBootOnConfigValidationFailure: true

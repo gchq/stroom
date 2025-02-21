@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class FileGroup {
 
@@ -28,5 +29,17 @@ public class FileGroup {
 
     public Path getEntries() {
         return entries;
+    }
+
+    /**
+     * @return All items in the file group
+     */
+    public List<Path> items() {
+        return List.of(zip, meta, entries);
+    }
+
+    @Override
+    public String toString() {
+        return zip.getParent().toString();
     }
 }
