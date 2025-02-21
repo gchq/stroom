@@ -39,6 +39,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexConstants;
 import stroom.svg.shared.SvgImage;
+import stroom.util.CharBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -137,7 +138,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     // State
     private final List<BulkOperation> bulkOperations;
     private final ByteArrayOutputStream currentDocument;
-    private final StringBuilder valueBuffer = new StringBuilder();
+    private final CharBuffer content = new CharBuffer();
     private Set<String> indexNameVariables = new HashSet<>();
     private final Map<String, String> currentDocIndexNameVariables = new HashMap<>();
     private String currentDocFieldName = null;
@@ -296,8 +297,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         }
 
         // Starting a new value, so clear the existing one
-        valueBuffer.setLength(0);
-
+        content.clear();
         super.startElement(uri, localName, qName, attributes);
     }
 
@@ -351,7 +351,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     }
                     break;
                 case JSONParser.XML_ELEMENT_STRING:
-                    value = valueBuffer.toString();
+                    value = content.toString();
                     try {
                         if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
@@ -363,11 +363,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         }
                     } catch (IOException e) {
                         fatalError("Invalid string value '" + value + "' for property '" +
-                                currentDocFieldName + "'", e);
+                                   currentDocFieldName + "'", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_BOOLEAN:
-                    value = valueBuffer.toString();
+                    value = content.toString();
                     try {
                         if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
@@ -379,7 +379,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         }
                     } catch (IOException e) {
                         fatalError("Invalid boolean value '" + value + "' for property '" +
-                                currentDocFieldName + "'", e);
+                                   currentDocFieldName + "'", e);
                     }
                     break;
                 case JSONParser.XML_ELEMENT_NULL:
@@ -395,7 +395,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     }
                     break;
                 case JSONParser.XML_ELEMENT_NUMBER:
-                    value = valueBuffer.toString();
+                    value = content.toString();
                     try {
                         if (!value.isEmpty()) {
                             if (includeField(currentDocFieldName)) {
@@ -407,15 +407,14 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         }
                     } catch (IOException e) {
                         fatalError("Invalid number value '" + value + "' for property '" +
-                                currentDocFieldName + "'", e);
+                                   currentDocFieldName + "'", e);
                     }
                     break;
             }
         }
 
-        valueBuffer.setLength(0);
         currentDocFieldName = null;
-
+        content.clear();
         super.endElement(uri, localName, qName);
     }
 
@@ -450,7 +449,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        valueBuffer.append(ch, start, length);
+        content.append(ch, start, length);
         super.characters(ch, start, length);
     }
 
@@ -533,7 +532,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     );
 
                     final DeleteByQueryResponse deleteResponse = elasticClient.deleteByQuery(deleteRequest);
-                    final long tookSeconds = deleteResponse.took() != null ? deleteResponse.took() / 1000 : 0;
+                    final long tookSeconds = deleteResponse.took() != null
+                            ? deleteResponse.took() / 1000
+                            : 0;
 
                     LOGGER.info("Deleted {} documents matching StreamId: {} from index: {}, took {} seconds",
                             deleteResponse.deleted(), streamId, indexName, tookSeconds);
@@ -580,10 +581,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 }
 
                 final SearchResponse<Void> response = elasticClient.search(s -> s
-                        .index(getIndexBaseName() + "*")
-                        .size(ES_COMPOSITE_BATCH_SIZE)
-                        .query(query._toQuery())
-                        .aggregations(indicesAggregationKey, compositeAggBuilder.build()._toAggregation()),
+                                .index(getIndexBaseName() + "*")
+                                .size(ES_COMPOSITE_BATCH_SIZE)
+                                .query(query._toQuery())
+                                .aggregations(indicesAggregationKey, compositeAggBuilder.build()._toAggregation()),
                         Void.class
                 );
 
@@ -606,7 +607,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             return allIndexNames;
         } catch (IOException e) {
             fatalError("Failed to list indices for reindex purge. StreamId: " + streamId + ". " +
-                    "Base name: '" + indexName + "'", e);
+                       "Base name: '" + indexName + "'", e);
             return null;
         }
     }
@@ -620,7 +621,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             return indexNameMatcher.group(1);
         } else {
             throw new RuntimeException("Expected one or more characters in the index name before the first curly " +
-                    "brace.");
+                                       "brace.");
         }
     }
 
@@ -668,7 +669,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                     ? " (retries: " + currentRetry + ")"
                                     : "";
                             LOGGER.info("Pipeline '{}' indexed {} documents from stream {} to Elasticsearch cluster " +
-                                            "'{}' in {} seconds{}", pipelineName, bulkOperations.size(),
+                                        "'{}' in {} seconds{}", pipelineName, bulkOperations.size(),
                                     metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
                                     retryMessage);
                         }
@@ -733,7 +734,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         deleteOperations.size(), metaHolder.getMeta().getId(), pipelineName);
             } catch (IOException e) {
                 LOGGER.warn("Error occurred when deleting documents indexed during a failed bulk request. " +
-                        "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
+                            "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
             }
         }
     }
@@ -753,10 +754,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         if (currentRetry < indexingConfig.getRetryCount()) {
             // Backoff by the initial interval plus an exponential amount
             final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() +
-                    (long) currentRetry * currentRetry;
+                                         (long) currentRetry * currentRetry;
             try {
                 LOGGER.warn("Indexing request by pipeline '{}' for stream {} was rejected by Elasticsearch. " +
-                                "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
+                            "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
                         sleepDurationMs, currentRetry);
                 Thread.sleep(sleepDurationMs);
             } catch (InterruptedException ex) {
@@ -794,7 +795,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             final String fieldValue = currentDocIndexNameVariables.get(fieldName);
             if (fieldValue == null) {
                 throw new IllegalArgumentException("Field '" + fieldName + "' not found in document when " +
-                        "building index name with pattern: '" + indexName + "'");
+                                                   "building index name with pattern: '" + indexName + "'");
             }
             return fieldValue;
         });
@@ -820,7 +821,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @PipelineProperty(
             description = "Refresh the index after each batch is processed, making the indexed documents visible to " +
-                    "searches.",
+                          "searches.",
             defaultValue = "false",
             displayPriority = 3
     )
@@ -838,8 +839,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @PipelineProperty(
             description = "Name of the Elasticsearch index. Variables specified such as `{year}` are replaced with " +
-                    "the corresponding field values contained in the document root. Field names beginning with an " +
-                    "underscore are not written to the document and are only used in the index name pattern.",
+                          "the corresponding field values contained in the document root. Field names beginning with " +
+                          "an underscore are not written to the document and are only used in the index name pattern.",
             displayPriority = 5
     )
     public void setIndexName(final String indexName) {
@@ -848,7 +849,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     @PipelineProperty(
             description = "When reprocessing a stream, first delete any documents from the index matching the " +
-                    "source stream ID.",
+                          "source stream ID.",
             defaultValue = "true",
             displayPriority = 11
     )

@@ -16,12 +16,14 @@
 
 package stroom.util;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class CharBuffer implements CharSequence, Serializable {
 
     private static final char SPACE = ' ';
 
+    @Serial
     private static final long serialVersionUID = -3021087453916074085L;
 
     private static final int DEFAULT_SIZE = 16;
@@ -227,8 +229,7 @@ public class CharBuffer implements CharSequence, Serializable {
             return false;
         }
 
-        if (o instanceof CharBuffer) {
-            final CharBuffer cb = (CharBuffer) o;
+        if (o instanceof final CharBuffer cb) {
             final int len1 = end - start;
             final int len2 = cb.end - cb.start;
 
@@ -241,8 +242,7 @@ public class CharBuffer implements CharSequence, Serializable {
                 }
             }
             return true;
-        } else if (o instanceof CharSequence) {
-            final CharSequence charSequence = (CharSequence) o;
+        } else if (o instanceof final CharSequence charSequence) {
             return (end - start) == charSequence.length() && toString().equals(charSequence.toString());
         }
 
