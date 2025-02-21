@@ -181,7 +181,7 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
                 th.tabIndex(-1);
             }
 
-            this.renderHeader(th, context, header, isSorted, isSortAscending, sortIndex);
+            this.renderHeader(th, context, header, isSortable, isSorted, isSortAscending, sortIndex);
         }
 
         th.endTH();
@@ -190,11 +190,12 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
     private void renderHeader(final ElementBuilderBase<?> out,
                               final Cell.Context context,
                               final Header<?> header,
+                              final boolean isSortable,
                               final boolean isSorted,
                               final boolean isSortAscending,
                               final int sortIndex) {
         final boolean isFooter = this.isBuildingFooter();
-        if (isSorted && !isFooter) {
+        if (isSortable && !isFooter) {
             final DivBuilder outerDiv = out.startDiv();
             outerDiv.className("dataGridSortableHeaderOuterDiv");
 
@@ -203,7 +204,9 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
             this.renderHeader(nameHolder, context, header);
             nameHolder.endDiv();
 
-            SortIcon.append(outerDiv, isSortAscending, sortIndex + 1);
+            if (isSorted) {
+                SortIcon.append(outerDiv, isSortAscending, sortIndex + 1);
+            }
 
             outerDiv.endDiv();
 

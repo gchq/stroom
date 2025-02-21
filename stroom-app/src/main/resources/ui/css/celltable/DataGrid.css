@@ -352,7 +352,7 @@ table .dataGridOddRow.dataGridSelectedRow {
     padding: 0 !important;
 }
 
-.dataGridSortableHeaderNameHolder {
+.dataGridSortableHeaderNameHolder:hover {
 	text-decoration: underline;
 }
 
