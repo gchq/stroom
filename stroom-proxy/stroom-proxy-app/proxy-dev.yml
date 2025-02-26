@@ -128,10 +128,11 @@ proxyConfig:
       name: "upstream"
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
   #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
-      retryDelay: "PT2S"
-      maxRetryAge: "PT10S"
-      retryDelayGrowthFactor: 1.1
       apiKey: ""
+      queue:
+        retryDelay: "PT2S"
+        maxRetryAge: "PT10S"
+        retryDelayGrowthFactor: 1.1
 
   contentDir: "content"
   #  contentSync:

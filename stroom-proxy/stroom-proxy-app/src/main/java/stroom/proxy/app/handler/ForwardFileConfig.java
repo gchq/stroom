@@ -16,7 +16,9 @@ import java.util.Objects;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
-public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
+public final class ForwardFileConfig
+        extends AbstractConfig
+        implements IsProxyConfig, ForwarderConfig {
 
     public static final String PROP_NAME_SUB_PATH_TEMPLATE = "subPathTemplate";
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
@@ -38,7 +40,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         path = null;
         subPathTemplate = DEFAULT_SUB_PATH_TEMPLATE;
         templatingMode = DEFAULT_TEMPLATING_MODE;
-        forwardQueueConfig = null;
+        forwardQueueConfig = null; // Assume local file forwarder by default, so no queue config needed
     }
 
     @SuppressWarnings("unused")
@@ -49,7 +51,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final String subPathTemplate,
                              @JsonProperty("templatingMode") final TemplatingMode templatingMode,
-                             @JsonProperty("forwardQueueConfig") final ForwardQueueConfig forwardQueueConfig) {
+                             @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
@@ -72,11 +74,13 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
     /**
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
+    @Override
     @JsonProperty
     public boolean isEnabled() {
         return enabled;
     }
 
+    @Override
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
@@ -85,6 +89,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         return instant;
     }
 
+    @Override
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
@@ -139,10 +144,12 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         return templatingMode;
     }
 
-    @JsonProperty
+    @Override
+    @JsonProperty("queue")
     @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. Can be set to null " +
-                             "for a local file forwarder, but should be populated for a HTTP forwarder or a file " +
-                             "forwarder forwarding to a remote file system that may fail.")
+                             "for a local file forwarder, but should be populated if the file forwarder is " +
+                             "forwarding to a remote file system that may fail. Defaults to null as a " +
+                             "local file forwarder is assumed.")
     public ForwardQueueConfig getForwardQueueConfig() {
         return forwardQueueConfig;
     }

@@ -16,19 +16,16 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestinationFactoryImpl.class);
 
-    private final CleanupDirQueue cleanupDirQueue;
     private final ProxyServices proxyServices;
     private final DirQueueFactory dirQueueFactory;
     private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
 
     @Inject
-    public ForwardFileDestinationFactoryImpl(final CleanupDirQueue cleanupDirQueue,
-                                             final ProxyServices proxyServices,
+    public ForwardFileDestinationFactoryImpl(final ProxyServices proxyServices,
                                              final DirQueueFactory dirQueueFactory,
                                              final DataDirProvider dataDirProvider,
                                              final PathCreator pathCreator) {
-        this.cleanupDirQueue = cleanupDirQueue;
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
@@ -48,7 +45,7 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                 config.getTemplatingMode(),
                 pathCreator);
 
-        final ForwardDestination destination = getForwardDestination(config, forwardFileDestination);
+        final ForwardDestination destination = getWrappedForwardDestination(config, forwardFileDestination);
 
         LOGGER.info("Created {} '{}' at {} with getSubPathTemplate '{}' (isInstant: {})",
                 destination.getClass().getSimpleName(),
@@ -60,8 +57,8 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
         return destination;
     }
 
-    private ForwardDestination getForwardDestination(final ForwardFileConfig config,
-                                                     final ForwardFileDestinationImpl forwardFileDestination) {
+    private ForwardDestination getWrappedForwardDestination(final ForwardFileConfig config,
+                                                            final ForwardFileDestinationImpl forwardFileDestination) {
         final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
         final ForwardDestination destination;
         if (forwardQueueConfig != null) {
@@ -71,7 +68,6 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                     forwardFileDestination,
                     dataDirProvider,
                     pathCreator,
-                    cleanupDirQueue,
                     dirQueueFactory,
                     proxyServices);
         } else {

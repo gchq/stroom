@@ -24,7 +24,7 @@ public class Forwarder {
 
     private final List<ForwardDestination> destinations = new ArrayList<>();
     private final ForwardDestination forwardDestinationFacade;
-    private final CleanupDirQueue cleanupDirQueue;
+//    private final CleanupDirQueue cleanupDirQueue;
 
     @Inject
     public Forwarder(final DataDirProvider dataDirProvider,
@@ -32,7 +32,7 @@ public class Forwarder {
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ForwardHttpPostDestinationFactory forwardHttpPostDestinationFactory,
                      final CleanupDirQueue cleanupDirQueue) {
-        this.cleanupDirQueue = cleanupDirQueue;
+//        this.cleanupDirQueue = cleanupDirQueue;
 
         // Find out how many forward destinations are enabled.
         final ProxyConfig proxyConfig = proxyConfigProvider.get();

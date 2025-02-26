@@ -40,7 +40,6 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private final ForwardQueueConfig forwardQueueConfig;
     private final ForwardDestination delegateDestination;
-    private final CleanupDirQueue cleanupDirQueue;
     private final ProxyServices proxyServices;
 
     private final DirQueue forwardQueue;
@@ -52,16 +51,14 @@ public class RetryingForwardDestination implements ForwardDestination {
                                       final ForwardDestination delegateDestination,
                                       final DataDirProvider dataDirProvider,
                                       final PathCreator pathCreator,
-                                      final CleanupDirQueue cleanupDirQueue,
                                       final DirQueueFactory dirQueueFactory,
                                       final ProxyServices proxyServices) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
-        this.cleanupDirQueue = Objects.requireNonNull(cleanupDirQueue);
         this.proxyServices = Objects.requireNonNull(proxyServices);
 
-        this.destinationName = delegateDestination.getName();
+        this.destinationName = Objects.requireNonNull(delegateDestination.getName());
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get()
                 .resolve(DirNames.FORWARDING).resolve(safeDirName);
@@ -77,7 +74,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                 "retry - " + destinationName);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
-                forwardQueue::next, delegateDestination::add);
+                forwardQueue::next, this::forwardDir);
         final DirQueueTransfer retrying = new DirQueueTransfer(
                 retryQueue::next, this::retryDir);
         proxyServices.addParallelExecutor(

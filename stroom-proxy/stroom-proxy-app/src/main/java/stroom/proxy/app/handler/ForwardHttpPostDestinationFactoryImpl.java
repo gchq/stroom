@@ -41,28 +41,48 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
     }
 
     @Override
-    public ForwardHttpPostDestination create(final ForwardHttpPostConfig forwardHttpPostConfig) {
+    public ForwardDestination create(final ForwardHttpPostConfig forwardHttpPostConfig) {
         final ThreadConfig threadConfig = proxyConfigProvider.get().getThreadConfig();
         final StreamDestination streamDestination = httpSenderFactory.create(forwardHttpPostConfig);
         final String name = forwardHttpPostConfig.getName();
-        final ForwardHttpPostDestination forwardDestination = new ForwardHttpPostDestination(
+        final ForwardHttpPostDestination forwardHttpDestination = new ForwardHttpPostDestination(
                 name,
                 streamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig,
-                proxyServices,
-                dirQueueFactory,
-                threadConfig,
-                dataDirProvider,
-                simplePathCreator);
+                forwardHttpPostConfig);
 
-        LOGGER.info("Created ForwardHTTP destination '{}' with url '{}', threadCount: {}, " +
+        final ForwardDestination destination = getWrappedForwardDestination(
+                forwardHttpPostConfig, forwardHttpDestination);
+
+        LOGGER.info("Created {} '{}' with url '{}', threadCount: {}, " +
                     "retryCount: {}",
+                destination.getClass().getSimpleName(),
                 name,
                 forwardHttpPostConfig.getForwardUrl(),
                 threadConfig.getForwardThreadCount(),
                 threadConfig.getForwardRetryThreadCount());
 
-        return forwardDestination;
+        return destination;
+    }
+
+    private ForwardDestination getWrappedForwardDestination(
+            final ForwardHttpPostConfig config,
+            final ForwardHttpPostDestination forwardHttpPostDestination) {
+
+        final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
+        final ForwardDestination destination;
+        if (forwardQueueConfig != null) {
+            // We have queue config so wrap out ultimate destination with some queue/retry logic
+            destination = new RetryingForwardDestination(
+                    forwardQueueConfig,
+                    forwardHttpPostDestination,
+                    dataDirProvider,
+                    simplePathCreator,
+                    dirQueueFactory,
+                    proxyServices);
+        } else {
+            destination = forwardHttpPostDestination;
+        }
+        return destination;
     }
 }

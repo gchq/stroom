@@ -4,17 +4,20 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.List;
 
 @Singleton
 public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiverFactoryProvider.class);
 
     private ReceiverFactory receiverFactory;
 
@@ -30,28 +33,23 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<SimpleReceiver> simpleReceiverProvider,
                                    final ProxyServices proxyServices) {
         // Find out how many forward destinations are enabled.
-        final long enabledForwardCount = Stream
-                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
-                                .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
-                                .filter(ForwardFileConfig::isEnabled))
+        final long enabledForwardCount = proxyConfig.streamAllEnabledForwarders()
                 .count();
         // Find out how many forward destinations are set for instant forwarding.
-        final long instantForwardCount = Stream
-                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
-                                .filter(ForwardHttpPostConfig::isInstant),
-                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
-                                .filter(ForwardFileConfig::isInstant))
+        final long enabledInstantForwardCount = proxyConfig.streamAllEnabledForwarders()
+                .filter(ForwarderConfig::isInstant)
                 .count();
 
+        // Config validation should pick these things up, but just in case
         if (enabledForwardCount == 0) {
-            throw new RuntimeException("No forward destinations are configured.");
+            throw new RuntimeException("No enabled forward destinations are configured.");
         }
 
-        if (instantForwardCount > 0) {
+        if (enabledInstantForwardCount > 0) {
             if (enabledForwardCount > 1) {
-                throw new RuntimeException("Storing is not enabled but more than one forward destination is " +
-                                           "configured.");
+                throw new RuntimeException(LogUtil.message("At least one forward destination is set as " +
+                                                           "instant=true. You cannot have other enabled forward " +
+                                                           "destinations when using instant forwarding."));
             }
 
             createInstantForwarders(proxyConfig, instantForwardHttpPostProvider, instantForwardFileProvider);
@@ -148,31 +146,27 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
     private void createInstantForwarders(final ProxyConfig proxyConfig,
                                          final Provider<InstantForwardHttpPost> instantForwardHttpPostProvider,
                                          final Provider<InstantForwardFile> instantForwardFileProvider) {
-        // See if we can create a direct HTTP POST forwarding receiver.
-        if (proxyConfig.getForwardHttpDestinations() != null) {
-            final Optional<ForwardHttpPostConfig> optional = NullSafe.stream(
-                            proxyConfig.getForwardHttpDestinations())
-                    .filter(Objects::nonNull)
-                    .filter(ForwardHttpPostConfig::isEnabled)
-                    .findFirst();
-            // Create a direct forwarding HTTP POST receiver.
-            optional.ifPresent(forwardHttpPostConfig ->
-                    receiverFactory = instantForwardHttpPostProvider.get().get(forwardHttpPostConfig));
+
+        final List<ForwarderConfig> instantForwarders = proxyConfig.streamAllEnabledForwarders()
+                .filter(ForwarderConfig::isInstant)
+                .toList();
+        if (instantForwarders.size() != 1) {
+            throw new RuntimeException("Expecting one enabled instant forwarder");
         }
 
-        // See if we can create a direct file forwarding receiver.
-        if (proxyConfig.getForwardFileDestinations() != null) {
-            final Optional<ForwardFileConfig> optional = NullSafe.stream(
-                            proxyConfig.getForwardFileDestinations())
-                    .filter(Objects::nonNull)
-                    .filter(ForwardFileConfig::isEnabled)
-                    .findFirst();
-            if (optional.isPresent()) {
-                // Create a direct forwarding file receiver.
-                optional.ifPresent(forwardFileConfig ->
-                        receiverFactory = instantForwardFileProvider.get().get(forwardFileConfig));
+        final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
+        receiverFactory = switch (forwarderConfig) {
+            case ForwardHttpPostConfig forwardHttpPostConfig -> {
+                LOGGER.info("Creating instant HTTP POST forward destination to {}",
+                        forwardHttpPostConfig.getForwardUrl());
+                yield instantForwardHttpPostProvider.get().get(forwardHttpPostConfig);
             }
-        }
+            case ForwardFileConfig forwardFileConfig -> {
+                LOGGER.info("Creating instant file forward destination to {}",
+                        forwardFileConfig.getPath());
+                yield instantForwardFileProvider.get().get(forwardFileConfig);
+            }
+        };
     }
 
     @Override

@@ -32,17 +32,16 @@ proxyConfig:
     url: null
   forwardFileDestinations:
   - enabled: true
-    forwardQueueConfig: null
     instant: false
     name: null
     path: null
+    queue: null
     subPathTemplate: "${year}${month}${day}/${feed}"
     templatingMode: "REPLACE_UNKNOWN"
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
-    errorSubPathTemplate: "${year}${month}${day}/${feed}"
     forwardDelay: "PT0S"
     forwardUrl: null
     httpClient:
@@ -60,12 +59,16 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
-    maxRetryAge: "P7D"
-    maxRetryDelay: "PT10M"
     name: null
-    retryDelay: "PT10M"
-    retryDelayGrowthFactor: 1.0
-    templatingMode: "REPLACE_UNKNOWN"
+    queue:
+      errorSubPathTemplate: "${year}${month}${day}/${feed}"
+      forwardRetryThreadCount: 1
+      forwardThreadCount: 5
+      maxRetryAge: "P7D"
+      maxRetryDelay: "PT10M"
+      retryDelay: "PT10M"
+      retryDelayGrowthFactor: 1.0
+      templatingMode: "REPLACE_UNKNOWN"
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
