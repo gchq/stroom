@@ -188,13 +188,14 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             return false;
         }
         final ForwardQueueConfig that = (ForwardQueueConfig) o;
-        return Double.compare(retryDelayGrowthFactor,
-                that.retryDelayGrowthFactor) == 0 && forwardThreadCount == that.forwardThreadCount && forwardRetryThreadCount == that.forwardRetryThreadCount && Objects.equals(
-                retryDelay,
-                that.retryDelay) && Objects.equals(maxRetryDelay, that.maxRetryDelay) && Objects.equals(
-                maxRetryAge,
-                that.maxRetryAge) && Objects.equals(errorSubPathTemplate,
-                that.errorSubPathTemplate) && templatingMode == that.templatingMode;
+        return Double.compare(retryDelayGrowthFactor, that.retryDelayGrowthFactor) == 0
+               && forwardThreadCount == that.forwardThreadCount
+               && forwardRetryThreadCount == that.forwardRetryThreadCount
+               && Objects.equals(retryDelay, that.retryDelay)
+               && Objects.equals(maxRetryDelay, that.maxRetryDelay)
+               && Objects.equals(maxRetryAge, that.maxRetryAge)
+               && Objects.equals(errorSubPathTemplate, that.errorSubPathTemplate)
+               && templatingMode == that.templatingMode;
     }
 
     @Override
