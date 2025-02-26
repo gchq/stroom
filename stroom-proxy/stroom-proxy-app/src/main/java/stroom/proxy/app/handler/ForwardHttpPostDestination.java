@@ -400,7 +400,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
                 0L);
         final int attempts = NullSafe.getOrElse(retryState, RetryState::attempts, -1);
         final StroomDuration retryDelay = forwardHttpPostConfig.getRetryDelay();
-        final int retryDelayGrowthFactor = forwardHttpPostConfig.getRetryDelayGrowthFactor();
+        final double retryDelayGrowthFactor = forwardHttpPostConfig.getRetryDelayGrowthFactor();
         final long retryDelayMs;
         if (retryDelayGrowthFactor > 1 && retryState != null) {
             retryDelayMs = Math.min(

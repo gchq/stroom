@@ -23,7 +23,6 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConfig {
 
-    public static final int INFINITE_RETRIES_VALUE = -1;
     public static final String PROP_NAME_ERROR_SUB_PATH_TEMPLATE = "errorSubPathTemplate";
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
@@ -31,7 +30,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
      * Zero means no retries
      */
     private static final StroomDuration DEFAULT_MAX_RETRY_AGE = StroomDuration.ofDays(7);
-    private static final int DEFAULT_RETRY_GROWTH_FACTOR = 1;
+    private static final double DEFAULT_RETRY_GROWTH_FACTOR = 1;
     private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofMinutes(10);
     private static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofDays(1);
     private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
@@ -44,7 +43,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     private final String apiKey;
     private final StroomDuration forwardDelay;
     private final StroomDuration retryDelay;
-    private final int retryDelayGrowthFactor;
+    private final double retryDelayGrowthFactor;
     private final StroomDuration maxRetryDelay;
     private final StroomDuration maxRetryAge;
     private final boolean addOpenIdAccessToken;
@@ -78,7 +77,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                                  @JsonProperty("apiKey") final String apiKey,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("retryDelay") final StroomDuration retryDelay,
-                                 @JsonProperty("retryDelayGrowthFactor") final Integer retryDelayGrowthFactor,
+                                 @JsonProperty("retryDelayGrowthFactor") final Double retryDelayGrowthFactor,
                                  @JsonProperty("maxRetryDelay") final StroomDuration maxRetryDelay,
                                  @JsonProperty("maxRetryAge") final StroomDuration maxRetryAge,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
@@ -179,7 +178,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
      */
     @Min(1)
     @JsonProperty
-    public int getRetryDelayGrowthFactor() {
+    public double getRetryDelayGrowthFactor() {
         return retryDelayGrowthFactor;
     }
 
@@ -334,7 +333,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
         private StroomDuration maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
-        private int retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
+        private double retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
         private StroomDuration maxRetryAge = DEFAULT_MAX_RETRY_AGE;
         private boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
@@ -403,7 +402,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             return this;
         }
 
-        public Builder retryDelayGrowthFactor(final int retryDelayGrowthFactor) {
+        public Builder retryDelayGrowthFactor(final double retryDelayGrowthFactor) {
             this.retryDelayGrowthFactor = retryDelayGrowthFactor;
             return this;
         }

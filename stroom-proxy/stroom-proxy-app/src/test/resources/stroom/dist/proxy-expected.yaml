@@ -59,9 +59,12 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
-    maxRetries: -1
+    maxRetryAge: "P7D"
+    maxRetryDelay: "PT10M"
     name: null
-    retryDelay: "PT10S"
+    retryDelay: "PT10M"
+    retryDelayGrowthFactor: 1.0
+    templatingMode: "REPLACE_UNKNOWN"
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
