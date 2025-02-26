@@ -7,7 +7,9 @@ import java.nio.file.Path;
 public interface ForwardDestination {
 
     /**
-     * Add sourceDir to this {@link ForwardDestination}
+     * Add sourceDir to this {@link ForwardDestination}.
+     * If successful, sourceDir will be moved/deleted so should not be used by the caller
+     * after calling this method.
      */
     void add(Path sourceDir);
 

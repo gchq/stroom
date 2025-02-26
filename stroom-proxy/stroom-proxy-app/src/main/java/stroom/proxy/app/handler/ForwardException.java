@@ -4,7 +4,7 @@ import stroom.proxy.StroomStatusCode;
 
 import java.util.Objects;
 
-public class ForwardException extends Exception {
+public class ForwardException extends RuntimeException {
 
     private final StroomStatusCode stroomStatusCode;
     private final boolean isRecoverable;

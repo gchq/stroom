@@ -227,4 +227,9 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                     source, target, tryCount));
         }
     }
+
+    @Override
+    public Path getStoreDir() {
+        return storeDir;
+    }
 }

@@ -1,5 +1,7 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DataDirProvider;
+import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -14,15 +16,27 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestinationFactoryImpl.class);
 
+    private final CleanupDirQueue cleanupDirQueue;
+    private final ProxyServices proxyServices;
+    private final DirQueueFactory dirQueueFactory;
+    private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
 
     @Inject
-    public ForwardFileDestinationFactoryImpl(final PathCreator pathCreator) {
+    public ForwardFileDestinationFactoryImpl(final CleanupDirQueue cleanupDirQueue,
+                                             final ProxyServices proxyServices,
+                                             final DirQueueFactory dirQueueFactory,
+                                             final DataDirProvider dataDirProvider,
+                                             final PathCreator pathCreator) {
+        this.cleanupDirQueue = cleanupDirQueue;
+        this.proxyServices = proxyServices;
+        this.dirQueueFactory = dirQueueFactory;
+        this.dataDirProvider = dataDirProvider;
         this.pathCreator = pathCreator;
     }
 
     @Override
-    public ForwardFileDestination create(final ForwardFileConfig config) {
+    public ForwardDestination create(final ForwardFileConfig config) {
         // Create the store directory.
         final Path storeDir = pathCreator.toAppPath(config.getPath());
         DirUtil.ensureDirExists(storeDir);
@@ -34,12 +48,35 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                 config.getTemplatingMode(),
                 pathCreator);
 
-        LOGGER.info("Created forward file destination {} at {} with getSubPathTemplate '{}' (isInstant: {})",
+        final ForwardDestination destination = getForwardDestination(config, forwardFileDestination);
+
+        LOGGER.info("Created {} '{}' at {} with getSubPathTemplate '{}' (isInstant: {})",
+                destination.getClass().getSimpleName(),
                 config.getName(),
                 config.getPath(),
                 config.getSubPathTemplate(),
                 config.isInstant());
 
-        return forwardFileDestination;
+        return destination;
+    }
+
+    private ForwardDestination getForwardDestination(final ForwardFileConfig config,
+                                                     final ForwardFileDestinationImpl forwardFileDestination) {
+        final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
+        final ForwardDestination destination;
+        if (forwardQueueConfig != null) {
+            // We have queue config so wrap out ultimate destination with some queue/retry logic
+            destination = new RetryingForwardDestination(
+                    forwardQueueConfig,
+                    forwardFileDestination,
+                    dataDirProvider,
+                    pathCreator,
+                    cleanupDirQueue,
+                    dirQueueFactory,
+                    proxyServices);
+        } else {
+            destination = forwardFileDestination;
+        }
+        return destination;
     }
 }

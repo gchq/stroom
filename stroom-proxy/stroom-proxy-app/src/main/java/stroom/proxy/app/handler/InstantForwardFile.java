@@ -108,11 +108,11 @@ public class InstantForwardFile {
     private static class InstantForwardFileReceiver implements Receiver {
 
         private final NumberedDirProvider receivingDirProvider;
-        private final ForwardFileDestination forwardFileDestination;
+        private final ForwardDestination forwardFileDestination;
         private final LogStream logStream;
 
         public InstantForwardFileReceiver(final NumberedDirProvider receivingDirProvider,
-                                          final ForwardFileDestination forwardFileDestination,
+                                          final ForwardDestination forwardFileDestination,
                                           final LogStream logStream) {
             this.receivingDirProvider = receivingDirProvider;
             this.forwardFileDestination = forwardFileDestination;

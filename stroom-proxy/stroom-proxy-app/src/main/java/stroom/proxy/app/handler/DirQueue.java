@@ -37,6 +37,7 @@ public class DirQueue {
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final QueueMonitor queueMonitor;
+    private final String name;
 
     DirQueue(final Path rootDir,
              final QueueMonitors queueMonitors,
@@ -45,15 +46,16 @@ public class DirQueue {
              final String name) {
         this.rootDir = rootDir;
         this.queueMonitor = queueMonitors.create(order, name);
+        this.name = name;
 
         // Create the root directory
         DirUtil.ensureDirExists(rootDir);
 
         // Create the store directory and initialise the store id.
-        fileStores.add(order, name + " - store", this.rootDir);
+        fileStores.add(order, name + " - store", rootDir);
 
-        final long maxId = DirUtil.getMaxDirId(this.rootDir);
-        final long minId = DirUtil.getMinDirId(this.rootDir);
+        final long maxId = DirUtil.getMaxDirId(rootDir);
+        final long minId = DirUtil.getMinDirId(rootDir);
 
         if (minId > maxId) {
             throw new IllegalStateException(LogUtil.message("minId {} is greater than maxId {}", minId, maxId));
@@ -90,7 +92,7 @@ public class DirQueue {
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
                         queueMonitor.setReadPos(id);
-                        dir = new Dir(this, path);
+                        dir = createDir(path);
                     }
                 }
             } finally {
@@ -99,6 +101,7 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+        LOGGER.trace("{} ({}) - next() dir: {}", name, rootDir, dir);
         return dir;
     }
 
@@ -123,7 +126,7 @@ public class DirQueue {
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
                         queueMonitor.setReadPos(id);
-                        dir = new Dir(this, path);
+                        dir = createDir(path);
                     }
                 }
             } finally {
@@ -132,6 +135,7 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+        LOGGER.trace("{} ({}) - next() time: {}, unit: {}, dir: {}", name, rootDir, time, unit, dir);
         return Optional.of(dir);
     }
 
@@ -152,6 +156,7 @@ public class DirQueue {
                     final Path targetDir = DirUtil.createPath(rootDir, id);
                     DirUtil.ensureDirExists(targetDir.getParent());
                     Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
+                    LOGGER.trace("{} ({}) - Added sourceDir {}", name, rootDir, sourceDir);
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                     throw new UncheckedIOException(e);
@@ -196,6 +201,10 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+    }
+
+    private Dir createDir(final Path path) {
+        return new Dir(this, path);
     }
 
     long getReadId() {

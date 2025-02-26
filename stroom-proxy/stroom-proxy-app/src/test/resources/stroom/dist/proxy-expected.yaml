@@ -32,6 +32,7 @@ proxyConfig:
     url: null
   forwardFileDestinations:
   - enabled: true
+    forwardQueueConfig: null
     instant: false
     name: null
     path: null

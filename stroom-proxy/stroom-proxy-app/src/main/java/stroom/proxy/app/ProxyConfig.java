@@ -29,7 +29,10 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
@@ -236,6 +239,21 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         } else {
             return true;
         }
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "All forwarders must have unique names.")
+    public boolean isForwardNamesValid() {
+        final List<String> allNames = Stream.concat(
+                        NullSafe.stream(getForwardFileDestinations())
+                                .map(ForwardFileConfig::getName),
+                        NullSafe.stream(getForwardHttpDestinations())
+                                .map(ForwardHttpPostConfig::getName))
+                .sorted()
+                .toList();
+        final Set<String> uniqueNames = new HashSet<>(allNames);
+        return uniqueNames.size() == allNames.size();
     }
 
     public static Builder builder() {

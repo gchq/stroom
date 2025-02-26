@@ -6,6 +6,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
@@ -57,7 +58,8 @@ public class MockFileDestination {
                 "My forward file",
                 "forward_dest",
                 null,
-                null);
+                null,
+                new ForwardQueueConfig());
     }
 
     /**

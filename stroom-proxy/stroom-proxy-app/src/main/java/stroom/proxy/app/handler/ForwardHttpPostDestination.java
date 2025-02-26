@@ -41,12 +41,9 @@ public class ForwardHttpPostDestination implements ForwardDestination {
     private final DirQueue retryQueue;
     private final CleanupDirQueue cleanupDirQueue;
     private final ForwardHttpPostConfig forwardHttpPostConfig;
-    //    private final StroomDuration retryDelay;
-//    private final Integer maxRetries;
     private final String destinationName;
     private final ForwardFileDestination failureDestination;
     private final ProxyServices proxyServices;
-    private Path failureDir;
 
     public ForwardHttpPostDestination(final String destinationName,
                                       final StreamDestination destination,
@@ -100,7 +97,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
                                                            final SimplePathCreator simplePathCreator,
                                                            final Path forwardingDir) {
         final ForwardFileDestination failureDestination;
-        this.failureDir = forwardingDir.resolve("03_failure");
+        final Path failureDir = forwardingDir.resolve("03_failure");
         final String errorSubPathTemplate = forwardHttpPostConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(
@@ -114,6 +111,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     @Override
     public void add(final Path sourceDir) {
+        LOGGER.debug("'{}' - add(), dir: {}", destinationName, sourceDir);
         forwardQueue.add(sourceDir);
     }
 
@@ -137,7 +135,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
      * For testing
      */
     Path getFailureDir() {
-        return failureDir;
+        return failureDestination.getStoreDir();
     }
 
     private boolean forwardDir(final Path dir) {
@@ -437,67 +435,5 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     private Path getErrorLogFile(final Path dir) {
         return Objects.requireNonNull(dir).resolve(ERROR_LOG_FILENAME);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private record RetryState(long firstAttemptEpochMs,
-                              long lastAttemptEpochMs,
-                              int attempts) {
-
-        private static final int TOTAL_BYTES = Long.BYTES + Long.BYTES + Integer.BYTES;
-
-        public static RetryState initial() {
-            final long nowMs = System.currentTimeMillis();
-            return new RetryState(nowMs, nowMs, 1);
-        }
-
-        public RetryState cloneAndUpdate() {
-            return new RetryState(
-                    firstAttemptEpochMs,
-                    System.currentTimeMillis(),
-                    attempts + 1);
-        }
-
-        static RetryState deserialise(final byte[] bytes) {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-            return deserialise(byteBuffer);
-        }
-
-        static RetryState deserialise(final ByteBuffer byteBuffer) {
-            return new RetryState(
-                    byteBuffer.getLong(),
-                    byteBuffer.getLong(),
-                    byteBuffer.getInt());
-        }
-
-        byte[] serialise() {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[TOTAL_BYTES]);
-            byteBuffer.putLong(firstAttemptEpochMs);
-            byteBuffer.putLong(lastAttemptEpochMs);
-            byteBuffer.putInt(attempts);
-            return byteBuffer.array();
-        }
-
-        void serialise(final ByteBuffer byteBuffer) {
-            byteBuffer.putLong(firstAttemptEpochMs);
-            byteBuffer.putLong(lastAttemptEpochMs);
-            byteBuffer.putInt(attempts);
-        }
-
-        Duration getTimeSinceFirstAttempt() {
-            return Duration.between(Instant.ofEpochMilli(firstAttemptEpochMs), Instant.now());
-        }
-
-        @Override
-        public String toString() {
-            return "RetryState{" +
-                   "firstAttemptEpochMs=" + Instant.ofEpochMilli(firstAttemptEpochMs) +
-                   ", lastAttemptEpochMs=" + Instant.ofEpochMilli(lastAttemptEpochMs) +
-                   ", attempts=" + attempts +
-                   '}';
-        }
     }
 }

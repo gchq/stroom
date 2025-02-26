@@ -29,6 +29,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
     private final String path;
     private final String subPathTemplate;
     private final TemplatingMode templatingMode;
+    private final ForwardQueueConfig forwardQueueConfig;
 
     public ForwardFileConfig() {
         enabled = true;
@@ -37,6 +38,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         path = null;
         subPathTemplate = DEFAULT_SUB_PATH_TEMPLATE;
         templatingMode = DEFAULT_TEMPLATING_MODE;
+        forwardQueueConfig = null;
     }
 
     @SuppressWarnings("unused")
@@ -46,13 +48,15 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
                              @JsonProperty("name") final String name,
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final String subPathTemplate,
-                             @JsonProperty("templatingMode") final TemplatingMode templatingMode) {
+                             @JsonProperty("templatingMode") final TemplatingMode templatingMode,
+                             @JsonProperty("forwardQueueConfig") final ForwardQueueConfig forwardQueueConfig) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
         this.path = path;
         this.subPathTemplate = subPathTemplate;
         this.templatingMode = Objects.requireNonNullElse(templatingMode, DEFAULT_TEMPLATING_MODE);
+        this.forwardQueueConfig = forwardQueueConfig;
     }
 
     private ForwardFileConfig(final Builder builder) {
@@ -62,6 +66,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         path = builder.path;
         subPathTemplate = builder.subPathTemplate;
         templatingMode = builder.templatingMode;
+        forwardQueueConfig = builder.forwardQueueConfig;
     }
 
     /**
@@ -134,6 +139,14 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         return templatingMode;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. Can be set to null " +
+                             "for a local file forwarder, but should be populated for a HTTP forwarder or a file " +
+                             "forwarder forwarding to a remote file system that may fail.")
+    public ForwardQueueConfig getForwardQueueConfig() {
+        return forwardQueueConfig;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -177,6 +190,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         builder.path = copy.getPath();
         builder.subPathTemplate = copy.getSubPathTemplate();
         builder.templatingMode = copy.getTemplatingMode();
+        builder.forwardQueueConfig = copy.getForwardQueueConfig();
         return builder;
     }
 
@@ -192,6 +206,7 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
         private String path;
         private String subPathTemplate;
         private TemplatingMode templatingMode;
+        private ForwardQueueConfig forwardQueueConfig;
 
         private Builder() {
         }
@@ -238,6 +253,11 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder withTemplatingMode(final TemplatingMode templatingMode) {
             this.templatingMode = templatingMode;
+            return this;
+        }
+
+        public Builder withForwardQueueConfig(final ForwardQueueConfig forwardQueueConfig) {
+            this.forwardQueueConfig = forwardQueueConfig;
             return this;
         }
 

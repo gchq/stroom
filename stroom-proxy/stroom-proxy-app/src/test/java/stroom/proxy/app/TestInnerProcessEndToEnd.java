@@ -5,6 +5,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.MockForwardFileDestination;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
@@ -128,7 +129,8 @@ class TestInnerProcessEndToEnd {
                                 "test",
                                 "test",
                                 null,
-                                null))
+                                null,
+                                new ForwardQueueConfig()))
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);
