@@ -168,4 +168,16 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
+
+    public void delete(final Annotation annotation,
+                       final Consumer<Boolean> consumer,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.deleteAnnotation(annotation))
+                .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
 }

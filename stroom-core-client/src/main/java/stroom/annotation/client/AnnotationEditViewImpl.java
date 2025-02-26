@@ -67,6 +67,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     TextArea comment;
     @UiField
     SimplePanel history;
+    @UiField
+    Button delete;
 
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
@@ -74,6 +76,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
         create.setIcon(SvgImage.ADD);
+        delete.setIcon(SvgImage.DELETE);
 
         statusIcon.setSvg(SvgImage.SETTINGS);
         assignedToIcon.setSvg(SvgImage.SETTINGS);
@@ -298,6 +301,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onCommentIcon(final ClickEvent e) {
         if (getUiHandlers() != null && commentIcon.isEnabled()) {
             getUiHandlers().showCommentChooser(commentIcon.getElement());
+        }
+    }
+
+    @UiHandler("delete")
+    public void onDelete(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDelete();
         }
     }
 

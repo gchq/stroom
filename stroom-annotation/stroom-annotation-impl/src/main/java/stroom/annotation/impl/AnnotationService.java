@@ -159,7 +159,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
                 DocumentPermission.VIEW)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have read permission on the annotation");
+                    "You do not have permission to read this annotation");
         }
     }
 
@@ -170,7 +170,18 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
                 DocumentPermission.EDIT)) {
             throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have edit permission on the annotation");
+                    "You do not have permission to edit this annotation");
+        }
+    }
+
+    private void checkDeletePermission(final Annotation annotation) {
+        if (annotation == null) {
+            throw new RuntimeException("Annotation not found");
+        }
+        if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
+                DocumentPermission.DELETE)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to delete this annotation");
         }
     }
 
@@ -289,5 +300,13 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                             details);
                 })
                 .toList();
+    }
+
+    public Boolean deleteAnnotation(final Annotation annotation) {
+        checkAppPermission();
+        checkDeletePermission(annotation);
+
+        documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotation.asDocRef());
+        return annotationDao.delete(annotation);
     }
 }

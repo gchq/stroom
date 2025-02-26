@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
@@ -25,6 +26,7 @@ import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.UserRefEntryValue;
+import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -759,6 +761,17 @@ public class AnnotationEditPresenter
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
         }
+    }
+
+    @Override
+    public void onDelete() {
+        ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok -> {
+            annotationResourceClient.delete(getEntity(), result -> {
+                if (result) {
+                    CloseContentTabEvent.fire(this, parent);
+                }
+            }, this);
+        });
     }
 
     public void setInitialComment(final String initialComment) {

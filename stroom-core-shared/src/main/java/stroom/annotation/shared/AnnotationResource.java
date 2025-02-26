@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -53,6 +54,14 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "createAnnotation")
     AnnotationDetail createAnnotation(@Parameter(description = "request", required = true)
                                       CreateAnnotationRequest request);
+
+    @DELETE
+    @Path("delete")
+    @Operation(
+            summary = "Deletes an annotation",
+            operationId = "deleteAnnotation")
+    Boolean deleteAnnotation(@Parameter(description = "request", required = true)
+                             Annotation request);
 
     @POST
     @Path("addEntry")

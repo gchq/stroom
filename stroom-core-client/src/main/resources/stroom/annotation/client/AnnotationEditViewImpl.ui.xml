@@ -21,8 +21,10 @@
                     <g:FlowPanel styleName="annotationCommentContainer">
                         <g:TextArea ui:field="comment" styleName="annotationComment stroom-control allow-focus"/>
                         <g:FlowPanel ui:field="buttons" styleName="annotationButtons">
-                            <b:Button ui:field="create" addStyleNames="allow-focus Button--contained-primary" text="Create" width="200px"/>
-                            <b:Button ui:field="commentIcon" addStyleNames="allow-focus" text="Choose Comment" width="200px"/>
+                            <b:Button ui:field="create" addStyleNames="allow-focus Button--contained-primary"
+                                      text="Create" width="200px"/>
+                            <b:Button ui:field="commentIcon" addStyleNames="allow-focus" text="Choose Comment"
+                                      width="200px"/>
                         </g:FlowPanel>
                     </g:FlowPanel>
                 </form:FormGroup>
@@ -43,6 +45,10 @@
                             <b:InlineSvgButton ui:field="assignedToIcon" title="Change Assigned To"/>
                         </g:FlowPanel>
                     </form:FormGroup>
+                    <g:SimplePanel styleName="annotationDelete">
+                        <b:Button ui:field="delete" addStyleNames="allow-focus Button--contained-secondary"
+                                  text="Delete Annotation"/>
+                    </g:SimplePanel>
                 </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>

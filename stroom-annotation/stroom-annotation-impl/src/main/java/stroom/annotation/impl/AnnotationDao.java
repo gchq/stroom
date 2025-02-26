@@ -63,4 +63,6 @@ public interface AnnotationDao {
                 Predicate<String> uuidPredicate);
 
     List<Annotation> fetchByAssignedUser(final String userUuid);
+
+    boolean delete(Annotation annotation);
 }

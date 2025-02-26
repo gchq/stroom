@@ -713,4 +713,32 @@ class AnnotationDaoImpl implements AnnotationDao {
     private Condition createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
+
+    @Override
+    public boolean delete(final Annotation annotation) {
+        return JooqUtil.transactionResult(connectionProvider, context -> {
+            final Optional<Long> optionalId = context
+                    .select(ANNOTATION.ID)
+                    .from(ANNOTATION)
+                    .where(ANNOTATION.UUID.eq(annotation.getUuid()))
+                    .fetchOptional(ANNOTATION.ID);
+
+            return optionalId
+                    .map(id -> {
+                        context
+                                .delete(ANNOTATION_DATA_LINK)
+                                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(id))
+                                .execute();
+                        context
+                                .delete(ANNOTATION_ENTRY)
+                                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(id))
+                                .execute();
+                        return context
+                                .delete(ANNOTATION)
+                                .where(ANNOTATION.ID.eq(id))
+                                .execute();
+                    })
+                    .orElse(0);
+        }) > 0;
+    }
 }

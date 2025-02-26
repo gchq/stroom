@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateAnnotationRequest;
@@ -215,5 +216,10 @@ class AnnotationResourceImpl implements AnnotationResource {
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean deleteAnnotation(final Annotation annotation) {
+        return annotationService.get().deleteAnnotation(annotation);
     }
 }

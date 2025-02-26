@@ -154,7 +154,7 @@
 }
 
 .annotationButtons {
-    padding-top: var(--control__gap--vertical);
+    padding: var(--control__gap--vertical) 0;
     display: flex;
     gap: var(--control__gap--horizontal);
     flex-direction: row-reverse;
@@ -260,11 +260,12 @@
     align-self: flex-end;
 }
 
-.showLinkedEvents {
-    display: inline-block;
-    color: var(--link__text-color);
-    cursor: pointer;
-    text-decoration: underline;
-    text-align: right;
-    padding-bottom: 10px;
+.annotationDelete {
+    display: flex;
+    flex-direction: row-reverse;
+    padding-top: 20px;
+}
+
+.annotationDelete button {
+    width: 100%;
 }
