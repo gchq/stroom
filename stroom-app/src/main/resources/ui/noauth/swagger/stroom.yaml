@@ -5376,6 +5376,26 @@ paths:
       summary: Fetch completions for the query
       tags:
       - Queries
+  /query/v1/fetchDataSourceFromQueryString:
+    post:
+      operationId: fetchDataSourceFromQueryString
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: query
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocRef"
+          description: default response
+      summary: Fetch a data source from a query string
+      tags:
+      - Queries
   /query/v1/fetchDetail:
     post:
       operationId: fetchDetail
