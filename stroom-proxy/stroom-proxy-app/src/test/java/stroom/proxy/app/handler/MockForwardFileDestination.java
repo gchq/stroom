@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,6 +19,7 @@ public class MockForwardFileDestination implements ForwardFileDestination {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockForwardFileDestination.class);
 
     private final Path storeDir;
+    private final List<Path> addedPaths = new ArrayList<>();
 
     private final AtomicLong writeId = new AtomicLong();
     private volatile CountDownLatch countDownLatch;
@@ -33,6 +36,14 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         }
     }
 
+    public MockForwardFileDestination(final Path storeDir) {
+        this.storeDir = storeDir;
+
+        // Initialise the store id.
+        final long maxId = DirUtil.getMaxDirId(storeDir);
+        writeId.set(maxId);
+    }
+
     public void setCountDownLatch(final CountDownLatch countDownLatch) {
         this.countDownLatch = countDownLatch;
     }
@@ -44,6 +55,7 @@ public class MockForwardFileDestination implements ForwardFileDestination {
         final Path targetDir = DirUtil.createPath(storeDir, commitId);
         try {
             move(sourceDir, targetDir);
+            addedPaths.add(targetDir);
             if (countDownLatch != null) {
                 countDownLatch.countDown();
             }
@@ -78,5 +90,9 @@ public class MockForwardFileDestination implements ForwardFileDestination {
 
     public Path getStoreDir() {
         return storeDir;
+    }
+
+    public List<Path> getAddedPaths() {
+        return addedPaths;
     }
 }

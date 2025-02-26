@@ -6,6 +6,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
+import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
@@ -33,10 +34,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
@@ -48,6 +50,13 @@ public class HttpSender implements StreamDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpSender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
+    private static final int ONE_SECOND = 1_000;
+
+    // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
+    private static final Set<StroomStatusCode> NON_RECOVERABLE_STATUS_CODES = EnumSet.of(
+            StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+            StroomStatusCode.UNEXPECTED_DATA_TYPE,
+            StroomStatusCode.FEED_MUST_BE_SPECIFIED);
 
     private final LogStream logStream;
     private final ForwardHttpPostConfig config;
@@ -57,12 +66,14 @@ public class HttpSender implements StreamDestination {
     private final String forwardUrl;
     private final StroomDuration forwardDelay;
     private final String forwarderName;
+    private final ProxyServices proxyServices;
 
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
                       final String userAgent,
                       final UserIdentityFactory userIdentityFactory,
-                      final HttpClient httpClient) {
+                      final HttpClient httpClient,
+                      final ProxyServices proxyServices) {
         this.logStream = logStream;
         this.config = config;
         this.userAgent = userAgent;
@@ -71,6 +82,7 @@ public class HttpSender implements StreamDestination {
         this.forwardUrl = config.getForwardUrl();
         this.forwardDelay = NullSafe.duration(config.getForwardDelay());
         this.forwarderName = config.getName();
+        this.proxyServices = proxyServices;
     }
 
     @Override
@@ -152,6 +164,26 @@ public class HttpSender implements StreamDestination {
         return httpPost;
     }
 
+    private void delayPost(final Instant startTime) {
+        LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
+        final long notBeforeEpochMs = startTime.plus(forwardDelay).toEpochMilli();
+        long delay = notBeforeEpochMs - System.currentTimeMillis();
+
+        // Loop in case the delay is long and proxy shuts down part way through
+        while (delay > 0 && !proxyServices.isShuttingDown()) {
+            final long sleepMs = Math.min(ONE_SECOND, delay);
+            ThreadUtil.sleep(sleepMs);
+            if (sleepMs == ONE_SECOND) {
+                delay = notBeforeEpochMs - System.currentTimeMillis();
+            } else {
+                break;
+            }
+        }
+        if (proxyServices.isShuttingDown()) {
+            throw new RuntimeException("Proxy is shutting down");
+        }
+    }
+
     private ResponseStatus post(final HttpPost httpPost,
                                 final Instant startTime,
                                 final AttributeMap attributeMap,
@@ -159,8 +191,7 @@ public class HttpSender implements StreamDestination {
         // Execute and get the response.
         try {
             if (!forwardDelay.isZero()) {
-                LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
-                ThreadUtil.sleep(forwardDelay);
+                delayPost(startTime);
             }
 
             final ResponseStatus responseStatus = httpClient.execute(httpPost, response -> {
@@ -170,29 +201,29 @@ public class HttpSender implements StreamDestination {
                 return logResponseToSendLog(startTime, response, attributeMap, contentLengthSupplier);
             });
 
+            LOGGER.debug("'{}' - responseStatus: {}", forwarderName, responseStatus);
+
             // There is no point retrying with these
-            // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
-            return switch (responseStatus.stroomStatusCode) {
-                case OK -> responseStatus;
-                case FEED_IS_NOT_SET_TO_RECEIVE_DATA,
-                        UNEXPECTED_DATA_TYPE,
-                        FEED_MUST_BE_SPECIFIED -> throw ForwardException.nonRecoverable(
-                        responseStatus.message);
-                default -> throw ForwardException.recoverable(responseStatus.message);
-            };
+            final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
+            if (stroomStatusCode == StroomStatusCode.OK) {
+                return responseStatus;
+            } else if (NON_RECOVERABLE_STATUS_CODES.contains(stroomStatusCode)) {
+                throw ForwardException.nonRecoverable(stroomStatusCode);
+            } else {
+                throw ForwardException.recoverable(stroomStatusCode);
+            }
         } catch (final ForwardException e) {
             // Created above so we will have already logged
             throw e;
         } catch (final Exception e) {
             logErrorToSendLog(startTime, e, attributeMap);
             // Have to assume that any exception is recoverable
-            throw ForwardException.recoverable(e.getMessage(), e);
+            throw ForwardException.recoverable(StroomStatusCode.UNKNOWN_ERROR, e.getMessage(), e);
         }
     }
 
     private String formatHeaderEntryListForLogging(final Header[] headers) {
-        return Arrays
-                .stream(headers)
+        return NullSafe.stream(headers)
                 .map(header -> new SimpleEntry<>(
                         Objects.requireNonNullElse(header.getName(), "null"),
                         header.getValue())

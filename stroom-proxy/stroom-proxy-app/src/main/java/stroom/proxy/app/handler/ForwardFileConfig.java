@@ -82,7 +82,9 @@ public class ForwardFileConfig extends AbstractConfig implements IsProxyConfig {
 
     @NotNull
     @JsonProperty
-    @JsonPropertyDescription("The name of the destination. Must be supplied.")
+    @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
+                             "The name is used in the directories on the file system, so do not change the name " +
+                             "once proxy has processed data. Must be provided.")
     public String getName() {
         return name;
     }

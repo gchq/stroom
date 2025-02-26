@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import io.dropwizard.lifecycle.Managed;
@@ -10,6 +11,8 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 @Singleton
@@ -18,6 +21,7 @@ public class ProxyServices implements Managed {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyServices.class);
 
     private final List<Managed> services = new ArrayList<>();
+    private final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
 
     public void addParallelExecutor(final String threadName,
                                     final Supplier<Runnable> runnableSupplier,
@@ -44,6 +48,9 @@ public class ProxyServices implements Managed {
     }
 
     private void addManaged(final Managed managed) {
+        Objects.requireNonNull(managed);
+        LOGGER.debug(() -> LogUtil.message("Registering managed service {} {}",
+                managed.getClass().getSimpleName(), managed));
         services.add(managed);
     }
 
@@ -62,6 +69,8 @@ public class ProxyServices implements Managed {
     public void stop() {
         LOGGER.info("Stopping Stroom Proxy");
 
+        isShuttingDown.set(true);
+
         for (int i = services.size() - 1; i >= 0; i--) {
             try {
                 services.get(i).stop();
@@ -72,11 +81,18 @@ public class ProxyServices implements Managed {
             }
         }
 
-        // This method is part of DW  Managed which is managed by Jersey so we need to ensure any interrupts
+        // This method is part of DW  Managed which is managed by Jersey, so we need to ensure any interrupts
         // are cleared before it goes back to Jersey
         final boolean interrupted = Thread.interrupted();
         LOGGER.debug("Was interrupted = " + interrupted);
 
         LOGGER.info("Stopped Stroom Proxy");
+    }
+
+    /**
+     * @return True if proxy is shutting down
+     */
+    public boolean isShuttingDown() {
+        return isShuttingDown.get();
     }
 }

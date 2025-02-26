@@ -21,12 +21,14 @@ public class FrequencyExecutor implements Managed {
     private final ScheduledExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final long frequency;
+    private final String threadName;
 
     public FrequencyExecutor(final String threadName,
                              final Supplier<Runnable> runnableSupplier,
                              final long frequency) {
         this.runnableSupplier = runnableSupplier;
         this.frequency = frequency;
+        this.threadName = threadName;
         final ThreadFactory threadFactory = new CustomThreadFactory(
                 threadName + " ",
                 StroomThreadGroup.instance(),
@@ -46,11 +48,22 @@ public class FrequencyExecutor implements Managed {
                 throw e;
             }
         };
+        LOGGER.debug("Starting frequency executor with threadName: {}, frequency: {}", threadName, frequency);
         executorService.scheduleWithFixedDelay(runnable, 0, frequency, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
+        LOGGER.debug("Stopping frequency executor with threadName: {}, frequency: {}", threadName, frequency);
         executorService.shutdownNow();
+    }
+
+    @Override
+    public String toString() {
+        return "FrequencyExecutor{" +
+               "executorService=" + executorService +
+               ", frequency=" + frequency +
+               ", threadName='" + threadName + '\'' +
+               '}';
     }
 }

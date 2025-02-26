@@ -26,11 +26,11 @@ public class DirQueue {
     private final Path rootDir;
 
     /**
-     * ID last written to
+     * ID last written to, i.e. 0 if never written to
      */
     private long writeId;
     /**
-     * ID to read from next
+     * ID to read from next, i.e. 1 if not read yet
      */
     private long readId;
 
@@ -82,6 +82,10 @@ public class DirQueue {
                     while (readId > writeId) {
                         condition.await();
                     }
+                    // TODO It is possible to have big gaps, e.g. if there was an exception when
+                    //  transferring 001 (so it was left on the queue) but 002 -> 901 worked. On next
+                    //  reboot, it will have to check each of 002 -> 901 to find them not there.
+                    //  May be better to call DirUtil.getMinDirId if we encounter a gap
                     final long id = readId++;
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
@@ -192,5 +196,22 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+    }
+
+    long getReadId() {
+        return readId;
+    }
+
+    long getWriteId() {
+        return writeId;
+    }
+
+    @Override
+    public String toString() {
+        return "DirQueue{" +
+               "rootDir=" + rootDir +
+               ", writeId=" + writeId +
+               ", readId=" + readId +
+               '}';
     }
 }

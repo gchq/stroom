@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -21,12 +22,14 @@ public class ParallelExecutor implements Managed {
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final int threadCount;
+    private final String threadName;
 
     public ParallelExecutor(final String threadName,
                             final Supplier<Runnable> runnableSupplier,
                             final int threadCount) {
         this.runnableSupplier = runnableSupplier;
         this.threadCount = threadCount;
+        this.threadName = threadName;
         final ThreadFactory threadFactory = new CustomThreadFactory(
                 threadName + " ",
                 StroomThreadGroup.instance(),
@@ -36,6 +39,7 @@ public class ParallelExecutor implements Managed {
 
     @Override
     public synchronized void start() {
+        LOGGER.debug("Starting parallel executor with threadName: {}, threadCount: {}", threadName, threadCount);
         // Start.
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(this::run);
@@ -44,20 +48,32 @@ public class ParallelExecutor implements Managed {
 
     @Override
     public synchronized void stop() throws Exception {
+        LOGGER.debug("Stopping parallel executor with threadName: {}, threadCount: {}", threadName, threadCount);
         executorService.shutdownNow();
-        executorService.awaitTermination(1, TimeUnit.DAYS);
+        final boolean didTerminate = executorService.awaitTermination(1, TimeUnit.DAYS);
+        LOGGER.debug("Stopped parallel executor with threadName: {}, threadCount: {}, didTerminate: {}",
+                threadName, threadCount, didTerminate);
     }
 
     private void run() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 final Runnable runnable = runnableSupplier.get();
-                runnable.run();
+                NullSafe.run(runnable);
             }
         } catch (final UncheckedInterruptedException e) {
             LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ParallelExecutor{" +
+               "executorService=" + executorService +
+               ", threadCount=" + threadCount +
+               ", threadName='" + threadName + '\'' +
+               '}';
     }
 }

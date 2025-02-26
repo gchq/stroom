@@ -86,10 +86,17 @@ class TestDirUtil {
         Assertions.assertThat(path.getParent())
                 .isDirectory();
 
+        // Min ignores empty dirs
         assertThat(DirUtil.getMinDirId(rootDir))
                 .isEqualTo(1001);
-        assertThat(DirUtil.getMaxDirId(rootDir))
-                .isEqualTo(1003);
+
+        // Max throws if it finds empty dirs
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            DirUtil.getMaxDirId(rootDir);
+                        })
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Incomplete directory ID");
     }
 
     @TestFactory

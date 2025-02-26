@@ -35,6 +35,8 @@ class TestForwarder {
     private ForwardHttpPostDestinationFactory mockForwardHttpDestFactory;
     @Mock
     private ForwardFileDestinationFactory mockForwardFileDestFactory;
+    @Mock
+    private CleanupDirQueue mockCleanupDirQueue;
 
     private Path dataDir = null;
     private Path sourcesDir = null;
@@ -65,7 +67,8 @@ class TestForwarder {
                 () -> dataDir,
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
-                mockForwardHttpDestFactory);
+                mockForwardHttpDestFactory,
+                mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);
 
@@ -108,7 +111,8 @@ class TestForwarder {
                 () -> dataDir,
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
-                mockForwardHttpDestFactory);
+                mockForwardHttpDestFactory,
+                mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);
         final Snapshot sourceDir1Snapshot = DirectorySnapshot.of(sourceDir1);
