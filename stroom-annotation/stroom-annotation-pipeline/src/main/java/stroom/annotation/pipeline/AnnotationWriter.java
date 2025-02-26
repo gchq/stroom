@@ -16,8 +16,8 @@
 
 package stroom.annotation.pipeline;
 
-import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.StringEntryValue;

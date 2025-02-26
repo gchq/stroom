@@ -16,8 +16,8 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.CreateAnnotationRequest;

@@ -726,7 +726,9 @@
         },
         "summary" : "Gets an annotation",
         "tags" : [ "Annotations" ]
-      },
+      }
+    },
+    "/annotation/v1/addEntry" : {
       "post" : {
         "operationId" : "createAnnotationEntry",
         "requestBody" : {
@@ -752,7 +754,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Gets an annotation",
+        "summary" : "Adds an annotation entry",
         "tags" : [ "Annotations" ]
       }
     },
@@ -782,6 +784,36 @@
           }
         },
         "summary" : "Gets a list of predefined comments",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/create" : {
+      "post" : {
+        "operationId" : "createAnnotation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAnnotationRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnotationDetail"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates an annotation",
         "tags" : [ "Annotations" ]
       }
     },
@@ -879,6 +911,37 @@
         "tags" : [ "Annotations" ]
       }
     },
+    "/annotation/v1/setDescription" : {
+      "post" : {
+        "operationId" : "setAnnotationDescription",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetDescriptionRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set the description for an annotation",
+        "tags" : [ "Annotations" ]
+      }
+    },
     "/annotation/v1/setStatus" : {
       "post" : {
         "operationId" : "setAnnotationStatus",
@@ -912,7 +975,7 @@
     },
     "/annotation/v1/status" : {
       "get" : {
-        "operationId" : "getAnnotationDStatus",
+        "operationId" : "getAnnotationStatus",
         "parameters" : [ {
           "in" : "query",
           "name" : "filter",
@@ -11910,11 +11973,14 @@
           "comment" : {
             "type" : "string"
           },
-          "createTime" : {
+          "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
             "type" : "string"
           },
           "history" : {
@@ -11924,25 +11990,30 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "name" : {
+            "type" : "string"
+          },
           "status" : {
             "type" : "string"
           },
           "subject" : {
             "type" : "string"
           },
-          "title" : {
+          "type" : {
             "type" : "string"
           },
-          "updateTime" : {
+          "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "updateUser" : {
             "type" : "string"
           },
+          "uuid" : {
+            "type" : "string"
+          },
           "version" : {
-            "type" : "integer",
-            "format" : "int32"
+            "type" : "string"
           }
         }
       },
@@ -13104,6 +13175,20 @@
           },
           "userId" : {
             "type" : "string"
+          }
+        }
+      },
+      "CreateAnnotationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotation" : {
+            "$ref" : "#/components/schemas/Annotation"
+          },
+          "linkedEvents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EventId"
+            }
           }
         }
       },
@@ -20623,6 +20708,18 @@
           },
           "assignedTo" : {
             "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
+      "SetDescriptionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "description" : {
+            "type" : "string"
           }
         }
       },

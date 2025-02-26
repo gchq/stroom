@@ -68,7 +68,8 @@ public class ChangeAssignedToPresenter
                         final SetAssignedToRequest request = new SetAssignedToRequest(
                                 annotationIdList,
                                 userRefSelectionBoxPresenter.getSelected());
-                        annotationResourceClient.setAssignedTo(request, values -> {
+                        annotationResourceClient.setAssignedTo(request,
+                                values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();
                                 },

@@ -53,6 +53,7 @@ public class AnnotationPresenter
     private final AnnotationEditPresenter annotationEditPresenter;
     private MarkdownEditPresenter markdownEditPresenter;
 
+    @SuppressWarnings("checkstyle:linelength")
     @Inject
     public AnnotationPresenter(final EventBus eventBus,
                                final LinkTabPanelView view,

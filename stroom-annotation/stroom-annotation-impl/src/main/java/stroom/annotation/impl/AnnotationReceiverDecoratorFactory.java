@@ -16,8 +16,8 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
@@ -200,7 +200,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             return null;
         }
 
-        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationDecorationFields.DECORATION_FIELD_MAP);
+        final ExpressionMatcher expressionMatcher = expressionMatcherFactory
+                .create(AnnotationDecorationFields.DECORATION_FIELD_MAP);
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
             for (final String field : usedFields) {

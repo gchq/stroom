@@ -83,7 +83,8 @@ public class ChangeStatusPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
-                        annotationResourceClient.setStatus(request, values -> {
+                        annotationResourceClient.setStatus(request,
+                                values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();
                                 },

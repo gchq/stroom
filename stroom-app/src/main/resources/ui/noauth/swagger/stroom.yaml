@@ -501,6 +501,7 @@ paths:
       summary: Gets an annotation
       tags:
       - Annotations
+  /annotation/v1/addEntry:
     post:
       operationId: createAnnotationEntry
       requestBody:
@@ -517,7 +518,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AnnotationDetail"
           description: default response
-      summary: Gets an annotation
+      summary: Adds an annotation entry
       tags:
       - Annotations
   /annotation/v1/comment:
@@ -538,6 +539,26 @@ paths:
                   type: string
           description: default response
       summary: Gets a list of predefined comments
+      tags:
+      - Annotations
+  /annotation/v1/create:
+    post:
+      operationId: createAnnotation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnotationRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnotationDetail"
+          description: default response
+      summary: Creates an annotation
       tags:
       - Annotations
   /annotation/v1/link:
@@ -604,6 +625,27 @@ paths:
       summary: Bulk action to set the assignment for several annotations
       tags:
       - Annotations
+  /annotation/v1/setDescription:
+    post:
+      operationId: setAnnotationDescription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetDescriptionRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Set the description for an annotation
+      tags:
+      - Annotations
   /annotation/v1/setStatus:
     post:
       operationId: setAnnotationStatus
@@ -627,7 +669,7 @@ paths:
       - Annotations
   /annotation/v1/status:
     get:
-      operationId: getAnnotationDStatus
+      operationId: getAnnotationStatus
       parameters:
       - in: query
         name: filter
@@ -8226,30 +8268,35 @@ components:
           $ref: "#/components/schemas/UserRef"
         comment:
           type: string
-        createTime:
+        createTimeMs:
           type: integer
           format: int64
         createUser:
+          type: string
+        description:
           type: string
         history:
           type: string
         id:
           type: integer
           format: int64
+        name:
+          type: string
         status:
           type: string
         subject:
           type: string
-        title:
+        type:
           type: string
-        updateTime:
+        updateTimeMs:
           type: integer
           format: int64
         updateUser:
           type: string
+        uuid:
+          type: string
         version:
-          type: integer
-          format: int32
+          type: string
     AnnotationDetail:
       type: object
       properties:
@@ -9159,6 +9206,15 @@ components:
           type: string
         userId:
           type: string
+    CreateAnnotationRequest:
+      type: object
+      properties:
+        annotation:
+          $ref: "#/components/schemas/Annotation"
+        linkedEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventId"
     CreateApiKeyRequest:
       type: object
       properties:
@@ -15236,6 +15292,14 @@ components:
             format: int64
         assignedTo:
           $ref: "#/components/schemas/UserRef"
+    SetDescriptionRequest:
+      type: object
+      properties:
+        annotationId:
+          type: integer
+          format: int64
+        description:
+          type: string
     SetDocumentUserCreatePermissions:
       type: object
       allOf:
