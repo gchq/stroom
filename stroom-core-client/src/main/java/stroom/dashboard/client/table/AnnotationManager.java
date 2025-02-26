@@ -20,13 +20,15 @@ import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
 import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -38,8 +40,10 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -47,18 +51,15 @@ public class AnnotationManager {
 
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
-    private final RestFactory restFactory;
 
     private TableComponentSettings tableComponentSettings;
     private List<TableRow> selectedItems;
 
     @Inject
     public AnnotationManager(final ChangeStatusPresenter changeStatusPresenter,
-                             final ChangeAssignedToPresenter changeAssignedToPresenter,
-                             final RestFactory restFactory) {
+                             final ChangeAssignedToPresenter changeAssignedToPresenter) {
         this.changeStatusPresenter = changeStatusPresenter;
         this.changeAssignedToPresenter = changeAssignedToPresenter;
-        this.restFactory = restFactory;
     }
 
     public void showAnnotationMenu(final NativeEvent event,
@@ -90,7 +91,12 @@ public class AnnotationManager {
         // Create menu item.
         menuItems.add(createCreateMenu(eventIdList));
 
-        if (annotationIdList.size() > 0) {
+        if (annotationIdList.size() == 1) {
+            // Edit menu item.
+            menuItems.add(createEditMenu(annotationIdList.get(0)));
+        }
+
+        if (!annotationIdList.isEmpty()) {
             // Status menu item.
             menuItems.add(createStatusMenu(annotationIdList));
             // Assigned to menu item.
@@ -154,7 +160,24 @@ public class AnnotationManager {
 
     public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings,
                                           final List<TableRow> selectedItems) {
-        final List<String> values = getValues(tableComponentSettings, selectedItems, "annotation:Id");
+        Set<String> values = new HashSet<>();
+
+        // Get annotation ids from annotation id column.
+        if (tableComponentSettings.getDataSourceRef() != null &&
+            tableComponentSettings.getDataSourceRef().getType().equals(Annotation.TYPE)) {
+            final List<String> list = getValues(tableComponentSettings, selectedItems, AnnotationFields.ID);
+            if (list != null) {
+                values.addAll(list);
+            }
+        }
+
+        // Get annotation ids from decoration column.
+        final List<String> list = getValues(tableComponentSettings, selectedItems,
+                AnnotationDecorationFields.ANNOTATION_ID);
+        if (list != null) {
+            values.addAll(list);
+        }
+
         return values
                 .stream()
                 .map(this::toLong)
@@ -166,7 +189,7 @@ public class AnnotationManager {
                                   final List<TableRow> selectedItems,
                                   final String fieldName) {
         final List<String> values = new ArrayList<>();
-        if (selectedItems != null && selectedItems.size() > 0) {
+        if (selectedItems != null && !selectedItems.isEmpty()) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {
@@ -181,7 +204,7 @@ public class AnnotationManager {
     public String getValue(final TableComponentSettings tableComponentSettings,
                            final List<TableRow> selectedItems,
                            final String fieldName) {
-        if (selectedItems != null && selectedItems.size() > 0) {
+        if (selectedItems != null && !selectedItems.isEmpty()) {
             final String fieldId = getFieldId(tableComponentSettings, fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {
@@ -215,6 +238,15 @@ public class AnnotationManager {
                 .build();
     }
 
+    private Item createEditMenu(final Long annotationId) {
+        return new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgImage.EDIT)
+                .text("Edit Annotation")
+                .command(() -> editAnnotation(annotationId))
+                .build();
+    }
+
     private Item createStatusMenu(final List<Long> annotationIdList) {
         return new IconMenuItem.Builder()
                 .priority(1)
@@ -237,17 +269,25 @@ public class AnnotationManager {
         final String title = getValue(tableComponentSettings, selectedItems, "title");
         final String subject = getValue(tableComponentSettings, selectedItems, "subject");
         final String status = getValue(tableComponentSettings, selectedItems, "status");
-//        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
         final String comment = getValue(tableComponentSettings, selectedItems, "comment");
 
         final Annotation annotation = new Annotation();
-        annotation.setTitle(title);
+        annotation.setName(title == null
+                ? "New Annotation"
+                : title);
         annotation.setSubject(subject);
         annotation.setStatus(status);
-//        annotation.setAssignedTo(optUserName);
         annotation.setComment(comment);
 
         ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
+    }
+
+    public void editAnnotation(final long annotationId) {
+        // assignedTo is a display name so have to convert it back to a unique username
+        final Annotation annotation = new Annotation();
+        annotation.setId(annotationId);
+
+        ShowAnnotationEvent.fire(changeStatusPresenter, annotation, null);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

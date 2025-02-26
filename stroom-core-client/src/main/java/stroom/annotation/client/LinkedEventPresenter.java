@@ -2,7 +2,6 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -10,32 +9,27 @@ import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class LinkedEventPresenter
-        extends MyPresenterWidget<LinkedEventView> {
+        extends DocumentEditPresenter<LinkedEventView, Annotation> {
 
     private final MyDataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
 
-    private final RestFactory restFactory;
+    private final AnnotationResourceClient annotationResourceClient;
 
     private final ButtonView addEventButton;
     private final ButtonView removeEventButton;
@@ -48,13 +42,12 @@ public class LinkedEventPresenter
     private List<EventId> currentData;
     private EventId nextSelection;
     private boolean dirty;
-    private Consumer<Boolean> consumer;
 
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
                                 final LinkedEventView view,
                                 final PagerView pagerView,
-                                final RestFactory restFactory,
+                                final AnnotationResourceClient annotationResourceClient,
                                 final DataPresenter dataPresenter,
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
@@ -63,7 +56,7 @@ public class LinkedEventPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
-        this.restFactory = restFactory;
+        this.annotationResourceClient = annotationResourceClient;
         this.dataPresenter = dataPresenter;
         dataPresenter.setNavigationControlsVisible(false);
         // It is not in its own dialog but is part of this one and this will determine how the
@@ -95,14 +88,7 @@ public class LinkedEventPresenter
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
                 dirty = true;
-
-                final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                restFactory
-                        .create(annotationResource)
-                        .method(res -> res.link(new EventLink(annotation.getId(), eventId)))
-                        .onSuccess(this::setData)
-                        .taskMonitorFactory(this)
-                        .exec();
+                annotationResourceClient.linkEvent(new EventLink(annotation.getId(), eventId), this::setData, this);
             }
         })));
 
@@ -118,43 +104,21 @@ public class LinkedEventPresenter
                     index = Math.max(0, index);
                     nextSelection = currentData.get(index);
                 }
-
-                final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                restFactory
-                        .create(annotationResource)
-                        .method(res -> res.unlink(new EventLink(annotation.getId(), selected)))
-                        .onSuccess(this::setData)
-                        .taskMonitorFactory(this)
-                        .exec();
+                annotationResourceClient.unlinkEvent(new EventLink(annotation.getId(), selected), this::setData, this);
             }
         }));
     }
 
-    public void edit(final Annotation annotation, final Consumer<Boolean> consumer) {
+    @Override
+    protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
         this.annotation = annotation;
-        this.consumer = consumer;
         dirty = false;
-
-        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        restFactory
-                .create(annotationResource)
-                .method(res -> res.getLinkedEvents(annotation.getId()))
-                .onSuccess(this::show)
-                .taskMonitorFactory(this)
-                .exec();
+        annotationResourceClient.getLinkedEvents(annotation, this::setData, this);
     }
 
-    private void show(final List<EventId> data) {
-        setData(data);
-
-        final PopupSize popupSize = PopupSize.resizable(1100, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Linked Events")
-                .onShow(e -> addEventButton.focus())
-                .onHide(e -> consumer.accept(dirty))
-                .fire();
+    @Override
+    protected Annotation onWrite(final Annotation document) {
+        return null;
     }
 
     private void setData(final List<EventId> data) {

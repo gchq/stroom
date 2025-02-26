@@ -37,7 +37,7 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
             OtherObject o = new OtherObject();
             o.setId(String.valueOf(annotation.getId()));
             o.setType("Annotation");
-            o.setName(annotation.getTitle());
+            o.setName(annotation.getName());
             o.setState(annotation.getStatus());
 
 //            o.getData().add(EventLoggingUtil.createData("Stream id", String.valueOf(annotation.getStreamId())));

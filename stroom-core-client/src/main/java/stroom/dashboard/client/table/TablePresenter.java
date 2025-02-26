@@ -287,6 +287,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableAnnotate();
             getComponents().fireComponentChangeEvent(this);
+
+            if (event.getSelectionType().isDoubleSelect()) {
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.get(0));
+                }
+            }
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final Range range = event.getNewRange();

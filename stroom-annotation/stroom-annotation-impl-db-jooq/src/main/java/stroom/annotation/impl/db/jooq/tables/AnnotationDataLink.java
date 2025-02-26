@@ -5,19 +5,28 @@ package stroom.annotation.impl.db.jooq.tables;
 
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Function4;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Records;
 import org.jooq.Row4;
+import org.jooq.SQL;
 import org.jooq.Schema;
+import org.jooq.Select;
 import org.jooq.SelectField;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -28,6 +37,7 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 
 
@@ -73,11 +83,11 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
     public final TableField<AnnotationDataLinkRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     private AnnotationDataLink(Name alias, Table<AnnotationDataLinkRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private AnnotationDataLink(Name alias, Table<AnnotationDataLinkRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private AnnotationDataLink(Name alias, Table<AnnotationDataLinkRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -103,8 +113,35 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
         this(DSL.name("annotation_data_link"), null);
     }
 
-    public <O extends Record> AnnotationDataLink(Table<O> child, ForeignKey<O, AnnotationDataLinkRecord> key) {
-        super(child, key, ANNOTATION_DATA_LINK);
+    public <O extends Record> AnnotationDataLink(Table<O> path, ForeignKey<O, AnnotationDataLinkRecord> childPath, InverseForeignKey<O, AnnotationDataLinkRecord> parentPath) {
+        super(path, childPath, parentPath, ANNOTATION_DATA_LINK);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class AnnotationDataLinkPath extends AnnotationDataLink implements Path<AnnotationDataLinkRecord> {
+        public <O extends Record> AnnotationDataLinkPath(Table<O> path, ForeignKey<O, AnnotationDataLinkRecord> childPath, InverseForeignKey<O, AnnotationDataLinkRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private AnnotationDataLinkPath(Name alias, Table<AnnotationDataLinkRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public AnnotationDataLinkPath as(String alias) {
+            return new AnnotationDataLinkPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public AnnotationDataLinkPath as(Name alias) {
+            return new AnnotationDataLinkPath(alias, this);
+        }
+
+        @Override
+        public AnnotationDataLinkPath as(Table<?> alias) {
+            return new AnnotationDataLinkPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -132,14 +169,14 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
         return Arrays.asList(Keys.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID);
     }
 
-    private transient Annotation _annotation;
+    private transient AnnotationPath _annotation;
 
     /**
      * Get the implicit join path to the <code>stroom.annotation</code> table.
      */
-    public Annotation annotation() {
+    public AnnotationPath annotation() {
         if (_annotation == null)
-            _annotation = new Annotation(this, Keys.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID);
+            _annotation = new AnnotationPath(this, Keys.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID, null);
 
         return _annotation;
     }
@@ -181,6 +218,90 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
     @Override
     public AnnotationDataLink rename(Table<?> name) {
         return new AnnotationDataLink(name.getQualifiedName(), null);
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink where(Condition condition) {
+        return new AnnotationDataLink(getQualifiedName(), aliased() ? this : null, null, condition);
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationDataLink where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationDataLink where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationDataLink where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationDataLink where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationDataLink whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 
     // -------------------------------------------------------------------------

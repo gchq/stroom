@@ -34,6 +34,4 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
     void assignYourself();
 
     void create();
-
-    void showLinkedEvents();
 }

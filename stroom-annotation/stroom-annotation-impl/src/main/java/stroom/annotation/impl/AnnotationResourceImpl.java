@@ -18,10 +18,12 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationResource;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetDescriptionRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -89,6 +91,22 @@ class AnnotationResourceImpl implements AnnotationResource {
     }
 
     @Override
+    public AnnotationDetail createAnnotation(final CreateAnnotationRequest request) {
+        AnnotationDetail annotationDetail = null;
+
+        LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
+        try {
+            annotationDetail = annotationService.get().createAnnotation(request);
+            documentEventLog.get().create(annotationDetail, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
+            throw e;
+        }
+
+        return annotationDetail;
+    }
+
+    @Override
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
         AnnotationDetail annotationDetail = null;
 
@@ -137,6 +155,11 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request) {
         return annotationService.get().setAssignedTo(request);
+    }
+
+    @Override
+    public Integer setDescription(final SetDescriptionRequest request) {
+        return annotationService.get().setDescription(request);
     }
 
     private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {

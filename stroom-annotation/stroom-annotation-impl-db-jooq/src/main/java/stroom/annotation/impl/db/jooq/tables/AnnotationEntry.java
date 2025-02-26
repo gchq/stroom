@@ -5,19 +5,28 @@ package stroom.annotation.impl.db.jooq.tables;
 
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Function6;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Records;
 import org.jooq.Row6;
+import org.jooq.SQL;
 import org.jooq.Schema;
+import org.jooq.Select;
 import org.jooq.SelectField;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -28,6 +37,7 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 
 
@@ -83,11 +93,11 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     public final TableField<AnnotationEntryRecord, Long> ENTRY_TIME_MS = createField(DSL.name("entry_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -111,8 +121,35 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
         this(DSL.name("annotation_entry"), null);
     }
 
-    public <O extends Record> AnnotationEntry(Table<O> child, ForeignKey<O, AnnotationEntryRecord> key) {
-        super(child, key, ANNOTATION_ENTRY);
+    public <O extends Record> AnnotationEntry(Table<O> path, ForeignKey<O, AnnotationEntryRecord> childPath, InverseForeignKey<O, AnnotationEntryRecord> parentPath) {
+        super(path, childPath, parentPath, ANNOTATION_ENTRY);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class AnnotationEntryPath extends AnnotationEntry implements Path<AnnotationEntryRecord> {
+        public <O extends Record> AnnotationEntryPath(Table<O> path, ForeignKey<O, AnnotationEntryRecord> childPath, InverseForeignKey<O, AnnotationEntryRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private AnnotationEntryPath(Name alias, Table<AnnotationEntryRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public AnnotationEntryPath as(String alias) {
+            return new AnnotationEntryPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public AnnotationEntryPath as(Name alias) {
+            return new AnnotationEntryPath(alias, this);
+        }
+
+        @Override
+        public AnnotationEntryPath as(Table<?> alias) {
+            return new AnnotationEntryPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -135,14 +172,14 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
         return Arrays.asList(Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID);
     }
 
-    private transient Annotation _annotation;
+    private transient AnnotationPath _annotation;
 
     /**
      * Get the implicit join path to the <code>stroom.annotation</code> table.
      */
-    public Annotation annotation() {
+    public AnnotationPath annotation() {
         if (_annotation == null)
-            _annotation = new Annotation(this, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID);
+            _annotation = new AnnotationPath(this, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID, null);
 
         return _annotation;
     }
@@ -184,6 +221,90 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     @Override
     public AnnotationEntry rename(Table<?> name) {
         return new AnnotationEntry(name.getQualifiedName(), null);
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry where(Condition condition) {
+        return new AnnotationEntry(getQualifiedName(), aliased() ? this : null, null, condition);
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationEntry where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationEntry where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationEntry where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public AnnotationEntry where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public AnnotationEntry whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 
     // -------------------------------------------------------------------------

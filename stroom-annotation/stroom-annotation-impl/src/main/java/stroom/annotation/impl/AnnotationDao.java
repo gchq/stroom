@@ -18,10 +18,12 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetDescriptionRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.language.functions.FieldIndex;
@@ -29,6 +31,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.UserRef;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface AnnotationDao {
 
@@ -37,6 +40,8 @@ public interface AnnotationDao {
     AnnotationDetail getDetail(long annotationId);
 
     List<Annotation> getAnnotationsForEvents(long streamId, long eventId);
+
+    AnnotationDetail createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 
     AnnotationDetail createEntry(CreateEntryRequest request, UserRef currentUser);
 
@@ -50,7 +55,12 @@ public interface AnnotationDao {
 
     Integer setAssignedTo(SetAssignedToRequest request, UserRef currentUser);
 
-    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
+    Integer setDescription(SetDescriptionRequest request);
+
+    void search(ExpressionCriteria criteria,
+                FieldIndex fieldIndex,
+                ValuesConsumer consumer,
+                Predicate<String> uuidPredicate);
 
     List<Annotation> fetchByAssignedUser(final String userUuid);
 }

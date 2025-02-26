@@ -16,7 +16,7 @@
 
 package stroom.annotation.pipeline;
 
-import stroom.annotation.api.AnnotationCreator;
+import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
@@ -166,7 +166,7 @@ class AnnotationWriter extends AbstractXMLFilter {
             currentAnnotation = new Annotation();
             currentEventIds = new ArrayList<>();
         } else if (TITLE_TAG.equals(localName)) {
-            currentAnnotation.setTitle(content.toString());
+            currentAnnotation.setName(content.toString());
         } else if (DESCRIPTION_TAG.equals(localName)) {
             currentAnnotation.setSubject(content.toString());
         } else if (EVENTID_TAG.equals(localName)) {

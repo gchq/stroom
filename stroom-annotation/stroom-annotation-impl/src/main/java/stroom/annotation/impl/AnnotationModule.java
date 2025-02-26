@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.api.AnnotationCreator;
+import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;

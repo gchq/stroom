@@ -157,16 +157,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final String title = getParam(href, "title");
         final String subject = getParam(href, "subject");
         final String status = getParam(href, "status");
-//        final String assignedTo = getParam(href, "assignedTo");
         final String comment = getParam(href, "comment");
 
         // assignedTo is a display name so have to convert it back to a unique username
         final Annotation annotation = new Annotation();
         annotation.setId(annotationId);
-        annotation.setTitle(title);
+        annotation.setName(title == null ? "New Annotation" : title);
         annotation.setSubject(subject);
         annotation.setStatus(status);
-//        annotation.setAssignedTo(assignedTo);
         annotation.setComment(comment);
 
         final List<EventId> linkedEvents = new ArrayList<>();

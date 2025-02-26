@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 class TestCreateEntryRequest {
 
@@ -30,18 +31,21 @@ class TestCreateEntryRequest {
             .displayName("myDisplayName3")
             .build();
     protected static final Annotation ANNOTATION = new Annotation(
-            1L,
-            123,
+            Annotation.TYPE,
+            UUID.randomUUID().toString(),
+            "myTitle",
+            UUID.randomUUID().toString(),
+            Instant.now().toEpochMilli(),
             Instant.now().toEpochMilli(),
             USER_1.toDisplayString(),
-            Instant.now().toEpochMilli(),
             USER_2.toDisplayString(),
-            "myTitle",
+            1L,
             "mySubject",
             "myStatus",
             USER_3,
             "comment",
-            "history");
+            "history",
+            "");
     protected static final UserRef USER_4 = UserRef
             .builder()
             .uuid("myId4")

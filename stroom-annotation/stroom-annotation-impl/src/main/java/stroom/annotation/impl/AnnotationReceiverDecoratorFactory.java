@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.api.AnnotationFields;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.Annotation;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -56,32 +57,34 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
-            nullSafeEntry(AnnotationFields.ID, Annotation::getId),
-            nullSafeEntry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            nullSafeEntry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            nullSafeEntry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            nullSafeEntry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
-            nullSafeEntry(AnnotationFields.TITLE, Annotation::getTitle),
-            nullSafeEntry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            nullSafeEntry(AnnotationFields.STATUS, Annotation::getStatus),
-            nullSafeEntry(AnnotationFields.ASSIGNED_TO, annotation ->
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_ID, Annotation::getId),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_UUID, Annotation::getUuid),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_CREATED_ON, Annotation::getCreateTimeMs),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_CREATED_BY, Annotation::getCreateUser),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_UPDATED_ON, Annotation::getUpdateTimeMs),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_UPDATED_BY, Annotation::getUpdateUser),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_TITLE, Annotation::getName),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_SUBJECT, Annotation::getSubject),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_STATUS, Annotation::getStatus),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
-            nullSafeEntry(AnnotationFields.COMMENT, Annotation::getComment),
-            nullSafeEntry(AnnotationFields.HISTORY, Annotation::getHistory));
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_COMMENT, Annotation::getComment),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_HISTORY, Annotation::getHistory));
 
     private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = Map.ofEntries(
-            Map.entry(AnnotationFields.ID, Annotation::getId),
-            Map.entry(AnnotationFields.CREATED_ON, Annotation::getCreateTime),
-            Map.entry(AnnotationFields.CREATED_BY, Annotation::getCreateUser),
-            Map.entry(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime),
-            Map.entry(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser),
-            Map.entry(AnnotationFields.TITLE, Annotation::getTitle),
-            Map.entry(AnnotationFields.SUBJECT, Annotation::getSubject),
-            Map.entry(AnnotationFields.STATUS, Annotation::getStatus),
-            Map.entry(AnnotationFields.ASSIGNED_TO, annotation ->
+            Map.entry(AnnotationDecorationFields.ANNOTATION_ID, Annotation::getId),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_UUID, Annotation::getUuid),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_CREATED_ON, Annotation::getCreateTimeMs),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_CREATED_BY, Annotation::getCreateUser),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_UPDATED_ON, Annotation::getUpdateTimeMs),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_UPDATED_BY, Annotation::getUpdateUser),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_TITLE, Annotation::getName),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_SUBJECT, Annotation::getSubject),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_STATUS, Annotation::getStatus),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
-            Map.entry(AnnotationFields.COMMENT, Annotation::getComment),
-            Map.entry(AnnotationFields.HISTORY, Annotation::getHistory));
+            Map.entry(AnnotationDecorationFields.ANNOTATION_COMMENT, Annotation::getComment),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_HISTORY, Annotation::getHistory));
 
     private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
@@ -103,7 +106,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     public ValuesConsumer create(final ValuesConsumer valuesConsumer,
                                  final FieldIndex fieldIndex,
                                  final Query query) {
-        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationFields.ID);
+        final Integer annotationIdIndex = fieldIndex.getPos(AnnotationDecorationFields.ANNOTATION_ID);
         final Integer streamIdIndex = fieldIndex.getPos(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndex.getPos(IndexConstants.EVENT_ID);
 
@@ -115,7 +118,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
         final Set<String> usedFields = new HashSet<>(Set.of(fieldIndex.getFields()));
-        usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
+        usedFields.retainAll(AnnotationDecorationFields.DECORATION_FIELD_MAP.keySet());
 
         if (filter == null && usedFields.isEmpty()) {
             return valuesConsumer;
@@ -174,15 +177,15 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private Annotation createDefaultAnnotation() {
         final Annotation annotation = new Annotation();
-        annotation.setStatus(annotationConfig.getCreateText());
+        annotation.setStatus(annotationConfig.getStatusValues().getFirst());
         return annotation;
     }
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                .addPrefixIncludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                .addPrefixIncludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                 .addReplacementFilter(
-                        AnnotationFields.CURRENT_USER_FUNCTION,
+                        ParamKeys.CURRENT_USER,
                         securityContext.getUserIdentityForAudit())
                 .build();
 
@@ -197,7 +200,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             return null;
         }
 
-        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationFields.FIELD_MAP);
+        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationDecorationFields.DECORATION_FIELD_MAP);
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
             for (final String field : usedFields) {

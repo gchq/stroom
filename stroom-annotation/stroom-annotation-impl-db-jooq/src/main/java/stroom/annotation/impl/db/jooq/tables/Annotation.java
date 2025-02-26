@@ -5,19 +5,28 @@ package stroom.annotation.impl.db.jooq.tables;
 
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function13;
+import org.jooq.Function14;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Records;
-import org.jooq.Row13;
+import org.jooq.Row14;
+import org.jooq.SQL;
 import org.jooq.Schema;
+import org.jooq.Select;
 import org.jooq.SelectField;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -28,6 +37,8 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
@@ -117,12 +128,17 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     public final TableField<AnnotationRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.annotation.description</code>.
+     */
+    public final TableField<AnnotationRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
+
     private Annotation(Name alias, Table<AnnotationRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private Annotation(Name alias, Table<AnnotationRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private Annotation(Name alias, Table<AnnotationRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -146,8 +162,35 @@ public class Annotation extends TableImpl<AnnotationRecord> {
         this(DSL.name("annotation"), null);
     }
 
-    public <O extends Record> Annotation(Table<O> child, ForeignKey<O, AnnotationRecord> key) {
-        super(child, key, ANNOTATION);
+    public <O extends Record> Annotation(Table<O> path, ForeignKey<O, AnnotationRecord> childPath, InverseForeignKey<O, AnnotationRecord> parentPath) {
+        super(path, childPath, parentPath, ANNOTATION);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class AnnotationPath extends Annotation implements Path<AnnotationRecord> {
+        public <O extends Record> AnnotationPath(Table<O> path, ForeignKey<O, AnnotationRecord> childPath, InverseForeignKey<O, AnnotationRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private AnnotationPath(Name alias, Table<AnnotationRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public AnnotationPath as(String alias) {
+            return new AnnotationPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public AnnotationPath as(Name alias) {
+            return new AnnotationPath(alias, this);
+        }
+
+        @Override
+        public AnnotationPath as(Table<?> alias) {
+            return new AnnotationPath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -168,6 +211,32 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     @Override
     public List<UniqueKey<AnnotationRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_ANNOTATION_ANNOTATION_UUID);
+    }
+
+    private transient AnnotationDataLinkPath _annotationDataLink;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom.annotation_data_link</code> table
+     */
+    public AnnotationDataLinkPath annotationDataLink() {
+        if (_annotationDataLink == null)
+            _annotationDataLink = new AnnotationDataLinkPath(this, null, Keys.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID.getInverseKey());
+
+        return _annotationDataLink;
+    }
+
+    private transient AnnotationEntryPath _annotationEntry;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom.annotation_entry</code> table
+     */
+    public AnnotationEntryPath annotationEntry() {
+        if (_annotationEntry == null)
+            _annotationEntry = new AnnotationEntryPath(this, null, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID.getInverseKey());
+
+        return _annotationEntry;
     }
 
     @Override
@@ -214,19 +283,103 @@ public class Annotation extends TableImpl<AnnotationRecord> {
         return new Annotation(name.getQualifiedName(), null);
     }
 
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation where(Condition condition) {
+        return new Annotation(getQualifiedName(), aliased() ? this : null, null, condition);
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public Annotation where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public Annotation where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public Annotation where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public Annotation where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public Annotation whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
+    }
+
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Long, Integer, Long, String, Long, String, String, String, String, String, String, String, String> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row14<Long, Integer, Long, String, Long, String, String, String, String, String, String, String, String, String> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 
     /**
      * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
      */
-    public <U> SelectField<U> mapping(Function13<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Function14<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(Records.mapping(from));
     }
 
@@ -234,7 +387,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * Convenience mapping calling {@link SelectField#convertFrom(Class,
      * Function)}.
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function13<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
+    public <U> SelectField<U> mapping(Class<U> toType, Function14<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
         return convertFrom(toType, Records.mapping(from));
     }
 }

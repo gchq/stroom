@@ -46,8 +46,17 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
+    @Path("create")
     @Operation(
-            summary = "Gets an annotation",
+            summary = "Creates an annotation",
+            operationId = "createAnnotation")
+    AnnotationDetail createAnnotation(@Parameter(description = "request", required = true)
+                                      CreateAnnotationRequest request);
+
+    @POST
+    @Path("addEntry")
+    @Operation(
+            summary = "Adds an annotation entry",
             operationId = "createAnnotationEntry")
     AnnotationDetail createEntry(@Parameter(description = "request", required = true) CreateEntryRequest request);
 
@@ -55,7 +64,7 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     @Path("status")
     @Operation(
             summary = "Gets a list of allowed statuses",
-            operationId = "getAnnotationDStatus")
+            operationId = "getAnnotationStatus")
     List<String> getStatus(@QueryParam("filter") String filter);
 
     @GET
@@ -99,4 +108,11 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             summary = "Bulk action to set the assignment for several annotations",
             operationId = "setAnnotationAssignedTo")
     Integer setAssignedTo(@Parameter(description = "request", required = true) SetAssignedToRequest request);
+
+    @POST
+    @Path("setDescription")
+    @Operation(
+            summary = "Set the description for an annotation",
+            operationId = "setAnnotationDescription")
+    Integer setDescription(@Parameter(description = "request", required = true) SetDescriptionRequest request);
 }

@@ -42,18 +42,17 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
     private final Widget widget;
+
+    @UiField
+    Label annotationId;
     @UiField
     TextBox titleTextBox;
     @UiField
     TextBox subjectTextBox;
     @UiField
-    Label statusLabel;
-    @UiField
     InlineSvgButton statusIcon;
     @UiField
     Label status;
-    @UiField
-    Label assignedToLabel;
     @UiField
     InlineSvgButton assignedToIcon;
     @UiField
@@ -61,19 +60,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
-    FlowPanel commentFlowPanel;
-    @UiField
-    Label commentLabel;
-    @UiField
-    InlineSvgButton commentIcon;
+    Button commentIcon;
     @UiField
     Button create;
     @UiField
     TextArea comment;
     @UiField
     SimplePanel history;
-    @UiField
-    Label showLinkedEvents;
 
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
@@ -82,13 +75,17 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
         create.setIcon(SvgImage.ADD);
 
-        statusIcon.setSvg(SvgImage.ARROW_DOWN);
-        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
-        commentIcon.setSvg(SvgImage.ARROW_DOWN);
+        statusIcon.setSvg(SvgImage.SETTINGS);
+        assignedToIcon.setSvg(SvgImage.SETTINGS);
 
         setTitle(null);
         setSubject(null);
         setStatus(null);
+    }
+
+    @Override
+    public void setId(final long id) {
+        annotationId.setText("#" + id);
     }
 
     @Override
@@ -234,45 +231,45 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("statusLabel")
-    public void onStatusLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
-        }
-    }
+//    @UiHandler("statusLabel")
+//    public void onStatusLabel(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showStatusChooser(statusLabel.getElement());
+//        }
+//    }
 
     @UiHandler("status")
     public void onStatus(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
+            getUiHandlers().showStatusChooser(statusIcon.getElement());
         }
     }
 
     @UiHandler("statusIcon")
     public void onStatusIcon(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
+            getUiHandlers().showStatusChooser(statusIcon.getElement());
         }
     }
 
-    @UiHandler("assignedToLabel")
-    public void onAssignedToLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
+//    @UiHandler("assignedToLabel")
+//    public void onAssignedToLabel(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
+//        }
+//    }
 
     @UiHandler("assignedTo")
     public void onAssignedTo(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
+            getUiHandlers().showAssignedToChooser(assignedToIcon.getElement());
         }
     }
 
     @UiHandler("assignedToIcon")
     public void onAssignedToIcon(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
+            getUiHandlers().showAssignedToChooser(assignedToIcon.getElement());
         }
     }
 
@@ -290,24 +287,17 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("commentLabel")
-    public void onCommentLabel(final ClickEvent e) {
-        if (getUiHandlers() != null && commentIcon.isEnabled()) {
-            getUiHandlers().showCommentChooser(commentLabel.getElement());
-        }
-    }
+//    @UiHandler("commentLabel")
+//    public void onCommentLabel(final ClickEvent e) {
+//        if (getUiHandlers() != null && commentIcon.isEnabled()) {
+//            getUiHandlers().showCommentChooser(commentLabel.getElement());
+//        }
+//    }
 
     @UiHandler("commentIcon")
     public void onCommentIcon(final ClickEvent e) {
         if (getUiHandlers() != null && commentIcon.isEnabled()) {
-            getUiHandlers().showCommentChooser(commentLabel.getElement());
-        }
-    }
-
-    @UiHandler("showLinkedEvents")
-    public void onShowLinkedEvents(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showLinkedEvents();
+            getUiHandlers().showCommentChooser(commentIcon.getElement());
         }
     }
 
@@ -316,13 +306,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         // There may not be any preconfigured standard comments so enable/disable the QF dropdown
         // accordingly
         commentIcon.setEnabled(hasCommentValues);
-        if (hasCommentValues) {
-            commentLabel.addStyleName("clickable");
-            commentFlowPanel.addStyleName("clickable");
-        } else {
-            commentLabel.removeStyleName("clickable");
-            commentFlowPanel.removeStyleName("clickable");
-        }
+//        if (hasCommentValues) {
+////            commentLabel.addStyleName("clickable");
+//            commentFlowPanel.addStyleName("clickable");
+//        } else {
+////            commentLabel.removeStyleName("clickable");
+//            commentFlowPanel.removeStyleName("clickable");
+//        }
     }
 
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {

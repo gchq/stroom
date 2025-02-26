@@ -17,10 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,18 +38,18 @@ public class ChangeAssignedToPresenter
         extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
-    private final RestFactory restFactory;
+    private final AnnotationResourceClient annotationResourceClient;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
 
     @Inject
     public ChangeAssignedToPresenter(final EventBus eventBus,
                                      final ChangeAssignedToView view,
-                                     final RestFactory restFactory,
+                                     final AnnotationResourceClient annotationResourceClient,
                                      final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        this.restFactory = restFactory;
+        this.annotationResourceClient = annotationResourceClient;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
         getView().setUserView(userRefSelectionBoxPresenter.getView());
@@ -67,20 +65,15 @@ public class ChangeAssignedToPresenter
                 .onShow(e -> userRefSelectionBoxPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                         final SetAssignedToRequest request = new SetAssignedToRequest(
                                 annotationIdList,
                                 userRefSelectionBoxPresenter.getSelected());
-                        restFactory
-                                .create(annotationResource)
-                                .method(res -> res.setAssignedTo(request))
-                                .onSuccess(values -> {
+                        annotationResourceClient.setAssignedTo(request, values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();
-                                })
-                                .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskMonitorFactory(this)
-                                .exec();
+                                },
+                                RestErrorHandler.forPopup(this, e),
+                                this);
                     } else {
                         e.hide();
                     }

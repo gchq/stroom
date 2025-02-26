@@ -1,4 +1,4 @@
-package stroom.query.client.presenter;
+package stroom.annotation.shared;
 
 import stroom.datasource.api.v2.QueryField;
 
@@ -10,25 +10,24 @@ import java.util.stream.Collectors;
 
 public interface AnnotationFields {
 
-    String CURRENT_USER_FUNCTION = "currentUser()";
-
-    String NAMESPACE = "annotation";
-    String ANNOTATION_FIELD_PREFIX = NAMESPACE + ":";
-    String ID = ANNOTATION_FIELD_PREFIX + "Id";
-    String CREATED_ON = ANNOTATION_FIELD_PREFIX + "CreatedOn";
-    String CREATED_BY = ANNOTATION_FIELD_PREFIX + "CreatedBy";
-    String UPDATED_ON = ANNOTATION_FIELD_PREFIX + "UpdatedOn";
-    String UPDATED_BY = ANNOTATION_FIELD_PREFIX + "UpdatedBy";
-    String TITLE = ANNOTATION_FIELD_PREFIX + "Title";
-    String SUBJECT = ANNOTATION_FIELD_PREFIX + "Subject";
-    String STATUS = ANNOTATION_FIELD_PREFIX + "Status";
-    String ASSIGNED_TO = ANNOTATION_FIELD_PREFIX + "AssignedTo";
-    String COMMENT = ANNOTATION_FIELD_PREFIX + "Comment";
-    String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
+    String ID = "Id";
+    String UUID = "uuid";
+    String CREATED_ON = "CreatedOn";
+    String CREATED_BY = "CreatedBy";
+    String UPDATED_ON = "UpdatedOn";
+    String UPDATED_BY = "UpdatedBy";
+    String TITLE = "Title";
+    String SUBJECT = "Subject";
+    String STATUS = "Status";
+    String ASSIGNED_TO = "AssignedTo";
+    String COMMENT = "Comment";
+    String HISTORY = "History";
+    String DESCRIPTION = "Description";
+    String STREAM_ID = "StreamId";
+    String EVENT_ID = "EventId";
 
     QueryField ID_FIELD = QueryField.createId(ID);
-    //    AbstractField STREAM_ID_FIELD = QueryField.createId(IndexConstants.STREAM_ID);
-//    AbstractField EVENT_ID_FIELD = QueryField.createId(IndexConstants.EVENT_ID);
+    QueryField UUID_FIELD = QueryField.createId(UUID);
     QueryField CREATED_ON_FIELD = QueryField.createDate(CREATED_ON);
     QueryField CREATED_BY_FIELD = QueryField.createText(CREATED_BY);
     QueryField UPDATED_ON_FIELD = QueryField.createDate(UPDATED_ON);
@@ -39,11 +38,15 @@ public interface AnnotationFields {
     QueryField ASSIGNED_TO_FIELD = QueryField.createText(ASSIGNED_TO);
     QueryField COMMENT_FIELD = QueryField.createText(COMMENT);
     QueryField HISTORY_FIELD = QueryField.createText(HISTORY);
+    QueryField DESCRIPTION_FIELD = QueryField.createText(DESCRIPTION);
+    QueryField STREAM_ID_FIELD = QueryField.createText(STREAM_ID);
+    QueryField EVENT_ID_FIELD = QueryField.createText(EVENT_ID);
 
     List<QueryField> FIELDS = Arrays.asList(
             ID_FIELD,
-//            STREAM_ID_FIELD,
-//            EVENT_ID_FIELD,
+            UUID_FIELD,
+            STREAM_ID_FIELD,
+            EVENT_ID_FIELD,
             CREATED_ON_FIELD,
             CREATED_BY_FIELD,
             UPDATED_ON_FIELD,
@@ -53,7 +56,8 @@ public interface AnnotationFields {
             STATUS_FIELD,
             ASSIGNED_TO_FIELD,
             COMMENT_FIELD,
-            HISTORY_FIELD);
+            HISTORY_FIELD,
+            DESCRIPTION_FIELD);
     Map<String, QueryField> FIELD_MAP = FIELDS.stream()
             .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }
