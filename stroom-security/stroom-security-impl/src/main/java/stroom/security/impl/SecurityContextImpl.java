@@ -636,4 +636,31 @@ class SecurityContextImpl implements SecurityContext {
             checkTypeThreadLocal.set(currentCheckType);
         }
     }
+
+    @Override
+    public boolean inGroup(final String groupName) {
+        return inGroup(getUserRef(), groupName, new HashSet<>());
+    }
+
+    private boolean inGroup(final UserRef userRef,
+                          final String groupName,
+                          final Set<UserRef> examined) {
+        final Set<UserRef> userGroups = userGroupsCache.getGroups(userRef);
+        if (userGroups != null) {
+            for (final UserRef userGroup : userGroups) {
+                if (userGroup.getSubjectId().equals(groupName)) {
+                    return true;
+                }
+
+                // Recurse into parent groups.
+                if (!examined.contains(userGroup)) {
+                    examined.add(userGroup);
+                    if (inGroup(userGroup, groupName, examined)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

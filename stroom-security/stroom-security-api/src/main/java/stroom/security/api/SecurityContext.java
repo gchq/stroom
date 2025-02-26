@@ -202,4 +202,9 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      * insecurely even if it is often secured when executed from other entry points.
      */
     <T> T insecureResult(Supplier<T> supplier);
+
+    /**
+     * See if the current user is in the specified group.
+     */
+    boolean inGroup(String groupName);
 }

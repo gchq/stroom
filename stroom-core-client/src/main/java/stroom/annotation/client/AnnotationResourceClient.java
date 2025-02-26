@@ -10,25 +10,28 @@ import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetDescriptionRequest;
 import stroom.annotation.shared.SetStatusRequest;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.security.client.presenter.AbstractRestClient;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.task.client.TaskMonitorFactory;
 
 import com.google.gwt.core.client.GWT;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class AnnotationResourceClient {
+public class AnnotationResourceClient extends AbstractRestClient {
 
     private static final AnnotationResource ANNOTATION_RESOURCE = GWT.create(AnnotationResource.class);
 
-    private final RestFactory restFactory;
-
     @Inject
-    public AnnotationResourceClient(final RestFactory restFactory) {
-        this.restFactory = restFactory;
+    public AnnotationResourceClient(final EventBus eventBus,
+                                    final RestFactory restFactory) {
+        super(eventBus, restFactory);
     }
 
     public void getById(final Long annotationId,
@@ -150,6 +153,18 @@ public class AnnotationResourceClient {
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.unlink(eventLink))
                 .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request,
+                                          final Consumer<Boolean> consumer,
+                                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.changeDocumentPermissions(request))
+                .onSuccess(consumer)
+                .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

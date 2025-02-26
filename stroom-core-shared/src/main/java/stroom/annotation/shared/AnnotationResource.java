@@ -16,6 +16,7 @@
 
 package stroom.annotation.shared;
 
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -115,4 +116,12 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             summary = "Set the description for an annotation",
             operationId = "setAnnotationDescription")
     Integer setDescription(@Parameter(description = "request", required = true) SetDescriptionRequest request);
+
+    @POST
+    @Path("/changeDocumentPermissions")
+    @Operation(
+            summary = "Change document permissions",
+            operationId = "changeDocumentPermissions")
+    Boolean changeDocumentPermissions(
+            @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
 }

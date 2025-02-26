@@ -28,15 +28,21 @@ import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.impl.PermissionChangeService;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -48,16 +54,22 @@ class AnnotationResourceImpl implements AnnotationResource {
     private final Provider<DocumentEventLog> documentEventLog;
     private final Provider<AnnotationConfig> annotationConfig;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
+    private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<PermissionChangeService> permissionChangeServiceProvider;
 
     @Inject
     AnnotationResourceImpl(final Provider<AnnotationService> annotationService,
                            final Provider<DocumentEventLog> documentEventLog,
                            final Provider<AnnotationConfig> annotationConfig,
-                           final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider) {
+                           final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
+                           final Provider<SecurityContext> securityContextProvider,
+                           final Provider<PermissionChangeService> permissionChangeServiceProvider) {
         this.annotationService = annotationService;
         this.documentEventLog = documentEventLog;
         this.annotationConfig = annotationConfig;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
+        this.securityContextProvider = securityContextProvider;
+        this.permissionChangeServiceProvider = permissionChangeServiceProvider;
     }
 
     @Override
@@ -124,7 +136,32 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public List<String> getStatus(final String filter) {
-        return filterValues(annotationConfig.get().getStatusValues(), filter);
+        final SecurityContext securityContext = securityContextProvider.get();
+        final boolean admin = securityContext.isAdmin();
+        final List<String> values = annotationConfig.get().getStatusValues();
+        final List<String> filtered = new ArrayList<>();
+        final Map<String, Boolean> cache = new HashMap<>();
+        if (values != null) {
+            for (final String value : values) {
+                final String[] parts = value.split(":");
+                if (parts.length == 1) {
+                    filtered.add(parts[0]);
+                } else {
+                    final String group = parts[0];
+                    final String status = parts[1];
+                    if (admin) {
+                        filtered.add(status);
+                    } else {
+                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
+                        if (include) {
+                            filtered.add(status);
+                        }
+                    }
+                }
+            }
+        }
+
+        return filterValues(filtered, filter);
     }
 
     @Override
@@ -172,5 +209,11 @@ class AnnotationResourceImpl implements AnnotationResource {
                             Optional.of(Comparator.naturalOrder()))
                     .toList();
         }
+    }
+
+    @Override
+    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        permissionChangeServiceProvider.get().changeDocumentPermissions(request);
+        return Boolean.TRUE;
     }
 }
