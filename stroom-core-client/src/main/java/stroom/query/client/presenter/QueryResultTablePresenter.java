@@ -17,8 +17,10 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
@@ -36,6 +38,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -67,6 +70,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -120,7 +124,9 @@ public class QueryResultTablePresenter
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
+    private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
+    private final ButtonView annotateButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -130,6 +136,7 @@ public class QueryResultTablePresenter
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
+    private DocRef currentDataSource;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -138,6 +145,7 @@ public class QueryResultTablePresenter
                                      final QueryResultTableView tableView,
                                      final PagerView pagerView,
                                      final DownloadPresenter downloadPresenter,
+                                     final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
@@ -148,6 +156,7 @@ public class QueryResultTablePresenter
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
+        this.annotationManager = annotationManager;
         tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
@@ -201,6 +210,15 @@ public class QueryResultTablePresenter
         valueFilterButton.setSvg(SvgImage.FILTER);
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);
+
+        // Annotate
+        annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
+        annotateButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.ANNOTATIONS));
+        annotateButton.setEnabled(false);
+
+        annotationManager.setDataSourceSupplier(() -> currentDataSource);
+        annotationManager.setColumnSupplier(() -> currentColumns);
     }
 
     private void toggleOpenGroup(final String group) {
@@ -276,6 +294,33 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+
+        registerHandler(annotateButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                annotationManager.showAnnotationMenu(event.getNativeEvent(),
+                        selectionModel.getSelectedItems());
+            }
+        }));
+
+        registerHandler(selectionModel.addSelectionHandler(event -> {
+            enableAnnotate();
+
+            if (event.getSelectionType().isDoubleSelect()) {
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.get(0));
+                }
+            }
+        }));
+    }
+
+    private void enableAnnotate() {
+        final List<TableRow> selected = selectionModel.getSelectedItems();
+        final List<EventId> eventIdList = annotationManager.getEventIdList(selected);
+        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(selected);
+        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
+        annotateButton.setEnabled(enabled);
     }
 
     public void toggleApplyValueFilters() {
@@ -836,6 +881,15 @@ public class QueryResultTablePresenter
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column);
+    }
+
+    public void setQuery(final String query) {
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetchDataSourceFromQueryString(query))
+                .onSuccess(result -> currentDataSource = result)
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {

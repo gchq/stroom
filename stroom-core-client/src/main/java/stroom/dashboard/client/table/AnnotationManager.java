@@ -24,11 +24,10 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.TableComponentSettings;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -44,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -52,8 +52,10 @@ public class AnnotationManager {
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
 
-    private TableComponentSettings tableComponentSettings;
     private List<TableRow> selectedItems;
+
+    private Supplier<DocRef> dataSourceSupplier;
+    private Supplier<List<Column>> columnSupplier;
 
     @Inject
     public AnnotationManager(final ChangeStatusPresenter changeStatusPresenter,
@@ -62,10 +64,16 @@ public class AnnotationManager {
         this.changeAssignedToPresenter = changeAssignedToPresenter;
     }
 
+    public void setDataSourceSupplier(final Supplier<DocRef> dataSourceSupplier) {
+        this.dataSourceSupplier = dataSourceSupplier;
+    }
+
+    public void setColumnSupplier(final Supplier<List<Column>> columnSupplier) {
+        this.columnSupplier = columnSupplier;
+    }
+
     public void showAnnotationMenu(final NativeEvent event,
-                                   final TableComponentSettings tableComponentSettings,
                                    final List<TableRow> selectedItems) {
-        this.tableComponentSettings = tableComponentSettings;
         this.selectedItems = selectedItems;
 
         final Element target = event.getEventTarget().cast();
@@ -73,7 +81,7 @@ public class AnnotationManager {
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
-        final List<Item> menuItems = getMenuItems(tableComponentSettings, selectedItems);
+        final List<Item> menuItems = getMenuItems(selectedItems);
         ShowMenuEvent
                 .builder()
                 .items(menuItems)
@@ -81,12 +89,11 @@ public class AnnotationManager {
                 .fire(changeStatusPresenter);
     }
 
-    private List<Item> getMenuItems(final TableComponentSettings tableComponentSettings,
-                                    final List<TableRow> selectedItems) {
+    private List<Item> getMenuItems(final List<TableRow> selectedItems) {
         final List<Item> menuItems = new ArrayList<>();
 
-        final List<EventId> eventIdList = getEventIdList(tableComponentSettings, selectedItems);
-        final List<Long> annotationIdList = getAnnotationIdList(tableComponentSettings, selectedItems);
+        final List<EventId> eventIdList = getEventIdList(selectedItems);
+        final List<Long> annotationIdList = getAnnotationIdList(selectedItems);
 
         // Create menu item.
         menuItems.add(createCreateMenu(eventIdList));
@@ -106,19 +113,16 @@ public class AnnotationManager {
         return menuItems;
     }
 
-    public List<EventId> getEventIdList(final TableComponentSettings tableComponentSettings,
-                                        final List<TableRow> selectedItems) {
+    public List<EventId> getEventIdList(final List<TableRow> selectedItems) {
         final List<EventId> idList = new ArrayList<>();
 
         final List<String> streamIds = getValues(
-                tableComponentSettings,
                 selectedItems,
                 IndexConstants.RESERVED_STREAM_ID_FIELD_NAME);
         final List<String> eventIds = getValues(
-                tableComponentSettings,
                 selectedItems,
                 IndexConstants.RESERVED_EVENT_ID_FIELD_NAME);
-        final List<String> eventIdLists = getValues(tableComponentSettings, selectedItems, "EventIdList");
+        final List<String> eventIdLists = getValues(selectedItems, "EventIdList");
 
         for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {
             final Long streamId = toLong(streamIds.get(i));
@@ -149,8 +153,8 @@ public class AnnotationManager {
         return idList;
     }
 
-    private String getFieldId(final TableComponentSettings tableComponentSettings, final String fieldName) {
-        for (final Column column : tableComponentSettings.getColumns()) {
+    private String getFieldId(final String fieldName) {
+        for (final Column column : columnSupplier.get()) {
             if (column.getName().equalsIgnoreCase(fieldName)) {
                 return column.getId();
             }
@@ -158,21 +162,21 @@ public class AnnotationManager {
         return null;
     }
 
-    public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings,
-                                          final List<TableRow> selectedItems) {
+    public List<Long> getAnnotationIdList(final List<TableRow> selectedItems) {
         Set<String> values = new HashSet<>();
 
         // Get annotation ids from annotation id column.
-        if (tableComponentSettings.getDataSourceRef() != null &&
-            tableComponentSettings.getDataSourceRef().getType().equals(Annotation.TYPE)) {
-            final List<String> list = getValues(tableComponentSettings, selectedItems, AnnotationFields.ID);
+        final DocRef dataSource = dataSourceSupplier.get();
+        if (dataSource != null &&
+            Annotation.TYPE.equals(dataSource.getType())) {
+            final List<String> list = getValues(selectedItems, AnnotationFields.ID);
             if (list != null) {
                 values.addAll(list);
             }
         }
 
         // Get annotation ids from decoration column.
-        final List<String> list = getValues(tableComponentSettings, selectedItems,
+        final List<String> list = getValues(selectedItems,
                 AnnotationDecorationFields.ANNOTATION_ID);
         if (list != null) {
             values.addAll(list);
@@ -185,12 +189,11 @@ public class AnnotationManager {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getValues(final TableComponentSettings tableComponentSettings,
-                                  final List<TableRow> selectedItems,
+    public List<String> getValues(final List<TableRow> selectedItems,
                                   final String fieldName) {
         final List<String> values = new ArrayList<>();
         if (selectedItems != null && !selectedItems.isEmpty()) {
-            final String fieldId = getFieldId(tableComponentSettings, fieldName);
+            final String fieldId = getFieldId(fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {
                     final String value = row.getText(fieldId);
@@ -201,11 +204,10 @@ public class AnnotationManager {
         return values;
     }
 
-    public String getValue(final TableComponentSettings tableComponentSettings,
-                           final List<TableRow> selectedItems,
+    public String getValue(final List<TableRow> selectedItems,
                            final String fieldName) {
         if (selectedItems != null && !selectedItems.isEmpty()) {
-            final String fieldId = getFieldId(tableComponentSettings, fieldName);
+            final String fieldId = getFieldId(fieldName);
             if (fieldId != null) {
                 for (final TableRow row : selectedItems) {
                     final String value = row.getText(fieldId);
@@ -266,10 +268,10 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-        final String title = getValue(tableComponentSettings, selectedItems, "title");
-        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
-        final String status = getValue(tableComponentSettings, selectedItems, "status");
-        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
+        final String title = getValue(selectedItems, "title");
+        final String subject = getValue(selectedItems, "subject");
+        final String status = getValue(selectedItems, "status");
+        final String comment = getValue(selectedItems, "comment");
 
         final Annotation annotation = new Annotation();
         annotation.setName(title == null

@@ -185,6 +185,10 @@ public class QueryResultTableSplitPresenter
         tablePresenter.setQueryResultVisPresenter(queryResultVisPresenter);
     }
 
+    public void setQuery(final String query) {
+        tablePresenter.setQuery(query);
+    }
+
     public interface QueryResultTableSplitView extends View {
 
         void setWidget(Widget widget);

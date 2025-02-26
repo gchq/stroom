@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
-    private static final int DEBOUNCE_DELAY_MS = 500;
+    private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
             .bold(hb -> hb.append("Quick Filter"))
             .br()

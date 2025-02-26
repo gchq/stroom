@@ -279,6 +279,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        annotationManager.setDataSourceSupplier(() -> getTableComponentSettings().getDataSourceRef());
+        annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
     }
 
     @Override
@@ -289,7 +292,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             getComponents().fireComponentChangeEvent(this);
 
             if (event.getSelectionType().isDoubleSelect()) {
-                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
                         selectionModel.getSelectedItems());
                 if (annotationIdList.size() == 1) {
                     annotationManager.editAnnotation(annotationIdList.get(0));
@@ -334,9 +337,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        getTableComponentSettings(),
-                        selectionModel.getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), selectionModel.getSelectedItems());
             }
         }));
 
@@ -522,11 +523,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableComponentSettings(),
-                selectionModel.getSelectedItems());
-        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
-                selectionModel.getSelectedItems());
-        final boolean enabled = !eventIdList.isEmpty() || annotationIdList.size() > 0;
+        final List<TableRow> selected = selectionModel.getSelectedItems();
+        final List<EventId> eventIdList = annotationManager.getEventIdList(selected);
+        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(selected);
+        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
         annotateButton.setEnabled(enabled);
     }
 
@@ -568,7 +568,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
-                if (valuesRange.getOffset() == 0 || values.size() > 0) {
+                if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
                     tableRowStyles.setConditionalFormattingRules(getTableSettings()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
@@ -856,7 +856,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             // If the fields we want to make special do exist in the current data source then
             // add them.
-            if (requiredSpecialColumns.size() > 0) {
+            if (!requiredSpecialColumns.isEmpty()) {
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
