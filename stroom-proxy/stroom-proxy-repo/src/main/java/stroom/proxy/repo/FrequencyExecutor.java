@@ -21,16 +21,16 @@ public class FrequencyExecutor implements Managed {
     private final ScheduledExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final long frequency;
-    private final String threadName;
+    private final String threadNamePrefix;
 
-    public FrequencyExecutor(final String threadName,
+    public FrequencyExecutor(final String threadNamePrefix,
                              final Supplier<Runnable> runnableSupplier,
                              final long frequency) {
         this.runnableSupplier = runnableSupplier;
         this.frequency = frequency;
-        this.threadName = threadName;
+        this.threadNamePrefix = threadNamePrefix;
         final ThreadFactory threadFactory = new CustomThreadFactory(
-                threadName + " ",
+                threadNamePrefix + " ",
                 StroomThreadGroup.instance(),
                 Thread.NORM_PRIORITY - 1);
         executorService = Executors.newScheduledThreadPool(1, threadFactory);
@@ -48,13 +48,13 @@ public class FrequencyExecutor implements Managed {
                 throw e;
             }
         };
-        LOGGER.debug("Starting frequency executor with threadName: {}, frequency: {}", threadName, frequency);
+        LOGGER.debug("Starting frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
         executorService.scheduleWithFixedDelay(runnable, 0, frequency, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
-        LOGGER.debug("Stopping frequency executor with threadName: {}, frequency: {}", threadName, frequency);
+        LOGGER.debug("Stopping frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
         executorService.shutdownNow();
     }
 
@@ -63,7 +63,7 @@ public class FrequencyExecutor implements Managed {
         return "FrequencyExecutor{" +
                "executorService=" + executorService +
                ", frequency=" + frequency +
-               ", threadName='" + threadName + '\'' +
+               ", threadNamePrefix='" + threadNamePrefix + '\'' +
                '}';
     }
 }

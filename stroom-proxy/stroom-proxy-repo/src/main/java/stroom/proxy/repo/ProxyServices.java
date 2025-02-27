@@ -23,15 +23,16 @@ public class ProxyServices implements Managed {
     private final List<Managed> services = new ArrayList<>();
     private final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
 
-    public void addParallelExecutor(final String threadName,
-                                    final Supplier<Runnable> runnableSupplier,
-                                    final int threadCount) {
+    public ParallelExecutor addParallelExecutor(final String threadName,
+                                                final Supplier<Runnable> runnableSupplier,
+                                                final int threadCount) {
         LOGGER.info("Creating parallel executor '{}', threadCount: {}", threadName, threadCount);
         final ParallelExecutor executor = new ParallelExecutor(
                 threadName,
                 runnableSupplier,
                 threadCount);
         addManaged(executor);
+        return executor;
     }
 
     public void addFrequencyExecutor(final String threadName,
