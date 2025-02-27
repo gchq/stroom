@@ -3,7 +3,9 @@ package stroom.annotation.client;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.LinkEvents;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.annotation.shared.UnlinkEvents;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DisplayMode;
@@ -20,6 +22,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -37,11 +40,12 @@ public class LinkedEventPresenter
     private final DataPresenter dataPresenter;
     private final AddEventLinkPresenter addEventLinkPresenter;
 
-    private Annotation annotation;
+    private DocRef annotationRef;
 
     private List<EventId> currentData;
     private EventId nextSelection;
     private boolean dirty;
+    private AnnotationPresenter parent;
 
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
@@ -88,7 +92,8 @@ public class LinkedEventPresenter
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
                 dirty = true;
-                annotationResourceClient.linkEvent(new EventLink(annotation.getId(), eventId), this::setData, this);
+                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new LinkEvents(
+                        Collections.singletonList(eventId))), parent::read, this);
             }
         })));
 
@@ -104,16 +109,18 @@ public class LinkedEventPresenter
                     index = Math.max(0, index);
                     nextSelection = currentData.get(index);
                 }
-                annotationResourceClient.unlinkEvent(new EventLink(annotation.getId(), selected), this::setData, this);
+
+                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new UnlinkEvents(
+                        Collections.singletonList(selected))), parent::read, this);
             }
         }));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
-        this.annotation = annotation;
+        this.annotationRef = docRef;
         dirty = false;
-        annotationResourceClient.getLinkedEvents(annotation, this::setData, this);
+        annotationResourceClient.getLinkedEvents(docRef, this::setData, this);
     }
 
     @Override
@@ -162,6 +169,10 @@ public class LinkedEventPresenter
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    public void setParent(final AnnotationPresenter parent) {
+        this.parent = parent;
     }
 
     public interface LinkedEventView extends View {

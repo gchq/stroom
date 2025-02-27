@@ -1,7 +1,5 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.UserRef;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -10,25 +8,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class SetAssignedToRequest {
+public class MultiAnnotationChangeRequest {
 
     @JsonProperty
     private final List<Long> annotationIdList;
     @JsonProperty
-    private final UserRef assignedTo;
+    private final AbstractAnnotationChange change;
 
     @JsonCreator
-    public SetAssignedToRequest(@JsonProperty("annotationIdList") final List<Long> annotationIdList,
-                                @JsonProperty("assignedTo") final UserRef assignedTo) {
+    public MultiAnnotationChangeRequest(@JsonProperty("annotationIdList") final List<Long> annotationIdList,
+                                        @JsonProperty("change") final AbstractAnnotationChange change) {
         this.annotationIdList = annotationIdList;
-        this.assignedTo = assignedTo;
+        this.change = change;
     }
 
     public List<Long> getAnnotationIdList() {
         return annotationIdList;
     }
 
-    public UserRef getAssignedTo() {
-        return assignedTo;
+    public AbstractAnnotationChange getChange() {
+        return change;
     }
 }

@@ -21,21 +21,20 @@ import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.CreateAnnotationRequest;
-import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetDescriptionRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.impl.PermissionChangeService;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamKeys;
@@ -46,25 +45,37 @@ import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.NullSafe;
+import stroom.util.date.SimpleDurationUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
     private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
+    public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
 
     private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
@@ -72,6 +83,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
     private final Provider<MetaService> metaServiceProvider;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<AnnotationConfig> annotationConfigProvider;
+    private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
+    private final Provider<PermissionChangeService> permissionChangeServiceProvider;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
@@ -79,13 +93,40 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
                       final Provider<MetaService> metaServiceProvider,
-                      final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                      final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                      final Provider<AnnotationConfig> annotationConfigProvider,
+                      final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
+                      final Provider<PermissionChangeService> permissionChangeServiceProvider) {
         this.annotationDao = annotationDao;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.metaServiceProvider = metaServiceProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.annotationConfigProvider = annotationConfigProvider;
+        this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
+        this.permissionChangeServiceProvider = permissionChangeServiceProvider;
+    }
+
+    public Optional<Annotation> getByRef(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getByDocRef(annotationRef);
+    }
+
+    public Optional<Annotation> getById(final long id) {
+        final Optional<Annotation> optionalAnnotation = annotationDao.getById(id);
+        return optionalAnnotation.filter(annotation ->
+                securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
+    }
+
+    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
+        final List<Annotation> list = annotationDao.getAnnotationsForEvents(eventId);
+        return list
+                .stream()
+                .filter(annotation ->
+                        securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW))
+                .toList();
     }
 
     @Override
@@ -143,42 +184,48 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return securityContext.getUserRef();
     }
 
-    AnnotationDetail getDetail(Long annotationId) {
-        checkAppPermission();
-        final AnnotationDetail annotationDetail = annotationDao.getDetail(annotationId);
-        if (annotationDetail != null && annotationDetail.getAnnotation() != null) {
-            checkViewPermission(annotationDetail.getAnnotation());
+    AnnotationDetail getDetailById(final long annotationId) {
+        final List<DocRef> list = annotationDao.idListToDocRefs(Collections.singletonList(annotationId));
+        if (list.isEmpty()) {
+            return null;
         }
-        return annotationDetail;
+        final DocRef annotationRef = list.getFirst();
+        return getDetailByRef(annotationRef);
     }
 
-    private void checkViewPermission(final Annotation annotation) {
-        if (annotation == null) {
+    AnnotationDetail getDetailByRef(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getDetail(annotationRef).orElse(null);
+    }
+
+    private void checkViewPermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
             throw new RuntimeException("Annotation not found");
         }
-        if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
+        if (!securityContext.hasDocumentPermission(annotationRef,
                 DocumentPermission.VIEW)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to read this annotation");
         }
     }
 
-    private void checkEditPermission(final Annotation annotation) {
-        if (annotation == null) {
+    private void checkEditPermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
             throw new RuntimeException("Annotation not found");
         }
-        if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
+        if (!securityContext.hasDocumentPermission(annotationRef,
                 DocumentPermission.EDIT)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to edit this annotation");
         }
     }
 
-    private void checkDeletePermission(final Annotation annotation) {
-        if (annotation == null) {
+    private void checkDeletePermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
             throw new RuntimeException("Annotation not found");
         }
-        if (!securityContext.hasDocumentPermission(annotation.asDocRef(),
+        if (!securityContext.hasDocumentPermission(annotationRef,
                 DocumentPermission.DELETE)) {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to delete this annotation");
@@ -216,57 +263,35 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return annotationDetail;
     }
 
-    public AnnotationDetail createEntry(final CreateEntryRequest request) {
+    public AnnotationDetail change(final SingleAnnotationChangeRequest request) {
         checkAppPermission();
-        final Annotation annotation = annotationDao.get(request.getAnnotation().getId());
-        checkEditPermission(annotation);
-        return annotationDao.createEntry(request, getCurrentUser());
+        checkEditPermission(request.getAnnotationRef());
+        return annotationDao.change(request, getCurrentUser());
     }
 
-    List<EventId> getLinkedEvents(final Long annotationId) {
-        checkAppPermission();
-        final Annotation annotation = annotationDao.get(annotationId);
-        checkViewPermission(annotation);
-        return annotationDao.getLinkedEvents(annotationId);
-    }
-
-    List<EventId> link(final EventLink eventLink) {
-        checkAppPermission();
-        final Annotation annotation = annotationDao.get(eventLink.getAnnotationId());
-        checkEditPermission(annotation);
-        return annotationDao.link(getCurrentUser(), eventLink);
-    }
-
-    List<EventId> unlink(final EventLink eventLink) {
-        checkAppPermission();
-        final Annotation annotation = annotationDao.get(eventLink.getAnnotationId());
-        checkEditPermission(annotation);
-        return annotationDao.unlink(eventLink, getCurrentUser());
-    }
-
-    Integer setStatus(SetStatusRequest request) {
-        checkAppPermission();
-        for (long id : request.getAnnotationIdList()) {
-            final Annotation annotation = annotationDao.get(id);
-            checkEditPermission(annotation);
+    public Integer batchChange(final MultiAnnotationChangeRequest request) {
+        final List<DocRef> refs = getRefsForEdit(request.getAnnotationIdList());
+        for (final DocRef ref : refs) {
+            final SingleAnnotationChangeRequest singleAnnotationChangeRequest =
+                    new SingleAnnotationChangeRequest(ref, request.getChange());
+            annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
-        return annotationDao.setStatus(request, getCurrentUser());
+        return refs.size();
     }
 
-    Integer setAssignedTo(SetAssignedToRequest request) {
+    private List<DocRef> getRefsForEdit(final List<Long> annotationIdList) {
         checkAppPermission();
-        for (long id : request.getAnnotationIdList()) {
-            final Annotation annotation = annotationDao.get(id);
-            checkEditPermission(annotation);
+        final List<DocRef> annotationRefs = annotationDao.idListToDocRefs(annotationIdList);
+        for (final DocRef annotationRef : annotationRefs) {
+            checkEditPermission(annotationRef);
         }
-        return annotationDao.setAssignedTo(request, getCurrentUser());
+        return annotationRefs;
     }
 
-    Integer setDescription(final SetDescriptionRequest request) {
+    List<EventId> getLinkedEvents(final DocRef annotationRef) {
         checkAppPermission();
-        final Annotation annotation = annotationDao.get(request.getAnnotationId());
-        checkEditPermission(annotation);
-        return annotationDao.setDescription(request);
+        checkViewPermission(annotationRef);
+        return annotationDao.getLinkedEvents(annotationRef);
     }
 
     private void checkAppPermission() {
@@ -302,11 +327,85 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 .toList();
     }
 
-    public Boolean deleteAnnotation(final Annotation annotation) {
+    public Boolean deleteAnnotation(final DocRef annotationRef) {
         checkAppPermission();
-        checkDeletePermission(annotation);
+        checkDeletePermission(annotationRef);
 
-        documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotation.asDocRef());
-        return annotationDao.delete(annotation);
+        documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotationRef);
+        return annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+    }
+
+    public List<String> getStatus(final String filter) {
+        final boolean admin = securityContext.isAdmin();
+        final List<String> values = annotationConfigProvider.get().getStatusValues();
+        final List<String> filtered = new ArrayList<>();
+        final Map<String, Boolean> cache = new HashMap<>();
+        if (values != null) {
+            for (final String value : values) {
+                final int index = value.indexOf(":");
+                if (index == -1) {
+                    filtered.add(value);
+                } else {
+                    final String group = value.substring(0, index);
+                    final String status = value.substring(index + 1);
+                    if (admin) {
+                        filtered.add(status);
+                    } else {
+                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
+                        if (include) {
+                            filtered.add(status);
+                        }
+                    }
+                }
+            }
+        }
+
+        return filterValues(filtered, filter);
+    }
+
+    private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
+        if (allValues == null || allValues.isEmpty()) {
+            return allValues;
+        } else {
+            return expressionPredicateFactoryProvider.get()
+                    .filterAndSortStream(allValues.stream(),
+                            quickFilterInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .toList();
+        }
+    }
+
+    public List<String> getStandardComments(final String filter) {
+        return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
+    }
+
+    public SimpleDuration getDefaultRetentionPeriod() {
+        final AnnotationConfig annotationConfig = annotationConfigProvider.get();
+        final String defaultRetentionPeriod = NullSafe.getOrElse(
+                annotationConfig,
+                AnnotationConfig::getDefaultRetentionPeriod,
+                AnnotationConfig.DEFAULT_RETENTION_PERIOD);
+        try {
+            return SimpleDurationUtil.parse(defaultRetentionPeriod);
+        } catch (final ParseException e) {
+            // Ignore.
+        }
+
+        return SimpleDuration.builder().time(10).timeUnit(TimeUnit.YEARS).build();
+    }
+
+    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
+        permissionChangeServiceProvider.get().changeDocumentPermissions(request);
+        return Boolean.TRUE;
+    }
+
+    public void performDataRetention() {
+        // First mark annotations as deleted if they haven't been updated since their data retention time.
+        annotationDao.markDeletedByDataRetention(securityContext.getUserRef());
+
+        // Now delete items that have been deleted longer than the max deletion age.
+        final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
+        final Instant age = Instant.now().minus(physicalDeleteAge);
+        annotationDao.physicallyDelete(age);
     }
 }

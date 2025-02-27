@@ -1,21 +1,19 @@
 package stroom.annotation.client;
 
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateAnnotationRequest;
-import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetDescriptionRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.security.client.presenter.AbstractRestClient;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -34,69 +32,44 @@ public class AnnotationResourceClient extends AbstractRestClient {
         super(eventBus, restFactory);
     }
 
-    public void getById(final Long annotationId,
+    public void getById(final long annotationId,
                         final Consumer<AnnotationDetail> consumer,
                         final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.get(annotationId))
+                .method(res -> res.getById(annotationId))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void getStatus(final String filter,
-                          final Consumer<List<String>> consumer,
-                          final TaskMonitorFactory taskMonitorFactory) {
+    public void getStatusValues(final String filter,
+                                final Consumer<List<String>> consumer,
+                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getStatus(filter))
+                .method(res -> res.getStatusValues(filter))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void setStatus(final SetStatusRequest request,
-                          final Consumer<Integer> consumer,
-                          RestErrorHandler errorHandler,
-                          final TaskMonitorFactory taskMonitorFactory) {
+    public void getStandardComments(final String filter,
+                                    final Consumer<List<String>> consumer,
+                                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.setStatus(request))
+                .method(res -> res.getStandardComments(filter))
                 .onSuccess(consumer)
-                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void setAssignedTo(final SetAssignedToRequest request,
-                              final Consumer<Integer> consumer,
-                              RestErrorHandler errorHandler,
-                              final TaskMonitorFactory taskMonitorFactory) {
+    public void getDefaultRetentionPeriod(final Consumer<SimpleDuration> consumer,
+                                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.setAssignedTo(request))
-                .onSuccess(consumer)
-                .onFailure(errorHandler)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void setDescription(final SetDescriptionRequest request,
-                               final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.setDescription(request))
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void getComment(final String filter,
-                           final Consumer<List<String>> consumer,
-                           final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getComment(filter))
+                .method(AnnotationResource::getDefaultRetentionPeriod)
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -113,45 +86,36 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void addEntry(final CreateEntryRequest request,
-                         final Consumer<AnnotationDetail> consumer,
-                         final TaskMonitorFactory taskMonitorFactory) {
+    public void change(final SingleAnnotationChangeRequest request,
+                       final Consumer<AnnotationDetail> consumer,
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.createEntry(request))
+                .method(res -> res.change(request))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void getLinkedEvents(final Annotation annotation,
+    public void batchChange(final MultiAnnotationChangeRequest request,
+                            final Consumer<Integer> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.batchChange(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void getLinkedEvents(DocRef annotationRef,
                                 final Consumer<List<EventId>> consumer,
                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getLinkedEvents(annotation.getId()))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void linkEvent(final EventLink eventLink,
-                          final Consumer<List<EventId>> consumer,
-                          final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.link(eventLink))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void unlinkEvent(final EventLink eventLink,
-                            final Consumer<List<EventId>> consumer,
-                            final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.unlink(eventLink))
+                .method(res -> res.getLinkedEvents(annotationRef))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -169,12 +133,12 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void delete(final Annotation annotation,
+    public void delete(final DocRef annotationRef,
                        final Consumer<Boolean> consumer,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.deleteAnnotation(annotation))
+                .method(res -> res.deleteAnnotation(annotationRef))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(false)))
                 .taskMonitorFactory(taskMonitorFactory)

@@ -1,5 +1,5 @@
 buildscript {
-    ext.jooqVer = '3.18.7'
+    ext.jooqVer = '3.20.1'
     repositories {
         mavenLocal()
         mavenCentral()

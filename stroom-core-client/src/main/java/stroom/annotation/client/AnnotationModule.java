@@ -21,6 +21,7 @@ import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
@@ -38,5 +39,6 @@ public class AnnotationModule extends AbstractPresenterModule {
         bindPresenterWidget(ChangeAssignedToPresenter.class,
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
+        bindPresenterWidget(DurationPresenter.class, DurationView.class, DurationViewImpl.class);
     }
 }

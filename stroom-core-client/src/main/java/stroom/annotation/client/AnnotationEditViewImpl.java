@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -60,6 +59,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
+    InlineSvgButton retentionPeriodIcon;
+    @UiField
+    Label retentionPeriod;
+    @UiField
     Button commentIcon;
     @UiField
     Button create;
@@ -80,6 +83,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
         statusIcon.setSvg(SvgImage.SETTINGS);
         assignedToIcon.setSvg(SvgImage.SETTINGS);
+        retentionPeriodIcon.setSvg(SvgImage.SETTINGS);
 
         setTitle(null);
         setSubject(null);
@@ -142,6 +146,17 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
             this.assignedTo.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setRetentionPeriod(final String retentionPeriod) {
+        if (retentionPeriod == null || retentionPeriod.trim().isEmpty()) {
+            this.retentionPeriod.setText("None");
+            this.retentionPeriod.getElement().getStyle().setOpacity(0.5);
+        } else {
+            this.retentionPeriod.setText(retentionPeriod);
+            this.retentionPeriod.getElement().getStyle().setOpacity(1);
         }
     }
 
@@ -280,6 +295,20 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onAssignYourself(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
+        }
+    }
+
+    @UiHandler("retentionPeriod")
+    public void onRetentionPeriod(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showRetentionPeriodChooser(retentionPeriodIcon.getElement());
+        }
+    }
+
+    @UiHandler("retentionPeriodIcon")
+    public void onRetentionPeriodIcon(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showRetentionPeriodChooser(retentionPeriodIcon.getElement());
         }
     }
 

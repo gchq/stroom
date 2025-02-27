@@ -17,7 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.ChangeAssignedTo;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -65,10 +66,10 @@ public class ChangeAssignedToPresenter
                 .onShow(e -> userRefSelectionBoxPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final SetAssignedToRequest request = new SetAssignedToRequest(
+                        final MultiAnnotationChangeRequest request = new MultiAnnotationChangeRequest(
                                 annotationIdList,
-                                userRefSelectionBoxPresenter.getSelected());
-                        annotationResourceClient.setAssignedTo(request,
+                                new ChangeAssignedTo(userRefSelectionBoxPresenter.getSelected()));
+                        annotationResourceClient.batchChange(request,
                                 values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();

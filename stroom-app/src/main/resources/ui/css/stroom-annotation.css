@@ -233,6 +233,8 @@
     white-space: pre-wrap;
     word-break: break-word;
     color: var(--control__text-color);
+    max-height: 400px;
+    overflow: auto;
 }
 
 .annotationHistoryItem {

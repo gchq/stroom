@@ -19,7 +19,8 @@ package stroom.annotation.client;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.SetDescriptionRequest;
+import stroom.annotation.shared.ChangeDescription;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
@@ -59,25 +60,27 @@ public class AnnotationPresenter
                                final LinkTabPanelView view,
                                final AnnotationResourceClient annotationResourceClient,
                                final AnnotationEditPresenter annotationEditPresenter,
-                               final Provider<LinkedEventPresenter> linkedEventPresenterProvider,
+                               final LinkedEventPresenter linkedEventPresenter,
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
         this.annotationEditPresenter = annotationEditPresenter;
         annotationEditPresenter.setParent(this);
+        linkedEventPresenter.setParent(this);
 
         saveButton = SvgButton.create(SvgPresets.SAVE);
         saveButton.setEnabled(false);
         registerHandler(saveButton.addClickHandler(e -> {
-            getEntity().setDescription(markdownEditPresenter.getText());
-            annotationResourceClient.setDescription(
-                    new SetDescriptionRequest(getEntity().getId(),
-                            markdownEditPresenter.getText()), this);
+            annotationResourceClient.change(
+                    new SingleAnnotationChangeRequest(getDocRef(),
+                            new ChangeDescription(markdownEditPresenter.getText())), annotationDetail -> {
+                        // Ignore.
+                    }, this);
             saveButton.setEnabled(false);
         }));
 
         addTab(ANNOTATION, new DocumentEditTabProvider<>(() -> annotationEditPresenter));
-        addTab(EVENTS, new DocumentEditTabProvider<>(linkedEventPresenterProvider::get));
+        addTab(EVENTS, new DocumentEditTabProvider<>(() -> linkedEventPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = markdownEditPresenterProvider.get();
@@ -98,7 +101,7 @@ public class AnnotationPresenter
             @Override
             public Annotation onWrite(final MarkdownEditPresenter presenter,
                                       final Annotation document) {
-                document.setDescription(presenter.getText());
+//                document.setDescription(presenter.getText());
                 return document;
             }
         });

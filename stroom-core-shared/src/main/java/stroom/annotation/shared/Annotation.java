@@ -4,6 +4,7 @@ import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,31 +17,22 @@ public class Annotation extends Doc {
     public static final String TYPE = "Annotation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;
 
-    public static final String TITLE = "Title";
-    public static final String SUBJECT = "Subject";
-    public static final String COMMENT = "Comment";
-    public static final String STATUS = "Status";
-    public static final String ASSIGNED_TO = "Assigned";
-    public static final String LINK = "Link";
-    public static final String UNLINK = "Unlink";
-
     @JsonProperty
-    private Long id;
+    private final Long id;
     @JsonProperty
-    private String subject;
+    private final String subject;
     @JsonProperty
-    private String status;
+    private final String status;
     @JsonProperty
-    private UserRef assignedTo;
+    private final UserRef assignedTo;
     @JsonProperty
-    private String comment;
+    private final String comment;
     @JsonProperty
-    private String history;
+    private final String history;
     @JsonProperty
-    private String description;
-
-    public Annotation() {
-    }
+    private final String description;
+    @JsonProperty
+    private final SimpleDuration retentionPeriod;
 
     @JsonCreator
     public Annotation(@JsonProperty("type") final String type,
@@ -57,7 +49,8 @@ public class Annotation extends Doc {
                       @JsonProperty("assignedTo") final UserRef assignedTo,
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history,
-                      @JsonProperty("description") final String description) {
+                      @JsonProperty("description") final String description,
+                      @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.id = id;
         this.subject = subject;
@@ -66,61 +59,139 @@ public class Annotation extends Doc {
         this.comment = comment;
         this.history = history;
         this.description = description;
+        this.retentionPeriod = retentionPeriod;
     }
 
     public Long getId() {
         return id;
     }
 
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
     public String getSubject() {
         return subject;
-    }
-
-    public void setSubject(final String subject) {
-        this.subject = subject;
     }
 
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(final String status) {
-        this.status = status;
-    }
-
     public UserRef getAssignedTo() {
         return assignedTo;
-    }
-
-    public void setAssignedTo(final UserRef assignedTo) {
-        this.assignedTo = assignedTo;
     }
 
     public String getComment() {
         return comment;
     }
 
-    public void setComment(final String comment) {
-        this.comment = comment;
-    }
-
     public String getHistory() {
         return history;
-    }
-
-    public void setHistory(final String history) {
-        this.history = history;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
+    public SimpleDuration getRetentionPeriod() {
+        return retentionPeriod;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
+
+        private Long id;
+        private String subject;
+        private String status;
+        private UserRef assignedTo;
+        private String comment;
+        private String history;
+        private String description;
+        private SimpleDuration retentionPeriod;
+
+        public Builder() {
+        }
+
+        public Builder(final Annotation doc) {
+            super(doc);
+            this.id = doc.id;
+            this.subject = doc.subject;
+            this.status = doc.status;
+            this.assignedTo = doc.assignedTo;
+            this.comment = doc.comment;
+            this.history = doc.history;
+            this.description = doc.description;
+            this.retentionPeriod = doc.retentionPeriod;
+        }
+
+        public Builder id(final Long id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder subject(final String subject) {
+            this.subject = subject;
+            return self();
+        }
+
+        public Builder status(final String status) {
+            this.status = status;
+            return self();
+        }
+
+        public Builder assignedTo(final UserRef assignedTo) {
+            this.assignedTo = assignedTo;
+            return self();
+        }
+
+        public Builder comment(final String comment) {
+            this.comment = comment;
+            return self();
+        }
+
+        public Builder history(final String history) {
+            this.history = history;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder retentionPeriod(final SimpleDuration retentionPeriod) {
+            this.retentionPeriod = retentionPeriod;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public Annotation build() {
+            return new Annotation(
+                    type,
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    id,
+                    subject,
+                    status,
+                    assignedTo,
+                    comment,
+                    history,
+                    description,
+                    retentionPeriod);
+        }
     }
 }

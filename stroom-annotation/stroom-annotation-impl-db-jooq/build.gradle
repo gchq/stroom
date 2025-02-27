@@ -40,19 +40,21 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'annotation|annotation_data_link|annotation_entry'
+                        includes = 'annotation|annotation_data_link|annotation_entry|annotation_group|annotation_tag|annotation_tag_link'
                         // We don't want to include flyway versioning
                         excludes = 'annotation_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
                         // Treat some tinyint columns as booleans
-                        //forcedTypes {
-                            //forcedType {
-                                //name = 'BOOLEAN'
-                                //// see https://github.com/jOOQ/jOOQ/issues/9405
-                                //includeTypes = '(?i:tinyint)'
-                            //}
-                        //}
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                includeExpression = '' +
+                                        '.*\\.annotation\\.deleted|'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.annotation.impl.db.jooq'

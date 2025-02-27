@@ -4,15 +4,14 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function4;
 import org.jooq.Identity;
 import org.jooq.InverseForeignKey;
 import org.jooq.Name;
@@ -20,12 +19,9 @@ import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row4;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
-import org.jooq.SelectField;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -35,10 +31,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -302,29 +297,5 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
     @Override
     public AnnotationDataLink whereNotExists(Select<?> select) {
         return where(DSL.notExists(select));
-    }
-
-    // -------------------------------------------------------------------------
-    // Row4 type methods
-    // -------------------------------------------------------------------------
-
-    @Override
-    public Row4<Long, Long, Long, Long> fieldsRow() {
-        return (Row4) super.fieldsRow();
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
-     */
-    public <U> SelectField<U> mapping(Function4<? super Long, ? super Long, ? super Long, ? super Long, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
-     */
-    public <U> SelectField<U> mapping(Class<U> toType, Function4<? super Long, ? super Long, ? super Long, ? super Long, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
     }
 }

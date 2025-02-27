@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.EventId;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.index.shared.IndexConstants;
@@ -86,17 +87,17 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationDecorationFields.ANNOTATION_COMMENT, Annotation::getComment),
             Map.entry(AnnotationDecorationFields.ANNOTATION_HISTORY, Annotation::getHistory));
 
-    private final AnnotationDao annotationDao;
+    private final AnnotationService annotationService;
     private final ExpressionMatcherFactory expressionMatcherFactory;
     private final AnnotationConfig annotationConfig;
     private final SecurityContext securityContext;
 
     @Inject
-    AnnotationReceiverDecoratorFactory(final AnnotationDao annotationDao,
+    AnnotationReceiverDecoratorFactory(final AnnotationService annotationService,
                                        final ExpressionMatcherFactory expressionMatcherFactory,
                                        final AnnotationConfig annotationConfig,
                                        final SecurityContext securityContext) {
-        this.annotationDao = annotationDao;
+        this.annotationService = annotationService;
         this.expressionMatcherFactory = expressionMatcherFactory;
         this.annotationConfig = annotationConfig;
         this.securityContext = securityContext;
@@ -135,7 +136,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             if (annotationIdIndex != null) {
                 final Long annotationId = getLong(values, annotationIdIndex);
                 if (annotationId != null) {
-                    annotations.add(annotationDao.get(annotationId));
+                    annotationService.getById(annotationId).ifPresent(annotations::add);
                 }
             }
 
@@ -143,7 +144,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 final Long streamId = getLong(values, streamIdIndex);
                 final Long eventId = getLong(values, eventIdIndex);
                 if (streamId != null && eventId != null) {
-                    final List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
+                    final List<Annotation> list = annotationService
+                            .getAnnotationsForEvents(new EventId(streamId, eventId));
                     annotations.addAll(list);
                 }
             }
@@ -176,9 +178,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     private Annotation createDefaultAnnotation() {
-        final Annotation annotation = new Annotation();
-        annotation.setStatus(annotationConfig.getStatusValues().getFirst());
-        return annotation;
+        return Annotation.builder().status(annotationConfig.getStatusValues().getFirst()).build();
     }
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {

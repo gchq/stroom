@@ -4,15 +4,14 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function6;
 import org.jooq.Identity;
 import org.jooq.InverseForeignKey;
 import org.jooq.Name;
@@ -20,12 +19,9 @@ import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row6;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
-import org.jooq.SelectField;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -35,10 +31,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -73,11 +68,6 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     public final TableField<AnnotationEntryRecord, Long> FK_ANNOTATION_ID = createField(DSL.name("fk_annotation_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation_entry.type</code>.
-     */
-    public final TableField<AnnotationEntryRecord, String> TYPE = createField(DSL.name("type"), SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
      * The column <code>stroom.annotation_entry.data</code>.
      */
     public final TableField<AnnotationEntryRecord, String> DATA = createField(DSL.name("data"), SQLDataType.CLOB, this, "");
@@ -91,6 +81,16 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
      * The column <code>stroom.annotation_entry.entry_time_ms</code>.
      */
     public final TableField<AnnotationEntryRecord, Long> ENTRY_TIME_MS = createField(DSL.name("entry_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.annotation_entry.type_id</code>.
+     */
+    public final TableField<AnnotationEntryRecord, Byte> TYPE_ID = createField(DSL.name("type_id"), SQLDataType.TINYINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.annotation_entry.deleted</code>.
+     */
+    public final TableField<AnnotationEntryRecord, Byte> DELETED = createField(DSL.name("deleted"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
     private AnnotationEntry(Name alias, Table<AnnotationEntryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -305,29 +305,5 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     @Override
     public AnnotationEntry whereNotExists(Select<?> select) {
         return where(DSL.notExists(select));
-    }
-
-    // -------------------------------------------------------------------------
-    // Row6 type methods
-    // -------------------------------------------------------------------------
-
-    @Override
-    public Row6<Long, Long, String, String, String, Long> fieldsRow() {
-        return (Row6) super.fieldsRow();
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
-     */
-    public <U> SelectField<U> mapping(Function6<? super Long, ? super Long, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
-     */
-    public <U> SelectField<U> mapping(Class<U> toType, Function6<? super Long, ? super Long, ? super String, ? super String, ? super String, ? super Long, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
     }
 }

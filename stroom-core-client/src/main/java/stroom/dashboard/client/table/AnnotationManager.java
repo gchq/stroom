@@ -273,23 +273,22 @@ public class AnnotationManager {
         final String status = getValue(selectedItems, "status");
         final String comment = getValue(selectedItems, "comment");
 
-        final Annotation annotation = new Annotation();
-        annotation.setName(title == null
-                ? "New Annotation"
-                : title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        annotation.setComment(comment);
+        final Annotation annotation = Annotation
+                .builder()
+                .name(title == null
+                        ? "New Annotation"
+                        : title)
+                .subject(subject)
+                .status(status)
+                .comment(comment)
+                .build();
 
         ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
     }
 
     public void editAnnotation(final long annotationId) {
         // assignedTo is a display name so have to convert it back to a unique username
-        final Annotation annotation = new Annotation();
-        annotation.setId(annotationId);
-
-        ShowAnnotationEvent.fire(changeStatusPresenter, annotation, null);
+        ShowAnnotationEvent.fire(changeStatusPresenter, Annotation.builder().id(annotationId).build(), null);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

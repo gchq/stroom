@@ -17,7 +17,8 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.ChangeStatus;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -68,7 +69,7 @@ public class ChangeStatusPresenter
 
     public void show(final List<Long> annotationIdList) {
         if (currentStatus == null) {
-            annotationResourceClient.getStatus(null, values -> {
+            annotationResourceClient.getStatusValues(null, values -> {
                 if (currentStatus == null && values != null && !values.isEmpty()) {
                     changeStatus(values.get(0));
                 }
@@ -82,8 +83,9 @@ public class ChangeStatusPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
-                        annotationResourceClient.setStatus(request,
+                        final MultiAnnotationChangeRequest request = new MultiAnnotationChangeRequest(annotationIdList,
+                                new ChangeStatus(currentStatus));
+                        annotationResourceClient.batchChange(request,
                                 values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();
@@ -108,7 +110,7 @@ public class ChangeStatusPresenter
     @Override
     public void showStatusChooser(final Element element) {
         statusPresenter.setDataSupplier((filter, consumer) -> {
-            annotationResourceClient.getStatus(filter, consumer, this);
+            annotationResourceClient.getStatusValues(filter, consumer, this);
         });
         statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);

@@ -16,9 +16,11 @@
 
 package stroom.annotation.shared;
 
+import stroom.docref.DocRef;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.time.SimpleDuration;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,7 +47,7 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Gets an annotation",
             operationId = "getAnnotationDetail")
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
+    AnnotationDetail getById(@QueryParam("annotationId") Long annotationId);
 
     @POST
     @Path("create")
@@ -60,71 +62,52 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Deletes an annotation",
             operationId = "deleteAnnotation")
-    Boolean deleteAnnotation(@Parameter(description = "request", required = true)
-                             Annotation request);
+    Boolean deleteAnnotation(@Parameter(description = "annotationRef", required = true)
+                             DocRef annotationRef);
 
     @POST
-    @Path("addEntry")
+    @Path("change")
     @Operation(
-            summary = "Adds an annotation entry",
-            operationId = "createAnnotationEntry")
-    AnnotationDetail createEntry(@Parameter(description = "request", required = true) CreateEntryRequest request);
+            summary = "Applies a change to an annotation",
+            operationId = "changeAnnotation")
+    AnnotationDetail change(@Parameter(description = "request", required = true)
+                            SingleAnnotationChangeRequest request);
+
+    @POST
+    @Path("batchChange")
+    @Operation(
+            summary = "Applies a change to multiple annotations",
+            operationId = "batchChangeAnnotation")
+    Integer batchChange(@Parameter(description = "request", required = true)
+                        MultiAnnotationChangeRequest request);
 
     @GET
-    @Path("status")
+    @Path("getStatusValues")
     @Operation(
             summary = "Gets a list of allowed statuses",
             operationId = "getAnnotationStatus")
-    List<String> getStatus(@QueryParam("filter") String filter);
+    List<String> getStatusValues(@QueryParam("filter") String filter);
 
     @GET
-    @Path("comment")
+    @Path("getStandardComments")
     @Operation(
             summary = "Gets a list of predefined comments",
-            operationId = "getAnnotationComments")
-    List<String> getComment(@QueryParam("filter") String filter);
+            operationId = "getAnnotationSampleComments")
+    List<String> getStandardComments(@QueryParam("filter") String filter);
 
     @GET
-    @Path("linkedEvents")
+    @Path("getDefaultRetentionPeriod")
+    @Operation(
+            summary = "Gets the default retention period",
+            operationId = "getAnnotationDefaultRetentionPeriod")
+    SimpleDuration getDefaultRetentionPeriod();
+
+    @POST
+    @Path("getLinkedEvents")
     @Operation(
             summary = "Gets a list of events linked to this annotation",
             operationId = "getAnnotationLinkedEvents")
-    List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
-
-    @POST
-    @Path("link")
-    @Operation(
-            summary = "Links an annotation to an event",
-            operationId = "linkAnnotationEvents")
-    List<EventId> link(@Parameter(description = "eventLink", required = true) EventLink eventLink);
-
-    @POST
-    @Path("unlink")
-    @Operation(
-            summary = "Unlinks an annotation from an event",
-            operationId = "unlinkAnnotationEvents")
-    List<EventId> unlink(@Parameter(description = "eventLink", required = true) EventLink eventLink);
-
-    @POST
-    @Path("setStatus")
-    @Operation(
-            summary = "Bulk action to set the status for several annotations",
-            operationId = "setAnnotationStatus")
-    Integer setStatus(@Parameter(description = "request", required = true) SetStatusRequest request);
-
-    @POST
-    @Path("setAssignedTo")
-    @Operation(
-            summary = "Bulk action to set the assignment for several annotations",
-            operationId = "setAnnotationAssignedTo")
-    Integer setAssignedTo(@Parameter(description = "request", required = true) SetAssignedToRequest request);
-
-    @POST
-    @Path("setDescription")
-    @Operation(
-            summary = "Set the description for an annotation",
-            operationId = "setAnnotationDescription")
-    Integer setDescription(@Parameter(description = "request", required = true) SetDescriptionRequest request);
+    List<EventId> getLinkedEvents(@Parameter(description = "annotationRef", required = true) DocRef annotationRef);
 
     @POST
     @Path("/changeDocumentPermissions")

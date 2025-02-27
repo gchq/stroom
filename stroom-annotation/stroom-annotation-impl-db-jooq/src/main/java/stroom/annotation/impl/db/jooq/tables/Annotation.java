@@ -4,15 +4,17 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function14;
 import org.jooq.Identity;
 import org.jooq.InverseForeignKey;
 import org.jooq.Name;
@@ -20,12 +22,9 @@ import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row14;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
-import org.jooq.SelectField;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -35,11 +34,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -132,6 +129,31 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * The column <code>stroom.annotation.description</code>.
      */
     public final TableField<AnnotationRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>stroom.annotation.deleted</code>.
+     */
+    public final TableField<AnnotationRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
+
+    /**
+     * The column <code>stroom.annotation.group_id</code>.
+     */
+    public final TableField<AnnotationRecord, Integer> GROUP_ID = createField(DSL.name("group_id"), SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.annotation.parent_id</code>.
+     */
+    public final TableField<AnnotationRecord, Long> PARENT_ID = createField(DSL.name("parent_id"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.annotation.retention_time</code>.
+     */
+    public final TableField<AnnotationRecord, Long> RETENTION_TIME = createField(DSL.name("retention_time"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.annotation.retention_unit</code>.
+     */
+    public final TableField<AnnotationRecord, Byte> RETENTION_UNIT = createField(DSL.name("retention_unit"), SQLDataType.TINYINT, this, "");
 
     private Annotation(Name alias, Table<AnnotationRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -237,6 +259,27 @@ public class Annotation extends TableImpl<AnnotationRecord> {
             _annotationEntry = new AnnotationEntryPath(this, null, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID.getInverseKey());
 
         return _annotationEntry;
+    }
+
+    private transient AnnotationTagLinkPath _annotationTagLink;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom.annotation_tag_link</code> table
+     */
+    public AnnotationTagLinkPath annotationTagLink() {
+        if (_annotationTagLink == null)
+            _annotationTagLink = new AnnotationTagLinkPath(this, null, Keys.ANNOTATION_TAG_LINK_FK_ANNOTATION_ID.getInverseKey());
+
+        return _annotationTagLink;
+    }
+
+    /**
+     * Get the implicit many-to-many join path to the
+     * <code>stroom.annotation_tag</code> table
+     */
+    public AnnotationTagPath annotationTag() {
+        return annotationTagLink().annotationTag();
     }
 
     @Override
@@ -365,29 +408,5 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     @Override
     public Annotation whereNotExists(Select<?> select) {
         return where(DSL.notExists(select));
-    }
-
-    // -------------------------------------------------------------------------
-    // Row14 type methods
-    // -------------------------------------------------------------------------
-
-    @Override
-    public Row14<Long, Integer, Long, String, Long, String, String, String, String, String, String, String, String, String> fieldsRow() {
-        return (Row14) super.fieldsRow();
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
-     */
-    public <U> SelectField<U> mapping(Function14<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
-    }
-
-    /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
-     */
-    public <U> SelectField<U> mapping(Class<U> toType, Function14<? super Long, ? super Integer, ? super Long, ? super String, ? super Long, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? super String, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
     }
 }

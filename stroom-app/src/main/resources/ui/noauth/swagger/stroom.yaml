@@ -501,14 +501,35 @@ paths:
       summary: Gets an annotation
       tags:
       - Annotations
-  /annotation/v1/addEntry:
+  /annotation/v1/batchChange:
     post:
-      operationId: createAnnotationEntry
+      operationId: batchChangeAnnotation
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateEntryRequest"
+              $ref: "#/components/schemas/MultiAnnotationChangeRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Applies a change to multiple annotations
+      tags:
+      - Annotations
+  /annotation/v1/change:
+    post:
+      operationId: changeAnnotation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SingleAnnotationChangeRequest"
         description: request
         required: true
       responses:
@@ -518,27 +539,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/AnnotationDetail"
           description: default response
-      summary: Adds an annotation entry
+      summary: Applies a change to an annotation
       tags:
       - Annotations
-  /annotation/v1/comment:
-    get:
-      operationId: getAnnotationComments
-      parameters:
-      - in: query
-        name: filter
-        schema:
-          type: string
+  /annotation/v1/changeDocumentPermissions:
+    post:
+      operationId: changeDocumentPermissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SingleDocumentPermissionChangeRequest"
+        description: request
+        required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                type: boolean
           description: default response
-      summary: Gets a list of predefined comments
+      summary: Change document permissions
       tags:
       - Annotations
   /annotation/v1/create:
@@ -561,37 +582,47 @@ paths:
       summary: Creates an annotation
       tags:
       - Annotations
-  /annotation/v1/link:
-    post:
-      operationId: linkAnnotationEvents
+  /annotation/v1/delete:
+    delete:
+      operationId: deleteAnnotation
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventLink"
-        description: eventLink
+              $ref: "#/components/schemas/DocRef"
+        description: annotationRef
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EventId"
+                type: boolean
           description: default response
-      summary: Links an annotation to an event
+      summary: Deletes an annotation
       tags:
       - Annotations
-  /annotation/v1/linkedEvents:
+  /annotation/v1/getDefaultRetentionPeriod:
     get:
+      operationId: getAnnotationDefaultRetentionPeriod
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleDuration"
+          description: default response
+      summary: Gets the default retention period
+      tags:
+      - Annotations
+  /annotation/v1/getLinkedEvents:
+    post:
       operationId: getAnnotationLinkedEvents
       parameters:
       - in: query
-        name: annotationId
+        name: annotationRef
         schema:
-          type: integer
-          format: int64
+          $ref: "#/components/schemas/DocRef"
       responses:
         default:
           content:
@@ -604,70 +635,27 @@ paths:
       summary: Gets a list of events linked to this annotation
       tags:
       - Annotations
-  /annotation/v1/setAssignedTo:
-    post:
-      operationId: setAnnotationAssignedTo
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SetAssignedToRequest"
-        description: request
-        required: true
+  /annotation/v1/getStandardComments:
+    get:
+      operationId: getAnnotationSampleComments
+      parameters:
+      - in: query
+        name: filter
+        schema:
+          type: string
       responses:
         default:
           content:
             application/json:
               schema:
-                type: integer
-                format: int32
+                type: array
+                items:
+                  type: string
           description: default response
-      summary: Bulk action to set the assignment for several annotations
+      summary: Gets a list of predefined comments
       tags:
       - Annotations
-  /annotation/v1/setDescription:
-    post:
-      operationId: setAnnotationDescription
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SetDescriptionRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Set the description for an annotation
-      tags:
-      - Annotations
-  /annotation/v1/setStatus:
-    post:
-      operationId: setAnnotationStatus
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SetStatusRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Bulk action to set the status for several annotations
-      tags:
-      - Annotations
-  /annotation/v1/status:
+  /annotation/v1/getStatusValues:
     get:
       operationId: getAnnotationStatus
       parameters:
@@ -685,28 +673,6 @@ paths:
                   type: string
           description: default response
       summary: Gets a list of allowed statuses
-      tags:
-      - Annotations
-  /annotation/v1/unlink:
-    post:
-      operationId: unlinkAnnotationEvents
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EventLink"
-        description: eventLink
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EventId"
-          description: default response
-      summary: Unlinks an annotation from an event
       tags:
       - Annotations
   /apikey/v1:
@@ -2536,7 +2502,7 @@ paths:
       - Explorer (v2)
   /explorer/v2/changeDocumentPermissions:
     post:
-      operationId: changeDocumentPermissions
+      operationId: changeDocumentPermissions_1
       requestBody:
         content:
           application/json:
@@ -7867,6 +7833,15 @@ paths:
       - XSLTs
 components:
   schemas:
+    AbstractAnnotationChange:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     AbstractAppPermissionChange:
       type: object
       discriminator:
@@ -8302,6 +8277,8 @@ components:
           format: int64
         name:
           type: string
+        retentionPeriod:
+          $ref: "#/components/schemas/SimpleDuration"
         status:
           type: string
         subject:
@@ -8334,6 +8311,16 @@ components:
           format: int64
         entryType:
           type: string
+          enum:
+          - TITLE
+          - SUBJECT
+          - STATUS
+          - ASSIGNED
+          - COMMENT
+          - LINK
+          - UNLINK
+          - RETENTION_PERIOD
+          - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"
         entryValue:
@@ -8821,6 +8808,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CacheIdentity"
+    ChangeAssignedTo:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          userRef:
+            $ref: "#/components/schemas/UserRef"
+    ChangeComment:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          comment:
+            type: string
+    ChangeDescription:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          description:
+            type: string
     ChangePasswordRequest:
       type: object
       properties:
@@ -8841,6 +8852,38 @@ components:
           type: boolean
         message:
           type: string
+    ChangeRetentionPeriod:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          retentionPeriod:
+            $ref: "#/components/schemas/SimpleDuration"
+    ChangeStatus:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          status:
+            type: string
+    ChangeSubject:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          subject:
+            type: string
+    ChangeTitle:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          title:
+            type: string
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -9253,19 +9296,6 @@ components:
       required:
       - tokenType
       - userId
-    CreateEntryRequest:
-      type: object
-      properties:
-        annotation:
-          $ref: "#/components/schemas/Annotation"
-        entryValue:
-          $ref: "#/components/schemas/EntryValue"
-        linkedEvents:
-          type: array
-          items:
-            $ref: "#/components/schemas/EventId"
-        type:
-          type: string
     CreateHashedApiKeyRequest:
       type: object
       properties:
@@ -10479,14 +10509,6 @@ components:
         streamId:
           type: integer
           format: int64
-    EventLink:
-      type: object
-      properties:
-        annotationId:
-          type: integer
-          format: int64
-        eventId:
-          $ref: "#/components/schemas/EventId"
     EventRef:
       type: object
       properties:
@@ -12252,6 +12274,16 @@ components:
           format: int64
       xml:
         name: limits
+    LinkEvents:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: "#/components/schemas/EventId"
     ListConfigResponse:
       type: object
       description: List of config properties
@@ -12505,6 +12537,16 @@ components:
           $ref: "#/components/schemas/Meta"
         pipeline:
           $ref: "#/components/schemas/DocRef"
+    MultiAnnotationChangeRequest:
+      type: object
+      properties:
+        annotationIdList:
+          type: array
+          items:
+            type: integer
+            format: int64
+        change:
+          $ref: "#/components/schemas/AbstractAnnotationChange"
     Node:
       type: object
       properties:
@@ -15302,24 +15344,6 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
-    SetAssignedToRequest:
-      type: object
-      properties:
-        annotationIdList:
-          type: array
-          items:
-            type: integer
-            format: int64
-        assignedTo:
-          $ref: "#/components/schemas/UserRef"
-    SetDescriptionRequest:
-      type: object
-      properties:
-        annotationId:
-          type: integer
-          format: int64
-        description:
-          type: string
     SetDocumentUserCreatePermissions:
       type: object
       allOf:
@@ -15349,16 +15373,6 @@ components:
             - USE
           userRef:
             $ref: "#/components/schemas/UserRef"
-    SetStatusRequest:
-      type: object
-      properties:
-        annotationIdList:
-          type: array
-          items:
-            type: integer
-            format: int64
-        status:
-          type: string
     SharedElementData:
       type: object
       properties:
@@ -15399,6 +15413,20 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
+    SingleAnnotationChangeRequest:
+      type: object
+      properties:
+        annotationRef:
+          $ref: "#/components/schemas/DocRef"
+        change:
+          $ref: "#/components/schemas/AbstractAnnotationChange"
+    SingleDocumentPermissionChangeRequest:
+      type: object
+      properties:
+        change:
+          $ref: "#/components/schemas/AbstractDocumentPermissionsChange"
+        docRef:
+          $ref: "#/components/schemas/DocRef"
     Size:
       type: object
       properties:
@@ -16648,6 +16676,16 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UnlinkEvents:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          events:
+            type: array
+            items:
+              $ref: "#/components/schemas/EventId"
     UpdateAccountRequest:
       type: object
       properties:

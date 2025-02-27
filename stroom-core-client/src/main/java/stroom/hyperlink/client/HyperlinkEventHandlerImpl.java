@@ -160,12 +160,16 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final String comment = getParam(href, "comment");
 
         // assignedTo is a display name so have to convert it back to a unique username
-        final Annotation annotation = new Annotation();
-        annotation.setId(annotationId);
-        annotation.setName(title == null ? "New Annotation" : title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        annotation.setComment(comment);
+        final Annotation annotation = Annotation
+                .builder()
+                .id(annotationId)
+                .name(title == null
+                        ? "New Annotation"
+                        : title)
+                .subject(subject)
+                .status(status)
+                .comment(comment)
+                .build();
 
         final List<EventId> linkedEvents = new ArrayList<>();
         if (streamId != null && eventId != null) {

@@ -9,6 +9,7 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-impl')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-language-api')

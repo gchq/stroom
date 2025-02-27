@@ -4,18 +4,24 @@
 package stroom.annotation.impl.db.jooq;
 
 
+import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.AnnotationGroup;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationGroupRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationTagLinkRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationTagRecord;
+
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
 /**
@@ -34,6 +40,10 @@ public class Keys {
     public static final UniqueKey<AnnotationDataLinkRecord> KEY_ANNOTATION_DATA_LINK_FK_ANNOTATION_ID_STREAM_ID_EVENT_ID = Internal.createUniqueKey(AnnotationDataLink.ANNOTATION_DATA_LINK, DSL.name("KEY_annotation_data_link_fk_annotation_id_stream_id_event_id"), new TableField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.FK_ANNOTATION_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.STREAM_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.EVENT_ID }, true);
     public static final UniqueKey<AnnotationDataLinkRecord> KEY_ANNOTATION_DATA_LINK_PRIMARY = Internal.createUniqueKey(AnnotationDataLink.ANNOTATION_DATA_LINK, DSL.name("KEY_annotation_data_link_PRIMARY"), new TableField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.ID }, true);
     public static final UniqueKey<AnnotationEntryRecord> KEY_ANNOTATION_ENTRY_PRIMARY = Internal.createUniqueKey(AnnotationEntry.ANNOTATION_ENTRY, DSL.name("KEY_annotation_entry_PRIMARY"), new TableField[] { AnnotationEntry.ANNOTATION_ENTRY.ID }, true);
+    public static final UniqueKey<AnnotationGroupRecord> KEY_ANNOTATION_GROUP_PRIMARY = Internal.createUniqueKey(AnnotationGroup.ANNOTATION_GROUP, DSL.name("KEY_annotation_group_PRIMARY"), new TableField[] { AnnotationGroup.ANNOTATION_GROUP.ID }, true);
+    public static final UniqueKey<AnnotationTagRecord> KEY_ANNOTATION_TAG_PRIMARY = Internal.createUniqueKey(AnnotationTag.ANNOTATION_TAG, DSL.name("KEY_annotation_tag_PRIMARY"), new TableField[] { AnnotationTag.ANNOTATION_TAG.ID }, true);
+    public static final UniqueKey<AnnotationTagLinkRecord> KEY_ANNOTATION_TAG_LINK_FK_ANNOTATION_ID_FK_ANNOTATION_TAG_ID = Internal.createUniqueKey(AnnotationTagLink.ANNOTATION_TAG_LINK, DSL.name("KEY_annotation_tag_link_fk_annotation_id_fk_annotation_tag_id"), new TableField[] { AnnotationTagLink.ANNOTATION_TAG_LINK.FK_ANNOTATION_ID, AnnotationTagLink.ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID }, true);
+    public static final UniqueKey<AnnotationTagLinkRecord> KEY_ANNOTATION_TAG_LINK_PRIMARY = Internal.createUniqueKey(AnnotationTagLink.ANNOTATION_TAG_LINK, DSL.name("KEY_annotation_tag_link_PRIMARY"), new TableField[] { AnnotationTagLink.ANNOTATION_TAG_LINK.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -41,4 +51,6 @@ public class Keys {
 
     public static final ForeignKey<AnnotationDataLinkRecord, AnnotationRecord> ANNOTATION_DATA_LINK_FK_ANNOTATION_ID = Internal.createForeignKey(AnnotationDataLink.ANNOTATION_DATA_LINK, DSL.name("annotation_data_link_fk_annotation_id"), new TableField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.FK_ANNOTATION_ID }, Keys.KEY_ANNOTATION_PRIMARY, new TableField[] { Annotation.ANNOTATION.ID }, true);
     public static final ForeignKey<AnnotationEntryRecord, AnnotationRecord> ANNOTATION_ENTRY_FK_ANNOTATION_ID = Internal.createForeignKey(AnnotationEntry.ANNOTATION_ENTRY, DSL.name("annotation_entry_fk_annotation_id"), new TableField[] { AnnotationEntry.ANNOTATION_ENTRY.FK_ANNOTATION_ID }, Keys.KEY_ANNOTATION_PRIMARY, new TableField[] { Annotation.ANNOTATION.ID }, true);
+    public static final ForeignKey<AnnotationTagLinkRecord, AnnotationRecord> ANNOTATION_TAG_LINK_FK_ANNOTATION_ID = Internal.createForeignKey(AnnotationTagLink.ANNOTATION_TAG_LINK, DSL.name("annotation_tag_link_fk_annotation_id"), new TableField[] { AnnotationTagLink.ANNOTATION_TAG_LINK.FK_ANNOTATION_ID }, Keys.KEY_ANNOTATION_PRIMARY, new TableField[] { Annotation.ANNOTATION.ID }, true);
+    public static final ForeignKey<AnnotationTagLinkRecord, AnnotationTagRecord> ANNOTATION_TAG_LINK_FK_ANNOTATION_TAG_ID = Internal.createForeignKey(AnnotationTagLink.ANNOTATION_TAG_LINK, DSL.name("annotation_tag_link_fk_annotation_tag_id"), new TableField[] { AnnotationTagLink.ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID }, Keys.KEY_ANNOTATION_TAG_PRIMARY, new TableField[] { AnnotationTag.ANNOTATION_TAG.ID }, true);
 }

@@ -35,5 +35,7 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
 
     void create();
 
+    void showRetentionPeriodChooser(Element element);
+
     void onDelete();
 }

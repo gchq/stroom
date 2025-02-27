@@ -4,16 +4,19 @@
 package stroom.annotation.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.AnnotationGroup;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -45,6 +48,21 @@ public class Stroom extends SchemaImpl {
     public final AnnotationEntry ANNOTATION_ENTRY = AnnotationEntry.ANNOTATION_ENTRY;
 
     /**
+     * The table <code>stroom.annotation_group</code>.
+     */
+    public final AnnotationGroup ANNOTATION_GROUP = AnnotationGroup.ANNOTATION_GROUP;
+
+    /**
+     * The table <code>stroom.annotation_tag</code>.
+     */
+    public final AnnotationTag ANNOTATION_TAG = AnnotationTag.ANNOTATION_TAG;
+
+    /**
+     * The table <code>stroom.annotation_tag_link</code>.
+     */
+    public final AnnotationTagLink ANNOTATION_TAG_LINK = AnnotationTagLink.ANNOTATION_TAG_LINK;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -62,7 +80,10 @@ public class Stroom extends SchemaImpl {
         return Arrays.asList(
             Annotation.ANNOTATION,
             AnnotationDataLink.ANNOTATION_DATA_LINK,
-            AnnotationEntry.ANNOTATION_ENTRY
+            AnnotationEntry.ANNOTATION_ENTRY,
+            AnnotationGroup.ANNOTATION_GROUP,
+            AnnotationTag.ANNOTATION_TAG,
+            AnnotationTagLink.ANNOTATION_TAG_LINK
         );
     }
 }

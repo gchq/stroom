@@ -6,22 +6,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class SetDescriptionRequest {
+public class ChangeDescription extends AbstractAnnotationChange {
 
-    @JsonProperty
-    private final long annotationId;
     @JsonProperty
     private final String description;
 
     @JsonCreator
-    public SetDescriptionRequest(@JsonProperty("annotationId") final long annotationId,
-                                 @JsonProperty("description") final String description) {
-        this.annotationId = annotationId;
+    public ChangeDescription(@JsonProperty("description") final String description) {
         this.description = description;
-    }
-
-    public long getAnnotationId() {
-        return annotationId;
     }
 
     public String getDescription() {

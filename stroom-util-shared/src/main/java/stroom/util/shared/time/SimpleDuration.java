@@ -23,7 +23,9 @@ public class SimpleDuration {
     public SimpleDuration(@JsonProperty("time") final long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
         this.time = time;
-        this.timeUnit = timeUnit == null ? TimeUnit.DAYS : timeUnit;
+        this.timeUnit = timeUnit == null
+                ? TimeUnit.DAYS
+                : timeUnit;
     }
 
     public long getTime() {
@@ -62,6 +64,10 @@ public class SimpleDuration {
     @Override
     public String toString() {
         return time + timeUnit.getShortForm();
+    }
+
+    public String toLongString() {
+        return time + " " + timeUnit.getDisplayValue();
     }
 
 

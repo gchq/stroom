@@ -22,9 +22,17 @@ import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationEntryType;
+import stroom.annotation.shared.ChangeAssignedTo;
+import stroom.annotation.shared.ChangeComment;
+import stroom.annotation.shared.ChangeRetentionPeriod;
+import stroom.annotation.shared.ChangeStatus;
+import stroom.annotation.shared.ChangeSubject;
+import stroom.annotation.shared.ChangeTitle;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.annotation.shared.StringEntryValue;
 import stroom.annotation.shared.UserRefEntryValue;
 import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
@@ -39,6 +47,7 @@ import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -58,6 +67,7 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
@@ -115,7 +125,9 @@ public class AnnotationEditPresenter
     private final ChooserPresenter<String> commentPresenter;
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
+    private final Provider<DurationPresenter> durationPresenterProvider;
 
+    private DocRef annotationRef;
     private AnnotationDetail annotationDetail;
     private AnnotationPresenter parent;
 
@@ -127,7 +139,8 @@ public class AnnotationEditPresenter
                                    final UserRefPopupPresenter assignedToPresenter,
                                    final ChooserPresenter<String> commentPresenter,
                                    final ClientSecurityContext clientSecurityContext,
-                                   final DateTimeFormatter dateTimeFormatter) {
+                                   final DateTimeFormatter dateTimeFormatter,
+                                   final Provider<DurationPresenter> durationPresenterProvider) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
         this.statusPresenter = statusPresenter;
@@ -135,17 +148,18 @@ public class AnnotationEditPresenter
         this.commentPresenter = commentPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.durationPresenterProvider = durationPresenterProvider;
         getView().setUiHandlers(this);
         assignedToPresenter.showActiveUsersOnly(true);
 
         this.statusPresenter.setDataSupplier((filter, consumer) ->
-                annotationResourceClient.getStatus(filter, consumer, this));
+                annotationResourceClient.getStatusValues(filter, consumer, this));
 
         this.commentPresenter.setDataSupplier((filter, consumer) ->
-                annotationResourceClient.getComment(filter, consumer, this));
+                annotationResourceClient.getStandardComments(filter, consumer, this));
 
         // See if we are able to get standard comments.
-        annotationResourceClient.getComment(null, values ->
+        annotationResourceClient.getStandardComments(null, values ->
                 getView().setHasCommentValues(values != null && !values.isEmpty()), this);
     }
 
@@ -166,11 +180,10 @@ public class AnnotationEditPresenter
     private void changeTitle(final String selected) {
         if (hasChanged(getEntity().getName(), selected)) {
             if (annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        annotationDetail.getAnnotation(),
-                        Annotation.TITLE,
-                        selected);
-                addEntry(request);
+                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                        annotationRef,
+                        new ChangeTitle(selected));
+                change(request);
             }
 
             RefreshContentTabEvent.fire(this, parent);
@@ -184,11 +197,10 @@ public class AnnotationEditPresenter
     private void changeSubject(final String selected) {
         if (hasChanged(getEntity().getSubject(), selected)) {
             if (annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        annotationDetail.getAnnotation(),
-                        Annotation.SUBJECT,
-                        selected);
-                addEntry(request);
+                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                        annotationRef,
+                        new ChangeSubject(selected));
+                change(request);
             }
         }
     }
@@ -218,10 +230,10 @@ public class AnnotationEditPresenter
 
         if (hasChanged(getEntity().getStatus(), selected)) {
             if (annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        annotationDetail.getAnnotation(),
-                        Annotation.STATUS, selected);
-                addEntry(request);
+                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                        annotationRef,
+                        new ChangeStatus(selected));
+                change(request);
             }
         }
     }
@@ -237,10 +249,10 @@ public class AnnotationEditPresenter
             setAssignedTo(selected);
 
             if (annotationDetail != null) {
-                final CreateEntryRequest request = CreateEntryRequest.assignmentRequest(
-                        annotationDetail.getAnnotation(),
-                        selected);
-                addEntry(request);
+                final SingleAnnotationChangeRequest request =
+                        new SingleAnnotationChangeRequest(annotationRef,
+                                new ChangeAssignedTo(selected));
+                change(request);
             }
         }
     }
@@ -257,23 +269,24 @@ public class AnnotationEditPresenter
         }
     }
 
-    private void addEntry(final CreateEntryRequest request) {
-        annotationResourceClient.addEntry(request, parent::read, this);
+    private void change(final SingleAnnotationChangeRequest request) {
+        annotationResourceClient.change(request, parent::read, this);
     }
 
     public void read(final AnnotationDetail annotationDetail) {
+        final Annotation annotation = annotationDetail.getAnnotation();
+        this.annotationRef = annotation.asDocRef();
         this.annotationDetail = annotationDetail;
 
         getView().setId(annotationDetail.getAnnotation().getId());
         getView().setButtonText("Comment");
 
-        final Annotation annotation = annotationDetail.getAnnotation();
-        onRead(annotation.asDocRef(), annotation, false);
+        onRead(annotationRef, annotation, false);
         updateHistory(annotationDetail);
 
         if (annotation.getStatus() == null) {
             // Get an initial status value.
-            annotationResourceClient.getStatus(null, values -> {
+            annotationResourceClient.getStatusValues(null, values -> {
                 if (annotation.getStatus() == null && values != null && !values.isEmpty()) {
                     setStatus(values.get(0));
                 }
@@ -286,7 +299,10 @@ public class AnnotationEditPresenter
             final List<AnnotationEntry> entries = annotationDetail.getEntries();
             if (entries != null) {
                 final Date now = new Date();
-                final Map<String, Optional<EntryValue>> currentValues = new HashMap<>();
+                final Map<AnnotationEntryType, Optional<EntryValue>> currentValues = new HashMap<>();
+
+                // Set initial defaults so we see changes.
+                currentValues.put(AnnotationEntryType.RETENTION_PERIOD, Optional.of(new StringEntryValue("Forever")));
 
                 final SafeHtmlBuilder html = new SafeHtmlBuilder();
                 final StringBuilder text = new StringBuilder();
@@ -368,7 +384,7 @@ public class AnnotationEditPresenter
                               final Optional<EntryValue> currentValue) {
         final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
-        if (Annotation.COMMENT.equals(entry.getEntryType())) {
+        if (AnnotationEntryType.COMMENT.equals(entry.getEntryType())) {
             text.append(dateTimeFormatter.format(entry.getEntryTime()));
             text.append(", ");
             text.append(getUserName(entry.getEntryUser()));
@@ -376,19 +392,19 @@ public class AnnotationEditPresenter
             quote(text, entryUiValue);
             text.append("\n");
 
-        } else if (Annotation.LINK.equals(entry.getEntryType())
-                   || Annotation.UNLINK.equals(entry.getEntryType())) {
+        } else if (AnnotationEntryType.LINK.equals(entry.getEntryType())
+                   || AnnotationEntryType.UNLINK.equals(entry.getEntryType())) {
 
             text.append(dateTimeFormatter.format(entry.getEntryTime()));
             text.append(", ");
             text.append(getUserName(entry.getEntryUser()));
             text.append(", ");
-            text.append(entry.getEntryType().toLowerCase());
+            text.append(entry.getEntryType().getDisplayValue().toLowerCase());
             text.append("ed ");
             quote(text, entryUiValue);
             text.append("\n");
 
-        } else if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
+        } else if (AnnotationEntryType.ASSIGNED.equals(entry.getEntryType())) {
             if (currentValue != null && currentValue.isPresent()) {
                 text.append(dateTimeFormatter.format(entry.getEntryTime()));
                 text.append(", ");
@@ -429,7 +445,7 @@ public class AnnotationEditPresenter
             } else {
                 text.append(" set the ");
             }
-            text.append(entry.getEntryType().toLowerCase());
+            text.append(entry.getEntryType().getDisplayValue().toLowerCase());
 
             if (currentValue != null && currentValue.isPresent()) {
                 text.append(" from ");
@@ -459,7 +475,7 @@ public class AnnotationEditPresenter
         boolean added = false;
         final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
-        if (Annotation.COMMENT.equals(entry.getEntryType())) {
+        if (AnnotationEntryType.COMMENT.equals(entry.getEntryType())) {
             html.append(line);
             html.append(HISTORY_COMMENT_BORDER_START);
             html.append(HISTORY_COMMENT_HEADER_START);
@@ -473,14 +489,14 @@ public class AnnotationEditPresenter
             html.append(HISTORY_COMMENT_BORDER_END);
             added = true;
 
-        } else if (Annotation.LINK.equals(entry.getEntryType())
-                   || Annotation.UNLINK.equals(entry.getEntryType())) {
+        } else if (AnnotationEntryType.LINK.equals(entry.getEntryType())
+                   || AnnotationEntryType.UNLINK.equals(entry.getEntryType())) {
             html.append(line);
             html.append(HISTORY_LINE_START);
             html.append(HISTORY_ITEM_START);
             bold(html, getUserName(entry.getEntryUser()));
             html.appendEscaped(" ");
-            html.appendEscaped(entry.getEntryType().toLowerCase());
+            html.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
             html.appendEscaped("ed ");
             link(html, entryUiValue);
             html.appendEscaped(" ");
@@ -492,7 +508,7 @@ public class AnnotationEditPresenter
         } else {
             // Remember initial values but don't show them unless they change.
             if (currentValue != null) {
-                if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
+                if (AnnotationEntryType.ASSIGNED.equals(entry.getEntryType())) {
                     if (currentValue.isPresent()) {
                         html.append(line);
                         html.append(HISTORY_LINE_START);
@@ -539,7 +555,7 @@ public class AnnotationEditPresenter
                     } else {
                         html.appendEscaped(" set the ");
                     }
-                    html.appendEscaped(entry.getEntryType().toLowerCase());
+                    html.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
                     html.appendEscaped(" ");
 
                     if (currentValue.isPresent()) {
@@ -640,6 +656,9 @@ public class AnnotationEditPresenter
         setStatus(annotation.getStatus());
         setAssignedTo(annotation.getAssignedTo());
         getView().setAssignYourselfVisible(hasChanged(annotation.getAssignedTo(), clientSecurityContext.getUserRef()));
+        getView().setRetentionPeriod(annotation.getRetentionPeriod() == null
+                ? "Forever"
+                : annotation.getRetentionPeriod().toLongString());
     }
 
     @Override
@@ -754,9 +773,10 @@ public class AnnotationEditPresenter
     public void create() {
         final String comment = getView().getComment();
         if (comment != null && !comment.isEmpty()) {
-            final CreateEntryRequest request = new CreateEntryRequest(
-                    getEntity(), Annotation.COMMENT, comment, null);
-            addEntry(request);
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotationRef,
+                    new ChangeComment(comment));
+            change(request);
             getView().setComment("");
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
@@ -764,14 +784,47 @@ public class AnnotationEditPresenter
     }
 
     @Override
+    public void showRetentionPeriodChooser(final Element element) {
+        annotationResourceClient.getDefaultRetentionPeriod(standardDuration -> {
+            final SimpleDuration initial = GwtNullSafe
+                    .getOrElse(annotationDetail,
+                            AnnotationDetail::getAnnotation,
+                            Annotation::getRetentionPeriod,
+                            standardDuration);
+
+            final DurationPresenter durationPresenter = durationPresenterProvider.get();
+            durationPresenter.setDuration(initial);
+//            final PopupSize popupSize = PopupSize.resizableX();
+            ShowPopupEvent.builder(durationPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+//                    .popupSize(popupSize)
+                    .caption("Set Retention Period")
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(e -> {
+                        e.hide();
+                        if (e.isOk()) {
+                            final SimpleDuration duration = durationPresenter.getDuration();
+                            if (!Objects.equals(getEntity().getRetentionPeriod(), duration)) {
+                                final SingleAnnotationChangeRequest request =
+                                        new SingleAnnotationChangeRequest(annotationRef,
+                                                new ChangeRetentionPeriod(duration));
+                                change(request);
+                            }
+                        }
+                    })
+                    .fire();
+
+        }, this);
+    }
+
+    @Override
     public void onDelete() {
-        ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok -> {
-            annotationResourceClient.delete(getEntity(), result -> {
-                if (result) {
-                    CloseContentTabEvent.fire(this, parent);
-                }
-            }, this);
-        });
+        ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok ->
+                annotationResourceClient.delete(annotationRef, result -> {
+                    if (result) {
+                        CloseContentTabEvent.fire(this, parent);
+                    }
+                }, this));
     }
 
     public void setInitialComment(final String initialComment) {
@@ -810,5 +863,6 @@ public class AnnotationEditPresenter
 
         void setAssignYourselfVisible(boolean visible);
 
+        void setRetentionPeriod(String retentionPeriod);
     }
 }

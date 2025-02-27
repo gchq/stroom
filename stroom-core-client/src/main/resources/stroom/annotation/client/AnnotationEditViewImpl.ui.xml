@@ -45,6 +45,12 @@
                             <b:InlineSvgButton ui:field="assignedToIcon" title="Change Assigned To"/>
                         </g:FlowPanel>
                     </form:FormGroup>
+                    <form:FormGroup identity="annotationRetentionPeriod" label="Retain">
+                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                            <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
+                            <b:InlineSvgButton ui:field="retentionPeriodIcon" title="Change Retention Period"/>
+                        </g:FlowPanel>
+                    </form:FormGroup>
                     <g:SimplePanel styleName="annotationDelete">
                         <b:Button ui:field="delete" addStyleNames="allow-focus Button--contained-secondary"
                                   text="Delete Annotation"/>
