@@ -16,7 +16,6 @@
 
 package stroom.annotation.pipeline;
 
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
@@ -93,7 +92,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     private final CharBuffer content = new CharBuffer();
     private Locator locator;
 
-    private Annotation.Builder currentAnnotation = Annotation.builder();
+    private CreateAnnotationRequest.Builder currentRequest = CreateAnnotationRequest.builder();
     private String lastEventId = null;
     private String lastStreamId = null;
 
@@ -152,21 +151,20 @@ class AnnotationWriter extends AbstractXMLFilter {
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName)) {
-            final Annotation annotation = currentAnnotation.build();
+            currentRequest.linkedEvents(currentEventIds);
+            final CreateAnnotationRequest request = currentRequest.build();
             try {
-                annotationCreator.createAnnotation(new CreateAnnotationRequest(
-                        annotation,
-                        currentEventIds));
+                annotationCreator.createAnnotation(request);
 
             } catch (final RuntimeException e) {
-                log(Severity.ERROR, "Unable to create annotation " + annotation.getSubject(), e);
+                log(Severity.ERROR, "Unable to create annotation " + request.getTitle(), e);
             }
-            currentAnnotation = Annotation.builder();
+            currentRequest = CreateAnnotationRequest.builder();
             currentEventIds = new ArrayList<>();
         } else if (TITLE_TAG.equals(localName)) {
-            currentAnnotation.name(content.toString());
+            currentRequest.title(content.toString());
         } else if (DESCRIPTION_TAG.equals(localName)) {
-            currentAnnotation.subject(content.toString());
+            currentRequest.subject(content.toString());
         } else if (EVENTID_TAG.equals(localName)) {
             lastEventId = content.toString();
         } else if (STREAMID_TAG.equals(localName)) {

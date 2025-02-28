@@ -50,14 +50,6 @@ public interface AnnotationDao {
 
     List<EventId> getLinkedEvents(DocRef annotationRef);
 
-    List<EventId> link(DocRef annotationRef, EventId eventId, UserRef currentUser);
-
-    List<EventId> unlink(DocRef annotationRef, EventId eventId, UserRef currentUser);
-
-    Integer setStatus(List<DocRef> annotationRefs, String status, UserRef currentUser);
-
-    Integer setAssignedTo(List<DocRef> annotationRefs, UserRef assignedTo, UserRef currentUser);
-
     void search(ExpressionCriteria criteria,
                 FieldIndex fieldIndex,
                 ValuesConsumer consumer,

@@ -785,36 +785,32 @@ public class AnnotationEditPresenter
 
     @Override
     public void showRetentionPeriodChooser(final Element element) {
-        annotationResourceClient.getDefaultRetentionPeriod(standardDuration -> {
-            final SimpleDuration initial = GwtNullSafe
-                    .getOrElse(annotationDetail,
-                            AnnotationDetail::getAnnotation,
-                            Annotation::getRetentionPeriod,
-                            standardDuration);
+        final SimpleDuration initial = GwtNullSafe
+                .get(annotationDetail,
+                        AnnotationDetail::getAnnotation,
+                        Annotation::getRetentionPeriod);
 
-            final DurationPresenter durationPresenter = durationPresenterProvider.get();
-            durationPresenter.setDuration(initial);
+        final DurationPresenter durationPresenter = durationPresenterProvider.get();
+        durationPresenter.setDuration(initial);
 //            final PopupSize popupSize = PopupSize.resizableX();
-            ShowPopupEvent.builder(durationPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
+        ShowPopupEvent.builder(durationPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
 //                    .popupSize(popupSize)
-                    .caption("Set Retention Period")
-                    .onShow(e -> getView().focus())
-                    .onHideRequest(e -> {
-                        e.hide();
-                        if (e.isOk()) {
-                            final SimpleDuration duration = durationPresenter.getDuration();
-                            if (!Objects.equals(getEntity().getRetentionPeriod(), duration)) {
-                                final SingleAnnotationChangeRequest request =
-                                        new SingleAnnotationChangeRequest(annotationRef,
-                                                new ChangeRetentionPeriod(duration));
-                                change(request);
-                            }
+                .caption("Set Retention Period")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    e.hide();
+                    if (e.isOk()) {
+                        final SimpleDuration duration = durationPresenter.getDuration();
+                        if (!Objects.equals(getEntity().getRetentionPeriod(), duration)) {
+                            final SingleAnnotationChangeRequest request =
+                                    new SingleAnnotationChangeRequest(annotationRef,
+                                            new ChangeRetentionPeriod(duration));
+                            change(request);
                         }
-                    })
-                    .fire();
-
-        }, this);
+                    }
+                })
+                .fire();
     }
 
     @Override

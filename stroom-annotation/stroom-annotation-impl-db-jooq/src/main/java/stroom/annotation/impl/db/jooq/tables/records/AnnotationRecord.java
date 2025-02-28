@@ -4,10 +4,10 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
-import stroom.annotation.impl.db.jooq.tables.Annotation;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.annotation.impl.db.jooq.tables.Annotation;
 
 
 /**
@@ -284,6 +284,20 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
         return (Byte) get(18);
     }
 
+    /**
+     * Setter for <code>stroom.annotation.retain_until_ms</code>.
+     */
+    public void setRetainUntilMs(Long value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation.retain_until_ms</code>.
+     */
+    public Long getRetainUntilMs() {
+        return (Long) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -307,7 +321,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
     /**
      * Create a detached, initialised AnnotationRecord
      */
-    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String status, String assignedToUuid, String comment, String history, String uuid, String description, Boolean deleted, Integer groupId, Long parentId, Long retentionTime, Byte retentionUnit) {
+    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String status, String assignedToUuid, String comment, String history, String uuid, String description, Boolean deleted, Integer groupId, Long parentId, Long retentionTime, Byte retentionUnit, Long retainUntilMs) {
         super(Annotation.ANNOTATION);
 
         setId(id);
@@ -329,6 +343,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
         setParentId(parentId);
         setRetentionTime(retentionTime);
         setRetentionUnit(retentionUnit);
+        setRetainUntilMs(retainUntilMs);
         resetChangedOnNotNull();
     }
 }

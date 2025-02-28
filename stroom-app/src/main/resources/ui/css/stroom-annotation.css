@@ -233,7 +233,7 @@
     white-space: pre-wrap;
     word-break: break-word;
     color: var(--control__text-color);
-    max-height: 400px;
+    max-height: 300px;
     overflow: auto;
 }
 

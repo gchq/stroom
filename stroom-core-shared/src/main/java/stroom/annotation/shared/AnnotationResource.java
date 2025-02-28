@@ -95,12 +95,12 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "getAnnotationSampleComments")
     List<String> getStandardComments(@QueryParam("filter") String filter);
 
-    @GET
-    @Path("getDefaultRetentionPeriod")
-    @Operation(
-            summary = "Gets the default retention period",
-            operationId = "getAnnotationDefaultRetentionPeriod")
-    SimpleDuration getDefaultRetentionPeriod();
+//    @GET
+//    @Path("getDefaultRetentionPeriod")
+//    @Operation(
+//            summary = "Gets the default retention period",
+//            operationId = "getAnnotationDefaultRetentionPeriod")
+//    SimpleDuration getDefaultRetentionPeriod();
 
     @POST
     @Path("getLinkedEvents")

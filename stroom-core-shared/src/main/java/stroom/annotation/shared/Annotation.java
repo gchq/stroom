@@ -33,6 +33,8 @@ public class Annotation extends Doc {
     private final String description;
     @JsonProperty
     private final SimpleDuration retentionPeriod;
+    @JsonProperty
+    private final Long retainUntilTimeMs;
 
     @JsonCreator
     public Annotation(@JsonProperty("type") final String type,
@@ -50,7 +52,8 @@ public class Annotation extends Doc {
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history,
                       @JsonProperty("description") final String description,
-                      @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod) {
+                      @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
+                      @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.id = id;
         this.subject = subject;
@@ -60,6 +63,7 @@ public class Annotation extends Doc {
         this.history = history;
         this.description = description;
         this.retentionPeriod = retentionPeriod;
+        this.retainUntilTimeMs = retainUntilTimeMs;
     }
 
     public Long getId() {
@@ -94,6 +98,10 @@ public class Annotation extends Doc {
         return retentionPeriod;
     }
 
+    public Long getRetainUntilTimeMs() {
+        return retainUntilTimeMs;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -112,6 +120,7 @@ public class Annotation extends Doc {
         private String history;
         private String description;
         private SimpleDuration retentionPeriod;
+        private Long retainUntilTimeMs;
 
         public Builder() {
         }
@@ -126,6 +135,7 @@ public class Annotation extends Doc {
             this.history = doc.history;
             this.description = doc.description;
             this.retentionPeriod = doc.retentionPeriod;
+            this.retainUntilTimeMs = doc.retainUntilTimeMs;
         }
 
         public Builder id(final Long id) {
@@ -168,6 +178,11 @@ public class Annotation extends Doc {
             return self();
         }
 
+        public Builder retainUntilTimeMs(final Long retainUntilTimeMs) {
+            this.retainUntilTimeMs = retainUntilTimeMs;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -191,7 +206,8 @@ public class Annotation extends Doc {
                     comment,
                     history,
                     description,
-                    retentionPeriod);
+                    retentionPeriod,
+                    retainUntilTimeMs);
         }
     }
 }

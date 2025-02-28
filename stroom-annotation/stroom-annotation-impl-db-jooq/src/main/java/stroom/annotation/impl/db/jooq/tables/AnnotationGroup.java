@@ -4,9 +4,9 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationGroupRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -26,7 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Collection;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationGroupRecord;
 
 
 /**
@@ -54,6 +56,11 @@ public class AnnotationGroup extends TableImpl<AnnotationGroupRecord> {
      * The column <code>stroom.annotation_group.id</code>.
      */
     public final TableField<AnnotationGroupRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+
+    /**
+     * The column <code>stroom.annotation_group.uuid</code>.
+     */
+    public final TableField<AnnotationGroupRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.annotation_group.name</code>.
@@ -107,6 +114,11 @@ public class AnnotationGroup extends TableImpl<AnnotationGroupRecord> {
     @Override
     public UniqueKey<AnnotationGroupRecord> getPrimaryKey() {
         return Keys.KEY_ANNOTATION_GROUP_PRIMARY;
+    }
+
+    @Override
+    public List<UniqueKey<AnnotationGroupRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_ANNOTATION_GROUP_ANNOTATION_GROUP_UUID_IDX);
     }
 
     @Override

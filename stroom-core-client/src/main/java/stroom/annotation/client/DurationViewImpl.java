@@ -19,37 +19,61 @@ package stroom.annotation.client;
 import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DurationViewImpl extends ViewImpl implements DurationView {
 
-    private final DurationPicker widget;
+    private final Widget widget;
+
+    @UiField
+    CustomCheckBox forever;
+    @UiField
+    DurationPicker durationPicker;
 
     @Inject
-    public DurationViewImpl() {
-        widget = new DurationPicker();
+    DurationViewImpl(final Binder binder) {
+        widget = binder.createAndBindUi(this);
     }
 
     @Override
     public void setDuration(final SimpleDuration duration) {
-        widget.setValue(duration);
+        forever.setValue(duration == null);
+        durationPicker.setEnabled(!forever.getValue());
+        durationPicker.setValue(duration);
     }
 
     @Override
     public SimpleDuration getDuration() {
-        return widget.getValue();
+        if (forever.getValue()) {
+            return null;
+        }
+        return durationPicker.getValue();
     }
 
     @Override
     public void focus() {
-        widget.focus();
+        forever.focus();
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @UiHandler("forever")
+    public void onForever(final ValueChangeEvent<Boolean> event) {
+        durationPicker.setEnabled(!forever.getValue());
+    }
+
+    public interface Binder extends UiBinder<Widget, DurationViewImpl> {
+
     }
 }

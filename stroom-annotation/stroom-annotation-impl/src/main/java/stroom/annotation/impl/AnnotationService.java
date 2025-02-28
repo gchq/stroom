@@ -379,20 +379,20 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
     }
 
-    public SimpleDuration getDefaultRetentionPeriod() {
-        final AnnotationConfig annotationConfig = annotationConfigProvider.get();
-        final String defaultRetentionPeriod = NullSafe.getOrElse(
-                annotationConfig,
-                AnnotationConfig::getDefaultRetentionPeriod,
-                AnnotationConfig.DEFAULT_RETENTION_PERIOD);
-        try {
-            return SimpleDurationUtil.parse(defaultRetentionPeriod);
-        } catch (final ParseException e) {
-            // Ignore.
-        }
-
-        return SimpleDuration.builder().time(10).timeUnit(TimeUnit.YEARS).build();
-    }
+//    public SimpleDuration getDefaultRetentionPeriod() {
+//        final AnnotationConfig annotationConfig = annotationConfigProvider.get();
+//        final String defaultRetentionPeriod = NullSafe.getOrElse(
+//                annotationConfig,
+//                AnnotationConfig::getDefaultRetentionPeriod,
+//                AnnotationConfig.DEFAULT_RETENTION_PERIOD);
+//        try {
+//            return SimpleDurationUtil.parse(defaultRetentionPeriod);
+//        } catch (final ParseException e) {
+//            // Ignore.
+//        }
+//
+//        return SimpleDuration.builder().time(10).timeUnit(TimeUnit.YEARS).build();
+//    }
 
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);

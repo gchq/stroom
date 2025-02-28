@@ -72,12 +72,12 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public AnnotationDetail createAnnotation(final CreateAnnotationRequest request) {
         AnnotationDetail annotationDetail;
-        LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
+        LOGGER.info(() -> "Creating annotation " + request);
         try {
             annotationDetail = annotationService.get().createAnnotation(request);
             documentEventLog.get().create(annotationDetail, null);
         } catch (final RuntimeException e) {
-            documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
+            documentEventLog.get().create("Annotation", e);
             throw e;
         }
         return annotationDetail;
@@ -151,11 +151,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         return annotationService.get().getStandardComments(filter);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public SimpleDuration getDefaultRetentionPeriod() {
-        return annotationService.get().getDefaultRetentionPeriod();
-    }
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public SimpleDuration getDefaultRetentionPeriod() {
+//        return annotationService.get().getDefaultRetentionPeriod();
+//    }
 
     @Override
     public List<EventId> getLinkedEvents(final DocRef annotationRef) {

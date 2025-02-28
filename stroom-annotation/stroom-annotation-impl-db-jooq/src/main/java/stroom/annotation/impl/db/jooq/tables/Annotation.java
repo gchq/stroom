@@ -4,13 +4,9 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -34,9 +30,13 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
 /**
@@ -154,6 +154,11 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * The column <code>stroom.annotation.retention_unit</code>.
      */
     public final TableField<AnnotationRecord, Byte> RETENTION_UNIT = createField(DSL.name("retention_unit"), SQLDataType.TINYINT, this, "");
+
+    /**
+     * The column <code>stroom.annotation.retain_until_ms</code>.
+     */
+    public final TableField<AnnotationRecord, Long> RETAIN_UNTIL_MS = createField(DSL.name("retain_until_ms"), SQLDataType.BIGINT, this, "");
 
     private Annotation(Name alias, Table<AnnotationRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

@@ -4,10 +4,10 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
-import stroom.annotation.impl.db.jooq.tables.AnnotationGroup;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.annotation.impl.db.jooq.tables.AnnotationGroup;
 
 
 /**
@@ -33,31 +33,45 @@ public class AnnotationGroupRecord extends UpdatableRecordImpl<AnnotationGroupRe
     }
 
     /**
+     * Setter for <code>stroom.annotation_group.uuid</code>.
+     */
+    public void setUuid(String value) {
+        set(1, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_group.uuid</code>.
+     */
+    public String getUuid() {
+        return (String) get(1);
+    }
+
+    /**
      * Setter for <code>stroom.annotation_group.name</code>.
      */
     public void setName(String value) {
-        set(1, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_group.name</code>.
      */
     public String getName() {
-        return (String) get(1);
+        return (String) get(2);
     }
 
     /**
      * Setter for <code>stroom.annotation_group.deleted</code>.
      */
     public void setDeleted(Byte value) {
-        set(2, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_group.deleted</code>.
      */
     public Byte getDeleted() {
-        return (Byte) get(2);
+        return (Byte) get(3);
     }
 
     // -------------------------------------------------------------------------
@@ -83,10 +97,11 @@ public class AnnotationGroupRecord extends UpdatableRecordImpl<AnnotationGroupRe
     /**
      * Create a detached, initialised AnnotationGroupRecord
      */
-    public AnnotationGroupRecord(Integer id, String name, Byte deleted) {
+    public AnnotationGroupRecord(Integer id, String uuid, String name, Byte deleted) {
         super(AnnotationGroup.ANNOTATION_GROUP);
 
         setId(id);
+        setUuid(uuid);
         setName(name);
         setDeleted(deleted);
         resetChangedOnNotNull();

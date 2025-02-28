@@ -618,11 +618,13 @@ paths:
   /annotation/v1/getLinkedEvents:
     post:
       operationId: getAnnotationLinkedEvents
-      parameters:
-      - in: query
-        name: annotationRef
-        schema:
-          $ref: "#/components/schemas/DocRef"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: annotationRef
+        required: true
       responses:
         default:
           content:
@@ -8320,6 +8322,7 @@ components:
           - LINK
           - UNLINK
           - RETENTION_PERIOD
+          - DESCRIPTION
           - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"

@@ -65,15 +65,15 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void getDefaultRetentionPeriod(final Consumer<SimpleDuration> consumer,
-                                          final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(AnnotationResource::getDefaultRetentionPeriod)
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
+//    public void getDefaultRetentionPeriod(final Consumer<SimpleDuration> consumer,
+//                                          final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(ANNOTATION_RESOURCE)
+//                .method(AnnotationResource::getDefaultRetentionPeriod)
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
 
     public void createAnnotation(final CreateAnnotationRequest request,
                                  final Consumer<AnnotationDetail> consumer,

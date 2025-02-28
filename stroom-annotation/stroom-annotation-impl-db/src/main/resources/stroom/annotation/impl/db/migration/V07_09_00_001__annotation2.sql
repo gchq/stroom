@@ -19,17 +19,21 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 CREATE TABLE IF NOT EXISTS annotation_group (
   id                    int(11) NOT NULL AUTO_INCREMENT,
+  uuid                  varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
-  PRIMARY KEY           (id)
+  PRIMARY KEY           (id),
+  UNIQUE KEY            `annotation_group_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS annotation_tag (
   id                    int(11) NOT NULL AUTO_INCREMENT,
+  uuid                  varchar(255) NOT NULL,
   name                  varchar(255) NOT NULL,
   colour                varchar(255) NOT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
-  PRIMARY KEY           (id)
+  PRIMARY KEY           (id),
+  UNIQUE KEY            `annotation_tag_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS annotation_tag_link (

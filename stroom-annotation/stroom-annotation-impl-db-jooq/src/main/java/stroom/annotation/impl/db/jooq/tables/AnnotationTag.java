@@ -4,11 +4,9 @@
 package stroom.annotation.impl.db.jooq.tables;
 
 
-import stroom.annotation.impl.db.jooq.Keys;
-import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
-import stroom.annotation.impl.db.jooq.tables.records.AnnotationTagRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -32,7 +30,11 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Collection;
+import stroom.annotation.impl.db.jooq.Keys;
+import stroom.annotation.impl.db.jooq.Stroom;
+import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationTagRecord;
 
 
 /**
@@ -60,6 +62,11 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
      * The column <code>stroom.annotation_tag.id</code>.
      */
     public final TableField<AnnotationTagRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+
+    /**
+     * The column <code>stroom.annotation_tag.uuid</code>.
+     */
+    public final TableField<AnnotationTagRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.annotation_tag.name</code>.
@@ -149,6 +156,11 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
     @Override
     public UniqueKey<AnnotationTagRecord> getPrimaryKey() {
         return Keys.KEY_ANNOTATION_TAG_PRIMARY;
+    }
+
+    @Override
+    public List<UniqueKey<AnnotationTagRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX);
     }
 
     private transient AnnotationTagLinkPath _annotationTagLink;

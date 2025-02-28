@@ -4,10 +4,10 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
-import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
 
 
 /**
@@ -33,45 +33,59 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     }
 
     /**
+     * Setter for <code>stroom.annotation_tag.uuid</code>.
+     */
+    public void setUuid(String value) {
+        set(1, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_tag.uuid</code>.
+     */
+    public String getUuid() {
+        return (String) get(1);
+    }
+
+    /**
      * Setter for <code>stroom.annotation_tag.name</code>.
      */
     public void setName(String value) {
-        set(1, value);
+        set(2, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.name</code>.
      */
     public String getName() {
-        return (String) get(1);
+        return (String) get(2);
     }
 
     /**
      * Setter for <code>stroom.annotation_tag.colour</code>.
      */
     public void setColour(String value) {
-        set(2, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.colour</code>.
      */
     public String getColour() {
-        return (String) get(2);
+        return (String) get(3);
     }
 
     /**
      * Setter for <code>stroom.annotation_tag.deleted</code>.
      */
     public void setDeleted(Byte value) {
-        set(3, value);
+        set(4, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.deleted</code>.
      */
     public Byte getDeleted() {
-        return (Byte) get(3);
+        return (Byte) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -97,10 +111,11 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Create a detached, initialised AnnotationTagRecord
      */
-    public AnnotationTagRecord(Integer id, String name, String colour, Byte deleted) {
+    public AnnotationTagRecord(Integer id, String uuid, String name, String colour, Byte deleted) {
         super(AnnotationTag.ANNOTATION_TAG);
 
         setId(id);
+        setUuid(uuid);
         setName(name);
         setColour(colour);
         setDeleted(deleted);

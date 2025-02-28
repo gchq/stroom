@@ -18,7 +18,8 @@ package stroom.dashboard.client.table;
 
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
-import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.client.EditAnnotationEvent;
+import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
@@ -268,27 +269,20 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-        final String title = getValue(selectedItems, "title");
+        String title = getValue(selectedItems, "title");
         final String subject = getValue(selectedItems, "subject");
         final String status = getValue(selectedItems, "status");
         final String comment = getValue(selectedItems, "comment");
 
-        final Annotation annotation = Annotation
-                .builder()
-                .name(title == null
-                        ? "New Annotation"
-                        : title)
-                .subject(subject)
-                .status(status)
-                .comment(comment)
-                .build();
+        title = title == null
+                ? "New Annotation"
+                : title;
 
-        ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
+        CreateAnnotationEvent.fire(changeStatusPresenter, title, subject, status, comment, eventIdList);
     }
 
     public void editAnnotation(final long annotationId) {
-        // assignedTo is a display name so have to convert it back to a unique username
-        ShowAnnotationEvent.fire(changeStatusPresenter, Annotation.builder().id(annotationId).build(), null);
+        EditAnnotationEvent.fire(changeStatusPresenter, annotationId);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {

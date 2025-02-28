@@ -73,7 +73,8 @@ public class AnnotationPresenter
         registerHandler(saveButton.addClickHandler(e -> {
             annotationResourceClient.change(
                     new SingleAnnotationChangeRequest(getDocRef(),
-                            new ChangeDescription(markdownEditPresenter.getText())), annotationDetail -> {
+                            new ChangeDescription(markdownEditPresenter.getText())),
+                    annotationDetail -> {
                         // Ignore.
                     }, this);
             saveButton.setEnabled(false);
