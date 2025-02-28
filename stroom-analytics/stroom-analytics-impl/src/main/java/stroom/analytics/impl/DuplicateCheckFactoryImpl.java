@@ -84,8 +84,12 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     }
 
     public synchronized Boolean delete(final DeleteDuplicateCheckRequest request) {
-        return pool.use(request.getAnalyticDocUuid(), store -> store.delete(request, byteBufferFactory));
+        return pool.use(request.getAnalyticDocUuid(), store -> store.delete(request));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class NoOpDuplicateCheck implements DuplicateCheck {
 

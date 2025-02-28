@@ -111,6 +111,17 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
     }
 
     @Override
+    public void put(final ByteBuffer destByteBuffer, final int index, final long val) {
+        validateValue(val);
+        int idx = index;
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            destByteBuffer.put(idx++, (byte) (val >> shift));
+        }
+
+    }
+
+    @Override
     public long get(final byte[] bytes, final int off) {
         long val = 0;
         for (int i = 0; i < len; i++) {
@@ -165,7 +176,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
                         // Every byte is FF so we can't increment anymore
                         throw new IllegalArgumentException(
                                 "Can't increment without overflowing. Maximum value is "
-                                        + ModelStringUtil.formatCsv(maxVal));
+                                + ModelStringUtil.formatCsv(maxVal));
                     }
                     // Byte rolls around to zero and we need to carry over to the next one
                     byteBuffer.put(i, (byte) 0x00);
