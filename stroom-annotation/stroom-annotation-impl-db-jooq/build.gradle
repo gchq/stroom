@@ -50,7 +50,9 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
-                                        '.*\\.annotation\\.deleted|'
+                                        '.*\\.annotation\\.deleted|' +
+                                        '.*\\.annotation_group\\.deleted|' +
+                                        '.*\\.annotation_tag\\.deleted|'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

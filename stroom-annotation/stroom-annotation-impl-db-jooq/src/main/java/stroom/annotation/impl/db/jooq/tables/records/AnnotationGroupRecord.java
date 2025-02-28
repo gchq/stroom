@@ -63,15 +63,15 @@ public class AnnotationGroupRecord extends UpdatableRecordImpl<AnnotationGroupRe
     /**
      * Setter for <code>stroom.annotation_group.deleted</code>.
      */
-    public void setDeleted(Byte value) {
+    public void setDeleted(Boolean value) {
         set(3, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_group.deleted</code>.
      */
-    public Byte getDeleted() {
-        return (Byte) get(3);
+    public Boolean getDeleted() {
+        return (Boolean) get(3);
     }
 
     // -------------------------------------------------------------------------
@@ -97,7 +97,7 @@ public class AnnotationGroupRecord extends UpdatableRecordImpl<AnnotationGroupRe
     /**
      * Create a detached, initialised AnnotationGroupRecord
      */
-    public AnnotationGroupRecord(Integer id, String uuid, String name, Byte deleted) {
+    public AnnotationGroupRecord(Integer id, String uuid, String name, Boolean deleted) {
         super(AnnotationGroup.ANNOTATION_GROUP);
 
         setId(id);

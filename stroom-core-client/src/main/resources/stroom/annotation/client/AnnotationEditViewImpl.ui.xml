@@ -45,6 +45,12 @@
                             <b:InlineSvgButton ui:field="assignedToIcon" title="Change Assigned To"/>
                         </g:FlowPanel>
                     </form:FormGroup>
+                    <form:FormGroup identity="annotationGroup" label="Group">
+                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                            <g:Label ui:field="group" styleName="annotationLabel"/>
+                            <b:InlineSvgButton ui:field="groupIcon" title="Change Group"/>
+                        </g:FlowPanel>
+                    </form:FormGroup>
                     <form:FormGroup identity="annotationRetentionPeriod" label="Retain">
                         <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                             <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>

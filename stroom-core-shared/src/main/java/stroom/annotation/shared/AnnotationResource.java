@@ -17,10 +17,11 @@
 package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,7 +30,9 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -116,4 +119,49 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "changeDocumentPermissions")
     Boolean changeDocumentPermissions(
             @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
+
+    @POST
+    @Path("createAnnotationGroup")
+    @Operation(
+            summary = "Create an annotation group",
+            operationId = "createAnnotationGroup")
+    AnnotationGroup createAnnotationGroup(
+            @Parameter(description = "request", required = true) String name);
+
+    @PUT
+    @Path("updateAnnotationGroup")
+    @Operation(
+            summary = "Update an annotation group",
+            operationId = "updateAnnotationGroup")
+    AnnotationGroup updateAnnotationGroup(AnnotationGroup annotationGroup);
+
+    @DELETE
+    @Path("deleteAnnotationGroup")
+    @Operation(
+            summary = "Delete an annotation group",
+            operationId = "deleteAnnotationGroup")
+    Boolean deleteAnnotationGroup(AnnotationGroup annotationGroup);
+
+    @GET
+    @Path("/findAnnotationGroups/{name}")
+    @Operation(
+            summary = "Find an annotation group by name",
+            operationId = "findAnnotationGroupByName")
+    AnnotationGroup fetchAnnotationGroupByName(@PathParam("name") String name);
+
+    @POST
+    @Path("findAnnotationGroups")
+    @Operation(
+            summary = "Finds annotation groups matching request",
+            operationId = "findAnnotationGroups")
+    ResultPage<AnnotationGroup> findAnnotationGroups(
+            @Parameter(description = "request", required = true) ExpressionCriteria request);
+
+    @GET
+    @Path("getAnnotationGroups")
+    @Operation(
+            summary = "Gets a list of annotation groups",
+            operationId = "getAnnotationGroups")
+    List<AnnotationGroup> getAnnotationGroups(@QueryParam("filter") String filter);
+
 }

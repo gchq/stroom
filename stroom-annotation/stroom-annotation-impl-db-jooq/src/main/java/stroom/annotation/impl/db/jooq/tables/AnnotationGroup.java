@@ -70,7 +70,7 @@ public class AnnotationGroup extends TableImpl<AnnotationGroupRecord> {
     /**
      * The column <code>stroom.annotation_group.deleted</code>.
      */
-    public final TableField<AnnotationGroupRecord, Byte> DELETED = createField(DSL.name("deleted"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+    public final TableField<AnnotationGroupRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     private AnnotationGroup(Name alias, Table<AnnotationGroupRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -118,7 +118,7 @@ public class AnnotationGroup extends TableImpl<AnnotationGroupRecord> {
 
     @Override
     public List<UniqueKey<AnnotationGroupRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_ANNOTATION_GROUP_ANNOTATION_GROUP_UUID_IDX);
+        return Arrays.asList(Keys.KEY_ANNOTATION_GROUP_ANNOTATION_GROUP_UUID_IDX, Keys.KEY_ANNOTATION_GROUP_ANNOTATION_GROUP_NAME_IDX);
     }
 
     @Override

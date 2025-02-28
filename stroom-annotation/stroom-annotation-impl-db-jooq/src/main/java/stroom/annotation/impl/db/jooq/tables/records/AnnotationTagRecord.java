@@ -77,15 +77,15 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Setter for <code>stroom.annotation_tag.deleted</code>.
      */
-    public void setDeleted(Byte value) {
+    public void setDeleted(Boolean value) {
         set(4, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.deleted</code>.
      */
-    public Byte getDeleted() {
-        return (Byte) get(4);
+    public Boolean getDeleted() {
+        return (Boolean) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -111,7 +111,7 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Create a detached, initialised AnnotationTagRecord
      */
-    public AnnotationTagRecord(Integer id, String uuid, String name, String colour, Byte deleted) {
+    public AnnotationTagRecord(Integer id, String uuid, String name, String colour, Boolean deleted) {
         super(AnnotationTag.ANNOTATION_TAG);
 
         setId(id);

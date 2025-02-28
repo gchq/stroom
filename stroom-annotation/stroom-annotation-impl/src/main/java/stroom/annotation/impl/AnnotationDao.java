@@ -69,7 +69,7 @@ public interface AnnotationDao {
     /**
      * Physically delete annotations that have been marked as deleted since before the provided age.
      *
-     * @param age         Anything older than this age will be deleted.
+     * @param age Anything older than this age will be deleted.
      */
     void physicallyDelete(Instant age);
 }

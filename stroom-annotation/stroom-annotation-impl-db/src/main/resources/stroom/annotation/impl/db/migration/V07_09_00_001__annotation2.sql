@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS annotation_group (
   name                  varchar(255) NOT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY           (id),
+  UNIQUE KEY            `annotation_group_name_idx` (`name`),
   UNIQUE KEY            `annotation_group_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS annotation_tag (
   colour                varchar(255) NOT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY           (id),
+  UNIQUE KEY            `annotation_tag_name_idx` (`name`),
   UNIQUE KEY            `annotation_tag_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

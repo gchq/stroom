@@ -20,6 +20,7 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationGroup;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
@@ -74,6 +75,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
 
     private final AnnotationDao annotationDao;
+    private final AnnotationGroupDao annotationGroupDao;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
@@ -85,6 +87,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
+                      final AnnotationGroupDao annotationGroupDao,
                       final SecurityContext securityContext,
                       final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
@@ -94,6 +97,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
                       final Provider<PermissionChangeService> permissionChangeServiceProvider) {
         this.annotationDao = annotationDao;
+        this.annotationGroupDao = annotationGroupDao;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
@@ -403,5 +407,47 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
         final Instant age = Instant.now().minus(physicalDeleteAge);
         annotationDao.physicallyDelete(age);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public AnnotationGroup createAnnotationGroup(final String name) {
+        checkAppPermission();
+        return annotationGroupDao.createAnnotationGroup(name);
+    }
+
+    public AnnotationGroup updateAnnotationGroup(final AnnotationGroup annotationGroup) {
+        checkAppPermission();
+        return annotationGroupDao.updateAnnotationGroup(annotationGroup);
+    }
+
+    public Boolean deleteAnnotationGroup(final AnnotationGroup annotationGroup) {
+        checkAppPermission();
+        return annotationGroupDao.deleteAnnotationGroup(annotationGroup);
+    }
+
+    public AnnotationGroup fetchAnnotationGroupByName(final String name) {
+        checkAppPermission();
+        return annotationGroupDao.fetchAnnotationGroupByName(name);
+    }
+
+    public ResultPage<AnnotationGroup> findAnnotationGroups(final ExpressionCriteria request) {
+        checkAppPermission();
+        return annotationGroupDao.findAnnotationGroups(request);
+    }
+
+    public List<AnnotationGroup> getAnnotationGroups(final String filter) {
+        checkAppPermission();
+        return annotationGroupDao.getAnnotationGroups(filter);
     }
 }

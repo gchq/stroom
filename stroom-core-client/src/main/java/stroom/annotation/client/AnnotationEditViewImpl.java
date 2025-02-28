@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.shared.AnnotationGroup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
@@ -59,6 +60,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
+    InlineSvgButton groupIcon;
+    @UiField
+    Label group;
+    @UiField
     InlineSvgButton retentionPeriodIcon;
     @UiField
     Label retentionPeriod;
@@ -83,6 +88,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
         statusIcon.setSvg(SvgImage.SETTINGS);
         assignedToIcon.setSvg(SvgImage.SETTINGS);
+        groupIcon.setSvg(SvgImage.SETTINGS);
         retentionPeriodIcon.setSvg(SvgImage.SETTINGS);
 
         setTitle(null);
@@ -146,6 +152,17 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
             this.assignedTo.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setAnnotationGroup(final AnnotationGroup group) {
+        if (group == null || group.getName().trim().isEmpty()) {
+            this.group.setText("None");
+            this.group.getElement().getStyle().setOpacity(0.5);
+        } else {
+            this.group.setText(group.getName());
+            this.group.getElement().getStyle().setOpacity(1);
         }
     }
 
@@ -270,13 +287,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-//    @UiHandler("assignedToLabel")
-//    public void onAssignedToLabel(final ClickEvent e) {
-//        if (getUiHandlers() != null) {
-//            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-//        }
-//    }
-
     @UiHandler("assignedTo")
     public void onAssignedTo(final ClickEvent e) {
         if (getUiHandlers() != null) {
@@ -295,6 +305,20 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onAssignYourself(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
+        }
+    }
+
+    @UiHandler("group")
+    public void onGroup(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showGroupChooser(groupIcon.getElement());
+        }
+    }
+
+    @UiHandler("groupIcon")
+    public void onGroupIcon(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showGroupChooser(groupIcon.getElement());
         }
     }
 

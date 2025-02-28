@@ -18,12 +18,14 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationGroup;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -31,7 +33,7 @@ import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -179,5 +181,36 @@ class AnnotationResourceImpl implements AnnotationResource {
             throw e;
         }
         return success;
+    }
+
+
+    @Override
+    public AnnotationGroup createAnnotationGroup(final String name) {
+        return annotationService.get().createAnnotationGroup(name);
+    }
+
+    @Override
+    public AnnotationGroup updateAnnotationGroup(final AnnotationGroup annotationGroup) {
+        return annotationService.get().updateAnnotationGroup(annotationGroup);
+    }
+
+    @Override
+    public Boolean deleteAnnotationGroup(final AnnotationGroup annotationGroup) {
+        return annotationService.get().deleteAnnotationGroup(annotationGroup);
+    }
+
+    @Override
+    public AnnotationGroup fetchAnnotationGroupByName(final String name) {
+        return annotationService.get().fetchAnnotationGroupByName(name);
+    }
+
+    @Override
+    public ResultPage<AnnotationGroup> findAnnotationGroups(final ExpressionCriteria request) {
+        return annotationService.get().findAnnotationGroups(request);
+    }
+
+    @Override
+    public List<AnnotationGroup> getAnnotationGroups(final String filter) {
+        return annotationService.get().getAnnotationGroups(filter);
     }
 }

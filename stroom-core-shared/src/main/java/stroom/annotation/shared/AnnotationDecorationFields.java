@@ -22,6 +22,7 @@ public interface AnnotationDecorationFields {
     String ANNOTATION_SUBJECT = ANNOTATION_FIELD_PREFIX + "Subject";
     String ANNOTATION_STATUS = ANNOTATION_FIELD_PREFIX + "Status";
     String ANNOTATION_ASSIGNED_TO = ANNOTATION_FIELD_PREFIX + "AssignedTo";
+    String ANNOTATION_GROUP = ANNOTATION_FIELD_PREFIX + "Group";
     String ANNOTATION_COMMENT = ANNOTATION_FIELD_PREFIX + "Comment";
     String ANNOTATION_HISTORY = ANNOTATION_FIELD_PREFIX + "History";
     String ANNOTATION_DESCRIPTION = ANNOTATION_FIELD_PREFIX + "Description";
@@ -36,6 +37,7 @@ public interface AnnotationDecorationFields {
     QueryField ANNOTATION_SUBJECT_FIELD = QueryField.createText(ANNOTATION_SUBJECT);
     QueryField ANNOTATION_STATUS_FIELD = QueryField.createText(ANNOTATION_STATUS);
     QueryField ANNOTATION_ASSIGNED_TO_FIELD = QueryField.createText(ANNOTATION_ASSIGNED_TO);
+    QueryField ANNOTATION_GROUP_FIELD = QueryField.createText(ANNOTATION_GROUP);
     QueryField ANNOTATION_COMMENT_FIELD = QueryField.createText(ANNOTATION_COMMENT);
     QueryField ANNOTATION_HISTORY_FIELD = QueryField.createText(ANNOTATION_HISTORY);
     QueryField ANNOTATION_DESCRIPTION_FIELD = QueryField.createText(ANNOTATION_DESCRIPTION);
@@ -51,6 +53,7 @@ public interface AnnotationDecorationFields {
             ANNOTATION_SUBJECT_FIELD,
             ANNOTATION_STATUS_FIELD,
             ANNOTATION_ASSIGNED_TO_FIELD,
+            ANNOTATION_GROUP_FIELD,
             ANNOTATION_COMMENT_FIELD,
             ANNOTATION_HISTORY_FIELD,
             ANNOTATION_DESCRIPTION_FIELD);

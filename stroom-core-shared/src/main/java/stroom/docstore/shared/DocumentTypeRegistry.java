@@ -199,6 +199,11 @@ public class DocumentTypeRegistry {
             "Annotation",
             "Annotation",
             SvgImage.EDIT);
+    public static final DocumentType ANNOTATION_GROUP_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "AnnotationGroup",
+            "Annotation Group",
+            SvgImage.EDIT);
     public static final DocumentType STREAM_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "StreamStore",

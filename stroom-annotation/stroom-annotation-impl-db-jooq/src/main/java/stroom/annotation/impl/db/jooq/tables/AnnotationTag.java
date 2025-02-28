@@ -81,7 +81,7 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
     /**
      * The column <code>stroom.annotation_tag.deleted</code>.
      */
-    public final TableField<AnnotationTagRecord, Byte> DELETED = createField(DSL.name("deleted"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+    public final TableField<AnnotationTagRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
     private AnnotationTag(Name alias, Table<AnnotationTagRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -160,7 +160,7 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
 
     @Override
     public List<UniqueKey<AnnotationTagRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX);
+        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_NAME_IDX);
     }
 
     private transient AnnotationTagLinkPath _annotationTagLink;
