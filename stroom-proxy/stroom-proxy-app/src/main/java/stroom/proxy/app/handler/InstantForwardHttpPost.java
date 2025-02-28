@@ -35,6 +35,10 @@ public class InstantForwardHttpPost {
                 dropReceiver);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class InstantForwardHttpPostReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
@@ -59,6 +63,10 @@ public class InstantForwardHttpPost {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class InstantForwardHttpPostReceiver implements Receiver {
 
         private final HttpSender httpSender;
@@ -74,7 +82,9 @@ public class InstantForwardHttpPost {
                             final InputStreamSupplier inputStreamSupplier) {
             try {
                 httpSender.send(attributeMap, inputStreamSupplier.get());
-            } catch (final IOException e) {
+            } catch (final ForwardException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }

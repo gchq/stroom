@@ -4,10 +4,12 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
@@ -21,7 +23,6 @@ import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,9 +254,10 @@ public class ZipReceiver implements Receiver {
         logStream.log(
                 RECEIVE_LOG,
                 attributeMap,
-                "RECEIVE",
+                EventType.RECEIVE,
                 requestUri,
-                HttpStatus.SC_OK,
+                StroomStatusCode.OK,
+                attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
                 receiveResult.receivedBytes,
                 duration.toMillis());
     }

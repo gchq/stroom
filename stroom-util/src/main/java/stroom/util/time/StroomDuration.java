@@ -61,8 +61,8 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         // which is a bit grim, so do a simple hack to deal with whole numbers of days.
         if (durationStr.matches("^PT[0-9]+[hH]$")) {
             // get the number of hours
-            int hours = Integer.parseInt(durationStr.substring(2, durationStr.length() - 1));
-            int remainderHours = hours % 24;
+            long hours = Long.parseLong(durationStr.substring(2, durationStr.length() - 1));
+            long remainderHours = hours % 24;
 //            if (hours >= 24 && hours % 24 == 0) {
             if (hours >= 24) {
                 String valueAsStr = "P" + hours / 24 + "D";

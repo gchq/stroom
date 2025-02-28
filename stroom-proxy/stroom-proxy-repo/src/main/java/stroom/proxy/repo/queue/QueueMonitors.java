@@ -71,11 +71,19 @@ public class QueueMonitors {
         return queueMonitor;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private record Key(int order, String name) {
 
     }
 
-    public class QueueMonitorImpl implements QueueMonitor {
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class QueueMonitorImpl implements QueueMonitor {
 
         private volatile long writePos;
         private volatile long readPos;
@@ -94,6 +102,15 @@ public class QueueMonitors {
         @Override
         public void setBufferPos(final long bufferPos) {
             this.bufferPos = bufferPos;
+        }
+
+        @Override
+        public String toString() {
+            return "QueueMonitorImpl{" +
+                   "writePos=" + writePos +
+                   ", readPos=" + readPos +
+                   ", bufferPos=" + bufferPos +
+                   '}';
         }
     }
 }
