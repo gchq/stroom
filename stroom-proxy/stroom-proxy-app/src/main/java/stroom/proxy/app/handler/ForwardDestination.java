@@ -23,6 +23,22 @@ public interface ForwardDestination {
      */
     String getDestinationDescription();
 
+    /**
+     * @return True if this destination is configured with a check for its liveness.
+     */
+    default boolean hasLivenessCheck() {
+        return false;
+    }
+
+    /**
+     * @return True if the liveness check indicates that the destination is live and ready
+     * to have data forwarded to it.
+     * If hasLivenessCheck() returns false, performLivenessCheck() will always return true.
+     */
+    default boolean performLivenessCheck() {
+        return true;
+    }
+
     default String asString() {
         String str = this.getClass().getSimpleName() + " " + getName();
         final String desc = getDestinationDescription();

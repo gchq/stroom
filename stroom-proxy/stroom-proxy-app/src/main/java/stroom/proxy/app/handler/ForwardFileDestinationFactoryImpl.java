@@ -40,9 +40,7 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
 
         final ForwardFileDestinationImpl forwardFileDestination = new ForwardFileDestinationImpl(
                 storeDir,
-                config.getName(),
-                config.getSubPathTemplate(),
-                config.getTemplatingMode(),
+                config,
                 pathCreator);
 
         final ForwardDestination destination = getWrappedForwardDestination(config, forwardFileDestination);

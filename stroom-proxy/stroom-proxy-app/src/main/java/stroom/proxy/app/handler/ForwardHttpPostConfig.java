@@ -27,6 +27,7 @@ public final class ForwardHttpPostConfig
     private final boolean instant;
     private final String name;
     private final String forwardUrl;
+    private final String livenessCheckUrl;
     private final String apiKey;
     private final StroomDuration forwardDelay;
     private final boolean addOpenIdAccessToken;
@@ -38,6 +39,7 @@ public final class ForwardHttpPostConfig
         instant = false;
         name = null;
         forwardUrl = null;
+        livenessCheckUrl = null;
         apiKey = null;
         forwardDelay = DEFAULT_FORWARD_DELAY;
         addOpenIdAccessToken = false;
@@ -51,6 +53,7 @@ public final class ForwardHttpPostConfig
                                  @JsonProperty("instant") final boolean instant,
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
+                                 @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
                                  @JsonProperty("apiKey") final String apiKey,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
@@ -60,6 +63,7 @@ public final class ForwardHttpPostConfig
         this.instant = instant;
         this.name = name;
         this.forwardUrl = forwardUrl;
+        this.livenessCheckUrl = livenessCheckUrl;
         this.apiKey = apiKey;
         this.forwardDelay = Objects.requireNonNullElse(forwardDelay, DEFAULT_FORWARD_DELAY);
         this.addOpenIdAccessToken = addOpenIdAccessToken;
@@ -105,13 +109,21 @@ public final class ForwardHttpPostConfig
         return name;
     }
 
-    /**
-     * The URLs to forward onto. This is pass-through mode if instant is set.
-     */
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The URL to forward onto. This is pass-through mode if instant is set.")
     public String getForwardUrl() {
         return forwardUrl;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The URL to check for liveness of the forward destination. The URL should return a 200 response " +
+            "to a GET request for the destination to be considered live. If null, no liveness check will be " +
+            "made and the destination will be assumed to be live. If the response is not a 200, forwarding " +
+            "will be paused at least until the next liveness check is performed.")
+    public String getLivenessUrl() {
+        return livenessCheckUrl;
     }
 
     @NotNull
@@ -172,6 +184,7 @@ public final class ForwardHttpPostConfig
                && addOpenIdAccessToken == that.addOpenIdAccessToken
                && Objects.equals(name, that.name)
                && Objects.equals(forwardUrl, that.forwardUrl)
+               && Objects.equals(livenessCheckUrl, that.livenessCheckUrl)
                && Objects.equals(apiKey, that.apiKey)
                && Objects.equals(forwardDelay, that.forwardDelay)
                && Objects.equals(httpClient, that.httpClient)
@@ -184,6 +197,7 @@ public final class ForwardHttpPostConfig
                 instant,
                 name,
                 forwardUrl,
+                livenessCheckUrl,
                 apiKey,
                 forwardDelay,
                 addOpenIdAccessToken,
@@ -191,6 +205,21 @@ public final class ForwardHttpPostConfig
                 forwardQueueConfig);
     }
 
+    @Override
+    public String toString() {
+        return "ForwardHttpPostConfig{" +
+               "enabled=" + enabled +
+               ", instant=" + instant +
+               ", name='" + name + '\'' +
+               ", forwardUrl='" + forwardUrl + '\'' +
+               ", livenessCheckUrl='" + livenessCheckUrl + '\'' +
+               ", apiKey='" + apiKey + '\'' +
+               ", forwardDelay=" + forwardDelay +
+               ", addOpenIdAccessToken=" + addOpenIdAccessToken +
+               ", httpClient=" + httpClient +
+               ", forwardQueueConfig=" + forwardQueueConfig +
+               '}';
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -201,6 +230,7 @@ public final class ForwardHttpPostConfig
         private boolean instant;
         private String name;
         private String forwardUrl;
+        private String livenessCheckUrl;
         private String apiKey;
         private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private boolean addOpenIdAccessToken;
@@ -217,6 +247,7 @@ public final class ForwardHttpPostConfig
             this.instant = forwardHttpPostConfig.instant;
             this.name = forwardHttpPostConfig.name;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
+            this.livenessCheckUrl = forwardHttpPostConfig.livenessCheckUrl;
             this.apiKey = forwardHttpPostConfig.apiKey;
             this.forwardDelay = forwardHttpPostConfig.forwardDelay;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
@@ -241,6 +272,11 @@ public final class ForwardHttpPostConfig
 
         public Builder forwardUrl(final String forwardUrl) {
             this.forwardUrl = forwardUrl;
+            return this;
+        }
+
+        public Builder livenessCheckUrl(final String livenessCheckUrl) {
+            this.livenessCheckUrl = livenessCheckUrl;
             return this;
         }
 
@@ -275,6 +311,7 @@ public final class ForwardHttpPostConfig
                     instant,
                     name,
                     forwardUrl,
+                    livenessCheckUrl,
                     apiKey,
                     forwardDelay,
                     addOpenIdAccessToken,

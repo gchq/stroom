@@ -47,7 +47,6 @@ class TestRetryingForwardDestination {
     private Path tempDir;
     private Path sourcesDir;
     private ProxyServices proxyServices;
-    private CleanupDirQueue cleanupDirQueue;
     private DirQueueFactory dirQueueFactory;
 
     @BeforeEach
@@ -57,7 +56,6 @@ class TestRetryingForwardDestination {
         this.tempDir = baseDir.resolve("temp");
         this.sourcesDir = baseDir.resolve("sources");
         this.proxyServices = new ProxyServices();
-        this.cleanupDirQueue = new CleanupDirQueue(this::getDataDir);
         this.dirQueueFactory = new DirQueueFactory(this::getDataDir,
                 new QueueMonitors(),
                 new FileStores());

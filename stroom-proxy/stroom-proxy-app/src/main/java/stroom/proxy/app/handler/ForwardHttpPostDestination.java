@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -57,6 +58,16 @@ public class ForwardHttpPostDestination implements ForwardDestination {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public boolean hasLivenessCheck() {
+        return NullSafe.isNonBlankString(forwardHttpPostConfig.getLivenessUrl());
+    }
+
+    @Override
+    public boolean performLivenessCheck() {
+        return destination.performLivenessCheck();
     }
 
     @Override

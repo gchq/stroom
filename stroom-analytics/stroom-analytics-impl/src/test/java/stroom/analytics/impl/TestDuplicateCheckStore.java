@@ -10,6 +10,7 @@ import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
+import stroom.util.string.StringUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -138,6 +140,51 @@ class TestDuplicateCheckStore {
 
             duplicateCheckStore.close();
         }
+    }
+
+    @Test
+    void testBigValues(@TempDir Path tempDir) {
+        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
+                    mockDuplicateCheckDirs,
+                    byteBufferFactory,
+                    duplicateCheckStoreConfig,
+                    serde,
+                    () -> executorService,
+                    UUID);
+            duplicateCheckStore.writeColumnNames(List.of("col1"));
+
+            DuplicateCheckRow row = new DuplicateCheckRow(List.of(buildValue(510)));
+
+            duplicateCheckStore.tryInsert(row);
+
+            // Will block until all the above are loaded in
+//            duplicateCheckStore.flush();
+
+//            final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
+//                    PageRequest.unlimited(),
+//                    null,
+//                    null,
+//                    null));
+//
+//            final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
+//            Assertions.assertThat(values)
+//                    .containsExactlyInAnyOrder(row);
+//
+            duplicateCheckStore.close();
+        }
+    }
+
+    private String buildValue(final int len) {
+        return StringUtil.createRandomCode(new SecureRandom(), len);
     }
 
 

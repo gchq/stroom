@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.util.NullSafe;
@@ -31,6 +32,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestForwardFileDestinationImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestForwardFileDestinationImpl.class);
@@ -52,7 +55,7 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -61,10 +64,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -73,16 +76,16 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final Path destPath = DirUtil.createPath(dirs.getStoreDir(), 1);
         final Snapshot destSnapshot = DirectorySnapshot.of(destPath);
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(destPath);
 
-        Assertions.assertThat(destSnapshot)
+        assertThat(destSnapshot)
                 .isEqualTo(source1Snapshot);
     }
 
@@ -97,7 +100,7 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -107,12 +110,12 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1, source2, source3);
 
         Stream.of(source1, source2, source3)
                 .forEach(source -> {
-                    Assertions.assertThat(source1)
+                    assertThat(source1)
                             .isDirectory()
                             .exists();
                 });
@@ -122,13 +125,13 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source2, source3);
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(DirUtil.createPath(dirs.getStoreDir(), 1));
 
@@ -138,10 +141,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(dirs.getSourcesDir())
+        assertThat(dirs.getSourcesDir())
                 .isEmptyDirectory();
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(
                         DirUtil.createPath(dirs.getStoreDir(), 1),
@@ -158,9 +161,11 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 subPathStr,
                 null,
+                null,
+                null,
                 pathCreator);
 
-        Assertions.assertThat(subPath)
+        assertThat(subPath)
                 .exists()
                 .isDirectory()
                 .isEmptyDirectory();
@@ -171,10 +176,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(subPath);
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -183,16 +188,16 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(subPath);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final Path destPath = DirUtil.createPath(subPath, 1);
         final Snapshot destSnapshot = DirectorySnapshot.of(destPath);
-        Assertions.assertThat(deepListContent(subPath))
+        assertThat(deepListContent(subPath))
                 .extracting(TypedFile::path)
                 .contains(destPath);
 
-        Assertions.assertThat(destSnapshot)
+        assertThat(destSnapshot)
                 .isEqualTo(source1Snapshot);
     }
 
@@ -203,9 +208,11 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 "${feed}/${year}",
                 TemplatingMode.REPLACE_UNKNOWN,
+                null,
+                null,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1, Map.of(
@@ -224,10 +231,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1, source2, source3, source4);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -244,7 +251,7 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final String year = String.valueOf(ZonedDateTime.now().getYear());
@@ -259,20 +266,20 @@ class TestForwardFileDestinationImpl {
         final Path dest4 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 4);
         final Snapshot dest4Snapshot = DirectorySnapshot.of(dest4);
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(dest1,
                         dest2,
                         dest3,
                         dest4);
 
-        Assertions.assertThat(dest1Snapshot)
+        assertThat(dest1Snapshot)
                 .isEqualTo(source1Snapshot);
-        Assertions.assertThat(dest2Snapshot)
+        assertThat(dest2Snapshot)
                 .isEqualTo(source2Snapshot);
-        Assertions.assertThat(dest3Snapshot)
+        assertThat(dest3Snapshot)
                 .isEqualTo(source3Snapshot);
-        Assertions.assertThat(dest4Snapshot)
+        assertThat(dest4Snapshot)
                 .isEqualTo(source4Snapshot);
     }
 
@@ -283,9 +290,11 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 "${foo}/${year}",
                 TemplatingMode.REPLACE_UNKNOWN,
+                null,
+                null,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -296,10 +305,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1, source2, source3, source4);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -311,12 +320,12 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final String year = String.valueOf(ZonedDateTime.now().getYear());
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(
                         DirUtil.createPath(dirs.getStoreDir().resolve("XXX/" + year), 1),
@@ -332,9 +341,11 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 "${foo}/${year}",
                 TemplatingMode.REMOVE_UNKNOWN,
+                null,
+                null,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -345,10 +356,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1, source2, source3, source4);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -360,12 +371,12 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final String year = String.valueOf(ZonedDateTime.now().getYear());
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(
                         DirUtil.createPath(dirs.getStoreDir().resolve(year), 1),
@@ -381,9 +392,11 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 "${foo}/${year}",
                 TemplatingMode.IGNORE_UNKNOWN,
+                null,
+                null,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -394,10 +407,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .containsExactlyInAnyOrder(source1, source2, source3, source4);
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .isDirectory()
                 .exists();
 
@@ -409,12 +422,12 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         final String year = String.valueOf(ZonedDateTime.now().getYear());
 
-        Assertions.assertThat(deepListContent(dirs.getStoreDir()))
+        assertThat(deepListContent(dirs.getStoreDir()))
                 .extracting(TypedFile::path)
                 .contains(
                         DirUtil.createPath(dirs.getStoreDir().resolve("${foo}/" + year), 1),
@@ -431,6 +444,8 @@ class TestForwardFileDestinationImpl {
                     NAME,
                     "../sibling", // Outside the store dir, so no allowed
                     TemplatingMode.REPLACE_UNKNOWN,
+                    null,
+                    null,
                     pathCreator);
         }).isInstanceOf(IllegalArgumentException.class);
     }
@@ -442,7 +457,7 @@ class TestForwardFileDestinationImpl {
                 NAME,
                 pathCreator);
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
 
         final Path source1 = createSourceDir(1);
@@ -451,10 +466,10 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(listContent(dirs.getSourcesDir()))
+        assertThat(listContent(dirs.getSourcesDir()))
                 .isEmpty();
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
         Assertions.assertThatThrownBy(
@@ -468,11 +483,121 @@ class TestForwardFileDestinationImpl {
         dumpContents(dirs.getSourcesDir());
         dumpContents(dirs.getStoreDir());
 
-        Assertions.assertThat(source1)
+        assertThat(source1)
                 .doesNotExist();
 
-        Assertions.assertThat(dirs.getStoreDir())
+        assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
+    }
+
+    @Test
+    void testLiveness_writeMode() throws IOException {
+        final String livenessCheckPath = "health.check";
+        final Path file = dirs.getStoreDir().resolve(livenessCheckPath);
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                null,
+                null,
+                "health.check",
+                LivenessCheckMode.WRITE,
+                pathCreator);
+
+        assertThat(file)
+                .doesNotExist();
+
+        assertThat(forwardFileDest.hasLivenessCheck())
+                .isTrue();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
+
+        FileUtil.mkdirs(file.getParent());
+        FileUtil.touch(file);
+        assertThat(file)
+                .exists()
+                .isRegularFile();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isTrue();
+
+        FileUtil.deleteFile(file);
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
+    }
+
+    @Test
+    void testLiveness_readMode_file() throws IOException {
+        final String livenessCheckPath = "health.check";
+        final Path file = dirs.getStoreDir().resolve(livenessCheckPath);
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                null,
+                null,
+                "health.check",
+                LivenessCheckMode.READ,
+                pathCreator);
+
+        assertThat(file)
+                .doesNotExist();
+
+        assertThat(forwardFileDest.hasLivenessCheck())
+                .isTrue();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
+
+        FileUtil.mkdirs(file.getParent());
+        FileUtil.touch(file);
+        assertThat(file)
+                .exists()
+                .isRegularFile();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isTrue();
+
+        FileUtil.deleteFile(file);
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
+    }
+
+    @Test
+    void testLiveness_readMode_dir() throws IOException {
+        final String livenessCheckPath = "health.check";
+        final Path dir = dirs.getStoreDir().resolve(livenessCheckPath);
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                null,
+                null,
+                "health.check",
+                LivenessCheckMode.READ,
+                pathCreator);
+
+        assertThat(dir)
+                .doesNotExist();
+
+        assertThat(forwardFileDest.hasLivenessCheck())
+                .isTrue();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
+
+        FileUtil.mkdirs(dir);
+        assertThat(dir)
+                .exists()
+                .isDirectory();
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isTrue();
+
+        FileUtil.deleteDir(dir);
+
+        assertThat(forwardFileDest.performLivenessCheck())
+                .isFalse();
     }
 
     private void dumpContents(final Path path) {
@@ -518,7 +643,7 @@ class TestForwardFileDestinationImpl {
     private Path createSourceDir(final int num, final Map<String, String> attrs) {
         final Path sourceDir = dirs.getSourcesDir().resolve("source_" + num);
         FileUtil.ensureDirExists(sourceDir);
-        Assertions.assertThat(sourceDir)
+        assertThat(sourceDir)
                 .isDirectory()
                 .exists();
 

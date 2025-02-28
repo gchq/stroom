@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
+import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
@@ -22,9 +23,10 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Wraps another {@link ForwardDestination} with a forwarding queue and retry logic.
+ * Wraps another {@link ForwardDestination}, adding forwarding and retry queues plus the retry logic.
  * Directories passed to {@link RetryingForwardDestination#add(Path)} will simply be placed on the
  * forward queue. A pool of threads will consume from this queue, isolating the caller from any failures
  * when calling {@link ForwardDestination#add(Path)} on the delegate. Failures will result in the directory
@@ -34,9 +36,15 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RetryingForwardDestination.class);
 
+    /**
+     * File to hold the log of all forwarding errors from all forward attempts for this {@link FileGroup}
+     */
     private static final String ERROR_LOG_FILENAME = "error.log";
+    /**
+     * Holds the state relating to retries. Held in binary form.
+     */
     private static final String RETRY_STATE_FILENAME = "retry.state";
-    private static final int ONE_SECOND = 1_000;
+    private static final int ONE_SECOND_IN_MS = 1_000;
 
     private final ForwardQueueConfig forwardQueueConfig;
     private final ForwardDestination delegateDestination;
@@ -44,8 +52,11 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private final DirQueue forwardQueue;
     private final DirQueue retryQueue;
+    private final ParallelExecutor forwardExecutor;
+    private final ParallelExecutor retryExecutor;
     private final ForwardFileDestination failureDestination;
     private final String destinationName;
+    private final AtomicBoolean lastLiveCheckResult = new AtomicBoolean(true);
 
     public RetryingForwardDestination(final ForwardQueueConfig forwardQueueConfig,
                                       final ForwardDestination delegateDestination,
@@ -77,11 +88,11 @@ public class RetryingForwardDestination implements ForwardDestination {
                 forwardQueue::next, this::forwardDir);
         final DirQueueTransfer retrying = new DirQueueTransfer(
                 retryQueue::next, this::retryDir);
-        proxyServices.addParallelExecutor(
+        forwardExecutor = proxyServices.addParallelExecutor(
                 "forward - " + destinationName,
                 () -> forwarding,
                 forwardQueueConfig.getForwardThreadCount());
-        proxyServices.addParallelExecutor(
+        retryExecutor = proxyServices.addParallelExecutor(
                 "retry - " + destinationName,
                 () -> retrying,
                 forwardQueueConfig.getForwardRetryThreadCount());
@@ -89,6 +100,42 @@ public class RetryingForwardDestination implements ForwardDestination {
         // Create failure destination.
         failureDestination = setupFailureDestination(
                 forwardQueueConfig, pathCreator, forwardingDir);
+
+        if (delegateDestination.hasLivenessCheck()) {
+            proxyServices.addFrequencyExecutor(
+                    "liveness - " + destinationName,
+                    () -> this::doLivenessCheck,
+                    forwardQueueConfig.getLivenessCheckInterval().toMillis());
+        }
+    }
+
+    private synchronized void doLivenessCheck() {
+        boolean isLive;
+        try {
+            isLive = delegateDestination.performLivenessCheck();
+            LOGGER.debug("'{}' - isLive: {}", destinationName, isLive);
+        } catch (Exception e) {
+            LOGGER.debug("Error performing liveness check", e);
+            isLive = false;
+        }
+
+        final boolean hasChanged = lastLiveCheckResult.compareAndSet(!isLive, isLive);
+        if (hasChanged) {
+            if (isLive) {
+                LOGGER.info("'{}' - liveness check passed, resuming all forwarding and retries",
+                        destinationName);
+            } else {
+                LOGGER.info("'{}' - liveness check failed, pausing all forwarding and retries",
+                        destinationName);
+            }
+        } else {
+            if (!isLive) {
+                LOGGER.info("'{}' - liveness check still failing", destinationName);
+            }
+        }
+        // Let the executor worry if it has already been set or not
+        forwardExecutor.setPauseState(!isLive);
+        retryExecutor.setPauseState(!isLive);
     }
 
     @Override
@@ -133,6 +180,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                 getName() + " (failures)",
                 errorSubPathTemplate,
                 ForwardFileConfig.DEFAULT_TEMPLATING_MODE,
+                null,
+                null,
                 simplePathCreator);
         return failureDestination;
     }
@@ -248,10 +297,10 @@ public class RetryingForwardDestination implements ForwardDestination {
                 attempts));
 
         while (delay > 0 && !proxyServices.isShuttingDown()) {
-            final long sleepMs = Math.min(ONE_SECOND, delay);
+            final long sleepMs = Math.min(ONE_SECOND_IN_MS, delay);
             LOGGER.debug("Sleeping for {}ms", sleepMs);
             ThreadUtil.sleep(sleepMs);
-            if (sleepMs == ONE_SECOND) {
+            if (sleepMs == ONE_SECOND_IN_MS) {
                 delay = notBeforeEpochMs - System.currentTimeMillis();
             } else {
                 break;

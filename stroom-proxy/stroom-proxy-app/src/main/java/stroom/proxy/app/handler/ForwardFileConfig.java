@@ -24,6 +24,7 @@ public final class ForwardFileConfig
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
 
     private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
+    private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
 
     private final boolean enabled;
     private final boolean instant;
@@ -32,6 +33,8 @@ public final class ForwardFileConfig
     private final String subPathTemplate;
     private final TemplatingMode templatingMode;
     private final ForwardQueueConfig forwardQueueConfig;
+    private final String livenessCheckPath;
+    private final LivenessCheckMode livenessCheckMode;
 
     public ForwardFileConfig() {
         enabled = true;
@@ -41,6 +44,8 @@ public final class ForwardFileConfig
         subPathTemplate = DEFAULT_SUB_PATH_TEMPLATE;
         templatingMode = DEFAULT_TEMPLATING_MODE;
         forwardQueueConfig = null; // Assume local file forwarder by default, so no queue config needed
+        livenessCheckPath = null;
+        livenessCheckMode = LivenessCheckMode.READ;
     }
 
     @SuppressWarnings("unused")
@@ -51,7 +56,9 @@ public final class ForwardFileConfig
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final String subPathTemplate,
                              @JsonProperty("templatingMode") final TemplatingMode templatingMode,
-                             @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig) {
+                             @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig,
+                             @JsonProperty("livenessCheckPath") final String livenessCheckPath,
+                             @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
@@ -59,6 +66,8 @@ public final class ForwardFileConfig
         this.subPathTemplate = subPathTemplate;
         this.templatingMode = Objects.requireNonNullElse(templatingMode, DEFAULT_TEMPLATING_MODE);
         this.forwardQueueConfig = forwardQueueConfig;
+        this.livenessCheckPath = livenessCheckPath;
+        this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
     }
 
     private ForwardFileConfig(final Builder builder) {
@@ -69,6 +78,8 @@ public final class ForwardFileConfig
         subPathTemplate = builder.subPathTemplate;
         templatingMode = builder.templatingMode;
         forwardQueueConfig = builder.forwardQueueConfig;
+        livenessCheckPath = builder.livenessCheckPath;
+        livenessCheckMode = builder.livenessCheckMode;
     }
 
     /**
@@ -154,6 +165,24 @@ public final class ForwardFileConfig
         return forwardQueueConfig;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("The path to use for regular liveness checking of this forward destination. " +
+                             "If null or empty, no liveness check will be performed and the destination will be " +
+                             "assumed to be healthy. If livenessCheckMode is READ, livenessCheckPath can be a " +
+                             "directory or a file and stroom-proxy will attempt to check it can read the " +
+                             "file/directory. If livenessCheckMode is WRITE, then livenessCheckPath must be a " +
+                             "file and stroom-proxy will attempt to touch that file. It is " +
+                             "only recommended to set this property for a remote file system where " +
+                             "connection issues may be likely. If it is a relative path, it will be assumed " +
+                             "to be relative to 'path'.")
+    public String getLivenessCheckPath() {
+        return livenessCheckPath;
+    }
+
+    public LivenessCheckMode getLivenessCheckMode() {
+        return livenessCheckMode;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -163,14 +192,28 @@ public final class ForwardFileConfig
             return false;
         }
         final ForwardFileConfig that = (ForwardFileConfig) o;
-        return enabled == that.enabled && instant == that.instant && Objects.equals(name,
-                that.name) && Objects.equals(path, that.path) && Objects.equals(subPathTemplate,
-                that.subPathTemplate) && templatingMode == that.templatingMode;
+        return enabled == that.enabled
+               && instant == that.instant
+               && Objects.equals(name, that.name)
+               && Objects.equals(path, that.path)
+               && Objects.equals(subPathTemplate, that.subPathTemplate)
+               && templatingMode == that.templatingMode
+               && Objects.equals(forwardQueueConfig, that.forwardQueueConfig)
+               && Objects.equals(livenessCheckPath, that.livenessCheckPath)
+               && livenessCheckMode == that.livenessCheckMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, instant, name, path, subPathTemplate, templatingMode);
+        return Objects.hash(enabled,
+                instant,
+                name,
+                path,
+                subPathTemplate,
+                templatingMode,
+                forwardQueueConfig,
+                livenessCheckPath,
+                livenessCheckMode);
     }
 
     @Override
@@ -182,6 +225,9 @@ public final class ForwardFileConfig
                ", path='" + path + '\'' +
                ", subPathTemplate='" + subPathTemplate + '\'' +
                ", templatingMode=" + templatingMode +
+               ", forwardQueueConfig=" + forwardQueueConfig +
+               ", livenessCheckPath='" + livenessCheckPath + '\'' +
+               ", livenessCheckMode=" + livenessCheckMode +
                '}';
     }
 
@@ -198,6 +244,8 @@ public final class ForwardFileConfig
         builder.subPathTemplate = copy.getSubPathTemplate();
         builder.templatingMode = copy.getTemplatingMode();
         builder.forwardQueueConfig = copy.getForwardQueueConfig();
+        builder.livenessCheckPath = copy.getLivenessCheckPath();
+        builder.livenessCheckMode = copy.getLivenessCheckMode();
         return builder;
     }
 
@@ -207,6 +255,8 @@ public final class ForwardFileConfig
 
     public static final class Builder {
 
+        public String livenessCheckPath;
+        public LivenessCheckMode livenessCheckMode;
         private boolean enabled;
         private boolean instant;
         private String name;
@@ -268,8 +318,34 @@ public final class ForwardFileConfig
             return this;
         }
 
+        public Builder withLivenessCheckPath(final String livenessCheckPath) {
+            this.livenessCheckPath = livenessCheckPath;
+            return this;
+        }
+
+        public Builder withLivenessCheckMode(final LivenessCheckMode livenessCheckMode) {
+            this.livenessCheckMode = livenessCheckMode;
+            return this;
+        }
+
         public ForwardFileConfig build() {
             return new ForwardFileConfig(this);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum LivenessCheckMode {
+        /**
+         * Check the path exists, ie. can be read.
+         */
+        READ,
+        /**
+         * Check that a file can be written/update in the directory
+         */
+        WRITE,
+        ;
     }
 }

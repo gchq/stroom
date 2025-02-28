@@ -130,7 +130,9 @@ class TestInnerProcessEndToEnd {
                                 "test",
                                 null,
                                 null,
-                                new ForwardQueueConfig()))
+                                new ForwardQueueConfig(),
+                                null,
+                                null))
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);

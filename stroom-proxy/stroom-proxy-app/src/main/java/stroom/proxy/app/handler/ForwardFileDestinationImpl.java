@@ -2,6 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.io.FileUtil;
@@ -29,6 +30,8 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     private final String subPathTemplate;
     private final TemplatingMode templatingMode;
     private final Set<String> varsInTemplate;
+    private final String livenessCheckPath;
+    private final LivenessCheckMode livenessCheckMode;
     private final PathCreator pathCreator;
     private final Path staticBaseDir;
 
@@ -37,13 +40,33 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     public ForwardFileDestinationImpl(final Path storeDir,
                                       final String name,
                                       final PathCreator pathCreator) {
-        this(storeDir, name, null, null, pathCreator);
+        this(storeDir,
+                name,
+                null,
+                null,
+                null,
+                null,
+                pathCreator);
+    }
+
+    public ForwardFileDestinationImpl(final Path storeDir,
+                                      final ForwardFileConfig forwardFileConfig,
+                                      final PathCreator pathCreator) {
+        this(storeDir,
+                forwardFileConfig.getName(),
+                forwardFileConfig.getSubPathTemplate(),
+                forwardFileConfig.getTemplatingMode(),
+                forwardFileConfig.getLivenessCheckPath(),
+                forwardFileConfig.getLivenessCheckMode(),
+                pathCreator);
     }
 
     public ForwardFileDestinationImpl(final Path storeDir,
                                       final String name,
                                       final String subPathTemplate,
                                       final TemplatingMode templatingMode,
+                                      final String livenessCheckPath,
+                                      final LivenessCheckMode livenessCheckMode,
                                       final PathCreator pathCreator) {
 
         // TODO Create another impl that has a forward+retry queue and error file dest
@@ -56,6 +79,8 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         this.subPathTemplate = subPathTemplate;
         this.templatingMode = Objects.requireNonNullElse(
                 templatingMode, ForwardFileConfig.DEFAULT_TEMPLATING_MODE);
+        this.livenessCheckPath = livenessCheckPath;
+        this.livenessCheckMode = livenessCheckMode;
         this.pathCreator = pathCreator;
 
         if (NullSafe.isNonEmptyString(subPathTemplate)) {
@@ -89,6 +114,72 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public boolean hasLivenessCheck() {
+        return NullSafe.isNonBlankString(livenessCheckPath) && livenessCheckMode != null;
+    }
+
+    @Override
+    public boolean performLivenessCheck() {
+        boolean isLive = false;
+        if (NullSafe.isNonBlankString(livenessCheckPath)) {
+            try {
+                Path path = Path.of(livenessCheckPath);
+                if (!path.isAbsolute()) {
+                    path = storeDir.resolve(path);
+                }
+                isLive = switch (livenessCheckMode) {
+                    case WRITE -> canWriteToFile(path);
+                    case READ -> Files.exists(path);
+                    case null -> throw new IllegalArgumentException(
+                            "Unexpected value of livenessCheckMode " + livenessCheckMode);
+                };
+            } catch (Exception e) {
+                LOGGER.debug("'{}' - Error during liveness check", name, e);
+            }
+        }
+        LOGGER.debug("'{}' - isLive: {}", name, isLive);
+        return isLive;
+    }
+
+//    private boolean canWriteToFile(final Path path) {
+//        Objects.requireNonNull(path);
+//        try {
+//            FileUtil.touch(path);
+//            return true;
+//        } catch (IOException e) {
+//            final Path parent = path.getParent();
+//            try {
+//                FileUtil.mkdirs(parent);
+//            } catch (Exception ex) {
+//                LOGGER.debug("Error creating path {}", parent, ex);
+//                return false;
+//            }
+//            try {
+//                FileUtil.touch(path);
+//                return true;
+//            } catch (IOException ex) {
+//                LOGGER.debug("Error touching file {}", path, ex);
+//                return false;
+//            }
+//        }
+//    }
+
+    private boolean canWriteToFile(final Path path) {
+        Objects.requireNonNull(path);
+        try {
+            if (Files.isRegularFile(path)) {
+                FileUtil.touch(path);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error trying to write to file {}", path, e);
+            return false;
         }
     }
 

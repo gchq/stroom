@@ -19,12 +19,15 @@ import stroom.util.time.StroomDuration;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.ProtocolException;
 import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
+import org.apache.hc.core5.http.message.BasicHttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,14 +122,43 @@ public class HttpSender implements StreamDestination {
         LOGGER.debug("responseStatus: {}", responseStatus);
     }
 
+    @Override
+    public boolean performLivenessCheck() {
+        final String url = config.getLivenessUrl();
+        if (NullSafe.isBlankString(url)) {
+            throw new IllegalStateException("livenessCheckUrl is not set");
+        }
+
+        final HttpGet httpGet = new HttpGet(url);
+        httpGet.addHeader("User-Agent", userAgent);
+        addAuthHeaders(httpGet);
+
+        boolean isLive;
+        try {
+            final int responseCode = httpClient.execute(httpGet, response -> {
+                final int code = response.getCode();
+                LOGGER.debug("response {}, code: {}", response, code);
+                consumeAndCloseResponseContent(response);
+                return code;
+            });
+
+            isLive = responseCode == HttpStatus.SC_OK;
+        } catch (IOException e) {
+            LOGGER.debug("Error calling livenessCheckUrl '{}': {}",
+                    url, LogUtil.exceptionMessage(e), e);
+            // Consider it not live
+            isLive = false;
+        }
+        return isLive;
+    }
+
     private HttpPost createHttpPost(final AttributeMap attributeMap) {
         final HttpPost httpPost = new HttpPost(forwardUrl);
         httpPost.addHeader("User-Agent", userAgent);
         httpPost.addHeader("Content-Type", "application/audit");
-        final String apiKey = config.getApiKey();
-        if (apiKey != null && !apiKey.isBlank()) {
-            httpPost.addHeader("Authorization", "Bearer " + apiKey.trim());
-        }
+
+        addAuthHeaders(httpPost);
+
         final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             httpPost.addHeader(entry.getKey(), entry.getValue());
@@ -138,6 +170,16 @@ public class HttpSender implements StreamDestination {
         final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
         if (NullSafe.isNonBlankString(compression)) {
             httpPost.addHeader(StandardHeaderArguments.COMPRESSION, compression);
+        }
+
+        return httpPost;
+    }
+
+    private void addAuthHeaders(final BasicHttpRequest request) {
+        Objects.requireNonNull(request);
+        final String apiKey = config.getApiKey();
+        if (NullSafe.isNonBlankString(apiKey)) {
+            request.addHeader("Authorization", "Bearer " + apiKey.trim());
         }
 
         // Allows sending to systems on the same OpenId realm as us using an access token
@@ -159,9 +201,8 @@ public class HttpSender implements StreamDestination {
                             .collect(Collectors.joining("\n"))));
 
             userIdentityFactory.getServiceUserAuthHeaders()
-                    .forEach(httpPost::addHeader);
+                    .forEach(request::addHeader);
         }
-        return httpPost;
     }
 
     private void delayPost(final Instant startTime) {

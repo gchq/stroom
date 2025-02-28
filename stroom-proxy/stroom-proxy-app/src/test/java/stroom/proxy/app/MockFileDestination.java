@@ -59,7 +59,9 @@ public class MockFileDestination {
                 "forward_dest",
                 null,
                 null,
-                new ForwardQueueConfig());
+                new ForwardQueueConfig(),
+                null,
+                null);
     }
 
     /**

@@ -25,6 +25,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     public static final String PROP_NAME_ERROR_SUB_PATH_TEMPLATE = "errorSubPathTemplate";
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
+    private static final StroomDuration DEFAULT_LIVENESS_CHECK_INTERVAL = StroomDuration.ofMinutes(1);
     /**
      * Zero means no retries
      */
@@ -44,6 +45,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     private final TemplatingMode templatingMode;
     private final int forwardThreadCount;
     private final int forwardRetryThreadCount;
+    private final StroomDuration livenessCheckInterval;
 
     public ForwardQueueConfig() {
         retryDelay = DEFAULT_RETRY_DELAY;
@@ -54,6 +56,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         templatingMode = DEFAULT_TEMPLATING_MODE;
         forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
         forwardThreadCount = DEFAULT_FORWARD_THREAD_COUNT;
+        livenessCheckInterval = DEFAULT_LIVENESS_CHECK_INTERVAL;
     }
 
     @SuppressWarnings("unused")
@@ -66,7 +69,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty(PROP_NAME_ERROR_SUB_PATH_TEMPLATE) final String errorSubPathTemplate,
             @JsonProperty("templatingMode") final TemplatingMode templatingMode,
             @JsonProperty("forwardThreadCount") final int forwardThreadCount,
-            @JsonProperty("forwardRetryThreadCount") final int forwardRetryThreadCount) {
+            @JsonProperty("forwardRetryThreadCount") final int forwardRetryThreadCount,
+            @JsonProperty("livenessCheckInterval") final StroomDuration livenessCheckInterval) {
 
         this.retryDelay = Objects.requireNonNullElse(retryDelay, DEFAULT_RETRY_DELAY);
         this.retryDelayGrowthFactor = Objects.requireNonNullElse(retryDelayGrowthFactor, DEFAULT_RETRY_GROWTH_FACTOR);
@@ -76,6 +80,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         this.templatingMode = templatingMode;
         this.forwardThreadCount = forwardThreadCount;
         this.forwardRetryThreadCount = forwardRetryThreadCount;
+        this.livenessCheckInterval = Objects.requireNonNullElse(
+                livenessCheckInterval, DEFAULT_LIVENESS_CHECK_INTERVAL);
     }
 
     @JsonProperty
@@ -160,6 +166,12 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         return forwardRetryThreadCount;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("The interval between destination liveness checks, if livenessCheckUrl has a value.")
+    public StroomDuration getLivenessCheckInterval() {
+        return livenessCheckInterval;
+    }
+
     @SuppressWarnings("unused") // Used by jakarta.validation
     @JsonIgnore
     @ValidationMethod(message = "maxRetryDelay must be greater than or equal to retryDelay")
@@ -195,7 +207,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                && Objects.equals(maxRetryDelay, that.maxRetryDelay)
                && Objects.equals(maxRetryAge, that.maxRetryAge)
                && Objects.equals(errorSubPathTemplate, that.errorSubPathTemplate)
-               && templatingMode == that.templatingMode;
+               && templatingMode == that.templatingMode
+               && Objects.equals(livenessCheckInterval, that.livenessCheckInterval);
     }
 
     @Override
@@ -207,7 +220,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                 errorSubPathTemplate,
                 templatingMode,
                 forwardThreadCount,
-                forwardRetryThreadCount);
+                forwardRetryThreadCount,
+                livenessCheckInterval);
     }
 
     @Override
@@ -221,6 +235,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                ", templatingMode=" + templatingMode +
                ", forwardThreadCount=" + forwardThreadCount +
                ", forwardRetryThreadCount=" + forwardRetryThreadCount +
+               ", livenessCheckInterval=" + livenessCheckInterval +
                '}';
     }
 
@@ -237,6 +252,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         private TemplatingMode templatingMode;
         private int forwardThreadCount;
         private int forwardRetryThreadCount;
+        private StroomDuration livenessCheckInterval;
 
         private Builder() {
             this(new ForwardQueueConfig());
@@ -252,6 +268,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             this.templatingMode = forwardQueueConfig.templatingMode;
             this.forwardThreadCount = forwardQueueConfig.forwardThreadCount;
             this.forwardRetryThreadCount = forwardQueueConfig.forwardRetryThreadCount;
+            this.livenessCheckInterval = forwardQueueConfig.livenessCheckInterval;
         }
 
         public Builder retryDelay(final StroomDuration retryDelay) {
@@ -294,6 +311,11 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             return this;
         }
 
+        public Builder livenessCheckInterval(final StroomDuration livenessCheckInterval) {
+            this.livenessCheckInterval = livenessCheckInterval;
+            return this;
+        }
+
         public ForwardQueueConfig build() {
             return new ForwardQueueConfig(
                     retryDelay,
@@ -303,7 +325,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                     errorSubPathTemplate,
                     templatingMode,
                     forwardThreadCount,
-                    forwardRetryThreadCount);
+                    forwardRetryThreadCount,
+                    livenessCheckInterval);
         }
     }
 }
