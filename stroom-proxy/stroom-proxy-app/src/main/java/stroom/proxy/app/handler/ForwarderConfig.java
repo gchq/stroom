@@ -10,4 +10,6 @@ public sealed interface ForwarderConfig
     boolean isEnabled();
 
     ForwardQueueConfig getForwardQueueConfig();
+
+    String getDestinationDescription();
 }

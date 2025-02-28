@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.NullSafe;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -163,6 +164,13 @@ public final class ForwardFileConfig
                              "local file forwarder is assumed.")
     public ForwardQueueConfig getForwardQueueConfig() {
         return forwardQueueConfig;
+    }
+
+    @Override
+    public String getDestinationDescription() {
+        return NullSafe.isNonBlankString(subPathTemplate)
+                ? path + "/" + subPathTemplate
+                : path;
     }
 
     @JsonProperty

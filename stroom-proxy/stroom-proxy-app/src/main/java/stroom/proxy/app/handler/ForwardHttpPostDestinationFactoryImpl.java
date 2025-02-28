@@ -42,7 +42,6 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
 
     @Override
     public ForwardDestination create(final ForwardHttpPostConfig forwardHttpPostConfig) {
-        final ThreadConfig threadConfig = proxyConfigProvider.get().getThreadConfig();
         final StreamDestination streamDestination = httpSenderFactory.create(forwardHttpPostConfig);
         final String name = forwardHttpPostConfig.getName();
         final ForwardHttpPostDestination forwardHttpDestination = new ForwardHttpPostDestination(
@@ -54,13 +53,10 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
         final ForwardDestination destination = getWrappedForwardDestination(
                 forwardHttpPostConfig, forwardHttpDestination);
 
-        LOGGER.info("Created {} '{}' with url '{}', threadCount: {}, " +
-                    "retryCount: {}",
+        LOGGER.info("Created {} '{}' with url '{}'",
                 destination.getClass().getSimpleName(),
                 name,
-                forwardHttpPostConfig.getForwardUrl(),
-                threadConfig.getForwardThreadCount(),
-                threadConfig.getForwardRetryThreadCount());
+                forwardHttpPostConfig.getForwardUrl());
 
         return destination;
     }

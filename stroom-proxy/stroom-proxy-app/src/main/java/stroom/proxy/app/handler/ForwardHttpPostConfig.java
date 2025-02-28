@@ -166,6 +166,11 @@ public final class ForwardHttpPostConfig
         return forwardQueueConfig;
     }
 
+    @Override
+    public String getDestinationDescription() {
+        return forwardUrl;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
