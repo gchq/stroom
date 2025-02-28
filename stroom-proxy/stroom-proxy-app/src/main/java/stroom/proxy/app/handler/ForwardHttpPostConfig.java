@@ -122,7 +122,7 @@ public final class ForwardHttpPostConfig
             "to a GET request for the destination to be considered live. If null, no liveness check will be " +
             "made and the destination will be assumed to be live. If the response is not a 200, forwarding " +
             "will be paused at least until the next liveness check is performed.")
-    public String getLivenessUrl() {
+    public String getLivenessCheckUrl() {
         return livenessCheckUrl;
     }
 

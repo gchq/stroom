@@ -33,6 +33,8 @@ proxyConfig:
   forwardFileDestinations:
   - enabled: true
     instant: false
+    livenessCheckMode: "READ"
+    livenessCheckPath: null
     name: null
     path: null
     queue: null
@@ -59,11 +61,13 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
+    livenessCheckUrl: null
     name: null
     queue:
       errorSubPathTemplate: "${year}${month}${day}/${feed}"
       forwardRetryThreadCount: 1
       forwardThreadCount: 5
+      livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
       maxRetryDelay: "PT10M"
       retryDelay: "PT10M"

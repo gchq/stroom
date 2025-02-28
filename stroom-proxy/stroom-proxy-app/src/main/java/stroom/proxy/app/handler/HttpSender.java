@@ -124,7 +124,7 @@ public class HttpSender implements StreamDestination {
 
     @Override
     public boolean performLivenessCheck() {
-        final String url = config.getLivenessUrl();
+        final String url = config.getLivenessCheckUrl();
         if (NullSafe.isBlankString(url)) {
             throw new IllegalStateException("livenessCheckUrl is not set");
         }

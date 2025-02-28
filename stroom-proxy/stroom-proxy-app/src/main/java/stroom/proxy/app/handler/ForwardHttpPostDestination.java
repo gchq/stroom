@@ -62,7 +62,7 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     @Override
     public boolean hasLivenessCheck() {
-        return NullSafe.isNonBlankString(forwardHttpPostConfig.getLivenessUrl());
+        return NullSafe.isNonBlankString(forwardHttpPostConfig.getLivenessCheckUrl());
     }
 
     @Override

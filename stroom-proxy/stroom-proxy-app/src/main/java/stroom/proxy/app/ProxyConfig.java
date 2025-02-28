@@ -259,7 +259,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     @JsonIgnore
     @SuppressWarnings("unused")
-    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
+    @ValidationMethod(message = "Only one forwarder (regardless of type) is permitted if any " +
+                                "forwarder has instant=true. If you want to forward to multiple " +
+                                "destinations you cannot use instant forwarding.")
     public boolean isInstantForwardingValid() {
         final long enabledInstantForwardersCount = streamAllForwarders()
                 .filter(ForwarderConfig::isEnabled)
@@ -280,17 +282,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         }
     }
 
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    @ValidationMethod(message = "Only one forwarder (regardless of type) is permitted if any " +
-                                "forwarder has instant=true. If you want to forward to multiple " +
-                                "destinations you cannot use instant forwarding.")
-    public boolean isForwarderCountValid() {
-        final long allEnabledForwardersCount = streamAllForwarders()
-                .filter(ForwarderConfig::isEnabled)
-                .count();
-        return allEnabledForwardersCount >= 1;
-    }
+//    @JsonIgnore
+//    @SuppressWarnings("unused")
+//    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
+//    public boolean isForwarderCountValid() {
+//        final long allEnabledForwardersCount = streamAllForwarders()
+//                .filter(ForwarderConfig::isEnabled)
+//                .count();
+//        return allEnabledForwardersCount >= 1;
+//    }
 
     /**
      * @return A {@link Stream} of all forward destination config objects regardless of enabled
