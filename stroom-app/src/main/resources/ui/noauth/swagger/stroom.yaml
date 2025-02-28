@@ -602,19 +602,6 @@ paths:
       summary: Deletes an annotation
       tags:
       - Annotations
-  /annotation/v1/getDefaultRetentionPeriod:
-    get:
-      operationId: getAnnotationDefaultRetentionPeriod
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SimpleDuration"
-          description: default response
-      summary: Gets the default retention period
-      tags:
-      - Annotations
   /annotation/v1/getLinkedEvents:
     post:
       operationId: getAnnotationLinkedEvents
@@ -8279,6 +8266,9 @@ components:
           format: int64
         name:
           type: string
+        retainUntilTimeMs:
+          type: integer
+          format: int64
         retentionPeriod:
           $ref: "#/components/schemas/SimpleDuration"
         status:
@@ -9275,12 +9265,16 @@ components:
     CreateAnnotationRequest:
       type: object
       properties:
-        annotation:
-          $ref: "#/components/schemas/Annotation"
         linkedEvents:
           type: array
           items:
             $ref: "#/components/schemas/EventId"
+        status:
+          type: string
+        subject:
+          type: string
+        title:
+          type: string
     CreateApiKeyRequest:
       type: object
       properties:

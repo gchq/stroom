@@ -18,8 +18,8 @@ package stroom.dashboard.client.table;
 
 import stroom.annotation.client.ChangeAssignedToPresenter;
 import stroom.annotation.client.ChangeStatusPresenter;
-import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.CreateAnnotationEvent;
+import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
