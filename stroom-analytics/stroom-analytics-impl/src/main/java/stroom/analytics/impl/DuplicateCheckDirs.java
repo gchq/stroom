@@ -1,11 +1,13 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
@@ -68,20 +70,35 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
-    public <T extends AbstractAnalyticRuleDoc> void deleteUnused(
+    public void deleteUnused(
             final List<String> duplicateStoreDirs,
-            final List<T> analytics) {
+            final List<AnalyticRuleDoc> analytics) {
         try {
-            // Delete unused duplicate stores.
-            final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
-            for (final T analyticRuleDoc : analytics) {
-                remaining.remove(analyticRuleDoc.getUuid());
-            }
-            for (final String uuid : remaining) {
-                try {
-                    getDir(uuid).delete();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "deleteUnused() - duplicateStoreDirs.size: {}, analytics.size: {}",
+                    NullSafe.size(duplicateStoreDirs), NullSafe.size(analytics)));
+            if (NullSafe.hasItems(duplicateStoreDirs)) {
+                // Delete unused duplicate stores.
+                final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
+                for (final AnalyticRuleDoc analyticRuleDoc : NullSafe.list(analytics)) {
+                    remaining.remove(analyticRuleDoc.getUuid());
+                }
+                int delCount = 0;
+                for (final String uuid : remaining) {
+                    try {
+                        final LmdbEnvDir lmdbEnvDir = getDir(uuid);
+                        lmdbEnvDir.delete();
+                        delCount++;
+                        LOGGER.info("Deleted redundant duplicate check store with UUID: {}, path: {}",
+                                uuid, LogUtil.path(lmdbEnvDir.getEnvDir()));
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(() -> LogUtil.message(
+                                "Error deleting duplicateStore with UUID {}: {}",
+                                uuid, LogUtil.exceptionMessage(e), e));
+                    }
+                }
+                if (delCount > 0) {
+                    LOGGER.info("Deleted {} redundant duplicate check stores", delCount);
                 }
             }
         } catch (final RuntimeException e) {
