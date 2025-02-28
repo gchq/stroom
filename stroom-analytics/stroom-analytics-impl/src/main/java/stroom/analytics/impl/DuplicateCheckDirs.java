@@ -15,9 +15,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DuplicateCheckDirs {
@@ -70,25 +71,37 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
-    public void deleteUnused(
-            final List<String> duplicateStoreDirs,
+    public List<String> deleteUnused(
+            final List<String> duplicateStoreUuids,
             final List<AnalyticRuleDoc> analytics) {
+        final List<String> deletedUuids = new ArrayList<>();
         try {
             LOGGER.debug(() -> LogUtil.message(
-                    "deleteUnused() - duplicateStoreDirs.size: {}, analytics.size: {}",
-                    NullSafe.size(duplicateStoreDirs), NullSafe.size(analytics)));
-            if (NullSafe.hasItems(duplicateStoreDirs)) {
-                // Delete unused duplicate stores.
-                final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
-                for (final AnalyticRuleDoc analyticRuleDoc : NullSafe.list(analytics)) {
-                    remaining.remove(analyticRuleDoc.getUuid());
+                    "deleteUnused() - duplicateStoreUuids.size: {}, analytics.size: {}",
+                    NullSafe.size(duplicateStoreUuids), NullSafe.size(analytics)));
+            if (NullSafe.hasItems(duplicateStoreUuids)) {
+                final List<String> redundantDupStoreUuids;
+                if (NullSafe.hasItems(analytics)) {
+                    final Set<String> analyticUuids = analytics.stream()
+                            .filter(Objects::nonNull)
+                            .map(AnalyticRuleDoc::getUuid)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+                    // Find dup stores with no corresponding analytic
+                    redundantDupStoreUuids = duplicateStoreUuids.stream()
+                            .filter(uuid -> !analyticUuids.contains(uuid))
+                            .toList();
+                } else {
+                    // No analytics so all redundant
+                    redundantDupStoreUuids = duplicateStoreUuids;
                 }
-                int delCount = 0;
-                for (final String uuid : remaining) {
+
+                // Delete unused duplicate stores.
+                for (final String uuid : redundantDupStoreUuids) {
                     try {
                         final LmdbEnvDir lmdbEnvDir = getDir(uuid);
                         lmdbEnvDir.delete();
-                        delCount++;
+                        deletedUuids.add(uuid);
                         LOGGER.info("Deleted redundant duplicate check store with UUID: {}, path: {}",
                                 uuid, LogUtil.path(lmdbEnvDir.getEnvDir()));
                     } catch (final RuntimeException e) {
@@ -97,12 +110,14 @@ public class DuplicateCheckDirs {
                                 uuid, LogUtil.exceptionMessage(e), e));
                     }
                 }
-                if (delCount > 0) {
-                    LOGGER.info("Deleted {} redundant duplicate check stores", delCount);
+                if (!deletedUuids.isEmpty()) {
+                    LOGGER.info("Deleted {} redundant duplicate check stores", deletedUuids.size());
                 }
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
+        // Return this to ease testing
+        return deletedUuids;
     }
 }

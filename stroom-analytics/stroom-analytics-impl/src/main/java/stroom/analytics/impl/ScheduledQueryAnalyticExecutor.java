@@ -384,10 +384,10 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     @Override
     void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
         // Start by finding a set of UUIDs for existing rule checking stores.
-        final List<String> duplicateStoreDirs = duplicateCheckDirs.getAnalyticRuleUUIDList();
+        final List<String> duplicateStoreUuids = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
         // Delete unused duplicate stores.
-        duplicateCheckDirs.deleteUnused(duplicateStoreDirs, analyticDocs);
+        duplicateCheckDirs.deleteUnused(duplicateStoreUuids, analyticDocs);
     }
 
     @Override
