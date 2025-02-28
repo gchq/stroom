@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,19 +98,12 @@ public class DuplicateCheckDirs {
                 }
 
                 // Delete unused duplicate stores.
-                for (final String uuid : redundantDupStoreUuids) {
-                    try {
-                        final LmdbEnvDir lmdbEnvDir = getDir(uuid);
-                        lmdbEnvDir.delete();
-                        deletedUuids.add(uuid);
-                        LOGGER.info("Deleted redundant duplicate check store with UUID: {}, path: {}",
-                                uuid, LogUtil.path(lmdbEnvDir.getEnvDir()));
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(() -> LogUtil.message(
-                                "Error deleting duplicateStore with UUID {}: {}",
-                                uuid, LogUtil.exceptionMessage(e), e));
-                    }
-                }
+                redundantDupStoreUuids.stream()
+                        .map(this::deleteDuplicateStore)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .forEach(deletedUuids::add);
+
                 if (!deletedUuids.isEmpty()) {
                     LOGGER.info("Deleted {} redundant duplicate check stores", deletedUuids.size());
                 }
@@ -119,5 +113,20 @@ public class DuplicateCheckDirs {
         }
         // Return this to ease testing
         return deletedUuids;
+    }
+
+    private Optional<String> deleteDuplicateStore(final String uuid) {
+        try {
+            final LmdbEnvDir lmdbEnvDir = getDir(uuid);
+            lmdbEnvDir.delete();
+            LOGGER.info("Deleted redundant duplicate check store with UUID: {}, path: {}",
+                    uuid, LogUtil.path(lmdbEnvDir.getEnvDir()));
+            return Optional.of(uuid);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Error deleting duplicateStore with UUID {}: {}",
+                    uuid, LogUtil.exceptionMessage(e), e));
+            return Optional.empty();
+        }
     }
 }
