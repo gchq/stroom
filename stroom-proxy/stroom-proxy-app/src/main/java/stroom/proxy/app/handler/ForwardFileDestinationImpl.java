@@ -140,6 +140,8 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             } catch (Exception e) {
                 LOGGER.debug("'{}' - Error during liveness check", name, e);
             }
+        } else {
+            isLive = true;
         }
         LOGGER.debug("'{}' - isLive: {}", name, isLive);
         return isLive;

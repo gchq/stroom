@@ -67,7 +67,11 @@ public class ForwardHttpPostDestination implements ForwardDestination {
 
     @Override
     public boolean performLivenessCheck() {
-        return destination.performLivenessCheck();
+        if (hasLivenessCheck()) {
+            return destination.performLivenessCheck();
+        } else {
+            return true;
+        }
     }
 
     @Override

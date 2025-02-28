@@ -170,6 +170,10 @@ public final class ForwardHttpPostConfig
         return new Builder();
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

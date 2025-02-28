@@ -125,29 +125,30 @@ public class HttpSender implements StreamDestination {
     @Override
     public boolean performLivenessCheck() {
         final String url = config.getLivenessCheckUrl();
-        if (NullSafe.isBlankString(url)) {
-            throw new IllegalStateException("livenessCheckUrl is not set");
-        }
-
-        final HttpGet httpGet = new HttpGet(url);
-        httpGet.addHeader("User-Agent", userAgent);
-        addAuthHeaders(httpGet);
-
         boolean isLive;
-        try {
-            final int responseCode = httpClient.execute(httpGet, response -> {
-                final int code = response.getCode();
-                LOGGER.debug("response {}, code: {}", response, code);
-                consumeAndCloseResponseContent(response);
-                return code;
-            });
 
-            isLive = responseCode == HttpStatus.SC_OK;
-        } catch (IOException e) {
-            LOGGER.debug("Error calling livenessCheckUrl '{}': {}",
-                    url, LogUtil.exceptionMessage(e), e);
-            // Consider it not live
-            isLive = false;
+        if (NullSafe.isNonBlankString(url)) {
+            final HttpGet httpGet = new HttpGet(url);
+            httpGet.addHeader("User-Agent", userAgent);
+            addAuthHeaders(httpGet);
+
+            try {
+                final int responseCode = httpClient.execute(httpGet, response -> {
+                    final int code = response.getCode();
+                    LOGGER.debug("Liveness check, code: {}, response: '{}'", code, response);
+                    consumeAndCloseResponseContent(response);
+                    return code;
+                });
+
+                isLive = responseCode == HttpStatus.SC_OK;
+            } catch (IOException e) {
+                LOGGER.debug("Error calling livenessCheckUrl '{}': {}",
+                        url, LogUtil.exceptionMessage(e), e);
+                // Consider it not live
+                isLive = false;
+            }
+        } else {
+            isLive = true;
         }
         return isLive;
     }

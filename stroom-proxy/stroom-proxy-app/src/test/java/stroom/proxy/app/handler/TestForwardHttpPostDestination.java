@@ -106,6 +106,65 @@ class TestForwardHttpPostDestination {
                 .isNotEmptyDirectory();
     }
 
+    @Test
+    void test_noLivenesscheck() throws Exception {
+        final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
+                .livenessCheckUrl(null)
+                .build();
+        final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
+                "TestDest",
+                mockStreamDestination,
+                cleanupDirQueue,
+                forwardHttpPostConfig);
+
+        Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
+                .isFalse();
+        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
+                .isTrue();
+    }
+
+    @Test
+    void test_liveness_live() throws Exception {
+        final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
+                .livenessCheckUrl("aUrl")
+                .build();
+        final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
+                "TestDest",
+                mockStreamDestination,
+                cleanupDirQueue,
+                forwardHttpPostConfig);
+
+        Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
+                .isTrue();
+
+        Mockito.when(mockStreamDestination.performLivenessCheck())
+                .thenReturn(true);
+
+        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
+                .isTrue();
+    }
+
+    @Test
+    void test_liveness_notLive() throws Exception {
+        final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
+                .livenessCheckUrl("aUrl")
+                .build();
+        final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
+                "TestDest",
+                mockStreamDestination,
+                cleanupDirQueue,
+                forwardHttpPostConfig);
+
+        Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
+                .isTrue();
+
+        Mockito.when(mockStreamDestination.performLivenessCheck())
+                .thenReturn(false);
+
+        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
+                .isFalse();
+    }
+
     private Path getDataDir() {
         return dataDir;
     }

@@ -8,14 +8,18 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.proxy.repo.ProxyServices;
 import stroom.security.api.UserIdentityFactory;
+import stroom.test.common.TestResourceLocks;
 import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
@@ -25,6 +29,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,12 +42,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
 @ExtendWith(MockitoExtension.class)
 class TestHttpSender {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHttpSender.class);
-
-//    final MockHttpDestination mockHttpDestination = new MockHttpDestination();
 
     @Mock
     private LogStream mockLogStream;
@@ -55,6 +62,12 @@ class TestHttpSender {
     private HttpEntity mockHttpEntity;
     @Mock
     private ProxyServices mockProxyServices;
+
+    final MockHttpDestination mockHttpDestination = new MockHttpDestination();
+    // Use RegisterExtension instead of @WireMockTest so we can set up the req listener
+    @SuppressWarnings("unused")
+    @RegisterExtension
+    public final WireMockExtension wireMockExtension = mockHttpDestination.createExtension();
 
     static {
         CommonDirSetup.setup();
@@ -397,6 +410,83 @@ class TestHttpSender {
                         Mockito.anyLong(),
                         Mockito.anyLong(),
                         Mockito.contains(errorMsg));
+    }
+
+    @Test
+    void testLiveness_wiremock_noUrl() {
+        final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
+                .copy()
+                .livenessCheckUrl(null)
+                .build();
+
+        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
+                mappingBuilder.willReturn(WireMock.ok()));
+
+        final HttpClient httpClient = buildRealHttpClient();
+
+        HttpSender httpSender = new HttpSender(
+                mockLogStream,
+                config,
+                "my-user-agent",
+                mockUserIdentityFactory,
+                httpClient,
+                mockProxyServices);
+
+        assertThat(httpSender.performLivenessCheck())
+                .isTrue();
+    }
+
+    @Test
+    void testLiveness_wiremock_live() {
+        final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
+                .copy()
+                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+                .build();
+
+        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
+                mappingBuilder.willReturn(WireMock.ok()));
+
+        final HttpClient httpClient = buildRealHttpClient();
+
+        HttpSender httpSender = new HttpSender(
+                mockLogStream,
+                config,
+                "my-user-agent",
+                mockUserIdentityFactory,
+                httpClient,
+                mockProxyServices);
+
+        assertThat(httpSender.performLivenessCheck())
+                .isTrue();
+    }
+
+    @Test
+    void testLiveness_wiremock_notLive() {
+        final ForwardHttpPostConfig config = MockHttpDestination.createForwardHttpPostConfig(false)
+                .copy()
+                .livenessCheckUrl(MockHttpDestination.getLivenessCheckUrl())
+                .build();
+
+        mockHttpDestination.setupLivenessEndpoint(mappingBuilder ->
+                mappingBuilder.willReturn(WireMock.notFound()));
+
+        final HttpClient httpClient = buildRealHttpClient();
+
+        HttpSender httpSender = new HttpSender(
+                mockLogStream,
+                config,
+                "my-user-agent",
+                mockUserIdentityFactory,
+                httpClient,
+                mockProxyServices);
+
+        assertThat(httpSender.performLivenessCheck())
+                .isFalse();
+    }
+
+    private HttpClient buildRealHttpClient() {
+        return HttpClientBuilder.create()
+                .build();
     }
 
 
