@@ -1,11 +1,13 @@
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
@@ -13,9 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DuplicateCheckDirs {
@@ -68,24 +72,61 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
-    public <T extends AbstractAnalyticRuleDoc> void deleteUnused(
-            final List<String> duplicateStoreDirs,
-            final List<T> analytics) {
+    public List<String> deleteUnused(
+            final List<String> duplicateStoreUuids,
+            final List<AnalyticRuleDoc> analytics) {
+        final List<String> deletedUuids = new ArrayList<>();
         try {
-            // Delete unused duplicate stores.
-            final Set<String> remaining = new HashSet<>(duplicateStoreDirs);
-            for (final T analyticRuleDoc : analytics) {
-                remaining.remove(analyticRuleDoc.getUuid());
-            }
-            for (final String uuid : remaining) {
-                try {
-                    getDir(uuid).delete();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
+            LOGGER.debug(() -> LogUtil.message(
+                    "deleteUnused() - duplicateStoreUuids.size: {}, analytics.size: {}",
+                    NullSafe.size(duplicateStoreUuids), NullSafe.size(analytics)));
+            if (NullSafe.hasItems(duplicateStoreUuids)) {
+                final List<String> redundantDupStoreUuids;
+                if (NullSafe.hasItems(analytics)) {
+                    final Set<String> analyticUuids = analytics.stream()
+                            .filter(Objects::nonNull)
+                            .map(AnalyticRuleDoc::getUuid)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+                    // Find dup stores with no corresponding analytic
+                    redundantDupStoreUuids = duplicateStoreUuids.stream()
+                            .filter(uuid -> !analyticUuids.contains(uuid))
+                            .toList();
+                } else {
+                    // No analytics so all redundant
+                    redundantDupStoreUuids = duplicateStoreUuids;
+                }
+
+                // Delete unused duplicate stores.
+                redundantDupStoreUuids.stream()
+                        .map(this::deleteDuplicateStore)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .forEach(deletedUuids::add);
+
+                if (!deletedUuids.isEmpty()) {
+                    LOGGER.info("Deleted {} redundant duplicate check stores", deletedUuids.size());
                 }
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+        }
+        // Return this to ease testing
+        return deletedUuids;
+    }
+
+    private Optional<String> deleteDuplicateStore(final String uuid) {
+        try {
+            final LmdbEnvDir lmdbEnvDir = getDir(uuid);
+            lmdbEnvDir.delete();
+            LOGGER.info("Deleted redundant duplicate check store with UUID: {}, path: {}",
+                    uuid, LogUtil.path(lmdbEnvDir.getEnvDir()));
+            return Optional.of(uuid);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Error deleting duplicateStore with UUID {}: {}",
+                    uuid, LogUtil.exceptionMessage(e), e));
+            return Optional.empty();
         }
     }
 }

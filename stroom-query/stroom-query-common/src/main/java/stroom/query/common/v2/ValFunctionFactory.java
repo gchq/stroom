@@ -8,7 +8,6 @@ import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.util.date.DateUtil;
 
-import java.math.BigDecimal;
 import java.util.function.Function;
 
 public class ValFunctionFactory implements ValueFunctionFactory<Val> {
@@ -40,8 +39,7 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val> {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);
                     } catch (final NumberFormatException e) {
-//                        throw new MatchException(
-//                                "Unable to parse a date/time from value \"" + string + "\"");
+                        return null;
                     }
                 }
             }
@@ -50,24 +48,12 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val> {
     }
 
     @Override
-    public Function<Val, BigDecimal> createNumberExtractor() {
+    public Function<Val, Double> createNumberExtractor() {
         return values -> {
             try {
-                if (Type.LONG.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toLong());
-                } else if (Type.INTEGER.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toInteger());
-                } else if (Type.DOUBLE.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toDouble());
-                } else if (Type.FLOAT.equals(values.type())) {
-                    return BigDecimal.valueOf(values.toFloat());
-                }
-                return new BigDecimal(values.toString());
-            } catch (final NumberFormatException e) {
+                return values.toDouble();
+            } catch (final RuntimeException e) {
                 return null;
-
-//            throw new MatchException(
-//                    "Expected a numeric value but was given string \"" + val.toString() + "\"");
             }
         };
     }

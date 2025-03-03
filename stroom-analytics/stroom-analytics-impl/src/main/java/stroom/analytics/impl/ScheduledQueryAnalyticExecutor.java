@@ -92,6 +92,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
+    private final DuplicateCheckDirs duplicateCheckDirs;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticRuleStore analyticRuleStore,
@@ -118,7 +119,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                 nodeInfo,
                 securityContext,
                 executionScheduleDao,
-                duplicateCheckDirs,
                 docRefInfoServiceProvider,
                 "analytic rule");
         this.analyticRuleStore = analyticRuleStore;
@@ -132,6 +132,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
+        this.duplicateCheckDirs = duplicateCheckDirs;
     }
 
     @Override
@@ -368,6 +369,15 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         }
 
         return success;
+    }
+
+    @Override
+    void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
+        // Start by finding a set of UUIDs for existing rule checking stores.
+        final List<String> duplicateStoreUuids = duplicateCheckDirs.getAnalyticRuleUUIDList();
+
+        // Delete unused duplicate stores.
+        duplicateCheckDirs.deleteUnused(duplicateStoreUuids, analyticDocs);
     }
 
     @Override
