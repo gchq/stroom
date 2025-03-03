@@ -261,7 +261,7 @@ public class ExpressionPredicateFactory {
     private <T> Optional<Predicate<T>> createNumericTermPredicate(final ExpressionTerm term,
                                                                   final ValueFunctionFactory<T> valueFunctionFactory,
                                                                   final WordListProvider wordListProvider) {
-        final Function<T, BigDecimal> numExtractor = valueFunctionFactory.createNumberExtractor();
+        final Function<T, Double> numExtractor = valueFunctionFactory.createNumberExtractor();
         return switch (term.getCondition()) {
             case EQUALS -> NumericEquals.create(term, numExtractor);
             case NOT_EQUALS -> NotPredicate.create(NumericEquals.create(term, numExtractor));
@@ -281,10 +281,10 @@ public class ExpressionPredicateFactory {
     }
 
 
-    private static BigDecimal getTermNumber(final ExpressionTerm term,
-                                            final String value) {
+    private static Double getTermNumber(final ExpressionTerm term,
+                                        final String value) {
         try {
-            return new BigDecimal(value);
+            return new BigDecimal(value).doubleValue();
         } catch (final NumberFormatException e) {
             throw new MatchException(
                     "Expected a numeric value for field \"" + term.getField() +
@@ -321,10 +321,10 @@ public class ExpressionPredicateFactory {
         }
     }
 
-    private static BigDecimal[] getTermNumbers(final ExpressionTerm term,
-                                               final Object value) {
+    private static Double[] getTermNumbers(final ExpressionTerm term,
+                                           final Object value) {
         final String[] values = value.toString().split(DELIMITER);
-        final BigDecimal[] numbers = new BigDecimal[values.length];
+        final Double[] numbers = new Double[values.length];
         for (int i = 0; i < values.length; i++) {
             numbers[i] = getTermNumber(term, values[i].trim());
         }
@@ -364,7 +364,7 @@ public class ExpressionPredicateFactory {
 
         Function<T, Long> createDateExtractor();
 
-        Function<T, BigDecimal> createNumberExtractor();
+        Function<T, Double> createNumberExtractor();
 
         FieldType getFieldType();
     }
@@ -474,11 +474,11 @@ public class ExpressionPredicateFactory {
 
     private abstract static class NumericExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
 
-        final BigDecimal termNum;
-        final Function<T, BigDecimal> extractionFunction;
+        final Double termNum;
+        final Function<T, Double> extractionFunction;
 
         private NumericExpressionTermPredicate(final ExpressionTerm term,
-                                               final Function<T, BigDecimal> extractionFunction) {
+                                               final Function<T, Double> extractionFunction) {
             super(term);
             termNum = getTermNumber(term, term.getValue());
             this.extractionFunction = extractionFunction;
@@ -496,38 +496,42 @@ public class ExpressionPredicateFactory {
     private static class NumericEquals<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericEquals(final ExpressionTerm term,
-                              final Function<T, BigDecimal> extractionFunction) {
+                              final Function<T, Double> extractionFunction) {
             super(term, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> new NumericEquals<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            return Objects.equals(val, termNum);
+            try {
+                final Double val = extractionFunction.apply(values);
+                return Objects.equals(val, termNum);
+            } catch (final RuntimeException e) {
+                return false;
+            }
         }
     }
 
     private static class NumericGreaterThan<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericGreaterThan(final ExpressionTerm term,
-                                   final Function<T, BigDecimal> extractionFunction) {
+                                   final Function<T, Double> extractionFunction) {
             super(term, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> new NumericGreaterThan<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareBigDecimal(val, termNum);
+            final Double val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal > 0;
         }
     }
@@ -535,19 +539,19 @@ public class ExpressionPredicateFactory {
     private static class NumericGreaterThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericGreaterThanOrEqualTo(final ExpressionTerm term,
-                                            final Function<T, BigDecimal> extractionFunction) {
+                                            final Function<T, Double> extractionFunction) {
             super(term, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> new NumericGreaterThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareBigDecimal(val, termNum);
+            final Double val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal >= 0;
         }
     }
@@ -555,19 +559,19 @@ public class ExpressionPredicateFactory {
     private static class NumericLessThan<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericLessThan(final ExpressionTerm term,
-                                final Function<T, BigDecimal> extractionFunction) {
+                                final Function<T, Double> extractionFunction) {
             super(term, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> new NumericLessThan<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareBigDecimal(val, termNum);
+            final Double val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal < 0;
         }
     }
@@ -575,44 +579,44 @@ public class ExpressionPredicateFactory {
     private static class NumericLessThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
 
         private NumericLessThanOrEqualTo(final ExpressionTerm term,
-                                         final Function<T, BigDecimal> extractionFunction) {
+                                         final Function<T, Double> extractionFunction) {
             super(term, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> new NumericLessThanOrEqualTo<>(term, extractionFunction));
         }
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            int compVal = CompareUtil.compareBigDecimal(val, termNum);
+            final Double val = extractionFunction.apply(values);
+            int compVal = CompareUtil.compareDouble(val, termNum);
             return compVal <= 0;
         }
     }
 
     private static class NumericBetween<T> extends ExpressionTermPredicate<T> {
 
-        private final BigDecimal[] between;
-        private final Function<T, BigDecimal> extractionFunction;
+        private final Double[] between;
+        private final Function<T, Double> extractionFunction;
 
         private NumericBetween(final ExpressionTerm term,
-                               final Function<T, BigDecimal> extractionFunction,
-                               final BigDecimal[] between) {
+                               final Function<T, Double> extractionFunction,
+                               final Double[] between) {
             super(term);
             this.between = between;
             this.extractionFunction = extractionFunction;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
+                                                         final Function<T, Double> extractionFunction) {
             return ifValue(term, () -> {
-                final BigDecimal[] between = getTermNumbers(term, term.getValue());
+                final Double[] between = getTermNumbers(term, term.getValue());
                 if (between.length != 2) {
                     throw new MatchException("2 numbers needed for between query");
                 }
-                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                if (CompareUtil.compareDouble(between[0], between[1]) >= 0) {
                     throw new MatchException("From number must be lower than to number");
                 }
                 return new NumericBetween<>(term, extractionFunction, between);
@@ -621,28 +625,28 @@ public class ExpressionPredicateFactory {
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            return CompareUtil.compareBigDecimal(val, between[0]) >= 0
-                   && CompareUtil.compareBigDecimal(val, between[1]) <= 0;
+            final Double val = extractionFunction.apply(values);
+            return CompareUtil.compareDouble(val, between[0]) >= 0
+                   && CompareUtil.compareDouble(val, between[1]) <= 0;
         }
     }
 
     private static class NumericIn<T> extends ExpressionTermPredicate<T> {
 
-        private final BigDecimal[] in;
-        private final Function<T, BigDecimal> extractionFunction;
+        private final Double[] in;
+        private final Function<T, Double> extractionFunction;
 
         private NumericIn(final ExpressionTerm term,
-                          final Function<T, BigDecimal> extractionFunction,
-                          final BigDecimal[] in) {
+                          final Function<T, Double> extractionFunction,
+                          final Double[] in) {
             super(term);
             this.in = in;
             this.extractionFunction = extractionFunction;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction) {
-            final BigDecimal[] in = getTermNumbers(term, term.getValue());
+                                                         final Function<T, Double> extractionFunction) {
+            final Double[] in = getTermNumbers(term, term.getValue());
             // If there are no terms then always a false match.
             if (in.length == 0) {
                 return Optional.of(values -> false);
@@ -652,8 +656,8 @@ public class ExpressionPredicateFactory {
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            for (final BigDecimal n : in) {
+            final Double val = extractionFunction.apply(values);
+            for (final Double n : in) {
                 if (Objects.equals(n, val)) {
                     return true;
                 }
@@ -664,19 +668,19 @@ public class ExpressionPredicateFactory {
 
     private static class NumericInDictionary<T> extends ExpressionTermPredicate<T> {
 
-        private final Function<T, BigDecimal> extractionFunction;
-        private final BigDecimal[] in;
+        private final Function<T, Double> extractionFunction;
+        private final Double[] in;
 
         private NumericInDictionary(final ExpressionTerm term,
-                                    final Function<T, BigDecimal> extractionFunction,
-                                    final BigDecimal[] in) {
+                                    final Function<T, Double> extractionFunction,
+                                    final Double[] in) {
             super(term);
             this.extractionFunction = extractionFunction;
             this.in = in;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
-                                                         final Function<T, BigDecimal> extractionFunction,
+                                                         final Function<T, Double> extractionFunction,
                                                          final WordListProvider wordListProvider) {
             final String[] words;
             if (term.getDocRef() != null) {
@@ -688,7 +692,7 @@ public class ExpressionPredicateFactory {
                 return Optional.of(values -> false);
             }
 
-            final BigDecimal[] in = new BigDecimal[words.length];
+            final Double[] in = new Double[words.length];
             for (int i = 0; i < words.length; i++) {
                 final String word = words[i];
                 in[i] = getTermNumber(term, word);
@@ -698,8 +702,8 @@ public class ExpressionPredicateFactory {
 
         @Override
         public boolean test(final T values) {
-            final BigDecimal val = extractionFunction.apply(values);
-            for (final BigDecimal n : in) {
+            final Double val = extractionFunction.apply(values);
+            for (final Double n : in) {
                 if (Objects.equals(n, val)) {
                     return true;
                 }
