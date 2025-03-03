@@ -33,8 +33,14 @@ public class StringValueFunctionFactory implements ValueFunctionFactory<String> 
     }
 
     @Override
-    public Function<String, BigDecimal> createNumberExtractor() {
-        return BigDecimal::new;
+    public Function<String, Double> createNumberExtractor() {
+        return string -> {
+            try {
+                return new BigDecimal(string).doubleValue();
+            } catch (final NumberFormatException e) {
+                return null;
+            }
+        };
     }
 
     @Override
