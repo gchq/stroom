@@ -75,6 +75,21 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         return INSTANCES[len];
     }
 
+    public static UnsignedBytes forValue(final long value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException("Non positive values are not allowed");
+        }
+
+        for (int i = 1; i < INSTANCES.length; i++) {
+            final UnsignedBytes unsignedBytes = INSTANCES[i];
+            if (unsignedBytes.maxValue() >= value) {
+                return unsignedBytes;
+            }
+        }
+
+        throw new IllegalArgumentException("Unable to find appropriate unsigned bytes size");
+    }
+
     @Override
     public byte[] toBytes(final long val) {
         if (len == 0 && val == 0) {

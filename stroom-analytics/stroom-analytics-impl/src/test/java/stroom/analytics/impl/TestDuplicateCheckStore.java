@@ -52,7 +52,6 @@ class TestDuplicateCheckStore {
     @Mock
     private DuplicateCheckDirs mockDuplicateCheckDirs;
 
-
     @Test
     void test(@TempDir Path tempDir) {
         LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);

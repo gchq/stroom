@@ -1,7 +1,5 @@
 package stroom.analytics.shared;
 
-import stroom.util.shared.GwtNullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -46,7 +44,6 @@ public class DuplicateCheckRow {
 
     @Override
     public String toString() {
-        GwtNullSafe.stream(values);
         return "DuplicateCheckRow{" +
                "values=" + values +
                '}';

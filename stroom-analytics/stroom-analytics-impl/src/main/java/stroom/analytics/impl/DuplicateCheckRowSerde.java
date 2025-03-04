@@ -1,7 +1,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.DuplicateCheckRow;
-import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
@@ -23,19 +22,15 @@ import java.util.List;
 
 /**
  * The serialised key is of the form:
- * <pre>{@code <hash bytes (8)><seq no bytes(2)>}</pre>
+ * <pre>{@code <hash bytes (8)><seq no bytes(variable)>}</pre>
  */
-class DuplicateCheckRowSerde {
+public class DuplicateCheckRowSerde {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckRowSerde.class);
 
-    // Two bytes gives us 65k possible hash clashes, per hash. Hopefully enough
-    private static final int SEQUENCE_NUMBER_BYTES = 2;
-    private static final int HASH_OFFSET = 0;
     private static final int HASH_BYTES = Long.BYTES;
     private static final int SEQUENCE_NUMBER_OFFSET = HASH_BYTES;
-    private static final int KEY_BYTES = HASH_BYTES + SEQUENCE_NUMBER_BYTES;
-    private static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.ofLength(SEQUENCE_NUMBER_BYTES);
+    private static final int MAX_KEY_BYTES = HASH_BYTES + Long.BYTES;
 
     private final ByteBufferFactory byteBufferFactory;
 
@@ -60,9 +55,8 @@ class DuplicateCheckRowSerde {
     private LmdbKV createLmdbKV(final byte[] bytes) {
         // Hash the value.
         final long rowHash = createHash(bytes);
-        final ByteBuffer keyByteBuffer = acquireKeyBuffer();
+        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(MAX_KEY_BYTES);
         keyByteBuffer.putLong(rowHash);
-        UNSIGNED_BYTES.put(keyByteBuffer, 0);
         keyByteBuffer.flip();
 
         // TODO : Possibly trim bytes, although should have already happened.
@@ -75,20 +69,16 @@ class DuplicateCheckRowSerde {
     }
 
     /**
-     * Copy the hash part of the sourceKeyBuffer into destKeyBuffer.
-     * Absolute, no flip needed.
-     */
-    private void copyHashPart(final ByteBuffer sourceKeyBuffer,
-                              final ByteBuffer destKeyBuffer) {
-        ByteBufferUtils.copy(sourceKeyBuffer, destKeyBuffer, HASH_OFFSET, HASH_OFFSET, HASH_BYTES);
-    }
-
-    /**
      * Extracts the sequence number value from the keyBuffer.
      * Absolute, no flip required
      */
     public long extractSequenceNumber(final ByteBuffer keyBuffer) {
-        return UNSIGNED_BYTES.get(keyBuffer, SEQUENCE_NUMBER_OFFSET);
+        final int len = keyBuffer.limit() - SEQUENCE_NUMBER_OFFSET;
+        if (len == 0) {
+            return 0;
+        }
+        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.ofLength(len);
+        return unsignedBytes.get(keyBuffer, SEQUENCE_NUMBER_OFFSET);
     }
 
     /**
@@ -96,30 +86,29 @@ class DuplicateCheckRowSerde {
      * Absolute, no flip required.
      */
     public void setSequenceNumber(final ByteBuffer keyBuffer, final long sequenceNumber) {
-        UNSIGNED_BYTES.put(keyBuffer, SEQUENCE_NUMBER_OFFSET, sequenceNumber);
+        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(sequenceNumber);
+        keyBuffer.limit(SEQUENCE_NUMBER_OFFSET + unsignedBytes.length());
+        unsignedBytes.put(keyBuffer, SEQUENCE_NUMBER_OFFSET, sequenceNumber);
     }
 
     /**
      * Create a {@link KeyRange} for all possible keys that share the same hash value
      * as lmdbKV.
      */
-    public KeyRange<ByteBuffer> createSingleHashKeyRange(final LmdbKV lmdbKV) {
-        final ByteBuffer startKeyBuf = acquireKeyBuffer();
-        final ByteBuffer endKeyBuf = acquireKeyBuffer();
-        acquireKeyBuffer();
-        // Make the start key (inc)
-        copyHashPart(lmdbKV.getRowKey(), startKeyBuf);
-        startKeyBuf.position(HASH_BYTES);
-        UNSIGNED_BYTES.put(startKeyBuf, 0);
+    public KeyRange<ByteBuffer> createSequenceKeyRange(final LmdbKV lmdbKV) {
+        final long hash = lmdbKV.getRowKey().getLong(0);
+
+        final ByteBuffer startKeyBuf = byteBufferFactory.acquire(HASH_BYTES);
+        final ByteBuffer endKeyBuf = byteBufferFactory.acquire(HASH_BYTES);
+
+        // Make the start key (excl)
+        startKeyBuf.putLong(hash);
         startKeyBuf.flip();
 
-        // Make the end key (inc)
-        copyHashPart(lmdbKV.getRowKey(), endKeyBuf);
-        endKeyBuf.position(HASH_BYTES);
-        UNSIGNED_BYTES.put(endKeyBuf, UNSIGNED_BYTES.maxValue());
+        // Make the end key (excl)
+        endKeyBuf.putLong(hash + 1);
         endKeyBuf.flip();
-
-        return KeyRange.closed(startKeyBuf, endKeyBuf);
+        return KeyRange.open(startKeyBuf, endKeyBuf);
     }
 
     public DuplicateCheckRow createDuplicateCheckRow(final ByteBuffer valBuffer) {
@@ -131,10 +120,6 @@ class DuplicateCheckRowSerde {
             }
         }
         return new DuplicateCheckRow(values);
-    }
-
-    public ByteBuffer acquireKeyBuffer() {
-        return byteBufferFactory.acquire(KEY_BYTES);
     }
 
     private byte[] serialise(final List<String> values) {

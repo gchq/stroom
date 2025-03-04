@@ -20,7 +20,6 @@ import java.util.concurrent.Executor;
 @Singleton
 public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
 
-    private final ByteBufferFactory byteBufferFactory;
     private final DuplicateCheckStoreConfig analyticResultStoreConfig;
     private final DuplicateCheckStorePool<String, DuplicateCheckStore> pool;
 
@@ -30,7 +29,6 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
                                      final DuplicateCheckStoreConfig duplicateCheckStoreConfig,
                                      final DuplicateCheckRowSerde duplicateCheckRowSerde,
                                      final Provider<Executor> executorProvider) {
-        this.byteBufferFactory = byteBufferFactory;
         this.analyticResultStoreConfig = duplicateCheckStoreConfig;
 
         pool = new DuplicateCheckStorePool<>(k -> new DuplicateCheckStore(

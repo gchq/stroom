@@ -83,9 +83,7 @@ class DuplicateCheckStore {
     }
 
     synchronized void writeColumnNames(final List<String> columnNames) {
-        writer.write(writeTxn -> {
-            writeColumnNames(writeTxn, columnNames);
-        });
+        writer.write(writeTxn -> writeColumnNames(writeTxn, columnNames));
     }
 
     synchronized boolean tryInsert(final DuplicateCheckRow duplicateCheckRow) {
@@ -121,51 +119,70 @@ class DuplicateCheckStore {
     private boolean tryInsert(final DuplicateCheckRow duplicateCheckRow,
                               final WriteTxn writeTxn,
                               final LmdbKV lmdbKV) {
+        // try immediate insert first.
+        boolean didPut = db.put(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue(), PutFlags.MDB_NOOVERWRITE);
+        if (didPut) {
+            return true;
+        }
 
-        final AtomicBoolean foundMatchingVal = new AtomicBoolean();
-        final AtomicLong maxSeqNo = new AtomicLong(-1);
-        boolean didPut = false;
+        // If we didn't put then check to see if this was because this is an exact duplicate.
+        final ByteBuffer valueBuffer = db.get(writeTxn, lmdbKV.getRowKey());
+        if (ByteBufferUtils.compare(lmdbKV.getRowValue(), valueBuffer) == 0) {
+            // Found our value, job done
+            LOGGER.debug("Found row {}", duplicateCheckRow);
+            return false;
+        }
+
+        // We have a hash clash and didn't find the value we are looking for using the same key. We need to look at
+        // multiple keys to see if we can find the value.
         KeyRange<ByteBuffer> singleHashKeyRange = null;
+        final long nextSeqNo;
         try {
-            singleHashKeyRange = duplicateCheckRowSerde.createSingleHashKeyRange(lmdbKV);
+            // We know that the first key already exists so we will create a range beyond it and up to (not including)
+            // hash + 1 to search within the sequence space.
+            singleHashKeyRange = duplicateCheckRowSerde.createSequenceKeyRange(lmdbKV);
 
             // Iterate over all entries with the same hash. Will only be one unless
             // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
             // gaps in the seq numbers.
-            db.iterate(writeTxn, singleHashKeyRange, keyValIterator -> {
+            nextSeqNo = db.iterateResult(writeTxn, singleHashKeyRange, keyValIterator -> {
+                long maxSeqNo = 0;
+
                 while (keyValIterator.hasNext()) {
                     final KeyVal<ByteBuffer> cursorKeyVal = keyValIterator.next();
                     final long seqNo = duplicateCheckRowSerde.extractSequenceNumber(cursorKeyVal.key());
+
                     // See if the value is the same as ours
                     if (ByteBufferUtils.compare(lmdbKV.getRowValue(), cursorKeyVal.val()) == 0) {
                         // Found our value, job done
                         LOGGER.debug("Found row {}", duplicateCheckRow);
-                        foundMatchingVal.set(true);
-                        break;
+                        return -1L;
                     } else {
                         LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
                                 seqNo,
                                 ByteBufferUtils.byteBufferInfo(cursorKeyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(cursorKeyVal.val())));
                     }
-                    // keys will be seqNo order so can just set here
-                    maxSeqNo.set(seqNo);
+
+                    // Remember the maximum sequence number.
+                    maxSeqNo = Math.max(maxSeqNo, seqNo);
                 }
+
+                return maxSeqNo;
             });
         } finally {
             releaseKeyRange(singleHashKeyRange);
         }
 
-        if (!foundMatchingVal.get()) {
+        if (nextSeqNo != -1) {
             LOGGER.debug("Didn't find row {}", duplicateCheckRow);
-            final long seqNoVal = maxSeqNo.get() + 1;
-            if (seqNoVal != 0) {
-                duplicateCheckRowSerde.setSequenceNumber(lmdbKV.getRowKey(), seqNoVal);
-            }
+            final long seqNoVal = nextSeqNo + 1;
+            duplicateCheckRowSerde.setSequenceNumber(lmdbKV.getRowKey(), seqNoVal);
             didPut = db.put(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue(), PutFlags.MDB_NOOVERWRITE);
-            if (didPut) {
-                uncommittedCount++;
+            if (!didPut) {
+                throw new RuntimeException("Expected to put value but failed");
             }
+            uncommittedCount++;
         }
 
         if (LOGGER.isDebugEnabled()) {
@@ -273,11 +290,21 @@ class DuplicateCheckStore {
         return true;
     }
 
-    private synchronized void delete(LmdbKV lmdbKV) {
+    private synchronized void delete(final LmdbKV lmdbKV) {
         writer.write(writeTxn -> {
+            // First try to delete directly.
+            final boolean success = db.delete(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue());
+            if (success) {
+                LOGGER.debug("Deleted lmdbKV directly {}", lmdbKV);
+                return;
+            }
+
+            // If we didn't manage to delete directly then see if we can find the row to delete.
             KeyRange<ByteBuffer> singleHashKeyRange = null;
             try {
-                singleHashKeyRange = duplicateCheckRowSerde.createSingleHashKeyRange(lmdbKV);
+                // We tried the first key already so we will create a range beyond it and up to (not including)
+                // hash + 1 to search within the sequence space.
+                singleHashKeyRange = duplicateCheckRowSerde.createSequenceKeyRange(lmdbKV);
 
                 // Iterate over all entries with the same hash. Will only be one unless
                 // we get a hash clash. Delete the one with the matching value.
@@ -288,14 +315,14 @@ class DuplicateCheckStore {
                         if (ByteBufferUtils.compare(lmdbKV.getRowValue(), cursorKeyVal.val()) == 0) {
                             // Found our value, delete it
                             keyValIterator.remove();
-                            LOGGER.debug("Deleted lmdbKV {}", lmdbKV);
+                            LOGGER.debug("Deleted lmdbKV via iterator {}", lmdbKV);
                             break;
                         }
                     }
                 });
                 LOGGER.debug("Finished delete iterator");
-            } catch (Exception e) {
-                LOGGER.error("Error deleting " + lmdbKV, e);
+            } catch (final Exception e) {
+                LOGGER.error("Error deleting lmdbKV {}", lmdbKV, e);
                 throw e;
             } finally {
                 releaseKeyRange(singleHashKeyRange);
