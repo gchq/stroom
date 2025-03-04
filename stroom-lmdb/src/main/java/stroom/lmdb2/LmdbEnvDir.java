@@ -27,6 +27,10 @@ public class LmdbEnvDir {
         this.isDedicatedDir = isDedicatedDir;
     }
 
+    public boolean dbExists() {
+        return Files.exists(envDir.resolve(DATA_FILE_NAME));
+    }
+
     public Path getEnvDir() {
         return envDir;
     }
