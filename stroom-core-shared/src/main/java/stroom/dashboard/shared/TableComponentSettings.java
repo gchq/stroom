@@ -343,7 +343,9 @@ public class TableComponentSettings implements ComponentSettings, HasSelectionFi
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
             this.applyValueFilters = tableSettings.applyValueFilters;
-            this.selectionFilter = tableSettings.selectionHandlers;
+            this.selectionFilter = tableSettings.selectionHandlers == null
+                    ? null
+                    : new ArrayList<>(tableSettings.selectionHandlers);
         }
 
         private List<ConditionalFormattingRule> copyConditionalFormattingRules(
