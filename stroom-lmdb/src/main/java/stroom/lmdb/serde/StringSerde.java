@@ -25,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 
 public class StringSerde implements Serde<String> {
 
+    public static final StringSerde INSTANCE = new StringSerde();
+
     @Override
     public String deserialize(final ByteBuffer byteBuffer) {
         return extractValue(byteBuffer);

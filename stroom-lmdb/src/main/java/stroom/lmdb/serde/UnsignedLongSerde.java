@@ -1,6 +1,7 @@
 package stroom.lmdb.serde;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class UnsignedLongSerde implements Serde<UnsignedLong> {
 
@@ -17,6 +18,12 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
             throw new RuntimeException("Length mismatch, " + len + " vs " + unsignedBytes.length());
         }
         this.len = len;
+        this.unsignedBytes = unsignedBytes;
+    }
+
+    public UnsignedLongSerde(final UnsignedBytes unsignedBytes) {
+        Objects.requireNonNull(unsignedBytes);
+        this.len = unsignedBytes.length();
         this.unsignedBytes = unsignedBytes;
     }
 
@@ -45,7 +52,7 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
     @Override
     public String toString() {
         return "UnsignedLongSerde{" +
-                "len=" + len +
-                '}';
+               "len=" + len +
+               '}';
     }
 }

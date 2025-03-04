@@ -61,7 +61,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
         lmdbEnv = new LmdbEnvFactory(pathCreator, new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
+                .withMaxDbCount(20)
                 .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();

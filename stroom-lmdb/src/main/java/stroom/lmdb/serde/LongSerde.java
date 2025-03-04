@@ -21,6 +21,8 @@ import java.nio.ByteBuffer;
 
 public class LongSerde implements Serde<Long> {
 
+    public static final LongSerde INSTANCE = new LongSerde();
+
     @Override
     public Long deserialize(final ByteBuffer byteBuffer) {
         Long val = byteBuffer.getLong();

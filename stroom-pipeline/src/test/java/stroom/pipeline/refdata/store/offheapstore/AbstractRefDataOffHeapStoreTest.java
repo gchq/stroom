@@ -674,6 +674,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
                 // get the proxy object
                 final RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, key);
 
+//                refDataStore.logAllContents(LOGGER::info);
+
                 // Trigger the lookup
                 final Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
@@ -738,7 +740,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
                                 .map(name -> new MapDefinition(refStreamDefinition, name))
                                 .forEach(mapDefinition -> {
                                     int cnt = counter.incrementAndGet();
-                                    Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
+                                    Range<Long> keyRange = new Range<>(cnt * 10L, ((cnt * 10L) + 10));
                                     StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
                                     doLoaderPut(loader, mapDefinition, keyRange, value);

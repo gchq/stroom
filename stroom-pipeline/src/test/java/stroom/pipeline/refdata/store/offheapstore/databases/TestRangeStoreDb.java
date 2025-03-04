@@ -399,6 +399,10 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         executorService.awaitTermination(20, TimeUnit.SECONDS);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Obj {
 
         private final String key;
@@ -407,7 +411,5 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         Obj(final String key) {
             this.key = key;
         }
-
-
     }
 }

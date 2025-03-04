@@ -68,6 +68,8 @@ public class RangeStoreDb
                         final ValueStoreKeySerde valueSerde) {
 
         super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME);
+//        super(lmdbEnvironment.getEnvironment(), byteBufferPool, keySerde, valueSerde, DB_NAME,
+//                DbiFlags.MDB_CREATE, DbiFlags.MDB_UNSIGNEDKEY);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         lmdbEnvironment.registerDatabases(this);
@@ -139,7 +141,7 @@ public class RangeStoreDb
                                     uidOfFoundKey, mapDefinitionUid));
                         }
                         LOGGER.trace(() -> "key " + key + " is in the range, " +
-                                "found the required value after " + cnt.get() + " iterations");
+                                           "found the required value after " + cnt.get() + " iterations");
 
                         // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
                         //  Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the

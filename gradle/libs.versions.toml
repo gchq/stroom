@@ -147,7 +147,7 @@ kryo = { module = "com.esotericsoftware:kryo", version = "5.5.0" }
 # See https:#github.com/gchq/stroom/issues/3485 & https:#github.com/gchq/stroom/issues/4133
 # Potentially caused by https:#github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
 # lmdbjava 0.9.0 has a cursor bug though, https:#github.com/lmdbjava/lmdbjava/issues/228
-lmdbjava = { module = "org.lmdbjava:lmdbjava", version = "0.8.2" }
+lmdbjava = { module = "org.lmdbjava:lmdbjava", version = "0.9.1" }
 # This is the bridge from log4j v1 to slf4j
 log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j" } # version controlled by dropwizard-dependencies
 # This is the bridge from log4j v2 to slf4j
