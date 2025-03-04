@@ -19,6 +19,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -42,19 +43,13 @@ class DuplicateCheckStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckStore.class);
 
-    private static final int DB_STATE_KEY_LENGTH = 1;
-    public static final ByteBuffer DB_STATE_KEY = ByteBuffer.allocateDirect(DB_STATE_KEY_LENGTH);
-
-    static {
-        DB_STATE_KEY.put((byte) -1);
-        DB_STATE_KEY.flip();
-    }
+    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final ByteBufferFactory byteBufferFactory;
     private final DuplicateCheckRowSerde duplicateCheckRowSerde;
     private final LmdbEnv lmdbEnv;
     private final LmdbDb db;
-    private final LmdbDb columnNamesDb;
+    private final LmdbDb infoDb;
     private final LmdbWriter writer;
     private final int maxPutsBeforeCommit = 100;
     private long uncommittedCount = 0;
@@ -68,6 +63,17 @@ class DuplicateCheckStore {
         this.byteBufferFactory = byteBufferFactory;
         this.duplicateCheckRowSerde = duplicateCheckRowSerde;
         final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleUUID);
+
+        // See if the DB dir already exists.
+        if (lmdbEnvDir.dbExists()) {
+            // Find out the current schema version if any.
+            final int schemaVersion = readSchemaVersion(lmdbEnvDir, duplicateCheckStoreConfig);
+            // If there is no schema then delete and start again with a new DB.
+            if (schemaVersion == -1) {
+                lmdbEnvDir.delete();
+            }
+        }
+
         this.lmdbEnv = LmdbEnv
                 .builder()
                 .config(duplicateCheckStoreConfig.getLmdbConfig())
@@ -78,8 +84,46 @@ class DuplicateCheckStore {
                 .build();
 
         this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE);
-        this.columnNamesDb = lmdbEnv.openDb("column-names", DbiFlags.MDB_CREATE);
+        this.infoDb = lmdbEnv.openDb("info", DbiFlags.MDB_CREATE);
         writer = new LmdbWriter(executorProvider, lmdbEnv);
+        writeSchemaVersion();
+    }
+
+    private int readSchemaVersion(final LmdbEnvDir lmdbEnvDir,
+                                  final DuplicateCheckStoreConfig duplicateCheckStoreConfig) {
+        int version = -1;
+        try {
+            final LmdbEnv lmdbEnv = LmdbEnv
+                    .builder()
+                    .config(duplicateCheckStoreConfig.getLmdbConfig())
+                    .lmdbEnvDir(lmdbEnvDir)
+                    .maxDbs(2)
+                    .maxReaders(1)
+                    .addEnvFlag(EnvFlags.MDB_NOTLS)
+                    .build();
+            final LmdbDb info = lmdbEnv.openDb("info");
+            final ByteBuffer valueBuffer = info.get(lmdbEnv.readTxn(), InfoKey.SCHEMA_VERSION.getByteBuffer());
+            version = valueBuffer.getInt();
+
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return version;
+    }
+
+    private synchronized void writeSchemaVersion() {
+        writer.write(writeTxn -> writeSchemaVersion(writeTxn, CURRENT_SCHEMA_VERSION));
+    }
+
+    private void writeSchemaVersion(final WriteTxn txn, final int schemaVersion) {
+        final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
+        try {
+            byteBuffer.putInt(schemaVersion);
+            byteBuffer.flip();
+            infoDb.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
+        } finally {
+            byteBufferFactory.release(byteBuffer);
+        }
     }
 
     synchronized void writeColumnNames(final List<String> columnNames) {
@@ -254,19 +298,22 @@ class DuplicateCheckStore {
     }
 
     private void writeColumnNames(final WriteTxn txn, final List<String> columnNames) {
-        final ByteBuffer byteBuffer;
         try (final ByteBufferPoolOutput output =
                 new ByteBufferPoolOutput(byteBufferFactory, 128, -1)) {
             columnNames.forEach(output::writeString);
             output.flush();
-            byteBuffer = output.getByteBuffer();
+            final ByteBuffer byteBuffer = output.getByteBuffer();
             byteBuffer.flip();
+            try {
+                infoDb.put(txn, InfoKey.COLUMN_NAMES.getByteBuffer(), byteBuffer);
+            } finally {
+                byteBufferFactory.release(byteBuffer);
+            }
         }
-        columnNamesDb.put(txn, DB_STATE_KEY.duplicate(), byteBuffer);
     }
 
     private void readColumnNames(final ReadTxn txn, final List<String> columnNames) {
-        final ByteBuffer state = columnNamesDb.get(txn, DB_STATE_KEY);
+        final ByteBuffer state = infoDb.get(txn, InfoKey.COLUMN_NAMES.getByteBuffer());
         if (state != null) {
             try (final Input input = new UnsafeByteBufferInput(state)) {
                 while (!input.end()) {
@@ -361,6 +408,30 @@ class DuplicateCheckStore {
                    + "}, Value: {"
                    + NullSafe.get(lmdbKV.getRowValue(), ByteBufferUtils::byteBufferInfo)
                    + "}";
+        }
+    }
+
+    private enum InfoKey implements HasPrimitiveValue {
+        SCHEMA_VERSION(0),
+        COLUMN_NAMES(1);
+
+        private final byte primitiveValue;
+        private final ByteBuffer byteBuffer;
+
+        InfoKey(final int primitiveValue) {
+            this.primitiveValue = (byte) primitiveValue;
+            this.byteBuffer = ByteBuffer.allocateDirect(1);
+            byteBuffer.put((byte) primitiveValue);
+            byteBuffer.flip();
+        }
+
+        @Override
+        public byte getPrimitiveValue() {
+            return primitiveValue;
+        }
+
+        public ByteBuffer getByteBuffer() {
+            return byteBuffer.duplicate();
         }
     }
 }
