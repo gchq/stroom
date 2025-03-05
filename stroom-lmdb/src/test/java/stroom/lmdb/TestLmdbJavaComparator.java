@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.KeyRange;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.SequencedMap;
@@ -28,8 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbJavaComparator.class);
-
-    private static Method MISMATCH_METHOD = getMismatchMethod();
 
     final ByteBuffer buffer1 = ByteBuffer.allocate(20);
     final ByteBuffer buffer2 = ByteBuffer.allocate(20);
@@ -159,13 +155,6 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
             }
         });
 
-        final TimedCase reflection = TimedCase.of("reflection", (round, iterations) -> {
-            final int res = jdkCompare(buffer1, buffer2);
-            if (res >= 0) {
-                throw new RuntimeException("bad");
-            }
-        });
-
         final TimedCase compareBuf = TimedCase.of("compareBuf", (round, iterations) -> {
             final int res = compareBuff(buffer1, buffer2);
             if (res >= 0) {
@@ -177,7 +166,6 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
                 10_000_000L,
                 LOGGER::debug,
                 jdkCompare,
-                reflection,
                 compareBuf);
     }
 
@@ -248,50 +236,6 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
             }
         }
         return o1.remaining() - o2.remaining();
-    }
-
-    /**
-     * This is
-     *
-     * @param o1
-     * @param o2
-     * @return
-     */
-    private int jdkCompare(final ByteBuffer o1, final ByteBuffer o2) {
-        int thisPos = o1.position();
-        int thisRem = o1.limit() - thisPos;
-        int thatPos = o2.position();
-        int thatRem = o2.limit() - thatPos;
-        int length = Math.min(thisRem, thatRem);
-        if (length < 0) {
-            return -1;
-        }
-        int i = mismatch(o1, thisPos, o2, thatPos, length);
-        if (i >= 0) {
-            return Byte.compareUnsigned(o1.get(thisPos + i), o2.get(thatPos + i));
-        }
-        return thisRem - thatRem;
-    }
-
-    private static Method getMismatchMethod() {
-        Method method = null;
-        try {
-            final Class<?> clazz = Class.forName("java.nio.BufferMismatch");
-            method = clazz.getDeclaredMethod("mismatch",
-                    ByteBuffer.class, int.class, ByteBuffer.class, int.class, int.class);
-            method.setAccessible(true);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return method;
-    }
-
-    private int mismatch(ByteBuffer a, int aOff, ByteBuffer b, int bOff, int length) {
-        try {
-            return (int) MISMATCH_METHOD.invoke(null, a, aOff, b, bOff, length);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     // --------------------------------------------------------------------------------
