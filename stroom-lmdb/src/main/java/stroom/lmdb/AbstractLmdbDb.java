@@ -42,13 +42,16 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -138,8 +141,8 @@ public abstract class AbstractLmdbDb<K, V>
         int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
         if (keySerdeCapacity > envMaxKeySize) {
             LAMBDA_LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
-                            "key size for the environment {}. " +
-                            "The max environment key size {} will be used instead.",
+                                                      "key size for the environment {}. " +
+                                                      "The max environment key size {} will be used instead.",
                     keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
@@ -342,6 +345,21 @@ public abstract class AbstractLmdbDb<K, V>
                 return streamFunction.apply(deSerialisedStream);
             });
         }
+    }
+
+    /**
+     * Get all entries found in keyRange in the order they are found in the DB.
+     *
+     * @return The result of the stream mapping function.
+     */
+    public SequencedMap<K, V> asSequencedMap(final Txn<ByteBuffer> txn,
+                                             final KeyRange<K> keyRange) {
+        return streamEntries(txn, keyRange, stream -> stream
+                .collect(Collectors.toMap(
+                        Entry::getKey,
+                        Entry::getValue,
+                        (o, o2) -> o, // Merge shouldn't be an issue as the db is essentially a map
+                        LinkedHashMap::new)));
     }
 
     /**
