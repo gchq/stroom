@@ -52,9 +52,9 @@ abstract class AbstractLmdbWriter2<K, V> implements AutoCloseable {
                 .setMaxReaders(1);
 
         env = builder.open(lmdbEnvDir.getEnvDir().toFile(), EnvFlags.MDB_NOTLS);
-        keyDb = env.openDbi(KEY, DbiFlags.MDB_CREATE);
-        valueDb = env.openDbi(VALUE, DbiFlags.MDB_CREATE);
-        stateDb = env.openDbi(STATE, DbiFlags.MDB_CREATE);
+        keyDb = env.openDbi(KEY, DbiFlags.MDB_CREATE, DbiFlags.MDB_UNSIGNEDKEY);
+        valueDb = env.openDbi(VALUE, DbiFlags.MDB_CREATE, DbiFlags.MDB_UNSIGNEDKEY);
+        stateDb = env.openDbi(STATE, DbiFlags.MDB_CREATE, DbiFlags.MDB_UNSIGNEDKEY);
     }
 
 //    public void merge(final Path source) {

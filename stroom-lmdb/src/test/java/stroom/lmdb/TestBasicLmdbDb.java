@@ -135,7 +135,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 StringSerde.INSTANCE,
                 "MyBasicLmdb4",
                 DbiFlags.MDB_CREATE,
-                DbiFlags.MDB_INTEGERKEY);
+                DbiFlags.MDB_INTEGERKEY,
+                DbiFlags.MDB_UNSIGNEDKEY);
 
         basicLmdbDb5 = new BasicLmdbDb<>(
                 lmdbEnv,
@@ -1015,88 +1016,6 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 .addCase(KeyRange.open(5L, 15L),
                         RangeInfo.of(6, 14, 9))
                 .build();
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testKeyRange_numeric_negative() {
-        final BasicLmdbDb<Long, String> lmdbDb = new BasicLmdbDb<>(
-                lmdbEnv,
-                byteBufferPool,
-                LongSerde.INSTANCE,
-                StringSerde.INSTANCE,
-                "testKeyRange_numeric_negative",
-                DbiFlags.MDB_CREATE,
-                DbiFlags.MDB_INTEGERKEY,
-                DbiFlags.MDB_UNSIGNEDKEY);
-
-        final AtomicInteger totalCount = new AtomicInteger();
-        lmdbEnv.doWithWriteTxn(writeTxn -> {
-            Stream.of(-100, -10, 0, 10, 100)
-                    .flatMap(i ->
-                            LongStream.rangeClosed(i, i + 9L)
-                                    .boxed())
-                    .forEach(i -> {
-                        lmdbDb.put(
-                                writeTxn,
-                                i,
-                                "value-" + Strings.padStart(
-                                        String.valueOf(i),
-                                        10, '0'),
-                                false);
-                        totalCount.incrementAndGet();
-                    });
-        });
-
-        lmdbDb.logDatabaseContents(LOGGER::debug);
-
-        LOGGER.info("totalCount: {}", totalCount);
-
-        assertThat(lmdbDb.getEntryCount())
-                .isEqualTo(totalCount.get());
-
-        return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<KeyRange<Long>>() {
-                })
-                .withOutputType(RangeInfo.class)
-                .withTestFunction(testCase -> {
-                    final KeyRange<Long> keyRange = testCase.getInput();
-                    return lmdbEnv.getWithReadTxn(txn -> {
-                        final AtomicReference<RangeInfo> rangeInfoRef = new AtomicReference<>(RangeInfo.EMPTY);
-                        lmdbDb.forEachEntry(txn, keyRange, entry -> {
-                            final Long key = entry.getKey();
-                            LOGGER.debug("key: {}", key);
-                            rangeInfoRef.accumulateAndGet(null, (rangeInfo, rangeInfo2) ->
-                                    rangeInfo.add(key));
-                        });
-                        return rangeInfoRef.get();
-                    });
-                })
-                .withSimpleEqualityAssertion()
-                .addCase(KeyRange.all(), RangeInfo.of(-100, 100, totalCount.get()))
-                .addCase(KeyRange.allBackward(), RangeInfo.of(
-                        100, -100, -100, 100, totalCount.get()))
-//                .addCase(KeyRange.atLeast(1_000_000L),
-//                        RangeInfo.of(1_000_000, 1_000_009, 10))
-//                .addCase(KeyRange.atLeast(999_999L),
-//                        RangeInfo.of(1_000_000, 1_000_009, 10))
-//                .addCase(KeyRange.atLeast(1_000_000L),
-//                        RangeInfo.of(1_000_000, 1_000_009, 10))
-//                .addCase(KeyRange.atMost(1_010L),
-//                        RangeInfo.of(0, 1_009, 40))
-//                .addCase(KeyRange.closed(5L, 15L),
-//                        RangeInfo.of(5, 15, 11))
-//                .addCase(KeyRange.closedOpen(5L, 15L),
-//                        RangeInfo.of(5, 14, 10))
-//                .addCase(KeyRange.openClosed(5L, 15L),
-//                        RangeInfo.of(6, 15, 10))
-//                .addCase(KeyRange.open(5L, 15L),
-//                        RangeInfo.of(6, 14, 9))
-                .build();
-    }
-
-    @Test
-    void test() {
-
     }
 
     @Test

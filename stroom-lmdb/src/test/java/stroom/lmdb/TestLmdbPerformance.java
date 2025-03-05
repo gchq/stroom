@@ -39,8 +39,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
                 byteBufferPool,
                 new IntegerSerde(),
                 new StringSerde(),
-                name,
-                DbiFlags.MDB_CREATE);
+                name);
     }
 
     private BasicLmdbDb<Integer, String> createIntegerKeyDb(final LmdbEnv lmdbEnv,
@@ -52,7 +51,8 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
                 new StringSerde(),
                 name,
                 DbiFlags.MDB_CREATE,
-                DbiFlags.MDB_INTEGERKEY);
+                DbiFlags.MDB_INTEGERKEY,
+                DbiFlags.MDB_UNSIGNEDKEY);
     }
 
     /**

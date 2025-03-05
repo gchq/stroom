@@ -13,7 +13,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 
 import com.google.inject.assistedinject.Assisted;
 import jakarta.inject.Inject;
-import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 
 public class RangeValueStagingDb
@@ -38,9 +37,12 @@ public class RangeValueStagingDb
                 byteBufferPool,
                 new UnSortedDupKeySerde<>(keySerde),
                 valueSerde,
-                DB_NAME,
-                DbiFlags.MDB_CREATE);
+                DB_NAME);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Factory {
 

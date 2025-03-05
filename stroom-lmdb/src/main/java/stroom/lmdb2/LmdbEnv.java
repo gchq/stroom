@@ -54,7 +54,7 @@ public class LmdbEnv implements AutoCloseable {
                     .setMaxReaders(maxReaders);
 
             LOGGER.debug("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
-                            + "envFlags {}",
+                         + "envFlags {}",
                     lmdbEnvDir.toString(),
                     maxStoreSize,
                     maxDbs,
@@ -82,7 +82,9 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     public LmdbDb openDb(final String dbName) {
-        return openDb(dbName, DbiFlags.MDB_CREATE);
+        // MDB_UNSIGNEDKEY is needed by default to ensure we use the unsigned comparator
+        // rather than the default signed one, which does not match LMDB's sorting.
+        return openDb(dbName, DbiFlags.MDB_CREATE, DbiFlags.MDB_UNSIGNEDKEY);
     }
 
     public LmdbDb openDb(final String dbName, final DbiFlags... flags) {
@@ -173,12 +175,12 @@ public class LmdbEnv implements AutoCloseable {
     @Override
     public String toString() {
         return "Env{" +
-                "lmdbEnvDir=" + lmdbEnvDir +
-                ", maxStoreSize=" + maxStoreSize +
-                ", maxDbs=" + maxDbs +
-                ", maxReaders=" + maxReaders +
-                ", envFlags=" + envFlags +
-                '}';
+               "lmdbEnvDir=" + lmdbEnvDir +
+               ", maxStoreSize=" + maxStoreSize +
+               ", maxDbs=" + maxDbs +
+               ", maxReaders=" + maxReaders +
+               ", envFlags=" + envFlags +
+               '}';
     }
 
     public static Builder builder() {

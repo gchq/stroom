@@ -75,8 +75,9 @@ class DuplicateCheckStore {
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
 
+        // TODO This should be changed to pass no DbiFlags so the defaults get used.
         this.db = lmdbEnv.openDb("duplicate-check", DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT);
-        this.columnNamesDb = lmdbEnv.openDb("column-names", DbiFlags.MDB_CREATE);
+        this.columnNamesDb = lmdbEnv.openDb("column-names");
         writer = new LmdbWriter(executorProvider, lmdbEnv);
     }
 

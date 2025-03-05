@@ -162,10 +162,20 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
     DbiFlags[] getDbiFlags() {
         if (serde.hasPrefix()) {
-            return new DbiFlags[]{DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT};
+            return new DbiFlags[]{
+                    DbiFlags.MDB_CREATE,
+                    DbiFlags.MDB_UNSIGNEDKEY,
+                    DbiFlags.MDB_DUPSORT};
+        } else {
+            return new DbiFlags[]{
+                    DbiFlags.MDB_CREATE,
+                    DbiFlags.MDB_UNSIGNEDKEY};
         }
-        return new DbiFlags[]{DbiFlags.MDB_CREATE};
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class HashClashCommitRunnable implements Runnable {
 
@@ -267,6 +277,10 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         }
         return false;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Writer implements AutoCloseable {
 
@@ -451,6 +465,10 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
     public void close() {
         env.close();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private interface DBWriter {
 
