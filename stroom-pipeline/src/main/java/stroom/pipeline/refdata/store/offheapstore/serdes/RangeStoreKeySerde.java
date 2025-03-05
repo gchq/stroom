@@ -152,6 +152,10 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         return BUFFER_CAPACITY;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum CompareResult {
         MAP_UID_MISMATCH,
         IN_RANGE,

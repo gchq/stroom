@@ -11,7 +11,9 @@
     <logger name="stroom" level="info" />
 
     <logger name="stroom.meta.impl.db" level="debug" />
-    <logger name="stroom.lmdb.TestBasicLmdbDb" level="debug" />
+<!--    <logger name="stroom.lmdb.TestLmdbJavaComparator" level="debug" />-->
+<!--    <logger name="stroom.lmdb.TestBasicLmdbDb" level="debug" />-->
+
 
     <root level="error">
         <appender-ref ref="STDOUT" />
