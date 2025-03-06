@@ -2,6 +2,7 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.State.Key;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -11,6 +12,7 @@ import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable.KeyVal;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -20,6 +22,8 @@ import java.util.function.Predicate;
  */
 public class StateSerde implements Serde<Key, StateValue> {
 
+    private static final int KEY_LENGTH = Long.BYTES;
+
     private final ByteBufferFactory byteBufferFactory;
 
     public StateSerde(final ByteBufferFactory byteBufferFactory) {
@@ -28,7 +32,7 @@ public class StateSerde implements Serde<Key, StateValue> {
 
     @Override
     public <T> T createKeyByteBuffer(final Key key, final Function<ByteBuffer, T> function) {
-        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES);
+        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
         try {
             // Hash the key.
             final long keyHash = LongHashFunction.xx3().hashBytes(key.bytes());
@@ -60,8 +64,7 @@ public class StateSerde implements Serde<Key, StateValue> {
     }
 
     @Override
-    public <R> R createPrefixPredicate(final Key key,
-                                       final Function<Predicate<KeyVal<ByteBuffer>>, R> function) {
+    public <R> R createPrefixPredicate(final Key key, final Function<Predicate<BBKV>, R> function) {
         final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(Integer.BYTES + key.bytes().length);
         try {
             putPrefix(prefixByteBuffer, key.bytes());
@@ -74,12 +77,10 @@ public class StateSerde implements Serde<Key, StateValue> {
     }
 
     @Override
-    public <R> R createPrefixPredicate(final ByteBuffer keyByteBuffer,
-                                       final ByteBuffer valueByteBuffer,
-                                       final Function<Predicate<KeyVal<ByteBuffer>>, R> function) {
-        final int keyLength = valueByteBuffer.getInt(0);
-        final ByteBuffer slice = valueByteBuffer.slice(0, Integer.BYTES + keyLength);
-        return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
+    public void createPrefixPredicate(final BBKV kv, final Consumer<Predicate<BBKV>> consumer) {
+        final int keyLength = kv.val().getInt(0);
+        final ByteBuffer slice = kv.val().slice(0, Integer.BYTES + keyLength);
+        consumer.accept(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
     }
 
     @Override
@@ -121,8 +122,8 @@ public class StateSerde implements Serde<Key, StateValue> {
     }
 
     @Override
-    public Key getKey(final KeyVal<ByteBuffer> keyVal) {
-        final ByteBuffer byteBuffer = keyVal.val();
+    public Key getKey(final BBKV kv) {
+        final ByteBuffer byteBuffer = kv.val();
         final int keyLength = byteBuffer.getInt(0);
         final ByteBuffer slice = byteBuffer.slice(Integer.BYTES, keyLength);
         final byte[] keyBytes = ByteBufferUtils.toBytes(slice);
@@ -130,13 +131,18 @@ public class StateSerde implements Serde<Key, StateValue> {
     }
 
     @Override
-    public StateValue getVal(final KeyVal<ByteBuffer> keyVal) {
-        final ByteBuffer byteBuffer = keyVal.val();
+    public StateValue getVal(final BBKV kv) {
+        final ByteBuffer byteBuffer = kv.val();
         final int keyLength = byteBuffer.getInt(0);
         final byte typeId = byteBuffer.get(Integer.BYTES + keyLength);
         final int valueStart = Integer.BYTES + keyLength + Byte.BYTES;
         final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
         final byte[] valueBytes = ByteBufferUtils.toBytes(slice);
         return new StateValue(typeId, ByteBuffer.wrap(valueBytes));
+    }
+
+    @Override
+    public int getKeyLength() {
+        return KEY_LENGTH;
     }
 }

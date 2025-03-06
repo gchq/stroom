@@ -1,11 +1,14 @@
 package stroom.planb.impl.db;
 
+import stroom.lmdb2.BBKV;
+import stroom.lmdb2.KV;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.CursorIterable.KeyVal;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -15,17 +18,17 @@ public interface Serde<K, V> {
 
     <R> R createValueByteBuffer(K key, V value, Function<ByteBuffer, R> function);
 
-    <R> R createPrefixPredicate(K key, Function<Predicate<KeyVal<ByteBuffer>>, R> function);
+    <R> R createPrefixPredicate(K key, Function<Predicate<BBKV>, R> function);
 
-    <R> R createPrefixPredicate(ByteBuffer keyByteBuffer,
-                                ByteBuffer valueByteBuffer,
-                                Function<Predicate<KeyVal<ByteBuffer>>, R> function);
+    void createPrefixPredicate(BBKV kv, Consumer<Predicate<BBKV>> consumer);
 
     boolean hasPrefix();
 
     Function<KeyVal<ByteBuffer>, Val>[] getValExtractors(FieldIndex fieldIndex);
 
-    K getKey(KeyVal<ByteBuffer> keyVal);
+    K getKey(BBKV kv);
 
-    V getVal(KeyVal<ByteBuffer> keyVal);
+    V getVal(BBKV kv);
+
+    int getKeyLength();
 }

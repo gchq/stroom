@@ -85,26 +85,26 @@ public class StateProviderImpl implements StateProvider {
                             new StateRequest(keyName.getBytes(StandardCharsets.UTF_8));
                     return getVal(db
                             .getState(request)
-                            .map(State::value));
+                            .map(State::val));
                 } else if (reader instanceof final TemporalStateDb db) {
                     final TemporalStateRequest request =
                             new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
                                     eventTime.toEpochMilli());
                     return getVal(db
                             .getState(request)
-                            .map(TemporalState::value));
+                            .map(TemporalState::val));
                 } else if (reader instanceof final RangedStateDb db) {
                     final RangedStateRequest request =
                             new RangedStateRequest(Long.parseLong(keyName));
                     return getVal(db
                             .getState(request)
-                            .map(RangedState::value));
+                            .map(RangedState::val));
                 } else if (reader instanceof final TemporalRangedStateDb db) {
                     final TemporalRangedStateRequest request =
                             new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
                     return getVal(db
                             .getState(request)
-                            .map(TemporalRangedState::value));
+                            .map(TemporalRangedState::val));
                 } else if (reader instanceof final SessionDb db) {
                     final SessionRequest request =
                             new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());

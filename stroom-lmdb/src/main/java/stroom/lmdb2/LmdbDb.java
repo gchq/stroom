@@ -214,6 +214,10 @@ public class LmdbDb {
         errorHandler.error(e);
     }
 
+    public Dbi<ByteBuffer> getDbi() {
+        return dbi;
+    }
+
     @Override
     public String toString() {
         return "LmdbDb{" +

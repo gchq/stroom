@@ -173,7 +173,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            lmdbKV.getRowKey().putLong(0, uniqueIdProvider.getUniqueId());
+            lmdbKV.key().putLong(0, uniqueIdProvider.getUniqueId());
             return lmdbKV;
         }
 
@@ -329,7 +329,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
-            lmdbKV.getRowKey().putLong(Long.BYTES, uniqueIdProvider.getUniqueId());
+            lmdbKV.key().putLong(Long.BYTES, uniqueIdProvider.getUniqueId());
             return lmdbKV;
         }
 
@@ -457,8 +457,8 @@ public class LmdbRowKeyFactoryFactory {
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             if (isDetailLevel(getDepth(lmdbKV))) {
                 // Create a child unique key. <DEPTH><PARENT_GROUP_HASHES...><UNIQUE_ID>
-                lmdbKV.getRowKey()
-                        .putLong(lmdbKV.getRowKey().limit() - Long.BYTES, uniqueIdProvider.getUniqueId());
+                lmdbKV.key()
+                        .putLong(lmdbKV.key().limit() - Long.BYTES, uniqueIdProvider.getUniqueId());
             }
             return lmdbKV;
         }
@@ -470,7 +470,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public int getDepth(final LmdbKV lmdbKV) {
-            return Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
+            return Byte.toUnsignedInt(lmdbKV.key().get(0));
         }
 
         @Override
@@ -630,7 +630,7 @@ public class LmdbRowKeyFactoryFactory {
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             // If this isn't a group key then make it unique.
             if (isDetailLevel(getDepth(lmdbKV))) {
-                lmdbKV.getRowKey().putLong(lmdbKV.getRowKey().limit() - Long.BYTES,
+                lmdbKV.key().putLong(lmdbKV.key().limit() - Long.BYTES,
                         uniqueIdProvider.getUniqueId());
             }
             return lmdbKV;
@@ -643,7 +643,7 @@ public class LmdbRowKeyFactoryFactory {
 
         @Override
         public int getDepth(final LmdbKV lmdbKV) {
-            return Byte.toUnsignedInt(lmdbKV.getRowKey().get(0));
+            return Byte.toUnsignedInt(lmdbKV.key().get(0));
         }
 
         @Override

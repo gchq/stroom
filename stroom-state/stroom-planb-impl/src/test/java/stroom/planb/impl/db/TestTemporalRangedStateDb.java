@@ -67,8 +67,8 @@ class TestTemporalRangedStateDb {
             assertThat(res.key().keyStart()).isEqualTo(10);
             assertThat(res.key().keyEnd()).isEqualTo(30);
             assertThat(res.key().effectiveTime()).isEqualTo(refTime.toEpochMilli());
-            assertThat(res.value().typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.value().toString()).isEqualTo("test");
+            assertThat(res.val().typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(res.val().toString()).isEqualTo("test");
 
 //            final TemporalRangedStateRequest stateRequest =
 //                    new TemporalRangedStateRequest("TEST_MAP", 11, refTime);

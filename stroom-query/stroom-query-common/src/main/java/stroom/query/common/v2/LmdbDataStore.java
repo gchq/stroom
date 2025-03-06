@@ -454,8 +454,8 @@ public class LmdbDataStore implements DataStore {
                 final boolean success = put(
                         writeTxn,
                         db,
-                        lmdbKV.getRowKey(),
-                        lmdbKV.getRowValue(),
+                        lmdbKV.key(),
+                        lmdbKV.val(),
                         PutFlags.MDB_NOOVERWRITE);
                 if (success) {
                     resultCount.incrementAndGet();
@@ -463,12 +463,12 @@ public class LmdbDataStore implements DataStore {
                 } else {
                     final int depth = lmdbRowKeyFactory.getDepth(lmdbKV);
                     if (lmdbRowKeyFactory.isGroup(depth)) {
-                        final StoredValues newStoredValues = readValues(lmdbKV.getRowValue().duplicate());
+                        final StoredValues newStoredValues = readValues(lmdbKV.val().duplicate());
                         final Val[] newGroupValues
                                 = storedValueKeyFactory.getGroupValues(depth, newStoredValues);
 
                         // Get the existing entry for this key.
-                        final ByteBuffer existingValueBuffer = db.get(writeTxn, lmdbKV.getRowKey());
+                        final ByteBuffer existingValueBuffer = db.get(writeTxn, lmdbKV.key());
                         final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
                             boolean merged = false;
                             while (existingValueBuffer.remaining() > 0) {
@@ -501,12 +501,12 @@ public class LmdbDataStore implements DataStore {
                             // Append if we didn't merge.
                             if (!merged) {
                                 LOGGER.debug(() -> "Appending value to output");
-                                output.writeByteBuffer(lmdbKV.getRowValue());
+                                output.writeByteBuffer(lmdbKV.val());
                                 resultCount.incrementAndGet();
                             }
                         });
 
-                        final boolean ok = put(writeTxn, db, lmdbKV.getRowKey(), newValueBuffer);
+                        final boolean ok = put(writeTxn, db, lmdbKV.key(), newValueBuffer);
                         bufferFactory.release(newValueBuffer);
 
                         if (!ok) {
@@ -542,8 +542,8 @@ public class LmdbDataStore implements DataStore {
 
             } finally {
                 // Release buffers back to the pool.
-                bufferFactory.release(lmdbKV.getRowKey());
-                bufferFactory.release(lmdbKV.getRowValue());
+                bufferFactory.release(lmdbKV.key());
+                bufferFactory.release(lmdbKV.val());
             }
         });
     }

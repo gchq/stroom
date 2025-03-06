@@ -15,8 +15,8 @@ public class LmdbWriteQueue extends CompletableQueue<LmdbQueueItem> {
     @Override
     protected void destroy(final Object item) {
         if (item instanceof final LmdbKV lmdbKV) {
-            byteBufferFactory.release(lmdbKV.getRowKey());
-            byteBufferFactory.release(lmdbKV.getRowValue());
+            byteBufferFactory.release(lmdbKV.key());
+            byteBufferFactory.release(lmdbKV.val());
         }
     }
 }

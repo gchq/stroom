@@ -1,6 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
 
 import org.lmdbjava.CursorIterable;
@@ -40,10 +41,10 @@ public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
                            && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final long keyStart = keyVal.key().getLong(0);
-                        final long keyEnd = keyVal.key().getLong(Long.BYTES);
-                        final long effectiveTime = keyVal.key().getLong(Long.BYTES + Long.BYTES);
+                        final BBKV kv = BBKV.create(iterator.next());
+                        final long keyStart = kv.key().getLong(0);
+                        final long keyEnd = kv.key().getLong(Long.BYTES);
+                        final long effectiveTime = kv.key().getLong(Long.BYTES + Long.BYTES);
                         if (keyEnd < request.key()) {
                             return result;
                         } else if (effectiveTime >= request.effectiveTime() &&
@@ -54,7 +55,7 @@ public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
                                     .keyEnd(keyEnd)
                                     .effectiveTime(effectiveTime)
                                     .build();
-                            final StateValue value = serde.getVal(keyVal);
+                            final StateValue value = serde.getVal(kv);
                             result = Optional.of(new TemporalRangedState(key, value));
                         }
                     }
@@ -78,13 +79,13 @@ public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    final Key key = serde.getKey(keyVal);
-                    final StateValue value = serde.getVal(keyVal);
+                    final BBKV kv = BBKV.create(iterator.next());
+                    final Key key = serde.getKey(kv);
+                    final StateValue value = serde.getVal(kv);
 
                     if (key.effectiveTime() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {
@@ -94,7 +95,7 @@ public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
                             lastValue.byteBuffer().equals(value.byteBuffer())) {
                             if (key.effectiveTime() <= condenseBeforeMs) {
                                 // If the key and value are the same then delete the duplicate entry.
-                                dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                                dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                                 writer.tryCommit();
                             }
                         }

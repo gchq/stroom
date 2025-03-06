@@ -62,18 +62,18 @@ public class StateValueProxy implements RefDataValueProxy {
 
     @Override
     public Optional<RefDataValue> supplyValue() {
-        switch (state.value().typeId()) {
+        switch (state.val().typeId()) {
             case StringValue.TYPE_ID -> {
-                return Optional.of(new StringValue(state.value().toString()));
+                return Optional.of(new StringValue(state.val().toString()));
             }
             case FastInfosetValue.TYPE_ID -> {
-                return Optional.of(new FastInfosetValue(state.value().byteBuffer().duplicate()));
+                return Optional.of(new FastInfosetValue(state.val().byteBuffer().duplicate()));
             }
             case NullValue.TYPE_ID -> {
                 return Optional.of(NullValue.getInstance());
             }
             default -> {
-                return Optional.of(new UnknownRefDataValue(state.value().byteBuffer().duplicate()));
+                return Optional.of(new UnknownRefDataValue(state.val().byteBuffer().duplicate()));
             }
         }
     }
@@ -81,8 +81,8 @@ public class StateValueProxy implements RefDataValueProxy {
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         typedByteBufferConsumer.accept(new TypedByteBuffer(
-                state.value().typeId(),
-                state.value().byteBuffer().duplicate()));
+                state.val().typeId(),
+                state.val().byteBuffer().duplicate()));
         return true;
     }
 
