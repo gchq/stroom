@@ -1,10 +1,14 @@
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb2.BBKV;
+import stroom.lmdb2.KV;
 import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbKeySequence;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -17,6 +21,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.HasPrimitiveValue;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -25,6 +30,7 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
+import org.lmdbjava.KeyRangeType;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
@@ -43,16 +49,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdb.class);
+    private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private static final byte[] NAME = "db".getBytes(UTF_8);
+    private static final byte[] INFO_NAME = "info_db".getBytes(UTF_8);
     private static final int CONCURRENT_READERS = 10;
 
     private final Semaphore concurrentReaderSemaphore;
 
+    private final LmdbKeySequence lmdbKeySequence;
     final Serde<K, V> serde;
     final ByteBufferFactory byteBufferFactory;
     final Env<ByteBuffer> env;
     final Dbi<ByteBuffer> dbi;
+    final Dbi<ByteBuffer> infoDbi;
     private final DBWriter dbWriter;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
     private final ReentrantLock dbCommitLock = new ReentrantLock();
@@ -70,6 +80,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         this.serde = serde;
         this.readOnly = readOnly;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
+        lmdbKeySequence = new LmdbKeySequence(byteBufferFactory);
 
         if (readOnly) {
             LOGGER.info(() -> "Opening: " + path);
@@ -79,7 +90,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
         final Env.Builder<ByteBuffer> builder = Env.create()
                 .setMapSize(LmdbConfig.DEFAULT_MAX_STORE_SIZE.getBytes())
-                .setMaxDbs(1)
+                .setMaxDbs(2)
                 .setMaxReaders(CONCURRENT_READERS);
 
         if (readOnly) {
@@ -91,13 +102,28 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
             env = builder.open(lmdbEnvDir.getEnvDir().toFile(),
                     EnvFlags.MDB_NOTLS);
         }
-        dbi = env.openDbi(NAME, getDbiFlags());
+        dbi = env.openDbi(NAME, DbiFlags.MDB_CREATE);
 
         if (readOnly) {
             dbWriter = null;
             this.commitRunnable = null;
 
+            // Read schema version.
+            infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
+            try (final Txn<ByteBuffer> txn = env.txnRead()) {
+                final int schemaVersion = readSchemaVersion(txn);
+                LOGGER.info("Read schema version {}", schemaVersion);
+            }
+
         } else {
+            // Read and write schema version.
+            infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
+            try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+                final int schemaVersion = readSchemaVersion(txn);
+                LOGGER.info("Read schema version {}", schemaVersion);
+                writeSchemaVersion(txn, CURRENT_SCHEMA_VERSION);
+            }
+
             // If we do not prefix values then we can simply put rows.
             if (!serde.hasPrefix()) {
                 // Do nothing special on commit.
@@ -122,18 +148,46 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
                         if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
-                            serde.createPrefixPredicate(keyByteBuffer, valueByteBuffer, predicate -> {
-                                // Delete current value if there is one.
-                                if (!delete(writeTxn, keyByteBuffer, predicate)) {
-                                    // We must have had a hash clash here because we didn't find a row for the key even
-                                    // though the db contains the key hash.
-                                    hashClashCommitRunnable.increment();
-                                }
+                            // We didn't manage to put so see if we can find the existing KV pair.
+                            serde.createPrefixPredicate(new BBKV(keyByteBuffer, valueByteBuffer),
+                                    predicate -> lmdbKeySequence.find(
+                                            dbi,
+                                            writeTxn,
+                                            keyByteBuffer,
+                                            valueByteBuffer,
+                                            predicate,
+                                            match -> {
+                                                final ByteBuffer foundKey = match.foundKey();
+                                                if (foundKey != null) {
+                                                    // We need to copy the buffer to use it after delete.
+                                                    final ByteBuffer copy = byteBufferFactory.acquire(foundKey.limit());
+                                                    try {
+                                                        copy.put(foundKey);
+                                                        copy.flip();
 
-                                // Put new value allowing for duplicate keys as we are only using a hash key.
-                                dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
-                                return true;
-                            });
+                                                        dbi.delete(writeTxn, copy);
+                                                        if (!dbi.put(writeTxn,
+                                                                copy,
+                                                                valueByteBuffer,
+                                                                PutFlags.MDB_NOOVERWRITE)) {
+                                                            throw new RuntimeException("Unable to put after delete");
+                                                        }
+
+                                                    } finally {
+                                                        byteBufferFactory.release(copy);
+                                                    }
+
+                                                } else {
+                                                    // If we didn't find the item then insert it with a new sequence
+                                                    // number.
+                                                    putAtNewSequenceNumber(
+                                                            writeTxn,
+                                                            keyByteBuffer,
+                                                            valueByteBuffer,
+                                                            hashClashCommitRunnable,
+                                                            match.nextSequenceNumber());
+                                                }
+                                            }));
                         }
                     };
 
@@ -141,18 +195,25 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
                         if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
-                            serde.createPrefixPredicate(keyByteBuffer, valueByteBuffer, predicate -> {
-                                if (!exists(writeTxn, keyByteBuffer, predicate)) {
-                                    // We must have had a hash clash here because we didn't find a row for the key even
-                                    // though the db contains the key hash.
-                                    hashClashCommitRunnable.increment();
-
-                                    // Put the value as another row for the same key hash as we didn't find a row for
-                                    // the full key value.
-                                    dbi.put(writeTxn, keyByteBuffer, valueByteBuffer);
-                                }
-                                return true;
-                            });
+                            // We didn't manage to put so see if we can find the existing KV pair.
+                            serde.createPrefixPredicate(new BBKV(keyByteBuffer, valueByteBuffer),
+                                    predicate -> lmdbKeySequence.find(
+                                            dbi,
+                                            writeTxn,
+                                            keyByteBuffer,
+                                            valueByteBuffer,
+                                            predicate,
+                                            match -> {
+                                                // If we didn't find the item then insert it with a new sequence number.
+                                                if (match.foundKey() == null) {
+                                                    putAtNewSequenceNumber(
+                                                            writeTxn,
+                                                            keyByteBuffer,
+                                                            valueByteBuffer,
+                                                            hashClashCommitRunnable,
+                                                            match.nextSequenceNumber());
+                                                }
+                                            }));
                         }
                     };
                 }
@@ -160,11 +221,20 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         }
     }
 
-    DbiFlags[] getDbiFlags() {
-        if (serde.hasPrefix()) {
-            return new DbiFlags[]{DbiFlags.MDB_CREATE, DbiFlags.MDB_DUPSORT};
-        }
-        return new DbiFlags[]{DbiFlags.MDB_CREATE};
+    private void putAtNewSequenceNumber(final Txn<ByteBuffer> writeTxn,
+                                        final ByteBuffer keyByteBuffer,
+                                        final ByteBuffer valueByteBuffer,
+                                        final HashClashCommitRunnable hashClashCommitRunnable,
+                                        final long sequenceNumber) {
+        // We must have had a hash clash here because we didn't find a row for the key even
+        // though the db contains the key hash.
+        hashClashCommitRunnable.increment();
+
+        lmdbKeySequence.addSequenceNumber(keyByteBuffer, serde.getKeyLength(), sequenceNumber, sequenceKeyBuffer -> {
+            if (!dbi.put(writeTxn, sequenceKeyBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
+                throw new RuntimeException("Unable to put at sequence " + sequenceNumber);
+            }
+        });
     }
 
     private static class HashClashCommitRunnable implements Runnable {
@@ -200,7 +270,12 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                 try (final Txn<ByteBuffer> readTxn = sourceEnv.txnRead()) {
                     try (final CursorIterable<ByteBuffer> cursorIterable = sourceDbi.iterate(readTxn)) {
                         for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                            insert(writer, keyVal.key(), keyVal.val());
+                            ByteBuffer key = keyVal.key();
+                            ByteBuffer value = keyVal.val();
+                            if (key.limit() > serde.getKeyLength()) {
+                                key = key.slice(0, serde.getKeyLength());
+                            }
+                            insert(writer, key, value);
                         }
                     }
                 }
@@ -218,7 +293,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
     boolean insert(final Writer writer,
                    final KV<K, V> kv) {
-        return insert(writer, kv.key(), kv.value());
+        return insert(writer, kv.key(), kv.val());
     }
 
     boolean insert(final Writer writer,
@@ -235,37 +310,6 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         dbWriter.write(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer);
         writer.tryCommit();
         return true;
-    }
-
-    private boolean delete(final Txn<ByteBuffer> txn,
-                           final ByteBuffer keyByteBuffer,
-                           final Predicate<KeyVal<ByteBuffer>> predicate) {
-        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(keyByteBuffer, keyByteBuffer);
-        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn, keyRange)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-            while (iterator.hasNext()) {
-                final KeyVal<ByteBuffer> keyVal = iterator.next();
-                if (predicate.test(keyVal)) {
-                    iterator.remove();
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean exists(final Txn<ByteBuffer> txn,
-                           final ByteBuffer keyByteBuffer,
-                           final Predicate<KeyVal<ByteBuffer>> predicate) {
-        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(keyByteBuffer, keyByteBuffer);
-        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn, keyRange)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursor) {
-                if (predicate.test(keyVal)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public static class Writer implements AutoCloseable {
@@ -386,19 +430,58 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
     private Optional<V> get(final Txn<ByteBuffer> readTxn, final K key) {
         return serde.createKeyByteBuffer(key, keyByteBuffer ->
                 serde.createPrefixPredicate(key, predicate -> {
-                    final KeyRange<ByteBuffer> keyRange = KeyRange.closed(keyByteBuffer, keyByteBuffer);
-                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                        while (iterator.hasNext()
-                               && !Thread.currentThread().isInterrupted()) {
-                            final KeyVal<ByteBuffer> keyVal = iterator.next();
-                            if (predicate.test(keyVal)) {
-                                return Optional.of(serde.getVal(keyVal));
-                            }
-                        }
+                    // Just try to get directly first without the overhead of a cursor.
+                    Optional<V> optional = getDirect(readTxn, keyByteBuffer, predicate);
+                    if (optional.isPresent()) {
+                        return optional;
                     }
-                    return Optional.empty();
+
+                    // We tried directly so now try looking beyond the provided key to see if there are any sequence
+                    // appended keys.
+                    return getWithCursor(readTxn, keyByteBuffer, predicate);
                 }));
+    }
+
+    /**
+     * Direct lookup for exact key, assuming that there are no sequence rows.
+     */
+    private Optional<V> getDirect(final Txn<ByteBuffer> readTxn,
+                                  final ByteBuffer keyByteBuffer,
+                                  final Predicate<BBKV> predicate) {
+        final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
+        final BBKV kv = new BBKV(keyByteBuffer, valueByteBuffer);
+        if (predicate.test(kv)) {
+            return Optional.of(serde.getVal(kv));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * After trying and failing to get a value directly by exact key, iterate over any subsequent sequence rows that
+     * may exist.
+     */
+    private Optional<V> getWithCursor(final Txn<ByteBuffer> readTxn,
+                                      final ByteBuffer keyByteBuffer,
+                                      final Predicate<BBKV> predicate) {
+        final KeyRange<ByteBuffer> keyRange =
+                new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, keyByteBuffer, keyByteBuffer);
+        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+            while (iterator.hasNext()
+                   && !Thread.currentThread().isInterrupted()) {
+                final BBKV kv = BBKV.create(iterator.next());
+
+                // Stop iterating if we go beyond the prefix.
+                if (!ByteBufferUtils.containsPrefix(kv.key(), keyByteBuffer)) {
+                    return Optional.empty();
+                }
+
+                if (predicate.test(kv)) {
+                    return Optional.of(serde.getVal(kv));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public void search(final ExpressionCriteria criteria,
@@ -447,6 +530,31 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         return readOnly;
     }
 
+    private int readSchemaVersion(final Txn<ByteBuffer> txn) {
+        int version = -1;
+        try {
+            final ByteBuffer valueBuffer = infoDbi.get(txn, InfoKey.SCHEMA_VERSION.getByteBuffer());
+            if (valueBuffer != null) {
+                version = valueBuffer.getInt();
+            }
+
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return version;
+    }
+
+    private void writeSchemaVersion(final Txn<ByteBuffer> txn, final int schemaVersion) {
+        final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
+        try {
+            byteBuffer.putInt(schemaVersion);
+            byteBuffer.flip();
+            infoDbi.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
+        } finally {
+            byteBufferFactory.release(byteBuffer);
+        }
+    }
+
     @Override
     public void close() {
         env.close();
@@ -457,5 +565,29 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         void write(Txn<ByteBuffer> writeTxn,
                    ByteBuffer keyByteBuffer,
                    ByteBuffer valueByteBuffer);
+    }
+
+    private enum InfoKey implements HasPrimitiveValue {
+        SCHEMA_VERSION(0),
+        HASH_CLASHES(1);
+
+        private final byte primitiveValue;
+        private final ByteBuffer byteBuffer;
+
+        InfoKey(final int primitiveValue) {
+            this.primitiveValue = (byte) primitiveValue;
+            this.byteBuffer = ByteBuffer.allocateDirect(1);
+            byteBuffer.put((byte) primitiveValue);
+            byteBuffer.flip();
+        }
+
+        @Override
+        public byte getPrimitiveValue() {
+            return primitiveValue;
+        }
+
+        public ByteBuffer getByteBuffer() {
+            return byteBuffer.duplicate();
+        }
     }
 }

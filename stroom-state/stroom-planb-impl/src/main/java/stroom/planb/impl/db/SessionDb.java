@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.api.DateTimeSettings;
+import stroom.lmdb2.BBKV;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.language.functions.FieldIndex;
@@ -213,12 +214,12 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    final Session session = serde.getKey(keyVal);
+                    final BBKV kv = BBKV.create(iterator.next());
+                    final Session session = serde.getKey(kv);
 
                     if (session.end() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {

@@ -107,7 +107,7 @@ class TestStateLookupImpl {
                         .orElseThrow(() -> new RuntimeException(LogUtil.message(
                                 "No entry found for map: {}, key: {}, time: {}",
                                 mapName, key, time)));
-                final String val = state.value().toString();
+                final String val = state.val().toString();
                 Objects.requireNonNull(val);
             };
 

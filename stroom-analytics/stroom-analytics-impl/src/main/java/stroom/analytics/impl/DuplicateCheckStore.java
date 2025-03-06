@@ -10,6 +10,7 @@ import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
+import stroom.lmdb2.LmdbKeySequence;
 import stroom.lmdb2.LmdbWriter;
 import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
@@ -18,7 +19,6 @@ import stroom.query.common.v2.LmdbKV;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -29,7 +29,6 @@ import jakarta.inject.Provider;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 
 import java.nio.ByteBuffer;
@@ -51,6 +50,7 @@ class DuplicateCheckStore {
     private final LmdbDb db;
     private final LmdbDb infoDb;
     private final LmdbWriter writer;
+    private final LmdbKeySequence lmdbKeySequence;
     private final int maxPutsBeforeCommit = 100;
     private long uncommittedCount = 0;
 
@@ -62,6 +62,7 @@ class DuplicateCheckStore {
                         final String analyticRuleUUID) {
         this.byteBufferFactory = byteBufferFactory;
         this.duplicateCheckRowSerde = duplicateCheckRowSerde;
+        lmdbKeySequence = new LmdbKeySequence(byteBufferFactory);
         final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleUUID);
 
         // See if the DB dir already exists.
@@ -164,69 +165,37 @@ class DuplicateCheckStore {
                               final WriteTxn writeTxn,
                               final LmdbKV lmdbKV) {
         // try immediate insert first.
-        boolean didPut = db.put(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue(), PutFlags.MDB_NOOVERWRITE);
-        if (didPut) {
-            return true;
-        }
-
-        // If we didn't put then check to see if this was because this is an exact duplicate.
-        final ByteBuffer valueBuffer = db.get(writeTxn, lmdbKV.getRowKey());
-        if (ByteBufferUtils.compare(lmdbKV.getRowValue(), valueBuffer) == 0) {
-            // Found our value, job done
-            LOGGER.debug("Found row {}", duplicateCheckRow);
-            return false;
-        }
-
-        // We have a hash clash and didn't find the value we are looking for using the same key. We need to look at
-        // multiple keys to see if we can find the value.
-        KeyRange<ByteBuffer> singleHashKeyRange = null;
-        final long nextSeqNo;
-        try {
-            // We know that the first key already exists so we will create a range beyond it and up to (not including)
-            // hash + 1 to search within the sequence space.
-            singleHashKeyRange = duplicateCheckRowSerde.createSequenceKeyRange(lmdbKV);
-
-            // Iterate over all entries with the same hash. Will only be one unless
-            // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
-            // gaps in the seq numbers.
-            nextSeqNo = db.iterateResult(writeTxn, singleHashKeyRange, keyValIterator -> {
-                long maxSeqNo = 0;
-
-                while (keyValIterator.hasNext()) {
-                    final KeyVal<ByteBuffer> cursorKeyVal = keyValIterator.next();
-                    final long seqNo = duplicateCheckRowSerde.extractSequenceNumber(cursorKeyVal.key());
-
-                    // See if the value is the same as ours
-                    if (ByteBufferUtils.compare(lmdbKV.getRowValue(), cursorKeyVal.val()) == 0) {
-                        // Found our value, job done
-                        LOGGER.debug("Found row {}", duplicateCheckRow);
-                        return -1L;
-                    } else {
-                        LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
-                                seqNo,
-                                ByteBufferUtils.byteBufferInfo(cursorKeyVal.key()),
-                                ByteBufferUtils.byteBufferInfo(cursorKeyVal.val())));
-                    }
-
-                    // Remember the maximum sequence number.
-                    maxSeqNo = Math.max(maxSeqNo, seqNo);
-                }
-
-                return maxSeqNo;
-            });
-        } finally {
-            releaseKeyRange(singleHashKeyRange);
-        }
-
-        if (nextSeqNo != -1) {
-            LOGGER.debug("Didn't find row {}", duplicateCheckRow);
-            final long seqNoVal = nextSeqNo + 1;
-            duplicateCheckRowSerde.setSequenceNumber(lmdbKV.getRowKey(), seqNoVal);
-            didPut = db.put(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue(), PutFlags.MDB_NOOVERWRITE);
-            if (!didPut) {
-                throw new RuntimeException("Expected to put value but failed");
-            }
-            uncommittedCount++;
+        boolean didPut = db.put(writeTxn, lmdbKV.key(), lmdbKV.val(), PutFlags.MDB_NOOVERWRITE);
+        if (!didPut) {
+            // If we didn't put then check to see if this was because this is an exact duplicate.
+            final AtomicBoolean ok = new AtomicBoolean();
+            lmdbKeySequence.find(
+                    db.getDbi(),
+                    writeTxn.get(),
+                    lmdbKV.key(),
+                    lmdbKV.val(),
+                    kv -> kv.val().equals(lmdbKV.val()),
+                    match -> {
+                        if (match.foundKey() == null) {
+                            LOGGER.debug("Didn't find row {}", duplicateCheckRow);
+                            lmdbKeySequence.addSequenceNumber(
+                                    lmdbKV.key(),
+                                    duplicateCheckRowSerde.getKeyLength(),
+                                    match.nextSequenceNumber(),
+                                    sequenceKeyBuffer -> {
+                                        final boolean success = db.put(writeTxn,
+                                                sequenceKeyBuffer,
+                                                lmdbKV.val(),
+                                                PutFlags.MDB_NOOVERWRITE);
+                                        if (!success) {
+                                            throw new RuntimeException("Expected to put value but failed");
+                                        }
+                                        uncommittedCount++;
+                                        ok.set(success);
+                                    });
+                        }
+                    });
+            didPut = ok.get();
         }
 
         if (LOGGER.isDebugEnabled()) {
@@ -241,6 +210,7 @@ class DuplicateCheckStore {
                                    ", lmdbEnvDir=" + lmdbEnv.getDir() + ")");
             }
         }
+
         return didPut;
     }
 
@@ -339,55 +309,24 @@ class DuplicateCheckStore {
 
     private synchronized void delete(final LmdbKV lmdbKV) {
         writer.write(writeTxn -> {
-            // First try to delete directly.
-            final boolean success = db.delete(writeTxn, lmdbKV.getRowKey(), lmdbKV.getRowValue());
-            if (success) {
-                LOGGER.debug("Deleted lmdbKV directly {}", lmdbKV);
-                return;
-            }
-
-            // If we didn't manage to delete directly then see if we can find the row to delete.
-            KeyRange<ByteBuffer> singleHashKeyRange = null;
             try {
-                // We tried the first key already so we will create a range beyond it and up to (not including)
-                // hash + 1 to search within the sequence space.
-                singleHashKeyRange = duplicateCheckRowSerde.createSequenceKeyRange(lmdbKV);
-
-                // Iterate over all entries with the same hash. Will only be one unless
-                // we get a hash clash. Delete the one with the matching value.
-                db.iterate(writeTxn, singleHashKeyRange, keyValIterator -> {
-                    while (keyValIterator.hasNext()) {
-                        final KeyVal<ByteBuffer> cursorKeyVal = keyValIterator.next();
-                        // See if the value is the same as ours
-                        if (ByteBufferUtils.compare(lmdbKV.getRowValue(), cursorKeyVal.val()) == 0) {
-                            // Found our value, delete it
-                            keyValIterator.remove();
-                            LOGGER.debug("Deleted lmdbKV via iterator {}", lmdbKV);
-                            break;
-                        }
-                    }
-                });
+                lmdbKeySequence.delete(
+                        db.getDbi(),
+                        writeTxn.get(),
+                        lmdbKV.key(),
+                        cursorValue -> cursorValue.equals(lmdbKV.val()));
                 LOGGER.debug("Finished delete iterator");
             } catch (final Exception e) {
                 LOGGER.error("Error deleting lmdbKV {}", lmdbKV, e);
                 throw e;
-            } finally {
-                releaseKeyRange(singleHashKeyRange);
             }
         });
     }
 
-    private void releaseKeyRange(final KeyRange<ByteBuffer> keyRange) {
-        if (keyRange != null) {
-            byteBufferFactory.release(keyRange.getStart());
-            byteBufferFactory.release(keyRange.getStop());
-        }
-    }
-
     private void releaseLmdbKv(final LmdbKV lmdbKV) {
         if (lmdbKV != null) {
-            byteBufferFactory.release(lmdbKV.getRowKey());
-            byteBufferFactory.release(lmdbKV.getRowValue());
+            byteBufferFactory.release(lmdbKV.key());
+            byteBufferFactory.release(lmdbKV.val());
         }
     }
 
@@ -404,9 +343,9 @@ class DuplicateCheckStore {
             return "null";
         } else {
             return "Key: {"
-                   + NullSafe.get(lmdbKV.getRowKey(), ByteBufferUtils::byteBufferInfoAsLong)
+                   + NullSafe.get(lmdbKV.key(), ByteBufferUtils::byteBufferInfoAsLong)
                    + "}, Value: {"
-                   + NullSafe.get(lmdbKV.getRowValue(), ByteBufferUtils::byteBufferInfo)
+                   + NullSafe.get(lmdbKV.val(), ByteBufferUtils::byteBufferInfo)
                    + "}";
         }
     }

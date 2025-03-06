@@ -1,6 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
 
 import net.openhft.hashing.LongHashFunction;
@@ -47,11 +48,11 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
                            && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final long effectiveTime = keyVal.key().getLong(Long.BYTES);
-                        final int keyLength = keyVal.val().getInt(0);
+                        final BBKV kv = BBKV.create(iterator.next());
+                        final long effectiveTime = kv.key().getLong(Long.BYTES);
+                        final int keyLength = kv.val().getInt(0);
                         final byte[] keyBytes = new byte[keyLength];
-                        keyVal.val().get(Integer.BYTES, keyBytes);
+                        kv.val().get(Integer.BYTES, keyBytes);
 
                         // We might have had a hash collision so test the key equality.
                         if (Arrays.equals(keyBytes, request.key())) {
@@ -60,7 +61,7 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
                                     .name(keyBytes)
                                     .effectiveTime(effectiveTime)
                                     .build();
-                            final StateValue value = serde.getVal(keyVal);
+                            final StateValue value = serde.getVal(kv);
                             return Optional.of(new TemporalState(key, value));
                         }
                     }
@@ -85,13 +86,13 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    final Key key = serde.getKey(keyVal);
-                    final StateValue value = serde.getVal(keyVal);
+                    final BBKV kv = BBKV.create(iterator.next());
+                    final Key key = serde.getKey(kv);
+                    final StateValue value = serde.getVal(kv);
 
                     if (key.effectiveTime() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {
@@ -100,7 +101,7 @@ public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
                             lastValue.byteBuffer().equals(value.byteBuffer())) {
                             if (key.effectiveTime() <= condenseBeforeMs) {
                                 // If the key and value are the same then delete the duplicate entry.
-                                dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                                dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                                 writer.tryCommit();
                             }
                         }
