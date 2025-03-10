@@ -30,7 +30,6 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DestroySearchRequest;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.Search;
@@ -43,14 +42,11 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
@@ -242,7 +238,6 @@ class DashboardServiceImpl implements DashboardService {
 
             final DashboardSearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            final Search search = searchRequest.getSearch();
             Integer rowCount = null;
 
             try {
@@ -260,49 +255,28 @@ class DashboardServiceImpl implements DashboardService {
                     throw new EntityServiceException("No results can be found");
                 }
 
-                Result result = null;
-                for (final Result res : searchResponse.getResults()) {
-                    if (res.getComponentId().equals(request.getComponentId())) {
-                        result = res;
-                        break;
-                    }
-                }
+                final String componentId = request.getComponentId();
+                final List<TableResult> tableResults = searchResponse.getResults()
+                        .stream()
+                        .filter(result -> result instanceof TableResult)
+                        .filter(result -> request.isDownloadAllTables() || result.getComponentId().equals(componentId))
+                        .map(result -> (TableResult) result)
+                        .toList();
+                rowCount = tableResults
+                        .stream()
+                        .map(TableResult::getTotalResults)
+                        .reduce(0, Integer::sum);
 
-                if (result == null) {
+                if (tableResults.isEmpty()) {
                     throw new EntityServiceException("No result for component can be found");
                 }
 
-                if (!(result instanceof TableResult)) {
-                    throw new EntityServiceException("Result is not a table");
-                }
-
-                final TableResult tableResult = (TableResult) result;
-
                 // Import file.
-                String fileName = getResultsFilename(request);
-
+                final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final Optional<ComponentResultRequest> optional = searchRequest.getComponentResultRequests()
-                        .stream()
-                        .filter(r -> r.getComponentId().equals(request.getComponentId()))
-                        .findFirst();
-                if (optional.isEmpty()) {
-                    throw new EntityServiceException("No component result request found");
-                }
-
-                if (!(optional.get() instanceof TableResultRequest)) {
-                    throw new EntityServiceException("Component result request is not a table");
-                }
-
-                final TableResultRequest tableResultRequest = (TableResultRequest) optional.get();
-                final List<Field> fields = tableResultRequest.getTableSettings().getFields();
-                final List<Row> rows = tableResult.getRows();
-                rowCount = tableResult.getTotalResults();
-
-                download(fields, rows, file, request.getFileType(), request.isSample(), request.getPercent(),
-                        searchRequest.getDateTimeSettings());
+                download(request, searchRequest, tableResults, file);
 
                 searchEventLog.downloadResults(request, rowCount);
             } catch (final RuntimeException e) {
@@ -341,18 +315,15 @@ class DashboardServiceImpl implements DashboardService {
         return fileName;
     }
 
-    private void download(final List<Field> fields,
-                          final List<Row> rows,
-                          final Path file,
-                          final DownloadSearchResultFileType fileType,
-                          final boolean sample,
-                          final int percent,
-                          final DateTimeSettings dateTimeSettings) {
+    private void download(final DownloadSearchResultsRequest request,
+                          final DashboardSearchRequest searchRequest,
+                          final List<TableResult> tableResults,
+                          final Path file) {
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
             SearchResultWriter.Target target = null;
 
             // Write delimited file.
-            switch (fileType) {
+            switch (request.getFileType()) {
                 case CSV:
                     target = new DelimitedTarget(outputStream, ",");
                     break;
@@ -360,12 +331,15 @@ class DashboardServiceImpl implements DashboardService {
                     target = new DelimitedTarget(outputStream, "\t");
                     break;
                 case EXCEL:
-                    target = new ExcelTarget(outputStream, dateTimeSettings);
+                    target = new ExcelTarget(outputStream, searchRequest.getDateTimeSettings());
                     break;
             }
 
-            final SampleGenerator sampleGenerator = new SampleGenerator(sample, percent);
-            final SearchResultWriter searchResultWriter = new SearchResultWriter(fields, rows, sampleGenerator);
+            final SampleGenerator sampleGenerator = new SampleGenerator(request.isSample(), request.getPercent());
+            final SearchResultWriter searchResultWriter = new SearchResultWriter(
+                    searchRequest,
+                    tableResults,
+                    sampleGenerator);
             searchResultWriter.write(target);
 
         } catch (final IOException e) {
