@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
@@ -10,8 +11,8 @@ import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
+import stroom.util.string.StringUtil;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,10 +21,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestDuplicateCheckStore {
@@ -42,8 +46,12 @@ class TestDuplicateCheckStore {
     private static final String ALPHANUMERIC = UPPER + LOWER + DIGITS;
     private static final char[] CHARS = ALPHANUMERIC.toCharArray();
 
+    private final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+    private final SecureRandom secureRandom = new SecureRandom();
+
     @Mock
     private DuplicateCheckDirs mockDuplicateCheckDirs;
+
 
     @Test
     void test(@TempDir Path tempDir) {
@@ -51,7 +59,6 @@ class TestDuplicateCheckStore {
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
 
@@ -65,12 +72,18 @@ class TestDuplicateCheckStore {
                     UUID);
             duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
 
-            duplicateCheckStore.tryInsert(ROW_A);
-            duplicateCheckStore.tryInsert(ROW_B);
-            duplicateCheckStore.tryInsert(ROW_B);
-            duplicateCheckStore.tryInsert(ROW_C);
-            duplicateCheckStore.tryInsert(ROW_A);
-            duplicateCheckStore.tryInsert(ROW_C);
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isFalse();
 
             // Will block until all the above are loaded in
             duplicateCheckStore.flush();
@@ -82,7 +95,7 @@ class TestDuplicateCheckStore {
                     null));
 
             final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
-            Assertions.assertThat(values)
+            assertThat(values)
                     .containsExactlyInAnyOrder(
                             ROW_A,
                             ROW_B,
@@ -93,12 +106,114 @@ class TestDuplicateCheckStore {
     }
 
     @Test
+    void testLargeValue(@TempDir Path tempDir) {
+        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
+                    mockDuplicateCheckDirs,
+                    byteBufferFactory,
+                    duplicateCheckStoreConfig,
+                    serde,
+                    () -> executorService,
+                    UUID);
+            duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
+
+            // Make sure we can insert large values
+            final int valLen = 1_000;
+            final DuplicateCheckRow ROW_A = new DuplicateCheckRow(List.of(
+                    makeValue(valLen),
+                    makeValue(valLen * 10),
+                    makeValue(valLen * 100)));
+
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+
+            // Will block until all the above are loaded in
+            duplicateCheckStore.flush();
+
+            final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
+                    PageRequest.unlimited(),
+                    null,
+                    null,
+                    null));
+
+            final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
+            assertThat(values)
+                    .containsExactlyInAnyOrder(ROW_A);
+
+            duplicateCheckStore.close();
+        }
+    }
+
+    @Test
+    void testDeletes(@TempDir Path tempDir) {
+        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        final DuplicateCheckRowSerde serde = new DuplicateCheckRowSerde(byteBufferFactory);
+
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
+                    mockDuplicateCheckDirs,
+                    byteBufferFactory,
+                    duplicateCheckStoreConfig,
+                    serde,
+                    () -> executorService,
+                    UUID);
+            duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
+
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isFalse();
+
+            // Will block until all the above are loaded in
+            duplicateCheckStore.flush();
+
+            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                    .isTrue();
+            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+
+            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                    .isTrue();
+            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+
+            duplicateCheckStore.flush();
+
+            duplicateCheckStore.close();
+        } catch (Exception e) {
+            LOGGER.error("Error", e);
+        }
+    }
+
+    @Test
     void testHashClash(@TempDir Path tempDir) {
         LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
         Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
                 .thenReturn(lmdbEnvDir);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
         // Every value gets the same hash, so 100% hash clashes
         final DuplicateCheckRowSerde serde = new HashClashDupCheckRowSerde(byteBufferFactory);
@@ -113,12 +228,18 @@ class TestDuplicateCheckStore {
                     UUID);
             duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
 
-            duplicateCheckStore.tryInsert(ROW_A);
-            duplicateCheckStore.tryInsert(ROW_B);
-            duplicateCheckStore.tryInsert(ROW_B);
-            duplicateCheckStore.tryInsert(ROW_C);
-            duplicateCheckStore.tryInsert(ROW_A);
-            duplicateCheckStore.tryInsert(ROW_C);
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isFalse();
 
             // Will block until all the above are loaded in
             duplicateCheckStore.flush();
@@ -130,7 +251,7 @@ class TestDuplicateCheckStore {
                     null));
 
             final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
-            Assertions.assertThat(values)
+            assertThat(values)
                     .containsExactlyInAnyOrder(
                             ROW_A,
                             ROW_B,
@@ -138,6 +259,72 @@ class TestDuplicateCheckStore {
 
             duplicateCheckStore.close();
         }
+    }
+
+    @Test
+    void testDeletesWithHashClash(@TempDir Path tempDir) {
+        LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(tempDir, true);
+        Mockito.when(mockDuplicateCheckDirs.getDir(UUID))
+                .thenReturn(lmdbEnvDir);
+
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig();
+        // Every value gets the same hash, so 100% hash clashes
+        final DuplicateCheckRowSerde serde = new HashClashDupCheckRowSerde(byteBufferFactory);
+
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
+                    mockDuplicateCheckDirs,
+                    byteBufferFactory,
+                    duplicateCheckStoreConfig,
+                    serde,
+                    () -> executorService,
+                    UUID);
+            duplicateCheckStore.writeColumnNames(List.of("col1", "col2", "col3"));
+
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isFalse();
+            assertThat(duplicateCheckStore.tryInsert(ROW_C))
+                    .isFalse();
+
+            // Will block until all the above are loaded in
+            duplicateCheckStore.flush();
+
+            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                    .isTrue();
+            assertThat(delete(duplicateCheckStore, List.of(ROW_A)))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_A))
+                    .isTrue();
+
+            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                    .isTrue();
+            assertThat(delete(duplicateCheckStore, List.of(ROW_B)))
+                    .isTrue();
+            assertThat(duplicateCheckStore.tryInsert(ROW_B))
+                    .isTrue();
+
+            duplicateCheckStore.flush();
+
+            duplicateCheckStore.close();
+        }
+    }
+
+    private boolean delete(final DuplicateCheckStore duplicateCheckStore,
+                           final List<DuplicateCheckRow> rows) {
+        final DeleteDuplicateCheckRequest request = new DeleteDuplicateCheckRequest(null, rows);
+        return duplicateCheckStore.delete(request);
+    }
+
+    private String makeValue(int len) {
+        return StringUtil.createRandomCode(secureRandom, len);
     }
 
 

@@ -3,6 +3,7 @@ package stroom.lmdb2;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Provider;
 
@@ -74,6 +75,9 @@ public class LmdbWriter {
         } catch (final InterruptedException e) {
             LOGGER.error(e.getMessage(), e);
             throw new UncheckedInterruptedException(e);
+        } catch (Exception e) {
+            LOGGER.error(() -> LogUtil.message("Error doing put: {}", LogUtil.exceptionMessage(e), e));
+            throw e;
         }
     }
 
@@ -100,7 +104,7 @@ public class LmdbWriter {
                     }
                 }
             } finally {
-                LOGGER.debug(() -> "close called");
+                LOGGER.debug("close called");
                 LOGGER.trace(() -> "close()", new RuntimeException("close"));
                 try {
                     // Final commit.
