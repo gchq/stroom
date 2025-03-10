@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,12 +43,7 @@ import java.util.Objects;
         "updateUser",
         "description",
         "stateType",
-        "condense",
-        "condenseAge",
-        "condenseTimeUnit",
-        "retainForever",
-        "retainAge",
-        "retainTimeUnit"
+        "settings"
 })
 @JsonInclude(Include.NON_NULL)
 public class PlanBDoc extends Doc {
@@ -58,23 +52,16 @@ public class PlanBDoc extends Doc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PLAN_B_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private StateType stateType;
+    private final StateType stateType;
     @JsonProperty
-    private boolean condense;
-    @JsonProperty
-    private int condenseAge;
-    @JsonProperty
-    private TimeUnit condenseTimeUnit;
-    @JsonProperty
-    private boolean retainForever;
-    @JsonProperty
-    private int retainAge;
-    @JsonProperty
-    private TimeUnit retainTimeUnit;
+    private final AbstractPlanBSettings settings;
 
     public PlanBDoc() {
+        description = null;
+        stateType = null;
+        settings = null;
     }
 
     @JsonCreator
@@ -89,21 +76,11 @@ public class PlanBDoc extends Doc {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
             @JsonProperty("stateType") final StateType stateType,
-            @JsonProperty("condense") final boolean condense,
-            @JsonProperty("condenseAge") final int condenseAge,
-            @JsonProperty("condenseTimeUnit") final TimeUnit condenseTimeUnit,
-            @JsonProperty("retainForever") final boolean retainForever,
-            @JsonProperty("retainAge") final int retainAge,
-            @JsonProperty("retainTimeUnit") final TimeUnit retainTimeUnit) {
+            @JsonProperty("settings") final AbstractPlanBSettings settings) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.stateType = stateType;
-        this.condense = condense;
-        this.condenseAge = condenseAge;
-        this.condenseTimeUnit = condenseTimeUnit;
-        this.retainForever = retainForever;
-        this.retainAge = retainAge;
-        this.retainTimeUnit = retainTimeUnit;
+        this.settings = settings;
     }
 
     /**
@@ -126,64 +103,12 @@ public class PlanBDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public StateType getStateType() {
         return stateType;
     }
 
-    public void setStateType(final StateType stateType) {
-        this.stateType = stateType;
-    }
-
-    public boolean isCondense() {
-        return condense;
-    }
-
-    public void setCondense(final boolean condense) {
-        this.condense = condense;
-    }
-
-    public int getCondenseAge() {
-        return condenseAge;
-    }
-
-    public void setCondenseAge(final int condenseAge) {
-        this.condenseAge = condenseAge;
-    }
-
-    public TimeUnit getCondenseTimeUnit() {
-        return condenseTimeUnit;
-    }
-
-    public void setCondenseTimeUnit(final TimeUnit condenseTimeUnit) {
-        this.condenseTimeUnit = condenseTimeUnit;
-    }
-
-    public boolean isRetainForever() {
-        return retainForever;
-    }
-
-    public void setRetainForever(final boolean retainForever) {
-        this.retainForever = retainForever;
-    }
-
-    public int getRetainAge() {
-        return retainAge;
-    }
-
-    public void setRetainAge(final int retainAge) {
-        this.retainAge = retainAge;
-    }
-
-    public TimeUnit getRetainTimeUnit() {
-        return retainTimeUnit;
-    }
-
-    public void setRetainTimeUnit(final TimeUnit retainTimeUnit) {
-        this.retainTimeUnit = retainTimeUnit;
+    public AbstractPlanBSettings getSettings() {
+        return settings;
     }
 
     @JsonIgnore
@@ -204,14 +129,9 @@ public class PlanBDoc extends Doc {
             return false;
         }
         final PlanBDoc doc = (PlanBDoc) o;
-        return condense == doc.condense &&
-               condenseAge == doc.condenseAge &&
-               retainForever == doc.retainForever &&
-               retainAge == doc.retainAge &&
-               Objects.equals(description, doc.description) &&
+        return Objects.equals(description, doc.description) &&
                stateType == doc.stateType &&
-               condenseTimeUnit == doc.condenseTimeUnit &&
-               retainTimeUnit == doc.retainTimeUnit;
+               Objects.equals(settings, doc.settings);
     }
 
     @Override
@@ -219,12 +139,7 @@ public class PlanBDoc extends Doc {
         return Objects.hash(super.hashCode(),
                 description,
                 stateType,
-                condense,
-                condenseAge,
-                condenseTimeUnit,
-                retainForever,
-                retainAge,
-                retainTimeUnit);
+                settings);
     }
 
     @Override
@@ -232,12 +147,7 @@ public class PlanBDoc extends Doc {
         return "StateDoc{" +
                "description='" + description + '\'' +
                ", stateType=" + stateType +
-               ", condense=" + condense +
-               ", condenseAge=" + condenseAge +
-               ", condenseTimeUnit=" + condenseTimeUnit +
-               ", retainForever=" + retainForever +
-               ", retainAge=" + retainAge +
-               ", retainTimeUnit=" + retainTimeUnit +
+               ", settings=" + settings +
                '}';
     }
 
@@ -253,12 +163,7 @@ public class PlanBDoc extends Doc {
 
         private String description;
         private StateType stateType;
-        private boolean condense;
-        private int condenseAge;
-        private TimeUnit condenseTimeUnit;
-        private boolean retainForever;
-        private int retainAge;
-        private TimeUnit retainTimeUnit;
+        private AbstractPlanBSettings settings;
 
         public Builder() {
         }
@@ -267,12 +172,7 @@ public class PlanBDoc extends Doc {
             super(doc);
             this.description = doc.description;
             this.stateType = doc.stateType;
-            this.condense = doc.condense;
-            this.condenseAge = doc.condenseAge;
-            this.condenseTimeUnit = doc.condenseTimeUnit;
-            this.retainForever = doc.retainForever;
-            this.retainAge = doc.retainAge;
-            this.retainTimeUnit = doc.retainTimeUnit;
+            this.settings = doc.settings;
         }
 
         public Builder description(final String description) {
@@ -285,33 +185,8 @@ public class PlanBDoc extends Doc {
             return self();
         }
 
-        public Builder condense(final boolean condense) {
-            this.condense = condense;
-            return self();
-        }
-
-        public Builder condenseAge(final int condenseAge) {
-            this.condenseAge = condenseAge;
-            return self();
-        }
-
-        public Builder condenseTimeUnit(final TimeUnit condenseTimeUnit) {
-            this.condenseTimeUnit = condenseTimeUnit;
-            return self();
-        }
-
-        public Builder retainForever(final boolean retainForever) {
-            this.retainForever = retainForever;
-            return self();
-        }
-
-        public Builder retainAge(final int retainAge) {
-            this.retainAge = retainAge;
-            return self();
-        }
-
-        public Builder retainTimeUnit(final TimeUnit retainTimeUnit) {
-            this.retainTimeUnit = retainTimeUnit;
+        public Builder settings(final AbstractPlanBSettings settings) {
+            this.settings = settings;
             return self();
         }
 
@@ -333,12 +208,7 @@ public class PlanBDoc extends Doc {
                     updateUser,
                     description,
                     stateType,
-                    condense,
-                    condenseAge,
-                    condenseTimeUnit,
-                    retainForever,
-                    retainAge,
-                    retainTimeUnit);
+                    settings);
         }
     }
 }

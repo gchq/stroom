@@ -16,7 +16,7 @@
             <g:FlowPanel>
                 <tickbox:CustomCheckBox ui:field="condense" identity="stateStoreCondense" label="Enable"/>
                 <form:FormGroup ui:field="condenseAgePanel" identity="stateStoreCondenseAgePanel" label="Condense Age">
-                    <g:FlowPanel>
+                    <g:FlowPanel styleName="durationSetting">
                         <valuespinner:ValueSpinner ui:field="condenseAge"/>
                         <i:SelectionBox ui:field="condenseTimeUnit" addStyleNames="allow-focus"/>
                     </g:FlowPanel>
@@ -28,7 +28,7 @@
                 <tickbox:CustomCheckBox ui:field="retainForever" identity="stateStoreRetainForever"
                                         label="Retain Forever"/>
                 <form:FormGroup ui:field="retainAgePanel" identity="stateStoreRetainAge" label="Retain For">
-                    <g:FlowPanel>
+                    <g:FlowPanel styleName="durationSetting">
                         <valuespinner:ValueSpinner ui:field="retainAge"/>
                         <i:SelectionBox ui:field="retainTimeUnit" addStyleNames="allow-focus"/>
                     </g:FlowPanel>

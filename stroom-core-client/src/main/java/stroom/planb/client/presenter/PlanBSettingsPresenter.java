@@ -20,60 +20,103 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
-import stroom.util.shared.time.TimeUnit;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class PlanBSettingsPresenter
         extends DocumentEditPresenter<PlanBSettingsView, PlanBDoc>
         implements PlanBSettingsUiHandlers {
 
+    private final Provider<StateSettingsPresenter> stateSettingsPresenterProvider;
+    private final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider;
+    private final Provider<RangedStateSettingsPresenter> rangedStateSettingsPresenterProvider;
+    private final Provider<TemporalRangedStateSettingsPresenter> temporalRangedStateSettingsPresenterProvider;
+    private final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider;
+
+    private AbstractPlanBSettingsPresenter<?> settingsPresenter;
+    private StateType currentStateType;
 
     @Inject
     public PlanBSettingsPresenter(
             final EventBus eventBus,
-            final PlanBSettingsView view) {
+            final PlanBSettingsView view,
+            final Provider<StateSettingsPresenter> stateSettingsPresenterProvider,
+            final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider,
+            final Provider<RangedStateSettingsPresenter> rangedStateSettingsPresenterProvider,
+            final Provider<TemporalRangedStateSettingsPresenter> temporalRangedStateSettingsPresenterProvider,
+            final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider) {
         super(eventBus, view);
+        this.stateSettingsPresenterProvider = stateSettingsPresenterProvider;
+        this.temporalStateSettingsPresenterProvider = temporalStateSettingsPresenterProvider;
+        this.rangedStateSettingsPresenterProvider = rangedStateSettingsPresenterProvider;
+        this.temporalRangedStateSettingsPresenterProvider = temporalRangedStateSettingsPresenterProvider;
+        this.sessionSettingsPresenterProvider = sessionSettingsPresenterProvider;
         view.setUiHandlers(this);
     }
 
     @Override
     public void onChange() {
         setDirty(true);
+        changeStateType();
     }
 
     @Override
     protected void onRead(final DocRef docRef, final PlanBDoc doc, final boolean readOnly) {
         getView().onReadOnly(readOnly);
         getView().setStateType(doc.getStateType());
-        getView().setCondense(doc.isCondense());
-        getView().setCondenseAge(doc.getCondenseAge());
-        getView().setCondenseTimeUnit(doc.getCondenseTimeUnit());
-        getView().setRetainForever(doc.isRetainForever());
-        getView().setRetainAge(doc.getRetainAge());
-        getView().setRetainTimeUnit(doc.getRetainTimeUnit());
+        changeStateType();
     }
 
     @Override
     protected PlanBDoc onWrite(final PlanBDoc doc) {
-        doc.setStateType(getView().getStateType());
-        doc.setCondense(getView().isCondense());
-        doc.setCondenseAge(getView().getCondenseAge());
-        doc.setCondenseTimeUnit(getView().getCondenseTimeUnit());
-        doc.setRetainForever(getView().isRetainForever());
-        doc.setRetainAge(getView().getRetainAge());
-        doc.setRetainTimeUnit(getView().getRetainTimeUnit());
-        return doc;
+        AbstractPlanBSettings settings = null;
+        if (settingsPresenter != null) {
+            settings = settingsPresenter.write();
+        }
+        return doc.copy().stateType(getView().getStateType()).settings(settings).build();
     }
 
-
-    // --------------------------------------------------------------------------------
-
+    private void changeStateType() {
+        final StateType stateType = getView().getStateType();
+        if (!Objects.equals(stateType, currentStateType)) {
+            switch (stateType) {
+                case STATE: {
+                    settingsPresenter = stateSettingsPresenterProvider.get();
+                    break;
+                }
+                case TEMPORAL_STATE: {
+                    settingsPresenter = temporalStateSettingsPresenterProvider.get();
+                    break;
+                }
+                case RANGED_STATE: {
+                    settingsPresenter = rangedStateSettingsPresenterProvider.get();
+                    break;
+                }
+                case TEMPORAL_RANGED_STATE: {
+                    settingsPresenter = temporalRangedStateSettingsPresenterProvider.get();
+                    break;
+                }
+                case SESSION: {
+                    settingsPresenter = sessionSettingsPresenterProvider.get();
+                    break;
+                }
+            }
+            if (settingsPresenter != null) {
+                settingsPresenter.read(getEntity().getSettings(), isReadOnly());
+                getView().setSettingsView(settingsPresenter.getView());
+            }
+            currentStateType = stateType;
+        }
+    }
 
     public interface PlanBSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
@@ -82,28 +125,6 @@ public class PlanBSettingsPresenter
 
         void setStateType(StateType stateType);
 
-        boolean isCondense();
-
-        void setCondense(boolean condense);
-
-        int getCondenseAge();
-
-        void setCondenseAge(int age);
-
-        TimeUnit getCondenseTimeUnit();
-
-        void setCondenseTimeUnit(TimeUnit condenseTimeUnit);
-
-        boolean isRetainForever();
-
-        void setRetainForever(boolean retainForever);
-
-        int getRetainAge();
-
-        void setRetainAge(int age);
-
-        TimeUnit getRetainTimeUnit();
-
-        void setRetainTimeUnit(TimeUnit retainTimeUnit);
+        void setSettingsView(View view);
     }
 }

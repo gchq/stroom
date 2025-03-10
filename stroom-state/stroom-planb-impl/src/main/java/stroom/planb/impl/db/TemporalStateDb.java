@@ -3,6 +3,8 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.TemporalStateSettings;
 
 import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable;
@@ -15,20 +17,40 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Optional;
 
-public class TemporalStateDb extends AbstractLmdb<Key, StateValue> {
+public class TemporalStateDb extends AbstractDb<Key, StateValue> {
 
-    public TemporalStateDb(final Path path,
-                           final ByteBufferFactory byteBufferFactory) {
-        this(path, byteBufferFactory, true, false);
+    TemporalStateDb(final Path path,
+                    final ByteBufferFactory byteBufferFactory) {
+        this(
+                path,
+                byteBufferFactory,
+                TemporalStateSettings.builder().build(),
+                false);
     }
 
-    public TemporalStateDb(final Path path,
-                           final ByteBufferFactory byteBufferFactory,
-                           final boolean overwrite,
-                           final boolean readOnly) {
-        super(path, byteBufferFactory, new TemporalStateSerde(byteBufferFactory), overwrite, readOnly);
+    TemporalStateDb(final Path path,
+                    final ByteBufferFactory byteBufferFactory,
+                    final TemporalStateSettings settings,
+                    final boolean readOnly) {
+        super(
+                path,
+                byteBufferFactory,
+                new TemporalStateSerde(byteBufferFactory),
+                settings.getMaxStoreSize(),
+                settings.getOverwrite(),
+                readOnly);
     }
 
+    public static TemporalStateDb create(final Path path,
+                                         final ByteBufferFactory byteBufferFactory,
+                                         final PlanBDoc doc,
+                                         final boolean readOnly) {
+        if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+            return new TemporalStateDb(path, byteBufferFactory, temporalStateSettings, readOnly);
+        } else {
+            throw new RuntimeException("No temporal state settings provided");
+        }
+    }
 
     public Optional<TemporalState> getState(final TemporalStateRequest request) {
         final long rowHash = LongHashFunction.xx3().hashBytes(request.key());

@@ -3,18 +3,17 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.AbstractLmdb;
-import stroom.planb.impl.db.RangedStateDb;
-import stroom.planb.impl.db.SessionDb;
-import stroom.planb.impl.db.StateDb;
+import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
-import stroom.planb.impl.db.TemporalRangedStateDb;
-import stroom.planb.impl.db.TemporalStateDb;
+import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SessionSettings;
+import stroom.planb.shared.TemporalRangedStateSettings;
+import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.util.zip.ZipUtil;
 
@@ -50,7 +49,7 @@ class LocalShard implements Shard {
 
     private final PlanBDoc doc;
     private final AtomicInteger useCount = new AtomicInteger();
-    private volatile AbstractLmdb<?, ?> db;
+    private volatile AbstractDb<?, ?> db;
     private volatile boolean open;
     private volatile Instant lastAccessTime;
     private volatile Instant lastWriteTime;
@@ -152,27 +151,35 @@ class LocalShard implements Shard {
     public void condense(final PlanBDoc doc) {
         try {
             // Find out how old data needs to be before we condense it.
+            DurationSetting condense = null;
+            if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+                condense = temporalStateSettings.getCondense();
+            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+                condense = temporalRangedStateSettings.getCondense();
+            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+                condense = sessionSettings.getCondense();
+            }
+
             final long condenseBeforeMs;
-            if (doc.isCondense()) {
-                final SimpleDuration duration = SimpleDuration
-                        .builder()
-                        .time(doc.getCondenseAge())
-                        .timeUnit(doc.getCondenseTimeUnit())
-                        .build();
-                condenseBeforeMs = SimpleDurationUtil.minus(Instant.now(), duration).toEpochMilli();
+            if (condense != null && condense.isEnabled()) {
+                condenseBeforeMs = SimpleDurationUtil.minus(Instant.now(), condense.getDuration()).toEpochMilli();
             } else {
                 condenseBeforeMs = 0;
             }
 
             // Find out how old data needs to be before we delete it.
+            DurationSetting retain = null;
+            if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+                retain = temporalStateSettings.getRetain();
+            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+                retain = temporalRangedStateSettings.getRetain();
+            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+                retain = sessionSettings.getRetain();
+            }
+
             final long deleteBeforeMs;
-            if (!doc.isRetainForever()) {
-                final SimpleDuration duration = SimpleDuration
-                        .builder()
-                        .time(doc.getRetainAge())
-                        .timeUnit(doc.getRetainTimeUnit())
-                        .build();
-                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), duration).toEpochMilli();
+            if (retain != null && retain.isEnabled()) {
+                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), retain.getDuration()).toEpochMilli();
             } else {
                 deleteBeforeMs = 0;
             }
@@ -258,7 +265,7 @@ class LocalShard implements Shard {
     }
 
     @Override
-    public <R> R get(final Function<AbstractLmdb<?, ?>, R> function) {
+    public <R> R get(final Function<AbstractDb<?, ?>, R> function) {
         incrementUseCount();
         try {
             return function.apply(db);
@@ -291,7 +298,7 @@ class LocalShard implements Shard {
     private void open() {
         if (Files.exists(shardDir)) {
             LOGGER.info(() -> "Found local shard for '" + doc + "'");
-            db = openDb(doc, shardDir);
+            db = PlanBDb.open(doc, shardDir, byteBufferFactory, false);
 
 
         } else {
@@ -301,28 +308,6 @@ class LocalShard implements Shard {
                                    "'";
             LOGGER.error(() -> message);
             throw new RuntimeException(message);
-        }
-    }
-
-    private AbstractLmdb<?, ?> openDb(final PlanBDoc doc,
-                                      final Path targetPath) {
-        switch (doc.getStateType()) {
-            case STATE -> {
-                return new StateDb(targetPath, byteBufferFactory, true, false);
-            }
-            case TEMPORAL_STATE -> {
-                return new TemporalStateDb(targetPath, byteBufferFactory, true, false);
-            }
-            case RANGED_STATE -> {
-                return new RangedStateDb(targetPath, byteBufferFactory, true, false);
-            }
-            case TEMPORAL_RANGED_STATE -> {
-                return new TemporalRangedStateDb(targetPath, byteBufferFactory, true, false);
-            }
-            case SESSION -> {
-                return new SessionDb(targetPath, byteBufferFactory, true, false);
-            }
-            default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
         }
     }
 

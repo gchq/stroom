@@ -3,6 +3,8 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.RangedState.Key;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.RangedStateSettings;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -13,18 +15,39 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Optional;
 
-public class RangedStateDb extends AbstractLmdb<Key, StateValue> {
+public class RangedStateDb extends AbstractDb<Key, StateValue> {
 
-    public RangedStateDb(final Path path,
-                         final ByteBufferFactory byteBufferFactory) {
-        this(path, byteBufferFactory, true, false);
+    RangedStateDb(final Path path,
+                  final ByteBufferFactory byteBufferFactory) {
+        this(
+                path,
+                byteBufferFactory,
+                RangedStateSettings.builder().build(),
+                false);
     }
 
-    public RangedStateDb(final Path path,
-                         final ByteBufferFactory byteBufferFactory,
-                         final boolean overwrite,
-                         final boolean readOnly) {
-        super(path, byteBufferFactory, new RangedStateSerde(byteBufferFactory), overwrite, readOnly);
+    RangedStateDb(final Path path,
+                  final ByteBufferFactory byteBufferFactory,
+                  final RangedStateSettings settings,
+                  final boolean readOnly) {
+        super(
+                path,
+                byteBufferFactory,
+                new RangedStateSerde(byteBufferFactory),
+                settings.getMaxStoreSize(),
+                settings.getOverwrite(),
+                readOnly);
+    }
+
+    public static RangedStateDb create(final Path path,
+                                       final ByteBufferFactory byteBufferFactory,
+                                       final PlanBDoc doc,
+                                       final boolean readOnly) {
+        if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
+            return new RangedStateDb(path, byteBufferFactory, rangedStateSettings, readOnly);
+        } else {
+            throw new RuntimeException("No ranged state settings provided");
+        }
     }
 
     public Optional<RangedState> getState(final RangedStateRequest request) {

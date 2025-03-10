@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.state.client.view;
+package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.state.client.presenter.StateStoreSettingsPresenter.StateStoreSettingsView;
-import stroom.state.client.presenter.StateStoreSettingsUiHandlers;
-import stroom.state.shared.StateType;
+import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
+import stroom.planb.shared.DurationSetting;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -29,24 +30,17 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class StateStoreSettingsViewImpl
-        extends ViewWithUiHandlers<StateStoreSettingsUiHandlers>
-        implements StateStoreSettingsView {
+public class TemporalStateSettingsViewImpl
+        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        implements TemporalStateSettingsView {
 
     private final Widget widget;
 
-    @UiField
-    SimplePanel scyllaDBConnection;
-    @UiField
-    SelectionBox<StateType> stateType;
-    @UiField
-    FormGroup condensePanel;
     @UiField
     CustomCheckBox condense;
     @UiField
@@ -63,20 +57,16 @@ public class StateStoreSettingsViewImpl
     ValueSpinner retainAge;
     @UiField
     SelectionBox<TimeUnit> retainTimeUnit;
+    @UiField
+    TextBox maxStoreSize;
+    @UiField
+    CustomCheckBox overwrite;
 
     private boolean readOnly;
 
     @Inject
-    public StateStoreSettingsViewImpl(final Binder binder) {
+    public TemporalStateSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        stateType.addItem(StateType.STATE);
-        stateType.addItem(StateType.RANGED_STATE);
-        stateType.addItem(StateType.TEMPORAL_STATE);
-        stateType.addItem(StateType.TEMPORAL_RANGED_STATE);
-        stateType.addItem(StateType.SESSION);
-        stateType.setValue(StateType.TEMPORAL_STATE);
-        updateStateType();
 
         condenseAge.setMin(1);
         condenseAge.setMax(9999);
@@ -98,6 +88,7 @@ public class StateStoreSettingsViewImpl
         retainTimeUnit.addItem(TimeUnit.YEARS);
         retainTimeUnit.setValue(TimeUnit.YEARS);
 
+        setOverwrite(true);
         setCondenseEnabled(this.condense.getValue());
         setRetainEnabled(!retainForever.getValue());
     }
@@ -108,88 +99,81 @@ public class StateStoreSettingsViewImpl
     }
 
     @Override
-    public void setClusterView(final View view) {
-        scyllaDBConnection.setWidget(view.asWidget());
+    public DurationSetting getCondense() {
+        return DurationSetting
+                .builder()
+                .enabled(condense.getValue())
+                .duration(SimpleDuration
+                        .builder()
+                        .time(condenseAge.getValue())
+                        .timeUnit(condenseTimeUnit.getValue())
+                        .build())
+                .build();
     }
 
     @Override
-    public StateType getStateType() {
-        return stateType.getValue();
+    public void setCondense(final DurationSetting condense) {
+        this.condense.setValue(false);
+        this.condenseAge.setValue(1);
+        this.condenseTimeUnit.setValue(TimeUnit.YEARS);
+        if (condense != null) {
+            this.condense.setValue(condense.isEnabled());
+            if (condense.getDuration() != null) {
+                this.condenseAge.setValue(condense.getDuration().getTime());
+                this.condenseTimeUnit.setValue(condense.getDuration().getTimeUnit());
+            }
+        }
+        setCondenseEnabled(this.condense.getValue());
     }
 
     @Override
-    public void setStateType(final StateType stateType) {
-        this.stateType.setValue(stateType);
-        updateStateType();
-    }
-
-    private void updateStateType() {
-        condensePanel.setVisible(
-                StateType.TEMPORAL_STATE.equals(stateType.getValue()) ||
-                        StateType.TEMPORAL_RANGED_STATE.equals(stateType.getValue()) ||
-                        StateType.SESSION.equals(stateType.getValue()));
-    }
-
-    @Override
-    public boolean isCondense() {
-        return condense.getValue();
+    public DurationSetting getRetain() {
+        return DurationSetting
+                .builder()
+                .enabled(!retainForever.getValue())
+                .duration(SimpleDuration
+                        .builder()
+                        .time(retainAge.getValue())
+                        .timeUnit(retainTimeUnit.getValue())
+                        .build())
+                .build();
     }
 
     @Override
-    public void setCondense(final boolean condense) {
-        this.condense.setValue(condense);
-        setCondenseEnabled(condense);
+    public void setRetain(final DurationSetting retain) {
+        this.retainForever.setValue(true);
+        this.retainAge.setValue(1);
+        this.retainTimeUnit.setValue(TimeUnit.YEARS);
+        if (retain != null) {
+            this.retainForever.setValue(!retain.isEnabled());
+            if (retain.getDuration() != null) {
+                this.retainAge.setValue(retain.getDuration().getTime());
+                this.retainTimeUnit.setValue(retain.getDuration().getTimeUnit());
+            }
+        }
+        setRetainEnabled(!retainForever.getValue());
     }
 
     @Override
-    public int getCondenseAge() {
-        return condenseAge.getIntValue();
+    public String getMaxStoreSize() {
+        return maxStoreSize.getValue();
     }
 
     @Override
-    public void setCondenseAge(final int age) {
-        this.condenseAge.setValue(age);
+    public void setMaxStoreSize(final String maxStoreSize) {
+        this.maxStoreSize.setValue(maxStoreSize);
     }
 
     @Override
-    public TimeUnit getCondenseTimeUnit() {
-        return condenseTimeUnit.getValue();
+    public Boolean getOverwrite() {
+        return overwrite.getValue()
+                ? null
+                : overwrite.getValue();
     }
 
     @Override
-    public void setCondenseTimeUnit(final TimeUnit condenseTimeUnit) {
-        this.condenseTimeUnit.setValue(condenseTimeUnit);
-    }
-
-    @Override
-    public boolean isRetainForever() {
-        return retainForever.getValue();
-    }
-
-    @Override
-    public void setRetainForever(final boolean retainForever) {
-        this.retainForever.setValue(retainForever);
-        setRetainEnabled(!retainForever);
-    }
-
-    @Override
-    public int getRetainAge() {
-        return retainAge.getIntValue();
-    }
-
-    @Override
-    public void setRetainAge(final int age) {
-        this.retainAge.setValue(age);
-    }
-
-    @Override
-    public TimeUnit getRetainTimeUnit() {
-        return retainTimeUnit.getValue();
-    }
-
-    @Override
-    public void setRetainTimeUnit(final TimeUnit retainTimeUnit) {
-        this.retainTimeUnit.setValue(retainTimeUnit);
+    public void setOverwrite(final Boolean overwrite) {
+        this.overwrite.setValue(overwrite == null || overwrite);
     }
 
     private void setCondenseEnabled(final boolean enabled) {
@@ -219,24 +203,19 @@ public class StateStoreSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        stateType.setEnabled(!readOnly);
         condense.setEnabled(!readOnly);
         condenseAge.setEnabled(!readOnly);
         condenseTimeUnit.setEnabled(!readOnly);
         retainForever.setEnabled(!readOnly);
         retainAge.setEnabled(!readOnly);
         retainTimeUnit.setEnabled(!readOnly);
-    }
-
-    @UiHandler("stateType")
-    public void onStateType(final ValueChangeEvent<StateType> event) {
-        updateStateType();
-        getUiHandlers().onChange();
+        maxStoreSize.setEnabled(!readOnly);
+        overwrite.setEnabled(!readOnly);
     }
 
     @UiHandler("condense")
     public void onCondense(final ValueChangeEvent<Boolean> event) {
-        setCondenseEnabled(isCondense());
+        setCondenseEnabled(condense.getValue());
         getUiHandlers().onChange();
     }
 
@@ -252,7 +231,7 @@ public class StateStoreSettingsViewImpl
 
     @UiHandler("retainForever")
     public void onRetainForever(final ValueChangeEvent<Boolean> event) {
-        setRetainEnabled(!isRetainForever());
+        setRetainEnabled(!retainForever.getValue());
         getUiHandlers().onChange();
     }
 
@@ -266,7 +245,17 @@ public class StateStoreSettingsViewImpl
         getUiHandlers().onChange();
     }
 
-    public interface Binder extends UiBinder<Widget, StateStoreSettingsViewImpl> {
+    @UiHandler("maxStoreSize")
+    public void onMaxStoreSize(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("overwrite")
+    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    public interface Binder extends UiBinder<Widget, TemporalStateSettingsViewImpl> {
 
     }
 }

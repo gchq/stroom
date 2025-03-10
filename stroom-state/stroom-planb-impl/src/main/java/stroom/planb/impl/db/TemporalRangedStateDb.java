@@ -3,6 +3,8 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.TemporalRangedStateSettings;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -13,20 +15,40 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Optional;
 
-public class TemporalRangedStateDb extends AbstractLmdb<Key, StateValue> {
+public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
 
-    public TemporalRangedStateDb(final Path path,
-                                 final ByteBufferFactory byteBufferFactory) {
-        this(path, byteBufferFactory, true, false);
+    TemporalRangedStateDb(final Path path,
+                          final ByteBufferFactory byteBufferFactory) {
+        this(
+                path,
+                byteBufferFactory,
+                TemporalRangedStateSettings.builder().build(),
+                false);
     }
 
-    public TemporalRangedStateDb(final Path path,
-                                 final ByteBufferFactory byteBufferFactory,
-                                 final boolean overwrite,
-                                 final boolean readOnly) {
-        super(path, byteBufferFactory, new TemporalRangedStateSerde(byteBufferFactory), overwrite, readOnly);
+    TemporalRangedStateDb(final Path path,
+                          final ByteBufferFactory byteBufferFactory,
+                          final TemporalRangedStateSettings settings,
+                          final boolean readOnly) {
+        super(
+                path,
+                byteBufferFactory,
+                new TemporalRangedStateSerde(byteBufferFactory),
+                settings.getMaxStoreSize(),
+                settings.getOverwrite(),
+                readOnly);
     }
 
+    public static TemporalRangedStateDb create(final Path path,
+                                               final ByteBufferFactory byteBufferFactory,
+                                               final PlanBDoc doc,
+                                               final boolean readOnly) {
+        if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+            return new TemporalRangedStateDb(path, byteBufferFactory, temporalRangedStateSettings, readOnly);
+        } else {
+            throw new RuntimeException("No temporal ranged state settings provided");
+        }
+    }
 
     public Optional<TemporalRangedState> getState(final TemporalRangedStateRequest request) {
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);

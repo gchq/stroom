@@ -32,6 +32,7 @@ import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.db.State.Key;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -154,8 +155,11 @@ class TestStateDb {
 
         // Read merged
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateDb db = new StateDb(statePaths.getShardDir().resolve(MAP_UUID),
-                byteBufferFactory, false, true)) {
+        try (final StateDb db = new StateDb(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                byteBufferFactory,
+                StateSettings.builder().build(),
+                true)) {
             assertThat(db.count()).isEqualTo(2);
         }
     }
@@ -205,7 +209,11 @@ class TestStateDb {
                             ZipUtil.unzip(zipFile, target);
                             Files.delete(zipFile);
                             // Read.
-                            try (final StateDb db2 = new StateDb(target, byteBufferFactory, false, true)) {
+                            try (final StateDb db2 = new StateDb(
+                                    target,
+                                    byteBufferFactory,
+                                    StateSettings.builder().build(),
+                                    true)) {
                                 assertThat(db2.count()).isGreaterThanOrEqualTo(0);
                             }
                             // Cleanup.
@@ -231,7 +239,11 @@ class TestStateDb {
         testWrite(tempDir, 100, keyFunction, valueFunction);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateDb db = new StateDb(tempDir, byteBufferFactory, false, true)) {
+        try (final StateDb db = new StateDb(
+                tempDir,
+                byteBufferFactory,
+                StateSettings.builder().build(),
+                true)) {
             assertThat(db.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
 

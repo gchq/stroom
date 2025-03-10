@@ -22,6 +22,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -53,7 +54,7 @@ class TestTemporalRangedStateDb {
         try (final TemporalRangedStateDb db = new TemporalRangedStateDb(
                 tempDir,
                 byteBufferFactory,
-                false,
+                TemporalRangedStateSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(100);
             testGet(db);

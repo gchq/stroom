@@ -179,8 +179,8 @@ class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
 
     private DocRef createStateDoc(final String name) {
         final DocRef docRef = stateDocStore.createDocument(name);
-        final PlanBDoc doc = stateDocStore.readDocument(docRef);
-        doc.setStateType(StateType.TEMPORAL_STATE);
+        PlanBDoc doc = stateDocStore.readDocument(docRef);
+        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
         stateDocStore.writeDocument(doc);
         return docRef;
     }

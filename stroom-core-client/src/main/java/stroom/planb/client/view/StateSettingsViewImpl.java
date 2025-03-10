@@ -16,42 +16,34 @@
 
 package stroom.planb.client.view;
 
-import stroom.item.client.SelectionBox;
-import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
-import stroom.planb.shared.StateType;
+import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class PlanBSettingsViewImpl
+public class StateSettingsViewImpl
         extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
-        implements PlanBSettingsView {
+        implements StateSettingsView {
 
     private final Widget widget;
 
     @UiField
-    SelectionBox<StateType> stateType;
+    TextBox maxStoreSize;
     @UiField
-    SimplePanel settings;
+    CustomCheckBox overwrite;
 
     @Inject
-    public PlanBSettingsViewImpl(final Binder binder) {
+    public StateSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        stateType.addItem(StateType.STATE);
-        stateType.addItem(StateType.RANGED_STATE);
-        stateType.addItem(StateType.TEMPORAL_STATE);
-        stateType.addItem(StateType.TEMPORAL_RANGED_STATE);
-        stateType.addItem(StateType.SESSION);
-        stateType.setValue(StateType.TEMPORAL_STATE);
+        setOverwrite(true);
     }
 
     @Override
@@ -60,31 +52,44 @@ public class PlanBSettingsViewImpl
     }
 
     @Override
-    public StateType getStateType() {
-        return stateType.getValue();
+    public String getMaxStoreSize() {
+        return maxStoreSize.getValue();
     }
 
     @Override
-    public void setStateType(final StateType stateType) {
-        this.stateType.setValue(stateType);
+    public void setMaxStoreSize(final String maxStoreSize) {
+        this.maxStoreSize.setValue(maxStoreSize);
     }
 
     @Override
-    public void setSettingsView(final View view) {
-        settings.setWidget(view.asWidget());
+    public Boolean getOverwrite() {
+        return overwrite.getValue()
+                ? null
+                : overwrite.getValue();
+    }
+
+    @Override
+    public void setOverwrite(final Boolean overwrite) {
+        this.overwrite.setValue(overwrite == null || overwrite);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        stateType.setEnabled(!readOnly);
+        maxStoreSize.setEnabled(!readOnly);
+        overwrite.setEnabled(!readOnly);
     }
 
-    @UiHandler("stateType")
-    public void onStateType(final ValueChangeEvent<StateType> event) {
+    @UiHandler("maxStoreSize")
+    public void onMaxStoreSize(final ValueChangeEvent<String> event) {
         getUiHandlers().onChange();
     }
 
-    public interface Binder extends UiBinder<Widget, PlanBSettingsViewImpl> {
+    @UiHandler("overwrite")
+    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {
 
     }
 }

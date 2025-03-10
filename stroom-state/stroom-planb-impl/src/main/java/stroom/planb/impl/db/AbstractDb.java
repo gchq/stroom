@@ -46,9 +46,9 @@ import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public abstract class AbstractLmdb<K, V> implements AutoCloseable {
+public abstract class AbstractDb<K, V> implements AutoCloseable {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private static final byte[] NAME = "db".getBytes(UTF_8);
@@ -70,11 +70,12 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
 
     private final Runnable commitRunnable;
 
-    public AbstractLmdb(final Path path,
-                        final ByteBufferFactory byteBufferFactory,
-                        final Serde<K, V> serde,
-                        final boolean overwrite,
-                        final boolean readOnly) {
+    public AbstractDb(final Path path,
+                      final ByteBufferFactory byteBufferFactory,
+                      final Serde<K, V> serde,
+                      final Long mapSize,
+                      final Boolean overwrite,
+                      final boolean readOnly) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
         this.byteBufferFactory = byteBufferFactory;
         this.serde = serde;
@@ -89,7 +90,9 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
         }
 
         final Env.Builder<ByteBuffer> builder = Env.create()
-                .setMapSize(LmdbConfig.DEFAULT_MAX_STORE_SIZE.getBytes())
+                .setMapSize(mapSize == null
+                        ? LmdbConfig.DEFAULT_MAX_STORE_SIZE.getBytes()
+                        : mapSize)
                 .setMaxDbs(2)
                 .setMaxReaders(CONCURRENT_READERS);
 
@@ -112,7 +115,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
             infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
                 final int schemaVersion = readSchemaVersion(txn);
-                LOGGER.info("Read schema version {}", schemaVersion);
+                LOGGER.debug("Read schema version {}", schemaVersion);
             }
 
         } else {
@@ -120,7 +123,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
             infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
             try (final Txn<ByteBuffer> txn = env.txnWrite()) {
                 final int schemaVersion = readSchemaVersion(txn);
-                LOGGER.info("Read schema version {}", schemaVersion);
+                LOGGER.debug("Read schema version {}", schemaVersion);
                 writeSchemaVersion(txn, CURRENT_SCHEMA_VERSION);
             }
 
@@ -131,7 +134,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                 };
 
                 // If the value has no key prefix, i.e. we are not using key hashes then just try to put.
-                if (overwrite) {
+                if (overwrite == null || overwrite) {
                     // Put and overwrite any existing key/value.
                     dbWriter = dbi::put;
                 } else {
@@ -144,7 +147,7 @@ public abstract class AbstractLmdb<K, V> implements AutoCloseable {
                 final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
                 this.commitRunnable = hashClashCommitRunnable;
 
-                if (overwrite) {
+                if (overwrite == null || overwrite) {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
                         if (!dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {

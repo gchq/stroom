@@ -4,6 +4,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -89,7 +90,11 @@ class TestStateLookupImpl {
             });
         }
 
-        try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory, false, true)) {
+        try (final TemporalStateDb db = new TemporalStateDb(
+                tempDir,
+                byteBufferFactory,
+                TemporalStateSettings.builder().build(),
+                true)) {
             final Random random = new Random(892374809);
             final Runnable work = () -> {
                 final int refStrmIdx = random.nextInt(refStreamDefCount);
