@@ -6,6 +6,7 @@ import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 
@@ -50,9 +51,8 @@ public class DocFinder<D extends Doc> {
                 .flatMap(docRef -> docRefInfoService.info(docRef).map(DocRefInfo::getDocRef))
                 .orElse(null);
 
-
         // Load the document from a name pattern if one has been specified.
-        if (namePattern != null && namePattern.trim().length() > 0) {
+        if (NullSafe.isNonBlankString(namePattern)) {
             // Resolve replacement variables.
             String resolvedName = namePattern.trim();
             if (feedName != null) {
@@ -83,7 +83,7 @@ public class DocFinder<D extends Doc> {
             }
 
             final List<DocRef> docs = hasFindDocsByName.findByName(resolvedName);
-            if (docs == null || docs.size() == 0) {
+            if (NullSafe.isEmptyCollection(docs)) {
                 if (errorConsumer != null && !suppressNotFoundWarnings) {
                     final StringBuilder sb = new StringBuilder()
                             .append("No ")
@@ -110,17 +110,17 @@ public class DocFinder<D extends Doc> {
                 doc = docs.get(0);
                 if (errorConsumer != null && docs.size() > 1) {
                     final String message = "" +
-                            "Found " + docs.size()
-                            + " " + type + "s with name '" +
-                            resolvedName +
-                            "' from pattern '" +
-                            namePattern +
-                            "' - using " + type + " " + docRefToString(doc) +
-                            ". All matching UUIDs: " +
-                            LogUtil.truncate(
-                                    docs.stream().map(DocRef::getUuid).collect(Collectors.joining(", ")),
-                                    300) +
-                            ")";
+                                           "Found " + docs.size()
+                                           + " " + type + "s with name '" +
+                                           resolvedName +
+                                           "' from pattern '" +
+                                           namePattern +
+                                           "' - using " + type + " " + docRefToString(doc) +
+                                           ". All matching UUIDs: " +
+                                           LogUtil.truncate(
+                                                   docs.stream().map(DocRef::getUuid).collect(Collectors.joining(", ")),
+                                                   300) +
+                                           ")";
                     errorConsumer.accept(message);
                 }
             }
@@ -131,8 +131,8 @@ public class DocFinder<D extends Doc> {
             // defaultRef provided, but does not exist
             if (defaultRef != null && updatedDefaultRef == null) {
                 final String message = type + " "
-                        + docRefToString(defaultRef)
-                        + " appears to have been deleted";
+                                       + docRefToString(defaultRef)
+                                       + " appears to have been deleted";
                 throw ProcessException.create(message);
             }
             doc = updatedDefaultRef;

@@ -59,16 +59,16 @@ class TestProxyYamlUtil {
         // The expected file has already had the DW lines removed
         final List<String> actualLines = GenerateProxyExpectedYaml.removeDropWizardLines(actual);
 
-        // write the actual out so we can compare in other tools
+        // write the actual out, so we can compare in other tools
         Files.write(actualFile, actualLines);
 
         final Consumer<List<String>> diffLinesConsumer = diffLines -> {
             LOGGER.error(
                     "\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                            "\n  If the difference is what you would expect based on the changes you have made to " +
-                            "the config model " +
-                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
-                            "expected yaml\n{}",
+                    "\n  If the difference is what you would expect based on the changes you have made to " +
+                    "the config model " +
+                    "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
+                    "expected yaml\n{}",
                     String.join("\n", diffLines));
 
             LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);

@@ -9,6 +9,7 @@ dependencies {
 
     implementation libs.assertj.core
     implementation libs.classgraph
+    implementation libs.commons.codec
     implementation libs.commons.compress
     implementation libs.commons.lang
     implementation libs.data.faker

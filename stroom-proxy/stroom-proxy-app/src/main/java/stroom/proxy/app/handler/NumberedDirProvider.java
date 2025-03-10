@@ -1,7 +1,9 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Strings;
 
@@ -9,25 +11,38 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 public class NumberedDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NumberedDirProvider.class);
 
+    static final Comparator<DirId> DIR_ID_COMPARATOR = Comparator.comparingLong(DirId::num);
+
     private final Path parentDir;
     private final AtomicLong sequence = new AtomicLong();
 
     public NumberedDirProvider(final Path parentDir) {
+        if (!Files.isDirectory(parentDir)) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "parentDir '{}' is not a directory or does not exist", LogUtil.path(parentDir)));
+        }
         this.parentDir = parentDir;
-        final long maxId = getMaxDirId(parentDir);
-        sequence.set(maxId);
+        // Set the sequence to the number of the highest numbered file in the dir
+        findDir(parentDir)
+                .map(DirId::num)
+                .ifPresent(sequence::set);
+        LOGGER.debug(() -> LogUtil.message("parentDir '{}', sequence {}", LogUtil.path(parentDir), sequence));
     }
 
+    /**
+     * Gets a new numbered directory with a number one higher than the last one issued.
+     */
     public Path get() throws IOException {
         final long id = sequence.incrementAndGet();
         final String name = create(id);
@@ -46,76 +61,84 @@ public class NumberedDirProvider {
     }
 
     /**
-     * Get the max id of any numerically named file found in the supplied dir.
-     *
-     * @param parentDir The parent dir to look at.
-     * @return The max id of all files found in a dir or 0 if non found.
+     * MUST be called within a try-with-resources block.
+     * Find all direct child directories in path.
      */
-    private long getMaxDirId(final Path parentDir) {
-        return findDir(parentDir, (num, current) -> num > current).map(DirId::num).orElse(0L);
+    private static Stream<Path> findDirectories(final Path path) throws IOException {
+        return Files.find(path, 1,
+                        (aPath, basicFileAttributes) -> {
+                            LOGGER.trace(() -> LogUtil.message("aPath: {}, isDirectory {}",
+                                    aPath, basicFileAttributes.isDirectory()));
+                            if (basicFileAttributes.isDirectory()) {
+                                return true;
+                            } else {
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "Found unexpected file '{}'. It will be ignored.",
+                                        LogUtil.path(aPath)));
+                                return false;
+                            }
+                        })
+                .filter(aPath -> !path.equals(aPath));  // ignore the start path which Files.find includes
     }
 
-    private static Optional<DirId> findDir(final Path path,
-                                           final BiFunction<Long, Long, Boolean> comparator) {
-        DirId current = null;
-        try (final Stream<Path> stream = Files.list(path)) {
-            final Iterator<Path> iterator = stream.iterator();
-            while (iterator.hasNext()) {
-                final Path file = iterator.next();
-                // Parse numeric part of dir.
-                final long num = parse(file.getFileName().toString());
-
-                // If this is the biggest/smallest num we have seen then set it and remember the dir.
-                if (current == null || comparator.apply(num, current.num)) {
-                    current = new DirId(file, num);
-                }
-            }
+    /**
+     * Get the {@link DirId} with the highest {@link DirId#num}. Ignores files and non-numeric dirs.
+     */
+    private Optional<DirId> findDir(final Path path) {
+        try (final Stream<Path> stream = findDirectories(path)) {
+            return stream.map(
+                            aPath -> {
+                                final DirId dirId;
+                                // Parse numeric part of dir.
+                                final OptionalLong optNum = parse(aPath.getFileName().toString());
+                                if (optNum.isPresent()) {
+                                    dirId = new DirId(aPath, optNum.getAsLong());
+                                } else {
+                                    LOGGER.warn(() -> LogUtil.message(
+                                            "Found unexpected non-numeric directory '{}' in '{}'. It will be ignored.",
+                                            LogUtil.path(aPath), LogUtil.path(parentDir)));
+                                    dirId = null;
+                                }
+                                return dirId;
+                            })
+                    .filter(Objects::nonNull)
+                    .max(DIR_ID_COMPARATOR);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return Optional.ofNullable(current);
     }
 
     /**
      * Extract the number represented by the supplied `0` padded string.
      *
      * @param string A directory name.
-     * @return The long part of the string if found, else null.
+     * @return The long part of the string if found, else empty.
      */
-    private static long parse(final String string) {
+    private static OptionalLong parse(final String string) {
         try {
-            if (string.isEmpty()) {
-                throw new NumberFormatException("Empty string");
-            }
-
-            // Strip leading 0's.
-            int start = 0;
-            for (int i = 0; i < string.length(); i++) {
-                if (string.charAt(i) != '0') {
-                    break;
-                }
-                start = i + 1;
-            }
-            final String numericPart;
-            if (start == 0) {
-                // If there were no leading 0's then the whole string is a number.
-                numericPart = string;
-            } else if (start == string.length()) {
-                // If all characters were 0 then this string represents 0.
-                return 0L;
+            if (NullSafe.isNonBlankString(string)) {
+                // Parse numeric part of dir name.
+                return OptionalLong.of(Long.parseLong(string));
             } else {
-                numericPart = string.substring(start);
+                return OptionalLong.empty();
             }
-
-            // Parse numeric part of dir name.
-            return Long.parseLong(numericPart);
         } catch (final NumberFormatException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
+            return OptionalLong.empty();
         }
     }
 
-    private record DirId(Path dir, long num) {
+    @Override
+    public String toString() {
+        return "NumberedDirProvider{" +
+               "parentDir=" + parentDir +
+               ", sequence=" + sequence +
+               '}';
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    record DirId(Path dir, long num) {
 
     }
 }
