@@ -29,6 +29,7 @@ import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
+import stroom.planb.shared.TemporalStateSettings;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -180,7 +181,7 @@ class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
     private DocRef createStateDoc(final String name) {
         final DocRef docRef = stateDocStore.createDocument(name);
         PlanBDoc doc = stateDocStore.readDocument(docRef);
-        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
+        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).settings(TemporalStateSettings.builder().build()).build();
         stateDocStore.writeDocument(doc);
         return docRef;
     }

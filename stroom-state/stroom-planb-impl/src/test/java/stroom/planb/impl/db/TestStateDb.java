@@ -124,7 +124,13 @@ class TestStateDb {
 
         // Consume and merge parts.
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
-        final PlanBDoc doc = PlanBDoc.builder().uuid(MAP_UUID).name(MAP_NAME).stateType(StateType.STATE).build();
+        final PlanBDoc doc = PlanBDoc
+                .builder()
+                .uuid(MAP_UUID)
+                .name(MAP_NAME)
+                .stateType(StateType.STATE)
+                .settings(StateSettings.builder().build())
+                .build();
         Mockito.when(planBDocStore.findByName(Mockito.anyString()))
                 .thenReturn(Collections.singletonList(doc.asDocRef()));
         Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
