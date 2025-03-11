@@ -171,7 +171,7 @@ public class StateFilter extends AbstractXMLFilter {
     private final ByteBufferFactory byteBufferFactory;
     private ByteBufferPoolOutput stagingValueOutputStream;
     private byte typeId;
-    private final CharBuffer contentBuffer = new CharBuffer(20);
+    private final CharBuffer content = new CharBuffer();
 
     private final MetaHolder metaHolder;
     private String mapName;
@@ -403,7 +403,6 @@ public class StateFilter extends AbstractXMLFilter {
 
         depthLevel++;
         insideElement = true;
-        contentBuffer.clear();
 
         LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
@@ -451,6 +450,7 @@ public class StateFilter extends AbstractXMLFilter {
             }
         }
 
+        content.clear();
         super.startElement(uri, localName, qName, atts);
     }
 
@@ -516,7 +516,7 @@ public class StateFilter extends AbstractXMLFilter {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
-                mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+                mapName = content.toString().toLowerCase(Locale.ROOT);
                 if (!NullSafe.isBlankString(mapName)) {
                     stateDoc = stateDocMap.computeIfAbsent(mapName, k -> {
                         StateDoc doc = null;
@@ -540,11 +540,11 @@ public class StateFilter extends AbstractXMLFilter {
 
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair
-                key = contentBuffer.toString();
+                key = content.toString();
 
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
                 // the start key for the key range
-                final String string = contentBuffer.toString();
+                final String string = content.toString();
                 try {
                     rangeFrom = Long.parseLong(string);
                 } catch (final RuntimeException e) {
@@ -552,7 +552,7 @@ public class StateFilter extends AbstractXMLFilter {
                 }
             } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
                 // the end key for the key range
-                final String string = contentBuffer.toString();
+                final String string = content.toString();
                 try {
                     rangeTo = Long.parseLong(string);
                 } catch (final RuntimeException e) {
@@ -562,10 +562,10 @@ public class StateFilter extends AbstractXMLFilter {
                 addData();
 
             } else if ("time".equals(localName)) {
-                time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
+                time = DateUtil.parseNormalDateTimeStringToInstant(content.toString());
 
             } else if ("timeout".equals(localName)) {
-                timeout = StroomDuration.parse(contentBuffer.toString());
+                timeout = StroomDuration.parse(content.toString());
 
             } else if ("session".equals(localName) ||
                     "session-start".equals(localName) ||
@@ -573,8 +573,6 @@ public class StateFilter extends AbstractXMLFilter {
                 addData();
             }
         }
-
-        contentBuffer.clear();
 
         // Manually call endPrefixMapping for those prefixes we added
         final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
@@ -597,10 +595,11 @@ public class StateFilter extends AbstractXMLFilter {
                     .clear();
         }
 
-        super.endElement(uri, localName, qName);
-
         // Leaving this level so
         depthLevel--;
+
+        content.clear();
+        super.endElement(uri, localName, qName);
     }
 
     private void handleValueEndElement() throws SAXException {
@@ -614,7 +613,7 @@ public class StateFilter extends AbstractXMLFilter {
             typeId = FastInfosetValue.TYPE_ID;
         } else {
             // Simple string value
-            final String value = contentBuffer.toString();
+            final String value = content.toString();
             if (NullSafe.isBlankString(value)) {
                 typeId = NullValue.TYPE_ID;
             } else {
@@ -781,11 +780,11 @@ public class StateFilter extends AbstractXMLFilter {
                     fastInfosetCharacters(ch, start, length);
                 }
             } else {
-                contentBuffer.append(ch, start, length);
+                content.append(ch, start, length);
             }
         } else {
             // outside the value element so capture the chars, so we can get keys, map names, etc.
-            contentBuffer.append(ch, start, length);
+            content.append(ch, start, length);
         }
 
         super.characters(ch, start, length);

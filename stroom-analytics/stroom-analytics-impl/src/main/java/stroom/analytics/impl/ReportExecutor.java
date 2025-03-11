@@ -118,7 +118,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                           final NodeInfo nodeInfo,
                           final SecurityContext securityContext,
                           final ExecutionScheduleDao executionScheduleDao,
-                          final DuplicateCheckDirs duplicateCheckDirs,
                           final Provider<DocRefInfoService> docRefInfoServiceProvider,
                           final ReportStore reportStore,
                           final ResultStoreManager searchResponseCreatorManager,
@@ -138,7 +137,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 nodeInfo,
                 securityContext,
                 executionScheduleDao,
-                duplicateCheckDirs,
                 docRefInfoServiceProvider,
                 "report");
         this.reportStore = reportStore;
@@ -295,6 +293,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         }
 
         return success;
+    }
+
+    @Override
+    void postExecuteTidyUp(final List<ReportDoc> analyticDocs) {
+        // Nothing to do
     }
 
     private Path createFile(final ReportDoc reportDoc,

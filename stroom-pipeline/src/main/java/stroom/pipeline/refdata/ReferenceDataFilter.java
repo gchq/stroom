@@ -135,7 +135,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             <RefFragment xmlns:evt="event-logging:4"></RefFragment>
         </root>
      */
-    private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 2_000;
 
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
@@ -150,7 +149,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     //    private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
     private final StagingValueOutputStream stagingValueOutputStream;
-    private final CharBuffer contentBuffer = new CharBuffer(20);
+    private final CharBuffer content = new CharBuffer();
 
     private RefStreamDefinition refStreamDefinition;
     private String mapName;
@@ -164,11 +163,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private boolean overrideExistingValues = true;
 
     // Track all prefix=>uri mappings that are in scope in the wrapper xml
-    private Map<String, String> prefixToUriMap = new HashMap<>();
+    private final Map<String, String> prefixToUriMap = new HashMap<>();
     // Track all prefix=>uri mappings that have been applied to the current scope of the fastInfoset fragment
-    private Map<String, String> appliedPrefixToUriMap = new HashMap<>();
+    private final Map<String, String> appliedPrefixToUriMap = new HashMap<>();
 
-    private Map<Integer, Set<String>> manuallyAddedLevelToPrefixMap = new HashMap<>();
+    private final Map<Integer, Set<String>> manuallyAddedLevelToPrefixMap = new HashMap<>();
 
     private int depthLevel = 0;
 
@@ -176,11 +175,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private boolean isFastInfosetDocStarted = false;
     private String valueXmlDefaultNamespaceUri = null;
     private int valueCount = 0;
-
-    private enum ValueElementType {
-        XML,
-        STRING
-    }
 
     @Inject
     public ReferenceDataFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -334,11 +328,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         depthLevel++;
         insideElement = true;
-        contentBuffer.clear();
+        content.clear();
 
         LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
-        String newQName = qName;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             insideValueElement = true;
             stagingValueOutputStream.clear();
@@ -384,10 +377,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 ////                fastInfosetStartPrefixMapping("", uri);
 //            }
 
-            fastInfosetStartElement(localName, uri, newQName, atts);
+            fastInfosetStartElement(localName, uri, qName, atts);
         }
 
-        super.startElement(uri, localName, newQName, atts);
+        super.startElement(uri, localName, qName, atts);
     }
 
 
@@ -452,13 +445,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
-                mapName = contentBuffer.toString();
+                mapName = content.toString();
             } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
                 // the key for the KV pair
-                key = contentBuffer.toString();
+                key = content.toString();
             } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
                 // the start key for the key range
-                final String string = contentBuffer.toString();
+                final String string = content.toString();
                 try {
                     rangeFrom = Long.parseLong(string);
                 } catch (final RuntimeException e) {
@@ -467,7 +460,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
             } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
                 // the end key for the key range
-                final String string = contentBuffer.toString();
+                final String string = content.toString();
                 try {
                     rangeTo = Long.parseLong(string);
                 } catch (final RuntimeException e) {
@@ -480,7 +473,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             }
         }
 
-        contentBuffer.clear();
+        content.clear();
 
         // Manually call endPrefixMapping for those prefixes we added
         final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
@@ -520,7 +513,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
         } else {
             // Simple string value
-            final String value = contentBuffer.toString();
+            final String value = content.toString();
             if (NullSafe.isBlankString(value)) {
                 stagingValueOutputStream.setTypeId(NullValue.TYPE_ID);
             } else {
@@ -702,7 +695,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     fastInfosetCharacters(ch, start, length);
                 }
             } else {
-                contentBuffer.append(ch, start, length);
+                content.append(ch, start, length);
 //                // This is a simple String value
 //                final String str = new String(ch, start, length);
 //                try {
@@ -714,7 +707,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             }
         } else {
             // outside the value element so capture the chars, so we can get keys, map names, etc.
-            contentBuffer.append(ch, start, length);
+            content.append(ch, start, length);
         }
 
         super.characters(ch, start, length);
