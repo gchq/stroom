@@ -94,6 +94,7 @@ dependencies {
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws.rs.api.gwt
 
+    gwtDevSourceImplementation project(':stroom-gwt')
     gwtDevSourceImplementation libs.gwt.dev
 
     jakartaTransformerImplementation libs.eclipse.transformer.cli
@@ -257,7 +258,6 @@ tasks.register('makeGwtSourceDirs') {
         gwtSourceDirs = []
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
-        gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
         // Add the rsync clone of our transformed build
         gwtSourceDirs.add(rsyncOutputDir)
 
