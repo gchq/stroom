@@ -9,8 +9,8 @@ def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
 
-java {
-    mainClassName = 'stroom.proxy.app.App'
+application {
+    mainClass = 'stroom.proxy.app.App'
 }
 
 dependencies {

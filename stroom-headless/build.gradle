@@ -6,8 +6,8 @@ def releaseBuildDir = 'build/release'
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
 
-java {
-    mainClassName = 'stroom.headless.Cli'
+application {
+    mainClass = 'stroom.headless.Cli'
 }
 
 dependencies {

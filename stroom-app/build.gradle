@@ -36,10 +36,9 @@ def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
 apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
-apply plugin: "java"
 
-java {
-    mainClassName = 'stroom.app.App'
+application {
+    mainClass = 'stroom.app.App'
 }
 
 dependencies {
@@ -405,7 +404,7 @@ tasks.register('migrate', JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
 
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
+    mainClass = application.mainClass.get()
     args 'migrate', '../local.yml'
 }
 
