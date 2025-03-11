@@ -72,9 +72,7 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
         ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer, mapDefinition);
 
-        int compareResult = ByteBufferUtils.compare(refStreamDefBuffer, mapDefBuffer);
-
-        assertThat(compareResult).isEqualTo(0);
+        assertThat(refStreamDefBuffer).isEqualTo(mapDefBuffer);
 
         final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "myMapName");
         ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);

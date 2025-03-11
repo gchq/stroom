@@ -23,7 +23,9 @@ public class SimpleDuration {
     public SimpleDuration(@JsonProperty("time") final long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
         this.time = time;
-        this.timeUnit = timeUnit == null ? TimeUnit.DAYS : timeUnit;
+        this.timeUnit = timeUnit == null
+                ? TimeUnit.DAYS
+                : timeUnit;
     }
 
     public long getTime() {
@@ -32,14 +34,6 @@ public class SimpleDuration {
 
     public TimeUnit getTimeUnit() {
         return timeUnit;
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     @Override
@@ -64,9 +58,13 @@ public class SimpleDuration {
         return time + timeUnit.getShortForm();
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static class Builder {
 

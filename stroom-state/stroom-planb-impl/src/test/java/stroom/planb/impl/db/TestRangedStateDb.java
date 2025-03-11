@@ -22,6 +22,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.RangedState.Key;
+import stroom.planb.shared.RangedStateSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -48,7 +49,11 @@ class TestRangedStateDb {
         testWrite(tempDir);
 
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final RangedStateDb db = new RangedStateDb(tempDir, byteBufferFactory, false, true)) {
+        try (final RangedStateDb db = new RangedStateDb(
+                tempDir,
+                byteBufferFactory,
+                RangedStateSettings.builder().build(),
+                true)) {
             assertThat(db.count()).isEqualTo(1);
             testGet(db);
 
@@ -59,8 +64,8 @@ class TestRangedStateDb {
             final RangedState res = optional.get();
             assertThat(res.key().keyStart()).isEqualTo(10);
             assertThat(res.key().keyEnd()).isEqualTo(30);
-            assertThat(res.value().typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.value().toString()).isEqualTo("test99");
+            assertThat(res.val().typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(res.val().toString()).isEqualTo("test99");
 //
 //            final FieldIndex fieldIndex = new FieldIndex();
 //            fieldIndex.create(RangedStateFields.KEY_START);

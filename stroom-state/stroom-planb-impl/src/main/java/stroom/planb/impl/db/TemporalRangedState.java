@@ -1,41 +1,15 @@
 package stroom.planb.impl.db;
 
+import stroom.lmdb2.KV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
 
 import java.time.Instant;
 
-public record TemporalRangedState(Key key, StateValue value) implements KV<Key, StateValue> {
+public class TemporalRangedState extends KV<Key, StateValue> {
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private Key key;
-        private StateValue value;
-
-        public Builder() {
-        }
-
-        public Builder(final TemporalRangedState state) {
-            this.key = state.key;
-            this.value = state.value;
-        }
-
-        public Builder key(final Key key) {
-            this.key = key;
-            return this;
-        }
-
-        public Builder value(final StateValue value) {
-            this.value = value;
-            return this;
-        }
-
-        public TemporalRangedState build() {
-            return new TemporalRangedState(key, value);
-        }
+    public TemporalRangedState(final Key key,
+                               final StateValue value) {
+        super(key, value);
     }
 
     public record Key(long keyStart, long keyEnd, long effectiveTime) {

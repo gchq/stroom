@@ -15,9 +15,14 @@ public interface UnsignedBytes {
     void put(byte[] arr, int off, long val);
 
     /**
-     * Puts val as unsigned bytes into destByteBuffer using a length of len bytes
+     * Puts (relative) val as unsigned bytes into destByteBuffer using a length of len bytes
      */
     void put(ByteBuffer destByteBuffer, long val);
+
+    /**
+     * Puts (absolute) val as unsigned bytes into destByteBuffer at off, using a length of len bytes
+     */
+    void put(ByteBuffer destByteBuffer, int off, long val);
 
     long get(byte[] bytes, int off);
 

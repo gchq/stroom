@@ -21,7 +21,22 @@ import stroom.planb.client.PlanBPlugin;
 import stroom.planb.client.presenter.PlanBPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
+import stroom.planb.client.presenter.RangedStateSettingsPresenter;
+import stroom.planb.client.presenter.RangedStateSettingsPresenter.RangedStateSettingsView;
+import stroom.planb.client.presenter.SessionSettingsPresenter;
+import stroom.planb.client.presenter.SessionSettingsPresenter.SessionSettingsView;
+import stroom.planb.client.presenter.StateSettingsPresenter;
+import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
+import stroom.planb.client.presenter.TemporalRangedStateSettingsPresenter;
+import stroom.planb.client.presenter.TemporalRangedStateSettingsPresenter.TemporalRangedStateSettingsView;
+import stroom.planb.client.presenter.TemporalStateSettingsPresenter;
+import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
 import stroom.planb.client.view.PlanBSettingsViewImpl;
+import stroom.planb.client.view.RangedStateSettingsViewImpl;
+import stroom.planb.client.view.SessionSettingsViewImpl;
+import stroom.planb.client.view.StateSettingsViewImpl;
+import stroom.planb.client.view.TemporalRangedStateSettingsViewImpl;
+import stroom.planb.client.view.TemporalStateSettingsViewImpl;
 
 public class PlanBModule extends PluginModule {
 
@@ -32,5 +47,21 @@ public class PlanBModule extends PluginModule {
         bindPresenterWidget(PlanBSettingsPresenter.class,
                 PlanBSettingsView.class,
                 PlanBSettingsViewImpl.class);
+
+        bindPresenterWidget(StateSettingsPresenter.class,
+                StateSettingsView.class,
+                StateSettingsViewImpl.class);
+        bindPresenterWidget(TemporalStateSettingsPresenter.class,
+                TemporalStateSettingsView.class,
+                TemporalStateSettingsViewImpl.class);
+        bindPresenterWidget(RangedStateSettingsPresenter.class,
+                RangedStateSettingsView.class,
+                RangedStateSettingsViewImpl.class);
+        bindPresenterWidget(TemporalRangedStateSettingsPresenter.class,
+                TemporalRangedStateSettingsView.class,
+                TemporalRangedStateSettingsViewImpl.class);
+        bindPresenterWidget(SessionSettingsPresenter.class,
+                SessionSettingsView.class,
+                SessionSettingsViewImpl.class);
     }
 }
