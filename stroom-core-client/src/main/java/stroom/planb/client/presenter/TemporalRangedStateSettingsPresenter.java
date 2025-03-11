@@ -41,35 +41,48 @@ public class TemporalRangedStateSettingsPresenter
 
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
         if (settings instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-            setReadOnly(readOnly);
-            getView().setCondense(temporalRangedStateSettings.getCondense());
-            getView().setRetain(temporalRangedStateSettings.getRetain());
-            if (temporalRangedStateSettings.getMaxStoreSize() == null) {
-                getView().setMaxStoreSize("10 GB");
-            } else {
-                getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
-                        temporalRangedStateSettings.getMaxStoreSize(),
-                        true,
-                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
-            }
-            getView().setOverwrite(temporalRangedStateSettings.getOverwrite());
+            read(temporalRangedStateSettings, readOnly);
+        } else {
+            read(TemporalRangedStateSettings.builder().build(), readOnly);
         }
     }
 
-    public AbstractPlanBSettings write() {
-        Long maxStoreSize = null;
-        final String string = getView().getMaxStoreSize().trim();
-        if (!string.isEmpty()) {
-            maxStoreSize = ModelStringUtil.parseIECByteSizeString(string);
-        }
+    private void read(final TemporalRangedStateSettings settings, final boolean readOnly) {
+        setReadOnly(readOnly);
+        getView().setCondense(settings.getCondense());
+        getView().setRetention(settings.getRetention());
+        setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setOverwrite(settings.getOverwrite());
+    }
 
+    private void setMaxStoreSize(Long size) {
+        getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
+                size == null ? DEFAULT_MAX_STORE_SIZE : size,
+                true,
+                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
+    }
+
+    public AbstractPlanBSettings write() {
         return TemporalRangedStateSettings
                 .builder()
                 .condense(getView().getCondense())
-                .retain(getView().getRetain())
-                .maxStoreSize(maxStoreSize)
+                .retention(getView().getRetention())
+                .maxStoreSize(getMaxStoreSize())
                 .overwrite(getView().getOverwrite())
                 .build();
+    }
+
+    private Long getMaxStoreSize() {
+        try {
+            final String string = getView().getMaxStoreSize().trim();
+            if (!string.isEmpty()) {
+                return ModelStringUtil.parseIECByteSizeString(string);
+            }
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
+        setMaxStoreSize(DEFAULT_MAX_STORE_SIZE);
+        return DEFAULT_MAX_STORE_SIZE;
     }
 
     public interface TemporalRangedStateSettingsView
@@ -79,9 +92,9 @@ public class TemporalRangedStateSettingsPresenter
 
         void setCondense(DurationSetting condense);
 
-        DurationSetting getRetain();
+        DurationSetting getRetention();
 
-        void setRetain(DurationSetting retain);
+        void setRetention(DurationSetting retention);
 
         String getMaxStoreSize();
 

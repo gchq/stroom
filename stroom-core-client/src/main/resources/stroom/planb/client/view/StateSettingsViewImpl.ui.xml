@@ -5,11 +5,11 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Max Store Size"
-                        helpText="How large is this Plan B store allowed to be, e.g. 10GB.">
+                        helpText="How large is this Plan B store allowed to be, e.g. 10G.">
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Overwrite Existing Data"
-                        helpText="If subsequent data that is loaded matches an existing key then should the existing be kept or overwritten? By default PlanB will overwrite existing data.">
+                        helpText="If subsequent data that is loaded matches an existing key then should the existing be kept or overwritten? By default Plan B will overwrite existing data.">
             <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

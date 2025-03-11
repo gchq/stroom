@@ -40,31 +40,44 @@ public class StateSettingsPresenter
 
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
         if (settings instanceof final StateSettings stateSettings) {
-            setReadOnly(readOnly);
-            if (stateSettings.getMaxStoreSize() == null) {
-                getView().setMaxStoreSize("10 GB");
-            } else {
-                getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
-                        stateSettings.getMaxStoreSize(),
-                        true,
-                        ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
-            }
-            getView().setOverwrite(stateSettings.getOverwrite());
+            read(stateSettings, readOnly);
+        } else {
+            read(StateSettings.builder().build(), readOnly);
         }
     }
 
-    public AbstractPlanBSettings write() {
-        Long maxStoreSize = null;
-        final String string = getView().getMaxStoreSize().trim();
-        if (!string.isEmpty()) {
-            maxStoreSize = ModelStringUtil.parseIECByteSizeString(string);
-        }
+    private void read(final StateSettings settings, final boolean readOnly) {
+        setReadOnly(readOnly);
+        setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setOverwrite(settings.getOverwrite());
+    }
 
+    private void setMaxStoreSize(Long size) {
+        getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
+                size == null ? DEFAULT_MAX_STORE_SIZE : size,
+                true,
+                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
+    }
+
+    public AbstractPlanBSettings write() {
         return StateSettings
                 .builder()
-                .maxStoreSize(maxStoreSize)
+                .maxStoreSize(getMaxStoreSize())
                 .overwrite(getView().getOverwrite())
                 .build();
+    }
+
+    private Long getMaxStoreSize() {
+        try {
+            final String string = getView().getMaxStoreSize().trim();
+            if (!string.isEmpty()) {
+                return ModelStringUtil.parseIECByteSizeString(string);
+            }
+        } catch (final RuntimeException e) {
+            // Ignore.
+        }
+        setMaxStoreSize(DEFAULT_MAX_STORE_SIZE);
+        return DEFAULT_MAX_STORE_SIZE;
     }
 
     public interface StateSettingsView

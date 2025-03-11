@@ -168,18 +168,18 @@ class LocalShard implements Shard {
             }
 
             // Find out how old data needs to be before we delete it.
-            DurationSetting retain = null;
+            DurationSetting retention = null;
             if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-                retain = temporalStateSettings.getRetain();
+                retention = temporalStateSettings.getRetention();
             } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-                retain = temporalRangedStateSettings.getRetain();
+                retention = temporalRangedStateSettings.getRetention();
             } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-                retain = sessionSettings.getRetain();
+                retention = sessionSettings.getRetention();
             }
 
             final long deleteBeforeMs;
-            if (retain != null && retain.isEnabled()) {
-                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), retain.getDuration()).toEpochMilli();
+            if (retention != null && retention.isEnabled()) {
+                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), retention.getDuration()).toEpochMilli();
             } else {
                 deleteBeforeMs = 0;
             }

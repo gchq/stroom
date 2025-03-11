@@ -42,7 +42,7 @@ public class TemporalRangedStateSettingsViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox condense;
+    CustomCheckBox condenseEnabled;
     @UiField
     FormGroup condenseAgePanel;
     @UiField
@@ -50,13 +50,13 @@ public class TemporalRangedStateSettingsViewImpl
     @UiField
     SelectionBox<TimeUnit> condenseTimeUnit;
     @UiField
-    CustomCheckBox retainForever;
+    CustomCheckBox retentionEnabled;
     @UiField
-    FormGroup retainAgePanel;
+    FormGroup retentionAgePanel;
     @UiField
-    ValueSpinner retainAge;
+    ValueSpinner retentionAge;
     @UiField
-    SelectionBox<TimeUnit> retainTimeUnit;
+    SelectionBox<TimeUnit> retentionTimeUnit;
     @UiField
     TextBox maxStoreSize;
     @UiField
@@ -78,19 +78,19 @@ public class TemporalRangedStateSettingsViewImpl
         condenseTimeUnit.addItem(TimeUnit.YEARS);
         condenseTimeUnit.setValue(TimeUnit.YEARS);
 
-        retainAge.setMin(1);
-        retainAge.setMax(9999);
-        retainAge.setValue(1);
+        retentionAge.setMin(1);
+        retentionAge.setMax(9999);
+        retentionAge.setValue(1);
 
-        retainTimeUnit.addItem(TimeUnit.DAYS);
-        retainTimeUnit.addItem(TimeUnit.WEEKS);
-        retainTimeUnit.addItem(TimeUnit.MONTHS);
-        retainTimeUnit.addItem(TimeUnit.YEARS);
-        retainTimeUnit.setValue(TimeUnit.YEARS);
+        retentionTimeUnit.addItem(TimeUnit.DAYS);
+        retentionTimeUnit.addItem(TimeUnit.WEEKS);
+        retentionTimeUnit.addItem(TimeUnit.MONTHS);
+        retentionTimeUnit.addItem(TimeUnit.YEARS);
+        retentionTimeUnit.setValue(TimeUnit.YEARS);
 
         setOverwrite(true);
-        setCondenseEnabled(this.condense.getValue());
-        setRetainEnabled(!retainForever.getValue());
+        setCondenseEnabled(this.condenseEnabled.getValue());
+        setRetentionEnabled(this.retentionEnabled.getValue());
     }
 
     @Override
@@ -102,7 +102,7 @@ public class TemporalRangedStateSettingsViewImpl
     public DurationSetting getCondense() {
         return DurationSetting
                 .builder()
-                .enabled(condense.getValue())
+                .enabled(condenseEnabled.getValue())
                 .duration(SimpleDuration
                         .builder()
                         .time(condenseAge.getValue())
@@ -113,45 +113,45 @@ public class TemporalRangedStateSettingsViewImpl
 
     @Override
     public void setCondense(final DurationSetting condense) {
-        this.condense.setValue(false);
+        this.condenseEnabled.setValue(false);
         this.condenseAge.setValue(1);
         this.condenseTimeUnit.setValue(TimeUnit.YEARS);
         if (condense != null) {
-            this.condense.setValue(condense.isEnabled());
+            this.condenseEnabled.setValue(condense.isEnabled());
             if (condense.getDuration() != null) {
                 this.condenseAge.setValue(condense.getDuration().getTime());
                 this.condenseTimeUnit.setValue(condense.getDuration().getTimeUnit());
             }
         }
-        setCondenseEnabled(this.condense.getValue());
+        setCondenseEnabled(this.condenseEnabled.getValue());
     }
 
     @Override
-    public DurationSetting getRetain() {
+    public DurationSetting getRetention() {
         return DurationSetting
                 .builder()
-                .enabled(!retainForever.getValue())
+                .enabled(retentionEnabled.getValue())
                 .duration(SimpleDuration
                         .builder()
-                        .time(retainAge.getValue())
-                        .timeUnit(retainTimeUnit.getValue())
+                        .time(retentionAge.getValue())
+                        .timeUnit(retentionTimeUnit.getValue())
                         .build())
                 .build();
     }
 
     @Override
-    public void setRetain(final DurationSetting retain) {
-        this.retainForever.setValue(true);
-        this.retainAge.setValue(1);
-        this.retainTimeUnit.setValue(TimeUnit.YEARS);
-        if (retain != null) {
-            this.retainForever.setValue(!retain.isEnabled());
-            if (retain.getDuration() != null) {
-                this.retainAge.setValue(retain.getDuration().getTime());
-                this.retainTimeUnit.setValue(retain.getDuration().getTimeUnit());
+    public void setRetention(final DurationSetting retention) {
+        this.retentionEnabled.setValue(false);
+        this.retentionAge.setValue(1);
+        this.retentionTimeUnit.setValue(TimeUnit.YEARS);
+        if (retention != null) {
+            this.retentionEnabled.setValue(retention.isEnabled());
+            if (retention.getDuration() != null) {
+                this.retentionAge.setValue(retention.getDuration().getTime());
+                this.retentionTimeUnit.setValue(retention.getDuration().getTimeUnit());
             }
         }
-        setRetainEnabled(!retainForever.getValue());
+        setRetentionEnabled(retentionEnabled.getValue());
     }
 
     @Override
@@ -188,34 +188,34 @@ public class TemporalRangedStateSettingsViewImpl
         }
     }
 
-    private void setRetainEnabled(final boolean enabled) {
+    private void setRetentionEnabled(final boolean enabled) {
         if (!readOnly) {
             if (enabled) {
-                retainAgePanel.getElement().getStyle().setOpacity(1);
+                retentionAgePanel.getElement().getStyle().setOpacity(1);
             } else {
-                retainAgePanel.getElement().getStyle().setOpacity(0.5);
+                retentionAgePanel.getElement().getStyle().setOpacity(0.5);
             }
-            retainAge.setEnabled(enabled);
-            retainTimeUnit.setEnabled(enabled);
+            retentionAge.setEnabled(enabled);
+            retentionTimeUnit.setEnabled(enabled);
         }
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        condense.setEnabled(!readOnly);
+        condenseEnabled.setEnabled(!readOnly);
         condenseAge.setEnabled(!readOnly);
         condenseTimeUnit.setEnabled(!readOnly);
-        retainForever.setEnabled(!readOnly);
-        retainAge.setEnabled(!readOnly);
-        retainTimeUnit.setEnabled(!readOnly);
+        retentionEnabled.setEnabled(!readOnly);
+        retentionAge.setEnabled(!readOnly);
+        retentionTimeUnit.setEnabled(!readOnly);
         maxStoreSize.setEnabled(!readOnly);
         overwrite.setEnabled(!readOnly);
     }
 
-    @UiHandler("condense")
-    public void onCondense(final ValueChangeEvent<Boolean> event) {
-        setCondenseEnabled(condense.getValue());
+    @UiHandler("condenseEnabled")
+    public void onCondenseEnabled(final ValueChangeEvent<Boolean> event) {
+        setCondenseEnabled(condenseEnabled.getValue());
         getUiHandlers().onChange();
     }
 
@@ -229,18 +229,18 @@ public class TemporalRangedStateSettingsViewImpl
         getUiHandlers().onChange();
     }
 
-    @UiHandler("retainForever")
-    public void onRetainForever(final ValueChangeEvent<Boolean> event) {
-        setRetainEnabled(!retainForever.getValue());
+    @UiHandler("retentionEnabled")
+    public void onRetentionEnabled(final ValueChangeEvent<Boolean> event) {
+        setRetentionEnabled(retentionEnabled.getValue());
         getUiHandlers().onChange();
     }
 
-    @UiHandler("retainAge")
+    @UiHandler("retentionAge")
     public void onRetainAge(final ValueChangeEvent<Long> event) {
         getUiHandlers().onChange();
     }
 
-    @UiHandler("retainTimeUnit")
+    @UiHandler("retentionTimeUnit")
     public void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         getUiHandlers().onChange();
     }

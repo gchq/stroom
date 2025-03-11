@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "condense",
-        "retain",
+        "retention",
         "maxStoreSize",
         "overwrite"
 })
@@ -20,18 +20,18 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
     @JsonProperty
     private final DurationSetting condense;
     @JsonProperty
-    private final DurationSetting retain;
+    private final DurationSetting retention;
     @JsonProperty
     private final Boolean overwrite;
 
     @JsonCreator
     public TemporalRangedStateSettings(@JsonProperty("condense") final DurationSetting condense,
-                                       @JsonProperty("retain") final DurationSetting retain,
+                                       @JsonProperty("retention") final DurationSetting retention,
                                        @JsonProperty("maxStoreSize") final Long maxStoreSize,
                                        @JsonProperty("overwrite") final Boolean overwrite) {
         super(maxStoreSize);
         this.condense = condense;
-        this.retain = retain;
+        this.retention = retention;
         this.overwrite = overwrite;
     }
 
@@ -39,8 +39,8 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
         return condense;
     }
 
-    public DurationSetting getRetain() {
-        return retain;
+    public DurationSetting getRetention() {
+        return retention;
     }
 
     public Boolean getOverwrite() {
@@ -60,20 +60,20 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
         }
         final TemporalRangedStateSettings that = (TemporalRangedStateSettings) o;
         return Objects.equals(condense, that.condense) &&
-               Objects.equals(retain, that.retain) &&
+               Objects.equals(retention, that.retention) &&
                Objects.equals(overwrite, that.overwrite);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retain, overwrite);
+        return Objects.hash(super.hashCode(), condense, retention, overwrite);
     }
 
     @Override
     public String toString() {
         return "TemporalRangedStateSettings{" +
                "condense=" + condense +
-               ", retain=" + retain +
+               ", retention=" + retention +
                ", overwrite=" + overwrite +
                '}';
     }
@@ -89,7 +89,7 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
     public static class Builder extends AbstractBuilder<TemporalRangedStateSettings, Builder> {
 
         protected DurationSetting condense;
-        protected DurationSetting retain;
+        protected DurationSetting retention;
         protected Boolean overwrite;
 
         public Builder() {
@@ -98,7 +98,7 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
         public Builder(final TemporalRangedStateSettings settings) {
             super(settings);
             this.condense = settings.condense;
-            this.retain = settings.retain;
+            this.retention = settings.retention;
             this.overwrite = settings.overwrite;
         }
 
@@ -107,8 +107,8 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
             return self();
         }
 
-        public Builder retain(final DurationSetting retain) {
-            this.retain = retain;
+        public Builder retention(final DurationSetting retention) {
+            this.retention = retention;
             return self();
         }
 
@@ -126,7 +126,7 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
         public TemporalRangedStateSettings build() {
             return new TemporalRangedStateSettings(
                     condense,
-                    retain,
+                    retention,
                     maxStoreSize,
                     overwrite);
         }
