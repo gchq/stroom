@@ -293,7 +293,7 @@ subprojects {
             }
         }
 
-        reports.html.outputLocation = file("${reporting.baseDirectory}/${name}")
+        reports.html.outputLocation = file("${reporting.baseDirectory.getAsFile().get()}/${name}")
 
         afterSuite { descriptor, result ->
             if (descriptor != null
