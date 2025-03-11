@@ -43,7 +43,9 @@ class TestDirUtil {
             relPaths.add(rootDir.relativize(path));
         }
 
-        LOGGER.info("relPaths:\n{}", relPaths.stream().map(Path::toString).collect(Collectors.joining("\n")));
+        LOGGER.info("relPaths:\n{}", relPaths.stream()
+                .map(Path::toString)
+                .collect(Collectors.joining("\n")));
 
         DirUtil.ensureDirExists(rootDir.resolve("badDir"));
         FileUtil.touch(rootDir.resolve("badFile"));
@@ -66,7 +68,9 @@ class TestDirUtil {
             relPaths.add(rootDir.relativize(path));
         }
 
-        LOGGER.info("relPaths:\n{}", relPaths.stream().map(Path::toString).collect(Collectors.joining("\n")));
+        LOGGER.info("relPaths:\n{}", relPaths.stream()
+                .map(Path::toString)
+                .collect(Collectors.joining("\n")));
 
         Path path = DirUtil.createPath(rootDir, 99L);
         DirUtil.ensureDirExists(path);

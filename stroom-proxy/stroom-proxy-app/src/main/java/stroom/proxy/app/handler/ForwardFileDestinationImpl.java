@@ -69,11 +69,6 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                                       final LivenessCheckMode livenessCheckMode,
                                       final PathCreator pathCreator) {
 
-        // TODO Create another impl that has a forward+retry queue and error file dest
-        //  like the ForwardHttpPostDestination. This is to allow for a file dest on a remote
-        //  file system that may fail. Keep this impl for destinations that are local. Add
-        //  a config prop let the factory decide which to create.
-
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
         this.subPathTemplate = subPathTemplate;
