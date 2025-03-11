@@ -65,7 +65,10 @@ public class Aggregator {
             } else if (sourceDirCount == 1) {
                 // If we only have one source dir then no merging is required, just forward.
                 try (final Stream<Path> stream = Files.list(dir)) {
-                    stream.forEach(fileGroupDir -> destination.accept(fileGroupDir));
+                    stream.forEach(fileGroupDir -> {
+                        LOGGER.debug("Passing {} to destination {} with no merging", fileGroupDir, destination);
+                        destination.accept(fileGroupDir);
+                    });
                 }
 
             } else {
@@ -123,6 +126,7 @@ public class Aggregator {
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.
+                LOGGER.debug("Passing {} to destination {}", tempDir, destination);
                 destination.accept(tempDir);
             }
 

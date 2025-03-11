@@ -119,7 +119,7 @@ public class StroomStreamProcessor {
                     normalisedPrevReceivedTime,
                     curVal ->
                             !(NullSafe.contains(curVal, prevReceivedTime)
-                                    || NullSafe.contains(curVal, normalisedPrevReceivedTime)));
+                              || NullSafe.contains(curVal, normalisedPrevReceivedTime)));
         }
         // Add our new time to the end of the history
         attributeMap.appendDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
@@ -173,9 +173,12 @@ public class StroomStreamProcessor {
                                    final String prefix,
                                    final Instant receivedTime) {
 
-        String compression = globalAttributeMap.get(StandardHeaderArguments.COMPRESSION);
+        final String key = StandardHeaderArguments.COMPRESSION;
+        String compression = globalAttributeMap.get(key);
         if (NullSafe.isNonEmptyString(compression)) {
             compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
+            // Put the normalised value back in the map
+            globalAttributeMap.put(key, compression);
             if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
                 throw new StroomStreamException(
                         StroomStatusCode.UNKNOWN_COMPRESSION, globalAttributeMap, compression);
@@ -187,12 +190,11 @@ public class StroomStreamProcessor {
             return;
         }
 
-        if (StandardHeaderArguments.COMPRESSION_ZIP.equals(compression)) {
+        if (StandardHeaderArguments.COMPRESSION_ZIP.equalsIgnoreCase(compression)) {
             // Handle a zip stream.
             processZipStream(inputStream, prefix, receivedTime);
-
         } else {
-            if (StandardHeaderArguments.COMPRESSION_GZIP.equals(compression)) {
+            if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
                 // Handle a gzip stream.
                 processGZipStream(inputStream, prefix);
             } else {
