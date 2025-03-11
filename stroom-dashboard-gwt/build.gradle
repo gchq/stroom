@@ -157,7 +157,7 @@ tasks.register('copySources') {
                     transformedSourceDir,
                     '-tr', propFilePath,
             ]
-        }
+        }.result.get()
         println("${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
@@ -244,7 +244,7 @@ tasks.register('makeGwtSourceDirs') {
                     "--stats",
                     rsyncInputDir + "/",
                     rsyncOutputDir]
-        }
+        }.result.get()
 
         println("${Duration.between(start, Instant.now())}")
         start = Instant.now()

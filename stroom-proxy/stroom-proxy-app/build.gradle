@@ -1,14 +1,17 @@
 ext.moduleName = 'stroom.proxy.app'
 
 def fatJarName = 'stroom-proxy-app-all.jar'
-def releaseBuildDir = 'build/release'
+def releaseBuildDir = "${projectDir}/build/release"
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
 
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
-mainClassName = 'stroom.proxy.app.App'
+
+java {
+    mainClassName = 'stroom.proxy.app.App'
+}
 
 dependencies {
     implementation project(':stroom-core-shared')
@@ -187,21 +190,18 @@ tasks.register('copySupportingFiles', Copy) {
         providers.exec {
             // Move the banner.txt into bin where it is expected
             commandLine 'mv', "${releaseBuildDir}/banner.txt", "${releaseBuildDir}/bin/banner.txt"
-        }
+        }.result.get()
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
         //providers.exec {
-        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        //}
+        //  commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}.result.get()
     }
 }
 
 // Create an example yaml config file from the compile-time defaults
 tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
-    //dependsOn ':stroom-config:stroom-config-app:compileJava'
-    //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
-
-    classpath = project(':stroom-proxy:stroom-proxy-app').sourceSets.test.runtimeClasspath
+    classpath = sourceSets.test.runtimeClasspath
     mainClass = 'stroom.proxy.dist.GenerateProxyExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
@@ -285,7 +285,7 @@ tasks.register('makeSendExecutable') {
         // The args script is sourced so doesn't need execute perms
         providers.exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
-        }
+        }.result.get()
     }
 }
 

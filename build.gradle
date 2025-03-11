@@ -45,7 +45,7 @@ plugins {
 
     alias(libs.plugins.flyway) apply false
 
-    alias(libs.plugins.jdeps)
+//    alias(libs.plugins.jdeps)
 
 //    id 'org.javamodularity.moduleplugin' apply false
 
@@ -447,9 +447,9 @@ subprojects {
             }
         }
 
-        jdepsReport {
-            multiRelease = '15'
-        }
+//        jdepsReport {
+//            multiRelease = '15'
+//        }
     }
 
 

@@ -5,7 +5,10 @@ def releaseBuildDir = 'build/release'
 
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
-mainClassName = 'stroom.headless.Cli'
+
+java {
+    mainClassName = 'stroom.headless.Cli'
+}
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-mock')
@@ -117,7 +120,7 @@ tasks.register('copyJar', Copy) {
 //        // which we don't want
 //        providers.exec {
 //            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-//        }
+//        }.result.get()
 //    }
 //}
 
