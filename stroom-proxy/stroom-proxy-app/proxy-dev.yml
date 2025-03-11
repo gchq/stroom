@@ -125,7 +125,7 @@ proxyConfig:
 
   forwardFileDestinations:
     - enabled: true
-      name: "Local fileystem"
+      name: "Local filesystem"
       path: "file_forwarder"
       queue: null
       subPathTemplate: "${feed}"
@@ -136,6 +136,7 @@ proxyConfig:
       name: "downstream"
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
   #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
+      livenessCheckUrl: "http://localhost:8080/stroom/noauth/status"
       apiKey: ""
       queue:
         retryDelay: "PT2S"
