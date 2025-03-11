@@ -79,9 +79,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
         return HttpClientConfiguration
                 .builder()
-                .timeout(StroomDuration.ofMinutes(3))
-                .connectionTimeout(StroomDuration.ofMinutes(3))
-                .connectionRequestTimeout(StroomDuration.ofMinutes(3))
+                .timeout(StroomDuration.ofMinutes(1))
+                .connectionTimeout(StroomDuration.ofMinutes(1))
+                .connectionRequestTimeout(StroomDuration.ofMinutes(1))
                 .timeToLive(StroomDuration.ofHours(1))
                 .build();
     }
