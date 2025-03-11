@@ -7,6 +7,7 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -166,6 +167,7 @@ public final class ForwardFileConfig
         return forwardQueueConfig;
     }
 
+    @JsonIgnore
     @Override
     public String getDestinationDescription() {
         return NullSafe.isNonBlankString(subPathTemplate)

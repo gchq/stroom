@@ -139,6 +139,3 @@ proxyConfig:
     pollFrequency: "PT10S"
     queueName: null
     queueUrl: null
-  threads:
-    forwardRetryThreadCount: 1
-    forwardThreadCount: 5
