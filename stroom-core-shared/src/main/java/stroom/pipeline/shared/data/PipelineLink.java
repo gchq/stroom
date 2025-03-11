@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
@@ -51,6 +53,7 @@ import java.util.Objects;
  * &lt;/complexType>
  * </pre>
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"source", "from", "to"})
