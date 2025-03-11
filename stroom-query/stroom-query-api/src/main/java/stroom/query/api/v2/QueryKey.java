@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -33,9 +31,8 @@ import java.util.Objects;
 @JsonPropertyOrder({"uuid"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "QueryKey", propOrder = {"uuid"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A unique key to identify the instance of the search by. This key is used to " +
-        "identify multiple requests for the same search when running in incremental mode.")
+                      "identify multiple requests for the same search when running in incremental mode.")
 public final class QueryKey implements Serializable {
 
     @XmlElement

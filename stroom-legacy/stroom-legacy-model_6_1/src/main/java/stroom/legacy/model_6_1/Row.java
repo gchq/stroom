@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlType;
@@ -28,13 +26,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A row of data in a result set")
 @Deprecated
 public final class Row implements Serializable {
+
     private static final long serialVersionUID = 4379892306375080112L;
 
     @XmlElement
@@ -45,7 +44,7 @@ public final class Row implements Serializable {
     @XmlElementWrapper(name = "values")
     @XmlElement(name = "value")
     @Schema(description = "The value for this row of data. The values in the list are in the same order as the fields in " +
-            "the ResultRequest",
+                          "the ResultRequest",
             required = true)
     private List<String> values;
 
@@ -88,19 +87,13 @@ public final class Row implements Serializable {
 
         final Row row = (Row) o;
 
-        if (groupKey != null
-                ? !groupKey.equals(row.groupKey)
-                : row.groupKey != null) {
+        if (!Objects.equals(groupKey, row.groupKey)) {
             return false;
         }
-        if (values != null
-                ? !values.equals(row.values)
-                : row.values != null) {
+        if (!Objects.equals(values, row.values)) {
             return false;
         }
-        return depth != null
-                ? depth.equals(row.depth)
-                : row.depth == null;
+        return Objects.equals(depth, row.depth);
     }
 
     @Override
@@ -120,16 +113,17 @@ public final class Row implements Serializable {
     @Override
     public String toString() {
         return "Row{" +
-                "groupKey='" + groupKey + '\'' +
-                ", values=" + values +
-                ", depth=" + depth +
-                '}';
+               "groupKey='" + groupKey + '\'' +
+               ", values=" + values +
+               ", depth=" + depth +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link Row}
      */
     public static class Builder {
+
         private String groupKey;
 
         private final List<String> values = new ArrayList<>();

@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -26,18 +24,19 @@ import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "dashboard", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 @XmlRootElement(name = "dashboard")
 @Deprecated
 public class DashboardConfig implements SharedObject {
+
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "parameters")
     private String parameters;
     @XmlElementWrapper(name = "components")
     @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
     private List<ComponentConfig> components;
-    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+    @XmlElements({
+            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     private LayoutConfig layout;
     @XmlElement(name = "tabVisibility")
@@ -76,7 +75,9 @@ public class DashboardConfig implements SharedObject {
     }
 
     public enum TabVisibility implements HasDisplayValue {
-        SHOW_ALL("Show All"), HIDE_SINGLE("Hide Single Tabs"), HIDE_ALL("Hide All");
+        SHOW_ALL("Show All"),
+        HIDE_SINGLE("Hide Single Tabs"),
+        HIDE_ALL("Hide All");
 
         private final String displayValue;
 

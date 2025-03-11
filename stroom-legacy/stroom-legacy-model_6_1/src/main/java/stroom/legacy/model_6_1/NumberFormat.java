@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -28,7 +26,6 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
 @XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The definition of a format to apply to numeric data")
 @Deprecated
 public final class NumberFormat implements Serializable {
@@ -77,7 +74,7 @@ public final class NumberFormat implements Serializable {
         }
         final NumberFormat that = (NumberFormat) o;
         return Objects.equals(decimalPlaces, that.decimalPlaces) &&
-                Objects.equals(useSeparator, that.useSeparator);
+               Objects.equals(useSeparator, that.useSeparator);
     }
 
     @Override
@@ -88,9 +85,9 @@ public final class NumberFormat implements Serializable {
     @Override
     public String toString() {
         return "NumberFormat{" +
-                "decimalPlaces=" + decimalPlaces +
-                ", useSeparator=" + useSeparator +
-                '}';
+               "decimalPlaces=" + decimalPlaces +
+               ", useSeparator=" + useSeparator +
+               '}';
     }
 
     /**

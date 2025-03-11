@@ -19,8 +19,6 @@ package stroom.legacy.model_6_1;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 
 import java.util.ArrayList;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "structure", "values", "size", "error"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A result structure used primarily for visualisation data")
 @Deprecated
 public final class FlatResult extends Result {
@@ -41,7 +38,7 @@ public final class FlatResult extends Result {
 
     @XmlElement
     @JsonPropertyDescription("The 2 dimensional array containing the result set. The positions in the inner array " +
-            "correspond to the positions in the 'structure' property")
+                             "correspond to the positions in the 'structure' property")
     private List<List<Object>> values;
 
     @XmlElement
@@ -97,8 +94,8 @@ public final class FlatResult extends Result {
         }
         final FlatResult that = (FlatResult) o;
         return Objects.equals(structure, that.structure) &&
-                Objects.equals(values, that.values) &&
-                Objects.equals(size, that.size);
+               Objects.equals(values, that.values) &&
+               Objects.equals(size, that.size);
     }
 
     @Override
@@ -116,6 +113,7 @@ public final class FlatResult extends Result {
      */
     public static class Builder
             extends Result.Builder<FlatResult, Builder> {
+
         private final List<Field> structure = new ArrayList<>();
 
         private final List<List<Object>> values = new ArrayList<>();

@@ -16,20 +16,19 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
+import java.util.Objects;
 
 @Deprecated
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataRetentionPolicy")
 public class DataRetentionPolicy implements SharedObject {
+
     @XmlElement(name = "rule")
     private List<DataRetentionRule> rules;
     @XmlTransient
@@ -61,16 +60,22 @@ public class DataRetentionPolicy implements SharedObject {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final DataRetentionPolicy that = (DataRetentionPolicy) o;
 
-        return rules != null ? rules.equals(that.rules) : that.rules == null;
+        return Objects.equals(rules, that.rules);
     }
 
     @Override
     public int hashCode() {
-        return rules != null ? rules.hashCode() : 0;
+        return rules != null
+                ? rules.hashCode()
+                : 0;
     }
 }

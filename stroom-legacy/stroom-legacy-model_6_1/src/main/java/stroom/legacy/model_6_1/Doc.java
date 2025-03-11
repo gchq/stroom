@@ -18,18 +18,26 @@
 package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlRootElement(name = "doc")
-@XmlType(name = "Doc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Doc", propOrder = {
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTime",
+        "updateTime",
+        "createUser",
+        "updateUser"})
 @Deprecated
 public class Doc implements SharedObject {
+
     private static final long serialVersionUID = -7268601402378907741L;
 
     @XmlElement(name = "type")
@@ -124,31 +132,63 @@ public class Doc implements SharedObject {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Doc)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof final Doc document)) {
+            return false;
+        }
 
-        final Doc document = (Doc) o;
-
-        if (type != null ? !type.equals(document.type) : document.type != null) return false;
-        if (uuid != null ? !uuid.equals(document.uuid) : document.uuid != null) return false;
-        if (name != null ? !name.equals(document.name) : document.name != null) return false;
-        if (version != null ? !version.equals(document.version) : document.version != null) return false;
-        if (createTime != null ? !createTime.equals(document.createTime) : document.createTime != null) return false;
-        if (updateTime != null ? !updateTime.equals(document.updateTime) : document.updateTime != null) return false;
-        if (createUser != null ? !createUser.equals(document.createUser) : document.createUser != null) return false;
-        return updateUser != null ? !updateUser.equals(document.updateUser) : document.updateUser != null;
+        if (!Objects.equals(type, document.type)) {
+            return false;
+        }
+        if (!Objects.equals(uuid, document.uuid)) {
+            return false;
+        }
+        if (!Objects.equals(name, document.name)) {
+            return false;
+        }
+        if (!Objects.equals(version, document.version)) {
+            return false;
+        }
+        if (!Objects.equals(createTime, document.createTime)) {
+            return false;
+        }
+        if (!Objects.equals(updateTime, document.updateTime)) {
+            return false;
+        }
+        if (!Objects.equals(createUser, document.createUser)) {
+            return false;
+        }
+        return !Objects.equals(updateUser, document.updateUser);
     }
 
     @Override
     public int hashCode() {
-        int result = type != null ? type.hashCode() : 0;
-        result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (createTime != null ? createTime.hashCode() : 0);
-        result = 31 * result + (updateTime != null ? updateTime.hashCode() : 0);
-        result = 31 * result + (createUser != null ? createUser.hashCode() : 0);
-        result = 31 * result + (updateUser != null ? updateUser.hashCode() : 0);
+        int result = type != null
+                ? type.hashCode()
+                : 0;
+        result = 31 * result + (uuid != null
+                ? uuid.hashCode()
+                : 0);
+        result = 31 * result + (name != null
+                ? name.hashCode()
+                : 0);
+        result = 31 * result + (version != null
+                ? version.hashCode()
+                : 0);
+        result = 31 * result + (createTime != null
+                ? createTime.hashCode()
+                : 0);
+        result = 31 * result + (updateTime != null
+                ? updateTime.hashCode()
+                : 0);
+        result = 31 * result + (createUser != null
+                ? createUser.hashCode()
+                : 0);
+        result = 31 * result + (updateUser != null
+                ? updateUser.hashCode()
+                : 0);
         return result;
     }
 }

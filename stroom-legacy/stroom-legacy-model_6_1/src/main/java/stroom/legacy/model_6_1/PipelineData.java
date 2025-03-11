@@ -16,29 +16,27 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
 @XmlRootElement(name = "pipeline")
 @Deprecated
 public class PipelineData implements SharedObject {
+
     private static final long serialVersionUID = -4874097335141550178L;
 
     @XmlElement(name = "elements", required = false)
-    private PipelineElements elements = new PipelineElements();
+    private final PipelineElements elements = new PipelineElements();
     @XmlElement(name = "properties", required = false)
-    private PipelineProperties properties = new PipelineProperties();
+    private final PipelineProperties properties = new PipelineProperties();
     @XmlElement(name = "pipelineReferences", required = false)
-    private PipelineReferences pipelineReferences = new PipelineReferences();
+    private final PipelineReferences pipelineReferences = new PipelineReferences();
     @XmlElement(name = "links", required = false)
-    private PipelineLinks links = new PipelineLinks();
+    private final PipelineLinks links = new PipelineLinks();
 
     public PipelineElements getElements() {
         return elements;

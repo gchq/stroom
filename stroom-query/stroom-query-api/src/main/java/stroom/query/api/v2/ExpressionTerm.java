@@ -26,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -47,7 +45,6 @@ import java.util.function.Predicate;
         "value",
         "docRef"
 })
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")
 public final class ExpressionTerm extends ExpressionItem {

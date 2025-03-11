@@ -16,18 +16,16 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "component", propOrder = {"type", "id", "name", "settings"})
 @XmlRootElement(name = "component")
 @Deprecated
 public class ComponentConfig implements SharedObject {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "type")
@@ -39,7 +37,8 @@ public class ComponentConfig implements SharedObject {
     @XmlElement(name = "name")
     private String name;
 
-    @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
+    @XmlElements({
+            @XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
             @XmlElement(name = "text", type = TextComponentSettings.class),
             @XmlElement(name = "vis", type = VisComponentSettings.class)})

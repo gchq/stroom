@@ -16,15 +16,13 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "statisticField", propOrder = {"fieldName"})
 @Deprecated
 public class StatisticField implements HasDisplayValue, Comparable<StatisticField>, SharedObject {
+
     private static final long serialVersionUID = 8967939276508418808L;
 
     @XmlElement(name = "fieldName")
@@ -60,25 +58,27 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
+        result = prime * result + ((fieldName == null)
+                ? 0
+                : fieldName.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final StatisticField other = (StatisticField) obj;
         if (fieldName == null) {
-            if (other.fieldName != null)
-                return false;
-        } else if (!fieldName.equals(other.fieldName))
-            return false;
-        return true;
+            return other.fieldName == null;
+        } else return fieldName.equals(other.fieldName);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     }
 
     public StatisticField deepCopy() {
-        return new StatisticField(new String(fieldName));
+        return new StatisticField(fieldName);
     }
 
 }

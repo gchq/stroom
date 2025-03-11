@@ -16,17 +16,15 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "limits", propOrder = {"streamCount", "eventCount", "durationMs"})
 @XmlRootElement(name = "limits")
 @Deprecated
 public class Limits implements SharedObject {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "streamCount")

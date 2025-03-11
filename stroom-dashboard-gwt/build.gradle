@@ -78,14 +78,16 @@ dependencies {
     implementation libs.gwtp.mvp.client
     implementation libs.jackson.annotations
     implementation libs.jaxb.api.gwt
-    implementation libs.swagger.annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.swagger.annotations
     implementation libs.ws.rs.api.gwt
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt.user
     gwtSourceImplementation libs.gwtp.mvp.client
     gwtSourceImplementation libs.jaxb.api.gwt
-    gwtSourceImplementation libs.swagger.annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    // needed so gwt can compile the stroom-query code that contains swagger annotations
+    gwtSourceImplementation libs.swagger.annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws.rs.api.gwt
 
@@ -96,15 +98,15 @@ dependencies {
 
 // Define a list of projects that contain the source code we want to compile with GWT.
 def clientProjects = [
-    project(':stroom-core-client'),
-    project(':stroom-core-client-widget'),
-    project(':stroom-dashboard-gwt'),
-    project(':stroom-dashboard:stroom-dashboard-client'),
-    project(':stroom-core-shared'),
-    project(':stroom-docref'),
-    project(':stroom-query:stroom-query-api'),
-    project(':stroom-query:stroom-query-language-api'),
-    project(':stroom-util-shared'),
+        project(':stroom-core-client'),
+        project(':stroom-core-client-widget'),
+        project(':stroom-dashboard-gwt'),
+        project(':stroom-dashboard:stroom-dashboard-client'),
+        project(':stroom-core-shared'),
+        project(':stroom-docref'),
+        project(':stroom-query:stroom-query-api'),
+        project(':stroom-query:stroom-query-language-api'),
+        project(':stroom-util-shared'),
 ]
 
 // Task to make a copy of each project in projectsToRename then change all imports
@@ -147,7 +149,7 @@ tasks.register('copySources') {
         println('  output: ' + transformedSourceDir)
         delete transformedSourceDir
 
-        javaexec {
+        providers.javaexec {
             classpath = files(sourceSets.jakartaTransformer.compileClasspath)
             mainClass = "org.eclipse.transformer.cli.TransformerCLI"
             args = [
@@ -162,7 +164,7 @@ tasks.register('copySources') {
         delete allSourceDir
 
         println("copy dep jars => ${allSourceDir}")
-        sourceSets.gwtSource.compileClasspath.files.forEach {zipFile ->
+        sourceSets.gwtSource.compileClasspath.files.forEach { zipFile ->
             println('  ' + zipFile)
             copy {
                 from zipTree(zipFile)
@@ -198,7 +200,7 @@ tasks.register('compileSources', JavaCompile) {
 
 tasks.register('makeGwtSourceDirs') {
     dependsOn compileSources
-    group "gwt"
+    group = "gwt"
 
     doLast {
         def rsyncInputDir = "${gwtBuildDir}/rsync-input"
@@ -233,7 +235,7 @@ tasks.register('makeGwtSourceDirs') {
         // which it doesn't like. Rsync should only change the files that have actually changed
         // i.e. when doing superdev code changes.
         println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
-        exec {
+        providers.exec {
             executable = 'rsync'
             args = [
                     "--recursive",
@@ -264,7 +266,7 @@ tasks.register('makeGwtSourceDirs') {
 
 tasks.register('gwtCompile', JavaExec) {
     dependsOn classes
-    group "gwt"
+    group = "gwt"
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.dashboard.DashboardApp'
@@ -336,7 +338,7 @@ tasks.register('gwtCompile', JavaExec) {
 
 tasks.register('gwtDraftCompile', JavaExec) {
     dependsOn classes
-    group "gwt"
+    group = "gwt"
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
@@ -399,7 +401,7 @@ tasks.register('gwtDraftCompile', JavaExec) {
 
 tasks.register('gwtSuperDevMode', JavaExec) {
     dependsOn classes
-    group "gwt"
+    group = "gwt"
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
@@ -463,7 +465,7 @@ tasks.register('gwtSuperDevMode', JavaExec) {
 }
 
 tasks.register('gwtClean') {
-    group "gwt"
+    group = "gwt"
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir

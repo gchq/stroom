@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -30,6 +28,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Object describing the response to a {@link SearchRequest searchRequest} which may or may not contains results
@@ -37,9 +36,8 @@ import java.util.List;
 @JsonPropertyOrder({"highlights", "results", "errors", "complete"})
 @XmlRootElement(name = "searchResponse")
 @XmlType(name = "SearchResponse", propOrder = {"highlights", "results", "errors", "complete"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The response to a search request, that may or may not contain results. The results " +
-        "may only be a partial set if an iterative screech was requested")
+                      "may only be a partial set if an iterative screech was requested")
 @Deprecated
 public final class SearchResponse implements Serializable {
 
@@ -128,37 +126,56 @@ public final class SearchResponse implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final SearchResponse that = (SearchResponse) o;
 
-        if (highlights != null ? !highlights.equals(that.highlights) : that.highlights != null) return false;
-        if (results != null ? !results.equals(that.results) : that.results != null) return false;
-        if (errors != null ? !errors.equals(that.errors) : that.errors != null) return false;
-        return complete != null ? complete.equals(that.complete) : that.complete == null;
+        if (!Objects.equals(highlights, that.highlights)) {
+            return false;
+        }
+        if (!Objects.equals(results, that.results)) {
+            return false;
+        }
+        if (!Objects.equals(errors, that.errors)) {
+            return false;
+        }
+        return Objects.equals(complete, that.complete);
     }
 
     @Override
     public int hashCode() {
-        int result = highlights != null ? highlights.hashCode() : 0;
-        result = 31 * result + (results != null ? results.hashCode() : 0);
-        result = 31 * result + (errors != null ? errors.hashCode() : 0);
-        result = 31 * result + (complete != null ? complete.hashCode() : 0);
+        int result = highlights != null
+                ? highlights.hashCode()
+                : 0;
+        result = 31 * result + (results != null
+                ? results.hashCode()
+                : 0);
+        result = 31 * result + (errors != null
+                ? errors.hashCode()
+                : 0);
+        result = 31 * result + (complete != null
+                ? complete.hashCode()
+                : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "SearchResponse{" +
-                "highlights=" + highlights +
-                ", results=" + results +
-                ", errors=" + errors +
-                ", complete=" + complete +
-                '}';
+               "highlights=" + highlights +
+               ", results=" + results +
+               ", errors=" + errors +
+               ", complete=" + complete +
+               '}';
     }
 
     public static class TableResultBuilder extends Builder<TableResult, TableResultBuilder> {
+
         @Override
         public TableResultBuilder self() {
             return this;
@@ -181,6 +198,7 @@ public final class SearchResponse implements Serializable {
     private abstract static class Builder<
             ResultClass extends Result,
             CHILD_CLASS extends Builder<ResultClass, ?>> {
+
         // Mandatory parameters
         private Boolean complete;
 
@@ -208,7 +226,6 @@ public final class SearchResponse implements Serializable {
 
         /**
          * @param value are the results considered complete
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public CHILD_CLASS complete(final Boolean value) {

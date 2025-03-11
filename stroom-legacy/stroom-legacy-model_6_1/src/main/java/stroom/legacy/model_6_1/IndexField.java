@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import stroom.legacy.model_6_1.ExpressionTerm.Condition;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
@@ -34,11 +32,12 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
+@XmlType(name = "indexField", propOrder = {
+        "analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
         "stored", "termPositions"})
 @Deprecated
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
+
     private static final long serialVersionUID = 3100770758821157580L;
 
     @XmlElement(name = "fieldType")
@@ -72,8 +71,13 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         // Default constructor necessary for GWT serialisation.
     }
 
-    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
+    private IndexField(final IndexFieldType fieldType,
+                       final String fieldName,
+                       final AnalyzerType analyzerType,
+                       final boolean caseSensitive,
+                       final boolean stored,
+                       final boolean indexed,
+                       final boolean termPositions,
                        final List<ExpressionTerm.Condition> supportedConditions) {
         setFieldType(fieldType);
         setFieldName(fieldName);
@@ -101,8 +105,12 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return createField(fieldName, analyzerType, caseSensitive, false, true, false);
     }
 
-    public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
-                                         final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
+    public static IndexField createField(final String fieldName,
+                                         final AnalyzerType analyzerType,
+                                         final boolean caseSensitive,
+                                         final boolean stored,
+                                         final boolean indexed,
+                                         final boolean termPositions) {
         return new IndexField(IndexFieldType.FIELD, fieldName, analyzerType, caseSensitive, stored, indexed,
                 termPositions, null);
     }
@@ -121,15 +129,24 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 false, null);
     }
 
-    public static IndexField create(final IndexFieldType fieldType, final String fieldName,
-                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
+    public static IndexField create(final IndexFieldType fieldType,
+                                    final String fieldName,
+                                    final AnalyzerType analyzerType,
+                                    final boolean caseSensitive,
+                                    final boolean stored,
+                                    final boolean indexed,
                                     final boolean termPositions) {
         return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions, null);
     }
 
-    public static IndexField create(final IndexFieldType fieldType, final String fieldName,
-                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
-                                    final boolean termPositions, final List<Condition> supportedConditions) {
+    public static IndexField create(final IndexFieldType fieldType,
+                                    final String fieldName,
+                                    final AnalyzerType analyzerType,
+                                    final boolean caseSensitive,
+                                    final boolean stored,
+                                    final boolean indexed,
+                                    final boolean termPositions,
+                                    final List<Condition> supportedConditions) {
         return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions,
                 supportedConditions);
     }
@@ -220,16 +237,20 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final IndexField that = (IndexField) o;
         return stored == that.stored &&
-                indexed == that.indexed &&
-                termPositions == that.termPositions &&
-                caseSensitive == that.caseSensitive &&
-                fieldType == that.fieldType &&
-                Objects.equals(fieldName, that.fieldName) &&
-                analyzerType == that.analyzerType;
+               indexed == that.indexed &&
+               termPositions == that.termPositions &&
+               caseSensitive == that.caseSensitive &&
+               fieldType == that.fieldType &&
+               Objects.equals(fieldName, that.fieldName) &&
+               analyzerType == that.analyzerType;
     }
 
     @Override
@@ -295,8 +316,14 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     public enum AnalyzerType implements HasDisplayValue {
-        KEYWORD("Keyword"), ALPHA("Alpha"), NUMERIC("Numeric"), ALPHA_NUMERIC("Alpha numeric"), WHITESPACE(
-                "Whitespace"), STOP("Stop words"), STANDARD("Standard");
+        KEYWORD("Keyword"),
+        ALPHA("Alpha"),
+        NUMERIC("Numeric"),
+        ALPHA_NUMERIC("Alpha numeric"),
+        WHITESPACE(
+                "Whitespace"),
+        STOP("Stop words"),
+        STANDARD("Standard");
 
         private final String displayValue;
 

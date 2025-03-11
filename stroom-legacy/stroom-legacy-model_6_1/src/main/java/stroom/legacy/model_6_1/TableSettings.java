@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlType;
@@ -29,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({
         "queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
@@ -36,11 +35,11 @@ import java.util.List;
 @XmlType(
         name = "TableSettings",
         propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
-        "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
+                      "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 @Deprecated
 public final class TableSettings implements Serializable {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement
@@ -63,16 +62,16 @@ public final class TableSettings implements Serializable {
     @XmlElementWrapper(name = "maxResults")
     @XmlElement(name = "val")
     @Schema(description = "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means " +
-            "1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field " +
-            "system defaults will apply",
+                          "1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field " +
+                          "system defaults will apply",
             required = false,
             example = "1000,10,1")
     private List<Integer> maxResults;
 
     @XmlElement
     @Schema(description = "When grouping is used a value of true indicates that the results will include the full detail of " +
-            "any results aggregated into a group as well as their aggregates. A value of false will only " +
-            "include the aggregated values for each group. Defaults to false.",
+                          "any results aggregated into a group as well as their aggregates. A value of false will only " +
+                          "include the aggregated values for each group. Defaults to false.",
             required = false)
     private Boolean showDetail;
 
@@ -142,34 +141,22 @@ public final class TableSettings implements Serializable {
 
         final TableSettings that = (TableSettings) o;
 
-        if (queryId != null
-                ? !queryId.equals(that.queryId)
-                : that.queryId != null) {
+        if (!Objects.equals(queryId, that.queryId)) {
             return false;
         }
-        if (fields != null
-                ? !fields.equals(that.fields)
-                : that.fields != null) {
+        if (!Objects.equals(fields, that.fields)) {
             return false;
         }
-        if (extractValues != null
-                ? !extractValues.equals(that.extractValues)
-                : that.extractValues != null) {
+        if (!Objects.equals(extractValues, that.extractValues)) {
             return false;
         }
-        if (extractionPipeline != null
-                ? !extractionPipeline.equals(that.extractionPipeline)
-                : that.extractionPipeline != null) {
+        if (!Objects.equals(extractionPipeline, that.extractionPipeline)) {
             return false;
         }
-        if (maxResults != null
-                ? !maxResults.equals(that.maxResults)
-                : that.maxResults != null) {
+        if (!Objects.equals(maxResults, that.maxResults)) {
             return false;
         }
-        return showDetail != null
-                ? showDetail.equals(that.showDetail)
-                : that.showDetail == null;
+        return Objects.equals(showDetail, that.showDetail);
     }
 
     @Override
@@ -198,19 +185,20 @@ public final class TableSettings implements Serializable {
     @Override
     public String toString() {
         return "TableSettings{" +
-                "queryId='" + queryId + '\'' +
-                ", fields=" + fields +
-                ", extractValues=" + extractValues +
-                ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + maxResults +
-                ", showDetail=" + showDetail +
-                '}';
+               "queryId='" + queryId + '\'' +
+               ", fields=" + fields +
+               ", extractValues=" + extractValues +
+               ", extractionPipeline=" + extractionPipeline +
+               ", maxResults=" + maxResults +
+               ", showDetail=" + showDetail +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static class Builder {
+
         private String queryId;
         private final List<Field> fields = new ArrayList<>();
         private Boolean extractValues;

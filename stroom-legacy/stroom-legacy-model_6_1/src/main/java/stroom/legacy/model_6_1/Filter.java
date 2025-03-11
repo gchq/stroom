@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -28,11 +26,11 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"includes", "excludes"})
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
-        "both can be supplied")
+                      "both can be supplied")
 @Deprecated
 public final class Filter implements Serializable {
+
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement
@@ -65,11 +63,15 @@ public final class Filter implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Filter filter = (Filter) o;
         return Objects.equals(includes, filter.includes) &&
-                Objects.equals(excludes, filter.excludes);
+               Objects.equals(excludes, filter.excludes);
     }
 
     @Override
@@ -80,15 +82,16 @@ public final class Filter implements Serializable {
     @Override
     public String toString() {
         return "Filter{" +
-                "includes='" + includes + '\'' +
-                ", excludes='" + excludes + '\'' +
-                '}';
+               "includes='" + includes + '\'' +
+               ", excludes='" + excludes + '\'' +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link Filter}
      */
     public static class Builder {
+
         private String includes;
         private String excludes;
 
@@ -102,8 +105,8 @@ public final class Filter implements Serializable {
 
         /**
          * Set the inclusion regex
-         * @param value Only results matching this filter will be included
          *
+         * @param value Only results matching this filter will be included
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder includes(final String value) {
@@ -113,8 +116,8 @@ public final class Filter implements Serializable {
 
         /**
          * Set the exclusion regex
-         * @param value Only results NOT matching this filter will be included
          *
+         * @param value Only results NOT matching this filter will be included
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder excludes(final String value) {

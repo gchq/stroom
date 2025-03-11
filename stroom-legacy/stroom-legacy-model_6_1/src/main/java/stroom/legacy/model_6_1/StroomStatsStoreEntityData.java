@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
@@ -30,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
 @Deprecated
 public class StroomStatsStoreEntityData implements SharedObject {
@@ -160,14 +157,14 @@ public class StroomStatsStoreEntityData implements SharedObject {
 
         if (rolledUpFieldNames.size() > statisticFields.size()) {
             throw new RuntimeException(
-                    "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
+                    "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames
+                    + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
         }
 
         if (!fieldPositionMap.keySet().containsAll(rolledUpFieldNames)) {
             throw new RuntimeException(
-                    "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
+                    "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames
+                    + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
         }
 
         final List<Integer> rolledUpFieldPositions = new ArrayList<>();
@@ -186,25 +183,27 @@ public class StroomStatsStoreEntityData implements SharedObject {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((statisticFields == null) ? 0 : statisticFields.hashCode());
+        result = prime * result + ((statisticFields == null)
+                ? 0
+                : statisticFields.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
         if (statisticFields == null) {
-            if (other.statisticFields != null)
-                return false;
-        } else if (!statisticFields.equals(other.statisticFields))
-            return false;
-        return true;
+            return other.statisticFields == null;
+        } else return statisticFields.equals(other.statisticFields);
     }
 
     @Override

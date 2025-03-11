@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -54,7 +52,6 @@ import java.util.Objects;
  * &lt;/complexType>
  * </pre>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"string", "integer", "long", "boolean", "entity"})
@@ -161,10 +158,10 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         }
         final PipelinePropertyValue that = (PipelinePropertyValue) o;
         return Objects.equals(string, that.string) &&
-                Objects.equals(integer, that.integer) &&
-                Objects.equals(_long, that._long) &&
-                Objects.equals(_boolean, that._boolean) &&
-                Objects.equals(entity, that.entity);
+               Objects.equals(integer, that.integer) &&
+               Objects.equals(_long, that._long) &&
+               Objects.equals(_boolean, that._boolean) &&
+               Objects.equals(entity, that.entity);
     }
 
     @Override

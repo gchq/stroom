@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -31,7 +29,6 @@ import java.util.Objects;
  */
 @JsonPropertyOrder({"pattern", "timeZone"})
 @XmlType(name = "DateTimeFormat", propOrder = {"pattern", "timeZone"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The string formatting to apply to a date value")
 @Deprecated
 public final class DateTimeFormat implements Serializable {
@@ -40,7 +37,7 @@ public final class DateTimeFormat implements Serializable {
 
     @XmlElement
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
-            "java.time.format.DateTimeFormatter",
+                          "java.time.format.DateTimeFormatter",
             required = true)
     private String pattern;
 
@@ -88,7 +85,7 @@ public final class DateTimeFormat implements Serializable {
         }
         final DateTimeFormat that = (DateTimeFormat) o;
         return Objects.equals(pattern, that.pattern) &&
-                Objects.equals(timeZone, that.timeZone);
+               Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
@@ -99,9 +96,9 @@ public final class DateTimeFormat implements Serializable {
     @Override
     public String toString() {
         return "DateTimeFormat{" +
-                "pattern='" + pattern + '\'' +
-                ", timeZone=" + timeZone +
-                '}';
+               "pattern='" + pattern + '\'' +
+               ", timeZone=" + timeZone +
+               '}';
     }
 
     /**

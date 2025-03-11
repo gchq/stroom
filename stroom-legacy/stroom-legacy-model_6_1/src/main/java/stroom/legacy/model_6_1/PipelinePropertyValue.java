@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -44,10 +42,10 @@ import jakarta.xml.bind.annotation.XmlType;
  * &lt;/complexType>
  * </pre>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
 @Deprecated
 public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
+
     private static final long serialVersionUID = 1247638056133627349L;
 
     protected String string;

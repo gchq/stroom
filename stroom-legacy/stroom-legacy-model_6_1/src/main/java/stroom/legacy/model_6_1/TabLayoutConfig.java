@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -27,10 +25,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tabLayout", propOrder = {"tabs", "selected"})
 @Deprecated
 public class TabLayoutConfig extends LayoutConfig {
+
     private static final long serialVersionUID = -2105048053435792675L;
 
     @XmlElementWrapper(name = "tabs")

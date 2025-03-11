@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -28,15 +26,15 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"order", "direction"})
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "Describes the sorting applied to a field")
 @Deprecated
 public final class Sort implements Serializable {
+
     private static final long serialVersionUID = 4530846367973824427L;
 
     @XmlElement
     @Schema(description = "Where multiple fields are sorted this value describes the sort order, with 0 being the first " +
-                    "field to sort on",
+                          "field to sort on",
             example = "0",
             required = true)
     private Integer order;
@@ -65,11 +63,15 @@ public final class Sort implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Sort sort = (Sort) o;
         return Objects.equals(order, sort.order) &&
-                direction == sort.direction;
+               direction == sort.direction;
     }
 
     @Override
@@ -80,13 +82,14 @@ public final class Sort implements Serializable {
     @Override
     public String toString() {
         return "Sort{" +
-                "order=" + order +
-                ", direction=" + direction +
-                '}';
+               "order=" + order +
+               ", direction=" + direction +
+               '}';
     }
 
     public enum SortDirection implements HasDisplayValue {
-        ASCENDING("Ascending"), DESCENDING("Descending");
+        ASCENDING("Ascending"),
+        DESCENDING("Descending");
 
         private final String displayValue;
 
@@ -104,6 +107,7 @@ public final class Sort implements Serializable {
      * Builder for constructing a {@link Sort sort}
      */
     public static class Builder {
+
         private Integer order;
 
         private SortDirection direction;
@@ -119,7 +123,6 @@ public final class Sort implements Serializable {
         /**
          * @param value Where multiple fields are sorted this value describes the sort order,
          *              with 0 being the first field to sort on
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder order(final Integer value) {
@@ -129,7 +132,6 @@ public final class Sort implements Serializable {
 
         /**
          * @param value The direction to sort in, ASCENDING or DESCENDING
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder direction(final SortDirection value) {

@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
@@ -29,6 +27,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * {@value #CLASS_DESC}
@@ -36,7 +35,6 @@ import java.util.List;
 @JsonPropertyOrder({"dataSource", "expression", "params"})
 @XmlType(name = "Query", propOrder = {"dataSource", "expression", "params"})
 @XmlRootElement(name = "query")
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = Query.CLASS_DESC)
 @Deprecated
 public final class Query implements Serializable {
@@ -87,31 +85,45 @@ public final class Query implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final Query query = (Query) o;
 
-        if (dataSource != null ? !dataSource.equals(query.dataSource) : query.dataSource != null) return false;
-        if (expression != null ? !expression.equals(query.expression) : query.expression != null) return false;
-        return params != null ? params.equals(query.params) : query.params == null;
+        if (!Objects.equals(dataSource, query.dataSource)) {
+            return false;
+        }
+        if (!Objects.equals(expression, query.expression)) {
+            return false;
+        }
+        return Objects.equals(params, query.params);
     }
 
     @Override
     public int hashCode() {
-        int result = dataSource != null ? dataSource.hashCode() : 0;
-        result = 31 * result + (expression != null ? expression.hashCode() : 0);
-        result = 31 * result + (params != null ? params.hashCode() : 0);
+        int result = dataSource != null
+                ? dataSource.hashCode()
+                : 0;
+        result = 31 * result + (expression != null
+                ? expression.hashCode()
+                : 0);
+        result = 31 * result + (params != null
+                ? params.hashCode()
+                : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "Query{" +
-                "dataSource=" + dataSource +
-                ", expression=" + expression +
-                ", params=" + params +
-                '}';
+               "dataSource=" + dataSource +
+               ", expression=" + expression +
+               ", params=" + params +
+               '}';
     }
 
     /**
@@ -127,7 +139,6 @@ public final class Query implements Serializable {
 
         /**
          * @param value A DocRef that points to the data source of the query
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder dataSource(final DocRef value) {
@@ -137,6 +148,7 @@ public final class Query implements Serializable {
 
         /**
          * Shortcut function for creating the datasource {@link DocRef} in one go
+         *
          * @param type The type of the datasource
          * @param uuid The UUID of the datasource
          * @param name The name of the datasource
@@ -148,7 +160,6 @@ public final class Query implements Serializable {
 
         /**
          * @param value he root logical addOperator in the query expression tree
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder expression(final ExpressionOperator value) {
@@ -158,7 +169,8 @@ public final class Query implements Serializable {
 
         /**
          * Shortcut function to add a parameter and go straight back to building the query
-         * @param key The parameter key
+         *
+         * @param key   The parameter key
          * @param value The parameter value
          * @return this builder with the completed parameter added.
          */
@@ -168,10 +180,9 @@ public final class Query implements Serializable {
 
         /**
          * @param values A list of key/value pairs that provide additional information about the query
-         *
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addParams(final Param...values) {
+        public Builder addParams(final Param... values) {
             this.params.addAll(Arrays.asList(values));
             return this;
         }

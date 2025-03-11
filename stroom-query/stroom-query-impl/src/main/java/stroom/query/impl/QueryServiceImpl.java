@@ -998,6 +998,7 @@ class QueryServiceImpl implements QueryService {
         }
     }
 
+    @SafeVarargs
     private static <T1, T2> boolean containsTailElements(final List<T1> items,
                                                          final Function<T1, T2> mapper,
                                                          final T2... requiredTailTypes) {

@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -32,7 +30,6 @@ import java.util.Objects;
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "Param", propOrder = {"key", "value"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A key value pair that describes a property of a query")
 public final class Param {
 
@@ -40,13 +37,13 @@ public final class Param {
     @Schema(description = "The property key",
             required = true)
     @JsonProperty
-    private String key;
+    private final String key;
 
     @XmlElement
     @Schema(description = "The property value",
             required = true)
     @JsonProperty
-    private String value;
+    private final String value;
 
     @SuppressWarnings("unused") // For XML de-ser
     private Param() {
@@ -79,7 +76,7 @@ public final class Param {
         }
         Param param = (Param) o;
         return Objects.equals(key, param.key) &&
-                Objects.equals(value, param.value);
+               Objects.equals(value, param.value);
     }
 
     @Override
@@ -90,9 +87,9 @@ public final class Param {
     @Override
     public String toString() {
         return "Param{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+               "key='" + key + '\'' +
+               ", value='" + value + '\'' +
+               '}';
     }
 
     public static Builder builder() {

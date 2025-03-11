@@ -26,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
@@ -58,7 +56,6 @@ import java.util.Objects;
  * &lt;/complexType>
  * </pre>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"element", "name", "pipeline", "feed", "streamType"})
@@ -66,19 +63,19 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
 
     @XmlElement(name = "element", required = true)
     @JsonProperty
-    protected String element;
+    private String element;
     @XmlElement(name = "name", required = true)
     @JsonProperty
-    protected String name;
+    private String name;
     @XmlElement(name = "pipeline", required = true)
     @JsonProperty
-    protected DocRef pipeline;
+    private DocRef pipeline;
     @XmlElement(name = "feed", required = true)
     @JsonProperty
-    protected DocRef feed;
+    private DocRef feed;
     @XmlElement(name = "streamType", required = true)
     @JsonProperty
-    protected String streamType;
+    private String streamType;
 
     @XmlTransient
     @JsonProperty
@@ -169,10 +166,10 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         }
         final PipelineReference that = (PipelineReference) o;
         return Objects.equals(element, that.element) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(pipeline, that.pipeline) &&
-                Objects.equals(feed, that.feed) &&
-                Objects.equals(streamType, that.streamType);
+               Objects.equals(name, that.name) &&
+               Objects.equals(pipeline, that.pipeline) &&
+               Objects.equals(feed, that.feed) &&
+               Objects.equals(streamType, that.streamType);
     }
 
     @Override
@@ -197,7 +194,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
     @Override
     public String toString() {
         return "element=" + element + ", name=" + name + ", pipeline=" + pipeline + ", feed=" + feed + ", streamType="
-                + streamType;
+               + streamType;
     }
 
     @Override

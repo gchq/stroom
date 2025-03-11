@@ -19,8 +19,6 @@ package stroom.legacy.model_6_1;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -30,11 +28,11 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"field", "condition", "value", "docRef"})
 @XmlType(name = "ExpressionTerm", propOrder = {"field", "condition", "value", "docRef"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")
 @Deprecated
 public final class ExpressionTerm extends ExpressionItem {
+
     private static final long serialVersionUID = 9035311895540457146L;
 
     @XmlElement
@@ -107,9 +105,9 @@ public final class ExpressionTerm extends ExpressionItem {
         }
         ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
-                condition == that.condition &&
-                Objects.equals(value, that.value) &&
-                Objects.equals(docRef, that.docRef);
+               condition == that.condition &&
+               Objects.equals(value, that.value) &&
+               Objects.equals(docRef, that.docRef);
     }
 
     @Override
@@ -195,6 +193,7 @@ public final class ExpressionTerm extends ExpressionItem {
      */
     public static class Builder
             extends ExpressionItem.Builder<ExpressionTerm, Builder> {
+
         private String field;
 
         private Condition condition;

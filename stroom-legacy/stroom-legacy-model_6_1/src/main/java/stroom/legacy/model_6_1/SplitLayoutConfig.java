@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -26,15 +24,16 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "splitLayout", propOrder = {"dimension", "children"})
 @Deprecated
 public class SplitLayoutConfig extends LayoutConfig {
+
     private static final long serialVersionUID = 8201392610412513780L;
     @XmlElement(name = "dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
-    @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
+    @XmlElements({
+            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     private List<LayoutConfig> children;
 
@@ -116,7 +115,8 @@ public class SplitLayoutConfig extends LayoutConfig {
     }
 
     public enum Direction {
-        ACROSS(0), DOWN(1);
+        ACROSS(0),
+        DOWN(1);
 
         private final int dimension;
 

@@ -378,7 +378,7 @@ shadowJar {
     dependsOn resolve
 
     // Allows us to build fat jars with lots of files
-    zip64 true
+    zip64 = true
 
     // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
@@ -633,13 +633,13 @@ tasks.register('copySupportingFiles', Copy) {
     into releaseBuildDir
 
     doLast {
-        exec {
+        providers.exec {
             // Move the banner.txt into bin where it is expected
             commandLine 'mv', "${releaseBuildDir}/banner.txt", "${releaseBuildDir}/bin/banner.txt"
         }
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        //exec {
+        //providers.exec {
         //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
         //}
     }
@@ -675,7 +675,7 @@ tasks.register('makeSendExecutable') {
     dependsOn downloadSend
     doLast {
         // The args script is sourced so doesn't need execute perms
-        exec {
+        providers.exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
         }
     }
@@ -717,12 +717,14 @@ tasks.register('buildDistribution', Zip) {
 def thisProject = project
 rootProject.subprojects { subProj ->
     //println "subProj ${subProj.name} project ${thisProject.name}"
-    if (!subProj.name.equals(thisProject.name)) {
-        subProj.tasks.withType(Test) { otherTestTask ->
-            //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
-            thisProject.tasks.test.mustRunAfter otherTestTask.path
-            thisProject.tasks.jar.mustRunAfter otherTestTask.path
-            thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
+    if (subProj.name != thisProject.name) {
+        subProj.tasks.withType(Test).tap {
+            configureEach { otherTestTask ->
+                //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
+                thisProject.tasks.test.mustRunAfter otherTestTask.path
+                thisProject.tasks.jar.mustRunAfter otherTestTask.path
+                thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
+            }
         }
     }
 }

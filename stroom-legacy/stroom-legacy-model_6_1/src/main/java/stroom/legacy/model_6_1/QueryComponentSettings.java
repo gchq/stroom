@@ -16,17 +16,15 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "automate"})
 @XmlRootElement(name = "query")
 @Deprecated
 public class QueryComponentSettings extends ComponentSettings {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "dataSource")

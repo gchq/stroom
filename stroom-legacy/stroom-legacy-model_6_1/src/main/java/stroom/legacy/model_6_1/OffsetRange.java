@@ -18,24 +18,23 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @JsonPropertyOrder({"offset", "length"})
 @XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The offset and length of a range of data in a sub-set of a query result set")
 @Deprecated
 public final class OffsetRange implements Serializable {
+
     private static final long serialVersionUID = 5045453517852867315L;
 
     @XmlElement
     @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
-                    "in the full result set",
+                          "in the full result set",
             example = "0",
             required = true)
     private Long offset;
@@ -69,19 +68,27 @@ public final class OffsetRange implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OffsetRange)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof final OffsetRange that)) {
+            return false;
+        }
 
-        final OffsetRange that = (OffsetRange) o;
-
-        if (offset != null ? !offset.equals(that.offset) : that.offset != null) return false;
-        return length != null ? length.equals(that.length) : that.length == null;
+        if (!Objects.equals(offset, that.offset)) {
+            return false;
+        }
+        return Objects.equals(length, that.length);
     }
 
     @Override
     public int hashCode() {
-        int result = offset != null ? offset.hashCode() : 0;
-        result = 31 * result + (length != null ? length.hashCode() : 0);
+        int result = offset != null
+                ? offset.hashCode()
+                : 0;
+        result = 31 * result + (length != null
+                ? length.hashCode()
+                : 0);
         return result;
     }
 
@@ -89,22 +96,22 @@ public final class OffsetRange implements Serializable {
     @Override
     public String toString() {
         return "OffsetRange{" +
-                "offset=" + offset +
-                ", length=" + length +
-                '}';
+               "offset=" + offset +
+               ", length=" + length +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link OffsetRange}
      */
     public static class Builder {
+
         private Long offset;
         private Long length;
 
         /**
          * @param value The start offset for this sub-set of data,
          *              where zero is the offset of the first record in the full result set
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder offset(final Long value) {
@@ -114,7 +121,6 @@ public final class OffsetRange implements Serializable {
 
         /**
          * @param value The length in records of the sub-set of results
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder length(final Long value) {

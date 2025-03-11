@@ -115,7 +115,7 @@ shadowJar {
     dependsOn test
 
     // Allows us to build fat jars with lots of files
-    zip64 true
+    zip64 = true
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
@@ -184,13 +184,13 @@ tasks.register('copySupportingFiles', Copy) {
     into releaseBuildDir
 
     doLast {
-        exec {
+        providers.exec {
             // Move the banner.txt into bin where it is expected
             commandLine 'mv', "${releaseBuildDir}/banner.txt", "${releaseBuildDir}/bin/banner.txt"
         }
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        //exec {
+        //providers.exec {
         //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
         //}
     }
@@ -283,7 +283,7 @@ tasks.register('makeSendExecutable') {
     dependsOn downloadSend
     doLast {
         // The args script is sourced so doesn't need execute perms
-        exec {
+        providers.exec {
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
         }
     }

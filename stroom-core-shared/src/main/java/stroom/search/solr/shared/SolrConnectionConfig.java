@@ -7,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -16,7 +14,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "connection")
@@ -95,15 +92,14 @@ public class SolrConnectionConfig implements Serializable {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SolrConnectionConfig)) {
+        if (!(o instanceof final SolrConnectionConfig that)) {
             return false;
         }
-        final SolrConnectionConfig that = (SolrConnectionConfig) o;
         return useZk == that.useZk &&
-                instanceType == that.instanceType &&
-                Objects.equals(solrUrls, that.solrUrls) &&
-                Objects.equals(zkHosts, that.zkHosts) &&
-                Objects.equals(zkPath, that.zkPath);
+               instanceType == that.instanceType &&
+               Objects.equals(solrUrls, that.solrUrls) &&
+               Objects.equals(zkHosts, that.zkHosts) &&
+               Objects.equals(zkPath, that.zkPath);
     }
 
     @Override
@@ -114,12 +110,12 @@ public class SolrConnectionConfig implements Serializable {
     @Override
     public String toString() {
         return "SolrConnectionConfig{" +
-                "instanceType=" + instanceType +
-                ", useZk=" + useZk +
-                ", solrUrls=" + solrUrls +
-                ", zkHosts=" + zkHosts +
-                ", zkPath='" + zkPath + '\'' +
-                '}';
+               "instanceType=" + instanceType +
+               ", useZk=" + useZk +
+               ", solrUrls=" + solrUrls +
+               ", zkHosts=" + zkHosts +
+               ", zkPath='" + zkPath + '\'' +
+               '}';
     }
 
     public enum InstanceType implements HasDisplayValue {

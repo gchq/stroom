@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -28,10 +26,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The timezone to apply to a date time value")
 @Deprecated
 public final class TimeZone implements Serializable {
+
     private static final long serialVersionUID = 1200175661441813029L;
 
     @XmlElement
@@ -121,9 +119,9 @@ public final class TimeZone implements Serializable {
         }
         final TimeZone timeZone = (TimeZone) o;
         return use == timeZone.use &&
-                Objects.equals(id, timeZone.id) &&
-                Objects.equals(offsetHours, timeZone.offsetHours) &&
-                Objects.equals(offsetMinutes, timeZone.offsetMinutes);
+               Objects.equals(id, timeZone.id) &&
+               Objects.equals(offsetHours, timeZone.offsetHours) &&
+               Objects.equals(offsetMinutes, timeZone.offsetMinutes);
     }
 
     @Override
@@ -134,11 +132,11 @@ public final class TimeZone implements Serializable {
     @Override
     public String toString() {
         return "TimeZone{" +
-                "use=" + use +
-                ", id='" + id + '\'' +
-                ", offsetHours=" + offsetHours +
-                ", offsetMinutes=" + offsetMinutes +
-                '}';
+               "use=" + use +
+               ", id='" + id + '\'' +
+               ", offsetHours=" + offsetHours +
+               ", offsetMinutes=" + offsetMinutes +
+               '}';
     }
 
     public enum Use implements HasDisplayValue {
@@ -169,6 +167,7 @@ public final class TimeZone implements Serializable {
      * Builder for constructing a {@link TimeZone timeZone}
      */
     public static class Builder {
+
         private Use use;
 
         private String id;

@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -33,11 +31,11 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"op", "children"})
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionOperator",
         description = "A logical addOperator term in a query expression tree")
 @Deprecated
 public final class ExpressionOperator extends ExpressionItem {
+
     private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")
@@ -89,7 +87,7 @@ public final class ExpressionOperator extends ExpressionItem {
         }
         ExpressionOperator that = (ExpressionOperator) o;
         return op == that.op &&
-                Objects.equals(children, that.children);
+               Objects.equals(children, that.children);
     }
 
     @Override
@@ -153,9 +151,10 @@ public final class ExpressionOperator extends ExpressionItem {
      */
     public static class Builder
             extends ExpressionItem.Builder<ExpressionOperator, Builder> {
+
         private Op op;
 
-        private List<ExpressionItem> children = new ArrayList<>();
+        private final List<ExpressionItem> children = new ArrayList<>();
 
         /**
          * No args constructor, defaults to using AND as the operator.

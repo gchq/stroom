@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlType;
@@ -25,19 +23,19 @@ import jakarta.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Properties", propOrder = {"add", "remove"})
 @Deprecated
 public class PipelineProperties implements SharedObject {
+
     private static final long serialVersionUID = -7892582092797084330L;
 
     @XmlElementWrapper(name = "add", required = false)
     @XmlElement(name = "property", required = false)
-    private List<PipelineProperty> add = new ArrayList<>();
+    private final List<PipelineProperty> add = new ArrayList<>();
 
     @XmlElementWrapper(name = "remove", required = false)
     @XmlElement(name = "property", required = false)
-    private List<PipelineProperty> remove = new ArrayList<>();
+    private final List<PipelineProperty> remove = new ArrayList<>();
 
     public List<PipelineProperty> getAdd() {
         return add;

@@ -16,18 +16,26 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.Objects;
+
 @Deprecated
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
+@XmlType(name = "DataRetentionRule", propOrder = {
+        "ruleNumber",
+        "creationTime",
+        "name",
+        "enabled",
+        "expression",
+        "age",
+        "timeUnit",
+        "forever"})
 @XmlRootElement(name = "dataRetentionRule")
 public class DataRetentionRule implements SharedObject {
+
     public static final String FOREVER = "Forever";
 
     @XmlElement(name = "ruleNumber")
@@ -119,18 +127,36 @@ public class DataRetentionRule implements SharedObject {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final DataRetentionRule rule = (DataRetentionRule) o;
 
-        if (ruleNumber != rule.ruleNumber) return false;
-        if (creationTime != rule.creationTime) return false;
-        if (enabled != rule.enabled) return false;
-        if (age != rule.age) return false;
-        if (forever != rule.forever) return false;
-        if (name != null ? !name.equals(rule.name) : rule.name != null) return false;
-        if (expression != null ? !expression.equals(rule.expression) : rule.expression != null) return false;
+        if (ruleNumber != rule.ruleNumber) {
+            return false;
+        }
+        if (creationTime != rule.creationTime) {
+            return false;
+        }
+        if (enabled != rule.enabled) {
+            return false;
+        }
+        if (age != rule.age) {
+            return false;
+        }
+        if (forever != rule.forever) {
+            return false;
+        }
+        if (!Objects.equals(name, rule.name)) {
+            return false;
+        }
+        if (!Objects.equals(expression, rule.expression)) {
+            return false;
+        }
         return timeUnit == rule.timeUnit;
     }
 
@@ -138,12 +164,22 @@ public class DataRetentionRule implements SharedObject {
     public int hashCode() {
         int result = ruleNumber;
         result = 31 * result + (int) (creationTime ^ (creationTime >>> 32));
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (enabled ? 1 : 0);
-        result = 31 * result + (expression != null ? expression.hashCode() : 0);
+        result = 31 * result + (name != null
+                ? name.hashCode()
+                : 0);
+        result = 31 * result + (enabled
+                ? 1
+                : 0);
+        result = 31 * result + (expression != null
+                ? expression.hashCode()
+                : 0);
         result = 31 * result + age;
-        result = 31 * result + (timeUnit != null ? timeUnit.hashCode() : 0);
-        result = 31 * result + (forever ? 1 : 0);
+        result = 31 * result + (timeUnit != null
+                ? timeUnit.hashCode()
+                : 0);
+        result = 31 * result + (forever
+                ? 1
+                : 0);
         return result;
     }
 

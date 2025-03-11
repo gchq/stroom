@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -28,10 +26,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"type", "numberFormat", "dateTimeFormat"})
 @XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "Describes the formatting that will be applied to values in a field")
 @Deprecated
 public final class Format implements Serializable {
+
     private static final long serialVersionUID = -5380825645719299089L;
 
     @XmlElement
@@ -41,7 +39,7 @@ public final class Format implements Serializable {
     private Type type;
 
     @XmlElement
-    @Schema(            required = false)
+    @Schema(required = false)
     private NumberFormat numberFormat;
 
     @XmlElement
@@ -85,12 +83,16 @@ public final class Format implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final Format format = (Format) o;
         return type == format.type &&
-                Objects.equals(numberFormat, format.numberFormat) &&
-                Objects.equals(dateTimeFormat, format.dateTimeFormat);
+               Objects.equals(numberFormat, format.numberFormat) &&
+               Objects.equals(dateTimeFormat, format.dateTimeFormat);
     }
 
     @Override
@@ -101,10 +103,10 @@ public final class Format implements Serializable {
     @Override
     public String toString() {
         return "Format{" +
-                "type=" + type +
-                ", numberFormat=" + numberFormat +
-                ", dateTimeFormat=" + dateTimeFormat +
-                '}';
+               "type=" + type +
+               ", numberFormat=" + numberFormat +
+               ", dateTimeFormat=" + dateTimeFormat +
+               '}';
     }
 
     public enum Type implements HasDisplayValue {
@@ -129,6 +131,7 @@ public final class Format implements Serializable {
      * Builder for constructing a {@link Format}
      */
     public static class Builder {
+
         private Type type;
 
         private NumberFormat numberFormat;
@@ -150,7 +153,6 @@ public final class Format implements Serializable {
 
         /**
          * @param value XXXXXXXXXXXXXXXX
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder type(final Type value) {

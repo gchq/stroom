@@ -16,22 +16,20 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Arrays;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "size", propOrder = {"width", "height"})
 @Deprecated
 public class Size implements SharedObject {
+
     private static final long serialVersionUID = 8201392610412513780L;
 
     @XmlTransient
-    private int[] size = new int[]{200, 200};
+    private final int[] size = new int[]{200, 200};
 
     public Size() {
         // Default constructor necessary for GWT serialisation.

@@ -19,13 +19,12 @@ package stroom.legacy.model_6_1;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlSeeAlso;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -38,12 +37,12 @@ import java.io.Serializable;
 })
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 @Deprecated
 public abstract class ExpressionItem implements Serializable {
+
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
@@ -69,17 +68,21 @@ public abstract class ExpressionItem implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExpressionItem)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof final ExpressionItem that)) {
+            return false;
+        }
 
-        final ExpressionItem that = (ExpressionItem) o;
-
-        return enabled != null ? enabled.equals(that.enabled) : that.enabled == null;
+        return Objects.equals(enabled, that.enabled);
     }
 
     @Override
     public int hashCode() {
-        return enabled != null ? enabled.hashCode() : 0;
+        return enabled != null
+                ? enabled.hashCode()
+                : 0;
     }
 
     abstract void append(final StringBuilder sb, final String pad, final boolean singleLine);
@@ -115,7 +118,6 @@ public abstract class ExpressionItem implements Serializable {
 
         /**
          * @param value Sets the terms state to enabled if true or null, disabled if false
-         *
          * @return The Builder Builder, enabling method chaining
          */
         public CHILD_CLASS enabled(final Boolean value) {

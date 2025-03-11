@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
@@ -43,10 +41,10 @@ import jakarta.xml.bind.annotation.XmlType;
  * &lt;/complexType>
  * </pre>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Element", propOrder = {"id", "type"})
 @Deprecated
 public class PipelineElement implements Comparable<PipelineElement>, SharedObject {
+
     private static final long serialVersionUID = -8891708244423055172L;
 
     @XmlTransient
@@ -98,12 +96,11 @@ public class PipelineElement implements Comparable<PipelineElement>, SharedObjec
 
     @Override
     public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof PipelineElement)) {
+        if (obj == null || !(obj instanceof final PipelineElement element)) {
             return false;
         }
 
         // Make sure types are the same if they have been set.
-        final PipelineElement element = (PipelineElement) obj;
         if (type != null && element.type != null && !type.equals(element.type)) {
             return false;
         }

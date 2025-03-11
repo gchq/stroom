@@ -21,8 +21,6 @@ import stroom.legacy.model_6_1.ExpressionTerm.Condition;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlTransient;
@@ -32,10 +30,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
 @XmlType(name = "DataSourceField", propOrder = {"type", "docRefType", "name", "queryable", "conditions"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "The definition of a field within a data source")
 @Deprecated
 public final class DataSourceField implements Serializable, HasDisplayValue {
@@ -135,19 +133,13 @@ public final class DataSourceField implements Serializable, HasDisplayValue {
         if (type != that.type) {
             return false;
         }
-        if (name != null
-                ? !name.equals(that.name)
-                : that.name != null) {
+        if (!Objects.equals(name, that.name)) {
             return false;
         }
-        if (queryable != null
-                ? !queryable.equals(that.queryable)
-                : that.queryable != null) {
+        if (!Objects.equals(queryable, that.queryable)) {
             return false;
         }
-        return conditions != null
-                ? conditions.equals(that.conditions)
-                : that.conditions == null;
+        return Objects.equals(conditions, that.conditions);
     }
 
     @Override
@@ -170,11 +162,11 @@ public final class DataSourceField implements Serializable, HasDisplayValue {
     @Override
     public String toString() {
         return "DataSourceField{" +
-                "type=" + type +
-                ", name='" + name + '\'' +
-                ", queryable=" + queryable +
-                ", conditions=" + conditions +
-                '}';
+               "type=" + type +
+               ", name='" + name + '\'' +
+               ", queryable=" + queryable +
+               ", conditions=" + conditions +
+               '}';
     }
 
     public enum DataSourceFieldType implements HasDisplayValue {

@@ -18,16 +18,14 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
 @XmlType(name = "Param", propOrder = {"key", "value"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A key value pair that describes a property of a query")
 @Deprecated
 public final class Param implements Serializable {
@@ -62,40 +60,50 @@ public final class Param implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final Param param = (Param) o;
 
-        if (key != null ? !key.equals(param.key) : param.key != null) return false;
-        return value != null ? value.equals(param.value) : param.value == null;
+        if (!Objects.equals(key, param.key)) {
+            return false;
+        }
+        return Objects.equals(value, param.value);
     }
 
     @Override
     public int hashCode() {
-        int result = key != null ? key.hashCode() : 0;
-        result = 31 * result + (value != null ? value.hashCode() : 0);
+        int result = key != null
+                ? key.hashCode()
+                : 0;
+        result = 31 * result + (value != null
+                ? value.hashCode()
+                : 0);
         return result;
     }
 
     @Override
     public String toString() {
         return "Param{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+               "key='" + key + '\'' +
+               ", value='" + value + '\'' +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link Param}
      */
     public static class Builder {
+
         private String key;
         private String value;
 
         /**
          * @param value The property key
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder key(final String value) {
@@ -105,7 +113,6 @@ public final class Param implements Serializable {
 
         /**
          * @param value The property value
-         *
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder value(final String value) {

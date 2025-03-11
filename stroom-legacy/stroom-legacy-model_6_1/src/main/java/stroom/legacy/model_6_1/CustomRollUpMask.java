@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -25,10 +23,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
 @Deprecated
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
+
     private static final long serialVersionUID = 5978256629347842695L;
 
     /**
@@ -71,10 +69,8 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
                 Collections.sort(this.rolledUpTagPositions);
             }
         } else {
-            if (rolledUpTagPositions.contains(position)) {
-                rolledUpTagPositions.remove(position);
-                // no need to re-sort on remove as already in order
-            }
+            // no need to re-sort on remove as already in order
+            rolledUpTagPositions.remove(position);
         }
 
     }
@@ -87,7 +83,7 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     public CustomRollUpMask deepCopy() {
         final List<Integer> tagPositions = new ArrayList<>();
         for (final Integer tagPosition : tagPositions) {
-            tagPositions.add(Integer.valueOf(tagPosition));
+            tagPositions.add(tagPosition);
         }
 
         return new CustomRollUpMask(tagPositions);
@@ -97,25 +93,27 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((rolledUpTagPositions == null) ? 0 : rolledUpTagPositions.hashCode());
+        result = prime * result + ((rolledUpTagPositions == null)
+                ? 0
+                : rolledUpTagPositions.hashCode());
         return result;
     }
 
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final CustomRollUpMask other = (CustomRollUpMask) obj;
         if (rolledUpTagPositions == null) {
-            if (other.rolledUpTagPositions != null)
-                return false;
-        } else if (!rolledUpTagPositions.equals(other.rolledUpTagPositions))
-            return false;
-        return true;
+            return other.rolledUpTagPositions == null;
+        } else return rolledUpTagPositions.equals(other.rolledUpTagPositions);
     }
 
     @Override

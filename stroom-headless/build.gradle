@@ -79,7 +79,7 @@ shadowJar {
     dependsOn test
 
     // Allows us to build fat jars with lots of files
-    zip64 true
+    zip64 = true
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
@@ -115,7 +115,7 @@ tasks.register('copyJar', Copy) {
 //    doLast {
 //        // This is a sym-link so it seems to go into the zip with +x perms
 //        // which we don't want
-//        exec {
+//        providers.exec {
 //            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
 //        }
 //    }

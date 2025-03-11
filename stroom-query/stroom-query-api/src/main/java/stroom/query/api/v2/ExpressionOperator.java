@@ -29,8 +29,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -48,7 +46,6 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder({"op", "children"})
 @JsonInclude(Include.NON_NULL)
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionOperator",
         description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {

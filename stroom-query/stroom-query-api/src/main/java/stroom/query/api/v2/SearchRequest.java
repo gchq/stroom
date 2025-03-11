@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
@@ -58,9 +56,8 @@ import java.util.Objects;
         "dateTimeLocale",
         "incremental",
         "timeout"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A request for new search or a follow up request for more data for an existing " +
-        "iterative search")
+                      "iterative search")
 public final class SearchRequest {
 
     @JsonProperty
@@ -286,11 +283,11 @@ public final class SearchRequest {
         }
         final SearchRequest that = (SearchRequest) o;
         return Objects.equals(key, that.key) &&
-                Objects.equals(query, that.query) &&
-                Objects.equals(resultRequests, that.resultRequests) &&
-                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
-                Objects.equals(incremental, that.incremental) &&
-                Objects.equals(timeout, that.timeout);
+               Objects.equals(query, that.query) &&
+               Objects.equals(resultRequests, that.resultRequests) &&
+               Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
+               Objects.equals(incremental, that.incremental) &&
+               Objects.equals(timeout, that.timeout);
     }
 
     @Override
@@ -301,13 +298,13 @@ public final class SearchRequest {
     @Override
     public String toString() {
         return "SearchRequest{" +
-                "key=" + key +
-                ", query=" + query +
-                ", resultRequests=" + resultRequests +
-                ", dateTimeSettings='" + dateTimeSettings + '\'' +
-                ", incremental=" + incremental +
-                ", timeout=" + timeout +
-                '}';
+               "key=" + key +
+               ", query=" + query +
+               ", resultRequests=" + resultRequests +
+               ", dateTimeSettings='" + dateTimeSettings + '\'' +
+               ", incremental=" + incremental +
+               ", timeout=" + timeout +
+               '}';
     }
 
     public static Builder builder() {

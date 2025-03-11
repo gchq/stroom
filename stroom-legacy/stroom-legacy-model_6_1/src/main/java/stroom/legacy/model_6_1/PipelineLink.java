@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
@@ -43,10 +41,10 @@ import jakarta.xml.bind.annotation.XmlType;
  * &lt;/complexType>
  * </pre>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
 @Deprecated
 public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
+
     private static final long serialVersionUID = 8520066243443177869L;
 
     @XmlTransient
@@ -100,11 +98,9 @@ public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
             return true;
         }
 
-        if (!(o instanceof PipelineLink)) {
+        if (!(o instanceof final PipelineLink link)) {
             return false;
         }
-
-        final PipelineLink link = (PipelineLink) o;
 
         if (from != null && !from.equals(link.from)) {
             return false;

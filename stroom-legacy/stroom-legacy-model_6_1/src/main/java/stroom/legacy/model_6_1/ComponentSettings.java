@@ -16,18 +16,20 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlSeeAlso;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "settings")
-@XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
+@XmlSeeAlso({
+        QueryComponentSettings.class,
+        TableComponentSettings.class,
+        VisComponentSettings.class,
+        TextComponentSettings.class})
 @Deprecated
 public abstract class ComponentSettings implements Serializable {
+
     private static final long serialVersionUID = 2110282486749818888L;
 
     public ComponentSettings() {

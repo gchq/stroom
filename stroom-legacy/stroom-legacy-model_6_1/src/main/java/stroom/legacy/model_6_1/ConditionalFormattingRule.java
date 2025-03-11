@@ -1,14 +1,11 @@
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "conditionFormattingRule", propOrder = {
         "id",
         "expression",
@@ -18,6 +15,7 @@ import java.util.Objects;
         "enabled"})
 @Deprecated
 public class ConditionalFormattingRule implements Serializable {
+
     @XmlElement(name = "id")
     private String id;
     @XmlElement(name = "expression")
@@ -99,15 +97,19 @@ public class ConditionalFormattingRule implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
         return hide == that.hide &&
-                enabled == that.enabled &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(expression, that.expression) &&
-                Objects.equals(backgroundColor, that.backgroundColor) &&
-                Objects.equals(textColor, that.textColor);
+               enabled == that.enabled &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(expression, that.expression) &&
+               Objects.equals(backgroundColor, that.backgroundColor) &&
+               Objects.equals(textColor, that.textColor);
     }
 
     @Override
@@ -118,12 +120,12 @@ public class ConditionalFormattingRule implements Serializable {
     @Override
     public String toString() {
         return "ConditionalFormattingRule{" +
-                "id='" + id + '\'' +
-                ", expression=" + expression +
-                ", hide=" + hide +
-                ", backgroundColor='" + backgroundColor + '\'' +
-                ", textColor='" + textColor + '\'' +
-                ", enabled=" + enabled +
-                '}';
+               "id='" + id + '\'' +
+               ", expression=" + expression +
+               ", hide=" + hide +
+               ", backgroundColor='" + backgroundColor + '\'' +
+               ", textColor='" + textColor + '\'' +
+               ", enabled=" + enabled +
+               '}';
     }
 }

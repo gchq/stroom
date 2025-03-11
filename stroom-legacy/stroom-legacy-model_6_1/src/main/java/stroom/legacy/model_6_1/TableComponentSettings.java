@@ -16,8 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -28,7 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "table", propOrder = {
         "queryId",
         "fields",
@@ -40,6 +37,7 @@ import java.util.Objects;
         "modelVersion"
 })
 public class TableComponentSettings extends ComponentSettings {
+
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
@@ -196,22 +194,32 @@ public class TableComponentSettings extends ComponentSettings {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final TableComponentSettings that = (TableComponentSettings) o;
         return Objects.equals(queryId, that.queryId) &&
-                Objects.equals(fields, that.fields) &&
-                Objects.equals(extractValues, that.extractValues) &&
-                Objects.equals(extractionPipeline, that.extractionPipeline) &&
-                Arrays.equals(maxResults, that.maxResults) &&
-                Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion);
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(extractValues, that.extractValues) &&
+               Objects.equals(extractionPipeline, that.extractionPipeline) &&
+               Arrays.equals(maxResults, that.maxResults) &&
+               Objects.equals(showDetail, that.showDetail) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+               Objects.equals(modelVersion, that.modelVersion);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(queryId, fields, extractValues, extractionPipeline, showDetail, conditionalFormattingRules, modelVersion);
+        int result = Objects.hash(queryId,
+                fields,
+                extractValues,
+                extractionPipeline,
+                showDetail,
+                conditionalFormattingRules,
+                modelVersion);
         result = 31 * result + Arrays.hashCode(maxResults);
         return result;
     }
@@ -219,15 +227,15 @@ public class TableComponentSettings extends ComponentSettings {
     @Override
     public String toString() {
         return "TableComponentSettings{" +
-                "queryId='" + queryId + '\'' +
-                ", fields=" + fields +
-                ", extractValues=" + extractValues +
-                ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + Arrays.toString(maxResults) +
-                ", showDetail=" + showDetail +
-                ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", modelVersion='" + modelVersion + '\'' +
-                '}';
+               "queryId='" + queryId + '\'' +
+               ", fields=" + fields +
+               ", extractValues=" + extractValues +
+               ", extractionPipeline=" + extractionPipeline +
+               ", maxResults=" + Arrays.toString(maxResults) +
+               ", showDetail=" + showDetail +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
+               ", modelVersion='" + modelVersion + '\'' +
+               '}';
     }
 //
 //    public TableComponentSettings copy() {

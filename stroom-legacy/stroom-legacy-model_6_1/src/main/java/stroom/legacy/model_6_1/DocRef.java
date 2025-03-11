@@ -19,8 +19,6 @@ package stroom.legacy.model_6_1;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
@@ -35,13 +33,12 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name"})
 @XmlType(name = "DocRef", propOrder = {"type", "uuid", "name"})
 @XmlRootElement(name = "doc")
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = DocRef.CLASS_DESC)
 @Deprecated
 public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
 
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
-            "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
+                                            "A 'document' is an entity in stroom such as a data source dictionary or pipeline.";
 
     private static final long serialVersionUID = -2121399789820829359L;
 
@@ -158,11 +155,14 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DocRef)) return false;
-        final DocRef docRef = (DocRef) o;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof final DocRef docRef)) {
+            return false;
+        }
         return Objects.equals(type, docRef.type) &&
-                Objects.equals(uuid, docRef.uuid);
+               Objects.equals(uuid, docRef.uuid);
     }
 
     @Override
@@ -173,16 +173,17 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable
     @Override
     public String toString() {
         return "DocRef{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
     /**
      * Builder for constructing a {@link DocRef docRef}
      */
     public static class Builder {
+
         private String type;
 
         private String uuid;

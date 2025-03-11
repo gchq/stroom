@@ -16,17 +16,15 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlSeeAlso;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "layout", propOrder = {"preferredSize"})
 @XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 @Deprecated
 public abstract class LayoutConfig implements SharedObject {
+
     private static final long serialVersionUID = 8743223047838956165L;
 
     /**

@@ -16,16 +16,14 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
 @Deprecated
 public class TabConfig implements SharedObject {
+
     private static final long serialVersionUID = -2105048053435792675L;
 
     @XmlElement(name = "id")
@@ -34,7 +32,8 @@ public class TabConfig implements SharedObject {
     @XmlElement(name = "visible")
     private boolean visible = true;
 
-    @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
+    @XmlElements({
+            @XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
             @XmlElement(name = "vis", type = VisComponentSettings.class),
             @XmlElement(name = "text", type = TextComponentSettings.class)})

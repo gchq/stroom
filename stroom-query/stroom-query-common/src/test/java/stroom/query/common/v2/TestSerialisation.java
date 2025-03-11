@@ -45,8 +45,6 @@ import stroom.util.json.JsonUtil;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
@@ -63,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -187,11 +186,11 @@ class TestSerialisation {
 
         if (areDifferent) {
             System.out.println("\n If you are satisfied that the differences are justified, i.e. the java model has " +
-                    "changed then run the following:");
+                               "changed then run the following:");
             System.out.println("cp "
-                    + actualFileIn.toAbsolutePath().normalize()
-                    + " "
-                    + expectedFile.toAbsolutePath().normalize());
+                               + actualFileIn.toAbsolutePath().normalize()
+                               + " "
+                               + expectedFile.toAbsolutePath().normalize());
         }
 
         final String expected = StreamUtil.fileToString(expectedFile);
@@ -251,9 +250,9 @@ class TestSerialisation {
             });
             System.out.println("\n To see the diff in Vim run:");
             System.out.println("vimdiff "
-                    + expectedFile.toAbsolutePath().normalize()
-                    + " "
-                    + actualFile.toAbsolutePath().normalize());
+                               + expectedFile.toAbsolutePath().normalize()
+                               + " "
+                               + actualFile.toAbsolutePath().normalize());
             return true;
         } else {
             System.out.println("\n Files are the same");
@@ -400,11 +399,9 @@ class TestSerialisation {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Base)) {
+            if (!(o instanceof final Base base)) {
                 return false;
             }
-
-            final Base base = (Base) o;
 
             return num == base.num;
         }
@@ -415,7 +412,6 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub1", propOrder = {"num2"})
     public static class Sub1 extends Base {
 
@@ -439,14 +435,12 @@ class TestSerialisation {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Sub1)) {
+            if (!(o instanceof final Sub1 sub1)) {
                 return false;
             }
             if (!super.equals(o)) {
                 return false;
             }
-
-            final Sub1 sub1 = (Sub1) o;
 
             return num2 == sub1.num2;
         }
@@ -459,7 +453,6 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub2", propOrder = {"str"})
     public static class Sub2 extends Base {
 
@@ -483,18 +476,14 @@ class TestSerialisation {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Sub2)) {
+            if (!(o instanceof final Sub2 sub2)) {
                 return false;
             }
             if (!super.equals(o)) {
                 return false;
             }
 
-            final Sub2 sub2 = (Sub2) o;
-
-            return str != null
-                    ? str.equals(sub2.str)
-                    : sub2.str == null;
+            return Objects.equals(str, sub2.str);
         }
 
         @Override
@@ -507,7 +496,6 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "lst")
     public static class Lst {
 
@@ -533,15 +521,11 @@ class TestSerialisation {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Lst)) {
+            if (!(o instanceof final Lst lst)) {
                 return false;
             }
 
-            final Lst lst = (Lst) o;
-
-            return list != null
-                    ? list.equals(lst.list)
-                    : lst.list == null;
+            return Objects.equals(list, lst.list);
         }
 
         @Override
@@ -552,7 +536,6 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
     @XmlRootElement(name = "multi")
     public static class Multi {
 
@@ -579,15 +562,11 @@ class TestSerialisation {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof Multi)) {
+            if (!(o instanceof final Multi multi)) {
                 return false;
             }
 
-            final Multi multi = (Multi) o;
-
-            return list != null
-                    ? list.equals(multi.list)
-                    : multi.list == null;
+            return Objects.equals(list, multi.list);
         }
 
         @Override

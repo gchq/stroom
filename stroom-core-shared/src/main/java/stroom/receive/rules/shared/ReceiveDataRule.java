@@ -25,15 +25,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {
         "ruleNumber",
         "creationTime",
@@ -114,11 +111,11 @@ public class ReceiveDataRule {
         }
         final ReceiveDataRule that = (ReceiveDataRule) o;
         return ruleNumber == that.ruleNumber &&
-                creationTime == that.creationTime &&
-                enabled == that.enabled &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(expression, that.expression) &&
-                action == that.action;
+               creationTime == that.creationTime &&
+               enabled == that.enabled &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(expression, that.expression) &&
+               action == that.action;
     }
 
     @Override

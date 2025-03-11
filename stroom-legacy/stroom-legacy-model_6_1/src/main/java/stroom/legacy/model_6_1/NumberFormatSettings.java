@@ -16,16 +16,14 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "numberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
 @Deprecated
 public class NumberFormatSettings implements FormatSettings {
+
     public static final int DEFAULT_DECIMAL_PLACES = 0;
     public static final boolean DEFAULT_USE_SEPARATOR = false;
     private static final long serialVersionUID = 9145624653060319801L;
@@ -62,14 +60,18 @@ public class NumberFormatSettings implements FormatSettings {
     @XmlTransient
     public boolean isDefault() {
         return (decimalPlaces == null || decimalPlaces.equals(DEFAULT_DECIMAL_PLACES))
-                && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
+               && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o) {
+            return true;
+        }
 
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         NumberFormatSettings that = (NumberFormatSettings) o;
 
@@ -90,9 +92,9 @@ public class NumberFormatSettings implements FormatSettings {
     @Override
     public String toString() {
         return "NumberFormatSettings{" +
-                "decimalPlaces=" + decimalPlaces +
-                ", useSeparator=" + useSeparator +
-                '}';
+               "decimalPlaces=" + decimalPlaces +
+               ", useSeparator=" + useSeparator +
+               '}';
     }
 
     @Override

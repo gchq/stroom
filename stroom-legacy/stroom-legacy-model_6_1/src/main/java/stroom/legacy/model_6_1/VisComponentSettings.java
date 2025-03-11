@@ -16,16 +16,14 @@
 
 package stroom.legacy.model_6_1;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "vis", propOrder = {"tableId", "visualisation", "json"})
 @Deprecated
 public class VisComponentSettings extends ComponentSettings {
+
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")

@@ -18,8 +18,6 @@ package stroom.legacy.model_6_1;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -27,11 +25,11 @@ import java.io.Serializable;
 
 @JsonPropertyOrder({"uuid"})
 @XmlType(name = "QueryKey", propOrder = {"uuid"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A unique key to identify the instance of the search by. This key is used to " +
-        "identify multiple requests for the same search when running in incremental mode.")
+                      "identify multiple requests for the same search when running in incremental mode.")
 @Deprecated
 public final class QueryKey implements Serializable {
+
     private static final long serialVersionUID = -3222989872764402068L;
 
     @XmlElement
@@ -53,8 +51,12 @@ public final class QueryKey implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final QueryKey queryKey = (QueryKey) o;
 
