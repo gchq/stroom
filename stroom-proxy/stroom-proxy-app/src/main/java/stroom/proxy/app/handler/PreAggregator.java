@@ -12,6 +12,7 @@ import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -122,6 +123,7 @@ public class PreAggregator {
                     // Now read the entries.
                     groupStream.forEach(groupDir -> {
                         final FileGroup fileGroup = new FileGroup(groupDir);
+                        aggregateState.partCount++;
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
@@ -257,10 +259,13 @@ public class PreAggregator {
                                               final Part part) throws IOException {
         final AggregateState aggregateState = aggregateStateMap
                 .computeIfAbsent(feedKey, this::createAggregate);
+        final long partNo = aggregateState.partCount + 1;
+        final Path destDir = aggregateState.aggregateDir.resolve(StringIdUtil.idToString(partNo));
         Files.move(
                 dir,
-                aggregateState.aggregateDir.resolve(dir.getFileName()),
+                destDir,
                 StandardCopyOption.ATOMIC_MOVE);
+        aggregateState.partCount = partNo;
         aggregateState.itemCount += part.items;
         aggregateState.totalBytes += part.bytes;
         return aggregateState;
@@ -477,6 +482,7 @@ public class PreAggregator {
 
         final Instant createTime;
         final Path aggregateDir;
+        long partCount;
         long itemCount;
         long totalBytes;
 
