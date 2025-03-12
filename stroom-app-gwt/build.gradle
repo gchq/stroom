@@ -315,6 +315,7 @@ tasks.register('gwtCompile', JavaExec) {
     }
 
     args = [
+            '-sourceLevel', '17',
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-XfragmentCount', '5',
@@ -376,6 +377,7 @@ tasks.register('gwtDraftCompile', JavaExec) {
     }
 
     args = [
+            '-sourceLevel', '17',
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-draftCompile',                        // Speeds up compile with 25%
@@ -444,6 +446,7 @@ tasks.register('gwtSuperDevMode', JavaExec) {
     }
 
     args = [
+            '-sourceLevel', '17',
             '-logLevel', 'INFO',
             '-workDir', workDir,
             '-failOnError',

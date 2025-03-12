@@ -2,13 +2,9 @@ package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.AbstractLmdb;
-import stroom.planb.impl.db.RangedStateDb;
-import stroom.planb.impl.db.SessionDb;
-import stroom.planb.impl.db.StateDb;
+import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
-import stroom.planb.impl.db.TemporalRangedStateDb;
-import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
@@ -128,7 +124,7 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public <R> R get(final Function<AbstractLmdb<?, ?>, R> function) {
+    public <R> R get(final Function<AbstractDb<?, ?>, R> function) {
         R result = null;
 
         boolean success = false;
@@ -167,7 +163,7 @@ class SnapshotShard implements Shard {
         private final AtomicInteger useCount = new AtomicInteger();
         private final Instant currentSnapshotTime;
 
-        private volatile AbstractLmdb<?, ?> db;
+        private volatile AbstractDb<?, ?> db;
         private volatile boolean open;
         private volatile Instant lastAccessTime;
         private volatile Instant expiryTime;
@@ -279,7 +275,7 @@ class SnapshotShard implements Shard {
             }
         }
 
-        public <R> R get(final Function<AbstractLmdb<?, ?>, R> function) throws DestroyedException {
+        public <R> R get(final Function<AbstractDb<?, ?>, R> function) throws DestroyedException {
             incrementUseCount();
             try {
                 return function.apply(db);
@@ -345,29 +341,7 @@ class SnapshotShard implements Shard {
 
             // If we already fetched the snapshot then reopen.
             LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
-            db = openDb(doc, dbDir);
-        }
-
-        private AbstractLmdb<?, ?> openDb(final PlanBDoc doc,
-                                          final Path targetPath) {
-            switch (doc.getStateType()) {
-                case STATE -> {
-                    return new StateDb(targetPath, byteBufferFactory, false, true);
-                }
-                case TEMPORAL_STATE -> {
-                    return new TemporalStateDb(targetPath, byteBufferFactory, false, true);
-                }
-                case RANGED_STATE -> {
-                    return new RangedStateDb(targetPath, byteBufferFactory, false, true);
-                }
-                case TEMPORAL_RANGED_STATE -> {
-                    return new TemporalRangedStateDb(targetPath, byteBufferFactory, false, true);
-                }
-                case SESSION -> {
-                    return new SessionDb(targetPath, byteBufferFactory, false, true);
-                }
-                default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
-            }
+            db = PlanBDb.open(doc, dbDir, byteBufferFactory, true);
         }
     }
 

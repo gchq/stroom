@@ -2431,3 +2431,7 @@ button.main-menu svg {
 .permissionDetails {
     overflow-y: scroll;
 }
+
+.durationSetting {
+    display: flex;
+}

@@ -22,7 +22,9 @@ public final class ForwardHttpPostConfig
         implements IsProxyConfig, ForwarderConfig {
 
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
+    private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
     private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
+    private static final Integer DEFAULT_MAX_RETRIES = 3;
 
     private final boolean enabled;
     private final boolean instant;
@@ -75,10 +77,10 @@ public final class ForwardHttpPostConfig
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
         return HttpClientConfiguration
                 .builder()
-                .timeout(DEFAULT_FORWARD_TIMEOUT)
-                .connectionTimeout(DEFAULT_FORWARD_TIMEOUT)
-                .connectionRequestTimeout(DEFAULT_FORWARD_TIMEOUT)
-                .timeToLive(DEFAULT_FORWARD_TIMEOUT)
+                .timeout(StroomDuration.ofMinutes(1))
+                .connectionTimeout(StroomDuration.ofMinutes(1))
+                .connectionRequestTimeout(StroomDuration.ofMinutes(1))
+                .timeToLive(StroomDuration.ofHours(1))
                 .build();
     }
 

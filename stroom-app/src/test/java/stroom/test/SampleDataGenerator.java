@@ -99,7 +99,6 @@ public class SampleDataGenerator {
                 .fieldValueElementName("data")
                 .build();
 
-
         // Data that has one record per line
         // One with long lines, one with short
         generateDataViewRawData(
@@ -165,7 +164,6 @@ public class SampleDataGenerator {
                 longLoremText,
                 LocalDateTime.of(2020, 11, 1, 0, 0),
                 randomSeed++);
-
     }
 
     private void generateDataViewRawData(final Path dir,

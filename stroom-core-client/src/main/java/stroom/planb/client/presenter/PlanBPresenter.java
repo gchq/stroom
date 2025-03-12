@@ -62,8 +62,7 @@ public class PlanBPresenter extends DocumentEditTabPresenter<LinkTabPanelView, P
             @Override
             public PlanBDoc onWrite(final MarkdownEditPresenter presenter,
                                     final PlanBDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

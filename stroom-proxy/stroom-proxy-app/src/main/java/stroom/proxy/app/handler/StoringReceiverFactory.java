@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
+import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 
 public class StoringReceiverFactory implements ReceiverFactory {
@@ -20,16 +21,19 @@ public class StoringReceiverFactory implements ReceiverFactory {
     @Override
     public Receiver get(final AttributeMap attributeMap) {
         // Treat differently depending on compression type.
-        String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-        if (compression != null && !compression.isEmpty()) {
+        final String key = StandardHeaderArguments.COMPRESSION;
+        String compression = attributeMap.get(key);
+        if (NullSafe.isNonEmptyString(compression)) {
             compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
+            // Put the normalised value back in the map
+            attributeMap.put(key, compression);
             if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
                 throw new StroomStreamException(
                         StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
             }
         }
 
-        if (StandardHeaderArguments.COMPRESSION_ZIP.equals(compression)) {
+        if (StandardHeaderArguments.COMPRESSION_ZIP.equalsIgnoreCase(compression)) {
             // Handle a zip stream.
             return zipReceiver;
 
