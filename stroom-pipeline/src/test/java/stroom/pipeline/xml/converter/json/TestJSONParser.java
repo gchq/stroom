@@ -40,6 +40,7 @@ import stroom.util.shared.Indicators;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +90,178 @@ class TestJSONParser extends StroomUnitTest {
 
     private void positiveTest(final String stem, final String type) throws IOException {
         test(stem, "~" + type, false);
+    }
+
+    @Disabled
+    @Test
+    void testVeryLargeArray() throws IOException {
+        final String stem = "VeryLargeArray";
+        final Path testDir = getTestDir();
+        Path input = testDir.resolve(stem + ".in");
+
+        int maxDepth = 5;
+        JsonType[][] structure = new JsonType[maxDepth][];
+        structure[0] = new JsonType[]{JsonType.ARRAY};
+        structure[1] = new JsonType[]{JsonType.OBJECT};
+        structure[2] = new JsonType[]{
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+        structure[3] = new JsonType[]{
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+        structure[4] = new JsonType[]{
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+
+        new JSONTestDataCreator().writeFile(input, structure);
+
+        test(stem, "", false);
+    }
+
+    @Disabled
+    @Test
+    void testVeryLargeObject() throws IOException {
+        final String stem = "VeryLargeObject";
+        final Path testDir = getTestDir();
+        Path input = testDir.resolve(stem + ".in");
+
+        int maxDepth = 5;
+        JsonType[][] structure = new JsonType[maxDepth][];
+        structure[0] = new JsonType[]{JsonType.OBJECT};
+        structure[1] = new JsonType[]{JsonType.OBJECT};
+        structure[2] = new JsonType[]{
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+        structure[3] = new JsonType[]{
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.OBJECT,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.ARRAY,
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+        structure[4] = new JsonType[]{
+                JsonType.VALUE,
+                JsonType.VALUE,
+                JsonType.VALUE};
+
+        new JSONTestDataCreator().writeFile(input, structure);
+
+        test(stem, "", false);
     }
 
     private void test(final String stem, final String testType, final boolean expectedErrors) throws IOException {
