@@ -32,10 +32,11 @@ public interface ForwardDestination {
 
     /**
      * @return True if the liveness check indicates that the destination is live and ready
-     * to have data forwarded to it.
+     * to have data forwarded to it. If the check fails, an exception will be thrown and the
+     * message will provide details of why the liveness check is failing.
      * If hasLivenessCheck() returns false, performLivenessCheck() will always return true.
      */
-    default boolean performLivenessCheck() {
+    default boolean performLivenessCheck() throws Exception {
         return true;
     }
 

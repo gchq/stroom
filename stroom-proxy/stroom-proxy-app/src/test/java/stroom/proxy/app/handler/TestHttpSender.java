@@ -12,6 +12,7 @@ import stroom.test.common.TestResourceLocks;
 import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -41,8 +42,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
 @ExtendWith(MockitoExtension.class)
@@ -432,8 +431,7 @@ class TestHttpSender {
                 httpClient,
                 mockProxyServices);
 
-        assertThat(httpSender.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(httpSender, true);
     }
 
     @Test
@@ -456,8 +454,7 @@ class TestHttpSender {
                 httpClient,
                 mockProxyServices);
 
-        assertThat(httpSender.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(httpSender, true);
     }
 
     @Test
@@ -480,13 +477,23 @@ class TestHttpSender {
                 httpClient,
                 mockProxyServices);
 
-        assertThat(httpSender.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(httpSender, false);
     }
 
     private HttpClient buildRealHttpClient() {
         return HttpClientBuilder.create()
                 .build();
+    }
+
+    private void assertLivenessCheck(final HttpSender httpSender, final boolean isLive) {
+        try {
+            Assertions.assertThat(httpSender.performLivenessCheck())
+                    .isEqualTo(isLive);
+        } catch (Exception e) {
+            if (isLive) {
+                Assertions.fail(LogUtil.message("Expecting {} to be live", httpSender));
+            }
+        }
     }
 
 

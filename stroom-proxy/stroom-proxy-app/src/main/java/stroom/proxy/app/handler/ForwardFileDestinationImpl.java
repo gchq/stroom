@@ -118,22 +118,31 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     }
 
     @Override
-    public boolean performLivenessCheck() {
+    public boolean performLivenessCheck() throws Exception {
         boolean isLive = false;
         if (NullSafe.isNonBlankString(livenessCheckPath)) {
+            Path path = null;
             try {
-                Path path = Path.of(livenessCheckPath);
+                path = Path.of(livenessCheckPath);
                 if (!path.isAbsolute()) {
                     path = storeDir.resolve(path);
                 }
                 isLive = switch (livenessCheckMode) {
                     case WRITE -> canWriteToFile(path);
-                    case READ -> Files.exists(path);
+                    case READ -> {
+                        final boolean exists = Files.exists(path);
+                        if (!exists) {
+                            throw new Exception(LogUtil.message("Path '{}' does not exist", path));
+                        } else {
+                            yield true;
+                        }
+                    }
                     case null -> throw new IllegalArgumentException(
                             "Unexpected value of livenessCheckMode " + livenessCheckMode);
                 };
             } catch (Exception e) {
                 LOGGER.debug("'{}' - Error during liveness check", name, e);
+                throw e;
             }
         } else {
             isLive = true;
@@ -165,18 +174,18 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 //        }
 //    }
 
-    private boolean canWriteToFile(final Path path) {
+    private boolean canWriteToFile(final Path path) throws Exception {
         Objects.requireNonNull(path);
         try {
             if (Files.isRegularFile(path)) {
                 FileUtil.touch(path);
                 return true;
             } else {
-                return false;
+                throw new Exception(LogUtil.message("Path '{}' is not a regular file", path));
             }
         } catch (Exception e) {
             LOGGER.debug("Error trying to write to file {}", path, e);
-            return false;
+            throw new Exception(LogUtil.message("Error trying to write to file '{}': {}", path, e.getMessage()));
         }
     }
 

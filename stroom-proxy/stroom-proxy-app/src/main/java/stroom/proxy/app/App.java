@@ -263,15 +263,21 @@ public class App extends Application<Config> {
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
 
-        final String forwaders = configuration.getProxyConfig().streamAllEnabledForwarders()
+        final String forwaders = configuration.getProxyConfig().streamAllForwarders()
                 .map(forwarderConfig -> {
                     final String name = forwarderConfig.getName();
                     final String destination = forwarderConfig.getDestinationDescription();
+                    final String state = forwarderConfig.isEnabled()
+                            ? ""
+                            : " DISABLED";
+                    final String instant = forwarderConfig.isInstant()
+                            ? " (INSTANT)"
+                            : "";
                     final String type = switch (forwarderConfig) {
                         case ForwardHttpPostConfig ignored -> "HTTP";
                         case ForwardFileConfig ignored -> "FILE";
                     };
-                    return "    " + type + ": '" + name + "' -> " + destination;
+                    return "    " + type + ": '" + name + "' -> " + destination + instant + state;
                 })
                 .sorted()
                 .collect(Collectors.joining("\n"));
@@ -282,7 +288,7 @@ public class App extends Application<Config> {
                     + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Proxy ID:            " + proxyId.getId()
-                    + "\n  Enabled forwarders:  " + "\n" + forwaders
+                    + "\n  Forwarders:          " + "\n" + forwaders
                     + "\n");
     }
 

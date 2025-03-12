@@ -7,6 +7,7 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,8 +120,7 @@ class TestForwardHttpPostDestination {
 
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isFalse();
-        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(forwardHttpPostDestination, true);
     }
 
     @Test
@@ -140,8 +140,7 @@ class TestForwardHttpPostDestination {
         Mockito.when(mockStreamDestination.performLivenessCheck())
                 .thenReturn(true);
 
-        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(forwardHttpPostDestination, true);
     }
 
     @Test
@@ -159,10 +158,9 @@ class TestForwardHttpPostDestination {
                 .isTrue();
 
         Mockito.when(mockStreamDestination.performLivenessCheck())
-                .thenReturn(false);
+                .thenThrow(new Exception("not live"));
 
-        Assertions.assertThat(forwardHttpPostDestination.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardHttpPostDestination, false);
     }
 
     private Path getDataDir() {
@@ -194,5 +192,16 @@ class TestForwardHttpPostDestination {
             throw new UncheckedIOException(e);
         }
         return sourceDir;
+    }
+
+    private void assertLivenessCheck(final ForwardDestination forwardDestination, final boolean isLive) {
+        try {
+            Assertions.assertThat(forwardDestination.performLivenessCheck())
+                    .isEqualTo(isLive);
+        } catch (Exception e) {
+            if (isLive) {
+                Assertions.fail(LogUtil.message("Expecting {} to be live", forwardDestination));
+            }
+        }
     }
 }

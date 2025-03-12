@@ -123,7 +123,7 @@ public class HttpSender implements StreamDestination {
     }
 
     @Override
-    public boolean performLivenessCheck() {
+    public boolean performLivenessCheck() throws Exception {
         final String url = config.getLivenessCheckUrl();
         boolean isLive;
 
@@ -141,11 +141,16 @@ public class HttpSender implements StreamDestination {
                 });
 
                 isLive = responseCode == HttpStatus.SC_OK;
+                if (!isLive) {
+                    throw new Exception(LogUtil.message("Got response code {} from livenessCheckUrl '{}'",
+                            responseCode, url));
+                }
             } catch (IOException e) {
-                LOGGER.debug("Error calling livenessCheckUrl '{}': {}",
-                        url, LogUtil.exceptionMessage(e), e);
+                final String msg = LogUtil.message("Error calling livenessCheckUrl '{}': {}",
+                        url, LogUtil.exceptionMessage(e));
+                LOGGER.debug(msg, e);
                 // Consider it not live
-                isLive = false;
+                throw new Exception(msg, e);
             }
         } else {
             isLive = true;

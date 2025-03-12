@@ -13,6 +13,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -509,8 +510,7 @@ class TestForwardFileDestinationImpl {
         assertThat(forwardFileDest.hasLivenessCheck())
                 .isTrue();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
 
         FileUtil.mkdirs(file.getParent());
         FileUtil.touch(file);
@@ -518,13 +518,11 @@ class TestForwardFileDestinationImpl {
                 .exists()
                 .isRegularFile();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(forwardFileDest, true);
 
         FileUtil.deleteFile(file);
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
     }
 
     @Test
@@ -546,8 +544,7 @@ class TestForwardFileDestinationImpl {
         assertThat(forwardFileDest.hasLivenessCheck())
                 .isTrue();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
 
         FileUtil.mkdirs(file.getParent());
         FileUtil.touch(file);
@@ -555,13 +552,11 @@ class TestForwardFileDestinationImpl {
                 .exists()
                 .isRegularFile();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(forwardFileDest, true);
 
         FileUtil.deleteFile(file);
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
     }
 
     @Test
@@ -583,21 +578,18 @@ class TestForwardFileDestinationImpl {
         assertThat(forwardFileDest.hasLivenessCheck())
                 .isTrue();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
 
         FileUtil.mkdirs(dir);
         assertThat(dir)
                 .exists()
                 .isDirectory();
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isTrue();
+        assertLivenessCheck(forwardFileDest, true);
 
         FileUtil.deleteDir(dir);
 
-        assertThat(forwardFileDest.performLivenessCheck())
-                .isFalse();
+        assertLivenessCheck(forwardFileDest, false);
     }
 
     private void dumpContents(final Path path) {
@@ -661,6 +653,17 @@ class TestForwardFileDestinationImpl {
             throw new UncheckedIOException(e);
         }
         return sourceDir;
+    }
+
+    private void assertLivenessCheck(final ForwardDestination forwardDestination, final boolean isLive) {
+        try {
+            Assertions.assertThat(forwardDestination.performLivenessCheck())
+                    .isEqualTo(isLive);
+        } catch (Exception e) {
+            if (isLive) {
+                Assertions.fail(LogUtil.message("Expecting {} to be live", forwardDestination));
+            }
+        }
     }
 
 

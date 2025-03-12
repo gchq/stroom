@@ -9,5 +9,5 @@ public interface StreamDestination {
     void send(AttributeMap attributeMap,
               InputStream inputStream) throws ForwardException;
 
-    boolean performLivenessCheck();
+    boolean performLivenessCheck() throws Exception;
 }

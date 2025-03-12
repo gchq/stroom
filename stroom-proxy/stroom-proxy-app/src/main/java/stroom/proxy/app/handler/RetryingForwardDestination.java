@@ -111,26 +111,28 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private synchronized void doLivenessCheck() {
         boolean isLive;
+        String msg = null;
         try {
             isLive = delegateDestination.performLivenessCheck();
             LOGGER.debug("'{}' - isLive: {}", destinationName, isLive);
         } catch (Exception e) {
             LOGGER.debug("Error performing liveness check", e);
             isLive = false;
+            msg = e.getMessage();
         }
 
         final boolean hasChanged = lastLiveCheckResult.compareAndSet(!isLive, isLive);
         if (hasChanged) {
             if (isLive) {
-                LOGGER.info("'{}' - liveness check passed, resuming all forwarding and retries",
+                LOGGER.info("'{}' - destination liveness check passed, resuming all forwarding and retries",
                         destinationName);
             } else {
-                LOGGER.info("'{}' - liveness check failed, pausing all forwarding and retries",
-                        destinationName);
+                LOGGER.warn("'{}' - destination liveness check failed, pausing all forwarding and retries. {}",
+                        destinationName, msg);
             }
         } else {
             if (!isLive) {
-                LOGGER.info("'{}' - liveness check still failing", destinationName);
+                LOGGER.warn("'{}' - destination liveness check still failing. {}", destinationName, msg);
             }
         }
         // Let the executor worry if it has already been set or not
