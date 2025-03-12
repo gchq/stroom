@@ -1,17 +1,19 @@
 package stroom.test.common.data;
 
+import stroom.util.NullSafe;
+
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractXmlDataWriterBuilder {
-    private Optional<String> namespace = Optional.empty();
+
+    private String namespace = null;
     private String rootElementName = "records";
     String recordElementName = "record";
 
     public AbstractXmlDataWriterBuilder namespace(final String namespace) {
-        this.namespace = Optional.of(namespace);
+        this.namespace = namespace;
         return this;
     }
 
@@ -27,7 +29,8 @@ public abstract class AbstractXmlDataWriterBuilder {
 
     public DataWriter build() {
         //return our mapping function which conforms to the DataWriter interface
-        return this::mapRecords;
+        return (fieldDefinitions, recordStream) ->
+                mapRecords(namespace, rootElementName, fieldDefinitions, recordStream);
     }
 
     private Function<DataRecord, String> getDataMapper(final List<Field> fields) {
@@ -42,13 +45,17 @@ public abstract class AbstractXmlDataWriterBuilder {
 
     protected abstract String buildRecordFormatString(List<Field> fields);
 
-    Stream<String> mapRecords(List<Field> fields, Stream<DataRecord> recordStream) {
+    Stream<String> mapRecords(final String namespace,
+                              final String rootElementName,
+                              final List<Field> fields,
+                              final Stream<DataRecord> recordStream) {
         final Function<DataRecord, String> dataMapper = getDataMapper(fields);
 
         final Stream<String> dataStream = recordStream.map(dataMapper);
-        final String namespaceAtr = namespace
-                .map(namespace -> String.format(" xmlns=\"%s\"", namespace))
-                .orElse("");
+        final String namespaceAtr = NullSafe.getOrElse(
+                namespace,
+                namespace2 -> String.format(" xmlns=\"%s\"", namespace2),
+                "");
 
         final String xmlDeclaration = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
         final String openRootElm = String.format("<%s%s>", rootElementName, namespaceAtr);

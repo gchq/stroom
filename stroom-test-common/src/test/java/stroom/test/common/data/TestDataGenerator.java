@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -214,7 +215,7 @@ public class TestDataGenerator {
                 4,
                 Collections.singletonList("MY_SINGLE_VALUE"));
 
-        String val = field.getNext();
+        String val = field.getNext(new Random(), null);
 
         System.out.println("val = " + val);
     }
@@ -229,7 +230,7 @@ public class TestDataGenerator {
                             4,
                             Collections.emptyList());
 
-                    String val = field.getNext();
+                    String val = field.getNext(new Random(), null);
                 })
                 .withMessageContaining("wordList must have size greater than zero");
     }

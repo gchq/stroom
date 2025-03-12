@@ -5,6 +5,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.MockForwardFileDestination;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
@@ -123,7 +124,15 @@ class TestInnerProcessEndToEnd {
                                 .maxAggregateAge(StroomDuration.ofSeconds(5))
                                 .aggregationFrequency(StroomDuration.ofSeconds(1))
                                 .build())
-                        .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
+                        .addForwardFileDestination(new ForwardFileConfig(true,
+                                false,
+                                "test",
+                                "test",
+                                null,
+                                null,
+                                new ForwardQueueConfig(),
+                                null,
+                                null))
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);

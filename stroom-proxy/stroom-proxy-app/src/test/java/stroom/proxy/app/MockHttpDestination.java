@@ -67,10 +67,11 @@ public class MockHttpDestination {
 
     private static final int DEFAULT_STROOM_PORT = 8080;
 
+    public static final String STATUS_PATH_PART = "/status";
+
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
     private volatile boolean isRequestLoggingEnabled = true;
     private volatile boolean isHeaderLoggingEnabled = true;
-
 
     // Hold all requests send to the wiremock stroom datafeed endpoint
     private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
@@ -78,7 +79,7 @@ public class MockHttpDestination {
     private final ThreadLocal<Long> responseTimes = new ThreadLocal<>();
     private final AtomicInteger count = new AtomicInteger();
 
-    WireMockExtension createExtension() {
+    public WireMockExtension createExtension() {
         return WireMockExtension.newInstance()
                 .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
                 .options(WireMockConfiguration.wireMockConfig().extensions(new ServeEventListener() {
@@ -109,7 +110,7 @@ public class MockHttpDestination {
                         } finally {
                             final long startTime = responseTimes.get();
                             responseTimes.remove();
-                            LOGGER.info(() -> "Responding " +
+                            LOGGER.info(() -> "Responding with " +
                                               serveEvent.getResponse().getStatus() +
                                               " after " +
                                               Duration.ofMillis(System.currentTimeMillis() - startTime).toString() +
@@ -121,7 +122,13 @@ public class MockHttpDestination {
                 .build();
     }
 
-    void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
+    public void setupLivenessEndpoint(Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
+        final String path = getStatusPath();
+        WireMock.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
+        LOGGER.info("Setup WireMock POST stub for {}", path);
+    }
+
+    public void setupStroomStubs(Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
         final String feedStatusPath = getFeedStatusPath();
         final GetFeedStatusResponse feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
 
@@ -151,6 +158,10 @@ public class MockHttpDestination {
 
     private static String getDataFeedPath() {
         return ResourcePaths.buildUnauthenticatedServletPath(ReceiveDataServlet.DATA_FEED_PATH_PART);
+    }
+
+    private static String getStatusPath() {
+        return ResourcePaths.buildUnauthenticatedServletPath(STATUS_PATH_PART);
     }
 
     private void dumpWireMockEvent(final ServeEvent serveEvent) {
@@ -345,7 +356,7 @@ public class MockHttpDestination {
                 .isEqualTo(value);
     }
 
-    void clear() {
+    public void clear() {
         dataFeedRequests.clear();
     }
 
@@ -438,15 +449,21 @@ public class MockHttpDestination {
 //        isRequestLoggingEnabled = requestLoggingEnabled;
 //    }
 
-    static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
+    public static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
         return ForwardHttpPostConfig.builder()
                 .enabled(true)
                 .instant(instant)
                 .forwardUrl("http://localhost:"
                             + MockHttpDestination.DEFAULT_STROOM_PORT
                             + getDataFeedPath())
-                .name("Stroom datafeed")
+                .name("Mock Stroom datafeed")
                 .build();
+    }
+
+    public static String getLivenessCheckUrl() {
+        return "http://localhost:"
+               + MockHttpDestination.DEFAULT_STROOM_PORT
+               + getStatusPath();
     }
 
     static FeedStatusConfig createFeedStatusConfig() {

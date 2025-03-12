@@ -81,9 +81,9 @@ public final class LogUtil {
     public static String inSeparatorLine(final String format, final Object... args) {
         final String text = message(format, args);
         final String str = Strings.repeat(String.valueOf(BOX_HORIZONTAL_LINE), 3)
-                + " "
-                + text
-                + " ";
+                           + " "
+                           + text
+                           + " ";
         return Strings.padEnd(str, 100, BOX_HORIZONTAL_LINE);
     }
 
@@ -252,9 +252,9 @@ public final class LogUtil {
         if (t == null) {
             return null;
         } else if (t.getMessage() == null) {
-            return NullSafe.get(t.getClass(), Class::getSimpleName);
+            return t.getClass().getSimpleName();
         } else {
-            return NullSafe.get(t.getClass(), Class::getSimpleName) + " " + t.getMessage();
+            return t.getClass().getSimpleName() + " " + t.getMessage();
         }
     }
 
@@ -291,8 +291,8 @@ public final class LogUtil {
                 }
             } else {
                 throw new IllegalArgumentException("Type "
-                        + value.getClass().getSimpleName()
-                        + " not supported");
+                                                   + value.getClass().getSimpleName()
+                                                   + " not supported");
             }
         }
     }

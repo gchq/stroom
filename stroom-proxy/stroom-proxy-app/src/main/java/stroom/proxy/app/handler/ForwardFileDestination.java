@@ -2,7 +2,7 @@ package stroom.proxy.app.handler;
 
 import java.nio.file.Path;
 
-public interface ForwardFileDestination {
+public interface ForwardFileDestination extends ForwardDestination {
 
-    void add(Path sourceDir);
+    Path getStoreDir();
 }
