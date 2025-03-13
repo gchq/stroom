@@ -74,6 +74,27 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -166,6 +187,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -266,6 +308,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -357,6 +420,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -448,6 +532,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -525,6 +630,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -574,8 +700,22 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -657,6 +797,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -734,6 +895,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -811,6 +993,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -943,15 +1146,22 @@ select comp
         "visible" : true,
         "special" : false
       }, {
-        "id" : "StreamId",
-        "name" : "StreamId",
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
         "expression" : "${StreamId}",
         "width" : 200,
         "visible" : false,
         "special" : true
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -1235,8 +1445,22 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -1290,8 +1514,22 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "EventId",
-        "name" : "EventId",
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
         "expression" : "${EventId}",
         "width" : 200,
         "visible" : false,
@@ -1403,6 +1641,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -1503,6 +1762,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -1604,6 +1884,27 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -1701,6 +2002,27 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
@@ -1807,6 +2129,27 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : true,
         "special" : false
+      }, {
+        "id" : "__id__",
+        "name" : "__id__",
+        "expression" : "${Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",

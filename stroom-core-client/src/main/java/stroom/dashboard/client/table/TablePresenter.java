@@ -331,16 +331,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setComponents(final Components components) {
         super.setComponents(components);
-
         registerHandler(components.addComponentChangeHandler(event -> {
+            if (updateSelectionFilter()) {
+                onColumnFilterChange();
+            }
+        }));
+    }
+
+    private boolean updateSelectionFilter() {
+        final Components components = getComponents();
+        if (components != null) {
             final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
                     .create(components.getComponents(), getTableComponentSettings().getSelectionFilter())
                     .orElse(null);
             if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
                 currentSelectionFilter = selectionFilter;
-                onColumnFilterChange();
+                return true;
             }
-        }));
+        }
+        return false;
     }
 
     public void toggleApplyValueFilters() {
@@ -995,6 +1004,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final TableComponentSettings tableComponentSettings = getTableComponentSettings();
         setQueryId(tableComponentSettings.getQueryId());
         updatePageSize();
+        updateSelectionFilter();
 
         // Update styles and re-render
         tableRowStyles.setConditionalFormattingRules(getTableSettings().getConditionalFormattingRules());
