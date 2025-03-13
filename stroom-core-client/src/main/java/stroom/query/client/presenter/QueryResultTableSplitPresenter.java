@@ -16,12 +16,12 @@
 
 package stroom.query.client.presenter;
 
-import stroom.query.api.v2.SpecialColumns;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
 
