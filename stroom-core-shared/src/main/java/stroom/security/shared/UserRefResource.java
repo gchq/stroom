@@ -25,8 +25,15 @@ public interface UserRefResource extends RestResource, DirectRestService {
     @Path("/find")
     @Operation(
             summary = "Find the users and groups matching the supplied criteria of users who belong to at least " +
-                    "one of the same groups as the current user. If the current user is admin or has " +
-                    "Manage Users permission then they can see all users.",
+                      "one of the same groups as the current user. If the current user is admin or has " +
+                      "Manage Users permission then they can see all users.",
             operationId = "findUserRefs")
     ResultPage<UserRef> find(@Parameter(description = "criteria", required = true) FindUserCriteria criteria);
+
+    @POST
+    @Path("/getUserByUuid")
+    @Operation(
+            summary = "Resolve a user ref by UUID",
+            operationId = "getUserByUuid")
+    UserRef getUserByUuid(@Parameter(description = "uuid", required = true) String uuid);
 }

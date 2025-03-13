@@ -27,6 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -237,14 +238,16 @@ public class AnnotationManager {
         final String title = getValue(tableComponentSettings, selectedItems, "title");
         final String subject = getValue(tableComponentSettings, selectedItems, "subject");
         final String status = getValue(tableComponentSettings, selectedItems, "status");
-//        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
+        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
         final String comment = getValue(tableComponentSettings, selectedItems, "comment");
 
         final Annotation annotation = new Annotation();
         annotation.setTitle(title);
         annotation.setSubject(subject);
         annotation.setStatus(status);
-//        annotation.setAssignedTo(optUserName);
+        if (assignedTo != null) {
+            annotation.setAssignedTo(UserRef.builder().uuid(assignedTo).build());
+        }
         annotation.setComment(comment);
 
         ShowAnnotationEvent.fire(changeStatusPresenter, annotation, eventIdList);
