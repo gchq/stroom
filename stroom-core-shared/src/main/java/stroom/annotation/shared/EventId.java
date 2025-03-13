@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
@@ -15,10 +16,6 @@ public class EventId {
     @JsonProperty
     private final long eventId;
 
-    /**
-     * @param streamId
-     * @param eventId  One based
-     */
     @JsonCreator
     public EventId(@JsonProperty("streamId") final long streamId,
                    @JsonProperty("eventId") final long eventId) {
@@ -35,6 +32,23 @@ public class EventId {
      */
     public long getEventId() {
         return eventId;
+    }
+
+    public static void parseList(final String string,
+                                 final List<EventId> eventIds) {
+        if (string != null && !string.isEmpty()) {
+            final String[] eventIdStringArray = string.split(",");
+            for (final String eventIdString : eventIdStringArray) {
+                try {
+                    final EventId eventId = parse(eventIdString);
+                    if (eventId != null) {
+                        eventIds.add(eventId);
+                    }
+                } catch (final RuntimeException e) {
+                    // Ignore.
+                }
+            }
+        }
     }
 
     public static EventId parse(final String string) {

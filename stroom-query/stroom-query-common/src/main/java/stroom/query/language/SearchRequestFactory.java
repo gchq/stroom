@@ -26,7 +26,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
@@ -35,6 +34,7 @@ import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.Window;
 import stroom.query.common.v2.CompiledWindow;
@@ -380,7 +380,7 @@ public class SearchRequestFactory {
                 if (tokens.size() >= 3) {
                     final AbstractToken valueToken = tokens.get(2);
                     if (TokenType.STRING.equals(valueToken.getTokenType()) ||
-                            TokenType.PARAM.equals(valueToken.getTokenType())) {
+                        TokenType.PARAM.equals(valueToken.getTokenType())) {
                         additionalFields.add(valueToken);
                     }
                 }
@@ -411,8 +411,8 @@ public class SearchRequestFactory {
                         TokenType.STRING);
                 if (!stringTypes.contains(dictionaryNameToken.getTokenType())) {
                     throw new TokenException(dictionaryNameToken, "Expected dictionary name not " +
-                            dictionaryNameToken.getTokenType() +
-                            " token");
+                                                                  dictionaryNameToken.getTokenType() +
+                                                                  " token");
                 }
                 final String field = fieldToken.getUnescapedText();
                 final String dictionaryName = dictionaryNameToken.getUnescapedText().trim();
@@ -551,7 +551,7 @@ public class SearchRequestFactory {
                 boolean seenNumber = false;
                 for (final AbstractToken token : tokens) {
                     if (TokenType.PLUS.equals(token.getTokenType()) ||
-                            TokenType.MINUS.equals(token.getTokenType())) {
+                        TokenType.MINUS.equals(token.getTokenType())) {
                         if (seenSign || seenNumber) {
                             throw new TokenException(token, "Unexpected token");
                         }
@@ -631,8 +631,8 @@ public class SearchRequestFactory {
                 } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
                     out.add(processLogic(tokenGroup.getChildren()));
                 } else if (TokenType.AND.equals(token.getTokenType()) ||
-                        TokenType.OR.equals(token.getTokenType()) ||
-                        TokenType.NOT.equals(token.getTokenType())) {
+                           TokenType.OR.equals(token.getTokenType()) ||
+                           TokenType.NOT.equals(token.getTokenType())) {
                     if (!termTokens.isEmpty()) {
                         out.add(createTerm(termTokens));
                         termTokens.clear();
@@ -837,11 +837,17 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+                if (!addedFields.contains(SpecialColumns.RESERVED_ID_FIELD_NAME)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_ID_FIELD_NAME);
                 }
-                if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+                if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.STREAM_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+                }
+                if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.EVENT_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
                 }
             }
 
@@ -890,17 +896,6 @@ public class SearchRequestFactory {
             }
         }
 
-        public Column buildSpecialColumn(final String name) {
-            addedFields.add(name);
-            return Column.builder()
-                    .id(name)
-                    .name(name)
-                    .expression(ParamSubstituteUtil.makeParam(name))
-                    .visible(false)
-                    .special(true)
-                    .build();
-        }
-
         private void processWindow(final KeywordGroup keywordGroup,
                                    final TableSettings.Builder builder) {
             final List<AbstractToken> children = new ArrayList<>(keywordGroup.getChildren());
@@ -942,7 +937,8 @@ public class SearchRequestFactory {
 
             // Get `advance` and duration.
             final int advanceIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                    token.getUnescapedText().equalsIgnoreCase("advance"));
+                                                                      token.getUnescapedText().equalsIgnoreCase(
+                                                                              "advance"));
             if (advanceIndex != -1) {
                 if (children.size() > advanceIndex + 1) {
                     final AbstractToken token = children.get(advanceIndex + 1);
@@ -962,7 +958,7 @@ public class SearchRequestFactory {
 
             // Get `using` and function.
             final int usingIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                    token.getUnescapedText().equalsIgnoreCase("using"));
+                                                                    token.getUnescapedText().equalsIgnoreCase("using"));
             if (usingIndex != -1) {
                 if (children.size() > usingIndex + 1) {
                     final AbstractToken token = children.get(usingIndex + 1);

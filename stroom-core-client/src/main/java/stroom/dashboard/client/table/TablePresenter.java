@@ -38,7 +38,6 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
@@ -67,11 +66,11 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.client.DataSourceClient;
@@ -508,10 +507,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableComponentSettings(),
-                selectionModel.getSelectedItems());
-        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableComponentSettings(),
-                selectionModel.getSelectedItems());
+        final List<EventId> eventIdList = new ArrayList<>();
+        final List<Long> annotationIdList = new ArrayList<>();
+        annotationManager.addRowData(
+                getTableComponentSettings(),
+                selectionModel.getSelectedItems(),
+                eventIdList,
+                annotationIdList);
         final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
@@ -824,7 +826,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateColumns();
     }
 
-    private void ensureSpecialFields(final String... indexFieldNames) {
+    private void ensureSpecialColumns() {
         // Remove all special fields as we will re-add them.
         getTableComponentSettings().getColumns().removeIf(Column::isSpecial);
 
@@ -834,35 +836,29 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .map(Column::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
+
+        // Prior to the introduction of the special field concept, special fields were
+        // treated as invisible fields. For this reason we need to remove old invisible
+        // fields if we haven't yet turned them into special fields.
+        final Version version = Version.parse(getTableComponentSettings().getModelVersion());
+        final boolean old = version.lt(CURRENT_MODEL_VERSION);
+        if (old) {
+            getTableComponentSettings().getColumns().removeIf(column ->
+                    !column.isVisible() && (column.getName().equals("Id") ||
+                                            column.getName().equals("StreamId") ||
+                                            column.getName().equals("EventId") ||
+                                            column.getName().startsWith("__")));
+            setSettings(getTableComponentSettings()
+                    .copy()
+                    .modelVersion(CURRENT_MODEL_VERSION.toString())
+                    .build());
+        }
+
         if (getTableComponentSettings().showDetail() || maxGroup.isEmpty()) {
-            final List<Column> requiredSpecialColumns = new ArrayList<>();
-            for (final String indexFieldName : indexFieldNames) {
-                final Column specialColumn = buildSpecialColumn(indexFieldName);
-                requiredSpecialColumns.add(specialColumn);
-            }
-
-            // If the fields we want to make special do exist in the current data source then
-            // add them.
-            if (requiredSpecialColumns.size() > 0) {
-                // Prior to the introduction of the special field concept, special fields were
-                // treated as invisible fields. For this reason we need to remove old invisible
-                // fields if we haven't yet turned them into special fields.
-                final Version version = Version.parse(getTableComponentSettings().getModelVersion());
-                final boolean old = version.lt(CURRENT_MODEL_VERSION);
-                if (old) {
-                    requiredSpecialColumns.forEach(requiredSpecialDsColumn ->
-                            getTableComponentSettings().getColumns().removeIf(column ->
-                                    !column.isVisible() && column.getName().equals(requiredSpecialDsColumn.getName())));
-                    setSettings(getTableComponentSettings()
-                            .copy()
-                            .modelVersion(CURRENT_MODEL_VERSION.toString())
-                            .build());
-                }
-
-                // Add special fields.
-                requiredSpecialColumns.forEach(column ->
-                        getTableComponentSettings().getColumns().add(column));
-            }
+            // Add special fields.
+            getTableComponentSettings().getColumns().add(SpecialColumns.ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.STREAM_ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.EVENT_ID_COLUMN);
         }
 
 //        GWT.log(tableSettings.getFields().stream()
@@ -877,20 +873,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 //        }
     }
 
-    public static Column buildSpecialColumn(final String indexFieldName) {
-        final String reservedColumnName = IndexConstants.generateReservedColumnName(indexFieldName);
-        return Column.builder()
-                .id(reservedColumnName)
-                .name(reservedColumnName)
-                .expression(ParamSubstituteUtil.makeParam(indexFieldName))
-                .visible(false)
-                .special(true)
-                .build();
-    }
-
     void updateColumns() {
         // Now make sure special fields exist for stream id and event id.
-        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
+        ensureSpecialColumns();
 
         // Remove existing columns.
         for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
@@ -946,16 +931,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableComponentSettings().getColumns() != null) {
-            final String reservedStreamId = IndexConstants.RESERVED_STREAM_ID_FIELD_NAME;
-            final String reservedEventId = IndexConstants.RESERVED_EVENT_ID_FIELD_NAME;
+            final String reservedStreamId = SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME;
+            final String reservedEventId = SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME;
 
             final List<Column> columns = new ArrayList<>();
             getTableComponentSettings().getColumns().forEach(column -> {
                 Column col = column;
                 if (reservedStreamId.equals(col.getName())) {
-                    col = buildSpecialColumn(IndexConstants.STREAM_ID);
+                    col = SpecialColumns.STREAM_ID_COLUMN;
                 } else if (reservedEventId.equals(col.getName())) {
-                    col = buildSpecialColumn(IndexConstants.EVENT_ID);
+                    col = SpecialColumns.EVENT_ID_COLUMN;
                 } else if (column.getId() == null) {
                     col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
                 }
