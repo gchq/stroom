@@ -17,7 +17,6 @@
 package stroom.data.store.impl;
 
 import stroom.resource.api.ResourceStore;
-import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.PropertyMap;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -50,9 +50,10 @@ import java.util.Set;
  */
 public final class ImportFileServlet extends HttpServlet implements IsServlet {
 
-    protected static final String FILE_UPLOAD_PROP_NAME = "fileUpload";
+    private static final String FILE_UPLOAD_PROP_NAME = "fileUpload";
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
+    @Serial
     private static final long serialVersionUID = 487567988479000995L;
 
     private static final Set<String> PATH_SPECS = Set.of("/importfile.rpc");
@@ -78,7 +79,7 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
         try {
             // Parse the request and populate a map of file items.
             final Map<String, DiskFileItem> items = getFileItems(request);
-            if (items.size() == 0) {
+            if (items.isEmpty()) {
                 response.getWriter().write(propertyMap.toArgLine());
                 return;
             }
@@ -87,13 +88,13 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
             Objects.requireNonNull(fileItem, "Property '" + FILE_UPLOAD_PROP_NAME + "' not found in request");
             final String fileName = fileItem.getName();
             final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
-            final Path file = resourceStore.getTempFile(resourceKey);
+            final Path tempFile = resourceStore.getTempFile(resourceKey);
             streamEventLog.importStream(
                     fileItem,
-                    FileUtil.getCanonicalPath(file),
+                    fileName,
                     null);
             try (final InputStream inputStream = fileItem.getInputStream();
-                    final OutputStream outputStream = Files.newOutputStream(file)) {
+                    final OutputStream outputStream = Files.newOutputStream(tempFile)) {
                 StreamUtil.streamToStream(inputStream, outputStream);
             }
 

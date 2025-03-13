@@ -78,7 +78,6 @@ public class ImportExportServiceImpl implements ImportExportService {
 
     /**
      * Export the selected folder data.
-     * @return
      */
     @Override
     public ExportSummary exportConfig(final Set<DocRef> docRefs,
@@ -104,7 +103,12 @@ public class ImportExportServiceImpl implements ImportExportService {
     }
 
     private Path workingZipDir(final Path zipFile) {
-        final String name = zipFile.getFileName().toString();
-        return tempDirProvider.get().resolve(name.substring(0, name.length() - ".zip".length()));
+        // Remove extension if there is one.
+        String name = zipFile.getFileName().toString();
+        int index = name.lastIndexOf(".");
+        if (index != -1) {
+            name = name.substring(0, index);
+        }
+        return tempDirProvider.get().resolve(name);
     }
 }

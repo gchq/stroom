@@ -226,10 +226,8 @@ class DashboardServiceImpl implements DashboardService {
                 String fileName = getQueryFileName(request);
 
                 final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
-                final Path outputFile = resourceStore.getTempFile(resourceKey);
-
-                JsonUtil.writeValue(outputFile, apiSearchRequest);
-
+                final Path tempFile = resourceStore.getTempFile(resourceKey);
+                JsonUtil.writeValue(tempFile, apiSearchRequest);
                 return new ResourceGeneration(resourceKey, new ArrayList<>());
             } catch (final RuntimeException e) {
                 throw EntityServiceExceptionUtil.create(e);
@@ -280,28 +278,20 @@ class DashboardServiceImpl implements DashboardService {
                 // Import file.
                 final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
-                final Path file = resourceStore.getTempFile(resourceKey);
+                final Path tempFile = resourceStore.getTempFile(resourceKey);
 
                 final FormatterFactory formatterFactory =
                         new FormatterFactory(searchRequest.getDateTimeSettings());
 
                 // Start target
-                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-                    SearchResultWriter.Target target = null;
+                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                    final SearchResultWriter.Target target = switch (request.getFileType()) {
+                        case CSV -> new DelimitedTarget(outputStream, ",");
+                        case TSV -> new DelimitedTarget(outputStream, "\t");
+                        case EXCEL -> new ExcelTarget(outputStream, searchRequest.getDateTimeSettings());
+                    };
 
                     // Write delimited file.
-                    switch (request.getFileType()) {
-                        case CSV:
-                            target = new DelimitedTarget(outputStream, ",");
-                            break;
-                        case TSV:
-                            target = new DelimitedTarget(outputStream, "\t");
-                            break;
-                        case EXCEL:
-                            target = new ExcelTarget(outputStream, searchRequest.getDateTimeSettings());
-                            break;
-                    }
-
                     try {
                         target.start();
 
