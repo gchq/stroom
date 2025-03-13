@@ -105,9 +105,9 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
         }
 
         final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
-        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+        final Path tempFile = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            Files.writeString(file, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
+            Files.writeString(tempFile, dictionary.getData(), StreamUtil.DEFAULT_CHARSET);
         } catch (final IOException e) {
             LOGGER.error("Unable to download Dictionary", e);
             throw new UncheckedIOException(e);

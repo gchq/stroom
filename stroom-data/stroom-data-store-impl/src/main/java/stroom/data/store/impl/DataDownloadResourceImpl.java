@@ -68,7 +68,7 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
                                                 "Meta",
                                                 criteria))
                                         .addFile(File.builder()
-                                                .withName(tempFile.getFileName().toString())
+                                                .withName(resourceKey.getName())
                                                 .withSize(BigInteger.valueOf(Files.size(tempFile)))
                                                 .build())
                                         .build())
@@ -85,12 +85,11 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
 
                         final Response response = Response
                                 .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                                .header("Content-Disposition", "attachment; filename=\"" +
-                                        tempFile.getFileName().toString() + "\"")
+                                .header("Content-Disposition", "attachment; filename=\"" + resourceKey.getName() + "\"")
                                 .build();
 
                         return ComplexLoggedOutcome.success(response, exportEventAction);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw EntityServiceExceptionUtil.create(e);
                     }
                 })

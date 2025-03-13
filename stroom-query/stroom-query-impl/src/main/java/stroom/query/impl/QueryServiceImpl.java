@@ -236,12 +236,12 @@ class QueryServiceImpl implements QueryService {
                 // Import file.
                 final String fileName = getResultsFilename(request);
                 resourceKey = resourceStore.createTempFile(fileName);
-                final Path file = resourceStore.getTempFile(resourceKey);
+                final Path tempFile = resourceStore.getTempFile(resourceKey);
 
                 final FormatterFactory formatterFactory = new FormatterFactory(dateTimeSettings);
 
                 // Start target
-                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
+                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
                     final SearchResultWriter.Target target = switch (request.getFileType()) {
                         case CSV -> new DelimitedTarget(outputStream, ",");
                         case TSV -> new DelimitedTarget(outputStream, "\t");
@@ -898,6 +898,7 @@ class QueryServiceImpl implements QueryService {
         }
     }
 
+    @SafeVarargs
     private static <T1, T2> boolean containsTailElements(final List<T1> items,
                                                          final Function<T1, T2> mapper,
                                                          final T2... requiredTailTypes) {
