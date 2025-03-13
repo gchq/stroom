@@ -29,8 +29,6 @@ ext.moduleName = 'stroom.app'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v3.2.2-1'
 def releaseBuildDir = "${projectDir}/build/release"
-def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
-def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 def stroomZipDistContentPacksDir = "${releaseBuildDir}/content_packs"
 def stroomDockerBuildDir = "${projectDir}/docker/build"
 def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
@@ -38,9 +36,10 @@ def stroomDockerContentPacksDir = "${stroomDockerBuildDir}/content_packs"
 apply plugin: 'application'
 apply plugin: 'com.gradleup.shadow'
 apply plugin: "io.swagger.core.v3.swagger-gradle-plugin"
-apply plugin: "java"
 
-mainClassName = 'stroom.app.App'
+application {
+    mainClass = 'stroom.app.App'
+}
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
@@ -378,7 +377,7 @@ shadowJar {
     dependsOn resolve
 
     // Allows us to build fat jars with lots of files
-    zip64 true
+    zip64 = true
 
     // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
@@ -405,7 +404,7 @@ tasks.register('migrate', JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
 
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
+    mainClass = application.mainClass.get()
     args 'migrate', '../local.yml'
 }
 
@@ -633,15 +632,15 @@ tasks.register('copySupportingFiles', Copy) {
     into releaseBuildDir
 
     doLast {
-        exec {
+        providers.exec {
             // Move the banner.txt into bin where it is expected
             commandLine 'mv', "${releaseBuildDir}/banner.txt", "${releaseBuildDir}/bin/banner.txt"
-        }
+        }.result.get()
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        //exec {
-        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        //}
+        //providers.exec {
+        //  commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}.result.get()
     }
 }
 
@@ -674,10 +673,10 @@ tasks.register('downloadSendArgs', Download) {
 tasks.register('makeSendExecutable') {
     dependsOn downloadSend
     doLast {
-        // The args script is sourced so doesn't need execute perms
-        exec {
+        providers.exec {
+            // The args script is sourced so doesn't need execute perms
             commandLine 'chmod', '+x', "${releaseBuildDir}/bin/send_to_stroom.sh"
-        }
+        }.result.get()
     }
 }
 
@@ -685,16 +684,6 @@ tasks.register('makeSendExecutable') {
 //from contentPackDownloadDir
 //into "${releaseBuildDir}/contentPacks"
 //}
-
-// Create an example yaml config file from the compile-time defaults
-tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
-    dependsOn ':stroom-config:stroom-config-app:compileJava'
-    dependsOn ':stroom-config:stroom-config-app:compileTestJava'
-
-    classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
-    mainClass = 'stroom.config.app.GenerateExpectedYaml'
-    args = [configDefaultsFile, configSchemaFile]
-}
 
 // Build the release distribution zip for stroom
 tasks.register('buildDistribution', Zip) {
@@ -707,7 +696,7 @@ tasks.register('buildDistribution', Zip) {
     dependsOn makeSendExecutable
     dependsOn downloadStroomContentForZipDist
     dependsOn generateConfigFiles
-    dependsOn generateConfigDefaultsYamlFile
+    dependsOn ':stroom-config:stroom-config-app:generateConfigDefaultsYamlFile'
 
     from releaseBuildDir
 }
@@ -717,12 +706,14 @@ tasks.register('buildDistribution', Zip) {
 def thisProject = project
 rootProject.subprojects { subProj ->
     //println "subProj ${subProj.name} project ${thisProject.name}"
-    if (!subProj.name.equals(thisProject.name)) {
-        subProj.tasks.withType(Test) { otherTestTask ->
-            //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
-            thisProject.tasks.test.mustRunAfter otherTestTask.path
-            thisProject.tasks.jar.mustRunAfter otherTestTask.path
-            thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
+    if (subProj.name != thisProject.name) {
+        subProj.tasks.withType(Test).tap {
+            configureEach { otherTestTask ->
+                //println "subProj ${subProj}, task ${it.name} thisProject.tasks.test ${thisProject.tasks.test}"
+                thisProject.tasks.test.mustRunAfter otherTestTask.path
+                thisProject.tasks.jar.mustRunAfter otherTestTask.path
+                thisProject.tasks.shadowJar.mustRunAfter otherTestTask.path
+            }
         }
     }
 }

@@ -1,5 +1,9 @@
 ext.moduleName = 'stroom.config.app'
 
+def releaseBuildDir = "${projectDir}/../../stroom-app/build/release"
+def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
+def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
+
 dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-impl')
@@ -89,4 +93,14 @@ dependencies {
     testRuntimeOnly libs.log4j.over.slf4j
     testRuntimeOnly libs.logback.classic
     testRuntimeOnly libs.logback.core
+}
+
+// Create an example yaml config file from the compile-time defaults
+tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
+    dependsOn compileJava
+    dependsOn compileTestJava
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.config.app.GenerateExpectedYaml'
+    args = [configDefaultsFile, configSchemaFile]
 }

@@ -22,7 +22,7 @@ dependencies {
 tasks.register('lucene980ShadowJar', ShadowJar) {
     archiveClassifier = 'all'
     configurations = [project.configurations.runtimeClasspath]
-    zip64 true
+    zip64 = true
     relocate 'org.apache.lucene', 'org.apache.lucene980'
 
     mergeServiceFiles()
