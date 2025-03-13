@@ -265,15 +265,17 @@ public class AnnotationEditPresenter
     }
 
     private void setAssignedTo(final UserRef assignedTo) {
-        currentAssignedTo = assignedTo;
-        getView().setAssignedTo(assignedTo);
-//        if (currentAssignedTo == null) {
-//            assignedToPresenter.setClearSelectionText(null);
-//        } else {
-//            assignedToPresenter.setClearSelectionText("Clear");
-//        }
-//        assignedToPresenter.clearFilter();
-        assignedToPresenter.setSelected(currentAssignedTo);
+        assignedToPresenter.resolve(assignedTo, userRef -> {
+            currentAssignedTo = userRef;
+            getView().setAssignedTo(userRef);
+    //        if (currentAssignedTo == null) {
+    //            assignedToPresenter.setClearSelectionText(null);
+    //        } else {
+    //            assignedToPresenter.setClearSelectionText("Clear");
+    //        }
+    //        assignedToPresenter.clearFilter();
+            assignedToPresenter.setSelected(currentAssignedTo);
+        });
     }
 
     private void changeComment(final String selected) {

@@ -61,7 +61,7 @@ public class EventId {
         }
         final EventId eventId1 = (EventId) o;
         return streamId == eventId1.streamId &&
-                eventId == eventId1.eventId;
+               eventId == eventId1.eventId;
     }
 
     @Override

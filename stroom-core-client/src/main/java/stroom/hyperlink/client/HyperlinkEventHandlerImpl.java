@@ -17,8 +17,10 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.client.Console;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -154,10 +156,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final Long annotationId = getLongParam(href, "annotationId");
         final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
         final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
+        final String eventIdList = getParam(href, "eventIdList");
         final String title = getParam(href, "title");
         final String subject = getParam(href, "subject");
         final String status = getParam(href, "status");
-//        final String assignedTo = getParam(href, "assignedTo");
+        final String assignedTo = getParam(href, "assignedTo");
         final String comment = getParam(href, "comment");
 
         // assignedTo is a display name so have to convert it back to a unique username
@@ -166,12 +169,28 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         annotation.setTitle(title);
         annotation.setSubject(subject);
         annotation.setStatus(status);
-//        annotation.setAssignedTo(assignedTo);
+        if (assignedTo != null) {
+            annotation.setAssignedTo(UserRef.builder().uuid(assignedTo).build());
+        }
         annotation.setComment(comment);
 
         final List<EventId> linkedEvents = new ArrayList<>();
         if (streamId != null && eventId != null) {
             linkedEvents.add(new EventId(streamId, eventId));
+        }
+
+        if (eventIdList != null && !eventIdList.isBlank()) {
+            final String[] eventIdStringArray = eventIdList.split(",");
+            for (final String eventIdString : eventIdStringArray) {
+                try {
+                    final EventId eventId1 = EventId.parse(eventIdString);
+                    if (eventId1 != null) {
+                        linkedEvents.add(eventId1);
+                    }
+                } catch (final RuntimeException e) {
+                    Console.log(e::getMessage, e);
+                }
+            }
         }
 
         ShowAnnotationEvent.fire(this, annotation, linkedEvents);

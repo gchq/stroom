@@ -10455,6 +10455,36 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/userRef/v1/getUserByUuid" : {
+      "post" : {
+        "operationId" : "getUserByUuid",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "uuid",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Resolve a user ref by UUID",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1/createGroup" : {
       "post" : {
         "operationId" : "createGroup",
