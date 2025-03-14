@@ -27,7 +27,6 @@ import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
@@ -42,6 +41,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
@@ -76,7 +76,15 @@ public class TextPresenter
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
 
-    private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
+    private static final Version CURRENT_MODEL_VERSION = new Version(7, 8, 0);
+    private static final ColumnRef DEFAULT_STREAM_ID_COLUMN = new ColumnRef(
+            SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME,
+            SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+    private static final ColumnRef DEFAULT_EVENT_ID_COLUMN = new ColumnRef(
+            SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME,
+            SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+    private static final String OLD_STREAM_ID = "StreamId";
+    private static final String OLD_EVENT_ID = "EventId";
 
     private final Provider<EditorPresenter> rawPresenterProvider;
     private final Provider<HtmlPresenter> htmlPresenterProvider;
@@ -126,8 +134,8 @@ public class TextPresenter
         Scheduler.get().scheduleDeferred(() -> {
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
-                    && getTextSettings().isShowStepping()
-                    && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
+                                && getTextSettings().isShowStepping()
+                                && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
             getView().setSteppingVisible(playButtonVisible);
@@ -170,8 +178,8 @@ public class TextPresenter
             getView().setContent(rawPresenter.getView());
 
             final String title = "Unable to display stream ["
-                    + fetchDataResult.getSourceLocation().getIdentifierString()
-                    + "]";
+                                 + fetchDataResult.getSourceLocation().getIdentifierString()
+                                 + "]";
 
             final String errorText = String.join("\n", fetchDataResult.getErrors());
 
@@ -243,10 +251,10 @@ public class TextPresenter
                         if (inputChar == '<') {
                             inElementTag = true;
                         } else if (inputChar == '&'
-                                && i + 3 < inputLength
-                                && inputChars[i + 1] == 'l'
-                                && inputChars[i + 2] == 't'
-                                && inputChars[i + 3] == ';') {
+                                   && i + 3 < inputLength
+                                   && inputChars[i + 1] == 'l'
+                                   && inputChars[i + 2] == 't'
+                                   && inputChars[i + 3] == ';') {
                             inEscapedElement = true;
                         } else {
                             // If we aren't in an element or escaped element
@@ -277,11 +285,11 @@ public class TextPresenter
                         inElementTag = false;
 
                     } else if (inEscapedElement
-                            && inputChar == '&'
-                            && i + 3 < inputLength
-                            && inputChars[i + 1] == 'g'
-                            && inputChars[i + 2] == 't'
-                            && inputChars[i + 3] == ';') {
+                               && inputChar == '&'
+                               && i + 3 < inputLength
+                               && inputChars[i + 1] == 'g'
+                               && inputChars[i + 2] == 't'
+                               && inputChars[i + 3] == ';') {
                         inEscapedElement = false;
                     }
 
@@ -339,17 +347,17 @@ public class TextPresenter
                     final ComponentSelection selected = selection.get(0);
                     currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
                     if (currentStreamId == null) {
-                        currentStreamId = getLong(selected.get(IndexConstants.STREAM_ID));
+                        currentStreamId = getLong(selected.get(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME));
                         if (currentStreamId == null) {
-                            currentStreamId = getLong(selected.get(IndexConstants.RESERVED_STREAM_ID_FIELD_NAME));
+                            currentStreamId = getLong(selected.get(OLD_STREAM_ID));
                         }
                     }
                     currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
                     currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
                     if (currentRecordIndex == null) {
-                        currentRecordIndex = getLong(selected.get(IndexConstants.EVENT_ID));
+                        currentRecordIndex = getLong(selected.get(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME));
                         if (currentRecordIndex == null) {
-                            currentRecordIndex = getLong(selected.get(IndexConstants.RESERVED_EVENT_ID_FIELD_NAME));
+                            currentRecordIndex = getLong(selected.get(OLD_EVENT_ID));
                         }
                     }
                     final Long currentLineFrom = getLong(getTextSettings().getLineFromColumn(), selected);
@@ -380,9 +388,9 @@ public class TextPresenter
                         message = "No stream id found in selection";
 
                     } else if (getTextSettings().getRecordNoColumn() == null
-                            && !(
+                               && !(
                             getTextSettings().getLineFromColumn() != null
-                                    && getTextSettings().getLineToColumn() != null)) { // Allow just line positions to
+                            && getTextSettings().getLineToColumn() != null)) { // Allow just line positions to
                         //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
@@ -393,9 +401,9 @@ public class TextPresenter
                         DataRange dataRange = null;
                         TextRange highlight = null;
                         if (currentLineFrom != null
-                                && currentColFrom != null
-                                && currentLineTo != null
-                                && currentColTo != null) {
+                            && currentColFrom != null
+                            && currentLineTo != null
+                            && currentColTo != null) {
                             dataRange = DataRange.between(
                                     new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
                                     new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
@@ -634,18 +642,18 @@ public class TextPresenter
             // special field names have changed from EventId to __event_id__ so we need to deal
             // with those and replace them, also rebuild existing special fields just in case
             if (textComponentSettings.getStreamIdColumn() == null
-                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))) {
-                builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
+                || (old && OLD_STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))) {
+                builder.streamIdField(DEFAULT_STREAM_ID_COLUMN);
             }
             if (textComponentSettings.getRecordNoColumn() == null
-                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))) {
-                builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
+                || (old && OLD_EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))) {
+                builder.recordNoField(DEFAULT_EVENT_ID_COLUMN);
             }
 
         } else {
             builder = TextComponentSettings.builder();
-            builder.streamIdField(new ColumnRef(IndexConstants.STREAM_ID, IndexConstants.STREAM_ID));
-            builder.recordNoField(new ColumnRef(IndexConstants.EVENT_ID, IndexConstants.EVENT_ID));
+            builder.streamIdField(DEFAULT_STREAM_ID_COLUMN);
+            builder.recordNoField(DEFAULT_EVENT_ID_COLUMN);
         }
 
         builder.modelVersion(CURRENT_MODEL_VERSION.toString());
