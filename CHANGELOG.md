@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.16] - 2025-03-14
+
+* Issue **#2334** : Fix split depth for stepping to match the split filter.
+
+* Issue **#4812** : Fix data download issue.
+
+* Issue **#4815** : Add new `currentUser()` related functions `currentUserUuid()`, `currentUserSubjectId()`, `currentUserDisplayName()` and `currentUserFullName()`, so the annotation function can be passed a user UUID to set initial assignment.
+
+* Issue **#4787** : Make text panes use special `__stream_id__` and `__event_id__` columns by default.
+
+
 ## [v7.8-beta.15] - 2025-03-11
 
 * Issue **#4768** : Fix import file path issue.
@@ -1259,7 +1270,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.16...HEAD
+[v7.8-beta.16]: https://github.com/gchq/stroom/compare/v7.8-beta.15...v7.8-beta.16
 [v7.8-beta.15]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.8-beta.15
 [v7.8-beta.14]: https://github.com/gchq/stroom/compare/v7.8-beta.13...v7.8-beta.14
 [v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
