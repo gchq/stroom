@@ -47,8 +47,7 @@ public class ExportContentResourceImpl implements ExportContentResource {
 
         return Response
                 .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=\"" +
-                        tempFile.getFileName().toString() + "\"")
+                .header("Content-Disposition", "attachment; filename=\"" + tempResourceKey.getName() + "\"")
                 .build();
     }
 }

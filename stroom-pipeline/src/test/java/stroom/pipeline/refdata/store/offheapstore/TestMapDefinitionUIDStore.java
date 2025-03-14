@@ -417,8 +417,7 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
             loadedEntries.forEach(((uid, mapDefinition) -> {
                 UID uid2 = mapUidForwardDb.get(readTxn, mapDefinition).get();
 
-                int cmpResult = ByteBufferUtils.compare(uid.getBackingBuffer(), uid2.getBackingBuffer());
-                assertThat(cmpResult).isEqualTo(0);
+                assertThat(uid.getBackingBuffer()).isEqualTo(uid2.getBackingBuffer());
 
                 MapDefinition mapDefinition2 = mapUidReverseDb.get(readTxn, uid).get();
 

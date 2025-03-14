@@ -16,112 +16,29 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.Param;
-
-import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CurrentUser.NAME,
-        commonCategory = FunctionCategory.VALUE,
+        commonCategory = FunctionCategory.PARAM,
         commonReturnType = ValString.class,
-        commonReturnDescription = "Display name of the logged in user.",
+        commonReturnDescription = "Display name (or subjectId if there isn't one) of the logged in user.",
         signatures = {
                 @FunctionSignature(
-                        description = "Returns the display name of the current logged in user.",
-                        args = {}),
-                @FunctionSignature(
-                        description = "Returns the name of the current logged in user in the form of the " +
-                                "supplied nameType.",
-                        args = {
-                                @FunctionArg(
-                                        name = "nameType",
-                                        description =
-                                                "The type of name to return. One of ('display'|'full'|'subject'). "
-                                                        + "'display' returns the display name of the user. " +
-                                                        "'full' returns the full name of the user. " +
-                                                        "'subject returns the unique identity of the user.",
-                                        argType = ValString.class)
-                        })
+                        description = "Returns the display name (or subjectId if there isn't one) of the current " +
+                                      "logged in user.",
+                        args = {})
         })
-class CurrentUser extends AbstractFunction {
+class CurrentUser extends AbstractCurrentUser {
 
     static final String NAME = "currentUser";
-
-    private Generator gen = Null.GEN;
-    private Param[] params = null;
+    static final String KEY = NAME + "()";
 
     public CurrentUser(final String name) {
-        super(name, 0, 1);
+        super(name);
     }
 
     @Override
-    public void setParams(final Param[] params) throws ParseException {
-        super.setParams(params);
-        this.params = params;
-    }
-
-    @Override
-    public void setStaticMappedValues(final Map<String, String> staticMappedValues) {
-        final String v = switch (getNameType()) {
-            case DISPLAY_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER);
-            case SUBJECT_ID -> staticMappedValues.get(ParamKeys.CURRENT_USER_SUBJECT_ID);
-            case FULL_NAME -> staticMappedValues.get(ParamKeys.CURRENT_USER_FULL_NAME);
-        };
-        if (v != null) {
-            gen = new StaticValueGen(ValString.create(v));
-        }
-    }
-
-    @Override
-    public Generator createGenerator() {
-        return gen;
-    }
-
-    @Override
-    public boolean hasAggregate() {
-        return false;
-    }
-
-    private NameType getNameType() {
-        if (params == null || params.length == 0) {
-            return NameType.DEFAULT;
-        } else {
-            return NameType.fromString(params[0].toString());
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private enum NameType {
-        DISPLAY_NAME("display"),
-        SUBJECT_ID("subject"),
-        FULL_NAME("full"),
-        ;
-        private static final Map<String, NameType> STR_TO_ENUM_MAP = new HashMap<>(3);
-        private static final NameType DEFAULT = DISPLAY_NAME;
-
-        static {
-            for (final NameType nameType : NameType.values()) {
-                STR_TO_ENUM_MAP.put(nameType.paramVal, nameType);
-            }
-        }
-
-        private final String paramVal;
-
-        NameType(final String paramVal) {
-            this.paramVal = paramVal;
-        }
-
-        static NameType fromString(final String type) {
-            return type != null
-                    ? Objects.requireNonNullElse(STR_TO_ENUM_MAP.get(type), DEFAULT)
-                    : DEFAULT;
-        }
+    String getKey() {
+        return KEY;
     }
 }

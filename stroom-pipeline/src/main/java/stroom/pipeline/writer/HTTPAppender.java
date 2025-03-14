@@ -109,8 +109,10 @@ public class HTTPAppender extends AbstractAppender {
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private String forwardUrl;
+    private Long timeout;
     private Long connectionTimeout;
-    private Long readTimeout;
+    private Long connectionRequestTimeout;
+    private Long timeToLive;
     private Long forwardChunkSize;
     private Set<String> metaKeySet = getMetaKeySet(META_KEYS_DEFAULT);
 
@@ -174,11 +176,17 @@ public class HTTPAppender extends AbstractAppender {
             final HttpClientConfiguration.Builder builder = HttpClientConfiguration.builder();
             builder.tlsConfiguration(httpTlsConfiguration);
 
+            if (timeout != null) {
+                builder.timeout(StroomDuration.ofMillis(timeout.intValue()));
+            }
             if (connectionTimeout != null) {
                 builder.connectionTimeout(StroomDuration.ofMillis(connectionTimeout.intValue()));
             }
-            if (readTimeout != null) {
-                builder.connectionRequestTimeout(StroomDuration.ofMillis(readTimeout.intValue()));
+            if (connectionRequestTimeout != null) {
+                builder.connectionRequestTimeout(StroomDuration.ofMillis(connectionRequestTimeout.intValue()));
+            }
+            if (timeToLive != null) {
+                builder.timeToLive(StroomDuration.ofMillis(timeToLive.intValue()));
             }
 
             final HttpClientConfiguration httpClientConfiguration = builder.build();
@@ -501,14 +509,24 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private void logConnectionToDebug() {
-        LOGGER.debug(() -> LogUtil.message("About to connect to {} with requestMethod: {}, contentType: {}, " +
-                                           "readTimeout: {}, connectionTimeout: {}, useCompression: {}, " +
-                                           "compressionMethod: {}, forwardChunkSize: {}, request properties:\n{}",
+        LOGGER.debug(() -> LogUtil.message("About to connect to {} with " +
+                                           "requestMethod: {}, " +
+                                           "contentType: {}, " +
+                                           "timeout: {}, " +
+                                           "connectionTimeout: {}, " +
+                                           "connectionRequestTimeout: {}, " +
+                                           "timeToLive: {}, " +
+                                           "useCompression: {}, " +
+                                           "compressionMethod: {}, " +
+                                           "forwardChunkSize: {}, " +
+                                           "request properties:\n{}",
                 forwardUrl,
                 requestMethod,
                 contentType,
-                readTimeout,
+                timeout,
                 connectionTimeout,
+                connectionRequestTimeout,
+                timeToLive,
                 outputStreamSupport.isUseCompression(),
                 outputStreamSupport.getCompressionMethod(),
                 forwardChunkSize,
@@ -628,10 +646,27 @@ public class HTTPAppender extends AbstractAppender {
         this.forwardUrl = forwardUrl;
     }
 
-    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout. " +
+    @PipelineProperty(description = "Determines the timeout until arrival of a response from the opposite endpoint. " +
+                                    "A timeout value of zero is interpreted as an infinite timeout. " +
+                                    "Default: 3 minutes. " +
                                     "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
                                     "duration suffix, e.g. '500ms', '2s', '1m', etc.",
             displayPriority = 6)
+    public void setTimeout(final String string) {
+        timeout = null;
+        if (NullSafe.isNonEmptyString(string)) {
+            timeout = ModelStringUtil.parseDurationString(string);
+        }
+    }
+
+    @PipelineProperty(description = "Determines the timeout until a new connection is fully established. " +
+                                    "This may also include transport security negotiation exchanges such as SSL or " +
+                                    "TLS protocol negotiation. " +
+                                    "A timeout value of zero is interpreted as an infinite timeout. " +
+                                    "Default: 3 minutes. " +
+                                    "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
+                                    "duration suffix, e.g. '500ms', '2s', '1m', etc.",
+            displayPriority = 7)
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
         if (NullSafe.isNonEmptyString(string)) {
@@ -639,28 +674,54 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
+    @PipelineProperty(description = "Returns the connection lease request timeout used when requesting a connection " +
+                                    "from the connection manager. " +
+                                    "Default: 3 minutes. " +
+                                    "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
+                                    "duration suffix, e.g. '500ms', '2s', '1m', etc.",
+            displayPriority = 8)
+    public void setConnectionRequestTimeout(final String string) {
+        connectionRequestTimeout = null;
+        if (NullSafe.isNonEmptyString(string)) {
+            connectionRequestTimeout = ModelStringUtil.parseDurationString(string);
+        }
+    }
+
     @PipelineProperty(description = "How long to wait for data to be available before closing the connection. " +
                                     "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
                                     "duration suffix, e.g. '500ms', '2s', '1m', etc.",
-            displayPriority = 7)
+            displayPriority = 8)
+    @Deprecated
     public void setReadTimeout(final String string) {
-        readTimeout = null;
+        if (string != null) {
+            setConnectionRequestTimeout(string);
+        }
+    }
+
+    @PipelineProperty(description = "The maximum time a pooled connection can stay idle (not leased to any thread) " +
+                                    "before it is shut down. " +
+                                    "Default: 1 hour. " +
+                                    "The timeout is specified as either milliseconds, e.g. '60000' or with a " +
+                                    "duration suffix, e.g. '500ms', '2s', '1m', etc.",
+            displayPriority = 9)
+    public void setTimeToLive(final String string) {
+        timeToLive = null;
         if (NullSafe.isNonEmptyString(string)) {
-            readTimeout = ModelStringUtil.parseDurationString(string);
+            timeToLive = ModelStringUtil.parseDurationString(string);
         }
     }
 
     @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be. " +
                                     "Size is either specified in bytes e.g. '1024' or with a IEC unit suffix, " +
                                     "e.g. '1K', '1M', '1G', etc.",
-            displayPriority = 8)
+            displayPriority = 10)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
     }
 
     @PipelineProperty(description = "Should data be compressed when sending",
             defaultValue = DEFAULT_USE_COMPRESSION_PROP_VALUE,
-            displayPriority = 9)
+            displayPriority = 11)
     public void setUseCompression(final boolean useCompression) {
         outputStreamSupport.setUseCompression(useCompression);
     }
@@ -672,7 +733,7 @@ public class HTTPAppender extends AbstractAppender {
                                     "other destinations, but is only applicable for compression types " +
                                     "'gz', 'zstd' or 'deflate'.",
             defaultValue = DEFAULT_USE_CONTENT_ENCODING_PROP_VALUE,
-            displayPriority = 10)
+            displayPriority = 12)
     public void setUseContentEncodingHeader(final boolean useContentEncodingHeader) {
         this.useContentEncodingHeader = useContentEncodingHeader;
     }
@@ -681,7 +742,7 @@ public class HTTPAppender extends AbstractAppender {
             description = "Compression method to apply, if compression is enabled. Supported values: " +
                           CompressionUtil.SUPPORTED_COMPRESSORS + ".",
             defaultValue = DEFAULT_COMPRESSION_METHOD_PROP_VALUE,
-            displayPriority = 11)
+            displayPriority = 13)
     public void setCompressionMethod(final String compressionMethod) {
         try {
             outputStreamSupport.setCompressionMethod(compressionMethod);
@@ -695,7 +756,7 @@ public class HTTPAppender extends AbstractAppender {
             description = "Specifies Which meta data keys will have their values logged in the send log. A Comma " +
                           "delimited string of keys.",
             defaultValue = META_KEYS_DEFAULT,
-            displayPriority = 12)
+            displayPriority = 14)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
     }
@@ -706,14 +767,14 @@ public class HTTPAppender extends AbstractAppender {
                                     "Set this to false if you are explicitly setting key/trust store properties on " +
                                     "this HttpAppender.",
             defaultValue = "true",
-            displayPriority = 13)
+            displayPriority = 15)
     @Deprecated
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
 //        this.useJvmSslConfig = useJvmSslConfig;
     }
 
     @PipelineProperty(description = "The key store file path on the server",
-            displayPriority = 14)
+            displayPriority = 16)
     public void setKeyStorePath(final String keyStorePath) {
         sslConfigBuilder.withKeyStorePath(keyStorePath);
     }
@@ -721,19 +782,19 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The key store type. " +
                                     "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
             defaultValue = "JKS",
-            displayPriority = 15)
+            displayPriority = 17)
     public void setKeyStoreType(final String keyStoreType) {
         sslConfigBuilder.withKeyStoreType(keyStoreType);
     }
 
     @PipelineProperty(description = "The key store password",
-            displayPriority = 16)
+            displayPriority = 18)
     public void setKeyStorePassword(final String keyStorePassword) {
         sslConfigBuilder.withKeyStorePassword(keyStorePassword);
     }
 
     @PipelineProperty(description = "The trust store file path on the server",
-            displayPriority = 17)
+            displayPriority = 19)
     public void setTrustStorePath(final String trustStorePath) {
         sslConfigBuilder.withTrustStorePath(trustStorePath);
     }
@@ -741,13 +802,13 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The trust store type " +
                                     "Valid values are ['JCEKS', 'JKS', 'DKS', 'PKCS11', 'PKCS12'].",
             defaultValue = "JKS",
-            displayPriority = 18)
+            displayPriority = 20)
     public void setTrustStoreType(final String trustStoreType) {
         sslConfigBuilder.withTrustStoreType(trustStoreType);
     }
 
     @PipelineProperty(description = "The trust store password",
-            displayPriority = 19)
+            displayPriority = 21)
     public void setTrustStorePassword(final String trustStorePassword) {
         sslConfigBuilder.withTrustStorePassword(trustStorePassword);
     }
@@ -755,14 +816,14 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "Set this to true to verify that the destination host name matches against " +
                                     "the host names in the certificate supplied by the destination server.",
             defaultValue = "true",
-            displayPriority = 20)
+            displayPriority = 22)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
         sslConfigBuilder.withHostnameVerificationEnabled(hostnameVerificationEnabled);
     }
 
     @PipelineProperty(description = "The SSL protocol to use",
             defaultValue = "TLSv1.2",
-            displayPriority = 21)
+            displayPriority = 23)
     public void setSslProtocol(final String sslProtocol) {
         sslConfigBuilder.withSslProtocol(NullSafe.get(sslProtocol, String::trim));
     }
@@ -770,21 +831,21 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The HTTP request method. Valid values are " +
                                     "GET, POST, HEAD, OPTIONS, PUT, DELETE and TRACE.",
             defaultValue = DEFAULT_REQUEST_METHOD_PROP_VALUE,
-            displayPriority = 22)
+            displayPriority = 24)
     public void setRequestMethod(String requestMethod) {
         this.requestMethod = NullSafe.get(requestMethod, String::trim, String::toUpperCase);
     }
 
     @PipelineProperty(description = "The content type",
             defaultValue = "application/json",
-            displayPriority = 23)
+            displayPriority = 25)
     public void setContentType(String contentType) {
         this.contentType = contentType;
     }
 
     @PipelineProperty(description = "Provide stream metadata as HTTP headers",
             defaultValue = "true",
-            displayPriority = 24)
+            displayPriority = 26)
     public void setHttpHeadersIncludeStreamMetaData(final boolean newValue) {
         this.httpHeadersIncludeStreamMetaData = newValue;
     }
@@ -795,7 +856,7 @@ public class HTTPAppender extends AbstractAppender {
                                     "If httpHeadersStreamMetaDataAllowList contains keys, " +
                                     "httpHeadersStreamMetaDataDenyList is ignored.",
             defaultValue = "",
-            displayPriority = 25)
+            displayPriority = 27)
     public void setHttpHeadersStreamMetaDataAllowList(final String newValue) {
         this.httpHeadersStreamMetaDataAllowList = newValue;
     }
@@ -806,25 +867,25 @@ public class HTTPAppender extends AbstractAppender {
                                     "If httpHeadersStreamMetaDataAllowList contains keys, " +
                                     "httpHeadersStreamMetaDataDenyList is ignored.",
             defaultValue = "",
-            displayPriority = 26)
+            displayPriority = 28)
     public void setHttpHeadersStreamMetaDataDenyList(final String newValue) {
         this.httpHeadersStreamMetaDataDenyList = newValue;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 1, format is 'HeaderName: HeaderValue'",
-            displayPriority = 27)
+            displayPriority = 29)
     public void setHttpHeadersUserDefinedHeader1(final String headerText) {
         this.httpHeadersUserDefinedHeader1 = headerText;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 2, format is 'HeaderName: HeaderValue'",
-            displayPriority = 28)
+            displayPriority = 30)
     public void setHttpHeadersUserDefinedHeader2(final String headerText) {
         this.httpHeadersUserDefinedHeader2 = headerText;
     }
 
     @PipelineProperty(description = "Additional HTTP Header 3, format is 'HeaderName: HeaderValue'",
-            displayPriority = 29)
+            displayPriority = 31)
     public void setHttpHeadersUserDefinedHeader3(final String headerText) {
         this.httpHeadersUserDefinedHeader3 = headerText;
     }

@@ -21,6 +21,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
+import stroom.planb.shared.SessionSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -58,7 +59,11 @@ class TestSessionDb {
 //            lowRange = insertData(writer, key, refTime, 10, -10);
 //        }
 
-        try (final SessionDb db = new SessionDb(tempDir, byteBufferFactory, false, true)) {
+        try (final SessionDb db = new SessionDb(
+                tempDir,
+                byteBufferFactory,
+                SessionSettings.builder().build(),
+                true)) {
             assertThat(db.count()).isEqualTo(109);
             testGet(db, key, refTime, 10);
 

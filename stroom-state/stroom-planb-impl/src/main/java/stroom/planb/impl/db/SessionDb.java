@@ -4,6 +4,9 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.api.DateTimeSettings;
+import stroom.lmdb2.BBKV;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SessionSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.language.functions.FieldIndex;
@@ -27,20 +30,40 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class SessionDb extends AbstractLmdb<Session, Session> {
+public class SessionDb extends AbstractDb<Session, Session> {
 
-    public SessionDb(final Path path,
-                     final ByteBufferFactory byteBufferFactory) {
-        this(path, byteBufferFactory, true, false);
+    SessionDb(final Path path,
+              final ByteBufferFactory byteBufferFactory) {
+        this(
+                path,
+                byteBufferFactory,
+                SessionSettings.builder().build(),
+                false);
     }
 
-    public SessionDb(final Path path,
-                     final ByteBufferFactory byteBufferFactory,
-                     final boolean overwrite,
-                     final boolean readOnly) {
-        super(path, byteBufferFactory, new SessionSerde(byteBufferFactory), overwrite, readOnly);
+    SessionDb(final Path path,
+              final ByteBufferFactory byteBufferFactory,
+              final SessionSettings settings,
+              final boolean readOnly) {
+        super(
+                path,
+                byteBufferFactory,
+                new SessionSerde(byteBufferFactory),
+                settings.getMaxStoreSize(),
+                settings.getOverwrite(),
+                readOnly);
     }
 
+    public static SessionDb create(final Path path,
+                                   final ByteBufferFactory byteBufferFactory,
+                                   final PlanBDoc doc,
+                                   final boolean readOnly) {
+        if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+            return new SessionDb(path, byteBufferFactory, sessionSettings, readOnly);
+        } else {
+            throw new RuntimeException("No session settings provided");
+        }
+    }
 
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
@@ -213,12 +236,12 @@ public class SessionDb extends AbstractLmdb<Session, Session> {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    final Session session = serde.getKey(keyVal);
+                    final BBKV kv = BBKV.create(iterator.next());
+                    final Session session = serde.getKey(kv);
 
                     if (session.end() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), keyVal.key(), keyVal.val());
+                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {

@@ -69,10 +69,10 @@ public class S3ConfigResourceImpl implements S3ConfigResource, FetchWithUuid<S3C
         }
 
         final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("s3Config.properties");
-        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+        final Path tempFile = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            Files.writeString(file, s3ConfigDoc.getData(), StreamUtil.DEFAULT_CHARSET);
-        } catch (IOException e) {
+            Files.writeString(tempFile, s3ConfigDoc.getData(), StreamUtil.DEFAULT_CHARSET);
+        } catch (final IOException e) {
             LOGGER.error("Unable to download S3Config", e);
             throw new UncheckedIOException(e);
         }

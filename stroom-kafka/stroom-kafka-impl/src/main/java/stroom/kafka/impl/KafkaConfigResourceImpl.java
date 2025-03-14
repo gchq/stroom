@@ -68,10 +68,10 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource, FetchWithUu
         }
 
         final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("kafkaConfig.properties");
-        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+        final Path tempFile = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            Files.writeString(file, kafkaConfigDoc.getData(), StreamUtil.DEFAULT_CHARSET);
-        } catch (IOException e) {
+            Files.writeString(tempFile, kafkaConfigDoc.getData(), StreamUtil.DEFAULT_CHARSET);
+        } catch (final IOException e) {
             LOGGER.error("Unable to download KafkaConfig", e);
             throw new UncheckedIOException(e);
         }

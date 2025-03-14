@@ -21,6 +21,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
@@ -217,6 +218,20 @@ public class UserRefPopupPresenter
 
     public void setSelected(final UserRef userRef) {
         selectionModel.setSelected(userRef);
+    }
+
+    public void resolve(final UserRef userRef, final Consumer<UserRef> consumer) {
+        if (userRef == null || userRef.getUuid() == null) {
+            consumer.accept(userRef);
+        } else {
+            restFactory
+                    .create(RESOURCE)
+                    .method(res -> res.getUserByUuid(userRef.getUuid()))
+                    .onSuccess(consumer)
+                    .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(userRef)))
+                    .taskMonitorFactory(pagerView)
+                    .exec();
+        }
     }
 
     public void refresh() {

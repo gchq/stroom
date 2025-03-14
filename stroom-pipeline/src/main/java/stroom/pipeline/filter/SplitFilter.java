@@ -479,4 +479,9 @@ public class SplitFilter extends AbstractXMLFilter {
             locationHolder.setStoreLocations(storeLocations);
         }
     }
+
+    public int getSplitDepth() {
+        // Add a fudge in here to cope with legacy depth being 0 based.
+        return splitDepth - 1;
+    }
 }

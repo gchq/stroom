@@ -17,9 +17,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class DuplicateCheckRowSerde {
+/**
+ * The serialised key is of the form:
+ * <pre>{@code <hash bytes (8)><seq no bytes(variable)>}</pre>
+ */
+public class DuplicateCheckRowSerde {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckRowSerde.class);
+
+    private static final int HASH_BYTES = Long.BYTES;
+    private static final int MAX_KEY_BYTES = HASH_BYTES + Long.BYTES;
 
     private final ByteBufferFactory byteBufferFactory;
 
@@ -44,7 +51,7 @@ class DuplicateCheckRowSerde {
     private LmdbKV createLmdbKV(final byte[] bytes) {
         // Hash the value.
         final long rowHash = createHash(bytes);
-        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES);
+        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(MAX_KEY_BYTES);
         keyByteBuffer.putLong(rowHash);
         keyByteBuffer.flip();
 
@@ -77,5 +84,9 @@ class DuplicateCheckRowSerde {
             bytes = output.toBytes();
         }
         return bytes;
+    }
+
+    public int getKeyLength() {
+        return HASH_BYTES;
     }
 }

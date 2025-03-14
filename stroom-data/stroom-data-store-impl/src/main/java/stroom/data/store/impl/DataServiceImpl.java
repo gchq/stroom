@@ -54,7 +54,9 @@ import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -65,10 +67,13 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -76,7 +81,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class DataServiceImpl implements DataService {
 
@@ -88,6 +95,7 @@ class DataServiceImpl implements DataService {
     private final DocRefInfoService docRefInfoService;
     private final MetaService metaService;
     private final AttributeMapFactory attributeMapFactory;
+    private final TempDirProvider tempDirProvider;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
 
@@ -115,7 +123,8 @@ class DataServiceImpl implements DataService {
                     final PipelineDataCache pipelineDataCache,
                     final PipelineScopeRunnable pipelineScopeRunnable,
                     final SourceConfig sourceConfig,
-                    final TaskContextFactory taskContextFactory) {
+                    final TaskContextFactory taskContextFactory,
+                    final TempDirProvider tempDirProvider) {
 
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
@@ -125,6 +134,7 @@ class DataServiceImpl implements DataService {
         this.attributeMapFactory = attributeMapFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
+        this.tempDirProvider = tempDirProvider;
 
         this.dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -148,28 +158,53 @@ class DataServiceImpl implements DataService {
         return securityContext.secureResult(AppPermission.EXPORT_DATA_PERMISSION, () -> {
             // Import file.
             final ResourceKey resourceKey = resourceStore.createTempFile("StroomData.zip");
-            final Path file = resourceStore.getTempFile(resourceKey);
-            String fileName = file.getFileName().toString();
-            int index = fileName.lastIndexOf(".");
-            if (index != -1) {
-                fileName = fileName.substring(0, index);
-            }
+            final Path tempFile = resourceStore.getTempFile(resourceKey);
+            final Path outputDir = tempDirProvider.get().resolve(UUID.randomUUID().toString());
+            try {
+                final DataDownloadSettings settings = new DataDownloadSettings();
+                final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(
+                        criteria,
+                        outputDir,
+                        "data",
+                        settings);
 
-            final DataDownloadSettings settings = new DataDownloadSettings();
-            final DataDownloadResult result = dataDownloadTaskHandlerProvider.downloadData(criteria,
-                    file.getParent(),
-                    fileName,
-                    settings);
+                if (result.getRecordsWritten() == 0) {
+                    if (result.getMessageList() != null && !result.getMessageList().isEmpty()) {
+                        throw new RuntimeException("Download failed with errors: " +
+                                                   result.getMessageList().stream()
+                                                           .map(Message::getMessage)
+                                                           .collect(Collectors.joining(", ")));
+                    }
+                }
 
-            if (result.getRecordsWritten() == 0) {
-                if (result.getMessageList() != null && !result.getMessageList().isEmpty()) {
-                    throw new RuntimeException("Download failed with errors: " +
-                            result.getMessageList().stream()
-                                    .map(Message::getMessage)
-                                    .collect(Collectors.joining(", ")));
+                try {
+                    // Find out how many files were written.
+                    final List<Path> list;
+                    try (final Stream<Path> stream = Files.list(outputDir)) {
+                        list = stream.toList();
+                    }
+
+                    if (list.size() == 1) {
+                        // If we have only 1 file then just move it to the temp file.
+                        Files.move(list.getFirst(), tempFile);
+                    } else if (list.size() > 1) {
+                        // If we have more than 1 file then zip them all.
+                        ZipUtil.zip(tempFile, outputDir);
+                    } else {
+                        throw new RuntimeException("Download failed with no files written");
+                    }
+                } catch (final IOException e) {
+                    throw new RuntimeException("Download failed with errors: " + e.getMessage());
+                }
+
+                return new ResourceGeneration(resourceKey, result.getMessageList());
+            } finally {
+                try {
+                    FileUtil.deleteDir(outputDir);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
             }
-            return new ResourceGeneration(resourceKey, result.getMessageList());
         });
     }
 
@@ -191,11 +226,11 @@ class DataServiceImpl implements DataService {
         return securityContext.secureResult(AppPermission.IMPORT_DATA_PERMISSION, () -> {
             try {
                 // Import file.
-                final Path file = resourceStore.getTempFile(request.getKey());
+                final Path tempFile = resourceStore.getTempFile(request.getKey());
 
                 dataUploadTaskHandlerProvider.uploadData(
                         request.getFileName(),
-                        file,
+                        tempFile,
                         request.getFeedName(),
                         request.getStreamTypeName(),
                         request.getEffectiveMs(),
@@ -245,10 +280,10 @@ class DataServiceImpl implements DataService {
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
                 if (value != null &&
-                        // We are going to add retention entries separately.
-                        !DataRetentionFields.RETENTION_AGE.equals(key) &&
-                        !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
-                        !DataRetentionFields.RETENTION_RULE.equals(key)) {
+                    // We are going to add retention entries separately.
+                    !DataRetentionFields.RETENTION_AGE.equals(key) &&
+                    !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
+                    !DataRetentionFields.RETENTION_RULE.equals(key)) {
 
                     if (MetaFields.DURATION.getFldName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
@@ -323,10 +358,7 @@ class DataServiceImpl implements DataService {
     private String convertTime(final String value) {
         try {
             long valLong = Long.parseLong(value);
-            return DateUtil.createNormalDateTimeString(valLong)
-                    + " ("
-                    + valLong
-                    + ")";
+            return DateUtil.createNormalDateTimeString(valLong) + " (" + valLong + ")";
         } catch (RuntimeException e) {
             // Ignore.
         }
@@ -338,10 +370,7 @@ class DataServiceImpl implements DataService {
             final long valLong = Long.parseLong(value);
             final String iecByteSizeStr = ModelStringUtil.formatIECByteSizeString(valLong);
             if (valLong >= 1024) {
-                return iecByteSizeStr
-                        + " ("
-                        + NumberFormat.getIntegerInstance().format(valLong)
-                        + ")";
+                return iecByteSizeStr + " (" + NumberFormat.getIntegerInstance().format(valLong) + ")";
             } else {
                 return iecByteSizeStr;
             }

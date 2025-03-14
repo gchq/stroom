@@ -2469,3 +2469,7 @@ button.main-menu svg {
 .columnValueCell-text {
 	white-space: nowrap;
 }
+
+.durationSetting {
+    display: flex;
+}

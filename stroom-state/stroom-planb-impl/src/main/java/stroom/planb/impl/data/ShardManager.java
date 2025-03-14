@@ -7,7 +7,7 @@ import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
-import stroom.planb.impl.db.AbstractLmdb;
+import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.NullSafe;
@@ -111,7 +111,7 @@ public class ShardManager {
         shard.createSnapshot(request, outputStream);
     }
 
-    public <R> R get(final String mapName, final Function<AbstractLmdb<?, ?>, R> function) {
+    public <R> R get(final String mapName, final Function<AbstractDb<?, ?>, R> function) {
         final Shard shard = getShardForMapName(mapName);
         return shard.get(function);
     }

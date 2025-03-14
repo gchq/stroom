@@ -13,6 +13,35 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2334** : Fix split depth for stepping to match the split filter.
+
+* Issue **#4812** : Fix data download issue.
+
+* Issue **#4815** : Add new `currentUser()` related functions `currentUserUuid()`, `currentUserSubjectId()`, `currentUserDisplayName()` and `currentUserFullName()`, so the annotation function can be passed a user UUID to set initial assignment.
+
+* Issue **#4787** : Make text panes use special `__stream_id__` and `__event_id__` columns by default.
+
+* Issue **#4768** : Fix import file path issue.
+
+* Issue **#4767** : Improve null equality treatment in expressions.
+
+* Issue **#4781** : Fix NPE.
+
+* Issue **#4784** : Fix DynamicIndexingFilter values.
+
+* Issue **#4796** : Fix the accidental deletion of rule dup stores by scheduled reports.
+
+* Issue **#4758** : Change the way the duplicate check store works so that it can cope with values larger than 511 bytes.
+
+* Issue **#4788** : Deep copy selection handlers when duplicating dashboard tables.
+
+* Issue **#4791** : Fix numeric comparator in having clause.
+
+* Issue **#4795** : Add missing properties to HTTPAppender.
+
+* Issue **#4808** : Fix issue of proxy forwarding gzipped data inside a proxy zip when client uses header `Compression: gzip`, i.e. lower case value.
+
+
 ## [v7.9-beta.2] - 2025-02-21
 
 * Issue **#4778** : Improve menu text rendering.

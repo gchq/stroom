@@ -77,10 +77,8 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             throwNameException(name);
         }
 
-        // Set the default keyspace.
         PlanBDoc doc = store.readDocument(created);
-        doc.setStateType(StateType.TEMPORAL_STATE);
-        doc.setRetainForever(true);
+        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
         store.writeDocument(doc);
 
         return created;

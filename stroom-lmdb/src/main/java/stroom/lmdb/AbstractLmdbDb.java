@@ -783,7 +783,7 @@ public abstract class AbstractLmdbDb<K, V>
                 valueBufferConsumer.accept(newValueBuf);
 
                 // Only put if the buffer is different
-                if (ByteBufferUtils.compare(valueBuf, newValueBuf) != 0) {
+                if (!valueBuf.equals(newValueBuf)) {
                     cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
                 } else {
                     LOGGER.trace("put call skipped as buffers are the same");
