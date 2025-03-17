@@ -19,14 +19,24 @@ public class FileGroup {
         this.entries = parentDir.resolve(ENTRIES_FILE);
     }
 
+    /**
+     * @return The path to the .zip file
+     */
     public Path getZip() {
         return zip;
     }
 
+    /**
+     * @return The path to the .meta file
+     */
     public Path getMeta() {
         return meta;
     }
 
+    /**
+     * @return The .entries file containing the {@link ZipEntryGroup}s, serialised as
+     * JSON with one per line.
+     */
     public Path getEntries() {
         return entries;
     }

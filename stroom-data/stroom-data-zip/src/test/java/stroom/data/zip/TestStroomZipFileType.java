@@ -60,4 +60,46 @@ class TestStroomZipFileType {
                 .addCase("header", true)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testFromExtension() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(StroomZipFileType.class)
+                .withSingleArgTestFunction(StroomZipFileType::fromExtension)
+                .withSimpleEqualityAssertion()
+                .addCase(null, StroomZipFileType.DATA)
+                .addCase("", StroomZipFileType.DATA)
+                .addCase(" ", StroomZipFileType.DATA)
+                .addCase("foo", StroomZipFileType.DATA)
+                .addCase("bar", StroomZipFileType.DATA)
+                .addCase("meta", StroomZipFileType.META)
+                .addCase("met", StroomZipFileType.META)
+                .addCase("hdr", StroomZipFileType.META)
+                .addCase("header", StroomZipFileType.META)
+                .addCase("ctx", StroomZipFileType.CONTEXT)
+                .addCase("context", StroomZipFileType.CONTEXT)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testFromCanonicalExtension() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(StroomZipFileType.class)
+                .withSingleArgTestFunction(StroomZipFileType::fromCanonicalExtension)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase("", null)
+                .addCase(" ", null)
+                .addCase("foo", null)
+                .addCase("bar", null)
+                .addCase("meta", StroomZipFileType.META)
+                .addCase("met", null)
+                .addCase("hdr", null)
+                .addCase("header", null)
+                .addCase("ctx", StroomZipFileType.CONTEXT)
+                .addCase("context", null)
+                .build();
+    }
 }

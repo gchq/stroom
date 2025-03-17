@@ -24,7 +24,6 @@ public class Forwarder {
 
     private final List<ForwardDestination> destinations = new ArrayList<>();
     private final ForwardDestination forwardDestinationFacade;
-//    private final CleanupDirQueue cleanupDirQueue;
 
     @Inject
     public Forwarder(final DataDirProvider dataDirProvider,
@@ -32,8 +31,6 @@ public class Forwarder {
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ForwardHttpPostDestinationFactory forwardHttpPostDestinationFactory,
                      final CleanupDirQueue cleanupDirQueue) {
-//        this.cleanupDirQueue = cleanupDirQueue;
-
         // Find out how many forward destinations are enabled.
         final ProxyConfig proxyConfig = proxyConfigProvider.get();
         final long enabledForwardCount = Stream
@@ -64,7 +61,8 @@ public class Forwarder {
         final NumberedDirProvider copiesDirProvider = createCopiesDirProvider(dataDirProvider);
 
         if (destinations.size() == 1) {
-            // Most proxies will only have one destination configured so optimise for that
+            // Most stroom-proxy instances will only have one destination
+            // configured so optimise for that
             forwardDestinationFacade = NullSafe.first(destinations);
         } else {
             forwardDestinationFacade = new MultiForwardDestination(

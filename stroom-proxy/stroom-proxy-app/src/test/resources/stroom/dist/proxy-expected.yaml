@@ -139,3 +139,7 @@ proxyConfig:
     pollFrequency: "PT10S"
     queueName: null
     queueUrl: null
+  threads:
+    aggregateInputQueueThreadCount: 1
+    forwardingInputQueueThreadCount: 1
+    preAggregateInputQueueThreadCount: 1

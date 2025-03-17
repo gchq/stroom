@@ -15,6 +15,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +102,28 @@ class TestDirUtil {
                         })
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Incomplete directory ID");
+    }
+
+    @Test
+    void testMaxId_missing() {
+        Path path = Path.of("/doesntExist");
+        Assertions.assertThat(path)
+                .doesNotExist();
+
+        Assertions.assertThatThrownBy(() ->
+                        DirUtil.getMaxDirId(path))
+                .isInstanceOf(UncheckedIOException.class);
+    }
+
+    @Test
+    void testMinId_missing() {
+        Path path = Path.of("/doesntExist");
+        Assertions.assertThat(path)
+                .doesNotExist();
+
+        Assertions.assertThatThrownBy(() ->
+                        DirUtil.getMinDirId(path))
+                .isInstanceOf(UncheckedIOException.class);
     }
 
     @TestFactory

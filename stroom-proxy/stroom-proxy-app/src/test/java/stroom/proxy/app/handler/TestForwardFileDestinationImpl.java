@@ -258,13 +258,14 @@ class TestForwardFileDestinationImpl {
         final String year = String.valueOf(ZonedDateTime.now().getYear());
 
 
+        // Each feed has its own id number set
         final Path dest1 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 1);
         final Snapshot dest1Snapshot = DirectorySnapshot.of(dest1);
-        final Path dest2 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 2);
+        final Path dest2 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 1);
         final Snapshot dest2Snapshot = DirectorySnapshot.of(dest2);
-        final Path dest3 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 3);
+        final Path dest3 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED1/" + year), 2);
         final Snapshot dest3Snapshot = DirectorySnapshot.of(dest3);
-        final Path dest4 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 4);
+        final Path dest4 = DirUtil.createPath(dirs.getStoreDir().resolve("FEED2/" + year), 2);
         final Snapshot dest4Snapshot = DirectorySnapshot.of(dest4);
 
         assertThat(deepListContent(dirs.getStoreDir()))

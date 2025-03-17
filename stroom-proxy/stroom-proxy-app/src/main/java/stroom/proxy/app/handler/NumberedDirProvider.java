@@ -127,6 +127,10 @@ public class NumberedDirProvider {
         }
     }
 
+    public Path getParentDir() {
+        return parentDir;
+    }
+
     @Override
     public String toString() {
         return "NumberedDirProvider{" +

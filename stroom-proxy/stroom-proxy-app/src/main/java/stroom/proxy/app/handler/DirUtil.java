@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -301,19 +302,37 @@ public class DirUtil {
 
         final List<DirId> depthDirs = findDirs(rootPath, mode, DirUtil::isValidDepthPath);
         DirId dirId = null;
+        final AtomicReference<Path> incompletePath = new AtomicReference<>();
         for (final DirId depthDirId : depthDirs) {
             final Path depthDir = depthDirId.dir;
             LOGGER.debug("Checking depthPath: '{}'", depthDir);
-            dirId = getDirId(depthDir, mode);
+            dirId = getDirId(depthDir, mode, incompletePath);
             if (dirId != null) {
+                // Found it
                 break;
+            } else {
+                incompletePath.set(depthDir);
             }
         }
+
+        if (dirId != null && incompletePath.get() != null && mode == Mode.MAX) {
+            // In MAX mode we are scanning in reverse order, so we must have found
+            // an incomplete path BEFORE the valid leaf path. This means we have at least one
+            // DirId but an incomplete branch belonging to a higher DirId. Thus, we can't be
+            // sure what the max ID is as it must have been higher than dirId.
+            // If dirId == null then we have an empty root, so hopefully it is ok.
+            throw new IllegalStateException(
+                    LogUtil.message(
+                            "Incomplete directory ID path found '{}'. This implies that " +
+                            "an ID has previously been allocated with this branch so we cannot be sure what the " +
+                            "maximum ID is.", LogUtil.path(incompletePath.get())));
+        }
+
         LOGGER.debug("getDirIdFromRoot - returning dirId {}", dirId);
         return NullSafe.getOrElse(dirId, DirId::num, 0L);
     }
 
-    private static DirId getDirId(final Path path, final Mode mode) {
+    private static DirId getDirId(final Path path, final Mode mode, final AtomicReference<Path> incompletePath) {
         LOGGER.trace("getLastDirId - path: {}, mode: {}", path, mode);
 
         LOGGER.trace("Checking depthPath: '{}'", path);
@@ -328,21 +347,26 @@ public class DirUtil {
                     dirId = aDirId;
                 } else {
                     // Is a branch so recurse in
-                    dirId = getDirId(aDirId.dir, mode);
+                    dirId = getDirId(aDirId.dir, mode, incompletePath);
                 }
                 if (dirId != null) {
                     break;
                 }
             }
         }
-        if (mode == Mode.MAX && dirId == null) {
-            // It is less of an issue for MIN as there is no risk of using the same ID as a partial branch.
-            throw new IllegalStateException(
-                    LogUtil.message(
-                            "Incomplete directory ID path found '{}'. This implies that " +
-                            "an ID has previously been allocated with this branch so we cannot be sure what the " +
-                            "maximum ID is.", LogUtil.path(path)));
+        if (dirId == null && isValidLeafOrBranchPath(path)) {
+            // No leaf or child branch found so this path is incomplete
+            // Just record the first case we find
+            incompletePath.compareAndSet(null, path);
         }
+//        if (mode == Mode.MAX && dirId == null) {
+//            // It is less of an issue for MIN as there is no risk of using the same ID as a partial branch.
+//            throw new IllegalStateException(
+//                    LogUtil.message(
+//                            "Incomplete directory ID path found '{}'. This implies that " +
+//                            "an ID has previously been allocated with this branch so we cannot be sure what the " +
+//                            "maximum ID is.", LogUtil.path(path)));
+//        }
         LOGGER.trace("getDirId - returning dirId {}", dirId);
         return dirId;
     }

@@ -20,6 +20,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiverFactoryProvider.class);
 
     private ReceiverFactory receiverFactory;
+    private ThreadConfig threadConfig;
 
     @Inject
     public ReceiverFactoryProvider(final ProxyConfig proxyConfig,
@@ -32,6 +33,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<ZipReceiver> zipReceiverProvider,
                                    final Provider<SimpleReceiver> simpleReceiverProvider,
                                    final ProxyServices proxyServices) {
+        this.threadConfig = proxyConfig.getThreadConfig();
+        // TODO we should really be creating all forwarders regardless of state, so that
+        //  they can be initialised in a paused state, then respond to a change to the enabled
+        //  state. This is subject to fixing the hot loading of forwarder config changes.
         // Find out how many forward destinations are enabled.
         final long enabledForwardCount = proxyConfig.streamAllEnabledForwarders()
                 .count();
@@ -61,15 +66,16 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     DirNames.FORWARDING_INPUT_QUEUE,
                     40,
                     "Forwarding Input Queue");
-            // Move items from the forwarding queue to the forwarder.
+            // Move items from the forwarding queue to the forwarder(s).
             final DirQueueTransfer forwardingInputQueueTransfer =
                     new DirQueueTransfer(forwardInputQueue::next, forwarder::add);
             proxyServices.addParallelExecutor("Forwarding queue transfer", () ->
-                    forwardingInputQueueTransfer, 1);
+                    forwardingInputQueueTransfer, threadConfig.getForwardingInputQueueThreadCount());
 
             if (NullSafe.test(proxyConfig.getAggregatorConfig(), AggregatorConfig::isEnabled)) {
                 // If we are aggregating then create the aggregating moving parts.
-                createAggregatingReceiverFactory(dirQueueFactory,
+                createAggregatingReceiverFactory(
+                        dirQueueFactory,
                         aggregatorProvider,
                         preAggregatorProvider,
                         zipReceiverProvider,
@@ -117,8 +123,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
         // TODO : Could use more than one thread here.
         final DirQueueTransfer aggregateInputQueueTransfer =
                 new DirQueueTransfer(aggregateInputQueue::next, aggregator::addDir);
-        proxyServices.addParallelExecutor("Aggregate input queue transfer", () ->
-                aggregateInputQueueTransfer, 1);
+        proxyServices.addParallelExecutor(
+                "Aggregate input queue transfer",
+                () -> aggregateInputQueueTransfer,
+                threadConfig.getAggregateInputQueueThreadCount());
 
         // Create the pre aggregator.
         final PreAggregator preAggregator = preAggregatorProvider.get();
@@ -131,8 +139,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
         // Move items from the file store to the pre aggregator.
         final DirQueueTransfer preAggregateInputQueueTransfer =
                 new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);
-        proxyServices.addParallelExecutor("Pre aggregate input queue transfer", () ->
-                preAggregateInputQueueTransfer, 1);
+        proxyServices.addParallelExecutor(
+                "Pre aggregate input queue transfer",
+                () -> preAggregateInputQueueTransfer,
+                threadConfig.getPreAggregateInputQueueThreadCount());
 
         // Create the receivers that will add data to the file store queue on receipt.
         final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();

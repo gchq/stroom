@@ -65,7 +65,7 @@ public class DirQueue {
         readId = Math.max(1, minId);
         queueMonitor.setWritePos(maxId);
         queueMonitor.setReadPos(minId);
-        LOGGER.info("Initialising queue {} in {} with readId {} and writeId {}",
+        LOGGER.info("Initialising queue '{}' in {} with readId {} and writeId {}",
                 name, LogUtil.path(rootDir), readId, writeId);
     }
 

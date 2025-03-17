@@ -210,6 +210,10 @@ public class TestPreAggregator extends StroomUnitTest {
                 .build();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private record ExpectedOutput(List<Integer> entryCounts) {
 
     }

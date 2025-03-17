@@ -6,6 +6,7 @@ import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
+import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;
@@ -71,6 +72,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final LogStreamConfig logStreamConfig;
     private final ContentSyncConfig contentSyncConfig;
     private final FeedStatusConfig feedStatusConfig;
+    private final ThreadConfig threadConfig;
     private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
 
@@ -88,6 +90,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         logStreamConfig = new LogStreamConfig();
         contentSyncConfig = new ContentSyncConfig();
         feedStatusConfig = new FeedStatusConfig();
+        threadConfig = new ThreadConfig();
         proxySecurityConfig = new ProxySecurityConfig();
         sqsConnectors = new ArrayList<>();
     }
@@ -108,6 +111,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_CONTENT_SYNC) final ContentSyncConfig contentSyncConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
+            @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
             @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
@@ -123,6 +127,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.logStreamConfig = logStreamConfig;
         this.contentSyncConfig = contentSyncConfig;
         this.feedStatusConfig = feedStatusConfig;
+        this.threadConfig = threadConfig;
         this.proxySecurityConfig = proxySecurityConfig;
         this.sqsConnectors = sqsConnectors;
     }
@@ -201,6 +206,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty(PROP_NAME_FEED_STATUS)
     public FeedStatusConfig getFeedStatusConfig() {
         return feedStatusConfig;
+    }
+
+    @JsonProperty(PROP_NAME_THREADS)
+    public ThreadConfig getThreadConfig() {
+        return threadConfig;
     }
 
     @JsonProperty(PROP_NAME_SECURITY)
@@ -334,6 +344,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
+        private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
@@ -417,6 +428,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder threadConfig(final ThreadConfig threadConfig) {
+            this.threadConfig = threadConfig;
+            return this;
+        }
+
         public Builder securityConfig(final ProxySecurityConfig proxySecurityConfig) {
             this.proxySecurityConfig = proxySecurityConfig;
             return this;
@@ -441,6 +457,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     logStreamConfig,
                     contentSyncConfig,
                     feedStatusConfig,
+                    threadConfig,
                     proxySecurityConfig,
                     sqsConnectors);
         }

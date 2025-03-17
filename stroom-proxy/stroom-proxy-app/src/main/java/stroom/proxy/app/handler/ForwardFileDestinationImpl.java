@@ -11,6 +11,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -20,6 +24,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
@@ -35,7 +40,12 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     private final PathCreator pathCreator;
     private final Path staticBaseDir;
 
-    private final AtomicLong writeId = new AtomicLong();
+    // Because we have templated dirs, we need one commitId per base path, but the templating
+    // may mean MANY path variations, so use one AtomicLong per base dir. We could use one
+    // but, then we would have to scan every base dir to find the max on boot, so this seems easier.
+    private final LoadingCache<Path, AtomicLong> writeIdsCache;
+    private final AtomicLong staticPathCommitId;
+    private final Function<Path, Path> targetDirCreationFunc;
 
     public ForwardFileDestinationImpl(final Path storeDir,
                                       final String name,
@@ -95,15 +105,43 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
         // Initialise the store id.
         FileUtil.ensureDirExists(storeDir);
-        final long maxId = DirUtil.getMaxDirId(storeDir);
-        writeId.set(maxId);
+
+        if (staticBaseDir != null) {
+            // base dir is static, so we don't need the cost of hitting the cache
+            writeIdsCache = null;
+            final long maxId = DirUtil.getMaxDirId(staticBaseDir);
+            staticPathCommitId = new AtomicLong(maxId);
+            LOGGER.debug("'{}' - Initialising maxId at {} in '{}'", name, maxId, staticBaseDir);
+            targetDirCreationFunc = this::createStaticTargetDir;
+        } else {
+            // Templated base dirs, so need a cache of commitIds, one per templated path.
+            // No need to age them off.
+            writeIdsCache = Caffeine.newBuilder()
+                    .maximumSize(1_000)
+                    .removalListener((Path key, AtomicLong value, RemovalCause cause) -> {
+                        if (value != null) {
+                            // In case any other thread is holding onto the AtomicLong
+                            value.set(-1);
+                        }
+                    })
+                    .build(this::getMaxIdForPath);
+            staticPathCommitId = null;
+            targetDirCreationFunc = this::createTemplatedTargetDir;
+        }
+    }
+
+    private AtomicLong getMaxIdForPath(final Path path) {
+        FileUtil.ensureDirExists(path);
+        final long maxId = DirUtil.getMaxDirId(path);
+        LOGGER.debug("'{}' - Initialising maxId at {} in '{}'", name, maxId, path);
+        return new AtomicLong(maxId);
     }
 
     @Override
     public void add(final Path sourceDir) {
         // Record the sequence id for future use.
-        final long commitId = writeId.incrementAndGet();
-        final Path targetDir = createTargetDir(commitId, sourceDir);
+        // The func is dependent on whether the base dir is templated or not
+        final Path targetDir = targetDirCreationFunc.apply(sourceDir);
         try {
             move(sourceDir, targetDir);
         } catch (final IOException e) {
@@ -150,29 +188,6 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         LOGGER.debug("'{}' - isLive: {}", name, isLive);
         return isLive;
     }
-
-//    private boolean canWriteToFile(final Path path) {
-//        Objects.requireNonNull(path);
-//        try {
-//            FileUtil.touch(path);
-//            return true;
-//        } catch (IOException e) {
-//            final Path parent = path.getParent();
-//            try {
-//                FileUtil.mkdirs(parent);
-//            } catch (Exception ex) {
-//                LOGGER.debug("Error creating path {}", parent, ex);
-//                return false;
-//            }
-//            try {
-//                FileUtil.touch(path);
-//                return true;
-//            } catch (IOException ex) {
-//                LOGGER.debug("Error touching file {}", path, ex);
-//                return false;
-//            }
-//        }
-//    }
 
     private boolean canWriteToFile(final Path path) throws Exception {
         Objects.requireNonNull(path);
@@ -272,15 +287,43 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         return resolvedDir;
     }
 
-    private Path createTargetDir(final long commitId,
-                                 final Path sourceDir) {
-        final Path baseDir;
+    private long getNextCommitIdForTemplatedPath(final Path path) {
+        int retryCount = 0;
+        long nextId = -1;
+        while (retryCount++ < 100) {
+            final AtomicLong writeId = writeIdsCache.get(path);
+            // It is a loading cache so
+            Objects.requireNonNull(writeId, () -> LogUtil.message(
+                    "writeId should not be null for path {}", path));
+
+            nextId = writeId.incrementAndGet();
+            if (nextId != -1) {
+                break;
+            }
+        }
+        // AtomicLong is set to -1 on removal from the cache, so if we happen to hold the object that
+        // is being removed, ignore it and get the cache to load it again.
+        if (nextId == -1) {
+            throw new RuntimeException(LogUtil.message("Unable to get next ID for path {} after {} attempts",
+                    path, retryCount));
+        }
+        return nextId;
+    }
+
+    private Path createStaticTargetDir(final Path sourceDir) {
+        final long commitId = staticPathCommitId.incrementAndGet();
+        final Path targetDir = DirUtil.createPath(staticBaseDir, commitId);
+        LOGGER.debug("Using static targetDir '{}' (subPathTemplate: '{}', commitId: {})",
+                targetDir, subPathTemplate, commitId);
+        return targetDir;
+    }
+
+    private Path createTemplatedTargetDir(final Path sourceDir) {
         // dynamic templating of the subdir
-        baseDir = Objects.requireNonNullElseGet(
-                staticBaseDir,
-                () -> getBaseDirWithTemplatedSubDir(sourceDir));
+        final Path baseDir = getBaseDirWithTemplatedSubDir(sourceDir);
+        final long commitId = getNextCommitIdForTemplatedPath(baseDir);
         final Path targetDir = DirUtil.createPath(baseDir, commitId);
-        LOGGER.debug("Using targetDir '{}' (subPathTemplate: '{}', commitId: {})",
+        LOGGER.debug("Using templated targetDir '{}' (subPathTemplate: '{}', commitId: {})",
                 targetDir, subPathTemplate, commitId);
         return targetDir;
     }

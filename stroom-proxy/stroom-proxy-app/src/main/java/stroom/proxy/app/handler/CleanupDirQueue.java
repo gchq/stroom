@@ -43,6 +43,7 @@ public class CleanupDirQueue {
                 // We will move before delete to help ensure we don't end up partially deleting dir contents in place.
                 // Make sure we get a unique dir name.
                 final Path deleteDir = dir.resolve(StringIdUtil.idToString(count.incrementAndGet()));
+                LOGGER.debug("Moving {} => {}", sourceDir, deleteDir);
                 Files.move(sourceDir, deleteDir, StandardCopyOption.ATOMIC_MOVE);
                 LOGGER.debug("Deleting {} and its contents", deleteDir);
                 FileUtil.deleteDir(deleteDir);

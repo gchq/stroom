@@ -452,7 +452,7 @@ public class HttpSender implements StreamDestination {
             stroomStatusCode = getStroomStatusCode(response);
             if (stroomStatusCode == null) {
                 stroomStatusCode = StroomStatusCode.fromHttpCode(httpResponseCode);
-                LOGGER.warn("Null stroomStatusCode, httpResponseCode: {}, responseMessage: '{}'",
+                LOGGER.debug("Null stroomStatusCode, httpResponseCode: {}, responseMessage: '{}'",
                         httpResponseCode, responseMessage);
             }
 
