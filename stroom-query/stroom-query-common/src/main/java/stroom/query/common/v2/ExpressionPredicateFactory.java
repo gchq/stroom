@@ -977,13 +977,13 @@ public class ExpressionPredicateFactory {
                                                          final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard equals.
-                final String replaced = makePattern(term.getValue());
-                if (!Objects.equals(term.getValue(), replaced)) {
+                if (containsWildcard(term.getValue())) {
+                    final String wildcardPattern = replaceWildcards(term.getValue());
                     return new StringRegex<>(term, extractionFunction,
-                            Pattern.compile(replaced, Pattern.CASE_INSENSITIVE));
+                            Pattern.compile(wildcardPattern, Pattern.CASE_INSENSITIVE));
                 }
 
-                return new StringEquals<T>(term, term.getValue(), extractionFunction);
+                return new StringEquals<T>(term, unescape(term.getValue()), extractionFunction);
             });
         }
 
@@ -1005,13 +1005,13 @@ public class ExpressionPredicateFactory {
                                                          final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard equals.
-                final String replaced = makePattern(term.getValue());
-                if (!Objects.equals(term.getValue(), replaced)) {
+                if (containsWildcard(term.getValue())) {
+                    final String wildcardPattern = replaceWildcards(term.getValue());
                     return new StringRegex<>(term, extractionFunction,
-                            Pattern.compile(replaced));
+                            Pattern.compile(wildcardPattern));
                 }
 
-                return new StringEqualsCaseSensitive<T>(term, term.getValue(), extractionFunction);
+                return new StringEqualsCaseSensitive<T>(term, unescape(term.getValue()), extractionFunction);
             });
         }
 
@@ -1027,23 +1027,24 @@ public class ExpressionPredicateFactory {
         private final String value;
 
         private StringContains(final ExpressionTerm term,
+                               final String value,
                                final Function<T, String> extractionFunction) {
             super(term);
             this.extractionFunction = extractionFunction;
-            value = term.getValue().toLowerCase();
+            this.value = value;
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard contains.
-                final String replaced = makePattern(term.getValue());
-                if (!Objects.equals(term.getValue(), replaced)) {
+                if (containsWildcard(term.getValue())) {
+                    final String wildcardPattern = replaceWildcards(term.getValue());
                     return new StringRegex<>(term, extractionFunction,
-                            Pattern.compile(".*" + replaced + ".*", Pattern.CASE_INSENSITIVE));
+                            Pattern.compile(".*" + wildcardPattern + ".*", Pattern.CASE_INSENSITIVE));
                 }
 
-                return new StringContains<>(term, extractionFunction);
+                return new StringContains<>(term, unescape(term.getValue()).toLowerCase(), extractionFunction);
             });
         }
 
@@ -1060,21 +1061,22 @@ public class ExpressionPredicateFactory {
     private static class StringContainsCaseSensitive<T> extends StringExpressionTermPredicate<T> {
 
         private StringContainsCaseSensitive(final ExpressionTerm term,
+                                            final String value,
                                             final Function<T, String> extractionFunction) {
-            super(term, term.getValue(), extractionFunction);
+            super(term, value, extractionFunction);
         }
 
         private static <T> Optional<Predicate<T>> create(final ExpressionTerm term,
                                                          final Function<T, String> extractionFunction) {
             return ifValue(term, () -> {
                 // See if this is a wildcard contains.
-                final String replaced = makePattern(term.getValue());
-                if (!Objects.equals(term.getValue(), replaced)) {
+                if (containsWildcard(term.getValue())) {
+                    final String wildcardPattern = replaceWildcards(term.getValue());
                     return new StringRegex<>(term, extractionFunction,
-                            Pattern.compile(".*" + replaced + ".*"));
+                            Pattern.compile(".*" + wildcardPattern + ".*"));
                 }
 
-                return new StringContainsCaseSensitive<>(term, extractionFunction);
+                return new StringContainsCaseSensitive<>(term, unescape(term.getValue()), extractionFunction);
             });
         }
 
@@ -1358,35 +1360,72 @@ public class ExpressionPredicateFactory {
         }
     }
 
+    public static String replaceWildcards(final String value) {
+        boolean escaped = false;
 
-    public static String makePattern(final String value) {
-        int index = 0;
         final char[] chars = value.toCharArray();
-        final char[] out = new char[chars.length * 2];
+        final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < chars.length; i++) {
             final char c = chars[i];
-            if (c == '\\') {
-                if (i < chars.length - 1) {
-                    final char c2 = chars[i + 1];
-                    if (c2 == '*' || c2 == '?') {
-                        out[index++] = c2;
-                        i++;
-                    } else {
-                        out[index++] = c;
-                    }
+            if (escaped) {
+                if (Character.isLetterOrDigit(c)) {
+                    sb.append(c);
                 } else {
-                    out[index++] = c;
+                    // Might be a special char so escape it
+                    sb.append(Pattern.quote(String.valueOf(c)));
                 }
+                escaped = false;
+            } else if (c == '\\' && chars.length > i + 1 && (chars[i + 1] == '*' || chars[i + 1] == '?')) {
+                escaped = true;
             } else if (c == '*') {
-                out[index++] = '.';
-                out[index++] = c;
+                sb.append('.');
+                sb.append(c);
             } else if (c == '?') {
-                out[index++] = '.';
+                sb.append('.');
+            } else if (Character.isLetterOrDigit(c)) {
+                sb.append(c);
             } else {
-                out[index++] = c;
+                // Might be a special char so escape it
+                sb.append(Pattern.quote(String.valueOf(c)));
             }
         }
-        return new String(out, 0, index);
+        return sb.toString();
+    }
+
+    public static boolean containsWildcard(final String value) {
+        boolean escaped = false;
+        final char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            final char c = chars[i];
+            if (escaped) {
+                escaped = false;
+            } else if (c == '\\' && chars.length > i + 1 && (chars[i + 1] == '*' || chars[i + 1] == '?')) {
+                escaped = true;
+            } else if (c == '*') {
+                return true;
+            } else if (c == '?') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String unescape(final String value) {
+        boolean escaped = false;
+        final char[] chars = value.toCharArray();
+        final StringBuilder sb = new StringBuilder(chars.length);
+        for (int i = 0; i < chars.length; i++) {
+            final char c = chars[i];
+            if (escaped) {
+                sb.append(c);
+                escaped = false;
+            } else if (c == '\\' && chars.length > i + 1 && (chars[i + 1] == '*' || chars[i + 1] == '?')) {
+                escaped = true;
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private static String[] loadDictionary(final WordListProvider wordListProvider,
