@@ -30,7 +30,7 @@ jobs:
         # Make sure the wrapper jar has not been tampered with
       - name: Validate gradle wrapper jar
         id: validate_gradle_wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/actions/wrapper-validation@v3
 
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step

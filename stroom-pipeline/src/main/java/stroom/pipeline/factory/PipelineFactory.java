@@ -155,8 +155,22 @@ public class PipelineFactory {
             throw new PipelineFactoryException("The pipeline has no source element");
         }
 
+        // Get the split depth to use with the stepping controller.
+        int controllerSplitDepth = 1;
+        if (controller != null) {
+            controllerSplitDepth =
+                    getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId());
+            controllerSplitDepth = Math.max(controllerSplitDepth, 1);
+        }
+
         // Link the instances.
-        link(elementInstances, elementTypeMap, linkSets, controller, sourceElement, sourceElement.getElementId());
+        link(elementInstances,
+                elementTypeMap,
+                linkSets,
+                controller,
+                sourceElement,
+                sourceElement.getElementId(),
+                controllerSplitDepth);
 
         // We need to create a root element that will be a target for the input
         // stream.
@@ -236,12 +250,11 @@ public class PipelineFactory {
                             // stepping and have code to insert.
                             if (controller != null) {
                                 final PipelineStepRequest request = controller.getRequest();
-                                if (request.getCode() != null && request.getCode().size() > 0) {
+                                if (request.getCode() != null && !request.getCode().isEmpty()) {
                                     final String code = request.getCode().get(id);
                                     if (code != null) {
-                                        if (elementInstance instanceof SupportsCodeInjection) {
-                                            final SupportsCodeInjection supportsCodeInjection =
-                                                    (SupportsCodeInjection) elementInstance;
+                                        if (elementInstance instanceof
+                                                final SupportsCodeInjection supportsCodeInjection) {
                                             supportsCodeInjection.setInjectedCode(code);
                                         }
                                     }
@@ -308,7 +321,8 @@ public class PipelineFactory {
                       final Map<String, Set<String>> linkSets,
                       final SteppingController controller,
                       final Element parentElement,
-                      final String parentElementId) {
+                      final String parentElementId,
+                      final int controllerSplitDepth) {
         // Get the child elements of the supplied 'from' element id that we want
         // to work with.
         final List<Element> childElements = getChildElements(parentElementId, elementInstances, elementTypeMap,
@@ -335,8 +349,10 @@ public class PipelineFactory {
                     addMonitor(elementId, elementType, childElement, fragment, controller);
 
                 } else {
-                    fragment = insertRecorder(elementId, elementType, fragment, true, controller);
-                    fragment = insertRecorder(elementId, elementType, fragment, false, controller);
+                    fragment = insertRecorder(elementId, elementType, fragment, true, controller,
+                            controllerSplitDepth);
+                    fragment = insertRecorder(elementId, elementType, fragment, false, controller,
+                            controllerSplitDepth);
                     addMonitor(elementId, elementType, childElement, fragment, controller);
                     fragment = insertRecordDetector(elementType, fragment, true, controller);
                     fragment = insertRecordDetector(elementType, fragment, false, controller);
@@ -344,28 +360,60 @@ public class PipelineFactory {
             }
 
             // Continue to link the children of this child.
-            link(elementInstances, elementTypeMap, linkSets, controller, fragment.getOut(), elementId);
+            link(elementInstances,
+                    elementTypeMap,
+                    linkSets,
+                    controller,
+                    fragment.getOut(),
+                    elementId,
+                    controllerSplitDepth);
 
             // Now set the target of the parent element to be the 'wrapped'
             // child to complete the link.
             if (parentElement != null && parentElement != fragment.getIn()) {
-                if (!(parentElement instanceof HasTargets)) {
+                if (parentElement instanceof final HasTargets hasTargets) {
+                    if (childElement instanceof Target) {
+                        if (fragment.getIn() instanceof final Target target) {
+                            hasTargets.addTarget(target);
+                        }
+                    } else {
+                        throw new PipelineFactoryException("Attempt to link to an element that is not a target: "
+                                                           + parentElement.getElementId() + " > " + elementId);
+                    }
+                } else {
                     throw new PipelineFactoryException(
                             "Attempt to link from an element that cannot target another element: "
-                                    + parentElement.getElementId());
-                }
-                if (!(childElement instanceof Target)) {
-                    throw new PipelineFactoryException("Attempt to link to an element that is not a target: "
-                            + parentElement.getElementId() + " > " + elementId);
-                }
-
-                final HasTargets hasTargets = (HasTargets) parentElement;
-                if (fragment.getIn() instanceof Target) {
-                    final Target target = (Target) fragment.getIn();
-                    hasTargets.addTarget(target);
+                            + parentElement.getElementId());
                 }
             }
         }
+    }
+
+    /**
+     * Get the split depth for use in stepping.
+     */
+    private int getSplitDepth(final Map<String, Element> elementInstances,
+                              final Map<Element, PipelineElementType> elementTypeMap,
+                              final Map<String, Set<String>> linkSets,
+                              final String parentElementId) {
+        // Get the child elements of the supplied 'from' element id that we want
+        // to work with.
+        final List<Element> childElements = getChildElements(parentElementId, elementInstances, elementTypeMap,
+                linkSets, null);
+
+        // Loop over the child elements and link them to the parent.
+        for (final Element childElement : childElements) {
+            if (childElement instanceof final SplitFilter splitFilter) {
+                return splitFilter.getSplitDepth();
+            }
+            final int childSplitDepth =
+                    getSplitDepth(elementInstances, elementTypeMap, linkSets, childElement.getElementId());
+            if (childSplitDepth != -1) {
+                return childSplitDepth;
+            }
+        }
+
+        return -1;
     }
 
     /**
@@ -390,7 +438,7 @@ public class PipelineFactory {
         List<Element> childElements = Collections.emptyList();
 
         final Set<String> toElementIdSet = linkSets.get(fromElementId);
-        if (toElementIdSet != null && toElementIdSet.size() > 0) {
+        if (toElementIdSet != null && !toElementIdSet.isEmpty()) {
             childElements = new ArrayList<>(toElementIdSet.size());
 
             for (final String toElementId : toElementIdSet) {
@@ -440,7 +488,8 @@ public class PipelineFactory {
                                     final PipelineElementType elementType,
                                     final Fragment fragment,
                                     final boolean input,
-                                    final SteppingController controller) {
+                                    final SteppingController controller,
+                                    final int controllerSplitDepth) {
         Fragment result = fragment;
 
         // Get any filter settings that might be applied to XML output.
@@ -458,29 +507,25 @@ public class PipelineFactory {
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
 
-            } else if (in instanceof AbstractInputElement) {
-                final AbstractInputElement filter = (AbstractInputElement) in;
+            } else if (in instanceof final AbstractInputElement filter) {
                 final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(filter);
                 result = new Fragment(recorder, fragment.getOut());
 
-            } else if (in instanceof AbstractReaderElement) {
-                final AbstractReaderElement filter = (AbstractReaderElement) in;
+            } else if (in instanceof final AbstractReaderElement filter) {
                 final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(filter);
                 result = new Fragment(recorder, fragment.getOut());
 
-            } else if (in instanceof AbstractParser) {
-                final AbstractParser parser = (AbstractParser) in;
+            } else if (in instanceof final AbstractParser parser) {
                 final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(parser);
                 result = new Fragment(recorder, fragment.getOut());
 
-            } else if (in instanceof XMLFilter && elementType.hasRole(PipelineElementType.ROLE_MUTATOR)) {
-                final XMLFilter filter = (XMLFilter) in;
+            } else if (in instanceof final XMLFilter filter && elementType.hasRole(PipelineElementType.ROLE_MUTATOR)) {
 
                 // Create stepping filter.
                 final SAXEventRecorder recorder = elementFactory.getElementInstance(SAXEventRecorder.class);
@@ -502,27 +547,24 @@ public class PipelineFactory {
                 outputRecorder.setElementId(elementId);
                 result = new Fragment(outputRecorder);
 
-            } else if (out instanceof AbstractInputElement) {
-                final AbstractInputElement filter = (AbstractInputElement) out;
+            } else if (out instanceof final AbstractInputElement filter) {
                 final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 filter.setTarget(recorder);
                 result = new Fragment(fragment.getIn(), recorder);
 
-            } else if (out instanceof AbstractReaderElement) {
-                final AbstractReaderElement filter = (AbstractReaderElement) out;
+            } else if (out instanceof final AbstractReaderElement filter) {
                 final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 filter.setTarget(recorder);
                 result = new Fragment(fragment.getIn(), recorder);
 
-            } else if (out instanceof AbstractParser) {
-                final AbstractParser parser = (AbstractParser) out;
+            } else if (out instanceof final AbstractParser parser) {
 
                 // Insert a split filter after the parser to split all XML into
                 // single records.
                 final SplitFilter splitFilter = elementFactory.getElementInstance(SplitFilter.class);
-                splitFilter.setSplitDepth(1);
+                splitFilter.setSplitDepth(controllerSplitDepth);
                 splitFilter.setSplitCount(controller.getRequest().getStepSize());
                 parser.setTarget(splitFilter);
 
@@ -537,8 +579,7 @@ public class PipelineFactory {
 
                 result = new Fragment(fragment.getIn(), recorder);
 
-            } else if (out instanceof XMLFilter && elementType.hasRole(PipelineElementType.ROLE_WRITER)) {
-                final XMLFilter filter = (XMLFilter) out;
+            } else if (out instanceof final XMLFilter filter && elementType.hasRole(PipelineElementType.ROLE_WRITER)) {
 
                 final OutputRecorder outputRecorder = elementFactory.getElementInstance(OutputRecorder.class);
                 outputRecorder.setElementId(elementId);
@@ -546,9 +587,9 @@ public class PipelineFactory {
 
                 result = new Fragment(fragment.getIn(), outputRecorder);
 
-            } else if (out instanceof XMLFilter && (elementType.hasRole(PipelineElementType.ROLE_MUTATOR)
-                    || elementType.hasRole(PipelineElementType.ROLE_VALIDATOR))) {
-                final XMLFilter filter = (XMLFilter) out;
+            } else if (out instanceof final XMLFilter filter &&
+                       (elementType.hasRole(PipelineElementType.ROLE_MUTATOR) ||
+                        elementType.hasRole(PipelineElementType.ROLE_VALIDATOR))) {
 
                 // Create stepping filter.
                 final SAXEventRecorder recorder = elementFactory.getElementInstance(SAXEventRecorder.class);
@@ -629,7 +670,7 @@ public class PipelineFactory {
         if (!input) {
             if (elementType.hasRole(PipelineElementType.ROLE_PARSER)) {
                 if (controller.getRecordDetector() == null
-                        || !(controller.getRecordDetector() instanceof SAXRecordDetector)) {
+                    || !(controller.getRecordDetector() instanceof SAXRecordDetector)) {
                     final SAXRecordDetector recordDetector = elementFactory.getElementInstance(SAXRecordDetector.class);
                     controller.setRecordDetector(recordDetector);
                     ((HasTargets) fragment.getOut()).setTarget(recordDetector);

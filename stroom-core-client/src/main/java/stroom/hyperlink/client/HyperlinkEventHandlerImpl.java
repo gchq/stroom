@@ -9,16 +9,15 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.dispatch.client.RestFactory;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,27 +47,16 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     private final Provider<IFrameContentPresenter> iFrameContentPresenterProvider;
     private final Provider<IFramePresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
-    private final RestFactory restFactory;
-
-//    private Map<String, String> namedUrls;
 
     @Inject
     public HyperlinkEventHandlerImpl(final EventBus eventBus,
                                      final Provider<IFramePresenter> iFramePresenterProvider,
                                      final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
-                                     final ContentManager contentManager,
-                                     final RestFactory restFactory) {
+                                     final ContentManager contentManager) {
         this.eventBus = eventBus;
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.contentManager = contentManager;
-        this.restFactory = restFactory;
-
-//        clientPropertyCache.get()
-//                .onSuccess(result ->
-//                namedUrls = result.getLookupTable(ClientProperties.URL_LIST, ClientProperties.URL_BASE))
-//                .onFailure(caught ->
-//                AlertEvent.fireError(HyperlinkEventHandlerImpl.this, caught.getMessage(), null));
 
         registerHandler(eventBus.addHandler(HyperlinkEvent.getType(), this));
     }
@@ -84,12 +72,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
 
             String href = hyperlink.getHref();
-//        if (namedUrls != null) {
-//            for (final Map.Entry<String, String> namedUrlLookupEntry : namedUrls.entrySet()) {
-//                href = href.replaceAll("__" + namedUrlLookupEntry.getKey() + "__", namedUrlLookupEntry.getValue());
-//            }
-//        }
-
             String type = hyperlink.getType();
             String customTitle = null;
             if (type != null) {
@@ -136,7 +118,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                         break;
                     }
                     case ANNOTATION: {
-                        openAnnotation(href, event.getTaskMonitorFactory());
+                        openAnnotation(href);
                         break;
                     }
                     default:
@@ -150,14 +132,15 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         }
     }
 
-    private void openAnnotation(final String href, final TaskMonitorFactory taskMonitorFactory) {
+    private void openAnnotation(final String href) {
         final Long annotationId = getLongParam(href, "annotationId");
         final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
         final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
+        final String eventIdList = getParam(href, "eventIdList");
         final String title = getParam(href, "title");
         final String subject = getParam(href, "subject");
         final String status = getParam(href, "status");
-//        final String assignedTo = getParam(href, "assignedTo");
+        final String assignedTo = getParam(href, "assignedTo");
         final String comment = getParam(href, "comment");
 
         // assignedTo is a display name so have to convert it back to a unique username
@@ -166,14 +149,16 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         annotation.setTitle(title);
         annotation.setSubject(subject);
         annotation.setStatus(status);
-//        annotation.setAssignedTo(assignedTo);
+        if (assignedTo != null) {
+            annotation.setAssignedTo(UserRef.builder().uuid(assignedTo).build());
+        }
         annotation.setComment(comment);
 
         final List<EventId> linkedEvents = new ArrayList<>();
         if (streamId != null && eventId != null) {
             linkedEvents.add(new EventId(streamId, eventId));
         }
-
+        EventId.parseList(eventIdList, linkedEvents);
         ShowAnnotationEvent.fire(this, annotation, linkedEvents);
     }
 
@@ -286,17 +271,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 presenter,
                 presenter);
     }
-
-//    private DisplayMode getDisplayModeParam(final String href,
-//                                        final String paramName,
-//                                        final DisplayMode defaultValue) {
-//        final String value = getParam(href, paramName);
-//        if (value == null || value.length() == 0) {
-//            return defaultValue;
-//        } else {
-//            return DisplayMode.parse(value);
-//        }
-//    }
 
     private <T> T getParam(final String href,
                            final String paramName,

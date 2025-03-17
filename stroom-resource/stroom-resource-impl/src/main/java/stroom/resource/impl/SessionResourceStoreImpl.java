@@ -119,14 +119,14 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
                 final ResourceKey resourceKey = getRealKey(new ResourceKey(uuid, null));
                 if (resourceKey != null) {
                     try {
-                        final Path file = resourceStore.getTempFile(resourceKey);
-                        if (file != null && Files.isRegularFile(file)) {
+                        final Path tempFile = resourceStore.getTempFile(resourceKey);
+                        if (tempFile != null && Files.isRegularFile(tempFile)) {
                             if (resourceKey.getName().toLowerCase().endsWith(".zip")) {
                                 resp.setContentType("application/zip");
                             } else {
                                 resp.setContentType("application/octet-stream");
                             }
-                            resp.getOutputStream().write(Files.readAllBytes(file));
+                            resp.getOutputStream().write(Files.readAllBytes(tempFile));
                             found = true;
                         }
                     } finally {

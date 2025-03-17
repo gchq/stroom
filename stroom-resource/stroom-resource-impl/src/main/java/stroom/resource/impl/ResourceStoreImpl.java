@@ -81,6 +81,7 @@ public class ResourceStoreImpl implements ResourceStore {
         final Path path = getTempDir().resolve(uuid);
         final ResourceKey resourceKey = new ResourceKey(uuid, name);
         final ResourceItem resourceItem = new ResourceItem(resourceKey, path, Instant.now());
+        LOGGER.debug("Created resourceItem: {}", resourceItem);
         currentFiles.put(uuid, resourceItem);
         return resourceKey;
     }
@@ -92,6 +93,7 @@ public class ResourceStoreImpl implements ResourceStore {
             final Path file = resourceItem.getPath();
             try {
                 Files.deleteIfExists(file);
+                LOGGER.debug("Deleted resourceItem: {}", resourceItem);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -103,9 +105,11 @@ public class ResourceStoreImpl implements ResourceStore {
         // File gone !
         final ResourceItem resourceItem = currentFiles.get(resourceKey.getKey());
         if (resourceItem == null) {
+            LOGGER.debug("resourceItem not found for resourceKey: {}", resourceKey);
             return null;
         }
         resourceItem.setLastAccessTime(Instant.now());
+        LOGGER.debug("Returning resourceItem: {}", resourceItem);
         return resourceItem.getPath();
     }
 
@@ -133,6 +137,10 @@ public class ResourceStoreImpl implements ResourceStore {
         }
         lastCleanupTime = Instant.now();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ResourceItem {
 
@@ -173,11 +181,11 @@ public class ResourceStoreImpl implements ResourceStore {
         @Override
         public String toString() {
             return "ResourceItem{" +
-                    "resourceKey=" + resourceKey +
-                    ", path=" + path +
-                    ", createTime=" + createTime +
-                    ", lastAccessTime=" + lastAccessTime +
-                    '}';
+                   "resourceKey=" + resourceKey +
+                   ", path=" + path +
+                   ", createTime=" + createTime +
+                   ", lastAccessTime=" + lastAccessTime +
+                   '}';
         }
     }
 }

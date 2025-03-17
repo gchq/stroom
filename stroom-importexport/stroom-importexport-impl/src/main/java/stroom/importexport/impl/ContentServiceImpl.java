@@ -83,7 +83,7 @@ class ContentServiceImpl implements ContentService {
         return securityContext.secureResult(AppPermission.IMPORT_CONFIGURATION, () -> {
             try {
                 // Import file.
-                final Path file = resourceStore.getTempFile(request.getResourceKey());
+                final Path tempFile = resourceStore.getTempFile(request.getResourceKey());
 
                 //            boolean foundOneAction = false;
                 //            for (final ImportState importState : confirmList) {
@@ -96,8 +96,8 @@ class ContentServiceImpl implements ContentService {
                 //                return resourceKey;
                 //            }
 
-                final List<ImportState> result =
-                        importExportService.importConfig(file, request.getImportSettings(), request.getConfirmList());
+                final List<ImportState> result = importExportService
+                        .importConfig(tempFile, request.getImportSettings(), request.getConfirmList());
 
                 if (!ImportMode.CREATE_CONFIRMATION.equals(request.getImportSettings().getImportMode())) {
                     // Delete the import if it was successful
@@ -135,12 +135,12 @@ class ContentServiceImpl implements ContentService {
 
         return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
             final ResourceStore resourceStore = this.resourceStore;
-            final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
-            final Path file = resourceStore.getTempFile(guiKey);
-            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), file);
+            final ResourceKey resourceKey = resourceStore.createTempFile("StroomConfig.zip");
+            final Path tempFile = resourceStore.getTempFile(resourceKey);
+            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), tempFile);
             final List<Message> messageList = exportSummary.getMessages();
 
-            return new ResourceGeneration(guiKey, messageList);
+            return new ResourceGeneration(resourceKey, messageList);
         });
     }
 

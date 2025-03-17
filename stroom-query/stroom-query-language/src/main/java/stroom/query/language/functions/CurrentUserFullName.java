@@ -18,22 +18,21 @@ package stroom.query.language.functions;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = CurrentUser.NAME,
+        name = CurrentUserFullName.NAME,
         commonCategory = FunctionCategory.PARAM,
         commonReturnType = ValString.class,
-        commonReturnDescription = "Display name (or subjectId if there isn't one) of the logged in user.",
+        commonReturnDescription = "The full name of the logged in user.",
         signatures = {
                 @FunctionSignature(
-                        description = "Returns the display name (or subjectId if there isn't one) of the current " +
-                                      "logged in user.",
+                        description = "Returns the full name of the current logged in user.",
                         args = {})
         })
-class CurrentUser extends AbstractCurrentUser {
+class CurrentUserFullName extends AbstractCurrentUser {
 
-    static final String NAME = "currentUser";
+    static final String NAME = "currentUserFullName";
     static final String KEY = NAME + "()";
 
-    public CurrentUser(final String name) {
+    public CurrentUserFullName(final String name) {
         super(name);
     }
 

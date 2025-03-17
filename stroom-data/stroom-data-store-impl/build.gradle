@@ -30,6 +30,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation libs.eventLogging
 
+    implementation libs.commons.compress
     implementation libs.commons.fileupload
     implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api

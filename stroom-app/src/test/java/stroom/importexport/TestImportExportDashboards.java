@@ -286,8 +286,8 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         // Load the dashboard.
         final VisualisationDoc loadedVisualisation = first(visualisationStore);
-        final DocRef loadedPipeline = pipelineStore.list().get(0);
-        final DocRef loadedIndex = indexStore.list().get(0);
+        final DocRef loadedPipeline = pipelineStore.list().getFirst();
+        final DocRef loadedIndex = indexStore.list().getFirst();
         final DictionaryDoc loadedDictionary = first(dictionaryStore);
         final DashboardDoc loadedDashboard = first(dashboardStore);
         final List<ComponentConfig> loadedComponents = loadedDashboard.getDashboardConfig().getComponents();
@@ -318,7 +318,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
     private <T extends Doc> T first(final DocumentStore<T> store) {
         final Set<DocRef> set = store.listDocuments();
-        if (set != null && set.size() > 0) {
+        if (set != null && !set.isEmpty()) {
             return store.readDocument(set.iterator().next());
         }
         return null;
