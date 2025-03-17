@@ -276,19 +276,6 @@ public class RetryingForwardDestination implements ForwardDestination {
         return false;
     }
 
-    private Supplier<String> getMsgSupplier(final Path dir, final Exception e, final String errorMsgSuffix) {
-        return () ->
-                "Error sending '" + FileUtil.getCanonicalPath(dir)
-                + "' to " + getDestinationType() + " forward destination '"
-                + destinationName + "': '"
-                + LogUtil.exceptionMessage(getCause(e)) + "'. " +
-                "(Enable DEBUG for stack trace.) " +
-                (e instanceof ForwardException forwardException
-                        ? " Feed: '" + forwardException.getFeedName() + "'. "
-                        : "")
-                + errorMsgSuffix;
-    }
-
     private void addToRetryQueue(final Path dir) {
         // Add the dir to the retry queue ready to be tried again.
         retryQueue.add(dir);
