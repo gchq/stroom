@@ -57,6 +57,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     private final ParallelExecutor retryExecutor;
     private final ForwardFileDestination failureDestination;
     private final String destinationName;
+    // Assumed to be live on boot
     private final AtomicBoolean lastLiveCheckResult = new AtomicBoolean(true);
 
     public RetryingForwardDestination(final ForwardQueueConfig forwardQueueConfig,
