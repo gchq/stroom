@@ -255,9 +255,9 @@ public class HttpSender implements StreamDestination {
             if (stroomStatusCode == StroomStatusCode.OK) {
                 return responseStatus;
             } else if (NON_RECOVERABLE_STATUS_CODES.contains(stroomStatusCode)) {
-                throw ForwardException.nonRecoverable(stroomStatusCode);
+                throw ForwardException.nonRecoverable(stroomStatusCode, attributeMap);
             } else {
-                throw ForwardException.recoverable(stroomStatusCode);
+                throw ForwardException.recoverable(stroomStatusCode, attributeMap);
             }
         } catch (final ForwardException e) {
             // Created above so we will have already logged
@@ -265,7 +265,8 @@ public class HttpSender implements StreamDestination {
         } catch (final Exception e) {
             logErrorToSendLog(startTime, e, attributeMap);
             // Have to assume that any exception is recoverable
-            throw ForwardException.recoverable(StroomStatusCode.UNKNOWN_ERROR, e.getMessage(), e);
+            throw ForwardException.recoverable(
+                    StroomStatusCode.UNKNOWN_ERROR, attributeMap, e.getMessage(), e);
         }
     }
 

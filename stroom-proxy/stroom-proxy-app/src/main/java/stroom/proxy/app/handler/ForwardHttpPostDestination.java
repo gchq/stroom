@@ -77,6 +77,11 @@ public class ForwardHttpPostDestination implements ForwardDestination {
     }
 
     @Override
+    public DestinationType getDestinationType() {
+        return DestinationType.HTTP;
+    }
+
+    @Override
     public String getDestinationDescription() {
         return forwardHttpPostConfig.getForwardUrl()
                + " (instant=" + forwardHttpPostConfig.isInstant() + ")";

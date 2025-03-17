@@ -71,6 +71,11 @@ public class MockForwardFileDestination implements ForwardFileDestination {
     }
 
     @Override
+    public DestinationType getDestinationType() {
+        return DestinationType.FILE;
+    }
+
+    @Override
     public String getDestinationDescription() {
         return "Mock File Destination";
     }

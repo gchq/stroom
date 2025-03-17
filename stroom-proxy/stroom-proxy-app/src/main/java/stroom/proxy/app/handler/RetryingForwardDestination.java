@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * Wraps another {@link ForwardDestination}, adding forwarding and retry queues plus the retry logic.
@@ -154,6 +155,11 @@ public class RetryingForwardDestination implements ForwardDestination {
     }
 
     @Override
+    public DestinationType getDestinationType() {
+        return delegateDestination.getDestinationType();
+    }
+
+    @Override
     public String getDestinationDescription() {
         return delegateDestination.getDestinationDescription();
     }
@@ -198,11 +204,6 @@ public class RetryingForwardDestination implements ForwardDestination {
                 // Return true for success.
                 return true;
             } catch (final Exception e) {
-                LOGGER.error(() ->
-                        "Error sending '" + FileUtil.getCanonicalPath(dir)
-                        + "' to '" + destinationName + "': "
-                        + LogUtil.exceptionMessage(getCause(e)) + ". " +
-                        "(Enable DEBUG for stack trace.)");
                 LOGGER.debug(e::getMessage, e);
 
                 // Add to the errors
@@ -235,14 +236,36 @@ public class RetryingForwardDestination implements ForwardDestination {
                         }
                     }
                 }
+                final String errorMsgSuffix;
                 if (canRetry) {
                     LOGGER.debug("Retrying {}", dir);
-                    // TODO Make a LoopingDirQueue that can go back to the head of the queue
+                    // TODO Consider making a LoopingDirQueue that can go back to the head of the queue,
+                    //  e.g. when we have variable delay times due to the growth factor, rather than
+                    //  just sleeping till the delay ends, move on to the next item in the queue in case
+                    //  it is shorter. Or we hava a java delayQueue.
                     addToRetryQueue(dir);
+                    errorMsgSuffix = "Adding to retry queue.";
                 } else {
                     LOGGER.debug("Adding {} to failure queue", dir);
                     // If we exceeded the max number of retries then move the data to the failure destination.
                     failureDestination.add(dir);
+                    errorMsgSuffix = "Will not retry, moving to failure destination "
+                                     + failureDestination.getStoreDir();
+                }
+                final Supplier<String> msgSupplier = () ->
+                        "Error sending '" + FileUtil.getCanonicalPath(dir)
+                        + "' to " + getDestinationType() + " forward destination '"
+                        + destinationName + "': '"
+                        + LogUtil.exceptionMessage(getCause(e)) + "'. " +
+                        "(Enable DEBUG for stack trace.) " +
+                        (e instanceof ForwardException forwardException
+                                ? " Feed: '" + forwardException.getFeedName() + "'. "
+                                : "")
+                        + errorMsgSuffix;
+                if (canRetry) {
+                    LOGGER.debug(msgSupplier);
+                } else {
+                    LOGGER.error(msgSupplier);
                 }
             }
         } catch (final Throwable t) {
@@ -251,6 +274,19 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         // Failed, return false.
         return false;
+    }
+
+    private Supplier<String> getMsgSupplier(final Path dir, final Exception e, final String errorMsgSuffix) {
+        return () ->
+                "Error sending '" + FileUtil.getCanonicalPath(dir)
+                + "' to " + getDestinationType() + " forward destination '"
+                + destinationName + "': '"
+                + LogUtil.exceptionMessage(getCause(e)) + "'. " +
+                "(Enable DEBUG for stack trace.) " +
+                (e instanceof ForwardException forwardException
+                        ? " Feed: '" + forwardException.getFeedName() + "'. "
+                        : "")
+                + errorMsgSuffix;
     }
 
     private void addToRetryQueue(final Path dir) {

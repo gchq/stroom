@@ -104,6 +104,11 @@ final class MultiForwardDestination implements ForwardDestination {
     }
 
     @Override
+    public DestinationType getDestinationType() {
+        return DestinationType.MULTI;
+    }
+
+    @Override
     public String getDestinationDescription() {
         return "Facade for " + destinations.size() + " destinations";
     }

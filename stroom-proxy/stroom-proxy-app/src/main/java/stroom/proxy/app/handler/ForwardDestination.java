@@ -18,6 +18,8 @@ public interface ForwardDestination {
      */
     String getName();
 
+    DestinationType getDestinationType();
+
     /**
      * @return Any details of the destination, e.g. url, path, etc.
      */
@@ -47,5 +49,25 @@ public interface ForwardDestination {
             str += " - " + desc;
         }
         return str;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    enum DestinationType {
+        /**
+         * Forwards to a filesystem.
+         */
+        FILE,
+        /**
+         * Forwards to HTTP POST endpoint.
+         */
+        HTTP,
+        /**
+         * Forwards to multiple destinations.
+         */
+        MULTI,
+        ;
     }
 }
