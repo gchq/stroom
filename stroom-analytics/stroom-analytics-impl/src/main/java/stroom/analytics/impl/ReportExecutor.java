@@ -280,9 +280,12 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 LOGGER.error(e2::getMessage, e2);
             }
 
-            // Disable future execution.
-            LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
-            executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            // Disable future execution if the error was not an interrupted exception.
+            if (!(e instanceof InterruptedException)) {
+                // Disable future execution.
+                LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            }
 
         } finally {
             // Record the execution.

@@ -514,7 +514,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         try {
             return completableFuture.get();
         } catch (final InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
+            return false;
         }
     }
 
