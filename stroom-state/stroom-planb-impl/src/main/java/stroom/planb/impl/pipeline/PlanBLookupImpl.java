@@ -105,7 +105,7 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .name(state.key().bytes())
                                 .effectiveTime(0)
                                 .build(),
-                                state.value()));
+                                state.val()));
             } else if (reader instanceof final TemporalStateDb db) {
                 final TemporalStateRequest request =
                         new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8),
@@ -123,7 +123,7 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .name(keyName)
                                 .effectiveTime(0)
                                 .build(),
-                                state.value()));
+                                state.val()));
             } else if (reader instanceof final TemporalRangedStateDb db) {
                 final TemporalRangedStateRequest request =
                         new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli());
@@ -135,7 +135,7 @@ public class PlanBLookupImpl implements PlanBLookup {
                                 .name(keyName)
                                 .effectiveTime(0)
                                 .build(),
-                                state.value()));
+                                state.val()));
             } else if (reader instanceof final SessionDb db) {
                 final SessionRequest request =
                         new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli());

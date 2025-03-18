@@ -10911,6 +10911,36 @@
         "tags" : [ "Authorisation" ]
       }
     },
+    "/userRef/v1/getUserByUuid" : {
+      "post" : {
+        "operationId" : "getUserByUuid",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "uuid",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Resolve a user ref by UUID",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1/createGroup" : {
       "post" : {
         "operationId" : "createGroup",
@@ -11647,6 +11677,22 @@
           },
           "totalItemCount" : {
             "$ref" : "#/components/schemas/CountLong"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AbstractPlanBSettings" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "maxStoreSize" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "type" : {
             "type" : "string"
@@ -14538,6 +14584,17 @@
             "type" : "boolean"
           },
           "suppressDuplicateNotifications" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "DurationSetting" : {
+        "type" : "object",
+        "properties" : {
+          "duration" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "enabled" : {
             "type" : "boolean"
           }
         }
@@ -18250,17 +18307,6 @@
       "PlanBDoc" : {
         "type" : "object",
         "properties" : {
-          "condense" : {
-            "type" : "boolean"
-          },
-          "condenseAge" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "condenseTimeUnit" : {
-            "type" : "string",
-            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
-          },
           "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -18274,16 +18320,8 @@
           "name" : {
             "type" : "string"
           },
-          "retainAge" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "retainForever" : {
-            "type" : "boolean"
-          },
-          "retainTimeUnit" : {
-            "type" : "string",
-            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
+          "settings" : {
+            "$ref" : "#/components/schemas/AbstractPlanBSettings"
           },
           "stateType" : {
             "type" : "string",
@@ -19240,6 +19278,19 @@
             "format" : "int64"
           }
         }
+      },
+      "RangedStateSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "overwrite" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
       },
       "Rec" : {
         "type" : "object",
@@ -20982,6 +21033,25 @@
           }
         }
       },
+      "SessionSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "condense" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "retention" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            }
+          }
+        } ]
+      },
       "SetAllPermissionsFrom" : {
         "type" : "object",
         "allOf" : [ {
@@ -21504,6 +21574,19 @@
             "type" : "string"
           }
         }
+      },
+      "StateSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "overwrite" : {
+              "type" : "boolean"
+            }
+          }
+        } ]
       },
       "StatisticField" : {
         "type" : "object",
@@ -22394,6 +22477,44 @@
             }
           }
         }
+      },
+      "TemporalRangedStateSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "condense" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "retention" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            }
+          }
+        } ]
+      },
+      "TemporalStateSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "condense" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "retention" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            }
+          }
+        } ]
       },
       "TerminateTaskProgressRequest" : {
         "type" : "object",

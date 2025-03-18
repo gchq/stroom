@@ -2,6 +2,9 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb2.BBKV;
+import stroom.lmdb2.KV;
+import stroom.planb.impl.db.RangedState.Key;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -11,6 +14,7 @@ import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable.KeyVal;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -19,6 +23,8 @@ import java.util.function.Predicate;
  * VALUE = <KEY_BYTES>
  */
 public class SessionSerde implements Serde<Session, Session> {
+
+    private static final int KEY_LENGTH = Long.BYTES + Long.BYTES + Long.BYTES;
 
     private final ByteBufferFactory byteBufferFactory;
 
@@ -30,7 +36,7 @@ public class SessionSerde implements Serde<Session, Session> {
     public <T> T createKeyByteBuffer(final Session key, final Function<ByteBuffer, T> function) {
         // Hash the key.
         final long keyHash = LongHashFunction.xx3().hashBytes(key.key());
-        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES + Long.BYTES + Long.BYTES);
+        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
         try {
             keyByteBuffer.putLong(keyHash);
             keyByteBuffer.putLong(key.start());
@@ -57,8 +63,7 @@ public class SessionSerde implements Serde<Session, Session> {
     }
 
     @Override
-    public <R> R createPrefixPredicate(final Session key,
-                                       final Function<Predicate<KeyVal<ByteBuffer>>, R> function) {
+    public <R> R createPrefixPredicate(final Session key, final Function<Predicate<BBKV>, R> function) {
         final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(key.key().length);
         try {
             prefixByteBuffer.put(key.key());
@@ -71,11 +76,9 @@ public class SessionSerde implements Serde<Session, Session> {
     }
 
     @Override
-    public <R> R createPrefixPredicate(final ByteBuffer keyByteBuffer,
-                                       final ByteBuffer valueByteBuffer,
-                                       final Function<Predicate<KeyVal<ByteBuffer>>, R> function) {
-        final ByteBuffer slice = valueByteBuffer.duplicate();
-        return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
+    public void createPrefixPredicate(final BBKV kv, final Consumer<Predicate<BBKV>> consumer) {
+        final ByteBuffer slice = kv.val().duplicate();
+        consumer.accept(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
     }
 
     @Override
@@ -111,15 +114,20 @@ public class SessionSerde implements Serde<Session, Session> {
     }
 
     @Override
-    public Session getKey(final KeyVal<ByteBuffer> keyVal) {
-        final long start = keyVal.key().getLong(Long.BYTES);
-        final long end = keyVal.key().getLong(Long.BYTES + Long.BYTES);
-        final byte[] key = ByteBufferUtils.toBytes(keyVal.val());
+    public Session getKey(final BBKV kv) {
+        final long start = kv.key().getLong(Long.BYTES);
+        final long end = kv.key().getLong(Long.BYTES + Long.BYTES);
+        final byte[] key = ByteBufferUtils.toBytes(kv.val());
         return new Session(key, start, end);
     }
 
     @Override
-    public Session getVal(final KeyVal<ByteBuffer> keyVal) {
-        return getKey(keyVal);
+    public Session getVal(final BBKV kv) {
+        return getKey(kv);
+    }
+
+    @Override
+    public int getKeyLength() {
+        return KEY_LENGTH;
     }
 }

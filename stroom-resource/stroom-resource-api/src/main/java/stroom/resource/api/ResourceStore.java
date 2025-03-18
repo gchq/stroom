@@ -29,7 +29,7 @@ public interface ResourceStore {
     /**
      * Create a temporary file and give it a UUID.
      */
-    ResourceKey createTempFile(final String name);
+    ResourceKey createTempFile(String name);
 
     /**
      * Get a temporary file

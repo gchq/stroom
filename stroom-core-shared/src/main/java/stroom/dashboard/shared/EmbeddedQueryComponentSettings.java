@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -142,8 +143,12 @@ public class EmbeddedQueryComponentSettings
             super(settings);
             this.queryRef = settings.queryRef;
             this.showTable = settings.showTable;
-            this.queryTablePreferences = settings.queryTablePreferences;
-            this.selectionFilter = settings.selectionFilter;
+            this.queryTablePreferences = settings.queryTablePreferences == null
+                    ? null
+                    : settings.queryTablePreferences.copy().build();
+            this.selectionFilter = settings.selectionFilter == null
+                    ? null
+                    : new ArrayList<>(settings.selectionFilter);
         }
 
         public Builder queryRef(final DocRef queryRef) {

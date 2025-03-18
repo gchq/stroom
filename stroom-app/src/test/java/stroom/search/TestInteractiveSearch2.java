@@ -93,6 +93,27 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
         test(queryString, 5);
     }
 
+    /**
+     * Test the having clause.
+     */
+    @Test
+    void testHavingEquals() {
+        String queryString = """
+                from "Test index"
+                where UserId = user5 and Description = e0567
+                and EventTime >= 2000-01-01T00:00:00.000Z
+                and EventTime <= 2016-01-02T00:00:00.000Z
+                eval my_num = 3
+                having my_num = 3
+                select
+                 StreamId as "Stream Id",
+                 EventId as "Event Id",
+                 EventTime as "Event Time",
+                 "annotation:Status" as Status
+                """;
+        test(queryString, 5);
+    }
+
 //    @Test
 //    void positiveCaseInsensitiveTestMultiComponent() {
 //        final ExpressionOperator.Builder expression = buildExpression("UserId", "user5", "2000-01-01T00:00:00.000Z",

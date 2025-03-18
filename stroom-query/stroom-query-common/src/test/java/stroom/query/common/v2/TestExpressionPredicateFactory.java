@@ -410,10 +410,17 @@ class TestExpressionPredicateFactory {
         testWildcardReplacement("th\\*is", "th*is");
         testWildcardReplacement("th\\?is", "th?is");
         testWildcardReplacement("th\\is", "th\\is");
+        testWildcardReplacement("*user1 (xxx) yyy*", ".*user1\\Q \\E\\Q(\\Exxx\\Q)\\E\\Q \\Eyyy.*");
     }
 
     private void testWildcardReplacement(final String in, final String expected) {
-        assertThat(ExpressionPredicateFactory.makePattern(in)).isEqualTo(expected);
+        final String out;
+        if (ExpressionPredicateFactory.containsWildcard(in)) {
+            out = ExpressionPredicateFactory.replaceWildcards(in);
+        } else {
+            out = ExpressionPredicateFactory.unescape(in);
+        }
+        assertThat(out).isEqualTo(expected);
     }
 
     private void doStringMatchTest(final String userInput,

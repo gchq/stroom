@@ -36,14 +36,6 @@ public class SimpleDuration {
         return timeUnit;
     }
 
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -70,9 +62,13 @@ public class SimpleDuration {
         return time + " " + timeUnit.getDisplayValue();
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
 
-    // --------------------------------------------------------------------------------
-
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static class Builder {
 

@@ -94,7 +94,7 @@ public class DataDownloadTaskHandler {
         return securityContext.secureResult(() -> {
             final List<Meta> list = metaService.find(criteria).getValues();
             final DataDownloadResult result = new DataDownloadResult();
-            if (list.size() == 0) {
+            if (list.isEmpty()) {
                 return result;
             }
 

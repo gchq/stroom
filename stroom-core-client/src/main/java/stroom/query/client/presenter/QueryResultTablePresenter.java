@@ -316,9 +316,12 @@ public class QueryResultTablePresenter
     }
 
     private void enableAnnotate() {
-        final List<TableRow> selected = selectionModel.getSelectedItems();
-        final List<EventId> eventIdList = annotationManager.getEventIdList(selected);
-        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(selected);
+        final List<EventId> eventIdList = new ArrayList<>();
+        final List<Long> annotationIdList = new ArrayList<>();
+        annotationManager.addRowData(
+                selectionModel.getSelectedItems(),
+                eventIdList,
+                annotationIdList);
         final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
         annotateButton.setEnabled(enabled);
     }

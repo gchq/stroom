@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
@@ -32,9 +33,11 @@ import stroom.util.shared.Range;
 import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -58,10 +62,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRangeStoreDb extends AbstractStoreDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
-    final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);
-    final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 2);
-    final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 3);
+    private static final UID UID_1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 1);
+    private static final UID UID_2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 2);
+    private static final UID UID_3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 3);
     private RangeStoreDb rangeStoreDb;
+    private ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {
@@ -75,7 +80,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     @Test
     void testGet() {
 
-        final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
+        final List<UID> uids = Arrays.asList(UID_1, UID_2, UID_3);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
         for (int i = 0; i < uids.size(); i++) {
@@ -114,7 +119,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     @Test
     void testContainsMapDefinition() {
 
-        final List<UID> uids = Arrays.asList(uid2, uid3);
+        final List<UID> uids = Arrays.asList(UID_2, UID_3);
         final UID uid4 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 4);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
@@ -139,7 +144,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
             }
 
             // no entries exist for uid1
-            result = rangeStoreDb.containsMapDefinition(txn, uid1);
+            result = rangeStoreDb.containsMapDefinition(txn, UID_1);
             assertThat(result).isFalse();
 
             // no entries exist for uid4
@@ -150,21 +155,21 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
 
     @Test
     void testIsKeyInRange() {
-        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final RangeStoreKey rangeStoreKey = new RangeStoreKey(UID_1, Range.of(10L, 20L));
         final ByteBuffer keyBuffer = ByteBuffer.allocate(Long.BYTES * 2 + UID.UID_ARRAY_LENGTH);
         rangeStoreDb.serializeKey(keyBuffer, rangeStoreKey);
 
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 9))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_1, 9))
                 .isEqualTo(CompareResult.BELOW_RANGE);
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 10))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_1, 10))
                 .isEqualTo(CompareResult.IN_RANGE);
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 15L))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_1, 15L))
                 .isEqualTo(CompareResult.IN_RANGE);
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 19))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_1, 19))
                 .isEqualTo(CompareResult.IN_RANGE);
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 20))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_1, 20))
                 .isEqualTo(CompareResult.ABOVE_RANGE);
-        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid2, 15L))
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, UID_2, 15L))
                 .isEqualTo(CompareResult.MAP_UID_MISMATCH);
     }
 
@@ -186,7 +191,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
     @Test
     void testGetWithNegativeNumbers() {
 
-        final List<UID> uids = Arrays.asList(uid1);
+        final List<UID> uids = Arrays.asList(UID_1);
 
         for (int i = 0; i < uids.size(); i++) {
             LOGGER.debug("Iteration {}, loading for UID {}", i, uids.get(i));
@@ -206,7 +211,7 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         rangeStoreDb.logDatabaseContents();
 
         lmdbEnv.doWithReadTxn(txn -> {
-            Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid2, 5);
+            Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, UID_2, 5);
             assertThat(optValueStoreKey).isNotEmpty();
             assertThat(optValueStoreKey.get()).isEqualTo(val(11));
         });
@@ -243,9 +248,104 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
         doForEachTest(uid3, 1);
     }
 
+    /**
+     * Make sure that the entries are stored in the db in the order we expect.
+     */
+    @Test
+    void testSortOrder() {
+        final ValueStoreKey valueStoreKey = new ValueStoreKey(123, (short) 0);
+        int max = 100_000;
+        int fromDelta = 30;
+        int firstFrom = 10;
+        int rangeSize = 15;
+
+        final AtomicInteger putCount = new AtomicInteger();
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            for (long from = firstFrom; from <= max; from += fromDelta) {
+                final long to = from + rangeSize;
+                rangeStoreDb.put(
+                        writeTxn, RangeStoreKey.of(UID_1, from, to), valueStoreKey, false);
+                putCount.incrementAndGet();
+
+                // Dump the first 50 rows
+                if (from == (fromDelta * 50) + firstFrom) {
+                    rangeStoreDb.logDatabaseContents(writeTxn, LOGGER::info);
+                }
+            }
+        });
+
+        // Check that the cursor iterates over the ranges in the expected order
+        final AtomicReference<Range<Long>> lastRangeRef = new AtomicReference<>();
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            rangeStoreDb.forEachEntry(readTxn, entry -> {
+                final Range<Long> range = entry.getKey().getKeyRange();
+                final Range<Long> lastRange = lastRangeRef.get();
+                if (lastRange != null) {
+                    Assertions.assertThat(range.getFrom())
+                            .isGreaterThan(lastRange.getFrom());
+                    Assertions.assertThat(range.getFrom() - fromDelta)
+                            .isEqualTo(lastRange.getFrom());
+                }
+                lastRangeRef.set(range);
+            });
+        });
+
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            int i = 0;
+            for (long from = firstFrom; from <= max; from += fromDelta) {
+                i++;
+                final long stopKeyFrom = from + fromDelta + 10;
+                final RangeStoreKey startKeyInc = RangeStoreKey.of(UID_1, from, from);
+                final RangeStoreKey stopKeyExc = RangeStoreKey.of(UID_1, stopKeyFrom, stopKeyFrom);
+
+                final AtomicInteger count = new AtomicInteger();
+
+                LOGGER.debug("startKeyInc: {}, stopKeyExc: {}", startKeyInc, stopKeyExc);
+                rangeStoreDb.forEachEntry(readTxn, KeyRange.closedOpen(startKeyInc, stopKeyExc), entry -> {
+                    count.incrementAndGet();
+                    LOGGER.debug("Entry {}: {}", count.get(), entry.getKey().getKeyRange());
+                });
+
+                if (i < putCount.get() - 2) {
+                    Assertions.assertThat(count)
+                            .hasValue(2);
+                }
+            }
+        });
+    }
+
+    @Test
+    void testSortOrder2() {
+        final ValueStoreKey valueStoreKey = new ValueStoreKey(123, (short) 0);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            rangeStoreDb.put(
+                    writeTxn, RangeStoreKey.of(UID_1, 1, 10), valueStoreKey, false);
+            rangeStoreDb.put(
+                    writeTxn,
+                    RangeStoreKey.of(UID_1, Long.MAX_VALUE - 10, Long.MAX_VALUE),
+                    valueStoreKey,
+                    false);
+        });
+
+        rangeStoreDb.logDatabaseContents(LOGGER::debug);
+
+        final AtomicReference<Range<Long>> lastRangeRef = new AtomicReference<>();
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            rangeStoreDb.forEachEntry(readTxn, entry -> {
+                final Range<Long> range = entry.getKey().getKeyRange();
+                final Range<Long> lastRange = lastRangeRef.get();
+                if (lastRange != null) {
+                    Assertions.assertThat(range.getFrom())
+                            .isGreaterThan(lastRange.getFrom());
+                }
+                lastRangeRef.set(range);
+            });
+        });
+    }
+
     @Test
     void testGetEntryCount() {
-
         final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
         final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
         final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
@@ -275,7 +375,6 @@ class TestRangeStoreDb extends AbstractStoreDbTest {
             final long entryCount = rangeStoreDb.getEntryCount(uid2, readTxn);
             assertThat(entryCount).isEqualTo(2);
         });
-
     }
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {

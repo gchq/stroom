@@ -67,7 +67,6 @@ public class ShardWriters {
         private final Meta meta;
         private final Map<PlanBDoc, WriterInstance> writers = new HashMap<>();
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
-        private final boolean overwrite = true;
 
         public ShardWriter(final PlanBDocCache planBDocCache,
                            final ByteBufferFactory byteBufferFactory,
@@ -118,10 +117,10 @@ public class ShardWriters {
 
         private static class WriterInstance implements AutoCloseable {
 
-            private final AbstractLmdb<?, ?> lmdb;
-            private final AbstractLmdb.Writer writer;
+            private final AbstractDb<?, ?> lmdb;
+            private final AbstractDb.Writer writer;
 
-            public WriterInstance(final AbstractLmdb<?, ?> lmdb) {
+            public WriterInstance(final AbstractDb<?, ?> lmdb) {
                 this.lmdb = lmdb;
                 this.writer = lmdb.createWriter();
             }
@@ -160,37 +159,35 @@ public class ShardWriters {
 
         public void addState(final PlanBDoc doc,
                              final State state) {
-            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
-                    new StateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
-            writer.addState(state);
+            getWriter(doc).addState(state);
         }
 
         public void addTemporalState(final PlanBDoc doc,
                                      final TemporalState temporalState) {
-            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
-                    new TemporalStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
-            writer.addTemporalState(temporalState);
+            getWriter(doc).addTemporalState(temporalState);
         }
 
         public void addRangedState(final PlanBDoc doc,
                                    final RangedState rangedState) {
-            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
-                    new RangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
-            writer.addRangedState(rangedState);
+            getWriter(doc).addRangedState(rangedState);
         }
 
         public void addTemporalRangedState(final PlanBDoc doc,
                                            final TemporalRangedState temporalRangedState) {
-            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
-                    new TemporalRangedStateDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
-            writer.addTemporalRangedState(temporalRangedState);
+            getWriter(doc).addTemporalRangedState(temporalRangedState);
         }
 
         public void addSession(final PlanBDoc doc,
                                final Session session) {
-            final WriterInstance writer = writers.computeIfAbsent(doc, k -> new WriterInstance(
-                    new SessionDb(getLmdbEnvDir(k), byteBufferFactory, overwrite, false)));
-            writer.addSession(session);
+            getWriter(doc).addSession(session);
+        }
+
+        private WriterInstance getWriter(final PlanBDoc doc) {
+            return writers.computeIfAbsent(doc, k ->
+                    new WriterInstance(PlanBDb.open(doc,
+                            getLmdbEnvDir(k),
+                            byteBufferFactory,
+                            false)));
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {

@@ -28,9 +28,9 @@ import java.util.stream.Stream;
 public class FieldIndex {
 
     public static final String DEFAULT_TIME_FIELD_NAME = "__time__";
-    public static final String FALLBACK_TIME_FIELD_NAME = "EventTime";
     public static final String DEFAULT_STREAM_ID_FIELD_NAME = "__stream_id__";
     public static final String DEFAULT_EVENT_ID_FIELD_NAME = "__event_id__";
+    public static final String FALLBACK_TIME_FIELD_NAME = "EventTime";
     public static final String FALLBACK_STREAM_ID_FIELD_NAME = "StreamId";
     public static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
 

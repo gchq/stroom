@@ -45,7 +45,7 @@ plugins {
 
     alias(libs.plugins.flyway) apply false
 
-    alias(libs.plugins.jdeps)
+//    alias(libs.plugins.jdeps)
 
 //    id 'org.javamodularity.moduleplugin' apply false
 
@@ -72,7 +72,7 @@ java {
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue ->
-    def val;
+    def val
     if (project.hasProperty(propName)
             && project.getProperty(propName) != "unspecified"
             && project.getProperty(propName) != "") {
@@ -82,7 +82,7 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
         val = defaultValue
         logger.info("Property [$propName] has no value, using default value [$val]")
     }
-    return val;
+    return val
 }
 
 // Try to determine the jdbc url from local.yml so that when using
@@ -99,7 +99,7 @@ if (localYamlFile.exists()) {
     if (yamlVal != null) {
         // Strip all the param substitution stuff
         yamlVal = yamlVal.replaceAll('^\\$\\{STROOM_JDBC_DRIVER_URL:-', '')
-            .replaceAll('\\}$', '')
+                .replaceAll('\\}$', '')
         ext.jdbcUrl = yamlVal
         // Extract the schema name from the url
         ext.dbSchema = (yamlVal =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
@@ -127,7 +127,7 @@ ext.gwtCompilerProps = [
 //version numbers for libs that share version numbers, e.g. dropwizard-*, or for github repo release versions
 ext.versions = [
         //----------Stroom-----------------
-        stroom            : getPropertyOrDefault('version', 'SNAPSHOT').replaceFirst(/^v/, ""),
+        stroom: getPropertyOrDefault('version', 'SNAPSHOT').replaceFirst(/^v/, ""),
 ]
 
 // Defines the content packs that will be downloaded/copied for SetupSampleData,
@@ -293,7 +293,7 @@ subprojects {
             }
         }
 
-        reports.html.outputLocation = file("${reporting.baseDir}/${name}")
+        reports.html.outputLocation = file("${reporting.baseDirectory.getAsFile().get()}/${name}")
 
         afterSuite { descriptor, result ->
             if (descriptor != null
@@ -447,9 +447,9 @@ subprojects {
             }
         }
 
-        jdepsReport {
-            multiRelease = '15'
-        }
+//        jdepsReport {
+//            multiRelease = '15'
+//        }
     }
 
 
@@ -491,8 +491,8 @@ subprojects {
     // config files in config/checkstyle
 
     checkstyle {
-        ignoreFailures false
-        showViolations true
+        ignoreFailures = false
+        showViolations = true
         toolVersion = "10.4"
     }
 

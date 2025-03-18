@@ -266,8 +266,11 @@ public class AnnotationEditPresenter
     }
 
     private void setAssignedTo(final UserRef assignedTo) {
-        getView().setAssignedTo(assignedTo);
-        assignedToPresenter.setSelected(assignedTo);
+        assignedToPresenter.resolve(assignedTo, userRef -> {
+            currentAssignedTo = userRef;
+            getView().setAssignedTo(userRef);
+            assignedToPresenter.setSelected(currentAssignedTo);
+        });
     }
 
     private void changeAnnotationGroup(final AnnotationGroup selected) {

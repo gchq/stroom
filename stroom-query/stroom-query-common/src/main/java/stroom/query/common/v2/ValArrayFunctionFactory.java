@@ -8,7 +8,6 @@ import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.util.date.DateUtil;
 
-import java.math.BigDecimal;
 import java.util.function.Function;
 
 public class ValArrayFunctionFactory implements ValueFunctionFactory<Val[]> {
@@ -53,25 +52,13 @@ public class ValArrayFunctionFactory implements ValueFunctionFactory<Val[]> {
     }
 
     @Override
-    public Function<Val[], BigDecimal> createNumberExtractor() {
+    public Function<Val[], Double> createNumberExtractor() {
         return values -> {
-            final Val val = values[index];
             try {
-                if (Type.LONG.equals(val.type())) {
-                    return BigDecimal.valueOf(val.toLong());
-                } else if (Type.INTEGER.equals(val.type())) {
-                    return BigDecimal.valueOf(val.toInteger());
-                } else if (Type.DOUBLE.equals(val.type())) {
-                    return BigDecimal.valueOf(val.toDouble());
-                } else if (Type.FLOAT.equals(val.type())) {
-                    return BigDecimal.valueOf(val.toFloat());
-                }
-                return new BigDecimal(val.toString());
-            } catch (final NumberFormatException e) {
+                final Val val = values[index];
+                return val.toDouble();
+            } catch (final RuntimeException e) {
                 return null;
-
-//            throw new MatchException(
-//                    "Expected a numeric value but was given string \"" + val.toString() + "\"");
             }
         };
     }

@@ -69,13 +69,17 @@ public class ValueFunctionFactoriesImpl<T> implements ValueFunctionFactories<T> 
         }
 
         @Override
-        public Function<T, BigDecimal> createNumberExtractor() {
+        public Function<T, Double> createNumberExtractor() {
             return t -> {
                 final String string = fieldExtractor.apply(t);
                 if (string == null) {
                     return null;
                 }
-                return new BigDecimal(string);
+                try {
+                    return new BigDecimal(string).doubleValue();
+                } catch (final RuntimeException e) {
+                    return null;
+                }
             };
         }
 

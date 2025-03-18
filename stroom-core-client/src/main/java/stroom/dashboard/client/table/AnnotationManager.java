@@ -24,11 +24,13 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.EventId;
-import stroom.dashboard.shared.IndexConstants;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.query.client.presenter.TableRow;
 import stroom.svg.shared.SvgImage;
+import stroom.util.client.Console;
+import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -93,8 +95,9 @@ public class AnnotationManager {
     private List<Item> getMenuItems(final List<TableRow> selectedItems) {
         final List<Item> menuItems = new ArrayList<>();
 
-        final List<EventId> eventIdList = getEventIdList(selectedItems);
-        final List<Long> annotationIdList = getAnnotationIdList(selectedItems);
+        final List<EventId> eventIdList = new ArrayList<>();
+        final List<Long> annotationIdList = new ArrayList<>();
+        addRowData(selectedItems, eventIdList, annotationIdList);
 
         // Create menu item.
         menuItems.add(createCreateMenu(eventIdList));
@@ -114,44 +117,49 @@ public class AnnotationManager {
         return menuItems;
     }
 
-    public List<EventId> getEventIdList(final List<TableRow> selectedItems) {
-        final List<EventId> idList = new ArrayList<>();
+    public void addRowData(final List<TableRow> selectedItems,
+                           final List<EventId> eventIdList,
+                           final List<Long> annotationIdList) {
+        if (selectedItems != null && !selectedItems.isEmpty()) {
+            final String streamIdFieldId = getFieldId(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+            final String eventIdFieldId = getFieldId(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+            final String eventIdListFieldId = getFieldId("EventIdList");
+            final String annotationIdFieldId = getFieldId("annotation:Id");
 
-        final List<String> streamIds = getValues(
-                selectedItems,
-                IndexConstants.RESERVED_STREAM_ID_FIELD_NAME);
-        final List<String> eventIds = getValues(
-                selectedItems,
-                IndexConstants.RESERVED_EVENT_ID_FIELD_NAME);
-        final List<String> eventIdLists = getValues(selectedItems, "EventIdList");
-
-        for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {
-            final Long streamId = toLong(streamIds.get(i));
-            final Long eventId = toLong(eventIds.get(i));
-            if (streamId != null && eventId != null) {
-                idList.add(new EventId(streamId, eventId));
-            }
-        }
-
-        for (final String eventIdList : eventIdLists) {
-            if (eventIdList != null) {
-                final String[] events = eventIdList.split(" ");
-                for (final String event : events) {
-                    try {
-                        final String[] parts = event.split(":");
-                        if (parts.length == 2) {
-                            final long streamId = Long.parseLong(parts[0]);
-                            final long eventId = Long.parseLong(parts[1]);
-                            idList.add(new EventId(streamId, eventId));
+            if (streamIdFieldId != null ||
+                eventIdFieldId != null ||
+                eventIdListFieldId != null ||
+                annotationIdFieldId != null) {
+                for (final TableRow row : selectedItems) {
+                    // Add stream and event id fields.
+                    if (streamIdFieldId != null && eventIdFieldId != null) {
+                        try {
+                            final Long streamId = toLong(row.getText(streamIdFieldId));
+                            final Long eventId = toLong(row.getText(eventIdFieldId));
+                            if (streamId != null && eventId != null) {
+                                eventIdList.add(new EventId(streamId, eventId));
+                            }
+                        } catch (final RuntimeException e) {
+                            Console.log(e::getMessage, e);
                         }
-                    } catch (final NumberFormatException e) {
-                        // Ignore.
+                    }
+
+                    // Add event lists.
+                    if (eventIdListFieldId != null) {
+                        final String eventIdListString = row.getText(eventIdListFieldId);
+                        EventId.parseList(eventIdListString, eventIdList);
+                    }
+
+                    // Add annotation ids.
+                    if (annotationIdFieldId != null) {
+                        final Long annotationId = toLong(row.getText(annotationIdFieldId));
+                        if (annotationId != null) {
+                            annotationIdList.add(annotationId);
+                        }
                     }
                 }
             }
         }
-
-        return idList;
     }
 
     private String getFieldId(final String fieldName) {
@@ -205,8 +213,8 @@ public class AnnotationManager {
         return values;
     }
 
-    public String getValue(final List<TableRow> selectedItems,
-                           final String fieldName) {
+    private String getValue(final List<TableRow> selectedItems,
+                            final String fieldName) {
         if (selectedItems != null && !selectedItems.isEmpty()) {
             final String fieldId = getFieldId(fieldName);
             if (fieldId != null) {
@@ -272,13 +280,26 @@ public class AnnotationManager {
         String title = getValue(selectedItems, "title");
         final String subject = getValue(selectedItems, "subject");
         final String status = getValue(selectedItems, "status");
+        final String assignedTo = getValue(selectedItems, "assignedTo");
         final String comment = getValue(selectedItems, "comment");
 
         title = title == null
                 ? "New Annotation"
                 : title;
 
-        CreateAnnotationEvent.fire(changeStatusPresenter, title, subject, status, comment, eventIdList);
+        UserRef initialAssignTo = null;
+        if (assignedTo != null) {
+            initialAssignTo = UserRef.builder().uuid(assignedTo).build();
+        }
+
+        CreateAnnotationEvent.fire(
+                changeStatusPresenter,
+                title,
+                subject,
+                status,
+                initialAssignTo,
+                comment,
+                eventIdList);
     }
 
     public void editAnnotation(final long annotationId) {
