@@ -5,6 +5,7 @@ import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -59,6 +60,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     private final String destinationName;
     // Assumed to be live on boot
     private final AtomicBoolean lastLiveCheckResult = new AtomicBoolean(true);
+    private final Runnable delayForwardingFunc;
 
     public RetryingForwardDestination(final ForwardQueueConfig forwardQueueConfig,
                                       final ForwardDestination delegateDestination,
@@ -102,12 +104,58 @@ public class RetryingForwardDestination implements ForwardDestination {
         // Create failure destination.
         failureDestination = setupFailureDestination(
                 forwardQueueConfig, pathCreator, forwardingDir);
+        delayForwardingFunc = createForwardDelayFunc(forwardQueueConfig);
 
         if (delegateDestination.hasLivenessCheck()) {
             proxyServices.addFrequencyExecutor(
                     "liveness - " + destinationName,
                     () -> this::doLivenessCheck,
                     forwardQueueConfig.getLivenessCheckInterval().toMillis());
+        }
+    }
+
+    private Runnable createForwardDelayFunc(final ForwardQueueConfig forwardQueueConfig) {
+        final Runnable delayForwardingFunc;
+        final StroomDuration forwardDelay = Objects.requireNonNullElse(
+                forwardQueueConfig.getForwardDelay(), StroomDuration.ZERO);
+        if (forwardDelay.isZero()) {
+            delayForwardingFunc = () -> {
+                // No delay, so noop
+            };
+        } else {
+            LOGGER.warn("'{}' - Using a forwarding delay of {} on every forward. " +
+                        "If you see this message in production, set the property 'forwardDelay' to zero, " +
+                        "unless you actually want the delay.",
+                    destinationName, forwardDelay);
+            delayForwardingFunc = this::delayPost;
+        }
+        return delayForwardingFunc;
+    }
+
+    private void delayPost() {
+        try {
+            final Instant startTime = Instant.now();
+            final Duration forwardDelay = forwardQueueConfig.getForwardDelay().getDuration();
+            LOGGER.trace("'{}' - adding delay {}", destinationName, forwardDelay);
+            final long notBeforeEpochMs = startTime.plus(forwardDelay).toEpochMilli();
+            long delay = notBeforeEpochMs - System.currentTimeMillis();
+
+            // Loop in case the delay is long and proxy shuts down part way through
+            while (delay > 0
+                   && !proxyServices.isShuttingDown()
+                   && !Thread.currentThread().isInterrupted()) {
+
+                final long sleepMs = Math.min(ONE_SECOND_IN_MS, delay);
+                ThreadUtil.sleep(sleepMs);
+                if (sleepMs == ONE_SECOND_IN_MS) {
+                    delay = notBeforeEpochMs - System.currentTimeMillis();
+                } else {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // Swallow as this is only for testing
+            LOGGER.error("Error while delaying the forward: {}", LogUtil.exceptionMessage(e), e);
         }
     }
 
@@ -152,7 +200,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     @Override
     public String getName() {
-        return delegateDestination.getName();
+        return destinationName;
     }
 
     @Override
@@ -186,7 +234,7 @@ public class RetryingForwardDestination implements ForwardDestination {
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
-                getName() + " (failures)",
+                destinationName + " (failures)",
                 errorSubPathTemplate,
                 ForwardFileConfig.DEFAULT_TEMPLATING_MODE,
                 null,
@@ -198,14 +246,15 @@ public class RetryingForwardDestination implements ForwardDestination {
     private boolean forwardDir(final Path dir) {
         LOGGER.debug("'{}' - forwardDir(), dir: {}", destinationName, dir);
         try {
+            // Delay the forward, if one is configured. If not configured, this is a noop.
+            delayForwardingFunc.run();
             try {
                 delegateDestination.add(dir);
-//                // We have completed sending so can delete the data.
-//                cleanupDirQueue.add(dir);
                 // Return true for success.
                 return true;
             } catch (final Exception e) {
-                LOGGER.debug(e::getMessage, e);
+                LOGGER.debug(() -> LogUtil.message("'{}' - Error forwarding: {}",
+                        destinationName, LogUtil.exceptionMessage(e)), e);
 
                 // Add to the errors
                 addError(dir, e);
@@ -215,6 +264,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                 if (e instanceof ForwardException forwardException) {
                     canRetry = forwardException.isRecoverable();
                 }
+                final int attempts;
+                final Duration retryAge;
 
                 // Count errors.
                 if (canRetry) {
@@ -222,12 +273,20 @@ public class RetryingForwardDestination implements ForwardDestination {
                     if (maxRetryAge.isZero()) {
                         // No point creating the state file
                         canRetry = false;
+                        attempts = 1;
+                        retryAge = Duration.ZERO;
                     } else {
                         // Read the state file
                         // If it exists get previous state and update it for next time
                         // If not exists, create it
                         final RetryState retryState = getAndUpdateRetryState(dir);
-                        if (retryState != null) {
+                        attempts = retryState.attempts();
+                        retryAge = retryState.getTimeSinceFirstAttempt();
+                        if (retryState.hasReachMaxAttempts()) {
+                            LOGGER.debug("'{}' - Max retries of {} reached, adding {} to failure queue",
+                                    destinationName, RetryState.MAX_ATTEMPTS, dir);
+                            canRetry = false;
+                        } else {
                             final Duration timeSinceFirstAttempt = retryState.getTimeSinceFirstAttempt();
                             LOGGER.debug("'{}' - maxRetries: {}, retryState: {}, timeSinceFirstAttempt: {}",
                                     destinationName, maxRetryAge, retryState, timeSinceFirstAttempt);
@@ -236,43 +295,41 @@ public class RetryingForwardDestination implements ForwardDestination {
                                     maxRetryAge.getDuration());
                         }
                     }
+                } else {
+                    attempts = 1;
+                    retryAge = Duration.ZERO;
                 }
-                final String errorMsgSuffix;
+                final Supplier<String> msgSupplier = () ->
+                        "Error sending '" + FileUtil.getCanonicalPath(dir)
+                        + "' to " + getDestinationType() + " forward destination '"
+                        + destinationName + "' "
+                        + "(attempts: " + attempts + ", retryAge: " + retryAge + "): '"
+                        + LogUtil.exceptionMessage(getCause(e)) + "'. " +
+                        "(Enable DEBUG for stack trace.) " +
+                        (e instanceof ForwardException forwardException
+                                ? " Feed: '" + forwardException.getFeedName() + "'. "
+                                : "");
+
                 if (canRetry) {
-                    LOGGER.debug("Retrying {}", dir);
+                    LOGGER.debug("'{}' Retrying {}", destinationName, dir);
                     // TODO Consider making a LoopingDirQueue that can go back to the head of the queue,
                     //  e.g. when we have variable delay times due to the growth factor, rather than
                     //  just sleeping till the delay ends, move on to the next item in the queue in case
                     //  it is shorter. Or we hava a java delayQueue.
                     addToRetryQueue(dir);
-                    errorMsgSuffix = "Adding to retry queue.";
+                    LOGGER.debug(() -> msgSupplier.get()
+                                       + " Adding to retry queue.");
                 } else {
-                    LOGGER.debug("Adding {} to failure queue", dir);
                     // If we exceeded the max number of retries then move the data to the failure destination.
                     failureDestination.add(dir);
-                    errorMsgSuffix = "Will not retry, moving to failure destination "
-                                     + failureDestination.getStoreDir();
-                }
-                final Supplier<String> msgSupplier = () ->
-                        "Error sending '" + FileUtil.getCanonicalPath(dir)
-                        + "' to " + getDestinationType() + " forward destination '"
-                        + destinationName + "': '"
-                        + LogUtil.exceptionMessage(getCause(e)) + "'. " +
-                        "(Enable DEBUG for stack trace.) " +
-                        (e instanceof ForwardException forwardException
-                                ? " Feed: '" + forwardException.getFeedName() + "'. "
-                                : "")
-                        + errorMsgSuffix;
-                if (canRetry) {
-                    LOGGER.debug(msgSupplier);
-                } else {
-                    LOGGER.error(msgSupplier);
+                    LOGGER.error(() -> msgSupplier.get()
+                                       + " Will not retry, moving to failure destination "
+                                       + failureDestination.getStoreDir());
                 }
             }
         } catch (final Throwable t) {
             LOGGER.error(t::getMessage, t);
         }
-
         // Failed, return false.
         return false;
     }
@@ -301,7 +358,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                 retryState,
                 RetryState::lastAttemptEpochMs,
                 0L);
-        final int attempts = NullSafe.getOrElse(retryState, RetryState::attempts, -1);
+        final short attempts = NullSafe.getOrElse(retryState, RetryState::attempts, (short) -1);
         final StroomDuration retryDelay = forwardQueueConfig.getRetryDelay();
         final double retryDelayGrowthFactor = forwardQueueConfig.getRetryDelayGrowthFactor();
         final long retryDelayMs;
@@ -322,7 +379,10 @@ public class RetryingForwardDestination implements ForwardDestination {
                 Duration.ofMillis(retryDelayMs),
                 attempts));
 
-        while (delay > 0 && !proxyServices.isShuttingDown()) {
+        while (delay > 0
+               && !proxyServices.isShuttingDown()
+               && !Thread.currentThread().isInterrupted()) {
+
             final long sleepMs = Math.min(ONE_SECOND_IN_MS, delay);
             LOGGER.debug("Sleeping for {}ms", sleepMs);
             ThreadUtil.sleep(sleepMs);
@@ -343,9 +403,12 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private void addError(final Path dir, final Exception e) {
         try {
-            final StringBuilder sb = new StringBuilder(getCause(e).getClass().getSimpleName());
+            final StringBuilder sb = new StringBuilder();
+            sb.append(DateUtil.createNormalDateTimeString());
+            sb.append(" - ");
+            sb.append(getCause(e).getClass().getSimpleName());
             if (e.getMessage() != null) {
-                sb.append(" ");
+                sb.append(" - ");
                 sb.append(e.getMessage().replace('\n', ' '));
             }
             sb.append("\n");
@@ -378,9 +441,13 @@ public class RetryingForwardDestination implements ForwardDestination {
         }
     }
 
+    /**
+     * @return The {@link RetryState} after initialising/updating it for the attempt that has just
+     * happened.
+     */
     private RetryState getAndUpdateRetryState(final Path dir) {
         final Path retryStateFile = getRetryStateFile(dir);
-        RetryState retryState = null;
+        RetryState updatedRetryState;
         if (Files.isRegularFile(retryStateFile)) {
             try (RandomAccessFile reader = new RandomAccessFile(retryStateFile.toFile(), "rwd");
                     FileChannel channel = reader.getChannel()) {
@@ -388,16 +455,15 @@ public class RetryingForwardDestination implements ForwardDestination {
                 // First read the existing value
                 channel.read(byteBuffer);
                 byteBuffer.flip();
-                retryState = RetryState.deserialise(byteBuffer);
-                final RetryState newRetryState = retryState.cloneAndUpdate();
-                LOGGER.debug("'{}' - retryStateFile: {}, retryState: {}, newRetryState: {}",
-                        destinationName, retryStateFile, retryState, newRetryState);
-                retryState = newRetryState;
+                final RetryState existingRetryState = RetryState.deserialise(byteBuffer);
+                updatedRetryState = existingRetryState.cloneAndUpdate();
+                LOGGER.debug("'{}' - retryStateFile: {}, existingRetryState: {}, updatedRetryState: {}",
+                        destinationName, retryStateFile, existingRetryState, updatedRetryState);
 
                 // Get ready for writing back to the file
                 channel.position(0);
                 byteBuffer.flip();
-                retryState.serialise(byteBuffer);
+                updatedRetryState.serialise(byteBuffer);
                 byteBuffer.flip();
                 final int writeCount = channel.write(byteBuffer);
                 if (writeCount != RetryState.TOTAL_BYTES) {
@@ -405,18 +471,23 @@ public class RetryingForwardDestination implements ForwardDestination {
                             writeCount, RetryState.TOTAL_BYTES));
                 }
             } catch (IOException e) {
-                LOGGER.error(() ->
-                        LogUtil.message("Error updating retry file {}: {}", e.getMessage(), e));
+                LOGGER.error("'{}' - Error updating retry file '{}'. " +
+                             "Retry state cannot be updated so this directory will be " +
+                             "retried indefinitely. Error: {}",
+                        destinationName, retryStateFile, LogUtil.exceptionMessage(e), e);
+                updatedRetryState = RetryState.initial();
             }
         } else {
+            updatedRetryState = RetryState.initial();
             if (Files.exists(retryStateFile)) {
-                LOGGER.error(() -> LogUtil.message("{} exists but is not a file, ignoring", retryStateFile));
+                LOGGER.error("'{}' - Retry state file '{}' exists but is not a file. " +
+                             "Retry state cannot be updated so this directory will be " +
+                             "retried indefinitely. ", destinationName, retryStateFile);
+                // Means we will never update the state, but not a lot we can do
             } else {
-                // Not exists so write a new one
-                retryState = RetryState.initial();
                 try {
                     Files.write(retryStateFile,
-                            retryState.serialise(),
+                            updatedRetryState.serialise(),
                             StandardOpenOption.CREATE_NEW,
                             StandardOpenOption.WRITE);
                 } catch (IOException e) {
@@ -424,7 +495,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                 }
             }
         }
-        return retryState;
+        return updatedRetryState;
     }
 
     private Path getRetryStateFile(final Path dir) {

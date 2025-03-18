@@ -32,7 +32,6 @@ public final class ForwardHttpPostConfig
     private final String forwardUrl;
     private final String livenessCheckUrl;
     private final String apiKey;
-    private final StroomDuration forwardDelay;
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
     private final ForwardQueueConfig forwardQueueConfig;
@@ -44,7 +43,6 @@ public final class ForwardHttpPostConfig
         forwardUrl = null;
         livenessCheckUrl = null;
         apiKey = null;
-        forwardDelay = DEFAULT_FORWARD_DELAY;
         addOpenIdAccessToken = false;
         httpClient = createDefaultHttpClientConfiguration();
         forwardQueueConfig = new ForwardQueueConfig();
@@ -58,7 +56,6 @@ public final class ForwardHttpPostConfig
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
                                  @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
                                  @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
                                  @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig) {
@@ -68,7 +65,6 @@ public final class ForwardHttpPostConfig
         this.forwardUrl = forwardUrl;
         this.livenessCheckUrl = livenessCheckUrl;
         this.apiKey = apiKey;
-        this.forwardDelay = Objects.requireNonNullElse(forwardDelay, DEFAULT_FORWARD_DELAY);
         this.addOpenIdAccessToken = addOpenIdAccessToken;
         this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
         this.forwardQueueConfig = forwardQueueConfig;
@@ -136,12 +132,6 @@ public final class ForwardHttpPostConfig
         return apiKey;
     }
 
-    @JsonProperty
-    @JsonPropertyDescription("Debug setting to add a delay")
-    public StroomDuration getForwardDelay() {
-        return forwardDelay;
-    }
-
     /**
      * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
      * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
@@ -199,7 +189,6 @@ public final class ForwardHttpPostConfig
                && Objects.equals(forwardUrl, that.forwardUrl)
                && Objects.equals(livenessCheckUrl, that.livenessCheckUrl)
                && Objects.equals(apiKey, that.apiKey)
-               && Objects.equals(forwardDelay, that.forwardDelay)
                && Objects.equals(httpClient, that.httpClient)
                && Objects.equals(forwardQueueConfig, that.forwardQueueConfig);
     }
@@ -212,7 +201,6 @@ public final class ForwardHttpPostConfig
                 forwardUrl,
                 livenessCheckUrl,
                 apiKey,
-                forwardDelay,
                 addOpenIdAccessToken,
                 httpClient,
                 forwardQueueConfig);
@@ -227,7 +215,6 @@ public final class ForwardHttpPostConfig
                ", forwardUrl='" + forwardUrl + '\'' +
                ", livenessCheckUrl='" + livenessCheckUrl + '\'' +
                ", apiKey='" + apiKey + '\'' +
-               ", forwardDelay=" + forwardDelay +
                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
                ", httpClient=" + httpClient +
                ", forwardQueueConfig=" + forwardQueueConfig +
@@ -245,7 +232,6 @@ public final class ForwardHttpPostConfig
         private String forwardUrl;
         private String livenessCheckUrl;
         private String apiKey;
-        private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
         private ForwardQueueConfig forwardQueueConfig;
@@ -262,7 +248,6 @@ public final class ForwardHttpPostConfig
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
             this.livenessCheckUrl = forwardHttpPostConfig.livenessCheckUrl;
             this.apiKey = forwardHttpPostConfig.apiKey;
-            this.forwardDelay = forwardHttpPostConfig.forwardDelay;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
             this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
@@ -298,11 +283,6 @@ public final class ForwardHttpPostConfig
             return this;
         }
 
-        public Builder forwardDelay(final StroomDuration forwardDelay) {
-            this.forwardDelay = forwardDelay;
-            return this;
-        }
-
         public Builder addOpenIdAccessToken(final boolean addOpenIdAccessToken) {
             this.addOpenIdAccessToken = addOpenIdAccessToken;
             return this;
@@ -326,7 +306,6 @@ public final class ForwardHttpPostConfig
                     forwardUrl,
                     livenessCheckUrl,
                     apiKey,
-                    forwardDelay,
                     addOpenIdAccessToken,
                     httpClient,
                     forwardQueueConfig);

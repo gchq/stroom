@@ -10,12 +10,10 @@ import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.time.StroomDuration;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -67,7 +65,6 @@ public class HttpSender implements StreamDestination {
     private final UserIdentityFactory userIdentityFactory;
     private final HttpClient httpClient;
     private final String forwardUrl;
-    private final StroomDuration forwardDelay;
     private final String forwarderName;
     private final ProxyServices proxyServices;
 
@@ -83,7 +80,6 @@ public class HttpSender implements StreamDestination {
         this.userIdentityFactory = userIdentityFactory;
         this.httpClient = httpClient;
         this.forwardUrl = config.getForwardUrl();
-        this.forwardDelay = NullSafe.duration(config.getForwardDelay());
         this.forwarderName = config.getName();
         this.proxyServices = proxyServices;
     }
@@ -211,36 +207,12 @@ public class HttpSender implements StreamDestination {
         }
     }
 
-    private void delayPost(final Instant startTime) {
-        LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
-        final long notBeforeEpochMs = startTime.plus(forwardDelay).toEpochMilli();
-        long delay = notBeforeEpochMs - System.currentTimeMillis();
-
-        // Loop in case the delay is long and proxy shuts down part way through
-        while (delay > 0 && !proxyServices.isShuttingDown()) {
-            final long sleepMs = Math.min(ONE_SECOND, delay);
-            ThreadUtil.sleep(sleepMs);
-            if (sleepMs == ONE_SECOND) {
-                delay = notBeforeEpochMs - System.currentTimeMillis();
-            } else {
-                break;
-            }
-        }
-        if (proxyServices.isShuttingDown()) {
-            throw new RuntimeException("Proxy is shutting down");
-        }
-    }
-
     private ResponseStatus post(final HttpPost httpPost,
                                 final Instant startTime,
                                 final AttributeMap attributeMap,
                                 final LongSupplier contentLengthSupplier) throws ForwardException {
         // Execute and get the response.
         try {
-            if (!forwardDelay.isZero()) {
-                delayPost(startTime);
-            }
-
             final ResponseStatus responseStatus = httpClient.execute(httpPost, response -> {
                 LOGGER.debug(() -> LogUtil.message(
                         "'{}' - Closing stream, response header fields:\n{}",

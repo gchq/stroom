@@ -13,7 +13,6 @@ import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -151,7 +150,7 @@ class TestHttpSender {
                 .instant(false)
                 .forwardUrl("http://notused:8080/datafeed")
                 .name("Mock Stroom datafeed")
-                .forwardDelay(StroomDuration.ofMillis(500))
+//                .forwardDelay(StroomDuration.ofMillis(500))
                 .build();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
         final String receiptId = "my-receipt-id";

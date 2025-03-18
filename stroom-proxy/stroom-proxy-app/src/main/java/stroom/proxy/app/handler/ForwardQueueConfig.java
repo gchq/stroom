@@ -37,6 +37,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     public static final int DEFAULT_FORWARD_RETRY_THREAD_COUNT = 1;
     public static final int DEFAULT_FORWARD_THREAD_COUNT = 5;
 
+    private final StroomDuration forwardDelay;
     private final StroomDuration retryDelay;
     private final double retryDelayGrowthFactor;
     private final StroomDuration maxRetryDelay;
@@ -48,6 +49,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     private final StroomDuration livenessCheckInterval;
 
     public ForwardQueueConfig() {
+        forwardDelay = DEFAULT_FORWARD_DELAY;
         retryDelay = DEFAULT_RETRY_DELAY;
         retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
         maxRetryDelay = DEFAULT_RETRY_DELAY;
@@ -62,6 +64,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     @SuppressWarnings("unused")
     @JsonCreator
     public ForwardQueueConfig(
+            @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
             @JsonProperty("retryDelay") final StroomDuration retryDelay,
             @JsonProperty("retryDelayGrowthFactor") final Double retryDelayGrowthFactor,
             @JsonProperty("maxRetryDelay") final StroomDuration maxRetryDelay,
@@ -72,6 +75,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty("forwardRetryThreadCount") final Integer forwardRetryThreadCount,
             @JsonProperty("livenessCheckInterval") final StroomDuration livenessCheckInterval) {
 
+        this.forwardDelay = Objects.requireNonNullElse(forwardDelay, DEFAULT_FORWARD_DELAY);
         this.retryDelay = Objects.requireNonNullElse(retryDelay, DEFAULT_RETRY_DELAY);
         this.retryDelayGrowthFactor = Objects.requireNonNullElse(retryDelayGrowthFactor, DEFAULT_RETRY_GROWTH_FACTOR);
         this.maxRetryDelay = Objects.requireNonNullElse(maxRetryDelay, DEFAULT_MAX_RETRY_DELAY);
@@ -83,6 +87,13 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                 forwardRetryThreadCount, DEFAULT_FORWARD_RETRY_THREAD_COUNT);
         this.livenessCheckInterval = Objects.requireNonNullElse(
                 livenessCheckInterval, DEFAULT_LIVENESS_CHECK_INTERVAL);
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Debug/test setting to add a delay before forwarding. Default is zero. Do not set " +
+                             "this in production.")
+    public StroomDuration getForwardDelay() {
+        return forwardDelay;
     }
 
     @JsonProperty
@@ -113,7 +124,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     @JsonProperty
     @JsonPropertyDescription("The maximum duration between the initial attempt and the last retry. Set to zero " +
                              "for no retires at all. Set to something large like 'PT99999999999999D' " +
-                             "to 'always' retry.")
+                             "to 'always' retry. Default is 7 days.")
     public StroomDuration getMaxRetryAge() {
         return maxRetryAge;
     }
@@ -204,6 +215,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         return Double.compare(retryDelayGrowthFactor, that.retryDelayGrowthFactor) == 0
                && forwardThreadCount == that.forwardThreadCount
                && forwardRetryThreadCount == that.forwardRetryThreadCount
+               && Objects.equals(forwardDelay, that.forwardDelay)
                && Objects.equals(retryDelay, that.retryDelay)
                && Objects.equals(maxRetryDelay, that.maxRetryDelay)
                && Objects.equals(maxRetryAge, that.maxRetryAge)
@@ -214,7 +226,9 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
     @Override
     public int hashCode() {
-        return Objects.hash(retryDelay,
+        return Objects.hash(
+                forwardDelay,
+                retryDelay,
                 retryDelayGrowthFactor,
                 maxRetryDelay,
                 maxRetryAge,
@@ -228,7 +242,8 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     @Override
     public String toString() {
         return "ForwardQueueConfig{" +
-               "retryDelay=" + retryDelay +
+               "forwardDelay=" + forwardDelay +
+               ", retryDelay=" + retryDelay +
                ", retryDelayGrowthFactor=" + retryDelayGrowthFactor +
                ", maxRetryDelay=" + maxRetryDelay +
                ", maxRetryAge=" + maxRetryAge +
@@ -245,6 +260,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
     public static class Builder {
 
+        private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
         private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
         private StroomDuration maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
         private double retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
@@ -261,6 +277,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
         private Builder(final ForwardQueueConfig forwardQueueConfig) {
             Objects.requireNonNull(forwardQueueConfig);
+            this.forwardDelay = forwardQueueConfig.forwardDelay;
             this.retryDelay = forwardQueueConfig.retryDelay;
             this.maxRetryDelay = forwardQueueConfig.maxRetryDelay;
             this.retryDelayGrowthFactor = forwardQueueConfig.retryDelayGrowthFactor;
@@ -270,6 +287,11 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             this.forwardThreadCount = forwardQueueConfig.forwardThreadCount;
             this.forwardRetryThreadCount = forwardQueueConfig.forwardRetryThreadCount;
             this.livenessCheckInterval = forwardQueueConfig.livenessCheckInterval;
+        }
+
+        public Builder forwardDelay(final StroomDuration forwardDelay) {
+            this.forwardDelay = forwardDelay;
+            return this;
         }
 
         public Builder retryDelay(final StroomDuration retryDelay) {
@@ -319,6 +341,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
         public ForwardQueueConfig build() {
             return new ForwardQueueConfig(
+                    forwardDelay,
                     retryDelay,
                     retryDelayGrowthFactor,
                     maxRetryDelay,

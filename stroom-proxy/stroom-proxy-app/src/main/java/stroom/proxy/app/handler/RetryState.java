@@ -6,20 +6,27 @@ import java.time.Instant;
 
 record RetryState(long firstAttemptEpochMs,
                   long lastAttemptEpochMs,
-                  int attempts) {
+                  short attempts) {
 
-    public static final int TOTAL_BYTES = Long.BYTES + Long.BYTES + Integer.BYTES;
+    public static final int TOTAL_BYTES = Long.BYTES + Long.BYTES + Short.BYTES;
+    public static final int MAX_ATTEMPTS = Short.MAX_VALUE;
+
+    RetryState {
+        if (lastAttemptEpochMs < firstAttemptEpochMs) {
+            throw new IllegalArgumentException("lastAttemptEpochMs is before firstAttemptEpochMs");
+        }
+    }
 
     public static RetryState initial() {
         final long nowMs = System.currentTimeMillis();
-        return new RetryState(nowMs, nowMs, 1);
+        return new RetryState(nowMs, nowMs, (short) 1);
     }
 
     public RetryState cloneAndUpdate() {
-        return new RetryState(
-                firstAttemptEpochMs,
-                System.currentTimeMillis(),
-                attempts + 1);
+        final short newAttempts = attempts < Short.MAX_VALUE
+                ? (short) (attempts + 1)
+                : attempts;
+        return new RetryState(firstAttemptEpochMs, System.currentTimeMillis(), newAttempts);
     }
 
     static RetryState deserialise(final byte[] bytes) {
@@ -28,28 +35,31 @@ record RetryState(long firstAttemptEpochMs,
     }
 
     static RetryState deserialise(final ByteBuffer byteBuffer) {
+
         return new RetryState(
                 byteBuffer.getLong(),
                 byteBuffer.getLong(),
-                byteBuffer.getInt());
+                byteBuffer.getShort());
     }
 
     byte[] serialise() {
         final ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[TOTAL_BYTES]);
-        byteBuffer.putLong(firstAttemptEpochMs);
-        byteBuffer.putLong(lastAttemptEpochMs);
-        byteBuffer.putInt(attempts);
+        serialise(byteBuffer);
         return byteBuffer.array();
     }
 
     void serialise(final ByteBuffer byteBuffer) {
         byteBuffer.putLong(firstAttemptEpochMs);
         byteBuffer.putLong(lastAttemptEpochMs);
-        byteBuffer.putInt(attempts);
+        byteBuffer.putShort(attempts);
     }
 
     Duration getTimeSinceFirstAttempt() {
         return Duration.between(Instant.ofEpochMilli(firstAttemptEpochMs), Instant.now());
+    }
+
+    boolean hasReachMaxAttempts() {
+        return attempts == Short.MAX_VALUE;
     }
 
     @Override
