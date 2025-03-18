@@ -53,7 +53,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignedTo;
     @UiField
-    Label assignYourself; 
+    Label assignYourself;
     @UiField
     Label group;
     @UiField
