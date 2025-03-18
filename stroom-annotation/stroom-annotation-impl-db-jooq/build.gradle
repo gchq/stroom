@@ -40,7 +40,14 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'annotation|annotation_data_link|annotation_entry|annotation_group|annotation_tag|annotation_tag_link'
+                        includes = "" +
+                                "annotation|" +
+                                "annotation_data_link|" +
+                                "annotation_entry|" +
+                                "annotation_tag|" +
+                                "annotation_tag_link|" +
+                                "annotation_link|" +
+                                "annotation_subscription"
                         // We don't want to include flyway versioning
                         excludes = 'annotation_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
@@ -51,7 +58,6 @@ jooq {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
                                         '.*\\.annotation\\.deleted|' +
-                                        '.*\\.annotation_group\\.deleted|' +
                                         '.*\\.annotation_tag\\.deleted|'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'

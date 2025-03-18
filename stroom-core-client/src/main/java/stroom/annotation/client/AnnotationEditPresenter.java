@@ -873,6 +873,7 @@ public class AnnotationEditPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
 //                    .popupSize(popupSize)
                 .caption("Set Retention Period")
+                .modal()
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     e.hide();
@@ -891,12 +892,15 @@ public class AnnotationEditPresenter
 
     @Override
     public void onDelete() {
-        ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok ->
+        ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok -> {
+            if (ok) {
                 annotationResourceClient.delete(annotationRef, result -> {
                     if (result) {
                         CloseContentTabEvent.fire(this, parent);
                     }
-                }, this));
+                }, this);
+            }
+        });
     }
 
     public void setInitialComment(final String initialComment) {

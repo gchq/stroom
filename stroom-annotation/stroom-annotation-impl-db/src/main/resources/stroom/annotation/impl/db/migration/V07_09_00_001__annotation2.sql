@@ -17,24 +17,15 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-CREATE TABLE IF NOT EXISTS annotation_group (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  uuid                  varchar(255) NOT NULL,
-  name                  varchar(255) NOT NULL,
-  deleted               tinyint NOT NULL DEFAULT '0',
-  PRIMARY KEY           (id),
-  UNIQUE KEY            `annotation_group_name_idx` (`name`),
-  UNIQUE KEY            `annotation_group_uuid_idx` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 CREATE TABLE IF NOT EXISTS annotation_tag (
   id                    int(11) NOT NULL AUTO_INCREMENT,
   uuid                  varchar(255) NOT NULL,
+  type                  tinyint NOT NULL,
   name                  varchar(255) NOT NULL,
-  colour                varchar(255) NOT NULL,
+  colour                varchar(255) DEFAULT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY           (id),
-  UNIQUE KEY            `annotation_tag_name_idx` (`name`),
+  UNIQUE KEY            `annotation_tag_type_name_idx` (`type`, `name`),
   UNIQUE KEY            `annotation_tag_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -46,6 +37,25 @@ CREATE TABLE IF NOT EXISTS annotation_tag_link (
   UNIQUE KEY            fk_annotation_id_fk_annotation_tag_id (fk_annotation_id, fk_annotation_tag_id),
   CONSTRAINT            annotation_tag_link_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id),
   CONSTRAINT            annotation_tag_link_fk_annotation_tag_id FOREIGN KEY (fk_annotation_tag_id) REFERENCES annotation_tag (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS annotation_link (
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
+  fk_annotation_src_id  bigint(20) NOT NULL,
+  fk_annotation_dst_id  bigint(20) NOT NULL,
+  PRIMARY KEY           (id),
+  UNIQUE KEY            fk_annotation_src_id_fk_annotation_dst_id (fk_annotation_src_id, fk_annotation_dst_id),
+  CONSTRAINT            annotation_link_fk_annotation_src_id FOREIGN KEY (fk_annotation_src_id) REFERENCES annotation (id),
+  CONSTRAINT            annotation_link_fk_annotation_dst_id FOREIGN KEY (fk_annotation_dst_id) REFERENCES annotation (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS annotation_subscription (
+  id                    bigint(20) NOT NULL AUTO_INCREMENT,
+  fk_annotation_id      bigint(20) NOT NULL,
+  user_uuid             varchar(255) NOT NULL,
+  PRIMARY KEY           (id),
+  UNIQUE KEY            fk_annotation_id_user_uuid (fk_annotation_id, user_uuid),
+  CONSTRAINT            annotation_subscription_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS V07_09_00_001_annotation;
@@ -129,21 +139,6 @@ BEGIN
     END IF;
 
     --
-    -- Add group id
-    --
-    SELECT COUNT(1)
-    INTO object_count
-    FROM information_schema.columns
-    WHERE table_schema = database()
-    AND table_name = 'annotation'
-    AND column_name = 'group_id';
-
-    IF object_count = 0 THEN
-        ALTER TABLE `annotation`
-        ADD COLUMN `group_id` int(11) DEFAULT NULL;
-    END IF;
-
-    --
     -- Add parent id
     --
     SELECT COUNT(1)
@@ -192,6 +187,60 @@ BEGIN
 
     IF object_count = 0 THEN
         ALTER TABLE `annotation_entry` ADD COLUMN `deleted` tinyint NOT NULL DEFAULT '0';
+    END IF;
+
+    --
+    -- Remove status
+    --
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.columns
+    WHERE table_schema = database()
+    AND table_name = 'annotation'
+    AND column_name = 'status';
+
+    IF object_count > 0 THEN
+        INSERT INTO annotation_tag (uuid, type, name, colour, deleted)
+        SELECT uuid(), 0, status, "", 0
+        FROM annotation
+        WHERE status NOT IN (SELECT name FROM annotation_tag WHERE type = 0)
+        GROUP BY status;
+
+        INSERT INTO annotation_tag_link (fk_annotation_id, fk_annotation_tag_id)
+        SELECT a.id, at.id
+        FROM annotation a
+        JOIN annotation_tag at ON (a.status = at.name AND at.type = 0)
+        WHERE a.id NOT IN (SELECT fk_annotation_id FROM annotation_tag_link);
+
+        ALTER TABLE `annotation` DROP COLUMN `status`;
+    END IF;
+
+    --
+    -- Remove comment
+    --
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.columns
+    WHERE table_schema = database()
+    AND table_name = 'annotation'
+    AND column_name = 'comment';
+
+    IF object_count > 0 THEN
+        ALTER TABLE `annotation` DROP COLUMN `comment`;
+    END IF;
+
+    --
+    -- Remove history
+    --
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.columns
+    WHERE table_schema = database()
+    AND table_name = 'annotation'
+    AND column_name = 'history';
+
+    IF object_count > 0 THEN
+        ALTER TABLE `annotation` DROP COLUMN `history`;
     END IF;
 
 END $$

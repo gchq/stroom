@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:annotation="urn:import:stroom.annotation.client">
     <g:FlowPanel styleName="annotationContainer">
         <g:FlowPanel styleName="annotationTop">
             <g:FlowPanel addStyleNames="annotationTitleContainer">
@@ -23,7 +24,7 @@
                         <g:FlowPanel ui:field="buttons" styleName="annotationButtons">
                             <b:Button ui:field="create" addStyleNames="allow-focus Button--contained-primary"
                                       text="Create" width="200px"/>
-                            <b:Button ui:field="commentIcon" addStyleNames="allow-focus" text="Choose Comment"
+                            <b:Button ui:field="commentButton" addStyleNames="allow-focus" text="Choose Comment"
                                       width="200px"/>
                         </g:FlowPanel>
                     </g:FlowPanel>
@@ -31,32 +32,36 @@
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min dock-container-vertical annotationRight">
                 <g:FlowPanel styleName="max form annotationSetting">
-                    <form:FormGroup identity="annotationStatus" label="Status">
-                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                            <g:Label ui:field="status" styleName="annotationLabel"/>
-                            <b:InlineSvgButton ui:field="statusIcon" title="Change Status"/>
-                        </g:FlowPanel>
-                    </form:FormGroup>
-                    <form:FormGroup identity="annotationAssignedTo" label="Assigned To">
-                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                            <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
-                            <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
-                            </g:Label>
-                            <b:InlineSvgButton ui:field="assignedToIcon" title="Change Assigned To"/>
-                        </g:FlowPanel>
-                    </form:FormGroup>
-                    <form:FormGroup identity="annotationGroup" label="Group">
-                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                            <g:Label ui:field="group" styleName="annotationLabel"/>
-                            <b:InlineSvgButton ui:field="groupIcon" title="Change Group"/>
-                        </g:FlowPanel>
-                    </form:FormGroup>
-                    <form:FormGroup identity="annotationRetentionPeriod" label="Retain">
-                        <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                            <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
-                            <b:InlineSvgButton ui:field="retentionPeriodIcon" title="Change Retention Period"/>
-                        </g:FlowPanel>
-                    </form:FormGroup>
+                    <annotation:SettingBlock ui:field="statusBlock" title="Change Status">
+                        <form:FormGroup identity="annotationStatus" label="Status">
+                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                                <g:Label ui:field="status" styleName="annotationLabel"/>
+                            </g:FlowPanel>
+                        </form:FormGroup>
+                    </annotation:SettingBlock>
+                    <annotation:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
+                        <form:FormGroup identity="annotationAssignedTo" label="Assigned To">
+                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                                <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
+                                <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
+                                </g:Label>
+                            </g:FlowPanel>
+                        </form:FormGroup>
+                    </annotation:SettingBlock>
+                    <annotation:SettingBlock ui:field="annotationGroupBlock" title="Change Group">
+                        <form:FormGroup identity="annotationGroup" label="Group">
+                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                                <g:Label ui:field="group" styleName="annotationLabel"/>
+                            </g:FlowPanel>
+                        </form:FormGroup>
+                    </annotation:SettingBlock>
+                    <annotation:SettingBlock ui:field="annotationRetentionPeriodBlock" title="Change Retention Period">
+                        <form:FormGroup identity="annotationRetentionPeriod" label="Retain">
+                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                                <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
+                            </g:FlowPanel>
+                        </form:FormGroup>
+                    </annotation:SettingBlock>
                     <g:SimplePanel styleName="annotationDelete">
                         <b:Button ui:field="delete" addStyleNames="allow-focus Button--contained-secondary"
                                   text="Delete Annotation"/>
