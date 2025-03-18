@@ -27,6 +27,7 @@ public class MockForwardFileDestination implements ForwardFileDestination {
     public MockForwardFileDestination() {
         try {
             this.storeDir = Files.createTempDirectory("test");
+            LOGGER.info("Creating {} with storeDir {}", this.getClass().getSimpleName(), storeDir);
 
             // Initialise the store id.
             final long maxId = DirUtil.getMaxDirId(storeDir);
