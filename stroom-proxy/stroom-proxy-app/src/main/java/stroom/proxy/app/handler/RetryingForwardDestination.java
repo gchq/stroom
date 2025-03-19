@@ -320,10 +320,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                                        + " Adding to retry queue.");
                 } else {
                     // If we exceeded the max number of retries then move the data to the failure destination.
-                    failureDestination.add(dir);
-                    LOGGER.error(() -> msgSupplier.get()
-                                       + " Will not retry, moving to failure destination "
-                                       + failureDestination.getStoreDir());
+                    moveToFailureDestination(dir, msgSupplier);
                 }
             }
         } catch (final Throwable t) {
@@ -331,6 +328,22 @@ public class RetryingForwardDestination implements ForwardDestination {
         }
         // Failed, return false.
         return false;
+    }
+
+    private void moveToFailureDestination(final Path dir, final Supplier<String> msgSupplier) {
+        final Path retryStateFile = getRetryStateFile(dir);
+        try {
+            FileUtil.deleteFile(retryStateFile);
+        } catch (Exception e) {
+            // Only deleting as it is no longer needed. The error.log file contains info about each attempt
+            // and retry.state is binary. Thus, we don't really care if we can't delete it.
+            LOGGER.debug("Unable to delete retry state file {}: {}",
+                    retryStateFile, LogUtil.exceptionMessage(e), e);
+        }
+        failureDestination.add(dir);
+        LOGGER.error(() -> msgSupplier.get()
+                           + " Will not retry, moving to failure destination "
+                           + failureDestination.getStoreDir());
     }
 
     private void addToRetryQueue(final Path dir) {
