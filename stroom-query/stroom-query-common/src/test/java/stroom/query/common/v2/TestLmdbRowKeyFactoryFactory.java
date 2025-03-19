@@ -79,9 +79,9 @@ public class TestLmdbRowKeyFactoryFactory {
 //        final ByteBuffer parentKey = keyFactory.create(0, null, storedValues);
 //        final ByteBuffer key = keyFactory.create(1, parentKey, storedValues);
 //        final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //        keyFactory.makeUnique(lmdbKV);
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //    }
 //
 //    @Test
@@ -98,9 +98,9 @@ public class TestLmdbRowKeyFactoryFactory {
 //        final ByteBuffer parentKey = keyFactory.create(0, null, storedValues);
 //        final ByteBuffer key = keyFactory.create(1, parentKey, storedValues);
 //        final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //        keyFactory.makeUnique(lmdbKV);
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //    }
 //
 //
@@ -108,9 +108,9 @@ public class TestLmdbRowKeyFactoryFactory {
 //        final StoredValues storedValues = new StoredValues(new Object[]{ValLong.create(100L), ValLong.create(100L)});
 //        final ByteBuffer key = keyFactory.create(0, null, storedValues);
 //        final LmdbKV lmdbKV = new LmdbKV(null, key, ByteBuffer.allocateDirect(0));
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //        keyFactory.makeUnique(lmdbKV);
-//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.getRowKey()));
+//        System.out.println(ByteBufferUtils.byteBufferToString(lmdbKV.key()));
 //    }
 
     private void testNonTimeGroupedChildKeyRange(final LmdbRowKeyFactory keyFactory) {

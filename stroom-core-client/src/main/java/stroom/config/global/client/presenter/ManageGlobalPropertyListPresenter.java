@@ -21,6 +21,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
@@ -125,6 +126,11 @@ public class ManageGlobalPropertyListPresenter
         dataProvider.setListUpdater(this::refreshTable);
     }
 
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
     private void resetLocalState() {
         refreshAllNodesTimer.reset();
         updateChildMapsTimer.reset();
@@ -138,7 +144,8 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshTable(final Range range) {
 
-        criteria.setPageRequest(new PageRequest(range.getStart(), range.getLength()));
+        CriteriaUtil.setRange(criteria, range);
+        CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
 
         resetLocalState();
 
@@ -391,7 +398,6 @@ public class ManageGlobalPropertyListPresenter
                 750);
 
         DataGridUtil.addEndColumn(dataGrid);
-        DataGridUtil.addColumnSortHandler(dataGrid, criteria, this::refresh);
     }
 
     public ButtonView addButton(final Preset preset) {

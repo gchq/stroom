@@ -59,10 +59,8 @@ class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<
 
     @Override
     public DocumentationDoc fetch(final String uuid) {
-        final DocumentationDoc documentationDoc = documentResourceHelperProvider.get()
+        return documentResourceHelperProvider.get()
                 .read(documentationStoreProvider.get(), getDocRef(uuid));
-
-        return documentationDoc;
     }
 
     @Override
@@ -89,9 +87,9 @@ class DocumentationResourceImpl implements DocumentationResource, FetchWithUuid<
         }
 
         final ResourceKey resourceKey = resourceStoreProvider.get().createTempFile("dictionary.txt");
-        final Path file = resourceStoreProvider.get().getTempFile(resourceKey);
+        final Path tempFile = resourceStoreProvider.get().getTempFile(resourceKey);
         try {
-            Files.writeString(file, documentationDoc.getData(), StreamUtil.DEFAULT_CHARSET);
+            Files.writeString(tempFile, documentationDoc.getData(), StreamUtil.DEFAULT_CHARSET);
         } catch (final IOException e) {
             LOGGER.error("Unable to download Dictionary", e);
             throw new UncheckedIOException(e);

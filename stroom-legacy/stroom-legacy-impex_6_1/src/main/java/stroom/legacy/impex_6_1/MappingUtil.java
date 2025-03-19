@@ -343,6 +343,7 @@ public final class MappingUtil {
                 value.getWidth(),
                 value.isVisible(),
                 value.isSpecial(),
+                null,
                 null);
     }
 

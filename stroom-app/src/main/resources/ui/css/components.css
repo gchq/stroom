@@ -2431,3 +2431,45 @@ button.main-menu svg {
 .permissionDetails {
     overflow-y: scroll;
 }
+
+.ColumnValuesFilterViewImpl {
+    min-width: 200px;
+    max-width: 600px;
+    min-height: 200px;
+    max-height: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--control__padding--vertical);
+}
+
+.ColumnValuesFilterViewImpl .bar {
+	display: flex;
+    gap: var(--control__padding--horizontal);
+}
+
+.ColumnValuesFilterViewImpl .link {
+	display: inline-block;
+	cursor: pointer;
+	padding: 2px 5px;
+    text-decoration: underline;
+}
+
+.ColumnValuesFilterViewImpl .listContainer {
+    height: 300px;
+}
+
+.columnValueCell {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: var(--row__gap--horizontal);
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
+}
+
+.columnValueCell-text {
+	white-space: nowrap;
+}
+
+.durationSetting {
+    display: flex;
+}

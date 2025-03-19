@@ -84,7 +84,7 @@ public class DataUploadTaskHandler {
                             final Long effectiveMs,
                             final String metaData) {
         securityContext.secure(() -> {
-            taskContext.info(file::toString);
+            taskContext.info(() -> fileName);
             if (feedName == null) {
                 throw new EntityServiceException("Feed not set!");
             }

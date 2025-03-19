@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -75,6 +75,7 @@ class SearchableTaskProgress implements Searchable {
     private final TaskResource taskResource;
     private final SecurityContext securityContext;
     private final ExpressionMatcherFactory expressionMatcherFactory;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     SearchableTaskProgress(final Executor executor,
@@ -82,13 +83,15 @@ class SearchableTaskProgress implements Searchable {
                            final TargetNodeSetFactory targetNodeSetFactory,
                            final TaskResource taskResource,
                            final SecurityContext securityContext,
-                           final ExpressionMatcherFactory expressionMatcherFactory) {
+                           final ExpressionMatcherFactory expressionMatcherFactory,
+                           final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.taskResource = taskResource;
         this.securityContext = securityContext;
         this.expressionMatcherFactory = expressionMatcherFactory;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -114,9 +117,7 @@ class SearchableTaskProgress implements Searchable {
         if (!TASK_MANAGER_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria)
-                .addAll(getFields())
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, getFields());
     }
 
     private List<QueryField> getFields() {

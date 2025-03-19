@@ -5,12 +5,9 @@
 
 package com.google.gwt.user.cellview.client;
 
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.dom.builder.shared.DivBuilder;
 import com.google.gwt.dom.builder.shared.ElementBuilderBase;
 import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
@@ -19,16 +16,12 @@ import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<T>, FooterBuilder<T> {
-
-    private static final SafeHtml ARROW_UP_SAFE_HTML = SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP);
-    private static final SafeHtml ARROW_DOWN_SAFE_HTML = SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN);
 
     private final boolean isFooter;
     private boolean isSortIconStartOfLine = true;
@@ -133,33 +126,6 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
         out.html(sb.toSafeHtml());
     }
 
-    protected final void renderSortableHeader(final ElementBuilderBase<?> out,
-                                              final Cell.Context context,
-                                              final Header<?> header,
-                                              final boolean isSorted,
-                                              final boolean isSortAscending) {
-        if (isSorted && !this.isFooter) {
-            DivBuilder outerDiv = out.startDiv();
-            outerDiv.className("dataGridSortableHeaderOuterDiv");
-
-            DivBuilder nameHolder = outerDiv.startDiv();
-            nameHolder.className("dataGridSortableHeaderNameHolder");
-            this.renderHeader(nameHolder, context, header);
-            nameHolder.endDiv();
-
-            DivBuilder imageHolder = outerDiv.startDiv();
-            imageHolder.className("dataGridSortableHeaderImageHolder");
-
-            imageHolder.html(this.getSortIcon(isSortAscending));
-            imageHolder.endDiv();
-
-            outerDiv.endDiv();
-
-        } else {
-            this.renderHeader(out, context, header);
-        }
-    }
-
     protected final TableRowBuilder startRow() {
         while (this.section.getDepth() > 1) {
             this.section.end();
@@ -210,12 +176,6 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
 
     private String getHeaderId(final Element elem) {
         return this.getElementAttribute(elem, "__gwt_header");
-    }
-
-    private SafeHtml getSortIcon(final boolean isAscending) {
-        return isAscending
-                ? ARROW_UP_SAFE_HTML
-                : ARROW_DOWN_SAFE_HTML;
     }
 
 

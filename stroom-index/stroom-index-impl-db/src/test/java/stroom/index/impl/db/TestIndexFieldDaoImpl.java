@@ -7,8 +7,11 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
+import stroom.index.shared.AddField;
+import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.UpdateField;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.LambdaLogger;
@@ -24,9 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -35,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static stroom.db.util.JooqUtil.count;
 import static stroom.index.impl.db.jooq.tables.IndexField.INDEX_FIELD;
 import static stroom.index.impl.db.jooq.tables.IndexFieldSource.INDEX_FIELD_SOURCE;
@@ -55,17 +57,17 @@ class TestIndexFieldDaoImpl {
             .name("bar")
             .build();
 
-    private static final IndexField FIELD_1 = IndexFieldImpl.builder()
+    private static final IndexFieldImpl FIELD_1 = IndexFieldImpl.builder()
             .fldName("ID")
             .fldType(FieldType.ID)
             .analyzerType(AnalyzerType.NUMERIC)
             .build();
-    private static final IndexField FIELD_2 = IndexFieldImpl.builder()
+    private static final IndexFieldImpl FIELD_2 = IndexFieldImpl.builder()
             .fldName("Name")
             .fldType(FieldType.TEXT)
             .analyzerType(AnalyzerType.ALPHA_NUMERIC)
             .build();
-    private static final IndexField FIELD_3 = IndexFieldImpl.builder()
+    private static final IndexFieldImpl FIELD_3 = IndexFieldImpl.builder()
             .fldName("State")
             .fldType(FieldType.BOOLEAN)
             .analyzerType(AnalyzerType.KEYWORD)
@@ -77,7 +79,7 @@ class TestIndexFieldDaoImpl {
     IndexDbConnProvider indexDbConnProvider;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         final Injector injector = Guice.createInjector(
                 new IndexDbModule(),
                 new IndexDaoModule(),
@@ -126,40 +128,36 @@ class TestIndexFieldDaoImpl {
 
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        CompletableFuture.runAsync(() -> {
-            JooqUtil.context(indexDbConnProvider, context -> {
-                try {
-                    startLatch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        CompletableFuture.runAsync(() -> JooqUtil.context(indexDbConnProvider, context -> {
+            try {
+                startLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
-                final Record1<Integer> rec = context.select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
-                        .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
-                        .fetchOne();
+            final Record1<Integer> rec = context
+                    .select(INDEX_FIELD_SOURCE.ID)
+                    .from(INDEX_FIELD_SOURCE)
+                    .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
+                    .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
+                    .fetchOne();
 
-                final Integer id = rec.get(INDEX_FIELD_SOURCE.ID);
+            final Integer id = rec.get(INDEX_FIELD_SOURCE.ID);
+            LOGGER.info("id {}", id);
+        }));
 
-                LOGGER.info("id {}", id);
-            });
-        });
+        CompletableFuture.runAsync(() -> JooqUtil.context(indexDbConnProvider, context -> {
+            context.select(INDEX_FIELD_SOURCE.ID)
+                    .from(INDEX_FIELD_SOURCE)
+                    .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
+                    .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
+                    .forUpdate()
+                    .fetch();
+            LOGGER.info("Done lock");
+            startLatch.countDown();
 
-        CompletableFuture.runAsync(() -> {
-            JooqUtil.context(indexDbConnProvider, context -> {
-                context.select(INDEX_FIELD_SOURCE.ID)
-                        .from(INDEX_FIELD_SOURCE)
-                        .where(INDEX_FIELD_SOURCE.UUID.eq(DOC_REF_1.getUuid()))
-                        .and(INDEX_FIELD_SOURCE.TYPE.eq(DOC_REF_1.getType()))
-                        .forUpdate()
-                        .fetch();
-                LOGGER.info("Done lock");
-                startLatch.countDown();
-
-                ThreadUtil.sleepIgnoringInterrupts(5_000);
-            });
-        }).get();
+            ThreadUtil.sleepIgnoringInterrupts(5_000);
+        })).get();
     }
 
     /**
@@ -171,10 +169,8 @@ class TestIndexFieldDaoImpl {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        JooqUtil.context(indexDbConnProvider, context -> {
-            assertThat(count(context, INDEX_FIELD))
-                    .isEqualTo(0);
-        });
+        JooqUtil.context(indexDbConnProvider, context -> assertThat(count(context, INDEX_FIELD))
+                .isEqualTo(0));
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < threads; i++) {
@@ -225,11 +221,60 @@ class TestIndexFieldDaoImpl {
                 .isEqualTo(1);
     }
 
+    @Test
+    void addUpdateDeleteFields() {
+        List<IndexField> fields = getFields(DOC_REF_1);
+        assertThat(fields.size())
+                .isEqualTo(0);
+
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_1));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(1);
+        assertThatThrownBy(() -> indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_1)))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(1);
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_2));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(2);
+        indexFieldDao.updateField(new UpdateField(DOC_REF_1, FIELD_1.getFldName(), FIELD_3));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(2);
+        assertThatThrownBy(() -> indexFieldDao.updateField(new UpdateField(DOC_REF_1, FIELD_3.getFldName(), FIELD_2)))
+                .isInstanceOf(RuntimeException.class);
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(2);
+        indexFieldDao.deleteField(new DeleteField(DOC_REF_1, FIELD_3.getFldName()));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(1);
+        indexFieldDao.deleteField(new DeleteField(DOC_REF_1, FIELD_1.getFldName()));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(1);
+    }
+
+    @Test
+    void textDeleteAll() {
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(0);
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_1));
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_2));
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_3));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(3);
+        indexFieldDao.deleteAll(DOC_REF_1);
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(0);
+    }
+
+    @Test
+    void textCopyAll() {
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(0);
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_1));
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_2));
+        indexFieldDao.addField(new AddField(DOC_REF_1, FIELD_3));
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(3);
+
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_2)).isEqualTo(0);
+        indexFieldDao.copyAll(DOC_REF_1, DOC_REF_2);
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_1)).isEqualTo(3);
+        assertThat(indexFieldDao.getFieldCount(DOC_REF_2)).isEqualTo(3);
+    }
+
     private List<IndexField> getFields(final DocRef docRef) {
         final ResultPage<IndexField> resultPage = indexFieldDao.findFields(
                 new FindFieldCriteria(
                         new PageRequest(),
-                        Collections.emptyList(),
+                        FindFieldCriteria.DEFAULT_SORT_LIST,
                         docRef));
         return resultPage.getValues();
     }

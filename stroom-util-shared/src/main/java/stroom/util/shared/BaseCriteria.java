@@ -85,6 +85,10 @@ public abstract class BaseCriteria {
         }
     }
 
+    public void setSortList(final List<CriteriaFieldSort> sortList) {
+        this.sortList = sortList;
+    }
+
     public void setSort(final String field) {
         setSort(new CriteriaFieldSort(field, false, false));
     }
@@ -111,12 +115,6 @@ public abstract class BaseCriteria {
             sortList = new ArrayList<>();
         }
         sortList.add(sort);
-    }
-
-    public void removeSorts() {
-        if (sortList != null) {
-            sortList.clear();
-        }
     }
 
     public List<CriteriaFieldSort> getSortList() {
@@ -194,14 +192,6 @@ public abstract class BaseCriteria {
 
         public B sortList(final List<CriteriaFieldSort> sortList) {
             this.sortList = sortList;
-            return self();
-        }
-
-        public B addSort(final CriteriaFieldSort sort) {
-            if (sortList == null) {
-                sortList = new ArrayList<>();
-            }
-            sortList.add(sort);
             return self();
         }
     }

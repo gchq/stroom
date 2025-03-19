@@ -44,6 +44,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
 
     String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
     String SEARCH_PATH_PART = "/search";
+    String COLUMN_VALUES_PATH_PART = "/columnValues";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
@@ -114,5 +115,24 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     default DashboardSearchResponse search(
             @Parameter(description = "request", required = true) DashboardSearchRequest request) {
         return search(null, request);
+    }
+
+    @POST
+    @Path(COLUMN_VALUES_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Get unique column values so the user can filter table results more easily",
+            operationId = "getColumnValues")
+    ColumnValues getColumnValues(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "request", required = true) ColumnValuesRequest request);
+
+    @POST
+    @Path(COLUMN_VALUES_PATH_PART)
+    @Operation(
+            summary = "Get unique column values so the user can filter table results more easily",
+            operationId = "getColumnValues")
+    default ColumnValues getColumnValues(
+            @Parameter(description = "request", required = true) ColumnValuesRequest request) {
+        return getColumnValues(null, request);
     }
 }

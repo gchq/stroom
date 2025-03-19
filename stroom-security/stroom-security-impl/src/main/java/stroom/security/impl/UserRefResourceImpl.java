@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.UserService;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -40,5 +41,11 @@ public class UserRefResourceImpl implements UserRefResource {
                 .map(User::asRef)
                 .toList();
         return new ResultPage<>(list, userResultPage.getPageResponse());
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public UserRef getUserByUuid(final String uuid) {
+        return userServiceProvider.get().getUserByUuid(uuid);
     }
 }

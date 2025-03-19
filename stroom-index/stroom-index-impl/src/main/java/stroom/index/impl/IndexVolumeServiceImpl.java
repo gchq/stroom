@@ -328,7 +328,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
                         ? ""
                         : i.getNodeName())
-                .collect(Collectors.toList());
+                .toList();
         indexVolume.setNodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
                 : indexVolume.getNodeName());

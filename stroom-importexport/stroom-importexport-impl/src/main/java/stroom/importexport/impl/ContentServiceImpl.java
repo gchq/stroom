@@ -36,9 +36,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
@@ -83,7 +83,7 @@ class ContentServiceImpl implements ContentService {
         return securityContext.secureResult(AppPermission.IMPORT_CONFIGURATION, () -> {
             try {
                 // Import file.
-                final Path file = resourceStore.getTempFile(request.getResourceKey());
+                final Path tempFile = resourceStore.getTempFile(request.getResourceKey());
 
                 //            boolean foundOneAction = false;
                 //            for (final ImportState importState : confirmList) {
@@ -96,8 +96,8 @@ class ContentServiceImpl implements ContentService {
                 //                return resourceKey;
                 //            }
 
-                final List<ImportState> result =
-                        importExportService.importConfig(file, request.getImportSettings(), request.getConfirmList());
+                final List<ImportState> result = importExportService
+                        .importConfig(tempFile, request.getImportSettings(), request.getConfirmList());
 
                 if (!ImportMode.CREATE_CONFIRMATION.equals(request.getImportSettings().getImportMode())) {
                     // Delete the import if it was successful
@@ -135,17 +135,17 @@ class ContentServiceImpl implements ContentService {
 
         return securityContext.secureResult(AppPermission.EXPORT_CONFIGURATION, () -> {
             final ResourceStore resourceStore = this.resourceStore;
-            final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
-            final Path file = resourceStore.getTempFile(guiKey);
-            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), file);
+            final ResourceKey resourceKey = resourceStore.createTempFile("StroomConfig.zip");
+            final Path tempFile = resourceStore.getTempFile(resourceKey);
+            final ExportSummary exportSummary = importExportService.exportConfig(docRefs.getDocRefs(), tempFile);
             final List<Message> messageList = exportSummary.getMessages();
 
-            return new ResourceGeneration(guiKey, messageList);
+            return new ResourceGeneration(resourceKey, messageList);
         });
     }
 
     @Override
-    public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
     }
 
@@ -201,7 +201,7 @@ class ContentServiceImpl implements ContentService {
                 .map(docType -> Tuple.of(docType,
                         Objects.requireNonNullElse(exportSummary.getSuccessCountsByType().get(docType), 0),
                         Objects.requireNonNullElse(exportSummary.getFailedCountsByType().get(docType), 0)))
-                .collect(Collectors.toList());
+                .toList();
 
         final String typeCountsText = AsciiTable.builder(tableData)
                 .withColumn(Column.of("Type", Tuple3::_1))

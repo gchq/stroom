@@ -94,12 +94,12 @@ public class RowUtil {
         return formatters;
     }
 
-    static ValueFunctionFactories<Val[]> createColumnIdValExtractors(final List<Column> newColumns) {
+    public static ValueFunctionFactories<Val[]> createColumnIdValExtractors(final List<Column> newColumns) {
         // Create the field position map for the new columns.
         final Map<String, ValueFunctionFactory<Val[]>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {
             final Column column = newColumns.get(i);
-            fieldPositionMap.put(column.getId(), new ValFunctionFactory(column, i));
+            fieldPositionMap.put(column.getId(), new ValArrayFunctionFactory(column, i));
         }
         return fieldPositionMap::get;
     }
@@ -109,7 +109,7 @@ public class RowUtil {
         final Map<String, ValueFunctionFactory<Val[]>> fieldPositionMap = new HashMap<>();
         for (int i = 0; i < newColumns.size(); i++) {
             final Column column = newColumns.get(i);
-            fieldPositionMap.put(column.getName(), new ValFunctionFactory(column, i));
+            fieldPositionMap.put(column.getName(), new ValArrayFunctionFactory(column, i));
         }
         return fieldPositionMap::get;
     }

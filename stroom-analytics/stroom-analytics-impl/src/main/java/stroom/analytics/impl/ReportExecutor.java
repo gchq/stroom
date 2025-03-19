@@ -118,7 +118,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                           final NodeInfo nodeInfo,
                           final SecurityContext securityContext,
                           final ExecutionScheduleDao executionScheduleDao,
-                          final DuplicateCheckDirs duplicateCheckDirs,
                           final Provider<DocRefInfoService> docRefInfoServiceProvider,
                           final ReportStore reportStore,
                           final ResultStoreManager searchResponseCreatorManager,
@@ -138,7 +137,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 nodeInfo,
                 securityContext,
                 executionScheduleDao,
-                duplicateCheckDirs,
                 docRefInfoServiceProvider,
                 "report");
         this.reportStore = reportStore;
@@ -282,9 +280,12 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 LOGGER.error(e2::getMessage, e2);
             }
 
-            // Disable future execution.
-            LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
-            executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            // Disable future execution if the error was not an interrupted exception.
+            if (!(e instanceof InterruptedException)) {
+                // Disable future execution.
+                LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            }
 
         } finally {
             // Record the execution.
@@ -295,6 +296,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         }
 
         return success;
+    }
+
+    @Override
+    void postExecuteTidyUp(final List<ReportDoc> analyticDocs) {
+        // Nothing to do
     }
 
     private Path createFile(final ReportDoc reportDoc,
@@ -390,7 +396,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         String fileName = baseName;
         fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
         fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
-        fileName = fileName.replace(" ", "_");
+        fileName = fileName.replace(' ', '_');
         fileName = fileName + "." + extension;
         return fileName;
     }

@@ -25,6 +25,7 @@ import stroom.planb.impl.db.State.Key;
 import stroom.planb.impl.db.StateDb;
 import stroom.planb.impl.db.StateFields;
 import stroom.planb.impl.db.StateValue;
+import stroom.planb.shared.StateSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -78,9 +79,9 @@ class TestState2 {
     }
 
     private void testReadWrite(final Path tempDir,
-                      final int insertRows,
-                      final Function<Integer, Key> keyFunction,
-                      final Function<Integer, StateValue> valueFunction) {
+                               final int insertRows,
+                               final Function<Integer, Key> keyFunction,
+                               final Function<Integer, StateValue> valueFunction) {
         testWrite(tempDir, insertRows, keyFunction, valueFunction);
         testRead(tempDir, insertRows);
     }
@@ -98,7 +99,7 @@ class TestState2 {
     private void testRead(final Path tempDir,
                           final int expectedRows) {
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final StateDb db = new StateDb(tempDir, byteBufferFactory, false, true)) {
+        try (final StateDb db = new StateDb(tempDir, byteBufferFactory, StateSettings.builder().build(), true)) {
             assertThat(db.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
             final Optional<StateValue> optional = db.get(key);
@@ -112,7 +113,7 @@ class TestState2 {
             fieldIndex.create(StateFields.VALUE_TYPE);
             fieldIndex.create(StateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,

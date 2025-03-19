@@ -16,12 +16,12 @@
 
 package stroom.contentindex;
 
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
+import stroom.explorer.shared.DocContentHighlights;
+import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
+import stroom.explorer.shared.StringMatch;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.security.mock.MockSecurityContext;
@@ -127,7 +127,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
         assertThat(highlights.getHighlights().size()).isEqualTo(expectedHighlightCount);
         assertThat(TEXT.substring(highlights.getHighlights().getFirst().getOffset(),
                 highlights.getHighlights().getFirst().getOffset() +
-                        highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
+                highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
     }
 
     private DocContentHighlights test(final StringMatch stringMatch) {

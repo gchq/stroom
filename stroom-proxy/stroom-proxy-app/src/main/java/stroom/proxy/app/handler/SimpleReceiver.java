@@ -99,7 +99,7 @@ public class SimpleReceiver implements Receiver {
                         // Deal with GZIP compression.
                         final InputStream in;
                         final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-                        if (StandardHeaderArguments.COMPRESSION_GZIP.equals(compression)) {
+                        if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
                             in = new GzipCompressorInputStream(bufferedInputStream);
                         } else {
                             in = bufferedInputStream;

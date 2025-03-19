@@ -25,7 +25,6 @@ import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @AutoLogged
 public class UserResourceImpl implements UserResource {
@@ -116,13 +115,13 @@ public class UserResourceImpl implements UserResource {
                 .withDefaultEventAction(CreateEventAction.builder()
                         .withObjects(NullSafe.stream(externalUsers)
                                 .map(StroomEventLoggingUtil::createUser)
-                                .collect(Collectors.toList()))
+                                .toList())
                         .build())
                 .withSimpleLoggedResult(() -> {
                     final UserService userService = userServiceProvider.get();
                     return NullSafe.stream(externalUsers)
                             .map(userService::getOrCreateUser)
-                            .collect(Collectors.toList());
+                            .toList();
                 })
                 .getResultAndLog();
     }

@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
 
@@ -42,6 +41,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private final CollectionService collectionService;
     private final DocRefInfoService docRefInfoService;
     private final boolean useName;
+    private final boolean fieldIsCaseSensitive;
 
     TermHandler(final QueryField dataSourceField,
                 final Field<T> field,
@@ -49,7 +49,8 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 final WordListProvider wordListProvider,
                 final CollectionService collectionService,
                 final DocRefInfoService docRefInfoService,
-                final boolean useName) {
+                final boolean useName,
+                final boolean fieldIsCaseSensitive) {
         this.dataSourceField = dataSourceField;
         this.field = field;
         this.converter = converter;
@@ -57,13 +58,60 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         this.collectionService = collectionService;
         this.docRefInfoService = docRefInfoService;
         this.useName = useName;
+        this.fieldIsCaseSensitive = fieldIsCaseSensitive;
     }
 
     @Override
     public Condition apply(final ExpressionTerm term) {
         switch (term.getCondition()) {
-            case EQUALS, CONTAINS -> {
+            case EQUALS -> {
+                // TODO : Currently equality is used for wild carding with `*` but should probably use the
+                //  `MATCHES_REGEX` condition.
+                //  Also `is null` is being assumed if the value is null when we probably want to change this to
+                //  use the `IS_NULL` condition. Keeping this the same for now to reduce the change of breaking
+                //  backward compatibility.
                 return eq(term);
+
+//                if (fieldIsCaseSensitive) {
+//                    if (term.getValue() != null) {
+//                        return field.equalIgnoreCase(term.getValue());
+//                    }
+//                } else {
+//                    return getCondition(term, field::eq);
+//                }
+            }
+            case EQUALS_CASE_SENSITIVE -> {
+                return getCondition(term, field::eq);
+            }
+            case CONTAINS -> {
+                if (fieldIsCaseSensitive) {
+                    return getCondition(term, field::containsIgnoreCase);
+                } else {
+                    return getCondition(term, field::contains);
+                }
+            }
+            case CONTAINS_CASE_SENSITIVE -> {
+                return getCondition(term, field::contains);
+            }
+            case STARTS_WITH -> {
+                if (fieldIsCaseSensitive) {
+                    return getCondition(term, field::startsWithIgnoreCase);
+                } else {
+                    return getCondition(term, field::startsWith);
+                }
+            }
+            case STARTS_WITH_CASE_SENSITIVE -> {
+                return getCondition(term, field::startsWith);
+            }
+            case ENDS_WITH -> {
+                if (fieldIsCaseSensitive) {
+                    return getCondition(term, field::endsWithIgnoreCase);
+                } else {
+                    return getCondition(term, field::endsWith);
+                }
+            }
+            case ENDS_WITH_CASE_SENSITIVE -> {
+                return getCondition(term, field::endsWith);
             }
             case NOT_EQUALS -> {
                 return neq(term);
@@ -79,28 +127,16 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 }
             }
             case GREATER_THAN -> {
-                final List<T> value = getValues(term.getValue());
-                if (value.size() == 1) {
-                    return field.greaterThan(value.getFirst());
-                }
+                return getSingleValue(term.getValue()).map(field::greaterThan).orElse(DSL.falseCondition());
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
-                final List<T> value = getValues(term.getValue());
-                if (value.size() == 1) {
-                    return field.greaterOrEqual(value.getFirst());
-                }
+                return getSingleValue(term.getValue()).map(field::greaterOrEqual).orElse(DSL.falseCondition());
             }
             case LESS_THAN -> {
-                final List<T> value = getValues(term.getValue());
-                if (value.size() == 1) {
-                    return field.lessThan(value.getFirst());
-                }
+                return getSingleValue(term.getValue()).map(field::lessThan).orElse(DSL.falseCondition());
             }
             case LESS_THAN_OR_EQUAL_TO -> {
-                final List<T> value = getValues(term.getValue());
-                if (value.size() == 1) {
-                    return field.lessOrEqual(value.getFirst());
-                }
+                return getSingleValue(term.getValue()).map(field::lessOrEqual).orElse(DSL.falseCondition());
             }
             case IN -> {
                 final String value = NullSafe.get(term.getValue(), String::trim);
@@ -109,7 +145,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     final List<String> partsList = Arrays.stream(parts)
                             .map(String::trim)
                             .filter(part -> !part.isEmpty())
-                            .collect(Collectors.toList());
+                            .toList();
                     final List<T> values = getValues(partsList);
                     return field.in(values);
                 } else {
@@ -159,9 +195,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 return field.likeRegex(term.getValue());
             }
             default -> throw new RuntimeException("Unexpected condition '" +
-                    term.getCondition() +
-                    "' for term: " +
-                    term);
+                                                  term.getCondition() +
+                                                  "' for term: " +
+                                                  term);
         }
 
         return DSL.falseCondition();
@@ -180,9 +216,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 final Optional<String> resolvedName = docRefInfoService.name(docRef);
                 if (resolvedName.isEmpty()) {
                     throw new RuntimeException("Unable to find doc with reference '" +
-                            docRef +
-                            "' for term: " +
-                            term.toString());
+                                               docRef +
+                                               "' for term: " +
+                                               term.toString());
                 }
                 return resolvedName.get();
             }
@@ -228,6 +264,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         }
     }
 
+    private Condition getCondition(final ExpressionTerm term,
+                                   final Function<T, Condition> function) {
+        return getSingleValue(term.getValue()).map(function).orElse(DSL.falseCondition());
+    }
+
+    private Optional<T> getSingleValue(final String value) {
+        final List<T> values = converter.apply(NullSafe.singletonList(value));
+        if (values.size() == 1) {
+            return Optional.of(values.getFirst());
+        }
+        return Optional.empty();
+    }
+
     private List<T> getValues(final String value) {
         return converter.apply(NullSafe.singletonList(value));
     }
@@ -258,7 +307,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     final List<String> values = descendants.stream()
                             .map(descendant ->
                                     getDocValue(term, descendant))
-                            .collect(Collectors.toList());
+                            .toList();
                     final Set<T> set = new HashSet<>(converter.apply(values));
                     condition = field.in(set);
                 }

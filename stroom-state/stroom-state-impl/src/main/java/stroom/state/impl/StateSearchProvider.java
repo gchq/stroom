@@ -30,7 +30,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
@@ -76,6 +76,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final TaskManager taskManager;
     private final TaskContextFactory taskContextFactory;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public StateSearchProvider(final Executor executor,
@@ -85,7 +86,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final CoprocessorsFactory coprocessorsFactory,
                                final ResultStoreFactory resultStoreFactory,
                                final TaskManager taskManager,
-                               final TaskContextFactory taskContextFactory) {
+                               final TaskContextFactory taskContextFactory,
+                               final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
         this.stateDocCache = stateDocCache;
@@ -94,6 +96,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.taskManager = taskManager;
         this.taskContextFactory = taskContextFactory;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     private StateDoc getStateDoc(final DocRef docRef) {
@@ -108,10 +111,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
         final StateDoc doc = getStateDoc(criteria.getDataSourceRef());
         final List<QueryField> fields = StateFieldUtil.getQueryableFields(doc.getStateType());
-        return FieldInfoResultPageBuilder
-                .builder(criteria)
-                .addAll(fields)
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, fields);
     }
 
     @Override

@@ -31,6 +31,14 @@ public class RangeStoreKey {
     private final UID mapUid;
     private final Range<Long> keyRange;
 
+    public RangeStoreKey(final UID mapUid, final long from, final long to) {
+        this(mapUid, new Range<>(from, to));
+    }
+
+    public static RangeStoreKey of(final UID mapUid, final long from, final long to) {
+        return new RangeStoreKey(mapUid, from, to);
+    }
+
     public RangeStoreKey(final UID mapUid, final Range<Long> keyRange) {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.keyRange = Objects.requireNonNull(keyRange);
@@ -61,7 +69,7 @@ public class RangeStoreKey {
         }
         final RangeStoreKey that = (RangeStoreKey) o;
         return Objects.equals(mapUid, that.mapUid) &&
-                Objects.equals(keyRange, that.keyRange);
+               Objects.equals(keyRange, that.keyRange);
     }
 
     @Override
@@ -73,8 +81,8 @@ public class RangeStoreKey {
     @Override
     public String toString() {
         return "RangeStoreKey{" +
-                "mapUid=" + mapUid +
-                ", keyRange=" + keyRange +
-                '}';
+               "mapUid=" + mapUid +
+               ", keyRange=" + keyRange +
+               '}';
     }
 }

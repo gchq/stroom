@@ -188,6 +188,11 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     }
 
     @Override
+    public UserRef getUserByUuid(final String uuid) {
+        return userCache.getByUuid(uuid).map(User::asRef).orElse(null);
+    }
+
+    @Override
     public ResultPage<User> findUsersInGroup(final String groupUuid, final FindUserCriteria criteria) {
         // See if the user is allowed to see the requested group.
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {

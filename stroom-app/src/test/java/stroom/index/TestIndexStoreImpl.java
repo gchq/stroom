@@ -18,14 +18,19 @@
 package stroom.index;
 
 
+import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.shared.PageRequest;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +44,8 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private IndexStore indexStore;
+    @Inject
+    private IndexFieldService indexFieldService;
 
     private DocRef testIndex;
     private DocRef refIndex;
@@ -63,19 +70,16 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         assertThat(list.size()).isEqualTo(2);
 
         assertThat(list.stream()
-                .filter(docRef ->
-                        docRef.getName().equals("Test index"))
+                .filter(docRef -> docRef.getName().equals("Test index"))
                 .count())
                 .isEqualTo(1);
         assertThat((int) list.stream()
-                .filter(docRef ->
-                        docRef.getName().equals("Ref index"))
+                .filter(docRef -> docRef.getName().equals("Ref index"))
                 .count())
                 .isEqualTo(1);
 
         final LuceneIndexDoc index = indexStore.readDocument(list.stream()
-                .filter(docRef ->
-                        docRef.getName().equals("Test index"))
+                .filter(docRef -> docRef.getName().equals("Test index"))
                 .findFirst()
                 .orElseThrow());
 
@@ -89,7 +93,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                            <field>
                               <analyzerType>KEYWORD</analyzerType>
                               <caseSensitive>false</caseSensitive>
-                              <fieldName>StreamId</fieldName>
+                              <fieldName>EventId</fieldName>
                               <fieldType>ID</fieldType>
                               <indexed>true</indexed>
                               <stored>true</stored>
@@ -98,7 +102,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                            <field>
                               <analyzerType>KEYWORD</analyzerType>
                               <caseSensitive>false</caseSensitive>
-                              <fieldName>EventId</fieldName>
+                              <fieldName>StreamId</fieldName>
                               <fieldType>ID</fieldType>
                               <indexed>true</indexed>
                               <stored>true</stored>
@@ -124,9 +128,16 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                            </field>
                         </fields>
                         """;
-        final List<LuceneIndexField> indexFields = MappingUtil.map(
-                LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
-        assertThat(index.getFields()).isEqualTo(indexFields);
+        final List<IndexField> indexFields = MappingUtil
+                .map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml))
+                .stream()
+                .map(indexField -> (IndexField) new IndexFieldImpl.Builder(indexField).build())
+                .sorted()
+                .toList();
+        final FindFieldCriteria findFieldCriteria =
+                new FindFieldCriteria(PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, index.asDocRef());
+        final List<IndexField> stored = indexFieldService.findFields(findFieldCriteria).getValues();
+        assertThat(stored).isEqualTo(indexFields);
     }
 
     @Test
@@ -140,7 +151,6 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     void testClientSideStuff1() {
         LuceneIndexDoc index = indexStore.readDocument(refIndex);
         indexStore.writeDocument(index);
-
     }
 
     @Test

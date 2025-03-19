@@ -8,11 +8,43 @@
   "partitionSize" : 1,
   "shardsPerPartition" : 1,
   "fields" : [ {
-    "fldName" : "StreamId",
-    "fldType" : "ID",
+    "fldName" : "AirCargoTons",
+    "fldType" : "LONG",
+    "analyzerType" : "NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "Arrival_Departure",
+    "fldType" : "TEXT",
+    "analyzerType" : "ALPHA",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "CargoType",
+    "fldType" : "TEXT",
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "DataExtractDate",
+    "fldType" : "DATE",
     "analyzerType" : "KEYWORD",
     "indexed" : true,
-    "stored" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
+  }, {
+    "fldName" : "Domestic_International",
+    "fldType" : "TEXT",
+    "analyzerType" : "ALPHA",
+    "indexed" : true,
+    "stored" : false,
     "termPositions" : false,
     "caseSensitive" : false
   }, {
@@ -40,14 +72,6 @@
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fldName" : "DataExtractDate",
-    "fldType" : "DATE",
-    "analyzerType" : "KEYWORD",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
     "fldName" : "ReportPeriod",
     "fldType" : "DATE",
     "analyzerType" : "KEYWORD",
@@ -56,35 +80,11 @@
     "termPositions" : false,
     "caseSensitive" : false
   }, {
-    "fldName" : "Arrival_Departure",
-    "fldType" : "TEXT",
-    "analyzerType" : "ALPHA",
+    "fldName" : "StreamId",
+    "fldType" : "ID",
+    "analyzerType" : "KEYWORD",
     "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "Domestic_International",
-    "fldType" : "TEXT",
-    "analyzerType" : "ALPHA",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "CargoType",
-    "fldType" : "TEXT",
-    "analyzerType" : "ALPHA_NUMERIC",
-    "indexed" : true,
-    "stored" : false,
-    "termPositions" : false,
-    "caseSensitive" : false
-  }, {
-    "fldName" : "AirCargoTons",
-    "fldType" : "LONG",
-    "analyzerType" : "NUMERIC",
-    "indexed" : true,
-    "stored" : false,
+    "stored" : true,
     "termPositions" : false,
     "caseSensitive" : false
   } ],

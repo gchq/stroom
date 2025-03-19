@@ -31,6 +31,7 @@ public class ColumnBuilder<
     private final Supplier<T_CELL> cellSupplier;
     private boolean isSorted = false;
     private BooleanSupplier isSortableSupplier = () -> false;
+    private boolean isDefaultSortAscending = true;
     private HorizontalAlignmentConstant horizontalAlignment = null;
     private VerticalAlignmentConstant verticalAlignment = null;
     private String fieldName;
@@ -185,6 +186,14 @@ public class ColumnBuilder<
         return this;
     }
 
+    public ColumnBuilder<
+            T_ROW,
+            T_CELL_VAL,
+            T_CELL> defaultSortAscending(final boolean defaultSortAscending) {
+        isDefaultSortAscending = defaultSortAscending;
+        return this;
+    }
+
     private String buildCellStyles(final String baseStyleNames,
                                    final T_ROW object) {
 
@@ -230,6 +239,8 @@ public class ColumnBuilder<
         if (fieldUpdater != null) {
             column.setFieldUpdater(fieldUpdater);
         }
+
+        column.setDefaultSortAscending(isDefaultSortAscending);
 
         return column;
     }

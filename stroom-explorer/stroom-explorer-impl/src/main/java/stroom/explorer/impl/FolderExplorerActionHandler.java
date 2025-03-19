@@ -164,7 +164,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         return explorerTreeDao.findByNames(names, allowWildCards)
                 .stream()
                 .map(ExplorerTreeNode::getDocRef)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

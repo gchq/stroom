@@ -102,10 +102,10 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/SimpleDocuments.xml", indexFields);
 
         assertThat(documents.size()).isEqualTo(3);
-        final IndexDocument doc = documents.get(0);
+        final IndexDocument doc = documents.getFirst();
         final List<FieldValue> list = getFields(doc, "sid2");
         assertThat(list.size()).isOne();
-        final FieldValue fieldValue = list.get(0);
+        final FieldValue fieldValue = list.getFirst();
         final IndexField field = fieldValue.field();
 
 
@@ -209,9 +209,9 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            final LuceneIndexDoc index = indexStore.readDocument(indexRef);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef);
             index.setFields(indexFields);
-            indexStore.writeDocument(index);
+            index = indexStore.writeDocument(index);
 
             // Setup the error handler.
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();

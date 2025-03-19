@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -221,14 +222,16 @@ public class DataRetentionImpactPresenter
         flatNestedToggleButton.setState(isTableNested);
 
         expandAllButton.setEnabled(!isQueryRunning
-                && isTableNested
-                && treeAction.hasCollapsedRows());
+                                   && isTableNested
+                                   && treeAction.hasCollapsedRows());
         collapseAllButton.setEnabled(!isQueryRunning
-                && isTableNested
-                && treeAction.hasExpandedRows());
+                                     && isTableNested
+                                     && treeAction.hasExpandedRows());
     }
 
     private void refreshVisibleData() {
+        CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+
         // Rebuild the rows from the source data, e.g. when sorting has changed
         // or it is toggled from nest/flat
         final List<DataRetentionImpactRow> rows = Optional.ofNullable(this.sourceData)
@@ -280,6 +283,7 @@ public class DataRetentionImpactPresenter
             treeAction.collapseAll();
             refreshVisibleData();
         }));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refreshVisibleData()));
     }
 
     private void openFilterPresenter() {
@@ -392,8 +396,6 @@ public class DataRetentionImpactPresenter
                 150);
 
         DataGridUtil.addEndColumn(dataGrid);
-
-        DataGridUtil.addColumnSortHandler(dataGrid, criteria, this::refreshVisibleData);
     }
 
     public ButtonView addButton(final Preset preset) {

@@ -1,41 +1,14 @@
 package stroom.planb.impl.db;
 
+import stroom.lmdb2.KV;
 import stroom.planb.impl.db.State.Key;
 
 import java.nio.charset.StandardCharsets;
 
-public record State(Key key, StateValue value) implements KV<Key, StateValue> {
+public class State extends KV<Key, StateValue> {
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private Key key;
-        private StateValue value;
-
-        public Builder() {
-        }
-
-        public Builder(final State state) {
-            this.key = state.key;
-            this.value = state.value;
-        }
-
-        public Builder key(final Key key) {
-            this.key = key;
-            return this;
-        }
-
-        public Builder value(final StateValue value) {
-            this.value = value;
-            return this;
-        }
-
-        public State build() {
-            return new State(key, value);
-        }
+    public State(final Key key, final StateValue value) {
+        super(key, value);
     }
 
     public record Key(byte[] bytes) {

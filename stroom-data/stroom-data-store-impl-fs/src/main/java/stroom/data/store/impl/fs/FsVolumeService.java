@@ -735,7 +735,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                                 vol.getVolumeState(),
                                 FsVolumeState::getUpdateTimeMs,
                                 DateUtil::createNormalDateTimeString)))))
-                .collect(Collectors.toList());
+                .toList();
 
         return SystemInfoResult.builder(this)
                 .addDetail("volumeSelector", volumeConfigProvider.get().getVolumeSelector())

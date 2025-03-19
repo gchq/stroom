@@ -49,13 +49,15 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
 
     @Override
     public void release(final ByteBuffer byteBuffer) {
-        if (byteBuffer.capacity() > MAX_CACHED_BUFFER_SIZE) {
-            unmap(byteBuffer);
-        } else {
-            final int exponent = getExponent(byteBuffer.capacity());
-            final Pool pool = pools[exponent];
-            if (!pool.offer(byteBuffer)) {
+        if (byteBuffer != null) {
+            if (byteBuffer.capacity() > MAX_CACHED_BUFFER_SIZE) {
                 unmap(byteBuffer);
+            } else {
+                final int exponent = getExponent(byteBuffer.capacity());
+                final Pool pool = pools[exponent];
+                if (!pool.offer(byteBuffer)) {
+                    unmap(byteBuffer);
+                }
             }
         }
     }

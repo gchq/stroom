@@ -55,7 +55,7 @@ proxyConfig:
       maxConnectionsPerRoute: 1024
       proxy: null
       retries: 0
-      timeToLive: "PT1M"
+      timeToLive: "PT1H"
       timeout: "PT1M"
       tls: null
       userAgent: null

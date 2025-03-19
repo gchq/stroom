@@ -1,10 +1,7 @@
 package stroom.contentindex;
 
-import stroom.docref.StringMatch;
-import stroom.docref.StringMatchLocation;
-import stroom.util.string.StringMatcher;
-
-import org.apache.lucene980.index.IndexReader;
+import stroom.explorer.shared.StringMatch;
+import stroom.explorer.shared.StringMatchLocation;
 
 import java.util.List;
 

@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -472,11 +473,15 @@ class TestValueStoreDb extends AbstractStoreDbTest {
 
         // Ensure entries come back in the right order
         long hash = 123456789;
-        final List<Entry<ValueStoreKey, RefDataValue>> data = List.of(
-                Map.entry(new ValueStoreKey(hash, (short) 0), new StringValue("val1")),
-                Map.entry(new ValueStoreKey(hash, (short) 1), new StringValue("val2")),
-                Map.entry(new ValueStoreKey(hash, (short) 2), new StringValue("val3")),
-                Map.entry(new ValueStoreKey(hash, (short) 3), new StringValue("val4")));
+        final List<Entry<ValueStoreKey, RefDataValue>> data = IntStream.rangeClosed(0, 1001)
+                .boxed()
+                .map(i -> {
+                    return Map.entry(
+                            new ValueStoreKey(hash, Short.parseShort(Integer.toString(i))),
+                            (RefDataValue) new StringValue("val" + i));
+
+                })
+                .toList();
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             data.forEach(entry -> {

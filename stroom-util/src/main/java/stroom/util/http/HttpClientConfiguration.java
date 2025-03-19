@@ -9,6 +9,7 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -76,9 +77,9 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
 
 
     public HttpClientConfiguration() {
-        timeout = StroomDuration.ofMillis(500);
-        connectionTimeout = StroomDuration.ofMillis(500);
-        connectionRequestTimeout = StroomDuration.ofMillis(500);
+        timeout = StroomDuration.ofMinutes(3);
+        connectionTimeout = StroomDuration.ofMinutes(3);
+        connectionRequestTimeout = StroomDuration.ofMinutes(3);
         timeToLive = StroomDuration.ofHours(1);
         cookiesEnabled = false;
         maxConnections = 1024;
@@ -131,6 +132,10 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         this.tlsConfiguration = tlsConfiguration;
     }
 
+    @JsonPropertyDescription("The maximum time a connection will be kept alive before it is reconnected. " +
+                             "If set to 0, connections will be immediately closed after every request/response. " +
+                             "Default: 0")
+    @JsonProperty
     public StroomDuration getKeepAlive() {
         return keepAlive;
     }
@@ -140,16 +145,35 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         return maxConnectionsPerRoute;
     }
 
+    @JsonPropertyDescription("Determines the timeout until arrival of a response from the opposite endpoint. " +
+                             "A timeout value of zero is interpreted as an infinite timeout. " +
+                             "Default: 3 minutes")
     @JsonProperty
     public StroomDuration getTimeout() {
         return timeout;
     }
 
+    @JsonPropertyDescription("Determines the timeout until a new connection is fully established. " +
+                             "This may also include transport security negotiation exchanges such as SSL or TLS " +
+                             "protocol negotiation. " +
+                             "A timeout value of zero is interpreted as an infinite timeout. " +
+                             "Default: 3 minutes")
     @JsonProperty
     public StroomDuration getConnectionTimeout() {
         return connectionTimeout;
     }
 
+    @JsonPropertyDescription("Returns the connection lease request timeout used when requesting a connection from " +
+                             "the connection manager. " +
+                             "Default: 3 minutes")
+    @JsonProperty
+    public StroomDuration getConnectionRequestTimeout() {
+        return connectionRequestTimeout;
+    }
+
+    @JsonPropertyDescription("The maximum time a pooled connection can stay idle (not leased to any thread) " +
+                             "before it is shut down. " +
+                             "Default: 1 hour")
     @JsonProperty
     public StroomDuration getTimeToLive() {
         return timeToLive;
@@ -158,11 +182,6 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
     @JsonProperty
     public boolean isCookiesEnabled() {
         return cookiesEnabled;
-    }
-
-    @JsonProperty
-    public StroomDuration getConnectionRequestTimeout() {
-        return connectionRequestTimeout;
     }
 
     @JsonProperty

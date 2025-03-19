@@ -21,7 +21,7 @@ html,body {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	background: white;
+	background: transparent;
 	color: var(--text-color);
 	direction: ltr;
 
@@ -644,7 +644,6 @@ select option:disabled {
 }
 
 .info-page {
-	background-color: var(--page__background-color);
 	color: var(--text-color);
 	padding: 5px;
 	padding-top: 0;

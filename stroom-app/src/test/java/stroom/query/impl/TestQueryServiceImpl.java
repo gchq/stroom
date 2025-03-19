@@ -52,7 +52,8 @@ class TestQueryServiceImpl {
                 null,
                 null,
                 null,
-                new ExpressionPredicateFactory(null));
+                new ExpressionPredicateFactory(),
+                null);
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)

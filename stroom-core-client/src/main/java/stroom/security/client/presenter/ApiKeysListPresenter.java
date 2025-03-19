@@ -3,7 +3,7 @@ package stroom.security.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -140,6 +140,12 @@ public class ApiKeysListPresenter
 //        });
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
     public MultiSelectionModelImpl<HashedApiKey> getSelectionModel() {
         return selectionModel;
     }
@@ -249,8 +255,6 @@ public class ApiKeysListPresenter
 //    }
 
     private void initTableColumns() {
-        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
-
 //        final Column<HashedApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
 //                        (HashedApiKey row) ->
 //                                TickBoxState.fromBoolean(selection.isMatch(row.getId())),
@@ -315,6 +319,7 @@ public class ApiKeysListPresenter
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
+        dataGrid.sort(expiresOnColumn);
 
         // Hash algorithm
         final Column<HashedApiKey, String> hashAlgorithmColumn = DataGridUtil.textColumnBuilder(
@@ -350,7 +355,6 @@ public class ApiKeysListPresenter
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
 
-        dataGrid.getColumnSortList().push(expiresOnColumn);
         DataGridUtil.addEndColumn(dataGrid);
     }
 
@@ -370,7 +374,8 @@ public class ApiKeysListPresenter
                 .parse(filter, FindApiKeyCriteria.DEFAULT_FIELDS, FindApiKeyCriteria.ALL_FIELDs_MAP);
 
         criteriaBuilder.expression(expression);
-        criteriaBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+        criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
+        criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
         restFactory
                 .create(API_KEY_RESOURCE)

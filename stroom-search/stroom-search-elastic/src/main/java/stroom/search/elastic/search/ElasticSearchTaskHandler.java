@@ -349,7 +349,7 @@ public class ElasticSearchTaskHandler {
         if (docField.size() > 1) {
             return docField.stream()
                     .map(this::jsonValueToNative)
-                    .collect(Collectors.toList());
+                    .toList();
         } else {
             return jsonValueToNative(docField.get(0));
         }

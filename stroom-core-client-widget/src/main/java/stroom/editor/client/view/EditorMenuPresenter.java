@@ -24,6 +24,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public class EditorMenuPresenter {
         }
     }
 
-    private Item createItem(final String text, final Command command, final int position) {
+    private Item createItem(final SafeHtml text, final Command command, final int position) {
         return new IconMenuItem.Builder()
                 .priority(position)
                 .text(text)

@@ -195,7 +195,7 @@ public class GenerateProxyConfigProvidersModule {
         final String simpleClassName = clazz.getSimpleName();
         // Fix the name for nested classes
         final String fullClassName = clazz.getName()
-                .replace("$", ".");
+                .replace('$', '.');
 
         simpleNameToFullNamesMap.computeIfAbsent(simpleClassName, k -> new ArrayList<>())
                 .add(fullClassName);

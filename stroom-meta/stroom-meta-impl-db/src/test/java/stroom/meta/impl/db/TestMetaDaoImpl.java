@@ -332,7 +332,7 @@ class TestMetaDaoImpl {
                     .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                     .orderBy(meta.ID)
                     .stream()
-                    .collect(Collectors.toList());
+                    .toList();
 
             LOGGER.debug("meta rows:\n{}",
                     AsciiTable.builder(metaRows)
@@ -1023,7 +1023,7 @@ class TestMetaDaoImpl {
                 .extracting(SimpleMeta::getId)
                 .containsExactlyElementsOf(LongStream.rangeClosed(minId, maxId)
                         .boxed()
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     @Test
@@ -1040,7 +1040,7 @@ class TestMetaDaoImpl {
                 .extracting(SimpleMeta::getId)
                 .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
                         .boxed()
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     @Test
@@ -1058,7 +1058,7 @@ class TestMetaDaoImpl {
                 .extracting(SimpleMeta::getId)
                 .containsExactlyElementsOf(LongStream.range(minId, minId + 5)
                         .boxed()
-                        .collect(Collectors.toList()));
+                        .toList());
     }
 
     @Test
@@ -1109,7 +1109,7 @@ class TestMetaDaoImpl {
         assertThat(ids)
                 .containsExactlyInAnyOrderElementsOf(LongStream.range(metaMinId, metaMinId + 40)
                         .boxed()
-                        .collect(Collectors.toList()));
+                        .toList());
 
         assertThat(inputIds.containsAll(ids))
                 .isTrue();

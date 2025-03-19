@@ -260,11 +260,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
     private SearchRequest addCurrentUserParam(final SearchRequest searchRequest) {
-        // Add a param for `currentUser()`
         final List<Param> params = NullSafe.mutableList(searchRequest.getQuery().getParams());
-
         final UserRef userRef = securityContext.getUserRef();
+        params.add(new Param(ParamKeys.CURRENT_USER_UUID, userRef.getUuid()));
         params.add(new Param(ParamKeys.CURRENT_USER, userRef.toDisplayString()));
+        if (userRef.getDisplayName() != null) {
+            params.add(new Param(ParamKeys.CURRENT_USER_DISPLAY_NAME, userRef.getDisplayName()));
+        }
         if (userRef.getSubjectId() != null) {
             params.add(new Param(ParamKeys.CURRENT_USER_SUBJECT_ID, userRef.getSubjectId()));
         }
@@ -512,7 +514,8 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         try {
             return completableFuture.get();
         } catch (final InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
+            return false;
         }
     }
 

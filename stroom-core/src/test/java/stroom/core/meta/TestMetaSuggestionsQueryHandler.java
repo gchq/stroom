@@ -6,6 +6,7 @@ import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
@@ -23,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
 class TestMetaSuggestionsQueryHandler {
@@ -137,7 +137,7 @@ class TestMetaSuggestionsQueryHandler {
     private List<String> doFeedNameTest(final Set<String> metaFeedNames, final Set<String> storeFeedNames) {
         final MetaSuggestionsQueryHandlerImpl queryHandler = new MetaSuggestionsQueryHandlerImpl(
                 metaService, pipelineStore, securityContext, feedStore, taskContextFactory, docRefInfoService,
-                suggestionsService);
+                suggestionsService, new ExpressionPredicateFactory());
 
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
@@ -151,7 +151,7 @@ class TestMetaSuggestionsQueryHandler {
         Mockito.when(feedStore.list())
                 .thenReturn(storeFeedNames.stream()
                         .map(name -> DocRef.builder().name(name).build())
-                        .collect(Collectors.toList()));
+                        .toList());
 
         return queryHandler.getSuggestions(request).getList();
     }

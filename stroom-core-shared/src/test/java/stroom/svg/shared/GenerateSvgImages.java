@@ -168,7 +168,7 @@ public class GenerateSvgImages {
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
-                                                 + enumFieldName.toLowerCase().replace("_", "-");
+                                + enumFieldName.toLowerCase().replace('_', '-');
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);
                         if (!isNewName) {
                             System.err.println("Enum field name clash: " + enumFieldName);

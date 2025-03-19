@@ -12,7 +12,7 @@ import stroom.event.logging.api.ThreadLocalLogState;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.QuickFilterResultPage;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
@@ -50,7 +50,7 @@ class ActivityResourceImpl implements ActivityResource {
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
-    public QuickFilterResultPage<Activity> list(final String filter) {
+    public ResultPage<Activity> list(final String filter) {
         final boolean loggingRequired = !Strings.isNullOrEmpty(filter);
         ThreadLocalLogState.setLogged(!loggingRequired);
 
@@ -66,10 +66,10 @@ class ActivityResourceImpl implements ActivityResource {
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
-                    final QuickFilterResultPage<Activity> result = activityServiceProvider.get().find(filter);
+                    final ResultPage<Activity> result = activityServiceProvider.get().find(filter);
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
-                            .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
+                            .withQuery(buildRawQuery(filter))
                             .withResultPage(StroomEventLoggingUtil.createResultPage(result))
                             .withTotalResults(BigInteger.valueOf(result.size()))
                             .build();

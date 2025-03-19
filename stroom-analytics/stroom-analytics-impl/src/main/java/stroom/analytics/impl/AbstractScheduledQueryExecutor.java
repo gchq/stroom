@@ -24,7 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -70,7 +69,6 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final ExecutionScheduleDao executionScheduleDao;
-    private final DuplicateCheckDirs duplicateCheckDirs;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final String processType;
 
@@ -80,7 +78,6 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                                    final NodeInfo nodeInfo,
                                    final SecurityContext securityContext,
                                    final ExecutionScheduleDao executionScheduleDao,
-                                   final DuplicateCheckDirs duplicateCheckDirs,
                                    final Provider<DocRefInfoService> docRefInfoServiceProvider,
                                    final String processType) {
         this.executorProvider = executorProvider;
@@ -89,7 +86,6 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
-        this.duplicateCheckDirs = duplicateCheckDirs;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.processType = processType;
     }
@@ -99,9 +95,6 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             info(() -> "Starting scheduled " + processType + " processing");
-
-            // Start by finding a set of UUIDs for existing rule checking stores.
-            final List<String> duplicateStoreDirs = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
             // Load rules.
             final List<T> docs = loadScheduledRules();
@@ -123,8 +116,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             // Join.
             workQueue.join();
 
-            // Delete unused duplicate stores.
-            duplicateCheckDirs.deleteUnused(duplicateStoreDirs, docs);
+            postExecuteTidyUp(docs);
 
             info(() ->
                     LogUtil.message("Finished scheduled {} processing in {}", processType, logExecutionTime));
@@ -137,6 +129,13 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                     LogUtil.message("Error during scheduled {} processing: {}", processType, e.getMessage()), e);
         }
     }
+
+    /**
+     * Called at the end of execution to perform any tidy up operations.
+     *
+     * @param analyticDocs The list of all known analyticDocs for this executor.
+     */
+    abstract void postExecuteTidyUp(final List<T> analyticDocs);
 
     private Runnable createRunnable(final T doc,
                                     final TaskContext parentTaskContext) {
@@ -162,7 +161,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                 .builder()
                 .ownerDocRef(docRef)
                 .enabled(true)
-                .nodeName(StringMatch.equals(nodeInfo.getThisNodeName(), true))
+                .nodeName(nodeInfo.getThisNodeName())
                 .build();
 
         final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);

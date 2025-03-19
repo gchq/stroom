@@ -45,7 +45,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
@@ -103,6 +103,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final TaskContextFactory taskContextFactory;
     private final UserQueryRegistry userQueryRegistry;
     private final TaskManager taskManager;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
@@ -116,7 +117,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
                     final UserQueryRegistry userQueryRegistry,
-                    final TaskManager taskManager) {
+                    final TaskManager taskManager,
+                    final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
         this.metaValueDao = metaValueDao;
@@ -129,6 +131,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.taskContextFactory = taskContextFactory;
         this.userQueryRegistry = userQueryRegistry;
         this.taskManager = taskManager;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -318,7 +321,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         if (!MetaFields.STREAM_STORE_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getAllFields()).build();
+        return fieldInfoResultPageFactory.create(criteria, MetaFields.getAllFields());
     }
 
     @Override

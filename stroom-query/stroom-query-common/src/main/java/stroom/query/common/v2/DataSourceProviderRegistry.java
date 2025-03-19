@@ -65,7 +65,7 @@ public class DataSourceProviderRegistry {
                     criteria.getPageRequest(),
                     criteria.getSortList(),
                     docRef,
-                    criteria.getStringMatch(),
+                    criteria.getFilter(),
                     criteria.getQueryable());
 
             return getDataSourceProvider(docRef.getType())

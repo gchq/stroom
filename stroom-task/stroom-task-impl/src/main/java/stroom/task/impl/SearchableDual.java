@@ -20,13 +20,15 @@ import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +45,13 @@ public class SearchableDual implements Searchable {
 
     private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+
+    @Inject
+    public SearchableDual(final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+    }
+
     @Override
     public String getDataSourceType() {
         return DOC_REF.getType();
@@ -58,7 +67,7 @@ public class SearchableDual implements Searchable {
         if (!DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria).addAll(FIELDS).build();
+        return fieldInfoResultPageFactory.create(criteria, FIELDS);
     }
 
     @Override

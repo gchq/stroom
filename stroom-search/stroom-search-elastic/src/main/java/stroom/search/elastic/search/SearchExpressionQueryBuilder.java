@@ -47,7 +47,6 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -218,7 +217,7 @@ public class SearchExpressionQueryBuilder {
                     return BoolQuery.of(q -> q
                             .should(terms.stream()
                                     .map(term -> buildQueryFn.apply(fieldName, term))
-                                    .collect(Collectors.toList()))
+                                    .toList())
                     )._toQuery();
                 } else {
                     return buildQueryFn.apply(fieldName, expression);
@@ -295,7 +294,7 @@ public class SearchExpressionQueryBuilder {
             case IN -> {
                 fieldValues = tokenizeExpression(rawValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
-                        .collect(Collectors.toList());
+                        .toList();
                 return QueryBuilders
                         .terms(q -> q
                                 .field(fieldName)
@@ -332,7 +331,7 @@ public class SearchExpressionQueryBuilder {
             case BETWEEN -> {
                 fieldValues = tokenizeExpression(rawValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
-                        .collect(Collectors.toList());
+                        .toList();
                 if (fieldValues.size() != 2) {
                     throw new IllegalArgumentException(
                             "Two values needed for between query. Only " + fieldValues.size() + " provided");

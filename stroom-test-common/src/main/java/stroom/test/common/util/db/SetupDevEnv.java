@@ -275,8 +275,8 @@ public class SetupDevEnv {
             }
             // Make the name friendly for use as a db name
             dbName = dbName
-                    .replace(".", "_")
-                    .replace("-", "_");
+                    .replace('.', '_')
+                    .replace('-', '_');
             dbName = "stroom_" + dbName;
             return dbName;
         }

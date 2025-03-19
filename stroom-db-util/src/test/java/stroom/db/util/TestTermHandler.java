@@ -257,7 +257,8 @@ class TestTermHandler {
                 wordListProviderMock,
                 collectionServiceMock,
                 docRefInfoServiceMock,
-                useName);
+                useName,
+                false);
     }
 
     TermHandler<Long> getIdTermHandler(final boolean useName) {
@@ -268,6 +269,7 @@ class TestTermHandler {
                 wordListProviderMock,
                 collectionServiceMock,
                 docRefInfoServiceMock,
-                useName);
+                useName,
+                false);
     }
 }

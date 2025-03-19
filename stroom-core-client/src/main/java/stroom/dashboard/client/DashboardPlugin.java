@@ -167,25 +167,26 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
         if (source != null && SourceType.DASHBOARD_UI.equals(source.getSourceType())) {
             final DocRef docRef = source.getOwnerDocRef();
+            if (docRef != null) {
+                // If the item isn't already open but we are forcing it open then,
+                // create a new presenter and register it as open.
+                final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
+                presenter.setResultStoreInfo(resultStoreInfo);
 
-            // If the item isn't already open but we are forcing it open then,
-            // create a new presenter and register it as open.
-            final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
-            presenter.setResultStoreInfo(resultStoreInfo);
-
-            // Load the document and show the tab.
-            final CloseContentEvent.Handler closeHandler = event -> {
-                // Tell the presenter we are closing.
-                presenter.onClose();
-                // Actually close the tab.
-                event.getCallback().closeTab(true);
-            };
-            showDocument(docRef,
-                    presenter,
-                    closeHandler,
-                    presenter,
-                    false,
-                    new DefaultTaskMonitorFactory(this));
+                // Load the document and show the tab.
+                final CloseContentEvent.Handler closeHandler = event -> {
+                    // Tell the presenter we are closing.
+                    presenter.onClose();
+                    // Actually close the tab.
+                    event.getCallback().closeTab(true);
+                };
+                showDocument(docRef,
+                        presenter,
+                        closeHandler,
+                        presenter,
+                        false,
+                        new DefaultTaskMonitorFactory(this));
+            }
         }
     }
 

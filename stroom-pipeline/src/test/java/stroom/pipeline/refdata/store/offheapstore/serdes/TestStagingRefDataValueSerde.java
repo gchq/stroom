@@ -15,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.bytebuffer.ByteBufferUtils.compare;
 
 @Disabled  // TODO: 21/04/2023 Delete class
 class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue, StagingRefDataValueSerde> {
@@ -37,8 +36,7 @@ class TestStagingRefDataValueSerde extends AbstractSerdeTest<StagingRefDataValue
 
         FastInfosetValue fastInfosetValue2 = (FastInfosetValue) stagingRefDataValue2.getRefDataValue();
 
-        assertThat(compare(fastInfosetValue.getByteBuffer(), fastInfosetValue2.getByteBuffer()))
-                .isZero();
+        assertThat(fastInfosetValue.getByteBuffer()).isEqualTo(fastInfosetValue2.getByteBuffer());
 
         // Pass in null to getValueHashCode, so we know the hash is a stored one, rather than generated on the fly
         assertThat(stagingRefDataValue2)

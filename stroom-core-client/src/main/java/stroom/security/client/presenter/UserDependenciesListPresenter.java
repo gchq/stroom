@@ -1,6 +1,7 @@
 package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
@@ -81,6 +82,11 @@ public class UserDependenciesListPresenter
     }
 
     @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
     public void onFilterChange(final String text) {
         filter = GwtNullSafe.trim(text);
         if (filter.isEmpty()) {
@@ -117,6 +123,7 @@ public class UserDependenciesListPresenter
                     // TODO fix fields
                     ExpressionOperator expression = QuickFilterExpressionParser
                             .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
+                    criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
                     restFactory
                             .create(USER_RESOURCE)
@@ -146,8 +153,6 @@ public class UserDependenciesListPresenter
     }
 
     private void setupColumns() {
-        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
-
         // Doc type icon col
 //        dataGrid.addColumn(
 //                DataGridUtil.svgPresetColumnBuilder(
@@ -185,6 +190,7 @@ public class UserDependenciesListPresenter
                         .withToolTip("The document that depends on this user.")
                         .build(),
                 ColumnSizeConstants.BIG_COL);
+        dataGrid.sort(docNameCol);
 
         // Details col
         dataGrid.addAutoResizableColumn(
@@ -197,6 +203,5 @@ public class UserDependenciesListPresenter
                 700);
 
         DataGridUtil.addEndColumn(dataGrid);
-        dataGrid.getColumnSortList().push(docNameCol);
     }
 }

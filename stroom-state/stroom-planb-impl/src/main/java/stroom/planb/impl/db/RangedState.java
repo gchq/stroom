@@ -1,39 +1,12 @@
 package stroom.planb.impl.db;
 
+import stroom.lmdb2.KV;
 import stroom.planb.impl.db.RangedState.Key;
 
-public record RangedState(Key key, StateValue value) implements KV<Key, StateValue> {
+public class RangedState extends KV<Key, StateValue> {
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-
-        private Key key;
-        private StateValue value;
-
-        public Builder() {
-        }
-
-        public Builder(final RangedState state) {
-            this.key = state.key;
-            this.value = state.value;
-        }
-
-        public Builder key(final Key key) {
-            this.key = key;
-            return this;
-        }
-
-        public Builder value(final StateValue value) {
-            this.value = value;
-            return this;
-        }
-
-        public RangedState build() {
-            return new RangedState(key, value);
-        }
+    public RangedState(final Key key, final StateValue value) {
+        super(key, value);
     }
 
     public record Key(long keyStart, long keyEnd) {

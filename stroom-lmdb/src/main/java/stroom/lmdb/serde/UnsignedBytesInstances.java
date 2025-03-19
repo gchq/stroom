@@ -75,6 +75,21 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         return INSTANCES[len];
     }
 
+    public static UnsignedBytes forValue(final long value) {
+        if (value <= 0) {
+            throw new IllegalArgumentException("Non positive values are not allowed");
+        }
+
+        for (int i = 1; i < INSTANCES.length; i++) {
+            final UnsignedBytes unsignedBytes = INSTANCES[i];
+            if (unsignedBytes.maxValue() >= value) {
+                return unsignedBytes;
+            }
+        }
+
+        throw new IllegalArgumentException("Unable to find appropriate unsigned bytes size");
+    }
+
     @Override
     public byte[] toBytes(final long val) {
         if (len == 0 && val == 0) {
@@ -108,6 +123,17 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
             final int shift = (len - i - 1) * 8;
             destByteBuffer.put((byte) (val >> shift));
         }
+    }
+
+    @Override
+    public void put(final ByteBuffer destByteBuffer, final int index, final long val) {
+        validateValue(val);
+        int idx = index;
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            destByteBuffer.put(idx++, (byte) (val >> shift));
+        }
+
     }
 
     @Override
@@ -165,7 +191,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
                         // Every byte is FF so we can't increment anymore
                         throw new IllegalArgumentException(
                                 "Can't increment without overflowing. Maximum value is "
-                                        + ModelStringUtil.formatCsv(maxVal));
+                                + ModelStringUtil.formatCsv(maxVal));
                     }
                     // Byte rolls around to zero and we need to carry over to the next one
                     byteBuffer.put(i, (byte) 0x00);

@@ -650,6 +650,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.security.common.impl.ContentSecurityConfig getContentSecurityConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.common.impl.ContentSecurityConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.security.identity.config.EmailConfig getEmailConfig2(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -708,15 +717,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.AuthorisationConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.security.impl.ContentSecurityConfig getContentSecurityConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.security.impl.ContentSecurityConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

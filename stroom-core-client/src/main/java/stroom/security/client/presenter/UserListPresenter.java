@@ -19,7 +19,7 @@ package stroom.security.client.presenter;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.PageRequestUtil;
+import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -123,9 +123,12 @@ public class UserListPresenter
         userListView.setUiHandlers(this);
     }
 
-    private void setupColumns() {
-        DataGridUtil.addColumnSortHandler(dataGrid, criteriaBuilder, this::refresh);
+    @Override
+    protected void onBind() {
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
 
+    private void setupColumns() {
         if (showEnabledCol) {
             dataGrid.addColumn(
                     DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(User::isEnabled))
@@ -219,6 +222,7 @@ public class UserListPresenter
                         .withToolTip(displayNameTooltip)
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
+        dataGrid.sort(displayNameCol);
 
 //        final Column<User, User> displayNameCol = DataGridUtil.columnBuilder(
 //                        Function.identity(),
@@ -295,7 +299,6 @@ public class UserListPresenter
                 ColumnSizeConstants.ICON_COL + 10);
 
         DataGridUtil.addEndColumn(dataGrid);
-        dataGrid.getColumnSortList().push(displayNameCol);
     }
 
     private boolean isExternalIdp() {
@@ -417,7 +420,8 @@ public class UserListPresenter
                             .build();
                 }
                 criteriaBuilder.expression(expression);
-                criteriaBuilder.pageRequest(PageRequestUtil.createPageRequest(range));
+                criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
+                criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                 restFactory
                         .create(USER_RESOURCE)
                         .method(res -> res.find(criteriaBuilder.build()))

@@ -263,12 +263,12 @@ public class LuceneIndexField implements IndexField {
         }
         final LuceneIndexField that = (LuceneIndexField) o;
         return indexed == that.indexed &&
-                stored == that.stored &&
-                termPositions == that.termPositions &&
-                caseSensitive == that.caseSensitive &&
-                Objects.equals(fldName, that.fldName) &&
-                fldType == that.fldType &&
-                analyzerType == that.analyzerType;
+               stored == that.stored &&
+               termPositions == that.termPositions &&
+               caseSensitive == that.caseSensitive &&
+               Objects.equals(fldName, that.fldName) &&
+               fldType == that.fldType &&
+               analyzerType == that.analyzerType;
     }
 
     @Override
@@ -309,6 +309,16 @@ public class LuceneIndexField implements IndexField {
         private boolean caseSensitive;
 
         private Builder() {
+        }
+
+        public Builder(final IndexField indexField) {
+            this.fldName = indexField.getFldName();
+            this.fldType = indexField.getFldType();
+            this.analyzerType = indexField.getAnalyzerType();
+            this.indexed = indexField.isIndexed();
+            this.stored = indexField.isStored();
+            this.termPositions = indexField.isTermPositions();
+            this.caseSensitive = indexField.isCaseSensitive();
         }
 
         private Builder(final LuceneIndexField indexField) {

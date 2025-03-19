@@ -1,6 +1,6 @@
 package stroom.util.client;
 
-import stroom.docref.StringMatchLocation;
+import stroom.explorer.shared.StringMatchLocation;
 import stroom.util.shared.TextRange;
 
 import org.junit.jupiter.api.Test;

@@ -18,7 +18,7 @@ package stroom.widget.tab.client.view;
 
 import com.google.gwt.user.client.ui.Widget;
 
-abstract class AbstractTabSelector extends Widget {
+public abstract class AbstractTabSelector extends Widget {
 
     public abstract void setText(String text);
 

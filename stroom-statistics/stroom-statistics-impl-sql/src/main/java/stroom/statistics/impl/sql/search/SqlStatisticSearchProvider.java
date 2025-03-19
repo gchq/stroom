@@ -27,7 +27,7 @@ import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
@@ -74,6 +74,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final Statistics statistics;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     public SqlStatisticSearchProvider(final StatisticStoreStore statisticStoreStore,
@@ -86,7 +87,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                                       final UiConfig clientConfig,
                                       final CoprocessorsFactory coprocessorsFactory,
                                       final ResultStoreFactory resultStoreFactory,
-                                      final Statistics statistics) {
+                                      final Statistics statistics,
+                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.statisticStoreStore = statisticStoreStore;
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
@@ -96,16 +98,16 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
         final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(criteria.getDataSourceRef());
-        if (entity != null) {
-            builder.addAll(buildFields(entity));
+        if (entity == null) {
+            return ResultPage.empty();
         }
-        return builder.build();
+        return fieldInfoResultPageFactory.create(criteria, buildFields(entity));
     }
 
     @Override

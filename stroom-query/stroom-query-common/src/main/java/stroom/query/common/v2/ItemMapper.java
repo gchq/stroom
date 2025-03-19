@@ -4,5 +4,7 @@ public interface ItemMapper<R> {
 
     R create(Item item);
 
-    boolean hidesRows();
+    default boolean hidesRows() {
+        return false;
+    }
 }

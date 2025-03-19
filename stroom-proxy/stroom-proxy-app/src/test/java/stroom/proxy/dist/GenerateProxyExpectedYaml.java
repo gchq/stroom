@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class GenerateProxyExpectedYaml {
 
@@ -68,7 +67,7 @@ public class GenerateProxyExpectedYaml {
 
             outputLines = generatedYaml.replace("---", "---\n" + HEADER)
                     .lines()
-                    .collect(Collectors.toList());
+                    .toList();
         } else {
             // called manually for TestYamlUtil so don't modify the content else it will break the test
             outputLines = removeDropWizardLines(generatedYaml);
@@ -94,7 +93,7 @@ public class GenerateProxyExpectedYaml {
                         line.startsWith("---")
                                 || line.startsWith(PROXY_CONFIG + ":")
                                 || line.startsWith(" "))
-                .collect(Collectors.toList());
+                .toList();
     }
 
 

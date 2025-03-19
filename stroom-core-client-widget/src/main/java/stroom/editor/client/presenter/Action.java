@@ -16,6 +16,9 @@
 
 package stroom.editor.client.presenter;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
 public class Action {
 
     private final Runnable executeHandler;
@@ -56,7 +59,7 @@ public class Action {
         setAvailable(defaultAvailability);
     }
 
-    public String getText() {
-        return text;
+    public SafeHtml getText() {
+        return SafeHtmlUtils.fromString(text);
     }
 }

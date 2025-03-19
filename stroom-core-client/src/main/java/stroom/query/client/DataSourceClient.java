@@ -5,8 +5,8 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.docstore.shared.Documentation;
+import stroom.query.api.v2.StringExpressionUtil;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
@@ -48,9 +48,9 @@ public class DataSourceClient {
         if (dataSourceRef != null) {
             final FindFieldCriteria findFieldInfoCriteria = new FindFieldCriteria(
                     PageRequest.oneRow(),
-                    null,
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
                     dataSourceRef,
-                    StringMatch.equals(fieldName, true),
+                    StringExpressionUtil.equalsCaseSensitive(fieldName),
                     queryable);
             restFactory
                     .create(DATA_SOURCE_RESOURCE)

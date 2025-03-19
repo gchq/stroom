@@ -35,9 +35,9 @@ import java.util.function.Supplier;
         signatures = {
                 @FunctionSignature(
                         returnDescription = "A hyperlink to open the annotation edit screen for an existing " +
-                                "annotation.",
+                                            "annotation.",
                         description = "Creates a hyperlink that will open the annotation edit screen showing " +
-                                "the existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
+                                      "the existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + ".",
                         args = {
                                 @FunctionArg(
                                         name = "text",
@@ -51,9 +51,9 @@ import java.util.function.Supplier;
                 @FunctionSignature(
                         returnDescription = "A hyperlink to open the annotation edit screen.",
                         description = "Creates a hyperlink that will open the annotation edit screen showing the " +
-                                "existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID + " or if " +
-                                "that is '' or null() then it will show the edit screen pre-populated with the " +
-                                "supplied values ready to create a new annotation.",
+                                      "existing annotation with the supplied " + Annotation.ARG_ANNOTATION_ID +
+                                      " or if that is '' or null() then it will show the edit screen pre-populated " +
+                                      "with the supplied values ready to create a new annotation.",
                         args = {
                                 @FunctionArg(
                                         name = "text",
@@ -62,20 +62,20 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = Annotation.ARG_ANNOTATION_ID,
                                         description = "The ID of the existing annotation or null() if creating " +
-                                                "a new one.",
+                                                      "a new one.",
                                         argType = ValString.class,
                                         defaultValue = "${annotation:Id}"),
                                 @FunctionArg(
                                         name = Annotation.ARG_STREAM_ID,
                                         description = "The ID of the stream of the linked event. Must be provided " +
-                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                                      "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
                                         isOptional = true,
                                         argType = ValString.class,
                                         defaultValue = "${StreamId}"),
                                 @FunctionArg(
                                         name = Annotation.ARG_EVENT_ID,
                                         description = "The ID of the of the linked event. Must be provided " +
-                                                "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
+                                                      "if no " + Annotation.ARG_ANNOTATION_ID + " is provided.",
                                         isOptional = true,
                                         argType = ValString.class,
                                         defaultValue = "${EventId}"),
@@ -92,13 +92,13 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = Annotation.ARG_STATUS,
                                         description = "The status of the annotation (see " +
-                                                "stroom.annotation.statusValues property for possible values.",
+                                                      "stroom.annotation.statusValues property for possible values.",
                                         isOptional = true,
                                         argType = ValString.class),
                                 @FunctionArg(
                                         name = Annotation.ARG_ASSIGNED_TO,
                                         description = "The username of the user that this annotation will be " +
-                                                "assigned to.",
+                                                      "assigned to.",
                                         isOptional = true,
                                         argType = ValString.class),
                                 @FunctionArg(
@@ -106,22 +106,29 @@ import java.util.function.Supplier;
                                         description = "A comment for this annotation.",
                                         isOptional = true,
                                         argType = ValString.class),
+                                @FunctionArg(
+                                        name = Annotation.ARG_EVENT_ID_LIST,
+                                        description = "A comma separated list of event ids, e.g. 1:1,1:5,2:4.",
+                                        isOptional = true,
+                                        argType = ValString.class),
                         })
         })
 class Annotation extends AbstractLink {
 
-    protected static final String ARG_ANNOTATION_ID = "annotationId";
-    protected static final String ARG_STREAM_ID = "StreamId";
-    protected static final String ARG_EVENT_ID = "EventId";
-    protected static final String ARG_TITLE = "title";
-    protected static final String ARG_SUBJECT = "subject";
-    protected static final String ARG_STATUS = "status";
-    protected static final String ARG_ASSIGNED_TO = "assignedTo";
-    protected static final String ARG_COMMENT = "comment";
+    static final String ARG_ANNOTATION_ID = "annotationId";
+    static final String ARG_STREAM_ID = "StreamId";
+    static final String ARG_EVENT_ID = "EventId";
+    static final String ARG_TITLE = "title";
+    static final String ARG_SUBJECT = "subject";
+    static final String ARG_STATUS = "status";
+    static final String ARG_ASSIGNED_TO = "assignedTo";
+    static final String ARG_COMMENT = "comment";
+    static final String ARG_EVENT_ID_LIST = "eventIdList";
+
     static final String NAME = "annotation";
 
     public Annotation(final String name) {
-        super(name, 2, 9);
+        super(name, 2, 10);
     }
 
     @Override
@@ -146,6 +153,7 @@ class Annotation extends AbstractLink {
             append(storedValues, sb, 6, ARG_STATUS);
             append(storedValues, sb, 7, ARG_ASSIGNED_TO);
             append(storedValues, sb, 8, ARG_COMMENT);
+            append(storedValues, sb, 9, ARG_EVENT_ID_LIST);
 
             return makeLink(getEscapedString(
                             childGenerators[0].eval(storedValues, childDataSupplier)),
@@ -160,7 +168,7 @@ class Annotation extends AbstractLink {
             if (index < childGenerators.length) {
                 final Val val = childGenerators[index].eval(storedValues, null);
                 if (val.type().isValue()) {
-                    if (sb.length() > 0) {
+                    if (!sb.isEmpty()) {
                         sb.append("&");
                     } else {
                         sb.append("?");

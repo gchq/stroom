@@ -159,12 +159,12 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                         ICON_CLASS_NAME,
                         HOVER_ACTION_MENU_CLASS_NAME);
 
-                if (menuItems.size() == 1
-                    && menuItems.get(0) instanceof MenuItem
-                    && ((MenuItem) menuItems.get(0)).getCommand() != null) {
+                if (menuItems.size() == 1 &&
+                    menuItems.get(0) instanceof final MenuItem menuItem &&
+                    menuItem.getCommand() != null) {
                     // Single item with a command so no menu popup needed
-                    final String menuItemText = ((MenuItem) menuItems.get(0)).getText();
-                    sb.append(template.divWithToolTip(menuItemText, icon));
+                    sb.append(template.divWithToolTip(GwtNullSafe
+                            .getOrElse(menuItem.getText(), SafeHtml::asString, ""), icon));
                 } else {
                     // Build the menu popup
                     sb.append(template.divWithToolTip("Actions...", icon));

@@ -555,7 +555,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     protected String formatAnchor(String name) {
-        return "#" + name.replace(" ", "-").toLowerCase();
+        return "#" + name.replace(' ', '-').toLowerCase();
     }
 
     public interface GlobalPropertyEditView extends View, Focus, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {

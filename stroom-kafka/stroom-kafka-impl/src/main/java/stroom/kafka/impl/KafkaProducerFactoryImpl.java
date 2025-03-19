@@ -275,7 +275,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                     });
                     return map;
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         return SystemInfoResult.builder(this)
                 .addDetail("sharedProducers", producerInfo)

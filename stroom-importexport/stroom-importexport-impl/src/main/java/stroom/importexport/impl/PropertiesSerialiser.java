@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public final class PropertiesSerialiser {
 
@@ -36,7 +35,7 @@ public final class PropertiesSerialiser {
                     .stream()
                     .map(Object::toString)
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
 
             for (String key : keys) {
                 String val = properties.getProperty(key);

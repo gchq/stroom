@@ -78,24 +78,22 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final List<SqsConnectorConfig> sqsConnectors;
 
     public ProxyConfig() {
-        haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
-        proxyId = null;
-        contentDir = DEFAULT_CONTENT_DIR;
-
-        pathConfig = new ProxyPathConfig();
-        receiveDataConfig = new ReceiveDataConfig();
-        eventStoreConfig = new EventStoreConfig();
-        aggregatorConfig = new AggregatorConfig();
-        forwardFileDestinations = new ArrayList<>();
-        forwardHttpDestinations = new ArrayList<>();
-        logStreamConfig = new LogStreamConfig();
-        contentSyncConfig = new ContentSyncConfig();
-        feedStatusConfig = new FeedStatusConfig();
-        threadConfig = new ThreadConfig();
-        proxySecurityConfig = new ProxySecurityConfig();
-        sqsConnectors = new ArrayList<>();
+        this(DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE,
+                null,
+                DEFAULT_CONTENT_DIR,
+                new ProxyPathConfig(),
+                new ReceiveDataConfig(),
+                new EventStoreConfig(),
+                new AggregatorConfig(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new LogStreamConfig(),
+                new ContentSyncConfig(),
+                new FeedStatusConfig(),
+                new ThreadConfig(),
+                new ProxySecurityConfig(),
+                new ArrayList<>());
     }
-
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator

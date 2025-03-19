@@ -7,7 +7,6 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
 
 import java.util.List;
-import java.util.Optional;
 
 public class SimpleRowCreator implements ItemMapper<Row> {
 
@@ -26,18 +25,18 @@ public class SimpleRowCreator implements ItemMapper<Row> {
         this.errorConsumer = errorConsumer;
     }
 
-    public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final List<Column> newColumns,
-                                                   final FormatterFactory formatterFactory,
-                                                   final KeyFactory keyFactory,
-                                                   final ErrorConsumer errorConsumer) {
+    public static ItemMapper<Row> create(final List<Column> originalColumns,
+                                         final List<Column> newColumns,
+                                         final FormatterFactory formatterFactory,
+                                         final KeyFactory keyFactory,
+                                         final ErrorConsumer errorConsumer) {
         final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
         final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
-        return Optional.of(new SimpleRowCreator(
+        return new SimpleRowCreator(
                 columnIndexMapping,
                 formatters,
                 keyFactory,
-                errorConsumer));
+                errorConsumer);
     }
 
     @Override
@@ -48,10 +47,5 @@ public class SimpleRowCreator implements ItemMapper<Row> {
                 .values(stringValues)
                 .depth(item.getKey().getDepth())
                 .build();
-    }
-
-    @Override
-    public boolean hidesRows() {
-        return false;
     }
 }

@@ -1839,81 +1839,34 @@ public enum SvgImage {
             "191.0774 193.30859 1106.125 193.30859 L 979.28125 193.30859 z \"/></svg>\n" +
             ""),
 
-    FIELDS_SORTAZ("fields/sortaz.svg", "svg-image__fields-sortaz", "" +
-            "<!-- Created with Inkscape (http://www.inkscape.org/) --><svg version=\"1.1\" id=\"" +
-            "svg622\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" sodipodi:docname=\"fields-sort" +
-            "az.svg\" inkscape:version=\"1.2.2 (b0a8486541, 2022-12-01)\" xmlns:inkscape=\"http:/" +
-            "/www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"http://sodipodi.sourcefor" +
-            "ge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://" +
-            "www.w3.org/2000/svg\"><defs id=\"defs626\" /><sodipodi:namedview id=\"namedview624\" " +
-            "pagecolor=\"var(--icon-colour__white)\" bordercolor=\"#666666\" borderopacity=\"1.0\" " +
-            "inkscape:showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboard" +
-            "=\"0\" inkscape:deskcolor=\"#d1d1d1\" showgrid=\"false\" inkscape:zoom=\"5.025983\" inks" +
-            "cape:cx=\"22.085232\" inkscape:cy=\"26.164036\" inkscape:window-width=\"1444\" inkscap" +
-            "e:window-height=\"1236\" inkscape:window-x=\"5678\" inkscape:window-y=\"83\" inkscape:" +
-            "window-maximized=\"0\" inkscape:current-layer=\"g628\" /><g inkscape:groupmode=\"laye" +
-            "r\" inkscape:label=\"Image\" id=\"g628\"><text xml:space=\"preserve\" style=\"font-style" +
-            ":normal;font-weight:normal;font-size:9.33333px;line-height:1.25;font-family:'Dro" +
-            "id Sans Mono';fill:currentColor;fill-opacity:1;stroke:none;-inkscape-font-specif" +
-            "ication:'Droid Sans Mono';font-stretch:normal;font-variant:normal\" x=\"1.6919255\"" +
-            " y=\"6.984611\" id=\"text634\"><tspan sodipodi:role=\"line\" id=\"tspan632\" x=\"1.691925" +
-            "5\" y=\"6.984611\" style=\"font-size:9.33333px;-inkscape-font-specification:'Droid S" +
-            "ans Mono';font-family:'Droid Sans Mono';font-weight:normal;font-style:normal;fon" +
-            "t-stretch:normal;font-variant:normal\">a</tspan></text><text xml:space=\"preserve\"" +
-            " style=\"font-style:normal;font-weight:normal;font-size:8.30671px;line-height:1.2" +
-            "5;font-family:sans-serif;fill:currentColor;fill-opacity:1;stroke:none;stroke-wid" +
-            "th:0.890005\" x=\"1.3740022\" y=\"16.11894\" id=\"text638\" transform=\"scale(1.1235889," +
-            "0.89000524)\"><tspan sodipodi:role=\"line\" id=\"tspan636\" x=\"1.3740022\" y=\"16.11894" +
-            "\" style=\"font-style:normal;font-variant:normal;font-weight:normal;font-stretch:n" +
-            "ormal;font-size:8.30671px;font-family:'Droid Sans Mono';-inkscape-font-specifica" +
-            "tion:'Droid Sans Mono';stroke-width:0.890005\">Z</tspan></text><path style=\"fill:" +
-            "currentColor;stroke:currentColor;stroke-width:1px;stroke-linecap:round;stroke-li" +
-            "nejoin:round;stroke-opacity:1;fill-opacity:1\" d=\"m 8.8845943,11.021639 h 2.68120" +
-            "47 l 0.07387,2.828908 z\" id=\"path1487\" /><path style=\"fill:currentColor;stroke:c" +
-            "urrentColor;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;stroke-o" +
-            "pacity:1;fill-opacity:1\" d=\"m 14.394742,11.021639 h -2.681205 l -0.07387,2.82890" +
-            "8 z\" id=\"path1487-8\" /><path style=\"fill:none;stroke:currentColor;stroke-width:1" +
-            ".8;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opaci" +
-            "ty:1\" d=\"M 11.713537,11.021639 11.639669,2.8122217\" id=\"path1570\" sodipodi:nodet" +
-            "ypes=\"cc\" /></g></svg> \n" +
+    FIELDS_SORT_ASCENDING("fields/sort-ascending.svg", "svg-image__fields-sort-ascending", "" +
+            "<svg version=\"1.1\" id=\"svg622\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" xmlns=" +
+            "\"http://www.w3.org/2000/svg\"><g><path style=\"stroke:currentColor;stroke-width:2;" +
+            "stroke-linecap:round\" d=\"M 2.9805078,12.97533 H 13.036861\"/><path style=\"stroke:" +
+            "currentColor;stroke-width:2;stroke-linecap:round\" d=\"M 2.9805078,6.3275299 H 7.2" +
+            "87246\"/><path style=\"stroke:currentColor;stroke-width:2;stroke-linecap:round\" d=" +
+            "\"M 2.9805078,9.6514299 H 10.165244\"/><path style=\"stroke:currentColor;stroke-wid" +
+            "th:2;stroke-linecap:round\" d=\"M 2.9805078,3.0036298 H 4.4045705\"/></g></svg> \n" +
             ""),
 
-    FIELDS_SORTZA("fields/sortza.svg", "svg-image__fields-sortza", "" +
-            "<!-- Created with Inkscape (http://www.inkscape.org/) --><svg version=\"1.1\" id=\"" +
-            "svg622\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" sodipodi:docname=\"fields-sort" +
-            "za.svg\" inkscape:version=\"1.2.2 (b0a8486541, 2022-12-01)\" xmlns:inkscape=\"http:/" +
-            "/www.inkscape.org/namespaces/inkscape\" xmlns:sodipodi=\"http://sodipodi.sourcefor" +
-            "ge.net/DTD/sodipodi-0.dtd\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://" +
-            "www.w3.org/2000/svg\"><defs id=\"defs626\" /><sodipodi:namedview id=\"namedview624\" " +
-            "pagecolor=\"var(--icon-colour__white)\" bordercolor=\"#666666\" borderopacity=\"1.0\" " +
-            "inkscape:showpageshadow=\"2\" inkscape:pageopacity=\"0.0\" inkscape:pagecheckerboard" +
-            "=\"0\" inkscape:deskcolor=\"#d1d1d1\" showgrid=\"false\" inkscape:zoom=\"22.345395\" ink" +
-            "scape:cx=\"8.1896067\" inkscape:cy=\"11.165611\" inkscape:window-width=\"1444\" inksca" +
-            "pe:window-height=\"1236\" inkscape:window-x=\"5678\" inkscape:window-y=\"83\" inkscape" +
-            ":window-maximized=\"0\" inkscape:current-layer=\"g628\" /><g inkscape:groupmode=\"lay" +
-            "er\" inkscape:label=\"Image\" id=\"g628\"><text xml:space=\"preserve\" style=\"font-styl" +
-            "e:normal;font-weight:normal;font-size:8.30671px;line-height:1.25;font-family:san" +
-            "s-serif;fill:currentColor;fill-opacity:1;stroke:none;stroke-width:0.890005\" x=\"1" +
-            ".3740022\" y=\"8.0016098\" id=\"text638\" transform=\"scale(1.1235889,0.89000524)\"><ts" +
-            "pan sodipodi:role=\"line\" id=\"tspan636\" x=\"1.3740022\" y=\"8.0016098\" style=\"font-s" +
-            "tyle:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size" +
-            ":8.30671px;font-family:'Droid Sans Mono';-inkscape-font-specification:'Droid San" +
-            "s Mono';stroke-width:0.890005\">Z</tspan></text><text xml:space=\"preserve\" style=" +
-            "\"font-style:normal;font-weight:normal;font-size:8.30671px;line-height:1.25;font-" +
-            "family:sans-serif;fill:currentColor;fill-opacity:1;stroke:none;stroke-width:0.89" +
-            "0005\" x=\"1.6919247\" y=\"14.423592\" id=\"text634\"><tspan sodipodi:role=\"line\" id=\"t" +
-            "span632\" x=\"1.6919247\" y=\"14.423592\" style=\"font-style:normal;font-variant:norma" +
-            "l;font-weight:normal;font-stretch:normal;font-size:9.33333px;font-family:'Droid " +
-            "Sans Mono';-inkscape-font-specification:'Droid Sans Mono'\">a</tspan></text><path" +
-            " style=\"fill:currentColor;stroke:currentColor;stroke-width:1px;stroke-linecap:ro" +
-            "und;stroke-linejoin:round;stroke-opacity:1;fill-opacity:1\" d=\"m 8.8845943,11.021" +
-            "639 h 2.6812047 l 0.07387,2.828908 z\" id=\"path1487\" /><path style=\"fill:currentC" +
-            "olor;stroke:currentColor;stroke-width:1px;stroke-linecap:round;stroke-linejoin:r" +
-            "ound;stroke-opacity:1;fill-opacity:1\" d=\"m 14.394742,11.021639 h -2.681205 l -0." +
-            "07387,2.828908 z\" id=\"path1487-8\" /><path style=\"fill:currentColor;stroke:curren" +
-            "tColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:miter;stroke-dashar" +
-            "ray:none;stroke-opacity:1\" d=\"M 11.713537,11.021639 11.639669,2.8122217\" id=\"pat" +
-            "h1570\" sodipodi:nodetypes=\"cc\" /></g></svg> \n" +
+    FIELDS_SORT_DESCENDING("fields/sort-descending.svg", "svg-image__fields-sort-descending", "" +
+            "<svg version=\"1.1\" id=\"svg622\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" xmlns=" +
+            "\"http://www.w3.org/2000/svg\"><g><path style=\"stroke:currentColor;stroke-width:2;" +
+            "stroke-linecap:round\" d=\"M 2.9805078,3.0036298 H 13.036861\"/><path style=\"stroke" +
+            ":currentColor;stroke-width:2;stroke-linecap:round\" d=\"M 2.9805078,9.6514299 H 7." +
+            "287246\"/><path style=\"stroke:currentColor;stroke-width:2;stroke-linecap:round\" d" +
+            "=\"M 2.9805078,6.3275299 H 10.165244\"/><path style=\"stroke:currentColor;stroke-wi" +
+            "dth:2;stroke-linecap:round\" d=\"M 2.9805078,12.97533 H 4.4045705\"/></g></svg> \n" +
+            ""),
+
+    FIELDS_SORT_NONE("fields/sort-none.svg", "svg-image__fields-sort-none", "" +
+            "<svg version=\"1.1\" id=\"svg622\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" xmlns=" +
+            "\"http://www.w3.org/2000/svg\"><g><path style=\"stroke:currentColor;stroke-width:2;" +
+            "stroke-linecap:round\" d=\"M 2.9805078,12.97533 H 6.9743201\"/><path style=\"stroke:" +
+            "currentColor;stroke-width:2;stroke-linecap:round\" d=\"m 2.9805078,6.3275299 1.018" +
+            "2013,0\"/><path style=\"stroke:currentColor;stroke-width:2;stroke-linecap:round\" d" +
+            "=\"M 2.9805078,9.6514299 H 12.98399\"/><path style=\"stroke:currentColor;stroke-wid" +
+            "th:2;stroke-linecap:round\" d=\"m 2.9805078,3.0036298 7.0168126,0\"/></g></svg> \n" +
             ""),
 
     FILE("file.svg", "svg-image__file", "" +
@@ -4710,6 +4663,15 @@ public enum SvgImage {
             "1.5zm576 225q0 78-56 118.5t-138 40.5h-134q-103-123-265-128 81-117 81-256 0-29-5-" +
             "66 66 23 133 23 59 0 119-21.5t97.5-42.5 43.5-21q124 0 124 353zm-128-609q0 106-75" +
             " 181t-181 75-181-75-75-181 75-181 181-75 181 75 75 181z\"/></svg> \n" +
+            ""),
+
+    VALUE_FILTER("value-filter.svg", "svg-image__value-filter", "" +
+            "<svg width=\"1792\" height=\"1792\" viewBox=\"0 0 1792 1792\" version=\"1.1\" xmlns=\"htt" +
+            "p://www.w3.org/2000/svg\"><path style=\"stroke:currentColor;stroke-width:170;strok" +
+            "e-linecap:round\" d=\"M 253.74713,562.14586 H 1561.6726\"/><path style=\"stroke:curr" +
+            "entColor;stroke-width:170;stroke-linecap:round\" d=\"M 528.07529,863.17473 H 1287." +
+            "3444\"/><path style=\"stroke:currentColor;stroke-width:170;stroke-linecap:round\" d" +
+            "=\"m 799.6554,1164.2036 h 216.1089\"/></svg> \n" +
             ""),
 
     VOLUMES("volumes.svg", "svg-image__volumes", "" +

@@ -97,6 +97,9 @@ public class StateStoreSettingsViewImpl
         retainTimeUnit.addItem(TimeUnit.MONTHS);
         retainTimeUnit.addItem(TimeUnit.YEARS);
         retainTimeUnit.setValue(TimeUnit.YEARS);
+
+        setCondenseEnabled(this.condense.getValue());
+        setRetainEnabled(!retainForever.getValue());
     }
 
     @Override
@@ -250,6 +253,7 @@ public class StateStoreSettingsViewImpl
     @UiHandler("retainForever")
     public void onRetainForever(final ValueChangeEvent<Boolean> event) {
         setRetainEnabled(!isRetainForever());
+        getUiHandlers().onChange();
     }
 
     @UiHandler("retainAge")

@@ -19,7 +19,6 @@ package stroom.query.impl;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch.MatchType;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
@@ -28,6 +27,7 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -35,7 +35,6 @@ import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -43,6 +42,7 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 @Singleton
 public class Dictionaries {
@@ -67,14 +67,13 @@ public class Dictionaries {
 
     public void addRows(final PageRequest pageRequest,
                         final String parentPath,
-                        final StringMatcher stringMatcher,
+                        final Predicate<String> predicate,
                         final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final List<DocRef> docs = dictionaryStore.list();
         if (parentPath.isBlank()) {
-            final boolean hasChildren = hasChildren(docs, stringMatcher);
+            final boolean hasChildren = hasChildren(docs, predicate);
             if (hasChildren ||
-                MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                predicate.test(ROOT.getTitle())) {
                 resultPageBuilder.add(ROOT.copy().hasChildren(hasChildren).build());
             }
         } else if (parentPath.startsWith(DICTIONARY_ID + ".")) {
@@ -82,7 +81,7 @@ public class Dictionaries {
                     new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
 
             for (final DocRef docRef : docs) {
-                if (stringMatcher.match(docRef.getDisplayValue()).isPresent()) {
+                if (predicate.test(docRef.getDisplayValue())) {
                     final QueryHelpRow row = QueryHelpRow
                             .builder()
                             .type(QueryHelpType.DICTIONARY)
@@ -189,9 +188,9 @@ public class Dictionaries {
         return Optional.empty();
     }
 
-    private boolean hasChildren(final List<DocRef> docs, final StringMatcher stringMatcher) {
+    private boolean hasChildren(final List<DocRef> docs, final Predicate<String> predicate) {
         return docs.stream()
-                .anyMatch(docRef -> stringMatcher.match(docRef.getDisplayValue()).isPresent());
+                .anyMatch(docRef -> predicate.test(docRef.getDisplayValue()));
     }
 
 //    private CompletionItem createCompletionSnippet(final VisualisationDoc doc, final int score) {

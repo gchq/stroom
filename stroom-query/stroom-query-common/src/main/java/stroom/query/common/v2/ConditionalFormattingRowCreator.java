@@ -43,16 +43,16 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
         this.rules = rules;
     }
 
-    public static Optional<ItemMapper<Row>> create(final List<Column> originalColumns,
-                                                   final List<Column> newColumns,
-                                                   final boolean applyValueFilters,
-                                                   final FormatterFactory formatterFactory,
-                                                   final KeyFactory keyFactory,
-                                                   final ExpressionOperator rowFilterExpression,
-                                                   final List<ConditionalFormattingRule> rules,
-                                                   final DateTimeSettings dateTimeSettings,
-                                                   final ExpressionPredicateFactory expressionPredicateFactory,
-                                                   final ErrorConsumer errorConsumer) {
+    public static ItemMapper<Row> create(final List<Column> originalColumns,
+                                         final List<Column> newColumns,
+                                         final boolean applyValueFilters,
+                                         final FormatterFactory formatterFactory,
+                                         final KeyFactory keyFactory,
+                                         final ExpressionOperator rowFilterExpression,
+                                         final List<ConditionalFormattingRule> rules,
+                                         final DateTimeSettings dateTimeSettings,
+                                         final ExpressionPredicateFactory expressionPredicateFactory,
+                                         final ErrorConsumer errorConsumer) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
             final List<ConditionalFormattingRule> activeRules = rules
@@ -65,7 +65,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                 for (final ConditionalFormattingRule rule : activeRules) {
                     try {
                         final Optional<Predicate<Val[]>> optionalValuesPredicate =
-                                expressionPredicateFactory.create(
+                                expressionPredicateFactory.createOptional(
                                         rule.getExpression(),
                                         queryFieldIndex,
                                         dateTimeSettings);
@@ -80,28 +80,36 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                     }
                 }
 
-                if (!ruleAndMatchers.isEmpty()) {
-                    final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
-                    final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
-                    final Optional<Predicate<Val[]>> rowFilter = FilteredRowCreator
-                            .createValuesPredicate(newColumns,
-                                    applyValueFilters,
-                                    rowFilterExpression,
-                                    dateTimeSettings,
-                                    expressionPredicateFactory);
+                final int[] columnIndexMapping = RowUtil.createColumnIndexMapping(originalColumns, newColumns);
+                final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
+                final Optional<Predicate<Val[]>> rowFilter = FilteredRowCreator
+                        .createValuesPredicate(newColumns,
+                                applyValueFilters,
+                                rowFilterExpression,
+                                dateTimeSettings,
+                                expressionPredicateFactory);
 
-                    return Optional.of(new ConditionalFormattingRowCreator(
-                            columnIndexMapping,
-                            keyFactory,
-                            errorConsumer,
-                            formatters,
-                            rowFilter.orElse(values -> true),
-                            ruleAndMatchers));
-                }
+                return new ConditionalFormattingRowCreator(
+                        columnIndexMapping,
+                        keyFactory,
+                        errorConsumer,
+                        formatters,
+                        rowFilter.orElse(values -> true),
+                        ruleAndMatchers);
             }
         }
 
-        return Optional.empty();
+        // We didn't have any conditional formatting rules to apply so provide a filtered row creator.
+        return FilteredRowCreator.create(
+                originalColumns,
+                newColumns,
+                applyValueFilters,
+                formatterFactory,
+                keyFactory,
+                rowFilterExpression,
+                dateTimeSettings,
+                errorConsumer,
+                expressionPredicateFactory);
     }
 
     @Override

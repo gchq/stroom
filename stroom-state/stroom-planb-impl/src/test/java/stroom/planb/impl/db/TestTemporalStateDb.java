@@ -21,6 +21,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -49,7 +50,11 @@ class TestTemporalStateDb {
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory, false, true)) {
+        try (final TemporalStateDb db = new TemporalStateDb(
+                tempDir,
+                byteBufferFactory,
+                TemporalStateSettings.builder().build(),
+                true)) {
             assertThat(db.count()).isEqualTo(100);
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
@@ -68,7 +73,7 @@ class TestTemporalStateDb {
             fieldIndex.create(TemporalStateFields.VALUE_TYPE);
             fieldIndex.create(TemporalStateFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
-            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory(null);
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
             db.search(
                     new ExpressionCriteria(ExpressionOperator.builder().build()),
                     fieldIndex,

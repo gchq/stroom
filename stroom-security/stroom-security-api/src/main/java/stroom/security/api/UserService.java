@@ -58,6 +58,8 @@ public interface UserService {
 
     ResultPage<User> find(FindUserCriteria criteria);
 
+    UserRef getUserByUuid(String uuid);
+
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 
     ResultPage<User> findGroupsForUser(String userUuid, FindUserCriteria criteria);

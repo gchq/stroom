@@ -17,6 +17,9 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FilterCell.ViewData;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ColumnFilter;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -31,7 +34,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 
 public class FilterCell
-        extends AbstractInputCell<String, ViewData> {
+        extends AbstractInputCell<Column, ViewData> {
 
     interface Template extends SafeHtmlTemplates {
 
@@ -74,8 +77,8 @@ public class FilterCell
                 return false;
             }
             ViewData vd = (ViewData) other;
-            return equalsOrNull(lastValue, vd.lastValue)
-                    && equalsOrNull(curValue, vd.curValue);
+            return equalsOrNull(lastValue, vd.lastValue) &&
+                   equalsOrNull(curValue, vd.curValue);
         }
 
         /**
@@ -137,20 +140,26 @@ public class FilterCell
 
     private static Template template;
 
+    private final FilterCellManager filterCellManager;
+
     /**
      * Constructs a TextInputCell that renders its text without HTML markup.
      */
-    public FilterCell() {
+    public FilterCell(final FilterCellManager filterCellManager) {
         super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
+        this.filterCellManager = filterCellManager;
         if (template == null) {
             template = GWT.create(Template.class);
         }
     }
 
     @Override
-    public void onBrowserEvent(Context context, Element parent, String value,
-                               NativeEvent event, ValueUpdater<String> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
+    public void onBrowserEvent(Context context,
+                               Element parent,
+                               Column column,
+                               NativeEvent event,
+                               ValueUpdater<Column> valueUpdater) {
+        super.onBrowserEvent(context, parent, column, event, valueUpdater);
 
         // Ignore events that don't target the input.
         InputElement input = getInputElement(parent);
@@ -162,12 +171,12 @@ public class FilterCell
         String eventType = event.getType();
         Object key = context.getKey();
         if (BrowserEvents.CHANGE.equals(eventType)) {
-            finishEditing(parent, value, key, valueUpdater);
+            finishEditing(parent, column, key, valueUpdater);
         } else if (BrowserEvents.KEYUP.equals(eventType)) {
             // Record keys as they are typed.
             ViewData vd = getViewData(key);
             if (vd == null) {
-                vd = new ViewData(value);
+                vd = new ViewData(getValue(column));
                 setViewData(key, vd);
             }
             vd.setCurrentValue(input.getValue());
@@ -175,10 +184,11 @@ public class FilterCell
     }
 
     @Override
-    public void render(Context context, String value, SafeHtmlBuilder sb) {
+    public void render(Context context, Column column, SafeHtmlBuilder sb) {
         // Get the view data.
         Object key = context.getKey();
         ViewData viewData = getViewData(key);
+        final String value = getValue(column);
         if (viewData != null && viewData.getCurrentValue().equals(value)) {
             clearViewData(key);
             viewData = null;
@@ -195,8 +205,11 @@ public class FilterCell
     }
 
     @Override
-    protected void finishEditing(Element parent, String value, Object key,
-                                 ValueUpdater<String> valueUpdater) {
+    protected void finishEditing(final Element parent,
+                                 final Column column,
+                                 final Object key,
+                                 final ValueUpdater<Column> valueUpdater) {
+        final String value = getValue(column);
         String newValue = getInputElement(parent).getValue();
 
         // Get the view data.
@@ -208,9 +221,15 @@ public class FilterCell
         vd.setCurrentValue(newValue);
 
         // Fire the value updater if the value has changed.
-        if (valueUpdater != null && !vd.getCurrentValue().equals(vd.getLastValue())) {
+        if (!vd.getCurrentValue().equals(vd.getLastValue())) {
             vd.setLastValue(newValue);
-            valueUpdater.update(newValue);
+
+            if (filterCellManager != null) {
+                filterCellManager.setValueFilter(column, newValue);
+            }
+            if (valueUpdater != null) {
+                valueUpdater.update(column);
+            }
         }
 //
 //        // Blur the element.
@@ -220,5 +239,9 @@ public class FilterCell
     @Override
     protected InputElement getInputElement(Element parent) {
         return super.getInputElement(parent).<InputElement>cast();
+    }
+
+    private String getValue(final Column column) {
+        return GwtNullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
     }
 }

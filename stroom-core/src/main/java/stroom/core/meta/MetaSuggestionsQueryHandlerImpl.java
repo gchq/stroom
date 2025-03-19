@@ -12,13 +12,13 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.processor.shared.ProcessorTaskFields;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.filter.QuickFilterPredicateFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -29,8 +29,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -50,6 +52,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     private final FeedStore feedStore;
     private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
+    private final ExpressionPredicateFactory expressionPredicateFactory;
 
     // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
@@ -79,13 +82,15 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                     final FeedStore feedStore,
                                     final TaskContextFactory taskContextFactory,
                                     final DocRefInfoService docRefInfoService,
-                                    final SuggestionsService suggestionsService) {
+                                    final SuggestionsService suggestionsService,
+                                    final ExpressionPredicateFactory expressionPredicateFactory) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
+        this.expressionPredicateFactory = expressionPredicateFactory;
     }
 
     @Override
@@ -101,8 +106,8 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
             // Determine if we are going to allow the client to cache the suggestions.
             final boolean cache = ((request.getText() == null || request.getText().isBlank()) &&
-                    (request.getField().getFldName().equals(MetaFields.TYPE.getFldName()) ||
-                            request.getField().getFldName().equals(MetaFields.STATUS.getFldName())));
+                                   (request.getField().getFldName().equals(MetaFields.TYPE.getFldName()) ||
+                                    request.getField().getFldName().equals(MetaFields.STATUS.getFldName())));
 
             return new Suggestions(result, cache);
         });
@@ -128,27 +133,26 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     @NotNull
     private List<String> createPipelineList(final String userInput) {
-        final List<String> result;
-        final Stream<String> stream = pipelineStore.list().stream()
-                .map(DocRef::getName);
-        result = QuickFilterPredicateFactory.filterStream(userInput, stream)
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(
+                        pipelineStore
+                                .list()
+                                .stream()
+                                .map(DocRef::getName),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
-                .collect(Collectors.toList());
-
-        return result;
+                .toList();
     }
 
     @NotNull
     private List<String> createStatusList(final String userInput) {
-        final List<String> result;
-        Stream<String> stream = Arrays.stream(Status.values())
-                .map(Status::getDisplayValue);
-        result = QuickFilterPredicateFactory.filterStream(userInput, stream)
-                .sorted()
+        return expressionPredicateFactory.filterAndSortStream(
+                        Arrays.stream(Status.values())
+                                .map(Status::getDisplayValue),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
-                .collect(Collectors.toList());
-        return result;
+                .toList();
     }
 
     private List<String> createFeedList(final String userInput) {
@@ -179,17 +183,16 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
         try {
             // Make async calls to get the two lists then combine
-            return metaFeedsFuture
-                    .thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) ->
-                            QuickFilterPredicateFactory.filterStream(
-                                            userInput,
-                                            Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
-                                                    .parallel())
-                                    .distinct()
-                                    .sorted()
-                                    .limit(LIMIT)
-                                    .collect(Collectors.toList()))
-                    .get();
+            return expressionPredicateFactory.filterAndSortStream(
+                            metaFeedsFuture.thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) -> Stream
+                                            .concat(metaFeedNames.stream(), docFeedNames.stream())
+                                            .parallel()
+                                            .distinct())
+                                    .get(),
+                            userInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .limit(LIMIT)
+                    .toList();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Thread interrupted", e);
@@ -200,19 +203,22 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     }
 
     private List<String> createStreamTypeList(final String userInput) {
-        return QuickFilterPredicateFactory.filterStream(
-                        userInput, metaService.getTypes().stream().sorted())
+        return expressionPredicateFactory.filterAndSortStream(metaService.getTypes().stream(),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<String> getNonUniqueDocRefNames(final String docRefType,
                                                  final String userInput) {
-        return QuickFilterPredicateFactory.filterStream(
-                        userInput, docRefInfoService.findByType(docRefType)
+        return expressionPredicateFactory.filterAndSortStream(docRefInfoService
+                                .findByType(docRefType)
                                 .stream()
-                                .map(DocRef::getName))
+                                .map(DocRef::getName),
+                        userInput,
+                        Optional.of(Comparator.naturalOrder()))
                 .limit(LIMIT)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

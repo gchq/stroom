@@ -16,15 +16,18 @@
 
 package stroom.query.impl;
 
+import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
@@ -40,7 +43,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -51,6 +53,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {
@@ -65,6 +68,7 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<Functions> functionsProvider;
     private final Provider<Visualisations> visualisationProvider;
     private final Provider<Dictionaries> dictionariesProvider;
+    private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
@@ -74,7 +78,8 @@ class QueryResourceImpl implements QueryResource {
                       final Provider<Fields> fieldsProvider,
                       final Provider<Functions> functionsProvider,
                       final Provider<Visualisations> visualisationProvider,
-                      final Provider<Dictionaries> dictionariesProvider) {
+                      final Provider<Dictionaries> dictionariesProvider,
+                      final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
         this.dataSourcesProvider = dataSourcesProvider;
@@ -83,6 +88,7 @@ class QueryResourceImpl implements QueryResource {
         this.functionsProvider = functionsProvider;
         this.visualisationProvider = visualisationProvider;
         this.dictionariesProvider = dictionariesProvider;
+        this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
     }
 
     @Override
@@ -183,16 +189,17 @@ class QueryResourceImpl implements QueryResource {
     @Override
     public ResultPage<QueryHelpRow> fetchQueryHelpItems(final QueryHelpRequest request) {
         final String parentPath = request.getParentPath();
-        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+
+        final Predicate<String> predicate = expressionPredicateFactoryProvider.get().create(request.getFilter());
         final ResultPageBuilder<QueryHelpRow> resultPageBuilder =
                 new ResultPageBuilder<>(request.getPageRequest());
         PageRequest pageRequest = request.getPageRequest();
         if (request.isTypeIncluded(QueryHelpType.DATA_SOURCE)) {
-            dataSourcesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            dataSourcesProvider.get().addRows(pageRequest, parentPath, predicate, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         if (request.isTypeIncluded(QueryHelpType.STRUCTURE)) {
-            structuresProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            structuresProvider.get().addRows(pageRequest, parentPath, predicate, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         request.setPageRequest(pageRequest);
@@ -201,15 +208,15 @@ class QueryResourceImpl implements QueryResource {
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         if (request.isTypeIncluded(QueryHelpType.FUNCTION)) {
-            functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            functionsProvider.get().addRows(pageRequest, parentPath, predicate, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         if (request.isTypeIncluded(QueryHelpType.VISUALISATION)) {
-            visualisationProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            visualisationProvider.get().addRows(pageRequest, parentPath, predicate, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         if (request.isTypeIncluded(QueryHelpType.DICTIONARY)) {
-            dictionariesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            dictionariesProvider.get().addRows(pageRequest, parentPath, predicate, resultPageBuilder);
         }
         return resultPageBuilder.build();
     }
@@ -255,8 +262,8 @@ class QueryResourceImpl implements QueryResource {
     private boolean isTypeIncluded(final CompletionsRequest request,
                                    final Set<QueryHelpType> contextualHelpTypes,
                                    final QueryHelpType queryHelpType) {
-        return request.isTypeIncluded(queryHelpType)
-                && contextualHelpTypes.contains(queryHelpType);
+        return request.isTypeIncluded(queryHelpType) &&
+               contextualHelpTypes.contains(queryHelpType);
     }
 
     @Override
@@ -284,5 +291,31 @@ class QueryResourceImpl implements QueryResource {
     private int reduceMaxCompletions(final AtomicInteger maxCompletions, final List<?> list) {
         final int newVal = maxCompletions.addAndGet(list.size() * -1);
         return Math.max(0, newVal);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public ColumnValues getColumnValues(final String nodeName,
+                                        final QueryColumnValuesRequest request) {
+        try {
+            // If the client doesn't specify a node then execute locally.
+            if (nodeName == null || nodeName.equals("null")) {
+                return queryServiceProvider.get().getColumnValues(request);
+            }
+
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            ColumnValues.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    QueryResource.BASE_PATH,
+                                    QueryResource.COLUMN_VALUES_PATH_PART,
+                                    nodeName),
+                            () -> queryServiceProvider.get().getColumnValues(request),
+                            builder -> builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
+        }
     }
 }

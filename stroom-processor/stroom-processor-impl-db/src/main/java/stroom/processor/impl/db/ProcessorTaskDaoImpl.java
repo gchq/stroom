@@ -96,7 +96,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -1164,7 +1163,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return docRefInfoService.findByNames(PipelineDoc.TYPE, pipelineNames, true)
                 .stream()
                 .map(DocRef::getUuid)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

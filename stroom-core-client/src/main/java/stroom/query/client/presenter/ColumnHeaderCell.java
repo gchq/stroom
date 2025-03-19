@@ -17,22 +17,11 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.FilterCell;
-import stroom.dashboard.client.table.HasValueFilter;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
-import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.Sort;
-import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
-import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.CompositeCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.HasCell;
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,84 +32,28 @@ public class ColumnHeaderCell extends CompositeCell<Column> {
         super(cells);
     }
 
-    public static ColumnHeaderCell create(final HasValueFilter hasValueFilter) {
-        final com.google.gwt.user.cellview.client.Column<Column, SafeHtml> name =
-                new com.google.gwt.user.cellview.client.Column<Column, SafeHtml>(new SafeHtmlCell()) {
+    public static ColumnHeaderCell create(final FilterCellManager filterCellManager) {
+        final ColumnTitleCell columnTitleCell = new ColumnTitleCell();
+        final com.google.gwt.user.cellview.client.Column<Column, Column> title =
+                new com.google.gwt.user.cellview.client.Column<Column, Column>(columnTitleCell) {
                     @Override
-                    public SafeHtml getValue(final Column column) {
-                        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                        sb.appendHtmlConstant("<div class=\"column-top\">");
-
-                        // Output name.
-                        sb.appendHtmlConstant("<div class=\"column-label\">");
-                        sb.appendEscaped(column.getName());
-                        sb.appendHtmlConstant("</div>");
-
-                        // Show group icon.
-                        if (column.getGroup() != null) {
-                            // Show group icon.
-                            sb.append(getSafeHtml(SvgImage.FIELDS_GROUP));
-
-                            // Show group depth.
-                            sb.append(SafeHtmlUtils
-                                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                            (column.getGroup() + 1) +
-                                            "</div>"));
-                        }
-
-                        // Add sort icon.
-                        if (column.getSort() != null) {
-                            if (Sort.SortDirection.ASCENDING == column.getSort().getDirection()) {
-                                sb.append(getSafeHtml(SvgImage.FIELDS_SORTAZ));
-                            } else {
-                                sb.append(getSafeHtml(SvgImage.FIELDS_SORTZA));
-                            }
-
-                            // Add sort order.
-                            sb.append(SafeHtmlUtils
-                                    .fromTrustedString("<div class=\"column-sortOrder\">" +
-                                            (column.getSort().getOrder() + 1) +
-                                            "</div>"));
-                        }
-
-                        // Add filter icon.
-                        final IncludeExcludeFilter filter = column.getFilter();
-                        if (filter != null) {
-                            if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
-                                    (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
-                                sb.append(getSafeHtml(SvgImage.FIELDS_FILTER));
-                            }
-                        }
-
-                        sb.appendHtmlConstant("</div>");
-
-                        return sb.toSafeHtml();
+                    public Column getValue(final Column column) {
+                        return column;
                     }
                 };
 
-        final FilterCell filterCell = new FilterCell();
-        final com.google.gwt.user.cellview.client.Column<Column, String> filterInput =
-                new com.google.gwt.user.cellview.client.Column<Column, String>(filterCell) {
+        final FilterCell filterCell = new FilterCell(filterCellManager);
+        final com.google.gwt.user.cellview.client.Column<Column, Column> filterInput =
+                new com.google.gwt.user.cellview.client.Column<Column, Column>(filterCell) {
                     @Override
-                    public String getValue(final Column column) {
-                        return GwtNullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
+                    public Column getValue(final Column column) {
+                        return column;
                     }
                 };
-        filterInput.setFieldUpdater(new FieldUpdater<Column, String>() {
-            @Override
-            public void update(final int index, final Column column, final String value) {
-                hasValueFilter.setValueFilter(column, value);
-            }
-        });
-
         final List<HasCell<Column, ?>> list = new ArrayList<>();
-        list.add(name);
+        list.add(title);
         list.add(filterInput);
 
         return new ColumnHeaderCell(list);
-    }
-
-    private static SafeHtml getSafeHtml(final SvgImage svgImage) {
-        return SvgImageUtil.toSafeHtml(svgImage, "svgIcon");
     }
 }

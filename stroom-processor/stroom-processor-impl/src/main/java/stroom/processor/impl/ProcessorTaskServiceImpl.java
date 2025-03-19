@@ -27,7 +27,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
@@ -51,14 +51,17 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private final ProcessorTaskDao processorTaskDao;
     private final DocRefInfoService docRefInfoService;
     private final SecurityContext securityContext;
+    private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
                              final DocRefInfoService docRefInfoService,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.processorTaskDao = processorTaskDao;
         this.docRefInfoService = docRefInfoService;
         this.securityContext = securityContext;
+        this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
 
     @Override
@@ -110,9 +113,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
         if (!ProcessorTaskFields.PROCESSOR_TASK_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
-        return FieldInfoResultPageBuilder.builder(criteria)
-                .addAll(getFields())
-                .build();
+        return fieldInfoResultPageFactory.create(criteria, getFields());
     }
 
     @Override

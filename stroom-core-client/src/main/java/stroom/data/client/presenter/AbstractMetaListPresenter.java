@@ -27,7 +27,6 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
@@ -140,8 +139,6 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        criteria.setSort(MetaFields.CREATE_TIME.getFldName(), true, false);
-
         dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
             @Override
             protected void exec(final Range range,
@@ -149,6 +146,7 @@ public abstract class AbstractMetaListPresenter
                                 final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
+                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
@@ -170,13 +168,7 @@ public abstract class AbstractMetaListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(dataGrid.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
-                refresh();
-            }
-        }));
+        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -339,14 +331,17 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addCreatedColumn() {
-        dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                        dateTimeFormatter.format(metaRow.getMeta().getCreateMs()),
-                                getEventBus())
-                        .withSorting(MetaFields.CREATE_TIME)
-                        .build(),
+        final Column<MetaRow, String> col = DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
+                                dateTimeFormatter.format(metaRow.getMeta().getCreateMs()),
+                        getEventBus())
+                .withSorting(MetaFields.CREATE_TIME)
+                .defaultSortAscending(false)
+                .build();
+        dataGrid.addResizableColumn(col,
                 "Created",
                 ColumnSizeConstants.DATE_COL);
+        // Sort by create time by default.
+        dataGrid.sort(col);
     }
 
     void addFeedColumn() {
@@ -366,10 +361,10 @@ public abstract class AbstractMetaListPresenter
     void addStreamTypeColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
-                                Optional.ofNullable(metaRow)
-                                        .map(MetaRow::getMeta)
-                                        .map(Meta::getTypeName)
-                                        .orElse(""),
+                                        Optional.ofNullable(metaRow)
+                                                .map(MetaRow::getMeta)
+                                                .map(Meta::getTypeName)
+                                                .orElse(""),
                                 getEventBus())
                         .withSorting(MetaFields.TYPE)
                         .build(),

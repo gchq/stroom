@@ -38,8 +38,6 @@ public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunc
     SimplePanel editorContainer;
     @UiField
     SimplePanel queryHelpContainer;
-//    @UiField
-//    ButtonPanel buttonPanel;
 
     @Inject
     public ColumnFunctionEditorViewImpl(final Binder binder) {
@@ -61,15 +59,6 @@ public class ColumnFunctionEditorViewImpl extends ViewImpl implements ColumnFunc
     public void setQueryHelp(final View view) {
         queryHelpContainer.setWidget(view.asWidget());
     }
-
-//    @Override
-//    public ButtonView addButton(final Preset preset) {
-//        return buttonPanel.addButton(preset);
-//    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, ColumnFunctionEditorViewImpl> {
 

@@ -56,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /**
  * Pool API into open index shards.
@@ -194,7 +193,7 @@ public class IndexShardManager {
             final List<IndexShard> ownedShards = shards
                     .stream()
                     .filter(indexShard -> thisNodeName.equals(indexShard.getNodeName()))
-                    .collect(Collectors.toList());
+                    .toList();
             return performAction(ownedShards, action);
         });
     }

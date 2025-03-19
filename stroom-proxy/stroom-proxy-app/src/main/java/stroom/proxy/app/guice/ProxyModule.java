@@ -64,6 +64,8 @@ import java.nio.file.Path;
 
 public class ProxyModule extends AbstractModule {
 
+    private static final String MATCH_ALL_PATHS = "/*";
+
     private final Config configuration;
     private final Environment environment;
     private final ProxyConfigHolder proxyConfigHolder;
@@ -101,7 +103,7 @@ public class ProxyModule extends AbstractModule {
                 .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
-                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
+                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         ProxySecurityFilter.class);
 
         ServletBinder.create(binder())

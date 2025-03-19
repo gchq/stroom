@@ -69,6 +69,20 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
     }
 
     @Test
+    void testHavingEquals() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                eval count = count()
+                eval EventTime = floorYear(EventTime)
+                eval my_num = min(3)
+                group by EventTime, UserId
+                having count > 3 and my_num = 3
+                select EventTime, UserId, count""";
+        basicTest(query, 9, 2);
+    }
+
+    @Test
     void testWindowCount() {
         final String query = """
                 from index_view

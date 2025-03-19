@@ -16,7 +16,6 @@
 
 package stroom.query.impl;
 
-import stroom.docref.StringMatch.MatchType;
 import stroom.query.language.functions.FunctionArg;
 import stroom.query.language.functions.FunctionCategory;
 import stroom.query.language.functions.FunctionDef;
@@ -44,6 +43,7 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
+import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -52,7 +52,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
-import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -70,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -188,23 +188,21 @@ public class Functions {
 
     public void addRows(final PageRequest pageRequest,
                         final String parentUuid,
-                        final StringMatcher stringMatcher,
+                        final Predicate<String> predicate,
                         final ResultPageBuilder<QueryHelpRow> resultPageBuilder) {
         final List<QueryHelpRow> rows = map.getOrDefault(parentUuid, Collections.emptyList());
         final TrimmedSortedList<QueryHelpRow> trimmedSortedList =
                 new TrimmedSortedList<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));
         for (final QueryHelpRow row : rows) {
             if (row.isHasChildren()) {
-                if (!hasChildren(row, stringMatcher)) {
-                    if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                        match(row, stringMatcher)) {
+                if (!hasChildren(row, predicate)) {
+                    if (match(row, predicate)) {
                         trimmedSortedList.add(row.copy().hasChildren(false).build());
                     }
                 } else {
                     trimmedSortedList.add(row);
                 }
-            } else if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
-                       match(row, stringMatcher)) {
+            } else if (match(row, predicate)) {
                 trimmedSortedList.add(row);
             }
         }
@@ -215,13 +213,13 @@ public class Functions {
         }
     }
 
-    private boolean hasChildren(final QueryHelpRow parent, final StringMatcher stringMatcher) {
+    private boolean hasChildren(final QueryHelpRow parent, final Predicate<String> predicate) {
         final List<QueryHelpRow> rows = map.getOrDefault(parent.getId() + ".", Collections.emptyList());
         for (final QueryHelpRow row : rows) {
-            if (match(row, stringMatcher)) {
+            if (match(row, predicate)) {
                 return true;
             } else if (row.isHasChildren()) {
-                if (hasChildren(row, stringMatcher)) {
+                if (hasChildren(row, predicate)) {
                     return true;
                 }
             }
@@ -229,12 +227,12 @@ public class Functions {
         return false;
     }
 
-    private boolean match(final QueryHelpRow row, final StringMatcher stringMatcher) {
+    private boolean match(final QueryHelpRow row, final Predicate<String> predicate) {
         String name = row.getTitle();
         if (row.getData() instanceof final QueryHelpFunctionSignature queryHelpFunctionSignature) {
             name = queryHelpFunctionSignature.getName();
         }
-        return stringMatcher.match(name).isPresent();
+        return predicate.test(name);
     }
 
     private static QueryHelpFunctionSignature convertSignature(
@@ -260,12 +258,12 @@ public class Functions {
             final List<Arg> args = Arrays.stream(functionSignature.args())
                     .filter(Objects::nonNull)
                     .map(Functions::convertArg)
-                    .collect(Collectors.toList());
+                    .toList();
 
             final List<String> aliases = Arrays.stream(functionDef.aliases())
                     .filter(Objects::nonNull)
                     .filter(alias -> !alias.isEmpty())
-                    .collect(Collectors.toList());
+                    .toList();
 
             final List<String> categoryPath = buildCategoryPath(functionDef, functionSignature);
 
@@ -626,7 +624,7 @@ public class Functions {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +
-                signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                signature.getPrimaryCategory().toLowerCase().replace(' ', '-') +
                 "#" +
                 functionSignatureToAnchor(signature),
                 "Help Documentation");

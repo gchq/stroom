@@ -39,6 +39,7 @@ import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -599,7 +600,11 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             menuItems.add(new IconMenuItem.Builder()
                     .priority(0)
                     .icon(tabData.getIcon())
-                    .text("<b>" + tabData.getLabel() + "</b>")
+                    .text(new SafeHtmlBuilder()
+                            .appendHtmlConstant("<b>")
+                            .appendEscaped(tabData.getLabel())
+                            .appendHtmlConstant("</b>")
+                            .toSafeHtml())
                     .command(() -> fireTabSelection(tabData))
                     .build());
         }

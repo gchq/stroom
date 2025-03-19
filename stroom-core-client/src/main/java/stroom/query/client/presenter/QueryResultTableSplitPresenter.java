@@ -16,12 +16,12 @@
 
 package stroom.query.client.presenter;
 
-import stroom.dashboard.shared.IndexConstants;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
+import stroom.query.api.v2.SpecialColumns;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
 
@@ -77,8 +77,8 @@ public class QueryResultTableSplitPresenter
         if (tableRow == null) {
             showSplit(false);
         } else {
-            final String streamId = tableRow.getText(IndexConstants.STREAM_ID);
-            final String eventId = tableRow.getText(IndexConstants.EVENT_ID);
+            final String streamId = tableRow.getText(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+            final String eventId = tableRow.getText(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
             if (streamId != null && eventId != null && streamId.length() > 0 && eventId.length() > 0) {
                 try {
                     final long strmId = Long.parseLong(streamId);
@@ -92,7 +92,6 @@ public class QueryResultTableSplitPresenter
                             sourceLocation,
                             () -> showSplit(true),
                             () -> showSplit(false));
-
 
                 } catch (final RuntimeException e) {
                     showSplit(false);
