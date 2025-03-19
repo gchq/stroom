@@ -118,7 +118,8 @@ public final class ForwardHttpPostConfig
     @JsonProperty
     @JsonPropertyDescription(
             "The URL to check for liveness of the forward destination. The URL should return a 200 response " +
-            "to a GET request for the destination to be considered live. If null, no liveness check will be " +
+            "to a GET request for the destination to be considered live. If null, empty or property 'queue' " +
+            "is not configured then no liveness check will be " +
             "made and the destination will be assumed to be live. If the response is not a 200, forwarding " +
             "will be paused at least until the next liveness check is performed.")
     public String getLivenessCheckUrl() {

@@ -7,6 +7,14 @@ public class StringIdUtil {
     /**
      * Convert id into a zero padded string that has a length that is divisible by three.
      * The length will be the shortest possible to fit the id value.
+     * e.g.
+     * <ul>
+     *    <li>{@code 1 => 001}</li>
+     *    <li>{@code 12 => 012}</li>
+     *    <li>{@code 123 => 123}</li>
+     *    <li>{@code 1234 => 001234}</li>
+     *    <li>{@code 12345678 => 012345678}</li>
+     * </ul>
      */
     public static String idToString(final long id) {
         if (id < 0) {

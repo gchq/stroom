@@ -38,8 +38,7 @@ proxyConfig:
     name: null
     path: null
     queue: null
-    subPathTemplate: "${year}${month}${day}/${feed}"
-    templatingMode: "REPLACE_UNKNOWN"
+    subPathTemplate: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
@@ -63,7 +62,10 @@ proxyConfig:
     livenessCheckUrl: null
     name: null
     queue:
-      errorSubPathTemplate: "${year}${month}${day}/${feed}"
+      errorSubPathTemplate:
+        enabled: true
+        pathTemplate: "${year}${month}${day}/${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
       forwardDelay: "PT0S"
       forwardRetryThreadCount: 1
       forwardThreadCount: 5
@@ -72,7 +74,6 @@ proxyConfig:
       maxRetryDelay: "PT10M"
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
-      templatingMode: "REPLACE_UNKNOWN"
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:

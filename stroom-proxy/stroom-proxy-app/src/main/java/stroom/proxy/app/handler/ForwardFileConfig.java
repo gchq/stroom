@@ -1,6 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.NullSafe;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -12,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 import java.util.Objects;
 
@@ -23,7 +21,7 @@ public final class ForwardFileConfig
         implements IsProxyConfig, ForwarderConfig {
 
     public static final String PROP_NAME_SUB_PATH_TEMPLATE = "subPathTemplate";
-    public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
+    public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
 
     private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
@@ -32,8 +30,7 @@ public final class ForwardFileConfig
     private final boolean instant;
     private final String name;
     private final String path;
-    private final String subPathTemplate;
-    private final TemplatingMode templatingMode;
+    private final PathTemplateConfig subPathTemplate;
     private final ForwardQueueConfig forwardQueueConfig;
     private final String livenessCheckPath;
     private final LivenessCheckMode livenessCheckMode;
@@ -43,8 +40,7 @@ public final class ForwardFileConfig
         instant = false;
         name = null;
         path = null;
-        subPathTemplate = DEFAULT_SUB_PATH_TEMPLATE;
-        templatingMode = DEFAULT_TEMPLATING_MODE;
+        subPathTemplate = null;
         forwardQueueConfig = null; // Assume local file forwarder by default, so no queue config needed
         livenessCheckPath = null;
         livenessCheckMode = LivenessCheckMode.READ;
@@ -56,8 +52,7 @@ public final class ForwardFileConfig
                              @JsonProperty("instant") final boolean instant,
                              @JsonProperty("name") final String name,
                              @JsonProperty("path") final String path,
-                             @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final String subPathTemplate,
-                             @JsonProperty("templatingMode") final TemplatingMode templatingMode,
+                             @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final PathTemplateConfig subPathTemplate,
                              @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig,
                              @JsonProperty("livenessCheckPath") final String livenessCheckPath,
                              @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode) {
@@ -65,8 +60,7 @@ public final class ForwardFileConfig
         this.instant = instant;
         this.name = name;
         this.path = path;
-        this.subPathTemplate = subPathTemplate;
-        this.templatingMode = Objects.requireNonNullElse(templatingMode, DEFAULT_TEMPLATING_MODE);
+        this.subPathTemplate = Objects.requireNonNullElse(subPathTemplate, PathTemplateConfig.DISABLED);
         this.forwardQueueConfig = forwardQueueConfig;
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
@@ -78,7 +72,6 @@ public final class ForwardFileConfig
         name = builder.name;
         path = builder.path;
         subPathTemplate = builder.subPathTemplate;
-        templatingMode = builder.templatingMode;
         forwardQueueConfig = builder.forwardQueueConfig;
         livenessCheckPath = builder.livenessCheckPath;
         livenessCheckMode = builder.livenessCheckMode;
@@ -127,34 +120,14 @@ public final class ForwardFileConfig
      * The template to create subdirectories within the 'path' directory.
      * The default value is <code>${year}${month}${day}/${feed}</code>
      * Must be a relative path.
-     * Supported template parameters (must be lower-case) are:
-     * <ul>
-     *     <li><code>${feed}</code></li>
-     *     <li><code>${type}</code></li>
-     *     <li><code>${year}</code></li>
-     *     <li><code>${month}</code></li>
-     *     <li><code>${day}</code></li>
-     *     <li><code>${hour}</code></li>
-     *     <li><code>${minute}</code></li>
-     *     <li><code>${second}</code></li>
-     *     <li><code>${millis}</code></li>
-     *     <li><code>${ms}</code></li>
-     * </ul>
      */
-    @Pattern(regexp = "^[^/].*$") // Relative paths only
+    @NotNull
     @JsonPropertyDescription("The templated relative sub-path of path. " +
-                             "The default value is '" + DEFAULT_SUB_PATH_TEMPLATE + "'. " +
+                             "The default path template is '" + PathTemplateConfig.DATE_AND_FEED_TEMPLATE + "'. " +
                              "Cannot be an absolute path and must resolve to a descendant of path.")
     @JsonProperty
-    public String getSubPathTemplate() {
+    public PathTemplateConfig getSubPathTemplate() {
         return subPathTemplate;
-    }
-
-    @JsonPropertyDescription("How to handle unknown parameters in the subPathTemplate. " +
-                             "Default value is 'REPLACE_UNKNOWN'.")
-    @JsonProperty
-    public TemplatingMode getTemplatingMode() {
-        return templatingMode;
     }
 
     @Override
@@ -170,14 +143,21 @@ public final class ForwardFileConfig
     @JsonIgnore
     @Override
     public String getDestinationDescription() {
-        return NullSafe.isNonBlankString(subPathTemplate)
-                ? path + "/" + subPathTemplate
+        return subPathTemplate.hasPathTemplate()
+                ? path + "/" + subPathTemplate.getPathTemplate()
                 : path;
+    }
+
+    @JsonIgnore
+    boolean hasSubPathTemplate() {
+        return subPathTemplate != null
+               && subPathTemplate.hasPathTemplate();
     }
 
     @JsonProperty
     @JsonPropertyDescription("The path to use for regular liveness checking of this forward destination. " +
-                             "If null or empty, no liveness check will be performed and the destination will be " +
+                             "If null, empty or if the 'queue' property is not configured, then no liveness check " +
+                             "will be performed and the destination will be " +
                              "assumed to be healthy. If livenessCheckMode is READ, livenessCheckPath can be a " +
                              "directory or a file and stroom-proxy will attempt to check it can read the " +
                              "file/directory. If livenessCheckMode is WRITE, then livenessCheckPath must be a " +
@@ -207,7 +187,6 @@ public final class ForwardFileConfig
                && Objects.equals(name, that.name)
                && Objects.equals(path, that.path)
                && Objects.equals(subPathTemplate, that.subPathTemplate)
-               && templatingMode == that.templatingMode
                && Objects.equals(forwardQueueConfig, that.forwardQueueConfig)
                && Objects.equals(livenessCheckPath, that.livenessCheckPath)
                && livenessCheckMode == that.livenessCheckMode;
@@ -220,7 +199,6 @@ public final class ForwardFileConfig
                 name,
                 path,
                 subPathTemplate,
-                templatingMode,
                 forwardQueueConfig,
                 livenessCheckPath,
                 livenessCheckMode);
@@ -234,7 +212,6 @@ public final class ForwardFileConfig
                ", name='" + name + '\'' +
                ", path='" + path + '\'' +
                ", subPathTemplate='" + subPathTemplate + '\'' +
-               ", templatingMode=" + templatingMode +
                ", forwardQueueConfig=" + forwardQueueConfig +
                ", livenessCheckPath='" + livenessCheckPath + '\'' +
                ", livenessCheckMode=" + livenessCheckMode +
@@ -252,7 +229,6 @@ public final class ForwardFileConfig
         builder.name = copy.getName();
         builder.path = copy.getPath();
         builder.subPathTemplate = copy.getSubPathTemplate();
-        builder.templatingMode = copy.getTemplatingMode();
         builder.forwardQueueConfig = copy.getForwardQueueConfig();
         builder.livenessCheckPath = copy.getLivenessCheckPath();
         builder.livenessCheckMode = copy.getLivenessCheckMode();
@@ -271,8 +247,7 @@ public final class ForwardFileConfig
         private boolean instant;
         private String name;
         private String path;
-        private String subPathTemplate;
-        private TemplatingMode templatingMode;
+        private PathTemplateConfig subPathTemplate;
         private ForwardQueueConfig forwardQueueConfig;
 
         private Builder() {
@@ -313,13 +288,8 @@ public final class ForwardFileConfig
             return this;
         }
 
-        public Builder withSubPathTemplate(final String subPathTemplate) {
+        public Builder withSubPathTemplate(final PathTemplateConfig subPathTemplate) {
             this.subPathTemplate = subPathTemplate;
-            return this;
-        }
-
-        public Builder withTemplatingMode(final TemplatingMode templatingMode) {
-            this.templatingMode = templatingMode;
             return this;
         }
 

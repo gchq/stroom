@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
 
@@ -23,7 +23,6 @@ import java.util.Objects;
 public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_ERROR_SUB_PATH_TEMPLATE = "errorSubPathTemplate";
-    public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN;
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
     private static final StroomDuration DEFAULT_LIVENESS_CHECK_INTERVAL = StroomDuration.ofMinutes(1);
     /**
@@ -33,19 +32,26 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     private static final double DEFAULT_RETRY_GROWTH_FACTOR = 1;
     private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofMinutes(10);
     private static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofDays(1);
-    private static final String DEFAULT_ERROR_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
     public static final int DEFAULT_FORWARD_RETRY_THREAD_COUNT = 1;
     public static final int DEFAULT_FORWARD_THREAD_COUNT = 5;
 
+    @JsonProperty
     private final StroomDuration forwardDelay;
+    @JsonProperty
     private final StroomDuration retryDelay;
+    @JsonProperty
     private final double retryDelayGrowthFactor;
+    @JsonProperty
     private final StroomDuration maxRetryDelay;
+    @JsonProperty
     private final StroomDuration maxRetryAge;
-    private final String errorSubPathTemplate;
-    private final TemplatingMode templatingMode;
+    @JsonProperty
+    private final PathTemplateConfig errorSubPathTemplate;
+    @JsonProperty
     private final int forwardThreadCount;
+    @JsonProperty
     private final int forwardRetryThreadCount;
+    @JsonProperty
     private final StroomDuration livenessCheckInterval;
 
     public ForwardQueueConfig() {
@@ -54,8 +60,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
         maxRetryDelay = DEFAULT_RETRY_DELAY;
         maxRetryAge = DEFAULT_MAX_RETRY_AGE;
-        errorSubPathTemplate = DEFAULT_ERROR_PATH_TEMPLATE;
-        templatingMode = DEFAULT_TEMPLATING_MODE;
+        errorSubPathTemplate = PathTemplateConfig.DEFAULT;
         forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
         forwardThreadCount = DEFAULT_FORWARD_THREAD_COUNT;
         livenessCheckInterval = DEFAULT_LIVENESS_CHECK_INTERVAL;
@@ -69,8 +74,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty("retryDelayGrowthFactor") final Double retryDelayGrowthFactor,
             @JsonProperty("maxRetryDelay") final StroomDuration maxRetryDelay,
             @JsonProperty("maxRetryAge") final StroomDuration maxRetryAge,
-            @JsonProperty(PROP_NAME_ERROR_SUB_PATH_TEMPLATE) final String errorSubPathTemplate,
-            @JsonProperty("templatingMode") final TemplatingMode templatingMode,
+            @JsonProperty(PROP_NAME_ERROR_SUB_PATH_TEMPLATE) final PathTemplateConfig errorSubPathTemplate,
             @JsonProperty("forwardThreadCount") final Integer forwardThreadCount,
             @JsonProperty("forwardRetryThreadCount") final Integer forwardRetryThreadCount,
             @JsonProperty("livenessCheckInterval") final StroomDuration livenessCheckInterval) {
@@ -80,8 +84,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         this.retryDelayGrowthFactor = Objects.requireNonNullElse(retryDelayGrowthFactor, DEFAULT_RETRY_GROWTH_FACTOR);
         this.maxRetryDelay = Objects.requireNonNullElse(maxRetryDelay, DEFAULT_MAX_RETRY_DELAY);
         this.maxRetryAge = Objects.requireNonNullElse(maxRetryAge, DEFAULT_MAX_RETRY_AGE);
-        this.errorSubPathTemplate = errorSubPathTemplate;
-        this.templatingMode = templatingMode;
+        this.errorSubPathTemplate = Objects.requireNonNullElse(errorSubPathTemplate, PathTemplateConfig.DEFAULT);
         this.forwardThreadCount = Objects.requireNonNullElse(forwardThreadCount, DEFAULT_FORWARD_THREAD_COUNT);
         this.forwardRetryThreadCount = Objects.requireNonNullElse(
                 forwardRetryThreadCount, DEFAULT_FORWARD_RETRY_THREAD_COUNT);
@@ -89,20 +92,17 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                 livenessCheckInterval, DEFAULT_LIVENESS_CHECK_INTERVAL);
     }
 
-    @JsonProperty
     @JsonPropertyDescription("Debug/test setting to add a delay before forwarding. Default is zero. Do not set " +
                              "this in production.")
     public StroomDuration getForwardDelay() {
         return forwardDelay;
     }
 
-    @JsonProperty
     @JsonPropertyDescription("If we fail to send, how long should we wait until we try again?")
     public StroomDuration getRetryDelay() {
         return retryDelay;
     }
 
-    @JsonProperty
     @JsonPropertyDescription("If retryDelayGrowthFactor is > 1, " +
                              "this property controls the maximum retry delay interval.")
     public StroomDuration getMaxRetryDelay() {
@@ -116,12 +116,10 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
      * 1000, 1100, 1210, 1331, 1464, etc. Default value of 1 so the times don't increase.
      */
     @Min(1)
-    @JsonProperty
     public double getRetryDelayGrowthFactor() {
         return retryDelayGrowthFactor;
     }
 
-    @JsonProperty
     @JsonPropertyDescription("The maximum duration between the initial attempt and the last retry. Set to zero " +
                              "for no retires at all. Set to something large like 'PT99999999999999D' " +
                              "to 'always' retry. Default is 7 days.")
@@ -129,41 +127,16 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         return maxRetryAge;
     }
 
-    /**
-     * The template to use to create subdirectories of the error destination directory.
-     * The error directory is used when the retry limit is reached
-     * or the data is explicitly rejected by the downstream proxy/stroom.
-     * Must be a relative path.
-     * Supported template parameters (must be lower-case) are:
-     * <ul>
-     *     <li><code>${feed}</code></li>
-     *     <li><code>${type}</code></li>
-     *     <li><code>${year}</code></li>
-     *     <li><code>${month}</code></li>
-     *     <li><code>${day}</code></li>
-     *     <li><code>${hour}</code></li>
-     *     <li><code>${minute}</code></li>
-     *     <li><code>${second}</code></li>
-     *     <li><code>${millis}</code></li>
-     *     <li><code>${ms}</code></li>
-     * </ul>
-     */
-    @Pattern(regexp = "^[^/].*$") // Relative paths only
-    @JsonProperty
-    public String getErrorSubPathTemplate() {
+    @NotNull
+    @JsonPropertyDescription("The template to use to create subdirectories of the error destination directory. " +
+                             "The error directory is used when the retry limit is reached " +
+                             "or the data is explicitly rejected by the downstream proxy/stroom.")
+    public PathTemplateConfig getErrorSubPathTemplate() {
         return errorSubPathTemplate;
-    }
-
-    @JsonProperty
-    @JsonPropertyDescription("How to handle unknown parameters in the subPathTemplate. " +
-                             "Default value is 'REPLACE_UNKNOWN'.")
-    public TemplatingMode getTemplatingMode() {
-        return templatingMode;
     }
 
     @RequiresProxyRestart
     @Min(1)
-    @JsonProperty
     @JsonPropertyDescription("The number of threads to consume from the forward queue.")
     public int getForwardThreadCount() {
         return forwardThreadCount;
@@ -171,14 +144,12 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
     @RequiresProxyRestart
     @Min(1)
-    @JsonProperty
     @JsonPropertyDescription("The number of threads to consume from the forward retry queue that contains " +
                              "items that failed to forward on the previous attempt.")
     public int getForwardRetryThreadCount() {
         return forwardRetryThreadCount;
     }
 
-    @JsonProperty
     @JsonPropertyDescription("The interval between destination liveness checks, if livenessCheckUrl has a value.")
     public StroomDuration getLivenessCheckInterval() {
         return livenessCheckInterval;
@@ -220,7 +191,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                && Objects.equals(maxRetryDelay, that.maxRetryDelay)
                && Objects.equals(maxRetryAge, that.maxRetryAge)
                && Objects.equals(errorSubPathTemplate, that.errorSubPathTemplate)
-               && templatingMode == that.templatingMode
                && Objects.equals(livenessCheckInterval, that.livenessCheckInterval);
     }
 
@@ -233,7 +203,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                 maxRetryDelay,
                 maxRetryAge,
                 errorSubPathTemplate,
-                templatingMode,
                 forwardThreadCount,
                 forwardRetryThreadCount,
                 livenessCheckInterval);
@@ -248,7 +217,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                ", maxRetryDelay=" + maxRetryDelay +
                ", maxRetryAge=" + maxRetryAge +
                ", errorSubPathTemplate='" + errorSubPathTemplate + '\'' +
-               ", templatingMode=" + templatingMode +
                ", forwardThreadCount=" + forwardThreadCount +
                ", forwardRetryThreadCount=" + forwardRetryThreadCount +
                ", livenessCheckInterval=" + livenessCheckInterval +
@@ -265,7 +233,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         private StroomDuration maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
         private double retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
         private StroomDuration maxRetryAge = DEFAULT_MAX_RETRY_AGE;
-        private String errorSubPathTemplate;
+        private PathTemplateConfig errorSubPathTemplate;
         private TemplatingMode templatingMode;
         private int forwardThreadCount = DEFAULT_FORWARD_THREAD_COUNT;
         private int forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
@@ -283,7 +251,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             this.retryDelayGrowthFactor = forwardQueueConfig.retryDelayGrowthFactor;
             this.maxRetryAge = forwardQueueConfig.maxRetryAge;
             this.errorSubPathTemplate = forwardQueueConfig.errorSubPathTemplate;
-            this.templatingMode = forwardQueueConfig.templatingMode;
             this.forwardThreadCount = forwardQueueConfig.forwardThreadCount;
             this.forwardRetryThreadCount = forwardQueueConfig.forwardRetryThreadCount;
             this.livenessCheckInterval = forwardQueueConfig.livenessCheckInterval;
@@ -311,11 +278,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
 
         public Builder maxRetryAge(final StroomDuration maxRetryAge) {
             this.maxRetryAge = maxRetryAge;
-            return this;
-        }
-
-        public Builder errorSubPathTemplate(final String errorSubPathTemplate) {
-            this.errorSubPathTemplate = errorSubPathTemplate;
             return this;
         }
 
@@ -347,7 +309,6 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                     maxRetryDelay,
                     maxRetryAge,
                     errorSubPathTemplate,
-                    templatingMode,
                     forwardThreadCount,
                     forwardRetryThreadCount,
                     livenessCheckInterval);

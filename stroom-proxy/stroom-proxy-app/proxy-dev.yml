@@ -128,8 +128,9 @@ proxyConfig:
       name: "Local filesystem"
       path: "file_forwarder"
       queue: null
-      subPathTemplate: "${feed}"
-      templatingMode: "REPLACE_UNKNOWN"
+      subPathTemplate:
+        pathTemplate: "${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
 
   forwardHttpDestinations:
     - enabled: true

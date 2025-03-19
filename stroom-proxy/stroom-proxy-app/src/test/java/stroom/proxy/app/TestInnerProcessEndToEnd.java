@@ -137,7 +137,6 @@ class TestInnerProcessEndToEnd {
                                 "test",
                                 "test",
                                 null,
-                                null,
                                 new ForwardQueueConfig(),
                                 null,
                                 null))

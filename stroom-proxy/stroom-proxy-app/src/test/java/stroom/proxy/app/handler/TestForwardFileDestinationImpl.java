@@ -160,8 +160,7 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                subPathStr,
-                null,
+                new PathTemplateConfig(subPathStr),
                 null,
                 null,
                 pathCreator);
@@ -207,8 +206,7 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                "${feed}/${year}",
-                TemplatingMode.REPLACE_UNKNOWN,
+                new PathTemplateConfig("${feed}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
                 pathCreator);
@@ -286,12 +284,60 @@ class TestForwardFileDestinationImpl {
     }
 
     @Test
+    void testAdd_templateDisabled() {
+        final String subPathStr = "${feed}";
+        // subPathStr is ignored as TemplatingMode is DISABLED
+        final Path subPath = dirs.getStoreDir();
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                PathTemplateConfig.DISABLED,
+                null,
+                null,
+                pathCreator);
+
+        assertThat(subPath)
+                .exists()
+                .isDirectory()
+                .isEmptyDirectory();
+
+        final Path source1 = createSourceDir(1);
+        final Snapshot source1Snapshot = DirectorySnapshot.of(source1);
+
+        dumpContents(dirs.getSourcesDir());
+        dumpContents(subPath);
+
+        assertThat(listContent(dirs.getSourcesDir()))
+                .containsExactlyInAnyOrder(source1);
+
+        assertThat(source1)
+                .isDirectory()
+                .exists();
+
+        forwardFileDest.add(source1);
+
+        dumpContents(dirs.getSourcesDir());
+        dumpContents(subPath);
+
+        assertThat(source1)
+                .doesNotExist();
+
+        final Path destPath = DirUtil.createPath(subPath, 1);
+        final Snapshot destSnapshot = DirectorySnapshot.of(destPath);
+        assertThat(deepListContent(subPath))
+                .extracting(TypedFile::path)
+                .contains(destPath);
+
+        assertThat(destSnapshot)
+                .isEqualTo(source1Snapshot);
+    }
+
+    @Test
     void testAdd_template_badParam_replace() {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                "${foo}/${year}",
-                TemplatingMode.REPLACE_UNKNOWN,
+                new PathTemplateConfig("${foo}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
                 pathCreator);
@@ -341,8 +387,7 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                "${foo}/${year}",
-                TemplatingMode.REMOVE_UNKNOWN,
+                new PathTemplateConfig("${foo}/${year}", TemplatingMode.REMOVE_UNKNOWN_PARAMS),
                 null,
                 null,
                 pathCreator);
@@ -392,8 +437,7 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                "${foo}/${year}",
-                TemplatingMode.IGNORE_UNKNOWN,
+                new PathTemplateConfig("${foo}/${year}", TemplatingMode.IGNORE_UNKNOWN_PARAMS),
                 null,
                 null,
                 pathCreator);
@@ -444,8 +488,8 @@ class TestForwardFileDestinationImpl {
             final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                     dirs.getStoreDir(),
                     NAME,
-                    "../sibling", // Outside the store dir, so no allowed
-                    TemplatingMode.REPLACE_UNKNOWN,
+                    new PathTemplateConfig("../sibling", // Outside the store dir, so no allowed
+                            TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                     null,
                     null,
                     pathCreator);
@@ -500,7 +544,6 @@ class TestForwardFileDestinationImpl {
                 dirs.getStoreDir(),
                 NAME,
                 null,
-                null,
                 "health.check",
                 LivenessCheckMode.WRITE,
                 pathCreator);
@@ -534,7 +577,6 @@ class TestForwardFileDestinationImpl {
                 dirs.getStoreDir(),
                 NAME,
                 null,
-                null,
                 "health.check",
                 LivenessCheckMode.READ,
                 pathCreator);
@@ -567,7 +609,6 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                null,
                 null,
                 "health.check",
                 LivenessCheckMode.READ,

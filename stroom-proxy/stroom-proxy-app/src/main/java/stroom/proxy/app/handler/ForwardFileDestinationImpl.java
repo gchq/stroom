@@ -32,8 +32,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     private static final int MAX_MOVE_ATTEMPTS = 1_000;
     private final Path storeDir;
     private final String name;
-    private final String subPathTemplate;
-    private final TemplatingMode templatingMode;
+    private final PathTemplateConfig subPathTemplate;
     private final Set<String> varsInTemplate;
     private final String livenessCheckPath;
     private final LivenessCheckMode livenessCheckMode;
@@ -55,7 +54,6 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
                 null,
                 null,
                 null,
-                null,
                 pathCreator);
     }
 
@@ -65,7 +63,6 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         this(storeDir,
                 forwardFileConfig.getName(),
                 forwardFileConfig.getSubPathTemplate(),
-                forwardFileConfig.getTemplatingMode(),
                 forwardFileConfig.getLivenessCheckPath(),
                 forwardFileConfig.getLivenessCheckMode(),
                 pathCreator);
@@ -73,8 +70,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
     public ForwardFileDestinationImpl(final Path storeDir,
                                       final String name,
-                                      final String subPathTemplate,
-                                      final TemplatingMode templatingMode,
+                                      final PathTemplateConfig subPathTemplate,
                                       final String livenessCheckPath,
                                       final LivenessCheckMode livenessCheckMode,
                                       final PathCreator pathCreator) {
@@ -82,19 +78,18 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
         this.subPathTemplate = subPathTemplate;
-        this.templatingMode = Objects.requireNonNullElse(
-                templatingMode, ForwardFileConfig.DEFAULT_TEMPLATING_MODE);
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = livenessCheckMode;
         this.pathCreator = pathCreator;
 
-        if (NullSafe.isNonEmptyString(subPathTemplate)) {
-            final String[] vars = pathCreator.findVars(subPathTemplate);
+        if (subPathTemplate != null && subPathTemplate.hasPathTemplate()) {
+            final String pathTemplate = subPathTemplate.getPathTemplate();
+            final String[] vars = pathCreator.findVars(pathTemplate);
             if (NullSafe.hasItems(vars)) {
                 staticBaseDir = null;
                 varsInTemplate = Set.of(vars);
             } else {
-                staticBaseDir = resolveSubPath(subPathTemplate);
+                staticBaseDir = resolveSubPath(pathTemplate);
                 FileUtil.ensureDirExists(staticBaseDir);
                 varsInTemplate = null;
             }
@@ -211,11 +206,10 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
     @Override
     public String getDestinationDescription() {
-        String str = storeDir.toString();
-        if (NullSafe.isNonBlankString(subPathTemplate)) {
-            str += "/" + subPathTemplate;
-        }
-        return str;
+        String storeDirStr = storeDir.toString();
+        return subPathTemplate.hasPathTemplate()
+                ? storeDirStr + "/" + subPathTemplate.getPathTemplate()
+                : storeDirStr;
     }
 
     @Override
@@ -248,7 +242,8 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
     }
 
     private Path getBaseDirWithTemplatedSubDir(final Path sourceDir) {
-        String subPathStr = pathCreator.replaceTimeVars(subPathTemplate);
+        final String pathTemplate = subPathTemplate.getPathTemplate();
+        String subPathStr = pathCreator.replaceTimeVars(pathTemplate);
         // Wrap the attributeMapSupplier in a LazyValue as we don't want to supply it multiple times
         // in case it is costly, and we don't know if we even need the attributeMap
         final LazyValue<AttributeMap> lazyAttributeMap = LazyValue.initialisedBy(() ->
@@ -256,11 +251,11 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         subPathStr = replaceAttribute(subPathStr, "feed", lazyAttributeMap);
         subPathStr = replaceAttribute(subPathStr, "type", lazyAttributeMap);
 
-        subPathStr = switch (templatingMode) {
-            case IGNORE_UNKNOWN -> subPathStr;
-            case REPLACE_UNKNOWN -> replaceAllUnusedVars(subPathStr, "XXX");
+        subPathStr = switch (subPathTemplate.getTemplatingMode()) {
+            case IGNORE_UNKNOWN_PARAMS -> subPathStr;
+            case REPLACE_UNKNOWN_PARAMS -> replaceAllUnusedVars(subPathStr, "XXX");
             // If that means we get a/path////sub/dir, then Path with remove the extra slashes
-            case REMOVE_UNKNOWN -> replaceAllUnusedVars(subPathStr, "");
+            case REMOVE_UNKNOWN_PARAMS -> replaceAllUnusedVars(subPathStr, "");
         };
 
         return resolveSubPath(subPathStr);

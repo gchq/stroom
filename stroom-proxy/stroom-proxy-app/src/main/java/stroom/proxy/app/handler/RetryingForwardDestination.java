@@ -230,13 +230,12 @@ public class RetryingForwardDestination implements ForwardDestination {
                                                            final Path forwardingDir) {
         final ForwardFileDestination failureDestination;
         final Path failureDir = forwardingDir.resolve("03_failure");
-        final String errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
+        final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",
                 errorSubPathTemplate,
-                ForwardFileConfig.DEFAULT_TEMPLATING_MODE,
                 null,
                 null,
                 simplePathCreator);
