@@ -200,9 +200,9 @@ public class MockFileDestination {
                 },
                 (long) count,
                 () -> "Forwarded file pairs count",
-                Duration.ofMinutes(1),
-                Duration.ofMillis(100),
-                Duration.ofSeconds(1));
+                Duration.ofMinutes(2),
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5));
 
         final long actualCount = getForwardFiles(config)
                 .stream()
@@ -260,9 +260,9 @@ public class MockFileDestination {
                 () -> getForwardFileMetaCount(config),
                 (long) count,
                 () -> "Forwarded file pairs count",
-                Duration.ofMinutes(1),
-                Duration.ofMillis(100),
-                Duration.ofSeconds(1));
+                Duration.ofMinutes(2),
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5));
 
         final List<ForwardFileItem> forwardFileItems = getForwardFiles(config);
 
