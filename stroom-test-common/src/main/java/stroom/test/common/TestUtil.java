@@ -144,7 +144,7 @@ public class TestUtil {
 
                         if (timeSinceLastUpdate.compareTo(showProgressFrequency) > 0) {
                             LOGGER.info("Still waiting for '{}' to be '{} ({})'. " +
-                                            "Last value '{} ({})'. Waited {} so far.",
+                                        "Last value '{} ({})'. Waited {} so far.",
                                     messageSupplier.get(),
                                     requiredValue,
                                     NullSafe.getOrElse(
@@ -163,7 +163,7 @@ public class TestUtil {
 
         // Timed out so throw
         throw new RuntimeException(LogUtil.message("Timed out (timeout: {}) waiting for '{}' to be '{}'. " +
-                        "Last value '{}'",
+                                                   "Last value '{}'",
                 timeout,
                 messageSupplier.get(),
                 requiredValue,

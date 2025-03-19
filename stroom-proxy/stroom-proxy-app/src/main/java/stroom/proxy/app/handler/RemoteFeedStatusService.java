@@ -259,6 +259,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         return resultBuilder.build();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class FeedStatusUpdater {
 
         private final Executor executor;
@@ -293,6 +297,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             this.cachedResponse = cachedResponse;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CachedResponse {
 

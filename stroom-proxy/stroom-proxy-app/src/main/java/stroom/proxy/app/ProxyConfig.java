@@ -4,6 +4,7 @@ import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
@@ -28,7 +29,10 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
@@ -237,6 +241,79 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         }
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "All forwarders must have unique names, ignoring case.")
+    public boolean isForwardNamesValid() {
+        final List<String> allNames = streamAllForwarders()
+                .map(ForwarderConfig::getName)
+                .filter(Objects::nonNull) // Null names get picked up elsewhere
+                .map(String::toLowerCase)
+                .sorted()
+                .toList();
+        final long distinctCount = allNames.stream()
+                .distinct()
+                .count();
+        return distinctCount == allNames.size();
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "Only one forwarder (regardless of type) is permitted if any " +
+                                "forwarder has instant=true. If you want to forward to multiple " +
+                                "destinations you cannot use instant forwarding.")
+    public boolean isInstantForwardingValid() {
+        final long enabledInstantForwardersCount = streamAllForwarders()
+                .filter(ForwarderConfig::isEnabled)
+                .filter(ForwarderConfig::isInstant)
+                .count();
+        if (enabledInstantForwardersCount > 1) {
+            // There can be only one!
+            return false;
+        } else if (enabledInstantForwardersCount == 1) {
+            final long allEnabledForwardersCount = streamAllForwarders()
+                    .filter(ForwarderConfig::isEnabled)
+                    .count();
+            // It must be the only enabled forwarder
+            return allEnabledForwardersCount == 1;
+        } else {
+            // No instant forwarders so we don't care about the number of forwarders (here at least)
+            return true;
+        }
+    }
+
+//    @JsonIgnore
+//    @SuppressWarnings("unused")
+//    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
+//    public boolean isForwarderCountValid() {
+//        final long allEnabledForwardersCount = streamAllForwarders()
+//                .filter(ForwarderConfig::isEnabled)
+//                .count();
+//        return allEnabledForwardersCount >= 1;
+//    }
+
+    /**
+     * @return A {@link Stream} of all forward destination config objects regardless of enabled
+     * state.
+     */
+    public Stream<ForwarderConfig> streamAllForwarders() {
+        return Stream.concat(
+                NullSafe.stream(getForwardFileDestinations())
+                        .filter(Objects::nonNull)
+                        .map(config -> (ForwarderConfig) config),
+                NullSafe.stream(getForwardHttpDestinations())
+                        .filter(Objects::nonNull)
+                        .map(config -> (ForwarderConfig) config));
+    }
+
+    /**
+     * @return A {@link Stream} of all enabed forward destination config objects.
+     */
+    public Stream<ForwarderConfig> streamAllEnabledForwarders() {
+        return streamAllForwarders()
+                .filter(ForwarderConfig::isEnabled);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -315,8 +392,24 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder forwardFileDestinations(final Collection<ForwardFileConfig> forwarderFileConfigs) {
+            this.forwardFileDestinations.clear();
+            if (forwarderFileConfigs != null) {
+                this.forwardFileDestinations.addAll(forwarderFileConfigs);
+            }
+            return this;
+        }
+
         public Builder addForwardHttpDestination(final ForwardHttpPostConfig forwarderHttpConfig) {
             this.forwardHttpDestinations.add(forwarderHttpConfig);
+            return this;
+        }
+
+        public Builder forwardHttpDestinations(final Collection<ForwardHttpPostConfig> forwarderHttpConfigs) {
+            this.forwardHttpDestinations.clear();
+            if (forwarderHttpConfigs != null) {
+                this.forwardHttpDestinations.addAll(forwarderHttpConfigs);
+            }
             return this;
         }
 

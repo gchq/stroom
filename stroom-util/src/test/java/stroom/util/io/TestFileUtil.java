@@ -17,21 +17,32 @@
 package stroom.util.io;
 
 import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestFileUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFileUtil.class);
 
     @TempDir
     static Path tempDir;
@@ -119,5 +130,41 @@ class TestFileUtil {
         final boolean isEmpty = FileUtil.isEmptyDirectory(tempDir);
         assertThat(isEmpty)
                 .isFalse();
+    }
+
+    @Test
+    void testDeepListContents(@TempDir final Path tempDir) throws IOException {
+        final Path dirA = Files.createDirectories(tempDir.resolve("a1/a2/a3/a4"));
+        Files.writeString(Files.createFile(dirA.resolve("aFile1")), "aFile1");
+        Files.writeString(Files.createFile(dirA.resolve("aFile2")), "aFile2");
+        final Path dirB = Files.createDirectories(tempDir.resolve("b1/b2/b3/b4"));
+        Files.writeString(Files.createFile(dirB.resolve("bFile1")), "bFile1");
+        Files.writeString(Files.createFile(dirB.resolve("bFile2")), "bFile2");
+        final Path dirC = Files.createDirectories(tempDir.resolve("c1/c2/c3/c4"));
+        Files.writeString(Files.createFile(dirC.resolve("cFile1")), "cFile1");
+        Files.writeString(Files.createFile(dirC.resolve("cFile2")), "cFile2");
+
+        LOGGER.info("contents of {}:\n{}", tempDir, FileUtil.deepListContents(tempDir, false)
+                .stream()
+                .map(Objects::toString)
+                .collect(Collectors.joining("\n")));
+
+        final LongAdder totalSize = new LongAdder();
+
+        final Predicate<PathWithAttributes> isFilePredicate = pathWithAttributes -> {
+            final BasicFileAttributes fileAttributes = pathWithAttributes.attributes();
+            final boolean isRegularFile = fileAttributes.isRegularFile();
+            if (isRegularFile) {
+                totalSize.add(fileAttributes.size());
+            }
+            return isRegularFile;
+        };
+
+        final long fileCount = FileUtil.deepListContents(tempDir, false, isFilePredicate)
+                .size();
+        Assertions.assertThat(fileCount)
+                .isEqualTo(6);
+        Assertions.assertThat(totalSize)
+                .hasValue(6L * "XFileX".getBytes(StandardCharsets.UTF_8).length);
     }
 }

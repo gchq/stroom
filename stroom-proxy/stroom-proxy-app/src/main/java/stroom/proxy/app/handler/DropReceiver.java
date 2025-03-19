@@ -1,15 +1,18 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.StroomStreamException;
+import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +55,12 @@ public class DropReceiver implements Receiver {
             logStream.log(
                     RECEIVE_LOG,
                     attributeMap,
-                    "DROP",
+                    EventType.DROP,
                     requestUri,
-                    HttpStatus.SC_OK,
+                    StroomStatusCode.OK,
+                    NullSafe.get(
+                            attributeMap,
+                            map -> map.get(StandardHeaderArguments.RECEIPT_ID)),
                     byteCountInputStream.getCount(),
                     duration.toMillis());
         } catch (final IOException e) {

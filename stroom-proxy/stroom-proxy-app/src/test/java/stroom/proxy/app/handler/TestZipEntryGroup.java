@@ -51,6 +51,9 @@ public class TestZipEntryGroup extends StroomUnitTest {
                 assertThat(zipEntryGroup.getDataEntry().getName()).isEqualTo(i + ".dat");
                 assertThat(zipEntryGroup.getDataEntry().getUncompressedSize()).isEqualTo(456);
 
+                assertThat(zipEntryGroup.getTotalUncompressedSize())
+                        .isEqualTo(123 + 234 + 345 + 456);
+
                 i++;
                 line = bufferedReader.readLine();
             }

@@ -7,6 +7,7 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -16,34 +17,35 @@ import java.util.Objects;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
-public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConfig {
+public final class ForwardHttpPostConfig
+        extends AbstractConfig
+        implements IsProxyConfig, ForwarderConfig {
 
     private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
-    private static final Integer DEFAULT_MAX_RETRIES = 3;
     private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
+    private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
+    private static final Integer DEFAULT_MAX_RETRIES = 3;
 
     private final boolean enabled;
     private final boolean instant;
     private final String name;
     private final String forwardUrl;
+    private final String livenessCheckUrl;
     private final String apiKey;
-    private final StroomDuration forwardDelay;
-    private final StroomDuration retryDelay;
-    private final Integer maxRetries;
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
+    private final ForwardQueueConfig forwardQueueConfig;
 
     public ForwardHttpPostConfig() {
         enabled = true;
         instant = false;
         name = null;
         forwardUrl = null;
+        livenessCheckUrl = null;
         apiKey = null;
-        forwardDelay = DEFAULT_FORWARD_DELAY;
-        retryDelay = DEFAULT_RETRY_DELAY;
-        maxRetries = DEFAULT_MAX_RETRIES;
         addOpenIdAccessToken = false;
         httpClient = createDefaultHttpClientConfiguration();
+        forwardQueueConfig = new ForwardQueueConfig();
     }
 
     @SuppressWarnings("unused")
@@ -52,28 +54,20 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                                  @JsonProperty("instant") final boolean instant,
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
+                                 @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
                                  @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
-                                 @JsonProperty("retryDelay") final StroomDuration retryDelay,
-                                 @JsonProperty("maxRetries") final Integer maxRetries,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
-                                 @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
+                                 @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
+                                 @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
         this.forwardUrl = forwardUrl;
+        this.livenessCheckUrl = livenessCheckUrl;
         this.apiKey = apiKey;
-        this.forwardDelay = forwardDelay == null
-                ? DEFAULT_FORWARD_DELAY
-                : forwardDelay;
-        this.retryDelay = retryDelay == null
-                ? DEFAULT_RETRY_DELAY
-                : retryDelay;
-        this.maxRetries = maxRetries == null
-                ? DEFAULT_MAX_RETRIES
-                : maxRetries;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
         this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
+        this.forwardQueueConfig = forwardQueueConfig;
     }
 
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
@@ -89,11 +83,13 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     /**
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
+    @Override
     @JsonProperty
     public boolean isEnabled() {
         return enabled;
     }
 
+    @Override
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
@@ -102,52 +98,39 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         return instant;
     }
 
+    @Override
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
+                             "The name is used in the directories on the file system, so do not change the name " +
+                             "once proxy has processed data. Must be provided.")
     public String getName() {
         return name;
     }
 
-    /**
-     * The URLs to forward onto. This is pass-through mode if instant is set.
-     */
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The URL to forward onto. This is pass-through mode if instant is set.")
     public String getForwardUrl() {
         return forwardUrl;
     }
 
-    /**
-     * The API key to use when forwarding data if Stroom is configured to require an API key.
-     */
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The URL to check for liveness of the forward destination. The URL should return a 200 response " +
+            "to a GET request for the destination to be considered live. If null, empty or property 'queue' " +
+            "is not configured then no liveness check will be " +
+            "made and the destination will be assumed to be live. If the response is not a 200, forwarding " +
+            "will be paused at least until the next liveness check is performed.")
+    public String getLivenessCheckUrl() {
+        return livenessCheckUrl;
+    }
+
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require an API key.")
     public String getApiKey() {
         return apiKey;
-    }
-
-    /**
-     * Debug setting to add a delay
-     */
-    @JsonProperty
-    public StroomDuration getForwardDelay() {
-        return forwardDelay;
-    }
-
-    /**
-     * If we fail to send how long should we wait until we try again?
-     */
-    @JsonProperty
-    public StroomDuration getRetryDelay() {
-        return retryDelay;
-    }
-
-    /**
-     * How many times should we try to send the same data?
-     */
-    @JsonProperty
-    public Integer getMaxRetries() {
-        return maxRetries;
     }
 
     /**
@@ -161,15 +144,34 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
     }
 
     /**
-     * Get teh configuration for the HttpClient.
+     * Get the configuration for the HttpClient.
      */
     @JsonProperty("httpClient")
     public HttpClientConfiguration getHttpClient() {
         return httpClient;
     }
 
+    @Override
+    @NotNull // HTTP forwarder needs a queued mechanism to cope with failure
+    @JsonProperty("queue")
+    @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. " +
+                             "This is required for a HTTP forwarder as requests may fail.")
+    public ForwardQueueConfig getForwardQueueConfig() {
+        return forwardQueueConfig;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getDestinationDescription() {
+        return forwardUrl;
+    }
+
     public static Builder builder() {
         return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
     }
 
     @Override
@@ -177,34 +179,32 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         if (this == o) {
             return true;
         }
-        if (!(o instanceof final ForwardHttpPostConfig that)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        return enabled == that.enabled &&
-               instant == that.instant &&
-               Objects.equals(maxRetries, that.maxRetries) &&
-               addOpenIdAccessToken == that.addOpenIdAccessToken &&
-               Objects.equals(name, that.name) &&
-               Objects.equals(forwardUrl, that.forwardUrl) &&
-               Objects.equals(apiKey, that.apiKey) &&
-               Objects.equals(forwardDelay, that.forwardDelay) &&
-               Objects.equals(retryDelay, that.retryDelay) &&
-               Objects.equals(httpClient, that.httpClient);
+        final ForwardHttpPostConfig that = (ForwardHttpPostConfig) o;
+        return enabled == that.enabled
+               && instant == that.instant
+               && addOpenIdAccessToken == that.addOpenIdAccessToken
+               && Objects.equals(name, that.name)
+               && Objects.equals(forwardUrl, that.forwardUrl)
+               && Objects.equals(livenessCheckUrl, that.livenessCheckUrl)
+               && Objects.equals(apiKey, that.apiKey)
+               && Objects.equals(httpClient, that.httpClient)
+               && Objects.equals(forwardQueueConfig, that.forwardQueueConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                enabled,
+        return Objects.hash(enabled,
                 instant,
                 name,
                 forwardUrl,
+                livenessCheckUrl,
                 apiKey,
-                forwardDelay,
-                retryDelay,
-                maxRetries,
                 addOpenIdAccessToken,
-                httpClient);
+                httpClient,
+                forwardQueueConfig);
     }
 
     @Override
@@ -214,11 +214,11 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
                ", instant=" + instant +
                ", name='" + name + '\'' +
                ", forwardUrl='" + forwardUrl + '\'' +
-               ", forwardDelay=" + forwardDelay +
-               ", retryDelay=" + retryDelay +
-               ", maxRetries=" + maxRetries +
+               ", livenessCheckUrl='" + livenessCheckUrl + '\'' +
+               ", apiKey='" + apiKey + '\'' +
                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
-               ", httpClientConfiguration=" + httpClient +
+               ", httpClient=" + httpClient +
+               ", forwardQueueConfig=" + forwardQueueConfig +
                '}';
     }
 
@@ -231,26 +231,27 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
         private boolean instant;
         private String name;
         private String forwardUrl;
+        private String livenessCheckUrl;
         private String apiKey;
-        private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
-        private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
-        private Integer maxRetries = DEFAULT_MAX_RETRIES;
         private boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
+        private ForwardQueueConfig forwardQueueConfig;
 
-        public Builder() {
-            final ForwardHttpPostConfig forwardHttpPostConfig = new ForwardHttpPostConfig();
+        private Builder() {
+            this(new ForwardHttpPostConfig());
+        }
 
+        private Builder(final ForwardHttpPostConfig forwardHttpPostConfig) {
+            Objects.requireNonNull(forwardHttpPostConfig);
             this.enabled = forwardHttpPostConfig.enabled;
             this.instant = forwardHttpPostConfig.instant;
             this.name = forwardHttpPostConfig.name;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
+            this.livenessCheckUrl = forwardHttpPostConfig.livenessCheckUrl;
             this.apiKey = forwardHttpPostConfig.apiKey;
-            this.forwardDelay = forwardHttpPostConfig.forwardDelay;
-            this.retryDelay = forwardHttpPostConfig.retryDelay;
-            this.maxRetries = forwardHttpPostConfig.maxRetries;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
+            this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -273,23 +274,13 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             return this;
         }
 
+        public Builder livenessCheckUrl(final String livenessCheckUrl) {
+            this.livenessCheckUrl = livenessCheckUrl;
+            return this;
+        }
+
         public Builder apiKey(final String apiKey) {
             this.apiKey = apiKey;
-            return this;
-        }
-
-        public Builder forwardDelay(final StroomDuration forwardDelay) {
-            this.forwardDelay = forwardDelay;
-            return this;
-        }
-
-        public Builder retryDelay(final StroomDuration retryDelay) {
-            this.retryDelay = retryDelay;
-            return this;
-        }
-
-        public Builder maxRetries(final Integer maxRetries) {
-            this.maxRetries = maxRetries;
             return this;
         }
 
@@ -303,18 +294,22 @@ public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConf
             return this;
         }
 
+        public Builder forwardQueueConfig(final ForwardQueueConfig forwardQueueConfig) {
+            this.forwardQueueConfig = forwardQueueConfig;
+            return this;
+        }
+
         public ForwardHttpPostConfig build() {
             return new ForwardHttpPostConfig(
                     enabled,
                     instant,
                     name,
                     forwardUrl,
+                    livenessCheckUrl,
                     apiKey,
-                    forwardDelay,
-                    retryDelay,
-                    maxRetries,
                     addOpenIdAccessToken,
-                    httpClient);
+                    httpClient,
+                    forwardQueueConfig);
         }
     }
 }

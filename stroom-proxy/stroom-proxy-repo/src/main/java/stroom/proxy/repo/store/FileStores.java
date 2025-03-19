@@ -1,13 +1,13 @@
 package stroom.proxy.repo.store;
 
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathWithAttributes;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Predicate;
 
 @Singleton
 public class FileStores {
@@ -33,26 +33,10 @@ public class FileStores {
         final Map<Key, Long> sizes = new HashMap<>();
         final Map<Key, Long> fileCounts = new HashMap<>();
         for (final Entry<Key, Path> entry : fileStores.entrySet()) {
+            final Key key = entry.getKey();
             final Path path = entry.getValue();
-            final AtomicLong size = new AtomicLong();
-            final AtomicLong count = new AtomicLong();
             if (Files.isDirectory(path)) {
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.forEach(p -> {
-                        if (Files.isRegularFile(p)) {
-                            count.incrementAndGet();
-                            try {
-                                size.addAndGet(Files.size(p));
-                            } catch (final IOException e) {
-                                LOGGER.trace(e::getMessage, e);
-                            }
-                        }
-                    });
-                } catch (final IOException e) {
-                    LOGGER.trace(e::getMessage, e);
-                }
-                sizes.put(entry.getKey(), size.get());
-                fileCounts.put(entry.getKey(), count.get());
+                addRegularFileCountAndSizes(key, path, sizes, fileCounts);
             }
         }
 
@@ -95,6 +79,28 @@ public class FileStores {
 
         return sb.toString();
     }
+
+    private static void addRegularFileCountAndSizes(final Key key,
+                                                    final Path path,
+                                                    final Map<Key, Long> sizes,
+                                                    final Map<Key, Long> fileCounts) {
+        final LongAdder totalSize = new LongAdder();
+        final Predicate<PathWithAttributes> isFilePredicate = pathWithAttributes -> {
+            final boolean isRegularFile = pathWithAttributes.isRegularFile();
+            if (isRegularFile) {
+                totalSize.add(pathWithAttributes.size());
+            }
+            return isRegularFile;
+        };
+
+        final long fileCount = FileUtil.deepListContents(path, true, isFilePredicate).size();
+        sizes.put(key, totalSize.sum());
+        fileCounts.put(key, fileCount);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record Key(int order, String name) {
 

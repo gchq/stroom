@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -192,6 +193,23 @@ class TestLogUtil {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testExceptionMessage() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Throwable.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(LogUtil::exceptionMessage)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(new NullPointerException(), NullPointerException.class.getSimpleName())
+                .addCase(new IOException(), IOException.class.getSimpleName())
+                .addCase(new IOException((String) null), IOException.class.getSimpleName())
+                .addCase(
+                        new IOException("Bad happened"),
+                        IOException.class.getSimpleName() + " Bad happened")
+                .build();
+    }
+
     @Disabled
     @Test
     void testTemplatePerformance() {
@@ -265,7 +283,7 @@ class TestLogUtil {
             for (int i = 0; i < iterations; i++) {
                 final int num = random.nextInt();
                 LOGGER.trace(() -> "The numbers are " + num + " and " + num + " and " + num + " and " +
-                        num + " and " + num + " and " + num + " and " + num);
+                                   num + " and " + num + " and " + num + " and " + num);
             }
         });
 
@@ -320,9 +338,9 @@ class TestLogUtil {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "aString='" + aString + '\'' +
-                    ", anInt=" + anInt +
-                    '}';
+                   "aString='" + aString + '\'' +
+                   ", anInt=" + anInt +
+                   '}';
         }
     }
 

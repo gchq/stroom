@@ -34,6 +34,12 @@ class TestStroomDuration {
     }
 
     @Test
+    void testMaxDuration() {
+        // Approx max duration
+        final StroomDuration stroomDuration = StroomDuration.ofDays(99_999_999_999_999L);
+    }
+
+    @Test
     void testParse() {
         System.out.println(Duration.ZERO.toString());
         doParseTest("30d", "P30D", Duration.ofDays(30));

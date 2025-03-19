@@ -6,6 +6,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,12 +25,19 @@ public class DirQueue {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirQueue.class);
     private final Path rootDir;
 
+    /**
+     * ID last written to, i.e. 0 if never written to
+     */
     private long writeId;
+    /**
+     * ID to read from next, i.e. 1 if not read yet
+     */
     private long readId;
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final QueueMonitor queueMonitor;
+    private final String name;
 
     DirQueue(final Path rootDir,
              final QueueMonitors queueMonitors,
@@ -38,20 +46,27 @@ public class DirQueue {
              final String name) {
         this.rootDir = rootDir;
         this.queueMonitor = queueMonitors.create(order, name);
+        this.name = name;
 
         // Create the root directory
         DirUtil.ensureDirExists(rootDir);
 
         // Create the store directory and initialise the store id.
-        fileStores.add(order, name + " - store", this.rootDir);
+        fileStores.add(order, name + " - store", rootDir);
 
-        final long maxId = DirUtil.getMaxDirId(this.rootDir);
-        final long minId = DirUtil.getMinDirId(this.rootDir);
+        final long maxId = DirUtil.getMaxDirId(rootDir);
+        final long minId = DirUtil.getMinDirId(rootDir);
+
+        if (minId > maxId) {
+            throw new IllegalStateException(LogUtil.message("minId {} is greater than maxId {}", minId, maxId));
+        }
 
         writeId = maxId;
         readId = Math.max(1, minId);
         queueMonitor.setWritePos(maxId);
         queueMonitor.setReadPos(minId);
+        LOGGER.info("Initialising queue '{}' in {} with readId {} and writeId {}",
+                name, LogUtil.path(rootDir), readId, writeId);
     }
 
     /**
@@ -69,11 +84,15 @@ public class DirQueue {
                     while (readId > writeId) {
                         condition.await();
                     }
+                    // TODO It is possible to have big gaps, e.g. if there was an exception when
+                    //  transferring 001 (so it was left on the queue) but 002 -> 901 worked. On next
+                    //  reboot, it will have to check each of 002 -> 901 to find them not there.
+                    //  May be better to call DirUtil.getMinDirId if we encounter a gap
                     final long id = readId++;
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
                         queueMonitor.setReadPos(id);
-                        dir = new Dir(this, path);
+                        dir = createDir(path);
                     }
                 }
             } finally {
@@ -82,6 +101,7 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+        LOGGER.trace("{} ({}) - next() dir: {}", name, rootDir, dir);
         return dir;
     }
 
@@ -106,7 +126,7 @@ public class DirQueue {
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
                         queueMonitor.setReadPos(id);
-                        dir = new Dir(this, path);
+                        dir = createDir(path);
                     }
                 }
             } finally {
@@ -115,6 +135,7 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+        LOGGER.trace("{} ({}) - next() time: {}, unit: {}, dir: {}", name, rootDir, time, unit, dir);
         return Optional.of(dir);
     }
 
@@ -135,6 +156,7 @@ public class DirQueue {
                     final Path targetDir = DirUtil.createPath(rootDir, id);
                     DirUtil.ensureDirExists(targetDir.getParent());
                     Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
+                    LOGGER.trace("{} ({}) - Added sourceDir {}", name, rootDir, sourceDir);
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                     throw new UncheckedIOException(e);
@@ -149,9 +171,9 @@ public class DirQueue {
     }
 
     /**
-     * When we have finished with a dir we should be in a position where the dir has been moved so can try to delete the
-     * parent directories. We never want to delete the dir itself as it should have been moved and any failure to do so
-     * is an error.
+     * When we have finished with a dir we should be in a position where the dir has been
+     * moved so can try to delete the parent directories. We never want to delete the dir
+     * itself as it should have been moved and any failure to do so is an error.
      *
      * @param dir The dir to close.
      */
@@ -179,5 +201,26 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
+    }
+
+    private Dir createDir(final Path path) {
+        return new Dir(this, path);
+    }
+
+    long getReadId() {
+        return readId;
+    }
+
+    long getWriteId() {
+        return writeId;
+    }
+
+    @Override
+    public String toString() {
+        return "DirQueue{" +
+               "rootDir=" + rootDir +
+               ", writeId=" + writeId +
+               ", readId=" + readId +
+               '}';
     }
 }

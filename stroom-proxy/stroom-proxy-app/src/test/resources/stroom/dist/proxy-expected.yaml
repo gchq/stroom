@@ -33,13 +33,16 @@ proxyConfig:
   forwardFileDestinations:
   - enabled: true
     instant: false
+    livenessCheckMode: "READ"
+    livenessCheckPath: null
     name: null
     path: null
+    queue: null
+    subPathTemplate: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
-    forwardDelay: "PT0S"
     forwardUrl: null
     httpClient:
       connectionRequestTimeout: "PT1M"
@@ -56,9 +59,21 @@ proxyConfig:
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
-    maxRetries: 3
+    livenessCheckUrl: null
     name: null
-    retryDelay: "PT10S"
+    queue:
+      errorSubPathTemplate:
+        enabled: true
+        pathTemplate: "${year}${month}${day}/${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
+      forwardDelay: "PT0S"
+      forwardRetryThreadCount: 1
+      forwardThreadCount: 5
+      livenessCheckInterval: "PT1M"
+      maxRetryAge: "P7D"
+      maxRetryDelay: "PT10M"
+      retryDelay: "PT10M"
+      retryDelayGrowthFactor: 1.0
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
@@ -126,5 +141,6 @@ proxyConfig:
     queueName: null
     queueUrl: null
   threads:
-    forwardRetryThreadCount: 1
-    forwardThreadCount: 5
+    aggregateInputQueueThreadCount: 1
+    forwardingInputQueueThreadCount: 1
+    preAggregateInputQueueThreadCount: 1
