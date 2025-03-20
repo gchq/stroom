@@ -377,21 +377,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
     }
 
-//    public SimpleDuration getDefaultRetentionPeriod() {
-//        final AnnotationConfig annotationConfig = annotationConfigProvider.get();
-//        final String defaultRetentionPeriod = NullSafe.getOrElse(
-//                annotationConfig,
-//                AnnotationConfig::getDefaultRetentionPeriod,
-//                AnnotationConfig.DEFAULT_RETENTION_PERIOD);
-//        try {
-//            return SimpleDurationUtil.parse(defaultRetentionPeriod);
-//        } catch (final ParseException e) {
-//            // Ignore.
-//        }
-//
-//        return SimpleDuration.builder().time(10).timeUnit(TimeUnit.YEARS).build();
-//    }
-
     public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         permissionChangeServiceProvider.get().changeDocumentPermissions(request);
         return Boolean.TRUE;
@@ -415,7 +400,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
-        return annotationTagDao.updateAnnotationGroup(annotationTag);
+        return annotationTagDao.updateAnnotationTag(annotationTag);
     }
 
     public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
@@ -423,18 +408,16 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return annotationTagDao.deleteAnnotationTag(annotationTag);
     }
 
-//    public AnnotationTag fetchAnnotationGroupByName(final String name) {
-//        checkAppPermission();
-//        return annotationTagDao.fetchAnnotationGroupByName(name);
-//    }
-
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
         checkAppPermission();
-        return annotationTagDao.findAnnotationTags(request);
+        if (securityContext.isAdmin()) {
+            return annotationTagDao.findAnnotationTags(request);
+        }
+        List<AnnotationTag> list = annotationTagDao.findAnnotationTags(request).getValues();
+        list = list.stream()
+                .filter(at -> securityContext.hasDocumentPermission(
+                        new DocRef(AnnotationTag.TYPE, at.getUuid()), DocumentPermission.VIEW))
+                .toList();
+        return ResultPage.createUnboundedList(list);
     }
-
-//    public List<AnnotationTag> getAnnotationGroups(final String filter) {
-//        checkAppPermission();
-//        return annotationTagDao.getAnnotationGroups(filter);
-//    }
 }

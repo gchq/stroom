@@ -109,8 +109,6 @@
 
 .annotationSettingHeading {
     width: 100%;
-    display: flex;
-    align-items: center;
 }
 
 .annotationSettingHeading.clickable {
@@ -164,9 +162,8 @@
     display: inline-block;
     color: var(--link__text-color);
     cursor: pointer;
+    padding-top: 5px;
     text-decoration: underline;
-    padding-left: 10px;
-    padding-right: 5px;
 }
 
 .annotationDurationLabel {

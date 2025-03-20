@@ -163,7 +163,7 @@ public class QueryResultTablePresenter
         this.dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(tableRowStyles);
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,

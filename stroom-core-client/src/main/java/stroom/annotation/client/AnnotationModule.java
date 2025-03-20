@@ -42,7 +42,6 @@ public class AnnotationModule extends PluginModule {
         bindPresenterWidget(AnnotationTagEditPresenter.class,
                 AnnotationTagEditView.class,
                 AnnotationTagEditViewImpl.class);
-        bindPresenterWidget(ChooserPresenter.class, ChooserView.class, ChooserViewImpl.class);
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindPresenterWidget(AddEventLinkPresenter.class, AddEventLinkView.class, AddEventLinkViewImpl.class);
         bindPresenterWidget(ChangeStatusPresenter.class, ChangeStatusView.class, ChangeStatusViewImpl.class);
@@ -50,5 +49,9 @@ public class AnnotationModule extends PluginModule {
                 ChangeAssignedToView.class,
                 ChangeAssignedToViewImpl.class);
         bindPresenterWidget(DurationPresenter.class, DurationView.class, DurationViewImpl.class);
+
+        bindSharedView(ChooserView.class, ChooserViewImpl.class);
+        bind(ChooserPresenter.class);
+        bind(MultiChooserPresenter.class);
     }
 }

@@ -70,16 +70,12 @@ public class AnnotationTag {
             return false;
         }
         final AnnotationTag that = (AnnotationTag) o;
-        return id == that.id &&
-               Objects.equals(uuid, that.uuid) &&
-               type == that.type &&
-               Objects.equals(name, that.name) &&
-               style == that.style;
+        return id == that.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, uuid, type, name, style);
+        return Objects.hash(id);
     }
 
     @Override

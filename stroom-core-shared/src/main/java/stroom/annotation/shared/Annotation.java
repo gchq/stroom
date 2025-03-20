@@ -11,6 +11,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends Doc {
 
@@ -26,7 +29,9 @@ public class Annotation extends Doc {
     @JsonProperty
     private final UserRef assignedTo;
     @JsonProperty
-    private final AnnotationTag annotationCollection;
+    private final List<AnnotationTag> labels;
+    @JsonProperty
+    private final List<AnnotationTag> collections;
     @JsonProperty
     private final String comment;
     @JsonProperty
@@ -51,7 +56,8 @@ public class Annotation extends Doc {
                       @JsonProperty("subject") final String subject,
                       @JsonProperty("status") final AnnotationTag status,
                       @JsonProperty("assignedTo") final UserRef assignedTo,
-                      @JsonProperty("annotationCollection") final AnnotationTag annotationCollection,
+                      @JsonProperty("labels") final List<AnnotationTag> labels,
+                      @JsonProperty("collections") final List<AnnotationTag> collections,
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history,
                       @JsonProperty("description") final String description,
@@ -62,7 +68,8 @@ public class Annotation extends Doc {
         this.subject = subject;
         this.status = status;
         this.assignedTo = assignedTo;
-        this.annotationCollection = annotationCollection;
+        this.labels = labels;
+        this.collections = collections;
         this.comment = comment;
         this.history = history;
         this.description = description;
@@ -86,8 +93,12 @@ public class Annotation extends Doc {
         return assignedTo;
     }
 
-    public AnnotationTag getAnnotationGroup() {
-        return annotationCollection;
+    public List<AnnotationTag> getLabels() {
+        return labels;
+    }
+
+    public List<AnnotationTag> getCollections() {
+        return collections;
     }
 
     public String getComment() {
@@ -118,13 +129,34 @@ public class Annotation extends Doc {
         return new Builder(this);
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final Annotation that = (Annotation) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), id);
+    }
+
     public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
 
         private Long id;
         private String subject;
         private AnnotationTag status;
         private UserRef assignedTo;
-        private AnnotationTag annotationCollection;
+        private List<AnnotationTag> labels;
+        private List<AnnotationTag> collections;
         private String comment;
         private String history;
         private String description;
@@ -140,7 +172,8 @@ public class Annotation extends Doc {
             this.subject = doc.subject;
             this.status = doc.status;
             this.assignedTo = doc.assignedTo;
-            this.annotationCollection = doc.annotationCollection;
+            this.labels = doc.labels;
+            this.collections = doc.collections;
             this.comment = doc.comment;
             this.history = doc.history;
             this.description = doc.description;
@@ -168,8 +201,13 @@ public class Annotation extends Doc {
             return self();
         }
 
-        public Builder annotationCollection(final AnnotationTag annotationCollection) {
-            this.annotationCollection = annotationCollection;
+        public Builder labels(final List<AnnotationTag> labels) {
+            this.labels = labels;
+            return self();
+        }
+
+        public Builder collections(final List<AnnotationTag> collections) {
+            this.collections = collections;
             return self();
         }
 
@@ -218,7 +256,8 @@ public class Annotation extends Doc {
                     subject,
                     status,
                     assignedTo,
-                    annotationCollection,
+                    labels,
+                    collections,
                     comment,
                     history,
                     description,

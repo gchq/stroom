@@ -27,9 +27,11 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -37,6 +39,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.List;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
@@ -55,7 +59,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
-    Label collection;
+    HTML labels;
+    @UiField
+    HTML collections;
     @UiField
     Label retentionPeriod;
     @UiField
@@ -153,13 +159,36 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setCollection(final AnnotationTag collection) {
-        if (collection == null || collection.getName().trim().isEmpty()) {
-            this.collection.setText("None");
-            this.collection.getElement().getStyle().setOpacity(0.5);
+    public void setLabels(final List<AnnotationTag> labels) {
+        if (labels == null || labels.isEmpty()) {
+            this.labels.setText("None");
+            this.labels.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.collection.setText(collection.getName());
-            this.collection.getElement().getStyle().setOpacity(1);
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            for (final AnnotationTag annotationTag : labels) {
+                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
+                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
+                sb.appendHtmlConstant("</div>");
+            }
+            this.labels.setHTML(sb.toSafeHtml());
+            this.labels.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setCollections(final List<AnnotationTag> collections) {
+        if (collections == null || collections.isEmpty()) {
+            this.collections.setText("None");
+            this.collections.getElement().getStyle().setOpacity(0.5);
+        } else {
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            for (final AnnotationTag annotationTag : collections) {
+                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
+                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
+                sb.appendHtmlConstant("</div>");
+            }
+            this.collections.setHTML(sb.toSafeHtml());
+            this.collections.getElement().getStyle().setOpacity(1);
         }
     }
 
@@ -260,12 +289,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("status")
-    public void onStatus(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusBlock.getElement());
-        }
-    }
+//    @UiHandler("status")
+//    public void onStatus(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showStatusChooser(statusBlock.getElement());
+//        }
+//    }
 
     @UiHandler("assignedToBlock")
     public void onAssignedToBlock(final ClickEvent e) {
@@ -274,12 +303,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("assignedTo")
-    public void onAssignedTo(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
-        }
-    }
+//    @UiHandler("assignedTo")
+//    public void onAssignedTo(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
+//        }
+//    }
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
@@ -296,12 +325,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("label")
-    public void onLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
-        }
-    }
+//    @UiHandler("label")
+//    public void onLabel(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
+//        }
+//    }
 
     @UiHandler("annotationCollectionBlock")
     public void onAnnotationCollectionBlock(final ClickEvent e) {
@@ -310,12 +339,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("collection")
-    public void onCollection(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
-        }
-    }
+//    @UiHandler("collection")
+//    public void onCollection(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
+//        }
+//    }
 
     @UiHandler("annotationRetentionPeriodBlock")
     public void onAnnotationRetentionPeriodBlock(final ClickEvent e) {
@@ -324,12 +353,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("retentionPeriod")
-    public void onRetentionPeriod(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showRetentionPeriodChooser(annotationRetentionPeriodBlock.getElement());
-        }
-    }
+//    @UiHandler("retentionPeriod")
+//    public void onRetentionPeriod(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showRetentionPeriodChooser(annotationRetentionPeriodBlock.getElement());
+//        }
+//    }
 
     @UiHandler("create")
     public void onCreate(final ClickEvent e) {

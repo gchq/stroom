@@ -28,7 +28,7 @@ public interface AnnotationTagDao {
 
     AnnotationTag createAnnotationTag(CreateAnnotationTagRequest request);
 
-    AnnotationTag updateAnnotationGroup(AnnotationTag annotationTag);
+    AnnotationTag updateAnnotationTag(AnnotationTag annotationTag);
 
     Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 

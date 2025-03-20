@@ -17,13 +17,14 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.table.client.MyCellTable;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
-import stroom.widget.util.client.BasicSelectionEventManager;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -31,65 +32,49 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class ChooserPresenter<T>
+public class MultiChooserPresenter<T>
         extends MyPresenterWidget<ChooserView>
         implements ChooserUiHandlers {
 
-    private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
+    private final MultiSelectionModel<T> selectionModel = new MultiSelectionModelImpl<>();
     private final CellTable<T> cellTable;
     private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     @Inject
-    public ChooserPresenter(final EventBus eventBus,
-                            final ChooserView view,
-                            final UiConfigCache uiConfigCache) {
+    public MultiChooserPresenter(final EventBus eventBus,
+                                 final ChooserView view,
+                                 final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         view.setUiHandlers(this);
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
-        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<T>(cellTable) {
-            @Override
-            protected void onClose(final CellPreviewEvent<T> e) {
-                super.onClose(e);
-                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
-            }
-
-            @Override
-            protected void onExecute(final CellPreviewEvent<T> e) {
-                super.onExecute(e);
-                SelectionChangeEvent.fire(selectionModel);
-            }
-        });
+        cellTable.addStyleName("multiChooser");
         view.setBottomWidget(cellTable);
+
+        addSelectedColumn();
 
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final T value) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+//                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
                 if (value != null) {
                     builder.append(displayValueFunction.apply(value));
                 }
-                builder.appendHtmlConstant("</div>");
+//                builder.appendHtmlConstant("</div>");
                 return builder.toSafeHtml();
             }
         };
@@ -104,6 +89,24 @@ public class ChooserPresenter<T>
                                 uiConfig.getHelpUrlQuickFilter()));
             }
         }, this);
+    }
+
+    void addSelectedColumn() {
+        // Select Column
+        final Column<T, TickBoxState> column = new Column<T, TickBoxState>(
+                TickBoxCell.create(false, false)) {
+            @Override
+            public TickBoxState getValue(final T object) {
+                return TickBoxState.fromBoolean(selectionModel.isSelected(object));
+            }
+        };
+        cellTable.addColumn(column);
+
+        // Add Handlers
+        column.setFieldUpdater((index, row, value) -> {
+            selectionModel.setSelected(row, value.toBoolean());
+
+        });
     }
 
     void focus() {
@@ -121,25 +124,16 @@ public class ChooserPresenter<T>
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
     }
 
-    public T getSelected() {
-        return selectionModel.getSelectedObject();
+    public List<T> getSelectedItems() {
+        return selectionModel.getSelectedItems();
     }
 
-    public SafeHtml getSelectedDisplayValue() {
-        final T selected = getSelected();
-        return GwtNullSafe.get(selected, displayValueFunction);
+    public void setSelectedItems(final List<T> value) {
+        selectionModel.setSelectedItems(value);
     }
 
-    public void setSelected(final T value) {
-        selectionModel.setSelected(value, true);
-    }
-
-    public void setClearSelectionText(final String text) {
-        getView().setClearSelectionText(text);
-    }
-
-    public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
-        return selectionModel.addSelectionChangeHandler(handler);
+    public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
+        return selectionModel.addSelectionHandler(handler);
     }
 
     @Override
@@ -161,29 +155,14 @@ public class ChooserPresenter<T>
 
     public void setDataSupplier(final DataSupplier<T> dataSupplier) {
         this.dataSupplier = dataSupplier;
-        onFilterChange(null);
     }
 
-    // --------------------------------------------------------------------------------
-
+    public void refresh() {
+        onFilterChange(null);
+    }
 
     public interface DataSupplier<T> {
 
         void onChange(String filter, Consumer<List<T>> consumer);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
-
-        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
-
-        void setBottomWidget(Widget widget);
-
-        void clearFilter();
-
-        void setClearSelectionText(String text);
     }
 }

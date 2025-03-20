@@ -39,6 +39,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.Record;
 
 import java.util.List;
 import java.util.Optional;
@@ -74,18 +75,14 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     private Optional<AnnotationTag> load(final int id) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_TAG)
+                .select(ANNOTATION_TAG.ID,
+                        ANNOTATION_TAG.UUID,
+                        ANNOTATION_TAG.TYPE_ID,
+                        ANNOTATION_TAG.NAME,
+                        ANNOTATION_TAG.STYLE_ID)
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.ID.eq(id))
-                .fetchOptional(r -> AnnotationTag.builder()
-                        .id(r.get(ANNOTATION_TAG.ID))
-                        .uuid(r.get(ANNOTATION_TAG.UUID))
-                        .type(AnnotationTagType.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(r.get(ANNOTATION_TAG.TYPE_ID)))
-                        .name(r.get(ANNOTATION_TAG.UUID))
-                        .style(ConditionalFormattingStyle.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(r.get(ANNOTATION_TAG.STYLE_ID)))
-                        .build()));
+                .fetchOptional(this::mapToAnnotationTag));
     }
 
     public AnnotationTag get(final int id) {
@@ -127,11 +124,11 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         request.getName())
                 .returning(ANNOTATION_TAG.ID)
                 .fetchOne(ANNOTATION_TAG.ID));
-        return AnnotationTag.builder().id(id).uuid(uuid).name(request.getName()).build();
+        return AnnotationTag.builder().id(id).uuid(uuid).type(request.getType()).name(request.getName()).build();
     }
 
     @Override
-    public AnnotationTag updateAnnotationGroup(final AnnotationTag annotationTag) {
+    public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         JooqUtil.context(connectionProvider, context -> context
                 .update(ANNOTATION_TAG)
                 .set(ANNOTATION_TAG.NAME, annotationTag.getName())
@@ -159,6 +156,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
         final List<AnnotationTag> list = JooqUtil.contextResult(connectionProvider, context -> context
                         .select(ANNOTATION_TAG.ID,
                                 ANNOTATION_TAG.UUID,
+                                ANNOTATION_TAG.TYPE_ID,
                                 ANNOTATION_TAG.NAME,
                                 ANNOTATION_TAG.STYLE_ID)
                         .from(ANNOTATION_TAG)
@@ -167,14 +165,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         .offset(offset)
                         .limit(limit)
                         .fetch())
-                .map(r -> AnnotationTag
-                        .builder()
-                        .id(r.get(ANNOTATION_TAG.ID))
-                        .uuid(r.get(ANNOTATION_TAG.UUID))
-                        .name(r.get(ANNOTATION_TAG.NAME))
-                        .style(ConditionalFormattingStyle.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(r.get(ANNOTATION_TAG.STYLE_ID)))
-                        .build());
+                .map(this::mapToAnnotationTag);
         return ResultPage.createCriterialBasedList(list, request);
     }
 
@@ -187,6 +178,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
         return JooqUtil.contextResult(connectionProvider, context -> context
                         .select(ANNOTATION_TAG.ID,
                                 ANNOTATION_TAG.UUID,
+                                ANNOTATION_TAG.TYPE_ID,
                                 ANNOTATION_TAG.NAME,
                                 ANNOTATION_TAG.STYLE_ID)
                         .from(ANNOTATION_TAG)
@@ -195,14 +187,20 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         .and(ANNOTATION_TAG.DELETED.isFalse())
                         .limit(1)
                         .fetchOptional())
-                .map(r -> AnnotationTag
-                        .builder()
-                        .id(r.get(ANNOTATION_TAG.ID))
-                        .uuid(r.get(ANNOTATION_TAG.UUID))
-                        .name(r.get(ANNOTATION_TAG.NAME))
-                        .style(ConditionalFormattingStyle.PRIMITIVE_VALUE_CONVERTER
-                                .fromPrimitiveValue(r.get(ANNOTATION_TAG.STYLE_ID)))
-                        .build());
+                .map(this::mapToAnnotationTag);
+    }
+
+    private AnnotationTag mapToAnnotationTag(final Record record) {
+        return AnnotationTag
+                .builder()
+                .id(record.get(ANNOTATION_TAG.ID))
+                .uuid(record.get(ANNOTATION_TAG.UUID))
+                .type(AnnotationTagType.PRIMITIVE_VALUE_CONVERTER
+                        .fromPrimitiveValue(record.get(ANNOTATION_TAG.TYPE_ID)))
+                .name(record.get(ANNOTATION_TAG.NAME))
+                .style(ConditionalFormattingStyle.PRIMITIVE_VALUE_CONVERTER
+                        .fromPrimitiveValue(record.get(ANNOTATION_TAG.STYLE_ID)))
+                .build();
     }
 
     @Override
