@@ -2,6 +2,7 @@ package stroom.annotation.shared;
 
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.query.api.v2.ConditionalFormattingStyle;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,25 +12,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AnnotationGroup {
+public class AnnotationTag {
 
-    public static final String TYPE = "AnnotationGroup";
-    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_GROUP_DOCUMENT_TYPE;
+    public static final String TYPE = "AnnotationTag";
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_TAG_DOCUMENT_TYPE;
 
     @JsonProperty
     private final int id;
     @JsonProperty
     private final String uuid;
     @JsonProperty
+    private final AnnotationTagType type;
+    @JsonProperty
     private final String name;
+    @JsonProperty
+    private final ConditionalFormattingStyle style;
 
     @JsonCreator
-    public AnnotationGroup(@JsonProperty("id") final int id,
-                           @JsonProperty("uuid") final String uuid,
-                           @JsonProperty("name") final String name) {
+    public AnnotationTag(@JsonProperty("id") final int id,
+                         @JsonProperty("uuid") final String uuid,
+                         @JsonProperty("type") final AnnotationTagType type,
+                         @JsonProperty("name") final String name,
+                         @JsonProperty("style") final ConditionalFormattingStyle style) {
         this.id = id;
         this.uuid = uuid;
+        this.type = type;
         this.name = name;
+        this.style = style;
     }
 
     public int getId() {
@@ -40,8 +49,16 @@ public class AnnotationGroup {
         return uuid;
     }
 
+    public AnnotationTagType getType() {
+        return type;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public ConditionalFormattingStyle getStyle() {
+        return style;
     }
 
     @Override
@@ -52,23 +69,27 @@ public class AnnotationGroup {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AnnotationGroup that = (AnnotationGroup) o;
+        final AnnotationTag that = (AnnotationTag) o;
         return id == that.id &&
                Objects.equals(uuid, that.uuid) &&
-               Objects.equals(name, that.name);
+               type == that.type &&
+               Objects.equals(name, that.name) &&
+               style == that.style;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, uuid, name);
+        return Objects.hash(id, uuid, type, name, style);
     }
 
     @Override
     public String toString() {
-        return "AnnotationGroup{" +
+        return "AnnotationTag{" +
                "id=" + id +
                ", uuid='" + uuid + '\'' +
+               ", type=" + type +
                ", name='" + name + '\'' +
+               ", style=" + style +
                '}';
     }
 
@@ -84,15 +105,19 @@ public class AnnotationGroup {
 
         private int id;
         private String uuid;
+        private AnnotationTagType type;
         private String name;
+        private ConditionalFormattingStyle style;
 
         public Builder() {
         }
 
-        public Builder(final AnnotationGroup doc) {
+        public Builder(final AnnotationTag doc) {
             this.id = doc.id;
             this.uuid = doc.uuid;
+            this.type = doc.type;
             this.name = doc.name;
+            this.style = doc.style;
         }
 
         public Builder id(final int id) {
@@ -105,8 +130,18 @@ public class AnnotationGroup {
             return self();
         }
 
+        public Builder type(final AnnotationTagType type) {
+            this.type = type;
+            return self();
+        }
+
         public Builder name(final String name) {
             this.name = name;
+            return self();
+        }
+
+        public Builder style(final ConditionalFormattingStyle style) {
+            this.style = style;
             return self();
         }
 
@@ -114,11 +149,13 @@ public class AnnotationGroup {
             return this;
         }
 
-        public AnnotationGroup build() {
-            return new AnnotationGroup(
+        public AnnotationTag build() {
+            return new AnnotationTag(
                     id,
                     uuid,
-                    name);
+                    type,
+                    name,
+                    style);
         }
     }
 }

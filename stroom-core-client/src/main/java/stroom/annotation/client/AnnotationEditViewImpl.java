@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.annotation.shared.AnnotationGroup;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
@@ -55,7 +55,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
-    Label group;
+    Label collection;
     @UiField
     Label retentionPeriod;
     @UiField
@@ -74,7 +74,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     SettingBlock assignedToBlock;
     @UiField
-    SettingBlock annotationGroupBlock;
+    SettingBlock annotationLabelBlock;
+    @UiField
+    SettingBlock annotationCollectionBlock;
     @UiField
     SettingBlock annotationRetentionPeriodBlock;
 
@@ -129,12 +131,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setStatus(final String status) {
-        if (status == null || status.trim().isEmpty()) {
+    public void setStatus(final AnnotationTag status) {
+        if (status == null) {
             this.status.setText("None");
             this.status.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.status.setText(status);
+            this.status.setText(status.getName());
             this.status.getElement().getStyle().setOpacity(1);
         }
     }
@@ -151,13 +153,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setAnnotationGroup(final AnnotationGroup group) {
-        if (group == null || group.getName().trim().isEmpty()) {
-            this.group.setText("None");
-            this.group.getElement().getStyle().setOpacity(0.5);
+    public void setCollection(final AnnotationTag collection) {
+        if (collection == null || collection.getName().trim().isEmpty()) {
+            this.collection.setText("None");
+            this.collection.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.group.setText(group.getName());
-            this.group.getElement().getStyle().setOpacity(1);
+            this.collection.setText(collection.getName());
+            this.collection.getElement().getStyle().setOpacity(1);
         }
     }
 
@@ -287,17 +289,31 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         e.stopPropagation();
     }
 
-    @UiHandler("annotationGroupBlock")
-    public void onAnnotationGroupBlock(final ClickEvent e) {
+    @UiHandler("annotationLabelBlock")
+    public void onAnnotationLabelBlock(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showGroupChooser(annotationGroupBlock.getElement());
+            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
         }
     }
 
-    @UiHandler("group")
-    public void onGroup(final ClickEvent e) {
+    @UiHandler("label")
+    public void onLabel(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showGroupChooser(annotationGroupBlock.getElement());
+            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
+        }
+    }
+
+    @UiHandler("annotationCollectionBlock")
+    public void onAnnotationCollectionBlock(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
+        }
+    }
+
+    @UiHandler("collection")
+    public void onCollection(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
         }
     }
 

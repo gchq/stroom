@@ -22,11 +22,11 @@ public class Annotation extends Doc {
     @JsonProperty
     private final String subject;
     @JsonProperty
-    private final String status;
+    private final AnnotationTag status;
     @JsonProperty
     private final UserRef assignedTo;
     @JsonProperty
-    private final AnnotationGroup annotationGroup;
+    private final AnnotationTag annotationCollection;
     @JsonProperty
     private final String comment;
     @JsonProperty
@@ -49,9 +49,9 @@ public class Annotation extends Doc {
                       @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("id") final Long id,
                       @JsonProperty("subject") final String subject,
-                      @JsonProperty("status") final String status,
+                      @JsonProperty("status") final AnnotationTag status,
                       @JsonProperty("assignedTo") final UserRef assignedTo,
-                      @JsonProperty("annotationGroup") final AnnotationGroup annotationGroup,
+                      @JsonProperty("annotationCollection") final AnnotationTag annotationCollection,
                       @JsonProperty("comment") final String comment,
                       @JsonProperty("history") final String history,
                       @JsonProperty("description") final String description,
@@ -62,7 +62,7 @@ public class Annotation extends Doc {
         this.subject = subject;
         this.status = status;
         this.assignedTo = assignedTo;
-        this.annotationGroup = annotationGroup;
+        this.annotationCollection = annotationCollection;
         this.comment = comment;
         this.history = history;
         this.description = description;
@@ -78,7 +78,7 @@ public class Annotation extends Doc {
         return subject;
     }
 
-    public String getStatus() {
+    public AnnotationTag getStatus() {
         return status;
     }
 
@@ -86,8 +86,8 @@ public class Annotation extends Doc {
         return assignedTo;
     }
 
-    public AnnotationGroup getAnnotationGroup() {
-        return annotationGroup;
+    public AnnotationTag getAnnotationGroup() {
+        return annotationCollection;
     }
 
     public String getComment() {
@@ -122,9 +122,9 @@ public class Annotation extends Doc {
 
         private Long id;
         private String subject;
-        private String status;
+        private AnnotationTag status;
         private UserRef assignedTo;
-        private AnnotationGroup annotationGroup;
+        private AnnotationTag annotationCollection;
         private String comment;
         private String history;
         private String description;
@@ -140,7 +140,7 @@ public class Annotation extends Doc {
             this.subject = doc.subject;
             this.status = doc.status;
             this.assignedTo = doc.assignedTo;
-            this.annotationGroup = doc.annotationGroup;
+            this.annotationCollection = doc.annotationCollection;
             this.comment = doc.comment;
             this.history = doc.history;
             this.description = doc.description;
@@ -158,7 +158,7 @@ public class Annotation extends Doc {
             return self();
         }
 
-        public Builder status(final String status) {
+        public Builder status(final AnnotationTag status) {
             this.status = status;
             return self();
         }
@@ -168,8 +168,8 @@ public class Annotation extends Doc {
             return self();
         }
 
-        public Builder annotationGroup(final AnnotationGroup annotationGroup) {
-            this.annotationGroup = annotationGroup;
+        public Builder annotationCollection(final AnnotationTag annotationCollection) {
+            this.annotationCollection = annotationCollection;
             return self();
         }
 
@@ -218,7 +218,7 @@ public class Annotation extends Doc {
                     subject,
                     status,
                     assignedTo,
-                    annotationGroup,
+                    annotationCollection,
                     comment,
                     history,
                     description,

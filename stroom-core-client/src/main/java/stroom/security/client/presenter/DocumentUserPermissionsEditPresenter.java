@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.v2.ExpressionOperator;
@@ -120,7 +121,8 @@ public class DocumentUserPermissionsEditPresenter
                           final Runnable onClose) {
         final AbstractDocumentPermissionsChange change = createChange();
 
-        if (Annotation.TYPE.equals(relatedDoc.getType())) {
+        if (Annotation.TYPE.equals(relatedDoc.getType()) ||
+            AnnotationTag.TYPE.equals(relatedDoc.getType())) {
             final SingleDocumentPermissionChangeRequest request =
                     new SingleDocumentPermissionChangeRequest(relatedDoc, change);
             annotationResourceClient.changeDocumentPermissions(request, response -> {

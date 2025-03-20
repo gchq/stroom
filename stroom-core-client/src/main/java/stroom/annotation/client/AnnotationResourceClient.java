@@ -1,9 +1,10 @@
 package stroom.annotation.client;
 
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationGroup;
 import stroom.annotation.shared.AnnotationResource;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -45,16 +46,16 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void getStatusValues(final String filter,
-                                final Consumer<List<String>> consumer,
-                                final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getStatusValues(filter))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
+//    public void getStatusValues(final String filter,
+//                                final Consumer<List<AnnotationTag>> consumer,
+//                                final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(ANNOTATION_RESOURCE)
+//                .method(res -> res.getStatusValues(filter))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
 
     public void getStandardComments(final String filter,
                                     final Consumer<List<String>> consumer,
@@ -147,77 +148,77 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void fetchAnnotationGroupByName(final String name,
-                                           final Consumer<AnnotationGroup> consumer,
-                                           final RestErrorHandler errorHandler,
-                                           final TaskMonitorFactory taskMonitorFactory) {
+//    public void fetchAnnotationGroupByName(final String name,
+//                                           final Consumer<AnnotationTag> consumer,
+//                                           final RestErrorHandler errorHandler,
+//                                           final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(ANNOTATION_RESOURCE)
+//                .method(res -> res.fetchAnnotationGroupByName(name))
+//                .onSuccess(consumer)
+//                .onFailure(errorHandler)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
+
+    public void createAnnotationTag(final CreateAnnotationTagRequest request,
+                                    final Consumer<AnnotationTag> consumer,
+                                    final RestErrorHandler errorHandler,
+                                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.fetchAnnotationGroupByName(name))
+                .method(res -> res.createAnnotationTag(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void createAnnotationGroup(final String name,
-                                      final Consumer<AnnotationGroup> consumer,
-                                      final RestErrorHandler errorHandler,
-                                      final TaskMonitorFactory taskMonitorFactory) {
+    public void updateAnnotationTag(final AnnotationTag annotationCollection,
+                                    final Consumer<AnnotationTag> consumer,
+                                    final RestErrorHandler errorHandler,
+                                    final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.createAnnotationGroup(name))
+                .method(res -> res.updateAnnotationTag(annotationCollection))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void updateAnnotationGroup(final AnnotationGroup annotationGroup,
-                                      final Consumer<AnnotationGroup> consumer,
-                                      final RestErrorHandler errorHandler,
-                                      final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.updateAnnotationGroup(annotationGroup))
-                .onSuccess(consumer)
-                .onFailure(errorHandler)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void deleteAnnotationGroup(final AnnotationGroup annotationGroup,
+    public void deleteAnnotationGroup(final AnnotationTag annotationCollection,
                                       final Consumer<Boolean> consumer,
                                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.deleteAnnotationGroup(annotationGroup))
+                .method(res -> res.deleteAnnotationTag(annotationCollection))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void findAnnotationGroups(final ExpressionCriteria request,
-                                     final Consumer<ResultPage<AnnotationGroup>> consumer,
-                                     final RestErrorHandler errorHandler,
-                                     final TaskMonitorFactory taskMonitorFactory) {
+    public void findAnnotationTags(final ExpressionCriteria request,
+                                   final Consumer<ResultPage<AnnotationTag>> consumer,
+                                   final RestErrorHandler errorHandler,
+                                   final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.findAnnotationGroups(request))
+                .method(res -> res.findAnnotationTags(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void getAnnotationGroups(final String filter,
-                                final Consumer<List<AnnotationGroup>> consumer,
-                                final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getAnnotationGroups(filter))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
+//    public void getAnnotationTags(final String filter,
+//                                  final Consumer<List<AnnotationTag>> consumer,
+//                                  final TaskMonitorFactory taskMonitorFactory) {
+//        restFactory
+//                .create(ANNOTATION_RESOURCE)
+//                .method(res -> res.getAnnotationTags(filter))
+//                .onSuccess(consumer)
+//                .taskMonitorFactory(taskMonitorFactory)
+//                .exec();
+//    }
 }

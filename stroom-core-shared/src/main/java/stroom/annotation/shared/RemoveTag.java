@@ -6,17 +6,17 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ChangeStatus extends AbstractAnnotationChange {
+public class RemoveTag extends AbstractAnnotationChange {
 
     @JsonProperty
-    private final String status;
+    private final AnnotationTag tag;
 
     @JsonCreator
-    public ChangeStatus(@JsonProperty("status") final String status) {
-        this.status = status;
+    public RemoveTag(@JsonProperty("tag") final AnnotationTag tag) {
+        this.tag = tag;
     }
 
-    public String getStatus() {
-        return status;
+    public AnnotationTag getTag() {
+        return tag;
     }
 }

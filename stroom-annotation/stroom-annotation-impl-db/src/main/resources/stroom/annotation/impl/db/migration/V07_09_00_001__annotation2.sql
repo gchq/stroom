@@ -20,12 +20,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS annotation_tag (
   id                    int(11) NOT NULL AUTO_INCREMENT,
   uuid                  varchar(255) NOT NULL,
-  type                  tinyint NOT NULL,
+  type_id               tinyint NOT NULL,
   name                  varchar(255) NOT NULL,
-  colour                varchar(255) DEFAULT NULL,
+  style_id              tinyint DEFAULT NULL,
   deleted               tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY           (id),
-  UNIQUE KEY            `annotation_tag_type_name_idx` (`type`, `name`),
+  UNIQUE KEY            `annotation_tag_type_id_name_idx` (`type_id`, `name`),
   UNIQUE KEY            `annotation_tag_uuid_idx` (`uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -200,16 +200,16 @@ BEGIN
     AND column_name = 'status';
 
     IF object_count > 0 THEN
-        INSERT INTO annotation_tag (uuid, type, name, colour, deleted)
+        INSERT INTO annotation_tag (uuid, type_id, name, style_id, deleted)
         SELECT uuid(), 0, status, "", 0
         FROM annotation
-        WHERE status NOT IN (SELECT name FROM annotation_tag WHERE type = 0)
+        WHERE status NOT IN (SELECT name FROM annotation_tag WHERE type_id = 0)
         GROUP BY status;
 
         INSERT INTO annotation_tag_link (fk_annotation_id, fk_annotation_tag_id)
         SELECT a.id, at.id
         FROM annotation a
-        JOIN annotation_tag at ON (a.status = at.name AND at.type = 0)
+        JOIN annotation_tag at ON (a.status = at.name AND at.type_id = 0)
         WHERE a.id NOT IN (SELECT fk_annotation_id FROM annotation_tag_link);
 
         ALTER TABLE `annotation` DROP COLUMN `status`;

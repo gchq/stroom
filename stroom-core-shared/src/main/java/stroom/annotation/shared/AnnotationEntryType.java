@@ -14,8 +14,10 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     UNLINK("Unlink", 6),
     RETENTION_PERIOD("Retention Period", 7),
     DESCRIPTION("Description", 8),
-    GROUP("Group", 9),
-    TAG("Tag", 10),
+    ADD_TO_COLLECTION("Add to collection", 9),
+    REMOVE_FROM_COLLECTION("Remove from collection", 10),
+    ADD_LABEL("Add label", 11),
+    REMOVE_LABEL("Remove label", 12),
     DELETE("Delete", 99);
 
     public static final PrimitiveValueConverter<AnnotationEntryType> PRIMITIVE_VALUE_CONVERTER =

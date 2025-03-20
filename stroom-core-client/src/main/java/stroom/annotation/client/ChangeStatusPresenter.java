@@ -17,9 +17,17 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.annotation.shared.ChangeStatus;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.AnnotationTagFields;
+import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
+import stroom.annotation.shared.SetTag;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -43,14 +51,14 @@ public class ChangeStatusPresenter
         implements ChangeStatusUiHandlers {
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final ChooserPresenter<String> statusPresenter;
-    private String currentStatus;
+    private final ChooserPresenter<AnnotationTag> statusPresenter;
+    private AnnotationTag currentStatus;
 
     @Inject
     public ChangeStatusPresenter(final EventBus eventBus,
                                  final ChangeStatusView view,
                                  final AnnotationResourceClient annotationResourceClient,
-                                 final ChooserPresenter<String> statusPresenter) {
+                                 final ChooserPresenter<AnnotationTag> statusPresenter) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
         this.statusPresenter = statusPresenter;
@@ -62,18 +70,27 @@ public class ChangeStatusPresenter
         super.onBind();
 
         registerHandler(statusPresenter.addDataSelectionHandler(e -> {
-            final String selected = statusPresenter.getSelected();
+            final AnnotationTag selected = statusPresenter.getSelected();
             changeStatus(selected);
         }));
     }
 
     public void show(final List<Long> annotationIdList) {
         if (currentStatus == null) {
-            annotationResourceClient.getStatusValues(null, values -> {
+            final ExpressionOperator expression = ExpressionOperator
+                    .builder()
+                    .addTerm(ExpressionTerm.builder()
+                            .field(AnnotationTagFields.TYPE_ID)
+                            .condition(Condition.EQUALS)
+                            .value(AnnotationTagType.STATUS.getDisplayValue())
+                            .build())
+                    .build();
+            final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+            annotationResourceClient.findAnnotationTags(criteria, values -> {
                 if (currentStatus == null && values != null && !values.isEmpty()) {
-                    changeStatus(values.get(0));
+                    changeStatus(values.getValues().get(0));
                 }
-            }, this);
+            }, new DefaultErrorHandler(this, null), this);
         }
 
         ShowPopupEvent.builder(this)
@@ -84,7 +101,7 @@ public class ChangeStatusPresenter
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final MultiAnnotationChangeRequest request = new MultiAnnotationChangeRequest(annotationIdList,
-                                new ChangeStatus(currentStatus));
+                                new SetTag(currentStatus));
                         annotationResourceClient.batchChange(request,
                                 values -> {
                                     GWT.log("Updated " + values + " annotations");
@@ -99,7 +116,7 @@ public class ChangeStatusPresenter
                 .fire();
     }
 
-    private void changeStatus(final String selected) {
+    private void changeStatus(final AnnotationTag selected) {
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
@@ -110,7 +127,23 @@ public class ChangeStatusPresenter
     @Override
     public void showStatusChooser(final Element element) {
         statusPresenter.setDataSupplier((filter, consumer) -> {
-            annotationResourceClient.getStatusValues(filter, consumer, this);
+            final ExpressionOperator expression = ExpressionOperator
+                    .builder()
+                    .addTerm(ExpressionTerm.builder()
+                            .field(AnnotationTagFields.TYPE_ID)
+                            .condition(Condition.EQUALS)
+                            .value(AnnotationTagType.STATUS.getDisplayValue())
+                            .build())
+                    .addTerm(ExpressionTerm.builder()
+                            .field(AnnotationTagFields.NAME)
+                            .condition(Condition.CONTAINS)
+                            .value(filter)
+                            .build())
+                    .build();
+            final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+            annotationResourceClient.findAnnotationTags(criteria, values ->
+                            consumer.accept(values.getValues()),
+                    new DefaultErrorHandler(this, null), this);
         });
         statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);
@@ -126,6 +159,6 @@ public class ChangeStatusPresenter
 
     public interface ChangeStatusView extends View, Focus, HasUiHandlers<ChangeStatusUiHandlers> {
 
-        void setStatus(String status);
+        void setStatus(AnnotationTag status);
     }
 }

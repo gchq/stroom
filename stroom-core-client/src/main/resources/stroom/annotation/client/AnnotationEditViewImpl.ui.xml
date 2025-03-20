@@ -48,10 +48,17 @@
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>
-                    <annotation:SettingBlock ui:field="annotationGroupBlock" title="Change Group">
-                        <form:FormGroup identity="annotationGroup" label="Group">
+                    <annotation:SettingBlock ui:field="annotationLabelBlock" title="Change Labels">
+                        <form:FormGroup identity="annotationLabel" label="Labels">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
-                                <g:Label ui:field="group" styleName="annotationLabel"/>
+                                <g:Label ui:field="label" styleName="annotationLabel"/>
+                            </g:FlowPanel>
+                        </form:FormGroup>
+                    </annotation:SettingBlock>
+                    <annotation:SettingBlock ui:field="annotationCollectionBlock" title="Change Collections">
+                        <form:FormGroup identity="annotationCollection" label="Collections">
+                            <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                                <g:Label ui:field="collection" styleName="annotationLabel"/>
                             </g:FlowPanel>
                         </form:FormGroup>
                     </annotation:SettingBlock>

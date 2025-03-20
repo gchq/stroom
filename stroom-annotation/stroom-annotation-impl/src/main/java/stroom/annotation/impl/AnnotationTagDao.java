@@ -16,23 +16,23 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.AnnotationGroup;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.AnnotationTagType;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface AnnotationGroupDao {
+public interface AnnotationTagDao {
 
-    AnnotationGroup createAnnotationGroup(String name);
+    AnnotationTag createAnnotationTag(CreateAnnotationTagRequest request);
 
-    AnnotationGroup updateAnnotationGroup(AnnotationGroup annotationGroup);
+    AnnotationTag updateAnnotationGroup(AnnotationTag annotationTag);
 
-    Boolean deleteAnnotationGroup(AnnotationGroup annotationGroup);
+    Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-    AnnotationGroup fetchAnnotationGroupByName(String name);
+    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request);
 
-    ResultPage<AnnotationGroup> findAnnotationGroups(ExpressionCriteria request);
-
-    List<AnnotationGroup> getAnnotationGroups(String filter);
+    Optional<AnnotationTag> findAnnotationTag(AnnotationTagType annotationTagType, String name);
 }

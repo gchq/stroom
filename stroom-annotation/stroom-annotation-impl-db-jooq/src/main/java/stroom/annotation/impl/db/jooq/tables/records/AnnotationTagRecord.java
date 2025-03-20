@@ -47,45 +47,59 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     }
 
     /**
+     * Setter for <code>stroom.annotation_tag.type_id</code>.
+     */
+    public void setTypeId(Byte value) {
+        set(2, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_tag.type_id</code>.
+     */
+    public Byte getTypeId() {
+        return (Byte) get(2);
+    }
+
+    /**
      * Setter for <code>stroom.annotation_tag.name</code>.
      */
     public void setName(String value) {
-        set(2, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.name</code>.
      */
     public String getName() {
-        return (String) get(2);
-    }
-
-    /**
-     * Setter for <code>stroom.annotation_tag.colour</code>.
-     */
-    public void setColour(String value) {
-        set(3, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation_tag.colour</code>.
-     */
-    public String getColour() {
         return (String) get(3);
+    }
+
+    /**
+     * Setter for <code>stroom.annotation_tag.style_id</code>.
+     */
+    public void setStyleId(Byte value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_tag.style_id</code>.
+     */
+    public Byte getStyleId() {
+        return (Byte) get(4);
     }
 
     /**
      * Setter for <code>stroom.annotation_tag.deleted</code>.
      */
     public void setDeleted(Boolean value) {
-        set(4, value);
+        set(5, value);
     }
 
     /**
      * Getter for <code>stroom.annotation_tag.deleted</code>.
      */
     public Boolean getDeleted() {
-        return (Boolean) get(4);
+        return (Boolean) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -111,13 +125,14 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Create a detached, initialised AnnotationTagRecord
      */
-    public AnnotationTagRecord(Integer id, String uuid, String name, String colour, Boolean deleted) {
+    public AnnotationTagRecord(Integer id, String uuid, Byte typeId, String name, Byte styleId, Boolean deleted) {
         super(AnnotationTag.ANNOTATION_TAG);
 
         setId(id);
         setUuid(uuid);
+        setTypeId(typeId);
         setName(name);
-        setColour(colour);
+        setStyleId(styleId);
         setDeleted(deleted);
         resetChangedOnNotNull();
     }

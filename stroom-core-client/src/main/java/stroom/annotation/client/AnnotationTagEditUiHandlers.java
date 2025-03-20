@@ -16,30 +16,9 @@
 
 package stroom.annotation.client;
 
-import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface AnnotationEditUiHandlers extends UiHandlers {
+public interface AnnotationTagEditUiHandlers extends UiHandlers {
 
-    void showStatusChooser(Element element);
-
-    void showAssignedToChooser(Element element);
-
-    void showCollectionChooser(Element element);
-
-    void showLabelChooser(Element element);
-
-    void showCommentChooser(Element element);
-
-    void onTitleChange();
-
-    void onSubjectChange();
-
-    void assignYourself();
-
-    void create();
-
-    void showRetentionPeriodChooser(Element element);
-
-    void onDelete();
+    void onPermissions();
 }

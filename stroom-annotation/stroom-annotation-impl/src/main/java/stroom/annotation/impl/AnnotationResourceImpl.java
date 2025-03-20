@@ -18,9 +18,10 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationGroup;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -141,11 +142,11 @@ class AnnotationResourceImpl implements AnnotationResource {
         return count;
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public List<String> getStatusValues(final String filter) {
-        return annotationService.get().getStatus(filter);
-    }
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public List<AnnotationTag> getStatusValues(final String filter) {
+//        return annotationService.get().getStatus(filter);
+//    }
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
@@ -185,32 +186,32 @@ class AnnotationResourceImpl implements AnnotationResource {
 
 
     @Override
-    public AnnotationGroup createAnnotationGroup(final String name) {
-        return annotationService.get().createAnnotationGroup(name);
+    public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
+        return annotationService.get().createAnnotationTag(request);
     }
 
     @Override
-    public AnnotationGroup updateAnnotationGroup(final AnnotationGroup annotationGroup) {
-        return annotationService.get().updateAnnotationGroup(annotationGroup);
+    public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
+        return annotationService.get().updateAnnotationTag(annotationTag);
     }
 
     @Override
-    public Boolean deleteAnnotationGroup(final AnnotationGroup annotationGroup) {
-        return annotationService.get().deleteAnnotationGroup(annotationGroup);
+    public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
+        return annotationService.get().deleteAnnotationTag(annotationTag);
     }
 
-    @Override
-    public AnnotationGroup fetchAnnotationGroupByName(final String name) {
-        return annotationService.get().fetchAnnotationGroupByName(name);
-    }
+//    @Override
+//    public AnnotationTag fetchAnnotationGroupByName(final String name) {
+//        return annotationService.get().fetchAnnotationGroupByName(name);
+//    }
 
     @Override
-    public ResultPage<AnnotationGroup> findAnnotationGroups(final ExpressionCriteria request) {
-        return annotationService.get().findAnnotationGroups(request);
+    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+        return annotationService.get().findAnnotationTags(request);
     }
 
-    @Override
-    public List<AnnotationGroup> getAnnotationGroups(final String filter) {
-        return annotationService.get().getAnnotationGroups(filter);
-    }
+//    @Override
+//    public List<AnnotationTag> getAnnotationTags(final String filter) {
+//        return annotationService.get().getAnnotationGroups(filter);
+//    }
 }

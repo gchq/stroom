@@ -20,8 +20,9 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationFields;
-import stroom.annotation.shared.AnnotationGroup;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -60,12 +61,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -75,7 +73,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
 
     private final AnnotationDao annotationDao;
-    private final AnnotationGroupDao annotationGroupDao;
+    private final AnnotationTagDao annotationTagDao;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
@@ -87,7 +85,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
-                      final AnnotationGroupDao annotationGroupDao,
+                      final AnnotationTagDao annotationTagDao,
                       final SecurityContext securityContext,
                       final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
@@ -97,7 +95,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
                       final Provider<PermissionChangeService> permissionChangeServiceProvider) {
         this.annotationDao = annotationDao;
-        this.annotationGroupDao = annotationGroupDao;
+        this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
@@ -335,33 +333,33 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
     }
 
-    public List<String> getStatus(final String filter) {
-        final boolean admin = securityContext.isAdmin();
-        final List<String> values = annotationConfigProvider.get().getStatusValues();
-        final List<String> filtered = new ArrayList<>();
-        final Map<String, Boolean> cache = new HashMap<>();
-        if (values != null) {
-            for (final String value : values) {
-                final int index = value.indexOf(":");
-                if (index == -1) {
-                    filtered.add(value);
-                } else {
-                    final String group = value.substring(0, index);
-                    final String status = value.substring(index + 1);
-                    if (admin) {
-                        filtered.add(status);
-                    } else {
-                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
-                        if (include) {
-                            filtered.add(status);
-                        }
-                    }
-                }
-            }
-        }
-
-        return filterValues(filtered, filter);
-    }
+//    public List<String> getStatus(final String filter) {
+//        final boolean admin = securityContext.isAdmin();
+//        final List<String> values = annotationConfigProvider.get().getStatusValues();
+//        final List<String> filtered = new ArrayList<>();
+//        final Map<String, Boolean> cache = new HashMap<>();
+//        if (values != null) {
+//            for (final String value : values) {
+//                final int index = value.indexOf(":");
+//                if (index == -1) {
+//                    filtered.add(value);
+//                } else {
+//                    final String group = value.substring(0, index);
+//                    final String status = value.substring(index + 1);
+//                    if (admin) {
+//                        filtered.add(status);
+//                    } else {
+//                        final boolean include = cache.computeIfAbsent(group, securityContext::inGroup);
+//                        if (include) {
+//                            filtered.add(status);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return filterValues(filtered, filter);
+//    }
 
     private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
         if (allValues == null || allValues.isEmpty()) {
@@ -410,44 +408,33 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-    public AnnotationGroup createAnnotationGroup(final String name) {
+    public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
         checkAppPermission();
-        return annotationGroupDao.createAnnotationGroup(name);
+        return annotationTagDao.createAnnotationTag(request);
     }
 
-    public AnnotationGroup updateAnnotationGroup(final AnnotationGroup annotationGroup) {
+    public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
-        return annotationGroupDao.updateAnnotationGroup(annotationGroup);
+        return annotationTagDao.updateAnnotationGroup(annotationTag);
     }
 
-    public Boolean deleteAnnotationGroup(final AnnotationGroup annotationGroup) {
+    public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
         checkAppPermission();
-        return annotationGroupDao.deleteAnnotationGroup(annotationGroup);
+        return annotationTagDao.deleteAnnotationTag(annotationTag);
     }
 
-    public AnnotationGroup fetchAnnotationGroupByName(final String name) {
+//    public AnnotationTag fetchAnnotationGroupByName(final String name) {
+//        checkAppPermission();
+//        return annotationTagDao.fetchAnnotationGroupByName(name);
+//    }
+
+    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
         checkAppPermission();
-        return annotationGroupDao.fetchAnnotationGroupByName(name);
+        return annotationTagDao.findAnnotationTags(request);
     }
 
-    public ResultPage<AnnotationGroup> findAnnotationGroups(final ExpressionCriteria request) {
-        checkAppPermission();
-        return annotationGroupDao.findAnnotationGroups(request);
-    }
-
-    public List<AnnotationGroup> getAnnotationGroups(final String filter) {
-        checkAppPermission();
-        return annotationGroupDao.getAnnotationGroups(filter);
-    }
+//    public List<AnnotationTag> getAnnotationGroups(final String filter) {
+//        checkAppPermission();
+//        return annotationTagDao.getAnnotationGroups(filter);
+//    }
 }

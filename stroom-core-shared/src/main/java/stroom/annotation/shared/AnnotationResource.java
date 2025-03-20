@@ -32,7 +32,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -84,12 +83,12 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     Integer batchChange(@Parameter(description = "request", required = true)
                         MultiAnnotationChangeRequest request);
 
-    @GET
-    @Path("getStatusValues")
-    @Operation(
-            summary = "Gets a list of allowed statuses",
-            operationId = "getAnnotationStatus")
-    List<String> getStatusValues(@QueryParam("filter") String filter);
+//    @GET
+//    @Path("getStatusValues")
+//    @Operation(
+//            summary = "Gets a list of allowed statuses",
+//            operationId = "getAnnotationStatus")
+//    List<AnnotationTag> getStatusValues(@QueryParam("filter") String filter);
 
     @GET
     @Path("getStandardComments")
@@ -121,47 +120,46 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
 
     @POST
-    @Path("createAnnotationGroup")
+    @Path("createAnnotationTag")
     @Operation(
-            summary = "Create an annotation group",
-            operationId = "createAnnotationGroup")
-    AnnotationGroup createAnnotationGroup(
-            @Parameter(description = "request", required = true) String name);
+            summary = "Create an annotation tag",
+            operationId = "createAnnotationTag")
+    AnnotationTag createAnnotationTag(CreateAnnotationTagRequest request);
 
     @PUT
-    @Path("updateAnnotationGroup")
+    @Path("updateAnnotationTag")
     @Operation(
-            summary = "Update an annotation group",
-            operationId = "updateAnnotationGroup")
-    AnnotationGroup updateAnnotationGroup(AnnotationGroup annotationGroup);
+            summary = "Update an annotation tag",
+            operationId = "updateAnnotationTag")
+    AnnotationTag updateAnnotationTag(AnnotationTag annotationTag);
 
     @DELETE
-    @Path("deleteAnnotationGroup")
+    @Path("deleteAnnotationTag")
     @Operation(
-            summary = "Delete an annotation group",
-            operationId = "deleteAnnotationGroup")
-    Boolean deleteAnnotationGroup(AnnotationGroup annotationGroup);
+            summary = "Delete an annotation tag",
+            operationId = "deleteAnnotationTag")
+    Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-    @GET
-    @Path("/findAnnotationGroups/{name}")
-    @Operation(
-            summary = "Find an annotation group by name",
-            operationId = "findAnnotationGroupByName")
-    AnnotationGroup fetchAnnotationGroupByName(@PathParam("name") String name);
+//    @GET
+//    @Path("/findAnnotationGroups/{name}")
+//    @Operation(
+//            summary = "Find an annotation group by name",
+//            operationId = "findAnnotationGroupByName")
+//    AnnotationTag fetchAnnotationGroupByName(@PathParam("name") String name);
 
     @POST
-    @Path("findAnnotationGroups")
+    @Path("findAnnotationTags")
     @Operation(
-            summary = "Finds annotation groups matching request",
-            operationId = "findAnnotationGroups")
-    ResultPage<AnnotationGroup> findAnnotationGroups(
+            summary = "Finds annotation tags matching request",
+            operationId = "findAnnotationTags")
+    ResultPage<AnnotationTag> findAnnotationTags(
             @Parameter(description = "request", required = true) ExpressionCriteria request);
 
-    @GET
-    @Path("getAnnotationGroups")
-    @Operation(
-            summary = "Gets a list of annotation groups",
-            operationId = "getAnnotationGroups")
-    List<AnnotationGroup> getAnnotationGroups(@QueryParam("filter") String filter);
+//    @GET
+//    @Path("getAnnotationGroups")
+//    @Operation(
+//            summary = "Gets a list of annotation groups",
+//            operationId = "getAnnotationGroups")
+//    List<AnnotationTag> getAnnotationTags(@QueryParam("filter") String filter);
 
 }

@@ -16,7 +16,8 @@
 
 package stroom.annotation.client;
 
-import stroom.annotation.client.AnnotationGroupEditPresenter.AnnotationGroupEditView;
+import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
+import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class AnnotationGroupEditViewImpl extends ViewImpl implements AnnotationGroupEditView {
+public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationTagCreateView {
 
     private final Widget widget;
 
@@ -33,7 +34,7 @@ public class AnnotationGroupEditViewImpl extends ViewImpl implements AnnotationG
     TextBox name;
 
     @Inject
-    public AnnotationGroupEditViewImpl(final Binder binder) {
+    public AnnotationTagCreateViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -57,7 +58,7 @@ public class AnnotationGroupEditViewImpl extends ViewImpl implements AnnotationG
         this.name.setText(name);
     }
 
-    public interface Binder extends UiBinder<Widget, AnnotationGroupEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, AnnotationTagCreateViewImpl> {
 
     }
 }

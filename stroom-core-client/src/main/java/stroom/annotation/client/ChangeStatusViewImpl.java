@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
@@ -57,12 +58,12 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     }
 
     @Override
-    public void setStatus(final String status) {
-        if (status == null || status.trim().isEmpty()) {
+    public void setStatus(final AnnotationTag status) {
+        if (status == null) {
             this.status.setText("None");
             this.status.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.status.setText(status);
+            this.status.setText(status.getName());
             this.status.getElement().getStyle().setOpacity(1);
         }
     }

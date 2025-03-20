@@ -89,17 +89,14 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private final AnnotationService annotationService;
     private final ExpressionMatcherFactory expressionMatcherFactory;
-    private final AnnotationConfig annotationConfig;
     private final SecurityContext securityContext;
 
     @Inject
     AnnotationReceiverDecoratorFactory(final AnnotationService annotationService,
                                        final ExpressionMatcherFactory expressionMatcherFactory,
-                                       final AnnotationConfig annotationConfig,
                                        final SecurityContext securityContext) {
         this.annotationService = annotationService;
         this.expressionMatcherFactory = expressionMatcherFactory;
-        this.annotationConfig = annotationConfig;
         this.securityContext = securityContext;
     }
 
@@ -178,7 +175,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     private Annotation createDefaultAnnotation() {
-        return Annotation.builder().status(annotationConfig.getStatusValues().getFirst()).build();
+        return Annotation.builder().build();
     }
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {

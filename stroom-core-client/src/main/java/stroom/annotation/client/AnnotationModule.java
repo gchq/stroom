@@ -18,7 +18,8 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.annotation.client.AnnotationGroupEditPresenter.AnnotationGroupEditView;
+import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
+import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
@@ -30,12 +31,17 @@ public class AnnotationModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPlugin(AnnotationPlugin.class);
+        bindPlugin(AnnotationStatusPlugin.class);
+        bindPlugin(AnnotationLabelPlugin.class);
+        bindPlugin(AnnotationCollectionPlugin.class);
         bind(AnnotationEditSupport.class).asEagerSingleton();
         bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
-        bindPresenterWidget(AnnotationGroupEditPresenter.class,
-                AnnotationGroupEditView.class,
-                AnnotationGroupEditViewImpl.class);
+        bindPresenterWidget(AnnotationTagCreatePresenter.class,
+                AnnotationTagCreateView.class,
+                AnnotationTagCreateViewImpl.class);
+        bindPresenterWidget(AnnotationTagEditPresenter.class,
+                AnnotationTagEditView.class,
+                AnnotationTagEditViewImpl.class);
         bindPresenterWidget(ChooserPresenter.class, ChooserView.class, ChooserViewImpl.class);
         bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
         bindPresenterWidget(AddEventLinkPresenter.class, AddEventLinkView.class, AddEventLinkViewImpl.class);

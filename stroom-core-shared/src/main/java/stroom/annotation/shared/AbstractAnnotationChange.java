@@ -10,9 +10,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ChangeTitle.class, name = "title"),
         @JsonSubTypes.Type(value = ChangeSubject.class, name = "subject"),
-        @JsonSubTypes.Type(value = ChangeStatus.class, name = "status"),
+        @JsonSubTypes.Type(value = AddTag.class, name = "addTag"),
+        @JsonSubTypes.Type(value = RemoveTag.class, name = "removeTag"),
+        @JsonSubTypes.Type(value = SetTag.class, name = "setTag"),
         @JsonSubTypes.Type(value = ChangeAssignedTo.class, name = "assignedTo"),
-        @JsonSubTypes.Type(value = ChangeAnnotationGroup.class, name = "annotationGroup"),
         @JsonSubTypes.Type(value = ChangeComment.class, name = "comment"),
         @JsonSubTypes.Type(value = ChangeRetentionPeriod.class, name = "retentionPeriod"),
         @JsonSubTypes.Type(value = ChangeDescription.class, name = "description"),

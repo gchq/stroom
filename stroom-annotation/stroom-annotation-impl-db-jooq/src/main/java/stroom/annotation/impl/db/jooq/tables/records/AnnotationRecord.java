@@ -131,171 +131,115 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
     }
 
     /**
-     * Setter for <code>stroom.annotation.status</code>.
-     */
-    public void setStatus(String value) {
-        set(8, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation.status</code>.
-     */
-    public String getStatus() {
-        return (String) get(8);
-    }
-
-    /**
      * Setter for <code>stroom.annotation.assigned_to_uuid</code>.
      */
     public void setAssignedToUuid(String value) {
-        set(9, value);
+        set(8, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.assigned_to_uuid</code>.
      */
     public String getAssignedToUuid() {
-        return (String) get(9);
-    }
-
-    /**
-     * Setter for <code>stroom.annotation.comment</code>.
-     */
-    public void setComment(String value) {
-        set(10, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation.comment</code>.
-     */
-    public String getComment() {
-        return (String) get(10);
-    }
-
-    /**
-     * Setter for <code>stroom.annotation.history</code>.
-     */
-    public void setHistory(String value) {
-        set(11, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation.history</code>.
-     */
-    public String getHistory() {
-        return (String) get(11);
+        return (String) get(8);
     }
 
     /**
      * Setter for <code>stroom.annotation.uuid</code>.
      */
     public void setUuid(String value) {
-        set(12, value);
+        set(9, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.uuid</code>.
      */
     public String getUuid() {
-        return (String) get(12);
-    }
-
-    /**
-     * Setter for <code>stroom.annotation.description</code>.
-     */
-    public void setDescription(String value) {
-        set(13, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation.description</code>.
-     */
-    public String getDescription() {
-        return (String) get(13);
+        return (String) get(9);
     }
 
     /**
      * Setter for <code>stroom.annotation.deleted</code>.
      */
     public void setDeleted(Boolean value) {
-        set(14, value);
+        set(10, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.deleted</code>.
      */
     public Boolean getDeleted() {
-        return (Boolean) get(14);
+        return (Boolean) get(10);
     }
 
     /**
-     * Setter for <code>stroom.annotation.group_id</code>.
+     * Setter for <code>stroom.annotation.description</code>.
      */
-    public void setGroupId(Integer value) {
-        set(15, value);
+    public void setDescription(String value) {
+        set(11, value);
     }
 
     /**
-     * Getter for <code>stroom.annotation.group_id</code>.
+     * Getter for <code>stroom.annotation.description</code>.
      */
-    public Integer getGroupId() {
-        return (Integer) get(15);
-    }
-
-    /**
-     * Setter for <code>stroom.annotation.parent_id</code>.
-     */
-    public void setParentId(Long value) {
-        set(16, value);
-    }
-
-    /**
-     * Getter for <code>stroom.annotation.parent_id</code>.
-     */
-    public Long getParentId() {
-        return (Long) get(16);
+    public String getDescription() {
+        return (String) get(11);
     }
 
     /**
      * Setter for <code>stroom.annotation.retention_time</code>.
      */
     public void setRetentionTime(Long value) {
-        set(17, value);
+        set(12, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.retention_time</code>.
      */
     public Long getRetentionTime() {
-        return (Long) get(17);
+        return (Long) get(12);
     }
 
     /**
      * Setter for <code>stroom.annotation.retention_unit</code>.
      */
     public void setRetentionUnit(Byte value) {
-        set(18, value);
+        set(13, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.retention_unit</code>.
      */
     public Byte getRetentionUnit() {
-        return (Byte) get(18);
+        return (Byte) get(13);
     }
 
     /**
      * Setter for <code>stroom.annotation.retain_until_ms</code>.
      */
     public void setRetainUntilMs(Long value) {
-        set(19, value);
+        set(14, value);
     }
 
     /**
      * Getter for <code>stroom.annotation.retain_until_ms</code>.
      */
     public Long getRetainUntilMs() {
-        return (Long) get(19);
+        return (Long) get(14);
+    }
+
+    /**
+     * Setter for <code>stroom.annotation.parent_id</code>.
+     */
+    public void setParentId(Long value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation.parent_id</code>.
+     */
+    public Long getParentId() {
+        return (Long) get(15);
     }
 
     // -------------------------------------------------------------------------
@@ -321,7 +265,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
     /**
      * Create a detached, initialised AnnotationRecord
      */
-    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String status, String assignedToUuid, String comment, String history, String uuid, String description, Boolean deleted, Integer groupId, Long parentId, Long retentionTime, Byte retentionUnit, Long retainUntilMs) {
+    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String assignedToUuid, String uuid, Boolean deleted, String description, Long retentionTime, Byte retentionUnit, Long retainUntilMs, Long parentId) {
         super(Annotation.ANNOTATION);
 
         setId(id);
@@ -332,18 +276,14 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> {
         setUpdateUser(updateUser);
         setTitle(title);
         setSubject(subject);
-        setStatus(status);
         setAssignedToUuid(assignedToUuid);
-        setComment(comment);
-        setHistory(history);
         setUuid(uuid);
-        setDescription(description);
         setDeleted(deleted);
-        setGroupId(groupId);
-        setParentId(parentId);
+        setDescription(description);
         setRetentionTime(retentionTime);
         setRetentionUnit(retentionUnit);
         setRetainUntilMs(retainUntilMs);
+        setParentId(parentId);
         resetChangedOnNotNull();
     }
 }

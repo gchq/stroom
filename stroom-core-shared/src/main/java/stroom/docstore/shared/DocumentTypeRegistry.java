@@ -199,7 +199,7 @@ public class DocumentTypeRegistry {
             "Annotation",
             "Annotation",
             SvgImage.EDIT);
-    public static final DocumentType ANNOTATION_GROUP_DOCUMENT_TYPE = new DocumentType(
+    public static final DocumentType ANNOTATION_TAG_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "AnnotationGroup",
             "Annotation Group",

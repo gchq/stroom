@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.shared.AnnotationTagType;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -33,20 +34,29 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 
-@Singleton
-public class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationGroupPresenter> {
+abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPresenter> {
 
-    @Inject
+    private final String tabLabel;
+
     AnnotationPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
-                     final Provider<AnnotationGroupPresenter> presenterProvider,
-                     final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+                     final Provider<AnnotationTagPresenter> presenterProvider,
+                     final ClientSecurityContext securityContext,
+                     final String tabLabel,
+                     final AnnotationTagType annotationTagType) {
+        super(eventBus, contentManager, () -> {
+            final AnnotationTagPresenter annotationTagPresenter = presenterProvider.get();
+            annotationTagPresenter.setTabLabel(tabLabel);
+            annotationTagPresenter.setAnnotationTagType(annotationTagType);
+            annotationTagPresenter.refresh();
+            return annotationTagPresenter;
+        }, securityContext);
+        this.tabLabel = tabLabel;
     }
 
     @Override
     protected AppPermission getRequiredAppPermission() {
-        return AppPermission.ANNOTATIONS;
+        return AppPermission.ADMINISTRATOR;
     }
 
     @Override
@@ -57,13 +67,13 @@ public class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationGroupPres
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
-            MenuKeys.addAdministrationMenu(event.getMenuItems());
-            event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU,
+            MenuKeys.addAnnotationMenu(event.getMenuItems());
+            event.getMenuItems().addMenuItem(MenuKeys.ANNOTATION_MENU,
                     new IconMenuItem.Builder()
                             .priority(10)
-                            .icon(SvgImage.EDIT)
+                            .icon(SvgImage.TAGS)
                             .iconColour(IconColour.GREY)
-                            .text("Annotation Groups")
+                            .text(tabLabel)
                             .command(this::open)
                             .build());
         }

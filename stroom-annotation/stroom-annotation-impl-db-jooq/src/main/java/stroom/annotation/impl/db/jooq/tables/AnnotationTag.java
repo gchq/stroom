@@ -69,14 +69,19 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
     public final TableField<AnnotationTagRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>stroom.annotation_tag.type_id</code>.
+     */
+    public final TableField<AnnotationTagRecord, Byte> TYPE_ID = createField(DSL.name("type_id"), SQLDataType.TINYINT.nullable(false), this, "");
+
+    /**
      * The column <code>stroom.annotation_tag.name</code>.
      */
     public final TableField<AnnotationTagRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation_tag.colour</code>.
+     * The column <code>stroom.annotation_tag.style_id</code>.
      */
-    public final TableField<AnnotationTagRecord, String> COLOUR = createField(DSL.name("colour"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AnnotationTagRecord, Byte> STYLE_ID = createField(DSL.name("style_id"), SQLDataType.TINYINT, this, "");
 
     /**
      * The column <code>stroom.annotation_tag.deleted</code>.
@@ -160,7 +165,7 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
 
     @Override
     public List<UniqueKey<AnnotationTagRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_NAME_IDX);
+        return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_TYPE_ID_NAME_IDX);
     }
 
     private transient AnnotationTagLinkPath _annotationTagLink;

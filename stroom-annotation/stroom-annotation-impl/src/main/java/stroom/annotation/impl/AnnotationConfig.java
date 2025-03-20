@@ -4,6 +4,7 @@ import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -14,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,35 +24,34 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     public static final String DEFAULT_RETENTION_PERIOD = "5y";
 
     private final AnnotationDBConfig dbConfig;
-    private final List<String> statusValues;
     private final List<String> standardComments;
-    private final String createText;
     private final String defaultRetentionPeriod;
     private final StroomDuration physicalDeleteAge;
+    private final CacheConfig annotationTagCache;
 
     public AnnotationConfig() {
         dbConfig = new AnnotationDBConfig();
-        statusValues = List.of("New", "Assigned", "Closed");
         standardComments = new ArrayList<>();
-        createText = "Create Annotation";
         defaultRetentionPeriod = DEFAULT_RETENTION_PERIOD;
         physicalDeleteAge = StroomDuration.ofDays(7);
+        annotationTagCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public AnnotationConfig(@JsonProperty("db") final AnnotationDBConfig dbConfig,
-                            @JsonProperty("statusValues") final List<String> statusValues,
                             @JsonProperty("standardComments") final List<String> standardComments,
-                            @JsonProperty("createText") final String createText,
                             @JsonProperty("defaultRetentionPeriod") final String defaultRetentionPeriod,
-                            @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge) {
+                            @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge,
+                            @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache) {
         this.dbConfig = dbConfig;
-        this.statusValues = statusValues;
         this.standardComments = standardComments;
-        this.createText = createText;
         this.defaultRetentionPeriod = defaultRetentionPeriod;
         this.physicalDeleteAge = physicalDeleteAge;
+        this.annotationTagCache = annotationTagCache;
     }
 
     @Override
@@ -61,22 +60,10 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
         return dbConfig;
     }
 
-    @JsonProperty("statusValues")
-    @JsonPropertyDescription("The different status values that can be set on an annotation")
-    public List<String> getStatusValues() {
-        return statusValues;
-    }
-
     @JsonProperty("standardComments")
     @JsonPropertyDescription("A list of standard comments that can be added to annotations")
     public List<String> getStandardComments() {
         return standardComments;
-    }
-
-    @JsonProperty("createText")
-    @JsonPropertyDescription("The text to display to create an annotation")
-    public String getCreateText() {
-        return createText;
     }
 
     @JsonProperty("defaultRetentionPeriod")
@@ -89,6 +76,11 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                              "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getPhysicalDeleteAge() {
         return physicalDeleteAge;
+    }
+
+    @JsonPropertyDescription("Cache config for annotation tags")
+    public CacheConfig getAnnotationTagCache() {
+        return annotationTagCache;
     }
 
     @BootStrapConfig

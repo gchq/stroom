@@ -20,7 +20,8 @@ public interface AnnotationFields {
     String SUBJECT = "Subject";
     String STATUS = "Status";
     String ASSIGNED_TO = "AssignedTo";
-    String GROUP = "Group";
+    String LABEL = "Label";
+    String COLLECTION = "Collection";
     String COMMENT = "Comment";
     String HISTORY = "History";
     String DESCRIPTION = "Description";
@@ -37,7 +38,8 @@ public interface AnnotationFields {
     QueryField SUBJECT_FIELD = QueryField.createText(SUBJECT);
     QueryField STATUS_FIELD = QueryField.createText(STATUS);
     QueryField ASSIGNED_TO_FIELD = QueryField.createText(ASSIGNED_TO);
-    QueryField GROUP_FIELD = QueryField.createText(GROUP);
+    QueryField LABEL_FIELD = QueryField.createText(LABEL);
+    QueryField COLLECTION_FIELD = QueryField.createText(COLLECTION);
     QueryField COMMENT_FIELD = QueryField.createText(COMMENT);
     QueryField HISTORY_FIELD = QueryField.createText(HISTORY);
     QueryField DESCRIPTION_FIELD = QueryField.createText(DESCRIPTION);
@@ -57,7 +59,8 @@ public interface AnnotationFields {
             SUBJECT_FIELD,
             STATUS_FIELD,
             ASSIGNED_TO_FIELD,
-            GROUP_FIELD,
+            LABEL_FIELD,
+            COLLECTION_FIELD,
             COMMENT_FIELD,
             HISTORY_FIELD,
             DESCRIPTION_FIELD);
