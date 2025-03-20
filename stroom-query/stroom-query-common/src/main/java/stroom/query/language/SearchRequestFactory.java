@@ -837,17 +837,17 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(SpecialColumns.RESERVED_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_ID_FIELD_NAME);
+                if (!addedFields.contains(SpecialColumns.RESERVED_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_ID);
                 }
-                if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.STREAM_ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+                if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
                 }
-                if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.EVENT_ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+                if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_EVENT_ID);
                 }
             }
 
