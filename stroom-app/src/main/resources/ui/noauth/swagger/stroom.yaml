@@ -582,24 +582,22 @@ paths:
       summary: Creates an annotation
       tags:
       - Annotations
-  /annotation/v1/createAnnotationGroup:
+  /annotation/v1/createAnnotationTag:
     post:
-      operationId: createAnnotationGroup
+      operationId: createAnnotationTag
       requestBody:
         content:
           application/json:
             schema:
-              type: string
-        description: request
-        required: true
+              $ref: "#/components/schemas/CreateAnnotationTagRequest"
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AnnotationGroup"
+                $ref: "#/components/schemas/AnnotationTag"
           description: default response
-      summary: Create an annotation group
+      summary: Create an annotation tag
       tags:
       - Annotations
   /annotation/v1/delete:
@@ -622,14 +620,14 @@ paths:
       summary: Deletes an annotation
       tags:
       - Annotations
-  /annotation/v1/deleteAnnotationGroup:
+  /annotation/v1/deleteAnnotationTag:
     delete:
-      operationId: deleteAnnotationGroup
+      operationId: deleteAnnotationTag
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AnnotationGroup"
+              $ref: "#/components/schemas/AnnotationTag"
       responses:
         default:
           content:
@@ -637,12 +635,12 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete an annotation group
+      summary: Delete an annotation tag
       tags:
       - Annotations
-  /annotation/v1/findAnnotationGroups:
+  /annotation/v1/findAnnotationTags:
     post:
-      operationId: findAnnotationGroups
+      operationId: findAnnotationTags
       requestBody:
         content:
           application/json:
@@ -655,48 +653,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResultPageAnnotationGroup"
+                $ref: "#/components/schemas/ResultPageAnnotationTag"
           description: default response
-      summary: Finds annotation groups matching request
-      tags:
-      - Annotations
-  /annotation/v1/findAnnotationGroups/{name}:
-    get:
-      operationId: findAnnotationGroupByName
-      parameters:
-      - in: path
-        name: name
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AnnotationGroup"
-          description: default response
-      summary: Find an annotation group by name
-      tags:
-      - Annotations
-  /annotation/v1/getAnnotationGroups:
-    get:
-      operationId: getAnnotationGroups
-      parameters:
-      - in: query
-        name: filter
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AnnotationGroup"
-          description: default response
-      summary: Gets a list of annotation groups
+      summary: Finds annotation tags matching request
       tags:
       - Annotations
   /annotation/v1/getLinkedEvents:
@@ -741,42 +700,22 @@ paths:
       summary: Gets a list of predefined comments
       tags:
       - Annotations
-  /annotation/v1/getStatusValues:
-    get:
-      operationId: getAnnotationStatus
-      parameters:
-      - in: query
-        name: filter
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Gets a list of allowed statuses
-      tags:
-      - Annotations
-  /annotation/v1/updateAnnotationGroup:
+  /annotation/v1/updateAnnotationTag:
     put:
-      operationId: updateAnnotationGroup
+      operationId: updateAnnotationTag
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AnnotationGroup"
+              $ref: "#/components/schemas/AnnotationTag"
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AnnotationGroup"
+                $ref: "#/components/schemas/AnnotationTag"
           description: default response
-      summary: Update an annotation group
+      summary: Update an annotation tag
       tags:
       - Annotations
   /apikey/v1:
@@ -8223,6 +8162,14 @@ components:
           items:
             type: string
           uniqueItems: true
+    AddTag:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          tag:
+            $ref: "#/components/schemas/AnnotationTag"
     AdvancedDocumentFindRequest:
       type: object
       properties:
@@ -8395,10 +8342,12 @@ components:
     Annotation:
       type: object
       properties:
-        annotationGroup:
-          $ref: "#/components/schemas/AnnotationGroup"
         assignedTo:
           $ref: "#/components/schemas/UserRef"
+        collections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnotationTag"
         comment:
           type: string
         createTimeMs:
@@ -8413,6 +8362,10 @@ components:
         id:
           type: integer
           format: int64
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnnotationTag"
         name:
           type: string
         retainUntilTimeMs:
@@ -8421,7 +8374,7 @@ components:
         retentionPeriod:
           $ref: "#/components/schemas/SimpleDuration"
         status:
-          type: string
+          $ref: "#/components/schemas/AnnotationTag"
         subject:
           type: string
         type:
@@ -8462,8 +8415,10 @@ components:
           - UNLINK
           - RETENTION_PERIOD
           - DESCRIPTION
-          - GROUP
-          - TAG
+          - ADD_TO_COLLECTION
+          - REMOVE_FROM_COLLECTION
+          - ADD_LABEL
+          - REMOVE_LABEL
           - DELETE
         entryUser:
           $ref: "#/components/schemas/UserRef"
@@ -8472,7 +8427,7 @@ components:
         id:
           type: integer
           format: int64
-    AnnotationGroup:
+    AnnotationTag:
       type: object
       properties:
         id:
@@ -8480,6 +8435,35 @@ components:
           format: int32
         name:
           type: string
+        style:
+          type: string
+          enum:
+          - NONE
+          - RED
+          - PINK
+          - PURPLE
+          - DEEP_PURPLE
+          - INDIGO
+          - BLUE
+          - LIGHT_BLUE
+          - CYAN
+          - TEAL
+          - GREEN
+          - LIGHT_GREEN
+          - LIME
+          - YELLOW
+          - AMBER
+          - ORANGE
+          - DEEP_ORANGE
+          - BROWN
+          - GREY
+          - BLUE_GREY
+        type:
+          type: string
+          enum:
+          - STATUS
+          - LABEL
+          - COLLECTION
         uuid:
           type: string
     ApiKey:
@@ -8962,14 +8946,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CacheIdentity"
-    ChangeAnnotationGroup:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/AbstractAnnotationChange"
-      - type: object
-        properties:
-          annotationGroup:
-            $ref: "#/components/schemas/AnnotationGroup"
     ChangeAssignedTo:
       type: object
       allOf:
@@ -9022,14 +8998,6 @@ components:
         properties:
           retentionPeriod:
             $ref: "#/components/schemas/SimpleDuration"
-    ChangeStatus:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/AbstractAnnotationChange"
-      - type: object
-        properties:
-          status:
-            type: string
     ChangeSubject:
       type: object
       allOf:
@@ -9444,6 +9412,17 @@ components:
           type: string
         title:
           type: string
+    CreateAnnotationTagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - STATUS
+          - LABEL
+          - COLLECTION
     CreateApiKeyRequest:
       type: object
       properties:
@@ -14405,6 +14384,14 @@ components:
         properties:
           userRef:
             $ref: "#/components/schemas/UserRef"
+    RemoveTag:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          tag:
+            $ref: "#/components/schemas/AnnotationTag"
     ReportDoc:
       type: object
       properties:
@@ -14570,7 +14557,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticDataShard"
-    ResultPageAnnotationGroup:
+    ResultPageAnnotationTag:
       type: object
       description: A page of results.
       properties:
@@ -14579,7 +14566,7 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/AnnotationGroup"
+            $ref: "#/components/schemas/AnnotationTag"
     ResultPageAppUserPermissions:
       type: object
       description: A page of results.
@@ -15548,6 +15535,14 @@ components:
             - USE
           userRef:
             $ref: "#/components/schemas/UserRef"
+    SetTag:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractAnnotationChange"
+      - type: object
+        properties:
+          tag:
+            $ref: "#/components/schemas/AnnotationTag"
     SharedElementData:
       type: object
       properties:

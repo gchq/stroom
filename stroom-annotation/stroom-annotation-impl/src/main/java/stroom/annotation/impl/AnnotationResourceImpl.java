@@ -18,8 +18,8 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationResource;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;

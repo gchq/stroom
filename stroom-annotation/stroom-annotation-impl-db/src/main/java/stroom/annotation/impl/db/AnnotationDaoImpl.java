@@ -621,8 +621,10 @@ class AnnotationDaoImpl implements AnnotationDao {
                                 .update(ANNOTATION)
                                 //                        .set(ANNOTATION.COMMENT, changeComment.getComment())
                                 //                        .set(ANNOTATION.HISTORY, DSL
-                                //                                .when(ANNOTATION.HISTORY.isNull(), changeComment.getComment())
-                                //                                .otherwise(DSL.concat(ANNOTATION.HISTORY, "  |  " + changeComment.getComment())))
+                                //                                .when(ANNOTATION.HISTORY.isNull(),
+                                //                                changeComment.getComment())
+                                //                                .otherwise(DSL.concat(ANNOTATION.HISTORY, "  |  " +
+                                //                                changeComment.getComment())))
                                 .set(ANNOTATION.UPDATE_USER, currentUser.toDisplayString())
                                 .set(ANNOTATION.UPDATE_TIME_MS, nowMs)
                                 .where(ANNOTATION.ID.eq(annotationId))
