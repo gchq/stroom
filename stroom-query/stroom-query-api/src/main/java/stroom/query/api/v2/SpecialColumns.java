@@ -18,15 +18,15 @@ package stroom.query.api.v2;
 
 public interface SpecialColumns {
 
-    String RESERVED_ID_FIELD_NAME = "__id__";
-    String RESERVED_STREAM_ID_FIELD_NAME = "__stream_id__";
-    String RESERVED_EVENT_ID_FIELD_NAME = "__event_id__";
+    String RESERVED_ID = "__id__";
+    String RESERVED_STREAM_ID = "__stream_id__";
+    String RESERVED_EVENT_ID = "__event_id__";
 
-    Column ID_COLUMN = buildSpecialColumn(RESERVED_ID_FIELD_NAME,
+    Column RESERVED_ID_COLUMN = buildSpecialColumn(RESERVED_ID,
             ParamSubstituteUtil.makeParam("Id"));
-    Column STREAM_ID_COLUMN = buildSpecialColumn(RESERVED_STREAM_ID_FIELD_NAME,
+    Column RESERVED_STREAM_ID_COLUMN = buildSpecialColumn(RESERVED_STREAM_ID,
             ParamSubstituteUtil.makeParam("StreamId"));
-    Column EVENT_ID_COLUMN = buildSpecialColumn(RESERVED_EVENT_ID_FIELD_NAME,
+    Column RESERVED_EVENT_ID_COLUMN = buildSpecialColumn(RESERVED_EVENT_ID,
             ParamSubstituteUtil.makeParam("EventId"));
 
     static Column buildSpecialColumn(final String reservedColumnName,
