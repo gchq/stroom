@@ -2,7 +2,6 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
@@ -194,13 +193,13 @@ class TestAnnotationTagDaoImpl {
                 .subject("Test Subject")
                 .status("Assigned")
                 .build();
-        final AnnotationDetail annotationDetail = annotationDao
+        final Annotation annotation = annotationDao
                 .createAnnotation(createAnnotationRequest, currentUser);
 
         final Optional<Annotation> optionalAnnotation = annotationDao
-                .getByDocRef(annotationDetail.getAnnotation().asDocRef());
+                .getAnnotationByDocRef(annotation.asDocRef());
         assertThat(optionalAnnotation).isPresent();
-        assertThat(optionalAnnotation.get()).isEqualTo(annotationDetail.getAnnotation());
+        assertThat(optionalAnnotation.get()).isEqualTo(annotation);
 
 
     }

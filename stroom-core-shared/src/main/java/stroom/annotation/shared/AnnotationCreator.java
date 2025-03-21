@@ -2,5 +2,5 @@ package stroom.annotation.shared;
 
 public interface AnnotationCreator {
 
-    AnnotationDetail createAnnotation(CreateAnnotationRequest request);
+    Annotation createAnnotation(CreateAnnotationRequest request);
 }

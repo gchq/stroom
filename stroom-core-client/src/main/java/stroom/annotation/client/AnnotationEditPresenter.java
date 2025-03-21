@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationTag;
@@ -88,6 +87,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class AnnotationEditPresenter
         extends DocumentEditPresenter<AnnotationEditView, Annotation>
@@ -132,16 +132,16 @@ public class AnnotationEditPresenter
     private final ChooserPresenter<String> commentPresenter;
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
-    private final Provider<DurationPresenter> durationPresenterProvider;
+    private final DurationPresenter retentionDurationProvider;
 
     private DocRef annotationRef;
-    private AnnotationDetail annotationDetail;
     private AnnotationPresenter parent;
 
     private AnnotationTag currentStatus;
     private UserRef currentAssignedTo;
     private List<AnnotationTag> currentLabels;
     private List<AnnotationTag> currentCollections;
+    private SimpleDuration currentRetentionPeriod;
 
     @Inject
     public AnnotationEditPresenter(final EventBus eventBus,
@@ -154,7 +154,7 @@ public class AnnotationEditPresenter
                                    final ChooserPresenter<String> commentPresenter,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
-                                   final Provider<DurationPresenter> durationPresenterProvider) {
+                                   final DurationPresenter retentionDurationProvider) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
         this.annotationStatusPresenter = annotationStatusPresenter;
@@ -164,7 +164,7 @@ public class AnnotationEditPresenter
         this.commentPresenter = commentPresenter;
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.durationPresenterProvider = durationPresenterProvider;
+        this.retentionDurationProvider = retentionDurationProvider;
 
         getView().setUiHandlers(this);
         assignedToPresenter.showActiveUsersOnly(true);
@@ -243,7 +243,10 @@ public class AnnotationEditPresenter
 
         registerHandler(annotationStatusPresenter.addDataSelectionHandler(e -> {
             final AnnotationTag selected = annotationStatusPresenter.getSelected();
-            changeStatus(selected);
+            if (!Objects.equals(currentStatus, selected)) {
+                changeStatus(selected);
+                HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
+            }
         }));
         registerHandler(annotationLabelPresenter.addSelectionHandler(e -> {
             final List<AnnotationTag> selected = annotationLabelPresenter.getSelectedItems();
@@ -261,13 +264,14 @@ public class AnnotationEditPresenter
 
     private void changeTitle(final String selected) {
         if (hasChanged(getEntity().getName(), selected)) {
-            if (annotationDetail != null) {
+            if (getEntity() != null) {
                 final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
                         annotationRef,
                         new ChangeTitle(selected));
                 change(request);
             }
 
+            getEntity().setName(selected);
             RefreshContentTabEvent.fire(this, parent);
         }
     }
@@ -278,12 +282,10 @@ public class AnnotationEditPresenter
 
     private void changeSubject(final String selected) {
         if (hasChanged(getEntity().getSubject(), selected)) {
-            if (annotationDetail != null) {
-                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
-                        annotationRef,
-                        new ChangeSubject(selected));
-                change(request);
-            }
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotationRef,
+                    new ChangeSubject(selected));
+            change(request);
         }
     }
 
@@ -303,20 +305,18 @@ public class AnnotationEditPresenter
     }
 
     private void changeStatus(final AnnotationTag selected) {
-        HidePopupRequestEvent.builder(annotationStatusPresenter).fire();
-
         if (!Objects.equals(currentStatus, selected)) {
-            currentStatus = selected;
-            if (annotationDetail != null) {
-                final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
-                        annotationRef,
-                        new SetTag(selected));
-                change(request);
-            }
+            setStatus(selected);
+
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotationRef,
+                    new SetTag(selected));
+            change(request);
         }
     }
 
     private void setStatus(final AnnotationTag status) {
+        currentStatus = status;
         getView().setStatus(status);
         annotationStatusPresenter.clearFilter();
         annotationStatusPresenter.setSelected(status);
@@ -324,22 +324,21 @@ public class AnnotationEditPresenter
 
     private void changeAssignedTo(final UserRef selected) {
         if (!Objects.equals(currentAssignedTo, selected)) {
-            currentAssignedTo = selected;
             setAssignedTo(selected);
 
-            if (annotationDetail != null) {
-                final SingleAnnotationChangeRequest request =
-                        new SingleAnnotationChangeRequest(annotationRef,
-                                new ChangeAssignedTo(selected));
-                change(request);
-            }
+            final SingleAnnotationChangeRequest request =
+                    new SingleAnnotationChangeRequest(annotationRef,
+                            new ChangeAssignedTo(selected));
+            change(request);
         }
     }
 
     private void setAssignedTo(final UserRef assignedTo) {
+        currentAssignedTo = assignedTo;
         assignedToPresenter.resolve(assignedTo, userRef -> {
             currentAssignedTo = userRef;
             getView().setAssignedTo(userRef);
+            getView().setAssignYourselfVisible(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
             assignedToPresenter.setSelected(currentAssignedTo);
         });
     }
@@ -366,8 +365,13 @@ public class AnnotationEditPresenter
                 }
             }
 
-            currentLabels = selected;
+            setLabels(selected);
         }
+    }
+
+    private void setLabels(final List<AnnotationTag> labels) {
+        currentLabels = labels;
+        getView().setLabels(currentLabels);
     }
 
     private void changeAnnotationCollections(final List<AnnotationTag> selected) {
@@ -392,8 +396,36 @@ public class AnnotationEditPresenter
                 }
             }
 
-            currentCollections = selected;
+            setCollections(selected);
         }
+    }
+
+    private void setCollections(final List<AnnotationTag> collections) {
+        currentCollections = collections;
+        getView().setCollections(currentCollections);
+    }
+
+    @Override
+    public void showRetentionPeriodChooser(final Element element) {
+        retentionDurationProvider.show(currentRetentionPeriod, this::changeRetentionPeriod);
+    }
+
+    private void changeRetentionPeriod(final SimpleDuration retentionPeriod) {
+        if (!Objects.equals(currentRetentionPeriod, retentionPeriod)) {
+            setRetentionPeriod(retentionPeriod);
+
+            final SingleAnnotationChangeRequest request =
+                    new SingleAnnotationChangeRequest(annotationRef,
+                            new ChangeRetentionPeriod(retentionPeriod));
+            change(request);
+        }
+    }
+
+    private void setRetentionPeriod(final SimpleDuration retentionPeriod) {
+        currentRetentionPeriod = retentionPeriod;
+        getView().setRetentionPeriod(retentionPeriod == null
+                ? "Forever"
+                : retentionPeriod.toLongString());
     }
 
     private void changeComment(final String selected) {
@@ -404,120 +436,109 @@ public class AnnotationEditPresenter
     }
 
     private void change(final SingleAnnotationChangeRequest request) {
-        annotationResourceClient.change(request, parent::read, this);
+        change(request, success -> {
+            if (success) {
+                updateHistory();
+            }
+        });
     }
 
-    public void read(final AnnotationDetail annotationDetail) {
-        final Annotation annotation = annotationDetail.getAnnotation();
+    private void change(final SingleAnnotationChangeRequest request, final Consumer<Boolean> consumer) {
+        annotationResourceClient.change(request, consumer, this);
+    }
+
+    public void read(final Annotation annotation) {
+        this.annotationRef = annotation.asDocRef();
         this.currentStatus = annotation.getStatus();
         this.currentAssignedTo = annotation.getAssignedTo();
-        this.annotationRef = annotation.asDocRef();
-        this.annotationDetail = annotationDetail;
 
-        getView().setId(annotationDetail.getAnnotation().getId());
+        getView().setId(annotation.getId());
         getView().setButtonText("Comment");
 
         onRead(annotationRef, annotation, false);
-        updateHistory(annotationDetail);
-
-//        if (annotation.getStatus() == null) {
-//            // Get an initial status value.
-//            final ExpressionOperator expression = ExpressionOperator
-//                    .builder()
-//                    .addTerm(ExpressionTerm.builder()
-//                            .field(AnnotationTagFields.TYPE_ID)
-//                            .condition(Condition.EQUALS)
-//                            .value(AnnotationTagType.STATUS.getDisplayValue())
-//                            .build())
-//                    .build();
-//            final ExpressionCriteria criteria = new ExpressionCriteria(PageRequest.oneRow(), null, expression);
-//            annotationResourceClient.findAnnotationTags(criteria, values -> {
-//                if (annotation.getStatus() == null && values != null && !values.isEmpty()) {
-//                    setStatus(values.getValues().get(0));
-//                }
-//            }, new DefaultErrorHandler(this, null), this);
-//        }
+        updateHistory();
     }
 
-    private void updateHistory(final AnnotationDetail annotationDetail) {
-        if (annotationDetail != null) {
-            final List<AnnotationEntry> entries = annotationDetail.getEntries();
-            if (entries != null) {
-                final Date now = new Date();
-                final Map<AnnotationEntryType, EntryValue> currentValues = new HashMap<>();
+    public void updateHistory() {
+        annotationResourceClient.getAnnotationEntries(annotationRef, this::updateHistory, this);
+    }
 
-                final SafeHtmlBuilder html = new SafeHtmlBuilder();
-                final StringBuilder text = new StringBuilder();
-                html.append(HISTORY_INNER_START);
-                SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                boolean first = true;
-                for (final AnnotationEntry entry : entries) {
-                    final EntryValue currentValue = currentValues.get(entry.getEntryType());
+    private void updateHistory(final List<AnnotationEntry> entries) {
+        if (entries != null) {
+            final Date now = new Date();
+            final Map<AnnotationEntryType, EntryValue> currentValues = new HashMap<>();
 
-                    addEntryText(text, entry, currentValue);
-                    final boolean added = addEntryHtml(html, entry, currentValue, now, line);
+            final SafeHtmlBuilder html = new SafeHtmlBuilder();
+            final StringBuilder text = new StringBuilder();
+            html.append(HISTORY_INNER_START);
+            SafeHtml line = SafeHtmlUtils.EMPTY_SAFE_HTML;
+            boolean first = true;
+            for (final AnnotationEntry entry : entries) {
+                final EntryValue currentValue = currentValues.get(entry.getEntryType());
 
-                    if (added && first) {
-                        // If we actually added some content then make sure we add a line marker before any subsequent
-                        // content.
-                        first = false;
-                        line = HISTORY_LINE;
-                    }
+                addEntryText(text, entry, currentValue);
+                final boolean added = addEntryHtml(html, entry, currentValue, now, line);
 
-                    // Remember the previous value.
-                    currentValues.put(entry.getEntryType(), entry.getEntryValue());
+                if (added && first) {
+                    // If we actually added some content then make sure we add a line marker before any subsequent
+                    // content.
+                    first = false;
+                    line = HISTORY_LINE;
                 }
 
-                html.append(HISTORY_INNER_END);
+                // Remember the previous value.
+                currentValues.put(entry.getEntryType(), entry.getEntryValue());
+            }
 
-                final HTML panel = new HTML(html.toSafeHtml());
-                panel.setStyleName("dock-max annotationHistoryOuter");
-                panel.addMouseDownHandler(e -> {
-                    // If the user has clicked on a link then consume the event.
-                    final Element target = e.getNativeEvent().getEventTarget().cast();
-                    if (target.hasTagName("u")) {
-                        final String link = target.getAttribute("link");
-                        if (link != null) {
-                            final Hyperlink hyperlink = Hyperlink.create(link);
-                            if (hyperlink != null) {
-                                HyperlinkEvent.fire(this, hyperlink, this);
-                            }
+            html.append(HISTORY_INNER_END);
+
+            final HTML panel = new HTML(html.toSafeHtml());
+            panel.setStyleName("dock-max annotationHistoryOuter");
+            panel.addMouseDownHandler(e -> {
+                // If the user has clicked on a link then consume the event.
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                if (target.hasTagName("u")) {
+                    final String link = target.getAttribute("link");
+                    if (link != null) {
+                        final Hyperlink hyperlink = Hyperlink.create(link);
+                        if (hyperlink != null) {
+                            HyperlinkEvent.fire(this, hyperlink, this);
                         }
                     }
-                });
+                }
+            });
 
-                final TextArea textCopy = new TextArea();
-                textCopy.setTabIndex(-2);
-                textCopy.setStyleName("annotationHistoryText");
-                textCopy.setText(text.toString());
+            final TextArea textCopy = new TextArea();
+            textCopy.setTabIndex(-2);
+            textCopy.setStyleName("annotationHistoryText");
+            textCopy.setText(text.toString());
 
-                final Button copyToClipboard = new Button();
-                copyToClipboard.setIcon(SvgImage.COPY);
-                copyToClipboard.setText("Copy History");
-                copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
-                copyToClipboard.addClickHandler(e -> {
-                    textCopy.selectAll();
-                    boolean success = copy(textCopy.getElement());
-                    if (!success) {
-                        AlertEvent.fireError(
-                                AnnotationEditPresenter.this,
-                                "Unable to copy",
-                                null);
-                    }
-                });
+            final Button copyToClipboard = new Button();
+            copyToClipboard.setIcon(SvgImage.COPY);
+            copyToClipboard.setText("Copy History");
+            copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
+            copyToClipboard.addClickHandler(e -> {
+                textCopy.selectAll();
+                boolean success = copy(textCopy.getElement());
+                if (!success) {
+                    AlertEvent.fireError(
+                            AnnotationEditPresenter.this,
+                            "Unable to copy",
+                            null);
+                }
+            });
 
-                final FlowPanel verticalPanel = new FlowPanel();
-                verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
-                verticalPanel.add(panel);
-                verticalPanel.add(textCopy);
-                verticalPanel.add(copyToClipboard);
+            final FlowPanel verticalPanel = new FlowPanel();
+            verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
+            verticalPanel.add(panel);
+            verticalPanel.add(textCopy);
+            verticalPanel.add(copyToClipboard);
 
-                getView().setHistoryView(verticalPanel);
+            getView().setHistoryView(verticalPanel);
 
-                // Scroll the history to the bottom after update.
-                Scheduler.get().scheduleDeferred(() ->
-                        panel.getElement().setScrollTop(panel.getElement().getScrollHeight()));
-            }
+            // Scroll the history to the bottom after update.
+            Scheduler.get().scheduleDeferred(() ->
+                    panel.getElement().setScrollTop(panel.getElement().getScrollHeight()));
         }
     }
 
@@ -818,19 +839,13 @@ public class AnnotationEditPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
-        this.currentLabels = annotation.getLabels();
-        this.currentCollections = annotation.getCollections();
-
         setTitle(annotation.getName());
         setSubject(annotation.getSubject());
         setStatus(annotation.getStatus());
         setAssignedTo(annotation.getAssignedTo());
-        getView().setLabels(annotation.getLabels());
-        getView().setCollections(annotation.getCollections());
-        getView().setAssignYourselfVisible(!Objects.equals(currentAssignedTo, clientSecurityContext.getUserRef()));
-        getView().setRetentionPeriod(annotation.getRetentionPeriod() == null
-                ? "Forever"
-                : annotation.getRetentionPeriod().toLongString());
+        setLabels(annotation.getLabels());
+        setCollections(annotation.getCollections());
+        setRetentionPeriod(annotation.getRetentionPeriod());
     }
 
     @Override
@@ -987,37 +1002,6 @@ public class AnnotationEditPresenter
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
         }
-    }
-
-    @Override
-    public void showRetentionPeriodChooser(final Element element) {
-        final SimpleDuration initial = GwtNullSafe
-                .get(annotationDetail,
-                        AnnotationDetail::getAnnotation,
-                        Annotation::getRetentionPeriod);
-
-        final DurationPresenter durationPresenter = durationPresenterProvider.get();
-        durationPresenter.setDuration(initial);
-//            final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.builder(durationPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-//                    .popupSize(popupSize)
-                .caption("Set Retention Period")
-                .modal()
-                .onShow(e -> getView().focus())
-                .onHideRequest(e -> {
-                    e.hide();
-                    if (e.isOk()) {
-                        final SimpleDuration duration = durationPresenter.getDuration();
-                        if (!Objects.equals(getEntity().getRetentionPeriod(), duration)) {
-                            final SingleAnnotationChangeRequest request =
-                                    new SingleAnnotationChangeRequest(annotationRef,
-                                            new ChangeRetentionPeriod(duration));
-                            change(request);
-                        }
-                    }
-                })
-                .fire();
     }
 
     @Override

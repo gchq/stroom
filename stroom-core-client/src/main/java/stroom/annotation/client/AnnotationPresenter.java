@@ -18,7 +18,6 @@
 package stroom.annotation.client;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
@@ -137,10 +136,13 @@ public class AnnotationPresenter
         return DOCUMENTATION;
     }
 
-    public void read(final AnnotationDetail annotationDetail) {
-        final Annotation annotation = annotationDetail.getAnnotation();
+    public void read(final Annotation annotation) {
         read(annotation.asDocRef(), annotation, false);
-        annotationEditPresenter.read(annotationDetail);
+        annotationEditPresenter.read(annotation);
+    }
+
+    public void updateHistory() {
+        annotationEditPresenter.updateHistory();
     }
 
     public void setInitialComment(final String initialComment) {

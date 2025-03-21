@@ -23,7 +23,6 @@ import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
-import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationFields;
@@ -267,7 +266,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public Optional<Annotation> getById(final long id) {
+    public Optional<Annotation> getAnnotationById(final long id) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                         .select()
                         .from(ANNOTATION)
@@ -277,7 +276,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public Optional<Annotation> getByDocRef(final DocRef annotationRef) {
+    public Optional<Annotation> getAnnotationByDocRef(final DocRef annotationRef) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                         .select()
                         .from(ANNOTATION)
@@ -299,21 +298,19 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public Optional<AnnotationDetail> getDetail(final DocRef annotationRef) {
-        final Optional<Annotation> optionalAnnotation = getByDocRef(annotationRef);
-        return optionalAnnotation.map(this::getDetail);
-    }
-
-    private AnnotationDetail getDetail(final Annotation annotation) {
-        final List<AnnotationEntry> entries = JooqUtil.contextResult(connectionProvider, context -> context
-                        .select()
+    public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                        .select(ANNOTATION_ENTRY.ID,
+                                ANNOTATION_ENTRY.ENTRY_TIME_MS,
+                                ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                                ANNOTATION_ENTRY.TYPE_ID,
+                                ANNOTATION_ENTRY.DATA)
                         .from(ANNOTATION_ENTRY)
-                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotation.getId()))
-                        .orderBy(ANNOTATION_ENTRY.ID)
+                        .join(ANNOTATION).on(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                        .where(ANNOTATION.UUID.eq(annotationRef.getUuid()))
+                        .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
                         .fetch())
                 .map(this::mapToAnnotationEntry);
-
-        return new AnnotationDetail(annotation, entries);
     }
 
     @Override
@@ -447,8 +444,8 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public AnnotationDetail createAnnotation(final CreateAnnotationRequest request,
-                                             final UserRef currentUser) {
+    public Annotation createAnnotation(final CreateAnnotationRequest request,
+                                       final UserRef currentUser) {
         final Instant now = Instant.now();
         final long nowMs = now.toEpochMilli();
 
@@ -501,7 +498,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         }
 
         // Now select everything back to provide refreshed details.
-        return getDetail(annotation.asDocRef()).orElse(null);
+        return annotation;
     }
 
     private Long calculateRetainUntilTimeMs(final SimpleDuration retentionPeriod,
@@ -514,7 +511,7 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public AnnotationDetail change(final SingleAnnotationChangeRequest request, final UserRef currentUser) {
+    public boolean change(final SingleAnnotationChangeRequest request, final UserRef currentUser) {
         try {
             final Instant now = Instant.now();
             final long nowMs = now.toEpochMilli();
@@ -649,7 +646,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                 final Long retainUntilTimeMs;
                 if (retentionPeriod != null && retentionPeriod.getTimeUnit() != null) {
                     // Read the annotation to get the creation time.
-                    final Optional<Annotation> optionalAnnotation = getById(annotationId);
+                    final Optional<Annotation> optionalAnnotation = getAnnotationById(annotationId);
                     final Annotation annotation = optionalAnnotation
                             .orElseThrow(() -> new RuntimeException("Annotation not found"));
                     final long createTimeMs = annotation.getCreateTimeMs();
@@ -693,7 +690,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         }
 
         // Now select everything back to provide refreshed details.
-        return getDetail(request.getAnnotationRef()).orElse(null);
+        return true;
     }
 
     private void removeAllTags(final DSLContext context,

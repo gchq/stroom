@@ -18,7 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
@@ -106,14 +106,20 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
     }
 
-    public Optional<Annotation> getByRef(final DocRef annotationRef) {
+    public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {
         checkAppPermission();
         checkViewPermission(annotationRef);
-        return annotationDao.getByDocRef(annotationRef);
+        return annotationDao.getAnnotationByDocRef(annotationRef);
     }
 
-    public Optional<Annotation> getById(final long id) {
-        final Optional<Annotation> optionalAnnotation = annotationDao.getById(id);
+    public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getAnnotationEntries(annotationRef);
+    }
+
+    public Optional<Annotation> getAnnotationById(final long id) {
+        final Optional<Annotation> optionalAnnotation = annotationDao.getAnnotationById(id);
         return optionalAnnotation.filter(annotation ->
                 securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
     }
@@ -182,20 +188,20 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return securityContext.getUserRef();
     }
 
-    AnnotationDetail getDetailById(final long annotationId) {
-        final List<DocRef> list = annotationDao.idListToDocRefs(Collections.singletonList(annotationId));
-        if (list.isEmpty()) {
-            return null;
-        }
-        final DocRef annotationRef = list.getFirst();
-        return getDetailByRef(annotationRef);
-    }
-
-    AnnotationDetail getDetailByRef(final DocRef annotationRef) {
-        checkAppPermission();
-        checkViewPermission(annotationRef);
-        return annotationDao.getDetail(annotationRef).orElse(null);
-    }
+//    AnnotationDetail getDetailById(final long annotationId) {
+//        final List<DocRef> list = annotationDao.idListToDocRefs(Collections.singletonList(annotationId));
+//        if (list.isEmpty()) {
+//            return null;
+//        }
+//        final DocRef annotationRef = list.getFirst();
+//        return getDetailByRef(annotationRef);
+//    }
+//
+//    AnnotationDetail getDetailByRef(final DocRef annotationRef) {
+//        checkAppPermission();
+//        checkViewPermission(annotationRef);
+//        return annotationDao.getDetail(annotationRef).orElse(null);
+//    }
 
     private void checkViewPermission(final DocRef annotationRef) {
         if (annotationRef == null) {
@@ -230,12 +236,12 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         }
     }
 
-    public AnnotationDetail createAnnotation(final CreateAnnotationRequest request) {
+    @Override
+    public Annotation createAnnotation(final CreateAnnotationRequest request) {
         checkAppPermission();
 
         // Create the annotation.
-        final AnnotationDetail annotationDetail = annotationDao.createAnnotation(request, getCurrentUser());
-        final Annotation annotation = annotationDetail.getAnnotation();
+        final Annotation annotation = annotationDao.createAnnotation(request, getCurrentUser());
         final DocRef docRef = annotation.asDocRef();
 
         // Create permissions.
@@ -258,10 +264,10 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             }
         }
 
-        return annotationDetail;
+        return annotation;
     }
 
-    public AnnotationDetail change(final SingleAnnotationChangeRequest request) {
+    public boolean change(final SingleAnnotationChangeRequest request) {
         checkAppPermission();
         checkEditPermission(request.getAnnotationRef());
         return annotationDao.change(request, getCurrentUser());

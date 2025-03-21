@@ -17,7 +17,7 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
@@ -36,17 +36,17 @@ public interface AnnotationDao {
 
     List<DocRef> idListToDocRefs(List<Long> idList);
 
-    Optional<Annotation> getById(long id);
+    Optional<Annotation> getAnnotationById(long id);
 
-    Optional<Annotation> getByDocRef(DocRef annotationRef);
-
-    Optional<AnnotationDetail> getDetail(DocRef annotationRef);
+    Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
     List<Annotation> getAnnotationsForEvents(EventId eventId);
 
-    AnnotationDetail createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
+    Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 
-    AnnotationDetail change(SingleAnnotationChangeRequest request, UserRef currentUser);
+    boolean change(SingleAnnotationChangeRequest request, UserRef currentUser);
+
+    List<AnnotationEntry> getAnnotationEntries(DocRef annotationRef);
 
     List<EventId> getLinkedEvents(DocRef annotationRef);
 

@@ -17,7 +17,7 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
@@ -31,7 +31,6 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -57,50 +56,73 @@ class AnnotationResourceImpl implements AnnotationResource {
     }
 
     @Override
-    public AnnotationDetail getById(final Long annotationId) {
+    public Annotation getAnnotationById(final Long annotationId) {
         LOGGER.info(() -> "Getting annotation " + annotationId);
-        AnnotationDetail annotationDetail;
+        Annotation annotation;
         try {
-            annotationDetail = annotationService.get().getDetailById(annotationId);
-            if (annotationDetail != null) {
-                documentEventLog.get().view(annotationDetail, null);
+            annotation = annotationService.get().getAnnotationById(annotationId).orElse(null);
+            if (annotation != null) {
+                documentEventLog.get().view(annotation, null);
             }
         } catch (final RuntimeException e) {
             documentEventLog.get().view("Annotation " + annotationId, e);
             throw e;
         }
-        return annotationDetail;
+        return annotation;
     }
 
     @Override
-    public AnnotationDetail createAnnotation(final CreateAnnotationRequest request) {
-        AnnotationDetail annotationDetail;
+    public Annotation getAnnotationByRef(final DocRef annotationRef) {
+        LOGGER.info(() -> "Getting annotation " + annotationRef);
+        Annotation annotation;
+        try {
+            annotation = annotationService.get().getAnnotationByRef(annotationRef).orElse(null);
+            if (annotation != null) {
+                documentEventLog.get().view(annotation, null);
+            }
+        } catch (final RuntimeException e) {
+            documentEventLog.get().view("Annotation " + annotationRef, e);
+            throw e;
+        }
+        return annotation;
+    }
+
+    @Override
+    public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
+        return annotationService.get().getAnnotationEntries(annotationRef);
+    }
+
+    @Override
+    public Annotation createAnnotation(final CreateAnnotationRequest request) {
+        Annotation annotation;
         LOGGER.info(() -> "Creating annotation " + request);
         try {
-            annotationDetail = annotationService.get().createAnnotation(request);
-            documentEventLog.get().create(annotationDetail, null);
+            annotation = annotationService.get().createAnnotation(request);
+            documentEventLog.get().create(annotation, null);
         } catch (final RuntimeException e) {
             documentEventLog.get().create("Annotation", e);
             throw e;
         }
-        return annotationDetail;
+        return annotation;
     }
 
     @Override
-    public AnnotationDetail change(final SingleAnnotationChangeRequest request) {
+    public Boolean change(final SingleAnnotationChangeRequest request) {
         Annotation before = null;
         Annotation after = null;
+        boolean success = false;
 
-        AnnotationDetail annotationDetail;
         LOGGER.info(() -> "Changing annotation " + request.getAnnotationRef());
         try {
-            before = annotationService.get().getByRef(request.getAnnotationRef()).orElse(null);
+            before = annotationService.get().getAnnotationByRef(request.getAnnotationRef()).orElse(null);
             if (before == null) {
                 throw new RuntimeException("Unable to find annotation");
             }
 
-            annotationDetail = annotationService.get().change(request);
-            after = NullSafe.get(annotationDetail, AnnotationDetail::getAnnotation);
+            success = annotationService.get().change(request);
+            if (success) {
+                after = annotationService.get().getAnnotationByRef(request.getAnnotationRef()).orElse(null);
+            }
             documentEventLog.get().update(before, after, null);
         } catch (final RuntimeException e) {
             documentEventLog.get().update(before == null
@@ -109,7 +131,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             throw e;
         }
 
-        return annotationDetail;
+        return success;
     }
 
     @Override
@@ -118,20 +140,21 @@ class AnnotationResourceImpl implements AnnotationResource {
         for (final long id : request.getAnnotationIdList()) {
             Annotation before = null;
             Annotation after = null;
-            AnnotationDetail annotationDetail;
             LOGGER.info(() -> "Changing annotation " + id);
             try {
-                before = annotationService.get().getById(id).orElse(null);
+                before = annotationService.get().getAnnotationById(id).orElse(null);
                 if (before == null) {
                     throw new RuntimeException("Unable to find annotation");
                 }
 
                 DocRef docRef = before.asDocRef();
-                annotationDetail = annotationService.get().change(new SingleAnnotationChangeRequest(docRef,
+                boolean success = annotationService.get().change(new SingleAnnotationChangeRequest(docRef,
                         request.getChange()));
-                after = NullSafe.get(annotationDetail, AnnotationDetail::getAnnotation);
+                if (success) {
+                    after = annotationService.get().getAnnotationByRef(docRef).orElse(null);
+                    count++;
+                }
                 documentEventLog.get().update(before, after, null);
-                count++;
             } catch (final RuntimeException e) {
                 documentEventLog.get().update(before == null
                         ? id

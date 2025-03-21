@@ -16,7 +16,7 @@
 
 package stroom.annotation.client;
 
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.core.client.ContentManager;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -49,20 +49,20 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getSubject(),
                     e.getStatus(),
                     e.getLinkedEvents());
-            annotationResourceClient.createAnnotation(request, annotationDetail ->
-                    show(presenter, annotationDetail), new DefaultTaskMonitorFactory(this));
+            annotationResourceClient.createAnnotation(request, annotation ->
+                    show(presenter, annotation), new DefaultTaskMonitorFactory(this));
         });
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
             final AnnotationPresenter presenter = presenterProvider.get();
-            annotationResourceClient.getById(e.getAnnotationId(), annotationDetail ->
-                    show(presenter, annotationDetail), new DefaultTaskMonitorFactory(this));
+            annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
+                    show(presenter, annotation), new DefaultTaskMonitorFactory(this));
         });
     }
 
     private void show(final AnnotationPresenter presenter,
-                      final AnnotationDetail annotationDetail) {
-        presenter.read(annotationDetail);
+                      final Annotation annotation) {
+        presenter.read(annotation);
         contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
     }
 

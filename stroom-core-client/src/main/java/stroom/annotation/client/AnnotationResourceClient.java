@@ -1,6 +1,7 @@
 package stroom.annotation.client;
 
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.CreateAnnotationRequest;
@@ -35,27 +36,38 @@ public class AnnotationResourceClient extends AbstractRestClient {
         super(eventBus, restFactory);
     }
 
-    public void getById(final long annotationId,
-                        final Consumer<AnnotationDetail> consumer,
-                        final TaskMonitorFactory taskMonitorFactory) {
+    public void getAnnotationByRef(final DocRef annotationRef,
+                                  final Consumer<Annotation> consumer,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getById(annotationId))
+                .method(res -> res.getAnnotationByRef(annotationRef))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-//    public void getStatusValues(final String filter,
-//                                final Consumer<List<AnnotationTag>> consumer,
-//                                final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(ANNOTATION_RESOURCE)
-//                .method(res -> res.getStatusValues(filter))
-//                .onSuccess(consumer)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
+    public void getAnnotationById(final long annotationId,
+                                  final Consumer<Annotation> consumer,
+                                  final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.getAnnotationById(annotationId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void getAnnotationEntries(final DocRef annotationRef,
+                                     final Consumer<List<AnnotationEntry>> consumer,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(ANNOTATION_RESOURCE)
+                .method(res -> res.getAnnotationEntries(annotationRef))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
 
     public void getStandardComments(final String filter,
                                     final Consumer<List<String>> consumer,
@@ -68,18 +80,8 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-//    public void getDefaultRetentionPeriod(final Consumer<SimpleDuration> consumer,
-//                                          final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(ANNOTATION_RESOURCE)
-//                .method(AnnotationResource::getDefaultRetentionPeriod)
-//                .onSuccess(consumer)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
-
     public void createAnnotation(final CreateAnnotationRequest request,
-                                 final Consumer<AnnotationDetail> consumer,
+                                 final Consumer<Annotation> consumer,
                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
@@ -90,7 +92,7 @@ public class AnnotationResourceClient extends AbstractRestClient {
     }
 
     public void change(final SingleAnnotationChangeRequest request,
-                       final Consumer<AnnotationDetail> consumer,
+                       final Consumer<Boolean> consumer,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(ANNOTATION_RESOURCE)
@@ -148,19 +150,6 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-//    public void fetchAnnotationGroupByName(final String name,
-//                                           final Consumer<AnnotationTag> consumer,
-//                                           final RestErrorHandler errorHandler,
-//                                           final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(ANNOTATION_RESOURCE)
-//                .method(res -> res.fetchAnnotationGroupByName(name))
-//                .onSuccess(consumer)
-//                .onFailure(errorHandler)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
-
     public void createAnnotationTag(final CreateAnnotationTagRequest request,
                                     final Consumer<AnnotationTag> consumer,
                                     final RestErrorHandler errorHandler,
@@ -210,15 +199,4 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
-
-//    public void getAnnotationTags(final String filter,
-//                                  final Consumer<List<AnnotationTag>> consumer,
-//                                  final TaskMonitorFactory taskMonitorFactory) {
-//        restFactory
-//                .create(ANNOTATION_RESOURCE)
-//                .method(res -> res.getAnnotationTags(filter))
-//                .onSuccess(consumer)
-//                .taskMonitorFactory(taskMonitorFactory)
-//                .exec();
-//    }
 }

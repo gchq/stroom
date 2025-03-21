@@ -47,17 +47,33 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @GET
     @Operation(
-            summary = "Gets an annotation",
-            operationId = "getAnnotationDetail")
-    AnnotationDetail getById(@QueryParam("annotationId") Long annotationId);
+            summary = "Gets an annotation by id",
+            operationId = "getAnnotationById")
+    Annotation getAnnotationById(@QueryParam("annotationId") Long annotationId);
+
+    @POST
+    @Path("getAnnotationByRef")
+    @Operation(
+            summary = "Gets an annotation by ref",
+            operationId = "getAnnotationByRef")
+    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
+                                  DocRef annotationRef);
+
+    @POST
+    @Path("getAnnotationEntries")
+    @Operation(
+            summary = "Gets annotation entries",
+            operationId = "getAnnotationEntries")
+    List<AnnotationEntry> getAnnotationEntries(@Parameter(description = "annotationRef", required = true)
+                                               DocRef annotationRef);
 
     @POST
     @Path("create")
     @Operation(
             summary = "Creates an annotation",
             operationId = "createAnnotation")
-    AnnotationDetail createAnnotation(@Parameter(description = "request", required = true)
-                                      CreateAnnotationRequest request);
+    Annotation createAnnotation(@Parameter(description = "request", required = true)
+                                CreateAnnotationRequest request);
 
     @DELETE
     @Path("delete")
@@ -72,8 +88,8 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Applies a change to an annotation",
             operationId = "changeAnnotation")
-    AnnotationDetail change(@Parameter(description = "request", required = true)
-                            SingleAnnotationChangeRequest request);
+    Boolean change(@Parameter(description = "request", required = true)
+                   SingleAnnotationChangeRequest request);
 
     @POST
     @Path("batchChange")
@@ -83,13 +99,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     Integer batchChange(@Parameter(description = "request", required = true)
                         MultiAnnotationChangeRequest request);
 
-//    @GET
-//    @Path("getStatusValues")
-//    @Operation(
-//            summary = "Gets a list of allowed statuses",
-//            operationId = "getAnnotationStatus")
-//    List<AnnotationTag> getStatusValues(@QueryParam("filter") String filter);
-
     @GET
     @Path("getStandardComments")
     @Operation(
@@ -97,12 +106,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "getAnnotationSampleComments")
     List<String> getStandardComments(@QueryParam("filter") String filter);
 
-//    @GET
-//    @Path("getDefaultRetentionPeriod")
-//    @Operation(
-//            summary = "Gets the default retention period",
-//            operationId = "getAnnotationDefaultRetentionPeriod")
-//    SimpleDuration getDefaultRetentionPeriod();
 
     @POST
     @Path("getLinkedEvents")
@@ -140,13 +143,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "deleteAnnotationTag")
     Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-//    @GET
-//    @Path("/findAnnotationGroups/{name}")
-//    @Operation(
-//            summary = "Find an annotation group by name",
-//            operationId = "findAnnotationGroupByName")
-//    AnnotationTag fetchAnnotationGroupByName(@PathParam("name") String name);
-
     @POST
     @Path("findAnnotationTags")
     @Operation(
@@ -154,12 +150,4 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "findAnnotationTags")
     ResultPage<AnnotationTag> findAnnotationTags(
             @Parameter(description = "request", required = true) ExpressionCriteria request);
-
-//    @GET
-//    @Path("getAnnotationGroups")
-//    @Operation(
-//            summary = "Gets a list of annotation groups",
-//            operationId = "getAnnotationGroups")
-//    List<AnnotationTag> getAnnotationTags(@QueryParam("filter") String filter);
-
 }

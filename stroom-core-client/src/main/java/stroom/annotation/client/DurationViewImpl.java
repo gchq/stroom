@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.DurationPresenter.DurationView;
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -47,7 +48,9 @@ public class DurationViewImpl extends ViewImpl implements DurationView {
     public void setDuration(final SimpleDuration duration) {
         forever.setValue(duration == null);
         durationPicker.setEnabled(!forever.getValue());
-        durationPicker.setValue(duration);
+        durationPicker.setValue(duration != null
+                ? duration
+                : SimpleDuration.builder().time(5).timeUnit(TimeUnit.YEARS).build());
     }
 
     @Override

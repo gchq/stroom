@@ -133,7 +133,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             if (annotationIdIndex != null) {
                 final Long annotationId = getLong(values, annotationIdIndex);
                 if (annotationId != null) {
-                    annotationService.getById(annotationId).ifPresent(annotations::add);
+                    annotationService.getAnnotationById(annotationId).ifPresent(annotations::add);
                 }
             }
 

@@ -18,7 +18,6 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.util.NullSafe;
@@ -32,26 +31,7 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
 
     @Override
     public BaseObject createBaseObject(final Object obj) {
-        if (obj instanceof final AnnotationDetail annotationDetail) {
-            final Annotation annotation = annotationDetail.getAnnotation();
-
-            OtherObject o = new OtherObject();
-            o.setId(String.valueOf(annotation.getId()));
-            o.setType("Annotation");
-            o.setName(annotation.getName());
-            o.setState(NullSafe.get(annotation.getStatus(), AnnotationTag::getName));
-
-//            o.getData().add(EventLoggingUtil.createData("Stream id", String.valueOf(annotation.getStreamId())));
-//            o.getData().add(EventLoggingUtil.createData("Event Id", String.valueOf(annotation.getEventId())));
-            final UserRef assignedTo = annotation.getAssignedTo();
-            o.getData().add(EventLoggingUtil.createData(
-                    "Assigned To",
-                    assignedTo != null
-                            ? assignedTo.toDisplayString()
-                            : null));
-
-            return o;
-        } else if (obj instanceof final Annotation annotation) {
+        if (obj instanceof final Annotation annotation) {
             OtherObject o = new OtherObject();
             o.setId(String.valueOf(annotation.getId()));
             o.setType("Annotation");
