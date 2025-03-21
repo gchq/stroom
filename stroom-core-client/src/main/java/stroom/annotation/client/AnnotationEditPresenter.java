@@ -198,6 +198,7 @@ public class AnnotationEditPresenter
         // See if we are able to get standard comments.
         annotationResourceClient.getStandardComments(null, values ->
                 getView().setHasCommentValues(values != null && !values.isEmpty()), this);
+        assignedToPresenter.showActiveUsersOnly(true);
     }
 
     public static SafeHtml createSwatch(final ConditionalFormattingStyle formattingStyle,
@@ -929,7 +930,7 @@ public class AnnotationEditPresenter
 
     @Override
     public void showAssignedToChooser(final Element element) {
-        assignedToPresenter.setSelected(getEntity().getAssignedTo());
+        assignedToPresenter.setSelected(currentAssignedTo);
         assignedToPresenter.show(this::changeAssignedTo);
     }
 
@@ -1037,6 +1038,8 @@ public class AnnotationEditPresenter
 
         void setAssignedTo(UserRef assignedTo);
 
+        void setAssignYourselfVisible(boolean visible);
+
         void setLabels(List<AnnotationTag> labels);
 
         void setCollections(List<AnnotationTag> collections);
@@ -1050,8 +1053,6 @@ public class AnnotationEditPresenter
         void setHistoryView(Widget view);
 
         void setButtonText(String text);
-
-        void setAssignYourselfVisible(boolean visible);
 
         void setRetentionPeriod(String retentionPeriod);
     }
