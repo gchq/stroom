@@ -10,6 +10,7 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.util.io.DirProvidersModule;
 
 import com.google.inject.AbstractModule;
@@ -28,6 +29,7 @@ public class CoreTestModule extends AbstractModule {
 
         install(new AppConfigTestModule());
         install(new UriFactoryModule());
+        install(new MockMetricsModule());
         install(new CoreModule());
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());

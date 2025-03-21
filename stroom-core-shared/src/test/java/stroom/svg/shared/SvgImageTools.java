@@ -23,7 +23,7 @@ public class SvgImageTools {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SvgImageTools.class);
 
-//    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("#[0-9a-fA-F]+");
+    //    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("#[0-9a-fA-F]+");
     private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("(?<=(fill|stroke):)#[0-9a-fA-F]+");
     private static final String COLOURS_HTML_HEADER = """
             <!DOCTYPE html>
@@ -73,6 +73,7 @@ public class SvgImageTools {
             Paths.get("pipeline", "solr.svg")
     );
     public static final String THEMED_ICONS_HTML_FILENAME = "themedIcons.html";
+    public static final String COLOUR_SWATCHES_FILENAME = "colourSwatches.html";
 
     public static void main(String[] args) throws IOException {
         generateUniqueColoursContactSheet();
@@ -124,10 +125,10 @@ public class SvgImageTools {
                                     try {
                                         final String svg = Files.readString(path);
                                         return LogUtil.message("""
-                                                    <div class="svg-file">
-                                                      <div class="svg">{}</div>
-                                                      <div class="file-path">{}</div>
-                                                    </div>""",
+                                                        <div class="svg-file">
+                                                          <div class="svg">{}</div>
+                                                          <div class="file-path">{}</div>
+                                                        </div>""",
                                                 svg,
                                                 rawImagesBasePath.relativize(path).toString());
                                     } catch (IOException e) {
@@ -137,8 +138,8 @@ public class SvgImageTools {
                                 .collect(Collectors.joining("\n"));
 
                         final String colourClass = Objects.requireNonNullElse(
-                                SvgImageGen.COLOUR_MAPPINGS.get(colourHex),
-                                "")
+                                        GenerateSvgImages.COLOUR_MAPPINGS.get(colourHex),
+                                        "")
                                 .replace("var(", "")
                                 .replace(")", "");
 
@@ -170,7 +171,7 @@ public class SvgImageTools {
                     COLOURS_HTML_HEADER,
                     rowsHtml);
 
-            Files.writeString(outputPath.resolve("colourSwatches.html"), html);
+            Files.writeString(outputPath.resolve(COLOUR_SWATCHES_FILENAME), html);
         }
     }
 
@@ -211,8 +212,7 @@ public class SvgImageTools {
                             var, var))
                     .collect(Collectors.joining("\n"));
 
-            @SuppressWarnings("checkstyle:LineLength")
-            final String html = LogUtil.message("""
+            @SuppressWarnings("checkstyle:LineLength") final String html = LogUtil.message("""
                             {}
                             <body>
                               <div class="themed-icons-toolbar">
@@ -232,11 +232,17 @@ public class SvgImageTools {
 
             Files.writeString(outputPath.resolve(THEMED_ICONS_HTML_FILENAME), html);
         }
-        System.out.println("\nTo view the icon contact sheets do:\n" +
-                "  cd "
-                + outputPath.toAbsolutePath().normalize()
-                + "; python -m http.server 8888\n"
-                + "Then visit http://localhost:8888");
+        System.out.println(LogUtil.message("""
+
+                        To view the icon contact sheets run:
+                          python -m http.server 8888 --directory {}
+                        Then visit
+                          http://localhost:8888/{}
+                          http://localhost:8888/{}
+                        """,
+                outputPath.toAbsolutePath().normalize(),
+                THEMED_ICONS_HTML_FILENAME,
+                COLOUR_SWATCHES_FILENAME));
     }
 
     private static String padColour(final String colour) {
@@ -249,23 +255,23 @@ public class SvgImageTools {
     }
 
     private static Path getRawImagesBasePath() {
-        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
-        final Path appPath = SvgImageGen.getAppPath(coreSharedPath);
-        final Path imagesSourceBasePath = SvgImageGen.getImagesSourceBasePath(appPath);
+        final Path coreSharedPath = GenerateSvgImages.getCoreSharedPath();
+        final Path appPath = GenerateSvgImages.getAppPath(coreSharedPath);
+        final Path imagesSourceBasePath = GenerateSvgImages.getImagesSourceBasePath(appPath);
         LOGGER.debug("Scanning dir: {}", imagesSourceBasePath.toAbsolutePath().normalize());
         return imagesSourceBasePath;
     }
 
     private static Path getGeneratedImagesBasePath() {
-        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
-        final Path appPath = SvgImageGen.getAppPath(coreSharedPath);
-        final Path imagesDestBasePath = SvgImageGen.getImagesDestBasePath(appPath);
+        final Path coreSharedPath = GenerateSvgImages.getCoreSharedPath();
+        final Path appPath = GenerateSvgImages.getAppPath(coreSharedPath);
+        final Path imagesDestBasePath = GenerateSvgImages.getImagesDestBasePath(appPath);
         LOGGER.debug("Scanning dir: {}", imagesDestBasePath.toAbsolutePath().normalize());
         return imagesDestBasePath;
     }
 
     private static Path getOutputPath() {
-        final Path coreSharedPath = SvgImageGen.getCoreSharedPath();
+        final Path coreSharedPath = GenerateSvgImages.getCoreSharedPath();
         final Path path = coreSharedPath.resolve("src")
                 .resolve("test")
                 .resolve("resources")
@@ -283,9 +289,9 @@ public class SvgImageTools {
         if (colourHex.length() == 4) {
             return
                     "#"
-                            + colourHex.charAt(1) + colourHex.charAt(1)
-                            + colourHex.charAt(2) + colourHex.charAt(2)
-                            + colourHex.charAt(3) + colourHex.charAt(3);
+                    + colourHex.charAt(1) + colourHex.charAt(1)
+                    + colourHex.charAt(2) + colourHex.charAt(2)
+                    + colourHex.charAt(3) + colourHex.charAt(3);
         } else {
             return colourHex;
         }
@@ -298,5 +304,6 @@ public class SvgImageTools {
     private record ColourInstance(
             Path svgFile,
             String colour) {
+
     }
 }

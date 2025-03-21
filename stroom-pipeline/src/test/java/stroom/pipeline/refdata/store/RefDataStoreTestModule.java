@@ -10,6 +10,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
@@ -91,6 +92,7 @@ public class RefDataStoreTestModule extends AbstractModule {
         bind(HomeDirProvider.class).toInstance(homeDirProvider);
         bind(TempDirProvider.class).toInstance(tempDirProvider);
 
+        install(new MockMetricsModule());
         install(new CacheModule());
         install(new MockSecurityContextModule());
         install(new MockTaskModule());

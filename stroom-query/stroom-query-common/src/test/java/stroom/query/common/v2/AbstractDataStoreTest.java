@@ -32,7 +32,7 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -50,7 +50,7 @@ abstract class AbstractDataStoreTest {
 
     @BeforeAll
     static void beforeAll() {
-        Metrics.setEnabled(true);
+        SimpleMetrics.setEnabled(true);
     }
 
     void basicTest() {
@@ -308,7 +308,7 @@ abstract class AbstractDataStoreTest {
 
         final DataStore dataStore = createUnlimitedDataStore(tableSettings);
 
-        Metrics.measure("Loaded data", () -> {
+        SimpleMetrics.measure("Loaded data", () -> {
             for (int i = 0; i < 100; i++) {
                 final String key = UUID.randomUUID().toString();
                 for (int j = 0; j < 100000; j++) {
@@ -327,10 +327,10 @@ abstract class AbstractDataStoreTest {
         }
 
         System.out.println("\nLoading data");
-        Metrics.report();
+        SimpleMetrics.report();
 
         System.out.println("\nGetting data");
-        Metrics.report();
+        SimpleMetrics.report();
 
         //Getting the runtime reference from system
         Runtime runtime = Runtime.getRuntime();
@@ -339,9 +339,9 @@ abstract class AbstractDataStoreTest {
 
         //Print used memory
         System.out.println("Used Memory: "
-                + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory() - runtime.freeMemory()));
+                           + ModelStringUtil.formatIECByteSizeString(runtime.totalMemory() - runtime.freeMemory()));
 
-        Metrics.measure("Result", () -> {
+        SimpleMetrics.measure("Result", () -> {
             // Make sure we only get 50 results.
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
@@ -359,7 +359,7 @@ abstract class AbstractDataStoreTest {
         });
 
         System.out.println("\nGetting results");
-        Metrics.report();
+        SimpleMetrics.report();
 
     }
 

@@ -27,31 +27,47 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
     public static final String PROP_NAME_REFRESH_AFTER_WRITE = "refreshAfterWrite";
+    public static final String PROP_NAME_STATISTICS_MODE = "statisticsMode";
+
+    /**
+     * The default for all caches. {@link StatisticsMode#INTERNAL} is only suitable in stroom,
+     * not proxy.
+     */
+    public static final StatisticsMode DEFAULT_STATISTICS_MODE = StatisticsMode.INTERNAL;
+    /**
+     * The default {@link StatisticsMode} to use with stroom-proxy.
+     */
+    public static final StatisticsMode PROXY_DEFAULT_STATISTICS_MODE = StatisticsMode.DROPWIZARD_METRICS;
 
     protected final Long maximumSize;
     protected final StroomDuration expireAfterAccess;
     protected final StroomDuration expireAfterWrite;
     protected final StroomDuration refreshAfterWrite;
+    protected final StatisticsMode statisticsMode;
 
     public CacheConfig() {
         maximumSize = null;
         expireAfterAccess = null;
         expireAfterWrite = null;
         refreshAfterWrite = null;
+        statisticsMode = DEFAULT_STATISTICS_MODE;
     }
 
     @JsonCreator
     public CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite,
-                       @JsonProperty(PROP_NAME_REFRESH_AFTER_WRITE) final StroomDuration refreshAfterWrite) {
+                       @JsonProperty(PROP_NAME_REFRESH_AFTER_WRITE) final StroomDuration refreshAfterWrite,
+                       @JsonProperty(PROP_NAME_STATISTICS_MODE) final StatisticsMode statisticsMode) {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;
         this.refreshAfterWrite = refreshAfterWrite;
+        this.statisticsMode = Objects.requireNonNullElse(statisticsMode, DEFAULT_STATISTICS_MODE);
     }
 
-    @JsonPropertyDescription("Specifies the maximum number of entries the cache may contain. Note that the cache " +
+    @JsonPropertyDescription(
+            "Specifies the maximum number of entries the cache may contain. Note that the cache " +
             "may evict an entry before this limit is exceeded or temporarily exceed the threshold while evicting. " +
             "As the cache size grows close to the maximum, the cache evicts entries that are less likely to be used " +
             "again. For example, the cache may evict an entry because it hasn't been used recently or very often. " +
@@ -65,7 +81,8 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return maximumSize;
     }
 
-    @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
+    @JsonPropertyDescription(
+            "Specifies that each entry should be automatically removed from the cache once " +
             "this duration has elapsed after the entry's creation, the most recent replacement of " +
             "its value, or its last read. In ISO-8601 duration format, e.g. 'PT10M'. If no value is set then " +
             " entries will not be aged out based these criteria.")
@@ -75,7 +92,8 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return expireAfterAccess;
     }
 
-    @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
+    @JsonPropertyDescription(
+            "Specifies that each entry should be automatically removed from the cache once " +
             "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
             "In ISO-8601 duration format, e.g. 'PT5M'. If no value is set then entries will not be aged out based on " +
             " these criteria.")
@@ -85,7 +103,8 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return expireAfterWrite;
     }
 
-    @JsonPropertyDescription("Specifies that each entry should be automatically refreshed in the cache after " +
+    @JsonPropertyDescription(
+            "Specifies that each entry should be automatically refreshed in the cache after " +
             "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
             "In ISO-8601 duration format, e.g. 'PT5M'. Refreshing is performed asynchronously and the current value " +
             "provided until the refresh has occurred. This mechanism allows the cache to update values without any " +
@@ -96,14 +115,30 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return refreshAfterWrite;
     }
 
+    @JsonPropertyDescription(
+            "Determines whether/how statistics are captured on cache usage " +
+            "(e.g. hits, misses, entries, etc.). Values are (NONE, INTERNAL, DROPWIZARD_METRICS). " +
+            "NONE means capture no stats, offering a very slight performance gain, but the Caches screen in Stroom " +
+            "won't be able to show any stats for this cache. " +
+            "INTERNAL means the stats are captured but are only accessible via the Stroom Caches screen, thus not " +
+            "suitable for Stroom-Proxy. " +
+            "DROPWIZARD_METRICS means the stats are captured and are accessible via the Stroom Caches screen AND via " +
+            "the metrics servlet on the admin port for integration with tools like Graphite/Collectd.")
+    @JsonProperty(PROP_NAME_STATISTICS_MODE)
+    @RequiresRestart(RestartScope.SYSTEM)
+    public StatisticsMode getStatisticsMode() {
+        return statisticsMode;
+    }
+
     @Override
     public String toString() {
         return "CacheConfig{" +
-                "maximumSize=" + maximumSize +
-                ", expireAfterAccess=" + expireAfterAccess +
-                ", expireAfterWrite=" + expireAfterWrite +
-                ", refreshAfterWrite=" + refreshAfterWrite +
-                '}';
+               "maximumSize=" + maximumSize +
+               ", expireAfterAccess=" + expireAfterAccess +
+               ", expireAfterWrite=" + expireAfterWrite +
+               ", refreshAfterWrite=" + refreshAfterWrite +
+               ", statisticsMode=" + statisticsMode +
+               '}';
     }
 
     @Override
@@ -116,9 +151,10 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         }
         final CacheConfig that = (CacheConfig) o;
         return Objects.equals(maximumSize, that.maximumSize) &&
-                Objects.equals(expireAfterAccess, that.expireAfterAccess) &&
-                Objects.equals(expireAfterWrite, that.expireAfterWrite) &&
-                Objects.equals(refreshAfterWrite, that.refreshAfterWrite);
+               Objects.equals(expireAfterAccess, that.expireAfterAccess) &&
+               Objects.equals(expireAfterWrite, that.expireAfterWrite) &&
+               Objects.equals(refreshAfterWrite, that.refreshAfterWrite) &&
+               Objects.equals(statisticsMode, that.statisticsMode);
     }
 
     @Override
@@ -138,12 +174,38 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
     // --------------------------------------------------------------------------------
 
 
+    public enum StatisticsMode {
+        /**
+         * Do not capture any statistics on cache usage.
+         * This means no statistics will be available for this cache in the Stroom UI.
+         * Capturing statistics has a minor performance penalty.
+         */
+        NONE,
+        /**
+         * Uses the internal mechanism for capturing statistics. This is only suitable
+         * for Stroom as these can be viewed through the UI.
+         */
+        INTERNAL,
+        /**
+         * Uses Dropwizard Metrics for capturing statistics. This allows the cache stats
+         * to be accessed via tools such as Graphite/Collectd in addition to the Stroom UI.
+         * This is suitable for both Stroom and Stroom-Proxy.
+         * This adds a very slight performance overhead over {@link StatisticsMode#INTERNAL}.
+         */
+        DROPWIZARD_METRICS,
+        ;
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private Long maximumSize;
         private StroomDuration expireAfterAccess;
         private StroomDuration expireAfterWrite;
         private StroomDuration refreshAfterWrite;
+        private StatisticsMode statisticsMode;
         public PropertyPath basePath;
 
         private Builder() {
@@ -153,11 +215,17 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             maximumSize = cacheConfig.maximumSize;
             expireAfterAccess = cacheConfig.expireAfterAccess;
             expireAfterWrite = cacheConfig.expireAfterWrite;
+            statisticsMode = cacheConfig.statisticsMode;
             basePath = cacheConfig.getBasePath();
         }
 
         public Builder maximumSize(final Long maximumSize) {
             this.maximumSize = maximumSize;
+            return this;
+        }
+
+        public Builder maximumSize(final Integer maximumSize) {
+            this.maximumSize = NullSafe.get(maximumSize, Integer::longValue);
             return this;
         }
 
@@ -176,12 +244,18 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             return this;
         }
 
+        public Builder statisticsMode(final StatisticsMode statisticsMode) {
+            this.statisticsMode = statisticsMode;
+            return this;
+        }
+
         public CacheConfig build() {
             final CacheConfig cacheConfig = new CacheConfig(
                     maximumSize,
                     expireAfterAccess,
                     expireAfterWrite,
-                    refreshAfterWrite);
+                    refreshAfterWrite,
+                    statisticsMode);
             NullSafe.consume(basePath, cacheConfig::setBasePath);
             return cacheConfig;
         }

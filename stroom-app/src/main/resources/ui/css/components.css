@@ -2473,3 +2473,7 @@ button.main-menu svg {
 .durationSetting {
     display: flex;
 }
+
+.ExpressionTreeViewImpl-layoutPanel {
+    position: absolute;
+}

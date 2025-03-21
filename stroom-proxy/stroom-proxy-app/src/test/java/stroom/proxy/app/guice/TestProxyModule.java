@@ -6,6 +6,7 @@ import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Module;
 import io.dropwizard.core.setup.Environment;
@@ -38,6 +39,8 @@ class TestProxyModule {
         final Environment environmentMock = Mockito.mock(Environment.class);
         Mockito.when(environmentMock.healthChecks())
                 .thenReturn(new HealthCheckRegistry());
+        Mockito.when(environmentMock.metrics())
+                .thenReturn(new MetricRegistry());
 
         final Config config = new Config();
         config.setProxyConfig(new ProxyConfig());

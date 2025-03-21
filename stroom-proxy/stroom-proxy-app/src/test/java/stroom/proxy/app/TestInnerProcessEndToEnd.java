@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -48,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestInnerProcessEndToEnd {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
+
 
     @Test
     void testSimple() {
@@ -127,8 +129,7 @@ class TestInnerProcessEndToEnd {
                         .aggregatorConfig(AggregatorConfig.builder()
                                 .maxItemsPerAggregate(1000)
                                 .maxUncompressedByteSizeString("1G")
-                                .maxAggregateAge(StroomDuration.ofSeconds(60))
-                                .aggregationFrequency(StroomDuration.ofSeconds(10))
+                                .aggregationFrequency(StroomDuration.ofSeconds(60))
                                 .build())
                         .addForwardFileDestination(new ForwardFileConfig(true,
                                 false,
@@ -300,10 +301,13 @@ class TestInnerProcessEndToEnd {
         final Environment environmentMock = Mockito.mock(Environment.class);
         Mockito.when(environmentMock.healthChecks())
                 .thenReturn(new HealthCheckRegistry());
+        Mockito.when(environmentMock.metrics())
+                .thenReturn(new MetricRegistry());
 
         return new ProxyTestModule(
                 config,
-                new Environment("TestEnvironment"),
+                environmentMock,
+//                new Environment("TestEnvironment"),
                 Path.of("dummy/path/to/config.yml"));
     }
 }

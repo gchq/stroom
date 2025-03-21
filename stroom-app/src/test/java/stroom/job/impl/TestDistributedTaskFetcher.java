@@ -19,7 +19,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.SimpleScheduleExec;
 
@@ -89,7 +89,7 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
             final NodeInfo nodeInfo = new MockNodeInfo();
             final AtomicLong executionCount = new AtomicLong();
 
-            Metrics.setEnabled(true);
+            SimpleMetrics.setEnabled(true);
 
             final DistributedTaskFactory distributedTaskFactory = new DistributedTaskFactory() {
                 @Override
@@ -99,10 +99,10 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
                     }
 
                     final List<DistributedTask> list = new ArrayList<>(count);
-                    Metrics.measure("fetch", () -> {
+                    SimpleMetrics.measure("fetch", () -> {
                         for (int i = 0; i < count; i++) {
                             final Runnable runnable = () ->
-                                    Metrics.measure("exec task", executionCount::incrementAndGet);
+                                    SimpleMetrics.measure("exec task", executionCount::incrementAndGet);
                             final DistributedTask distributedTask =
                                     new DistributedTask(jobName, runnable, threadPool, "test");
                             list.add(distributedTask);
@@ -131,7 +131,7 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
             distributedTaskFetcher.execute();
 
             while (true) {
-                Metrics.report();
+                SimpleMetrics.report();
                 ThreadUtil.sleep(1000);
             }
         }

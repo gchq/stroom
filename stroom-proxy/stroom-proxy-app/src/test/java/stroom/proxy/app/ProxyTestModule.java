@@ -6,7 +6,11 @@ import stroom.proxy.app.handler.ForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ForwardHttpPostDestinationFactory;
 import stroom.proxy.app.handler.ForwardHttpPostDestinationFactoryImpl;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
+import stroom.test.common.MockMetrics;
+import stroom.util.metrics.Metrics;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import io.dropwizard.core.setup.Environment;
 
@@ -33,6 +37,9 @@ public class ProxyTestModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(MetricRegistry.class).toInstance(environment.metrics());
+        bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
+        bind(Metrics.class).toInstance(new MockMetrics());
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());

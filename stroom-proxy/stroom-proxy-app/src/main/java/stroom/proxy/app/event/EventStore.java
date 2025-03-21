@@ -1,5 +1,7 @@
 package stroom.proxy.app.event;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.StroomCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
@@ -10,16 +12,11 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.RemovalCause;
-import com.github.benmanes.caffeine.cache.RemovalListener;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
@@ -36,14 +33,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 @Singleton
-public class EventStore implements EventConsumer, RemovalListener<FeedKey, EventAppender> {
+public class EventStore implements EventConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
+    private static final String CACHE_NAME = "Event Store Open Appenders";
 
     private final ReceiverFactory receiverFactory;
     private final Path dir;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
-    private final Cache<FeedKey, EventAppender> openAppenders;
+    private final StroomCache<FeedKey, EventAppender> openAppendersCache;
     private final Map<FeedKey, EventAppender> stores;
     private final EventSerialiser eventSerialiser;
     private final LinkedBlockingQueue<Path> forwardQueue;
@@ -52,7 +50,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
     public EventStore(final ReceiverFactory receiverFactory,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final DataDirProvider dataDirProvider,
-                      final FileStores fileStores) {
+                      final FileStores fileStores,
+                      final CacheManager cacheManager) {
         this.eventStoreConfigProvider = eventStoreConfigProvider;
         final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
@@ -67,12 +66,14 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
         fileStores.add(0, "Event Store", dir);
 
         this.receiverFactory = receiverFactory;
-        final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.maximumSize(eventStoreConfig.getMaxOpenFiles());
-        cacheBuilder.removalListener(this);
-        this.openAppenders = cacheBuilder.build();
+
+        this.openAppendersCache = cacheManager.create(
+                CACHE_NAME,
+                () -> eventStoreConfigProvider.get().getOpenFilesCache(),
+                this::onCacheRemoval);
+
         this.stores = new ConcurrentHashMap<>();
-        eventSerialiser = new EventSerialiser();
+        this.eventSerialiser = new EventSerialiser();
 
         forwardOldFiles();
     }
@@ -161,7 +162,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
             }
 
             // Consume the data
-            Metrics.measure("ProxyRequestHandler - handle", () -> {
+            SimpleMetrics.measure("ProxyRequestHandler - handle", () -> {
                 final AtomicBoolean success = new AtomicBoolean();
                 try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
                     receiverFactory
@@ -185,10 +186,8 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
         }
     }
 
-    @Override
-    public void onRemoval(@Nullable final FeedKey feedKey,
-                          @Nullable final EventAppender appender,
-                          @NonNull final RemovalCause cause) {
+    public void onCacheRemoval(@Nullable final FeedKey feedKey,
+                               @Nullable final EventAppender appender) {
         try {
             if (appender != null) {
                 appender.close();
@@ -233,7 +232,7 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
                     // Add the appender to the forward queue.
                     forwardQueue.put(eventAppender.closeAndGetFile());
                     // Invalidate the cache item that keeps the appender open.
-                    openAppenders.invalidate(k);
+                    openAppendersCache.invalidate(k);
                     eventAppender = null;
                 } catch (final InterruptedException e) {
                     throw UncheckedInterruptedException.create(e);
@@ -260,11 +259,11 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
 
                 // Config is fixed until next roll
                 eventAppender = new EventAppender(file, now, eventStoreConfigProvider.get());
-                openAppenders.put(k, eventAppender);
+                openAppendersCache.put(k, eventAppender);
 
             } else {
                 // Keep the existing appender open by keeping its cache entry fresh.
-                openAppenders.getIfPresent(feedKey);
+                openAppendersCache.getIfPresent(feedKey);
             }
 
             try {

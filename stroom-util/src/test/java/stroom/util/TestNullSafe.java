@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1358,6 +1359,50 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testEnumSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<TestEnum>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.enumSet(TestEnum.class, testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<TestEnum> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isNotNull()
+                            .isEqualTo(testOutcome.getExpectedOutput())
+                            .isInstanceOf(EnumSet.class);
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), EnumSet.noneOf(TestEnum.class))
+                .addCase(Set.of(TestEnum.A, TestEnum.C), Set.of(TestEnum.A, TestEnum.C))
+                .addCase(EnumSet.of(TestEnum.A, TestEnum.B), Set.of(TestEnum.A, TestEnum.B))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEnumSetOf() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(TestEnum[].class)
+                .withWrappedOutputType(new TypeLiteral<Set<TestEnum>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.enumSetOf(TestEnum.class, testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<TestEnum> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isNotNull()
+                            .isEqualTo(testOutcome.getExpectedOutput())
+                            .isInstanceOf(EnumSet.class);
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(new TestEnum[0], EnumSet.noneOf(TestEnum.class))
+                .addCase(new TestEnum[]{null}, EnumSet.noneOf(TestEnum.class))
+                .addCase(new TestEnum[]{null, TestEnum.A}, EnumSet.of(TestEnum.A))
+                .addCase(new TestEnum[]{TestEnum.B, TestEnum.A}, EnumSet.of(TestEnum.B, TestEnum.A))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testSingletonSet() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -2478,5 +2523,12 @@ class TestNullSafe {
         public String getNonNullNonEmptyString() {
             return nonNullNonEmptyString;
         }
+    }
+
+    private static enum TestEnum {
+        A,
+        B,
+        C,
+        ;
     }
 }

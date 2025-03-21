@@ -31,7 +31,11 @@ class TestDirQueue extends StroomUnitTest {
     @Test
     void test() {
         final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue dirQueue = new DirQueue(dataDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
 
         assertThat(FileUtil.count(dataDir)).isZero();
 
@@ -39,7 +43,11 @@ class TestDirQueue extends StroomUnitTest {
         addFile(dirQueue);
 
         // Re open.
-        final DirQueue reopenFileStore = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue reopenFileStore = new DirQueue(dataDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
 
         try (final Dir dir = reopenFileStore.next()) {
             final FileGroup fileGroup = new FileGroup(dir.getPath());
@@ -59,7 +67,12 @@ class TestDirQueue extends StroomUnitTest {
     @Test
     void testPerformance() {
         final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue dirQueue = new DirQueue(
+                dataDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
 
         for (int i = 0; i < MAX; i++) {
             addTempDir(dirQueue);
@@ -80,7 +93,12 @@ class TestDirQueue extends StroomUnitTest {
     void testMultiThreadedPerformance() {
         final int threads = 10;
         final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue dirQueue = new DirQueue(
+                dataDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
         try {
@@ -134,7 +152,12 @@ class TestDirQueue extends StroomUnitTest {
     @Test
     void testPerformanceWithData() {
         final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue dirQueue = new DirQueue(
+                dataDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
 
         for (int i = 0; i < MAX; i++) {
             addFile(dirQueue);

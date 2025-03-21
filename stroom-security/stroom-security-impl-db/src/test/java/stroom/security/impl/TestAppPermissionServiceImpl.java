@@ -16,6 +16,8 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.AppPermissionService;
+import stroom.security.api.UserService;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.AppPermission;

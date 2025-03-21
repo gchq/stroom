@@ -36,6 +36,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.date.DateUtil;
 
@@ -61,29 +62,32 @@ class TestMetaValueDaoImpl {
 
     @BeforeEach
     void setup() {
+        final AbstractModule module = new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(MetaServiceConfig.class).toProvider(() ->
+                        getMetaServiceConfig());
+                bind(MetaValueConfig.class).toProvider(() ->
+                        getMetaValueConfig());
+            }
+        };
+
         Guice.createInjector(
-                new MetaModule(),
-                new MetaDbModule(),
-                new MetaDaoModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule(),
-                new MetaTestModule(),
-                new MockTaskModule(),
-                new MockStroomEventLoggingModule(),
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(MetaServiceConfig.class).toProvider(() ->
-                                getMetaServiceConfig());
-                        bind(MetaValueConfig.class).toProvider(() ->
-                                getMetaValueConfig());
-                    }
-                })
+                        new MetaModule(),
+                        new MetaDbModule(),
+                        new MetaDaoModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new MockMetricsModule(),
+                        new CacheModule(),
+                        new DbTestModule(),
+                        new MetaTestModule(),
+                        new MockTaskModule(),
+                        new MockStroomEventLoggingModule(),
+                        module)
                 .injectMembers(this);
         setAddAsync(false);
         // Delete everything

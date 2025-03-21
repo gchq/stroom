@@ -95,6 +95,7 @@ public class SetupDevEnv {
         LOGGER.debug("repo dir: {}", REPO_ROOT_PATH);
 
         log("Enter the name for this environment, e.g. '7.5', or 'master' (blank for un-named):");
+        log("The entered name will be prefixed with 'stroom_' and 'stroom-proxy_'");
         final String envName = inputScanner.nextLine();
         final String stroomEnvName = buildDbName(envName);
         final String proxyEnvName = stroomEnvName.replace("stroom", "stroom-proxy");

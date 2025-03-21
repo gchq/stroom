@@ -587,4 +587,25 @@ public class DataGridUtil {
     public static HeadingBuilder headingBuilder() {
         return new HeadingBuilder("");
     }
+
+    /**
+     * Returns a {@link Function} that will call the toString method on the value returned
+     * from passing the row into valueExtractor, but only if the value is non-null.
+     */
+    public static <T_ROW> Function<T_ROW, String> toStringFunc(final Function<T_ROW, Object> valueExtractor) {
+        return (T_ROW row) ->
+                GwtNullSafe.toStringOrElse(row, valueExtractor, "");
+    }
+
+    /**
+     * Returns a {@link Function} that will call the toString method on the value returned
+     * from passing the row through valueExtractor1 then valueExtractor2. If any intermediate value
+     * is null, the returned function will return an empty string.
+     */
+    public static <T_ROW, T_VAL1> Function<T_ROW, String> toStringFunc(
+            final Function<T_ROW, T_VAL1> valueExtractor1,
+            final Function<T_VAL1, Object> valueExtractor2) {
+        return (T_ROW row) ->
+                GwtNullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
+    }
 }

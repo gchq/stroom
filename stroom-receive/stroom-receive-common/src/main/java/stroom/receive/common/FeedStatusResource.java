@@ -30,6 +30,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+/**
+ * @deprecated Use {@link FeedStatusResourceV2}
+ */
+@Deprecated()
 @Tag(name = "Feed Status")
 @Path(FeedStatusResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -44,7 +48,6 @@ public interface FeedStatusResource extends RestResource {
     @Operation(
             summary = "Submit a request to get the status of a feed",
             operationId = "getFeedStatus")
-        // TODO This should really be a GET with the feedName and senderDn as params
     GetFeedStatusResponse getFeedStatus(
             @Parameter(description = "GetFeedStatusRequest", required = true) GetFeedStatusRequest request);
 }

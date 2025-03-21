@@ -38,8 +38,18 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                                  final Action action,
                                  final boolean enabled,
                                  final boolean highlight,
+                                 final String tooltip,
                                  final Future<List<Item>> children) {
-        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, highlight);
+        super(priority,
+                enabledIcon,
+                disabledIcon,
+                iconColour,
+                text,
+                action,
+                enabled,
+                null,
+                highlight,
+                tooltip);
         this.children = children;
     }
 
@@ -82,6 +92,7 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                     action,
                     enabled,
                     highlight,
+                    tooltip,
                     children);
         }
     }
