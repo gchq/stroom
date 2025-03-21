@@ -32,10 +32,26 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
 
     @Override
     public BaseObject createBaseObject(final Object obj) {
-        if (obj instanceof AnnotationDetail) {
-            final AnnotationDetail annotationDetail = (AnnotationDetail) obj;
+        if (obj instanceof final AnnotationDetail annotationDetail) {
             final Annotation annotation = annotationDetail.getAnnotation();
 
+            OtherObject o = new OtherObject();
+            o.setId(String.valueOf(annotation.getId()));
+            o.setType("Annotation");
+            o.setName(annotation.getName());
+            o.setState(NullSafe.get(annotation.getStatus(), AnnotationTag::getName));
+
+//            o.getData().add(EventLoggingUtil.createData("Stream id", String.valueOf(annotation.getStreamId())));
+//            o.getData().add(EventLoggingUtil.createData("Event Id", String.valueOf(annotation.getEventId())));
+            final UserRef assignedTo = annotation.getAssignedTo();
+            o.getData().add(EventLoggingUtil.createData(
+                    "Assigned To",
+                    assignedTo != null
+                            ? assignedTo.toDisplayString()
+                            : null));
+
+            return o;
+        } else if (obj instanceof final Annotation annotation) {
             OtherObject o = new OtherObject();
             o.setId(String.valueOf(annotation.getId()));
             o.setType("Annotation");
