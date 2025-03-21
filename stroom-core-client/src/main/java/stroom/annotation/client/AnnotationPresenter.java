@@ -138,7 +138,6 @@ public class AnnotationPresenter
 
     public void read(final Annotation annotation) {
         read(annotation.asDocRef(), annotation, false);
-        annotationEditPresenter.read(annotation);
     }
 
     public void updateHistory() {

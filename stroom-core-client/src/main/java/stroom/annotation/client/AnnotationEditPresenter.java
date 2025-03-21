@@ -77,7 +77,6 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
@@ -445,18 +444,6 @@ public class AnnotationEditPresenter
 
     private void change(final SingleAnnotationChangeRequest request, final Consumer<Boolean> consumer) {
         annotationResourceClient.change(request, consumer, this);
-    }
-
-    public void read(final Annotation annotation) {
-        this.annotationRef = annotation.asDocRef();
-        this.currentStatus = annotation.getStatus();
-        this.currentAssignedTo = annotation.getAssignedTo();
-
-        getView().setId(annotation.getId());
-        getView().setButtonText("Comment");
-
-        onRead(annotationRef, annotation, false);
-        updateHistory();
     }
 
     public void updateHistory() {
@@ -839,6 +826,13 @@ public class AnnotationEditPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
+        this.annotationRef = annotation.asDocRef();
+        this.currentStatus = annotation.getStatus();
+        this.currentAssignedTo = annotation.getAssignedTo();
+
+        getView().setId(annotation.getId());
+        getView().setButtonText("Comment");
+
         setTitle(annotation.getName());
         setSubject(annotation.getSubject());
         setStatus(annotation.getStatus());
@@ -846,6 +840,8 @@ public class AnnotationEditPresenter
         setLabels(annotation.getLabels());
         setCollections(annotation.getCollections());
         setRetentionPeriod(annotation.getRetentionPeriod());
+
+        updateHistory();
     }
 
     @Override

@@ -18,7 +18,6 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -234,7 +233,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.ANNOTATIONS));
-        annotateButton.setEnabled(false);
 
         columnsManager = new ColumnsManager(
                 this,
@@ -287,7 +285,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     protected void onBind() {
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            enableAnnotate();
             getComponents().fireComponentChangeEvent(this);
 
             if (event.getSelectionType().isDoubleSelect()) {
@@ -528,17 +525,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .timeZone(userPreferences.getTimeZone())
                 .localZoneId(timeZones.getLocalTimeZoneId())
                 .build();
-    }
-
-    private void enableAnnotate() {
-        final List<EventId> eventIdList = new ArrayList<>();
-        final List<Long> annotationIdList = new ArrayList<>();
-        annotationManager.addRowData(
-                selectionModel.getSelectedItems(),
-                eventIdList,
-                annotationIdList);
-        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
-        annotateButton.setEnabled(enabled);
     }
 
     @Override

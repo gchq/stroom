@@ -25,6 +25,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.EventId;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.SpecialColumns;
 import stroom.query.client.presenter.TableRow;
@@ -121,10 +122,22 @@ public class AnnotationManager {
                            final List<EventId> eventIdList,
                            final List<Long> annotationIdList) {
         if (selectedItems != null && !selectedItems.isEmpty()) {
-            final String streamIdFieldId = getFieldId(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
-            final String eventIdFieldId = getFieldId(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+            String streamIdFieldId = getFieldId(IndexConstants.STREAM_ID);
+            if (streamIdFieldId == null) {
+                streamIdFieldId = getFieldId(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+            }
+            String eventIdFieldId = getFieldId(IndexConstants.EVENT_ID);
+            if (eventIdFieldId == null) {
+                eventIdFieldId = getFieldId(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+            }
             final String eventIdListFieldId = getFieldId("EventIdList");
-            final String annotationIdFieldId = getFieldId("annotation:Id");
+            String annotationIdFieldId = getFieldId("annotation:Id");
+            if (annotationIdFieldId == null) {
+                annotationIdFieldId = getFieldId("Id");
+                if (annotationIdFieldId == null) {
+                    annotationIdFieldId = getFieldId(SpecialColumns.RESERVED_ID_FIELD_NAME);
+                }
+            }
 
             if (streamIdFieldId != null ||
                 eventIdFieldId != null ||

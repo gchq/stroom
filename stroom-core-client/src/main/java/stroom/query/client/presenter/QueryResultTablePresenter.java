@@ -215,7 +215,6 @@ public class QueryResultTablePresenter
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.ANNOTATIONS));
-        annotateButton.setEnabled(false);
 
         annotationManager.setDataSourceSupplier(() -> currentDataSource);
         annotationManager.setColumnSupplier(() -> currentColumns);
@@ -303,8 +302,6 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            enableAnnotate();
-
             if (event.getSelectionType().isDoubleSelect()) {
                 final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
                         selectionModel.getSelectedItems());
@@ -313,17 +310,6 @@ public class QueryResultTablePresenter
                 }
             }
         }));
-    }
-
-    private void enableAnnotate() {
-        final List<EventId> eventIdList = new ArrayList<>();
-        final List<Long> annotationIdList = new ArrayList<>();
-        annotationManager.addRowData(
-                selectionModel.getSelectedItems(),
-                eventIdList,
-                annotationIdList);
-        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
-        annotateButton.setEnabled(enabled);
     }
 
     public void toggleApplyValueFilters() {
