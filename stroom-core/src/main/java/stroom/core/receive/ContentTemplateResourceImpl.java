@@ -1,10 +1,14 @@
 package stroom.core.receive;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.receive.content.ContentTemplates;
+import stroom.receive.content.shared.ContentTemplateResource;
+import stroom.receive.content.shared.ContentTemplates;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Set;
 
 @AutoLogged
 public class ContentTemplateResourceImpl implements ContentTemplateResource {
@@ -24,5 +28,10 @@ public class ContentTemplateResourceImpl implements ContentTemplateResource {
     @Override
     public ContentTemplates update(final ContentTemplates contentTemplates) {
         return contentTemplateServiceProvider.get().update(contentTemplates);
+    }
+
+    @Override
+    public Set<QueryField> fetchFields() {
+        return contentTemplateServiceProvider.get().fetchFields();
     }
 }

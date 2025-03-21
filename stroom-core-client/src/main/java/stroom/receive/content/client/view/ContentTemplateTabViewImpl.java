@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,37 +12,37 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.annotation.client;
+package stroom.receive.content.client.view;
 
-import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
+import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
-public class ChangeAssignedToViewImpl
-        extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
-        implements ChangeAssignedToView {
+public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTemplateTabView {
 
     private final Widget widget;
 
     @UiField
-    SimplePanel assignedTo;
+    SimplePanel table;
     @UiField
-    Label assignYourself;
+    TextArea description;
+    @UiField
+    SimplePanel expression;
 
     @Inject
-    public ChangeAssignedToViewImpl(final Binder binder) {
+    public ContentTemplateTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        description.setReadOnly(true);
     }
 
     @Override
@@ -51,22 +51,25 @@ public class ChangeAssignedToViewImpl
     }
 
     @Override
-    public void setUserView(final View view) {
-        assignedTo.setWidget(view.asWidget());
+    public void setTableView(final View view) {
+        this.table.setWidget(view.asWidget());
     }
 
-    @UiHandler("assignYourself")
-    public void onAssignYourself(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().assignYourself();
-        }
+    @Override
+    public void setDescription(final String description) {
+        this.description.setValue(description);
+    }
+
+    @Override
+    public void setExpressionView(final View view) {
+        this.expression.setWidget(view.asWidget());
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, ChangeAssignedToViewImpl> {
+    public interface Binder extends UiBinder<Widget, ContentTemplateTabViewImpl> {
 
     }
 }

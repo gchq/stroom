@@ -14,7 +14,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +36,11 @@ public class FileStores {
     @Inject
     public FileStores(final Metrics metrics) {
         this.metrics = metrics;
-        statsMapUpdater = CachedValue.stateless(Duration.ofSeconds(30), this::buildStoreState);
+        statsMapUpdater = CachedValue.builder()
+                .withMaxCheckIntervalSeconds(30)
+                .withoutStateSupplier()
+                .withValueSupplier(this::buildStoreState)
+                .build();
     }
 
     private Map<Key, StoreStats> buildStoreState() {

@@ -27,8 +27,8 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.receive.content.ContentTemplate;
-import stroom.receive.content.ContentTemplates;
+import stroom.receive.content.shared.ContentTemplate;
+import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -53,7 +53,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -116,22 +115,23 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
-        this.cachedExpressionMatcher = new CachedValue<>(
-                Duration.ofMinutes(1),
-                templateMatchFields ->
-                        createExpressionMatcher(expressionMatcherFactory, templateMatchFields),
-                () -> autoContentCreationConfigProvider.get().getTemplateMatchFields());
+        this.cachedExpressionMatcher = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getTemplateMatchFields())
+                .withValueFunction(templateMatchFields ->
+                        createExpressionMatcher(expressionMatcherFactory, templateMatchFields))
+                .build();
     }
 
-    private ExpressionMatcher createExpressionMatcher(final ExpressionMatcherFactory expressionMatcherFactory,
-                                                      final Set<String> templateMatchFields) {
+    private static ExpressionMatcher createExpressionMatcher(final ExpressionMatcherFactory expressionMatcherFactory,
+                                                             final Set<String> templateMatchFields) {
         // ExpressionMatcher is currently case-sensitive so normalise to lower case
         final Map<String, QueryField> fields = NullSafe.stream(templateMatchFields)
                 .filter(NullSafe::isNonBlankString)
+                .map(String::trim)
                 .map(String::toLowerCase)
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        QueryField::createText));
+                .collect(Collectors.toMap(Function.identity(), QueryField::createText));
         return expressionMatcherFactory.create(fields);
     }
 

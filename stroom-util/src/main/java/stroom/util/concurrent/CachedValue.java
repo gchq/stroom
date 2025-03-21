@@ -52,31 +52,12 @@ public class CachedValue<V, S> {
      *                         it may be called by multiple threads at once. Should be side effect free.
      *                         Value returned must implement equals method to determine if it has changed.
      */
-    public CachedValue(final Duration maxCheckInterval,
-                       final Function<S, V> valueSupplier,
-                       final Supplier<S> stateSupplier) {
+    private CachedValue(final Duration maxCheckInterval,
+                        final Function<S, V> valueSupplier,
+                        final Supplier<S> stateSupplier) {
         this.checkIntervalMs = Objects.requireNonNull(maxCheckInterval).toMillis();
         this.valueSupplier = Objects.requireNonNull(valueSupplier);
         this.stateSupplier = stateSupplier;
-    }
-
-    /**
-     * Updating the value is not dependent on any state.
-     *
-     * @param maxCheckInterval The max interval to call stateSupplier to determine if the valueSupplier needs
-     *                         to be called to update the value.
-     * @param valueSupplier    Will be called on first call of {@link CachedValue#getValue()}
-     *                         then any time the value supplied by stateSupplier changes. If multiple
-     *                         threads call {@link CachedValue#getValue()} at once valueSupplier
-     *                         may be called by each thread. Should be side effect free.
-     */
-    public static <V2> CachedValue<V2, Void> stateless(final Duration maxCheckInterval,
-                                                       final Supplier<V2> valueSupplier) {
-        return new CachedValue<>(
-                maxCheckInterval,
-                (Void aVoid) ->
-                        valueSupplier.get(),
-                null);
     }
 
     private CheckResult<S> checkUpdateRequired() {
@@ -143,6 +124,161 @@ public class CachedValue<V, S> {
         // Call getValue to ensure that the state as been initialised and is up-to-date
         getValue();
         return state;
+    }
+
+    public static BuilderStage1 builder() {
+        return new BuilderStage1();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class BuilderStage1 {
+
+
+        private BuilderStage1() {
+        }
+
+        /**
+         * @param maxCheckInterval The max interval to call stateSupplier to determine if the valueSupplier needs
+         *                         to be called to update the value.
+         */
+        public BuilderStage2 withMaxCheckInterval(final Duration maxCheckInterval) {
+            return new BuilderStage2(Objects.requireNonNull(maxCheckInterval));
+        }
+
+        /**
+         * @param maxCheckIntervalMinutes The max interval to call stateSupplier to determine if the
+         *                                valueSupplier needs to be called to update the value.
+         */
+        public BuilderStage2 withMaxCheckIntervalMinutes(final int maxCheckIntervalMinutes) {
+            return new BuilderStage2(Duration.ofMinutes(maxCheckIntervalMinutes));
+        }
+
+        /**
+         * @param maxCheckIntervalSeconds The max interval to call stateSupplier to determine if the
+         *                                valueSupplier needs to be called to update the value.
+         */
+        public BuilderStage2 withMaxCheckIntervalSeconds(final int maxCheckIntervalSeconds) {
+            return new BuilderStage2(Duration.ofSeconds(maxCheckIntervalSeconds));
+        }
+
+        /**
+         * @param maxCheckIntervalMillis The max interval to call stateSupplier to determine if the
+         *                               valueSupplier needs to be called to update the value.
+         */
+        public BuilderStage2 withMaxCheckIntervalMillis(final int maxCheckIntervalMillis) {
+            return new BuilderStage2(Duration.ofMillis(maxCheckIntervalMillis));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class BuilderStage2 {
+
+        private final Duration maxCheckInterval;
+
+        private BuilderStage2(final Duration maxCheckInterval) {
+            this.maxCheckInterval = maxCheckInterval;
+        }
+
+        /**
+         * @param stateSupplier Will generally be called once per checkInterval unless multiple threads
+         *                      call {@link CachedValue#getValue()} at once, in which case
+         *                      it may be called by multiple threads at once. Should be side effect free.
+         *                      Value returned must implement equals method to determine if it has changed.
+         */
+        public <S> BuilderStage3a<S> withStateSupplier(final Supplier<S> stateSupplier) {
+            return new BuilderStage3a<>(this, stateSupplier);
+        }
+
+        /**
+         * Updating the value is not dependent on any state.
+         */
+        public BuilderStage3b withoutStateSupplier() {
+            return new BuilderStage3b(this);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class BuilderStage3a<S> {
+
+        private final BuilderStage2 builderStage2;
+        private final Supplier<S> stateSupplier;
+
+        private BuilderStage3a(final BuilderStage2 builderStage2,
+                               final Supplier<S> stateSupplier) {
+            this.builderStage2 = builderStage2;
+            this.stateSupplier = stateSupplier;
+        }
+
+        /**
+         * @param valueFunction Will be called on first call of {@link CachedValue#getValue()}
+         *                      then any time the value supplied by stateSupplier changes. If multiple
+         *                      threads call {@link CachedValue#getValue()} at once valueSupplier
+         *                      may be called by each thread. Should be side effect free.
+         */
+        public <V> BuilderStage4<S, V> withValueFunction(final Function<S, V> valueFunction) {
+            return new BuilderStage4<>(
+                    builderStage2.maxCheckInterval,
+                    stateSupplier,
+                    valueFunction);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class BuilderStage3b {
+
+        private final BuilderStage2 builderStage2;
+
+        private BuilderStage3b(final BuilderStage2 builderStage2) {
+            this.builderStage2 = builderStage2;
+        }
+
+        /**
+         * @param valueSupplier Will be called on first call of {@link CachedValue#getValue()}
+         *                      then any time the value supplied by stateSupplier changes. If multiple
+         *                      threads call {@link CachedValue#getValue()} at once valueSupplier
+         *                      may be called by each thread. Should be side effect free.
+         */
+        public <V> BuilderStage4<Void, V> withValueSupplier(final Supplier<V> valueSupplier) {
+            return new BuilderStage4<>(
+                    builderStage2.maxCheckInterval,
+                    null,
+                    (Void ignored) -> valueSupplier.get());
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class BuilderStage4<S, V> {
+
+        private final Duration maxCheckInterval;
+        private final Supplier<S> stateSupplier;
+        private final Function<S, V> valueFunction;
+
+        private BuilderStage4(final Duration maxCheckInterval,
+                              final Supplier<S> stateSupplier,
+                              final Function<S, V> valueFunction) {
+            this.maxCheckInterval = maxCheckInterval;
+            this.stateSupplier = stateSupplier;
+            this.valueFunction = valueFunction;
+        }
+
+        public CachedValue<V, S> build() {
+            return new CachedValue<>(maxCheckInterval, valueFunction, stateSupplier);
+        }
     }
 
 

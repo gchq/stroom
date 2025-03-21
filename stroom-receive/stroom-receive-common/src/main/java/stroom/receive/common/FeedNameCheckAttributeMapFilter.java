@@ -12,7 +12,6 @@ import stroom.util.logging.LogUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +38,11 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
     @Inject
     public FeedNameCheckAttributeMapFilter(final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
-        this.cachedFeedNameGenerator = new CachedValue<>(
-                Duration.ofMinutes(1),
-                FeedNameGenerator::new,
-                () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
+        this.cachedFeedNameGenerator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() -> ConfigState.fromConfig(receiveDataConfigProvider.get()))
+                .withValueFunction(FeedNameGenerator::new)
+                .build();
     }
 
     @Override

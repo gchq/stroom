@@ -6,7 +6,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -26,16 +25,18 @@ class TestCachedValue {
 
         final AtomicInteger version = new AtomicInteger(1);
 
-        final CachedValue<String, Integer> cachedValue = new CachedValue<>(
-                Duration.ofMillis(100),
-                state -> {
-                    LOGGER.debug("Supplying value");
-                    return "version " + state;
-                },
-                () -> {
+
+        final CachedValue<String, Integer> cachedValue = CachedValue.builder()
+                .withMaxCheckIntervalMillis(100)
+                .withStateSupplier(() -> {
                     LOGGER.debug("Supplying state");
                     return version.get();
-                });
+                })
+                .withValueFunction(state -> {
+                    LOGGER.debug("Supplying value");
+                    return "version " + state;
+                })
+                .build();
 
         assertThat(cachedValue.getValue())
                 .isEqualTo("version 1");
@@ -65,17 +66,19 @@ class TestCachedValue {
 //        final AtomicInteger version = new AtomicInteger(1);
         final int version = 1;
 
-        final CachedValue<String, Integer> cachedValue = new CachedValue<>(
-                Duration.ofMillis(60_000),
-                state -> {
-                    LOGGER.debug("Supplying value");
-                    return "version " + state;
-                },
-                () -> {
+
+        final CachedValue<String, Integer> cachedValue = CachedValue.builder()
+                .withMaxCheckIntervalSeconds(60)
+                .withStateSupplier(() -> {
                     LOGGER.debug("Supplying state");
 //                    return version.get();
                     return version;
-                });
+                })
+                .withValueFunction(state -> {
+                    LOGGER.debug("Supplying value");
+                    return "version " + state;
+                })
+                .build();
 
         final int threadCount = 3;
         final CountDownLatch startLatch = new CountDownLatch(threadCount);
@@ -117,9 +120,11 @@ class TestCachedValue {
     @Test
     void testStateless() {
         final AtomicInteger updateCount = new AtomicInteger();
-        final CachedValue<Integer, Void> updater = CachedValue.stateless(
-                Duration.ofMillis(200),
-                updateCount::incrementAndGet);
+        final CachedValue<Integer, Void> updater = CachedValue.builder()
+                .withMaxCheckIntervalMillis(200)
+                .withoutStateSupplier()
+                .withValueSupplier(updateCount::incrementAndGet)
+                .build();
 
         assertThat(updateCount)
                 .hasValue(0);

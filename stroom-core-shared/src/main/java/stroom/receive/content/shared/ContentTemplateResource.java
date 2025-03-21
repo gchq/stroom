@@ -1,6 +1,6 @@
-package stroom.core.receive;
+package stroom.receive.content.shared;
 
-import stroom.receive.content.ContentTemplates;
+import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -14,6 +14,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.Set;
 
 @Path(ContentTemplateResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,4 +39,11 @@ public interface ContentTemplateResource extends RestResource, DirectRestService
             operationId = "updateContentTemplates")
     ContentTemplates update(
             @Parameter(description = "contentTemplates", required = true) ContentTemplates contentTemplates);
+
+    @GET
+    @Path("/fields")
+    @Operation(
+            summary = "Get the list of fields for use in the match expression.",
+            operationId = "fetchFields")
+    Set<QueryField> fetchFields();
 }

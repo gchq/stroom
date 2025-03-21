@@ -1,4 +1,4 @@
-package stroom.receive.content;
+package stroom.receive.content.shared;
 
 public enum TemplateType {
     /**

@@ -11,7 +11,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,10 +43,11 @@ public class AttributeMapFilterFactory {
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = new CachedValue<>(
-                Duration.ofSeconds(60),
-                this::create,
-                () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
+        this.updatableAttributeMapFilter = CachedValue.builder()
+                .withMaxCheckIntervalSeconds(60)
+                .withStateSupplier(() -> ConfigState.fromConfig(receiveDataConfigProvider.get()))
+                .withValueFunction(this::create)
+                .build();
     }
 
     private AttributeMapFilter create(final ConfigState configState) {

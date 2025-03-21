@@ -1,0 +1,28 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:ThinSplitLayoutPanel unit="PX" vSplits="0.5" styleName="max">
+        <g:north size="200">
+            <g:SimplePanel ui:field="table" styleName="max"/>
+        </g:north>
+        <g:center>
+            <g:FlowPanel styleName="max form form-padding">
+                <form:FormGroup
+                        identity="contentTemplateDescription"
+                        label="Description"
+                        helpText="The pipeline to use as the template for content.">
+                    <g:TextArea ui:field="description" addStyleNames="w-100"/>
+                </form:FormGroup>
+
+                <form:FormGroup identity="contentTemplateExpression"
+                                label="Expression"
+                                addStyleNames="dock-max"
+                                helpText="The expression to match received streams to this template.
+                        The stream header attributes will be used for matching.">
+                    <g:SimplePanel ui:field="expression" styleName="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:center>
+    </g:ThinSplitLayoutPanel>
+</ui:UiBinder>

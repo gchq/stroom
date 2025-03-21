@@ -884,7 +884,24 @@ public class GwtNullSafe {
     public static <T1, T2> String toStringOrElse(final T1 value,
                                                  final Function<T1, T2> getter1,
                                                  final Function<T2, Object> getter2,
-                                                 final Supplier<String> otherSupplier) {
+                                                 final String other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final Object value3 = Objects.requireNonNull(getter2).apply(value2);
+                return convertToString(value3, other);
+            }
+        }
+    }
+
+    public static <T1, T2> String toStringOrElseGet(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final Function<T2, Object> getter2,
+                                                    final Supplier<String> otherSupplier) {
         if (value == null) {
             return handleNull(otherSupplier);
         } else {

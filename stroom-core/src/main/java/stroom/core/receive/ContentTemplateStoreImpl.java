@@ -11,8 +11,8 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.receive.content.ContentTemplate;
-import stroom.receive.content.ContentTemplates;
+import stroom.receive.content.shared.ContentTemplate;
+import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.NullSafe;
@@ -66,7 +66,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
                     throw new RuntimeException("Found multiple documents, expecting one. " + docRefs);
                 } else {
                     docRef = Objects.requireNonNull(docRefs.getFirst());
-                    if (Objects.equals(DOC_NAME, docRef.getName())) {
+                    if (!Objects.equals(DOC_NAME, docRef.getName())) {
                         throw new RuntimeException("Unexpected document " + docRef);
                     }
                 }

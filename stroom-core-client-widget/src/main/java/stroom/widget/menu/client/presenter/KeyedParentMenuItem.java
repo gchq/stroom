@@ -40,8 +40,18 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
-                        final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, false);
+                        final MenuKey menuKey,
+                        final String tooltip) {
+        super(priority,
+                enabledIcon,
+                disabledIcon,
+                iconColour,
+                text,
+                action,
+                enabled,
+                null,
+                false,
+                tooltip);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -103,7 +113,8 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                     action,
                     enabled,
                     menuItems,
-                    menuKey);
+                    menuKey,
+                    tooltip);
         }
     }
 }

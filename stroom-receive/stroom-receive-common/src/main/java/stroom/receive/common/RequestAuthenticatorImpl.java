@@ -15,7 +15,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,10 +50,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = new CachedValue<>(
-                Duration.ofSeconds(60),
-                this::createFilter,
-                () -> ConfigState.fromConfig(receiveDataConfigProvider.get()));
+        this.updatableAttributeMapFilter = CachedValue.builder()
+                .withMaxCheckIntervalSeconds(60)
+                .withStateSupplier(() -> ConfigState.fromConfig(receiveDataConfigProvider.get()))
+                .withValueFunction(this::createFilter)
+                .build();
         this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
         this.oidcTokenAuthenticatorProvider = oidcTokenAuthenticatorProvider;
         this.certificateAuthenticatorProvider = certificateAuthenticatorProvider;
