@@ -49,7 +49,7 @@ commons-lang = { module = "org.apache.commons:commons-lang3" } # version control
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.0" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
 classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.179" }
-data-faker = { module = "net.datafaker:datafaker", version = "2.3.0" }
+data-faker = { module = "net.datafaker:datafaker", version = "2.4.2" }
 dropwizard-assets = { module = "io.dropwizard:dropwizard-assets" } # version controlled by dropwizard-dependencies
 dropwizard-auth = { module = "io.dropwizard:dropwizard-auth" } # version controlled by dropwizard-dependencies
 dropwizard-bom = { module = "io.dropwizard:dropwizard-bom", version.ref = "dropwizard" }

@@ -110,6 +110,11 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     }
 
     @Override
+    public boolean containsVars(final String path) {
+        return delegate.containsVars(path);
+    }
+
+    @Override
     public String replace(final String path,
                           final String type,
                           final LongSupplier replacementSupplier,

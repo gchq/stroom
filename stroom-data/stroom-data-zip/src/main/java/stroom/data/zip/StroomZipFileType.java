@@ -6,8 +6,9 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,6 +19,9 @@ public enum StroomZipFileType {
     CONTEXT(2, "ctx", "context"),
     DATA(3, "dat");
 
+    /**
+     * Map from the canonical extension or any extensionAlias to the StroomZipFileType
+     */
     private static final Map<String, StroomZipFileType> EXTENSION_MAP = Arrays.stream(StroomZipFileType.values())
             .flatMap(stroomZipFileType ->
                     Stream.concat(
@@ -25,6 +29,13 @@ public enum StroomZipFileType {
                                     stroomZipFileType.extensionAliases.stream())
                             .map(ext -> Map.entry(ext, stroomZipFileType)))
             .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+    /**
+     * Map from the canonical extension to the StroomZipFileType, but NOT from an extensionAlias
+     */
+    private static final Map<String, StroomZipFileType> CANONICAL_EXTENSION_MAP =
+            Arrays.stream(StroomZipFileType.values())
+                    .collect(Collectors.toMap(StroomZipFileType::getExtension, Function.identity()));
 
     private final int index;
     private final String extension;
@@ -70,8 +81,8 @@ public enum StroomZipFileType {
      */
     public boolean hasExtension(final String fileName) {
         return fileName != null
-                && (fileName.endsWith(getDotExtension())
-                || getExtensionAliases().stream().anyMatch(ext -> fileName.endsWith("." + ext)));
+               && (fileName.endsWith(getDotExtension())
+                   || getExtensionAliases().stream().anyMatch(ext -> fileName.endsWith("." + ext)));
     }
 
     /**
@@ -79,15 +90,31 @@ public enum StroomZipFileType {
      */
     public boolean hasOfficialExtension(final String fileName) {
         return fileName != null
-                && fileName.endsWith(getDotExtension());
+               && fileName.endsWith(getDotExtension());
     }
 
+    /**
+     * Map loosely from the canonical extension or any extensionAlias to the StroomZipFileType.
+     * Case-insensitive.
+     * If no match is found will return {@link StroomZipFileType#DATA}
+     */
     public static StroomZipFileType fromExtension(final String extension) {
-        Optional<StroomZipFileType> optional = Optional.empty();
-        if (extension != null && !extension.isEmpty()) {
-            optional = Optional.ofNullable(EXTENSION_MAP.get(extension.toLowerCase(Locale.ROOT)));
+        StroomZipFileType stroomZipFileType = null;
+        if (NullSafe.isNonEmptyString(extension)) {
+            stroomZipFileType = EXTENSION_MAP.get(extension.toLowerCase(Locale.ROOT));
         }
-        return optional.orElse(StroomZipFileType.DATA);
+        return Objects.requireNonNullElse(stroomZipFileType, StroomZipFileType.DATA);
+    }
+
+    /**
+     * Map strictly from the canonical extension to the StroomZipFileType, but NOT from an extensionAlias.
+     * Case-sensitive.
+     * If no match is found will return null.
+     */
+    public static StroomZipFileType fromCanonicalExtension(final String canonicalExtension) {
+        return NullSafe.isNonEmptyString(canonicalExtension)
+                ? CANONICAL_EXTENSION_MAP.get(canonicalExtension)
+                : null;
     }
 
     /**

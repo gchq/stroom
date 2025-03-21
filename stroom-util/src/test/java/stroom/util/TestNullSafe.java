@@ -1627,6 +1627,26 @@ class TestNullSafe {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testSupplyAndMap() {
+        final Function<String, String> mapToNonNull = str -> str + "XXX";
+        final Function<String, String> mapToNull = str -> null;
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Supplier<String>, Function<String, String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        NullSafe.supplyAndMap(testCase.getInput()._1, testCase.getInput()._2))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, mapToNonNull), null)
+                .addCase(Tuple.of(() -> null, mapToNonNull), null)
+                .addCase(Tuple.of(() -> null, mapToNull), null)
+                .addCase(Tuple.of(() -> "foo", mapToNonNull), "fooXXX")
+                .addCase(Tuple.of(() -> "foo", mapToNull), null)
+                .addThrowsCase(Tuple.of(() -> "foo", null), NullPointerException.class)
+                .build();
+    }
 
     @Test
     void testConsume1() {

@@ -1,21 +1,55 @@
 package stroom.util.string;
 
-import java.util.Arrays;
+import stroom.util.logging.LogUtil;
 
 public class StringIdUtil {
 
+    /**
+     * Convert id into a zero padded string that has a length that is divisible by three.
+     * The length will be the shortest possible to fit the id value.
+     * e.g.
+     * <ul>
+     *    <li>{@code 1 => 001}</li>
+     *    <li>{@code 12 => 012}</li>
+     *    <li>{@code 123 => 123}</li>
+     *    <li>{@code 1234 => 001234}</li>
+     *    <li>{@code 12345678 => 012345678}</li>
+     * </ul>
+     */
     public static String idToString(final long id) {
-        final String string = String.valueOf(id);
-        if (string.length() % 3 == 0) {
-            return string;
+        if (id < 0) {
+            throw new IllegalArgumentException("Negative IDs not supported");
         }
+        final String idStr = String.valueOf(id);
+        final int remainder = idStr.length() % 3;
+        return switch (remainder) {
+            case 0 -> idStr; // Length is OK as is
+            case 1 -> "00" + idStr;
+            case 2 -> "0" + idStr;
+            default -> {
+                // Should never happen
+                throw new IllegalStateException(
+                        LogUtil.message("Unexpected remainder {}, id {}, idStr {}, len {}",
+                                remainder, id, idStr, idStr.length()));
+            }
+        };
+    }
 
-        final char[] chars = string.toCharArray();
-        final int len = (int) Math.ceil(chars.length / 3D) * 3;
-        final char[] arr = new char[len];
-        final int pos = len - chars.length;
-        Arrays.fill(arr, 0, pos, '0');
-        System.arraycopy(chars, 0, arr, pos, chars.length);
-        return String.valueOf(arr);
+    public static boolean isValidIdString(final String idString) {
+        if (idString == null) {
+            return false;
+        } else {
+            final int len = idString.length();
+            if (len >= 3 && len % 3 == 0) {
+                for (final char chr : idString.toCharArray()) {
+                    if (!Character.isDigit(chr)) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }

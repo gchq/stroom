@@ -3,8 +3,10 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.util.io.ByteCountInputStream;
@@ -13,7 +15,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +55,7 @@ public class InstantForwardFile {
         DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
+        LOGGER.info("Deleting contents of {}", receivingDir);
         if (!FileUtil.deleteContents(receivingDir)) {
             LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivingDir));
         }
@@ -107,11 +109,11 @@ public class InstantForwardFile {
     private static class InstantForwardFileReceiver implements Receiver {
 
         private final NumberedDirProvider receivingDirProvider;
-        private final ForwardFileDestination forwardFileDestination;
+        private final ForwardDestination forwardFileDestination;
         private final LogStream logStream;
 
         public InstantForwardFileReceiver(final NumberedDirProvider receivingDirProvider,
-                                          final ForwardFileDestination forwardFileDestination,
+                                          final ForwardDestination forwardFileDestination,
                                           final LogStream logStream) {
             this.receivingDirProvider = receivingDirProvider;
             this.forwardFileDestination = forwardFileDestination;
@@ -164,9 +166,10 @@ public class InstantForwardFile {
                 logStream.log(
                         RECEIVE_LOG,
                         attributeMap,
-                        "RECEIVE",
+                        EventType.RECEIVE,
                         requestUri,
-                        HttpStatus.SC_OK,
+                        StroomStatusCode.OK,
+                        attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
                         receivedBytes,
                         duration.toMillis());
 

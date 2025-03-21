@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4700** : Add props `forwardFileDestinations.subPathTemplate`,  `forwardFileDestinations.templatingMode` and `forwardHttpDestinations.errorSubPathTemplate` to allow templating of the file destination paths. Change the default retries to infinite. Make the following Stroom status codes go straight to the HTTP forwarder error destination: FEED_IS_NOT_DEFINED(101), FEED_IS_NOT_SET_TO_RECEIVE_DATA(110), UNEXPECTED_DATA_TYPE(120). Make the `data` directory more permissive to invalid files/directories that it finds. Remove the retry config prop `maxRetries` and replace it with `maxRetryAge` and `retryDelayGrowthFactor` to allow for a retry delay that grows with each retry. Change the file forwarder to support queueing/retry for remote file systems. Move the queue/retry config into the `queue` branch of the destination config. Fix issue of missing `.entries` files when rebooting proxy. Change the `thread` branch of the config, previous properties moved into `queue`, new properties added to control aggregation.
+
+* Issue **#4821** : Fix wildcard replacement.
+
+* Issue **#4823** : Fix default StreamId, EventId query columns.
+
 * Issue **#2334** : Fix split depth for stepping to match the split filter.
 
 * Issue **#4812** : Fix data download issue.

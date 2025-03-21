@@ -28,6 +28,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -218,10 +219,6 @@ public class TestPreAggregator extends StroomUnitTest {
                 .build();
     }
 
-    private record ExpectedOutput(List<Integer> entryCounts) {
-
-    }
-
     /**
      * Using records takes ~x5 as long
      */
@@ -246,12 +243,23 @@ public class TestPreAggregator extends StroomUnitTest {
                 TimedCase.of(
                         "records",
                         (round, iterations) -> {
-                            Part part = new Part(round, round);
+                            Part part = new Part(round, round, Collections.emptyList());
                             for (int i = 0; i < iterations; i++) {
-                                part = part.addItem(1);
+                                part = new Part(
+                                        part.items() + 1,
+                                        part.bytes() + 1,
+                                        Collections.emptyList());
                             }
                             LOGGER.info("part: {}", part);
                         })
         );
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ExpectedOutput(List<Integer> entryCounts) {
+
     }
 }

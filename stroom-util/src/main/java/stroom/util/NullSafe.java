@@ -854,11 +854,30 @@ public class NullSafe {
     }
 
     /**
-     * Return the value supplier or null if supplier is itself null.
+     * Return the value supplied by supplier or null if supplier is itself null.
      */
     public static <T> T supply(final Supplier<T> supplier) {
         if (supplier != null) {
             return supplier.get();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Return the result of applying mapper to the value supplied by supplier.
+     * Will return null if supplier is null, the supplied value is null or
+     * the result of mapper is null.
+     */
+    public static <T1, T2> T2 supplyAndMap(final Supplier<T1> supplier,
+                                           final Function<T1, T2> mapper) {
+        if (supplier != null) {
+            final T1 t1 = supplier.get();
+            if (t1 != null) {
+                return Objects.requireNonNull(mapper).apply(t1);
+            } else {
+                return null;
+            }
         } else {
             return null;
         }

@@ -178,5 +178,14 @@ public class QueueMonitors {
                     ? bufferPos - readPos
                     : 0;
         }
+
+        @Override
+        public String toString() {
+            return "QueueMonitorImpl{" +
+                   "writePos=" + writePos +
+                   ", readPos=" + readPos +
+                   ", bufferPos=" + bufferPos +
+                   '}';
+        }
     }
 }

@@ -3,6 +3,13 @@ package stroom.proxy;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 /**
  * List of all the stroom codes that we return from the datafeed interface.
  * Both stroom and proxy use this.
@@ -112,13 +119,36 @@ public enum StroomStatusCode {
             "Unknown error",
             "An unknown unexpected error occurred");
 
-    public static StroomStatusCode getStroomStatusCode(int code) {
-        for (StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
-            if (stroomStatusCode.getCode() == code) {
-                return stroomStatusCode;
+    static {
+        final Set<Integer> codes = new HashSet<>(StroomStatusCode.values().length);
+        for (final StroomStatusCode stroomStatusCode : StroomStatusCode.values()) {
+            final boolean didAdd = codes.add(stroomStatusCode.code);
+            if (!didAdd) {
+                throw new IllegalStateException(
+                        "Code " + stroomStatusCode.code + " is used more than once");
             }
         }
-        return UNKNOWN_ERROR;
+    }
+
+    private static final Map<Integer, StroomStatusCode> CODE_TO_ENUM_MAP = Arrays.stream(StroomStatusCode.values())
+            .collect(Collectors.toMap(
+                    StroomStatusCode::getCode,
+                    Function.identity()));
+
+    public static StroomStatusCode fromCode(int code) {
+        return CODE_TO_ENUM_MAP.getOrDefault(code, StroomStatusCode.UNKNOWN_ERROR);
+    }
+
+    /**
+     * Should ONLY be used when a stroom status code is not known.
+     *
+     * @return Either {@link StroomStatusCode#OK} if httpCode is 200 else
+     * {@link StroomStatusCode#UNKNOWN_ERROR}
+     */
+    public static StroomStatusCode fromHttpCode(int httpCode) {
+        return httpCode == OK.httpCode
+                ? OK
+                : UNKNOWN_ERROR;
     }
 
     private final String message;
@@ -133,10 +163,16 @@ public enum StroomStatusCode {
         this.reason = reason;
     }
 
+    /**
+     * @return The HTTP response status code, e.g. 200, 404, etc.
+     */
     public int getHttpCode() {
         return httpCode;
     }
 
+    /**
+     * @return Stroom's own status code
+     */
     public int getCode() {
         return code;
     }

@@ -140,13 +140,26 @@ proxyConfig:
     maxUncompressedByteSize: "1G"
     aggregationFrequency: 10s
 
+  forwardFileDestinations:
+    - enabled: true
+      name: "Local filesystem"
+      path: "file_forwarder"
+      queue: null
+      subPathTemplate:
+        pathTemplate: "${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
+
   forwardHttpDestinations:
     - enabled: true
-      name: "upstream"
+      name: "downstream"
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
   #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
-      maxRetries: 3
+      livenessCheckUrl: "http://localhost:8080/stroom/noauth/status"
       apiKey: ""
+      queue:
+        retryDelay: "PT2S"
+        maxRetryAge: "PT10S"
+        retryDelayGrowthFactor: 1
 
   contentDir: "content"
   #  contentSync:

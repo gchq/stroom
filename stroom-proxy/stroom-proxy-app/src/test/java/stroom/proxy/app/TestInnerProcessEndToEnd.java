@@ -5,18 +5,24 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.MockForwardFileDestination;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ZipWriter;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.test.common.DirectorySnapshot;
+import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -42,20 +48,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInnerProcessEndToEnd {
 
-//    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
 
 
     @Test
     void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 10, receiverFactory ->
+        test(1, 10_001, 10, receiverFactory ->
                 sendSimpleData(receiverFactory, feedName));
     }
 
     @Test
     void testSimpleZip() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 10, receiverFactory ->
+        test(1, 10_001, 10, receiverFactory ->
                 sendSimpleZip(receiverFactory, feedName, 1));
     }
 
@@ -104,6 +110,7 @@ class TestInnerProcessEndToEnd {
                       final Consumer<ReceiverFactory> sender) {
         try {
             final Path root = Files.createTempDirectory("stroom-proxy");
+            LOGGER.info("root: {}", root);
             ProxyLifecycle proxyLifecycle = null;
             try {
                 FileUtil.deleteContents(root);
@@ -122,9 +129,16 @@ class TestInnerProcessEndToEnd {
                         .aggregatorConfig(AggregatorConfig.builder()
                                 .maxItemsPerAggregate(1000)
                                 .maxUncompressedByteSizeString("1G")
-                            .aggregationFrequency(StroomDuration.ofSeconds(5))
+                                .aggregationFrequency(StroomDuration.ofSeconds(60))
                                 .build())
-                        .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
+                        .addForwardFileDestination(new ForwardFileConfig(true,
+                                false,
+                                "test",
+                                "test",
+                                null,
+                                new ForwardQueueConfig(),
+                                null,
+                                null))
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);
@@ -165,6 +179,9 @@ class TestInnerProcessEndToEnd {
                 // Examine data.
                 final Path storeDir = forwardFileDestination.getStoreDir();
                 long maxId = DirUtil.getMaxDirId(storeDir);
+
+                final Snapshot snapshot = DirectorySnapshot.of(storeDir);
+                LOGGER.info("snapshot:\n{}", snapshot);
 
                 // Cope with final rolling output (hence +1).
                 assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);
@@ -210,9 +227,10 @@ class TestInnerProcessEndToEnd {
 
         try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             try (final ZipWriter zipWriter = new ZipWriter(byteArrayOutputStream, LocalByteBuffer.get())) {
-                for (int i = 0; i < entryCount; i++) {
-                    zipWriter.writeAttributeMap(i + ".meta", attributeMap);
-                    zipWriter.writeString(i + ".dat", "test");
+                for (int i = 1; i <= entryCount; i++) {
+                    final String name = Strings.padStart(Integer.toString(i), 10, '0');
+                    zipWriter.writeAttributeMap(name + ".meta", attributeMap);
+                    zipWriter.writeString(name + ".dat", "test");
                 }
             }
 
@@ -241,18 +259,19 @@ class TestInnerProcessEndToEnd {
 
         try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             try (final ZipWriter zipWriter = new ZipWriter(byteArrayOutputStream, LocalByteBuffer.get())) {
-                for (int i = 0; i < entryCount; i++) {
+                for (int i = 1; i <= entryCount; i++) {
+                    final String name = Strings.padStart(Integer.toString(i), 10, '0');
                     final AttributeMap attributeMap1 = new AttributeMap();
                     attributeMap1.put(StandardHeaderArguments.FEED, feedName1);
                     attributeMap1.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-                    zipWriter.writeAttributeMap(i + "_1.meta", attributeMap1);
-                    zipWriter.writeString(i + "_1.dat", "test");
+                    zipWriter.writeAttributeMap(name + "_1.meta", attributeMap1);
+                    zipWriter.writeString(name + "_1.dat", "test");
 
                     final AttributeMap attributeMap2 = new AttributeMap();
                     attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
                     attributeMap2.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-                    zipWriter.writeAttributeMap(i + "_2.meta", attributeMap2);
-                    zipWriter.writeString(i + "_2.dat", "test");
+                    zipWriter.writeAttributeMap(name + "_2.meta", attributeMap2);
+                    zipWriter.writeString(name + "_2.dat", "test");
                 }
             }
 

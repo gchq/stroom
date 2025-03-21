@@ -103,9 +103,9 @@ public class AnnotationManager {
                             final List<Long> annotationIdList) {
         if (selectedItems != null && selectedItems.size() > 0) {
             final String streamIdFieldId = getFieldId(tableComponentSettings,
-                    SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+                    SpecialColumns.RESERVED_STREAM_ID);
             final String eventIdFieldId = getFieldId(tableComponentSettings,
-                    SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+                    SpecialColumns.RESERVED_EVENT_ID);
             final String eventIdListFieldId = getFieldId(tableComponentSettings,
                     "EventIdList");
             final String annotationIdFieldId = getFieldId(tableComponentSettings,

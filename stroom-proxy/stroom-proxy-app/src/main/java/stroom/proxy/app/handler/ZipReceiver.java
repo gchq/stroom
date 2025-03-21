@@ -4,10 +4,12 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.StroomStreamException;
@@ -22,7 +24,6 @@ import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +36,13 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -50,7 +53,7 @@ import java.util.function.Consumer;
  * 4. It splits the data into separate zip files for each feed.
  * 5. It then sends each new zip to the destination.
  * </p><p>
- * As a result of processing all resulting zip files will be in a known proxy file format consisting of entries of 10
+ * As a result of processing, all resulting zip files will be in a known proxy file format consisting of entries of 10
  * numeric characters and appropriate file extensions. The entry order will also be specific with associated entries
  * having the order (manifest, meta, context, data).
  * </p><p>
@@ -106,6 +109,8 @@ public class ZipReceiver implements Receiver {
 //        // Move any received data from previous proxy usage to the store.
 //        transferOldReceivedData(receivedDir);
 
+        LOGGER.info("Initialised ZipReceiver, receivingDir base: {}, splitZipDir base: {}",
+                receivingDirProvider.getParentDir(), splitZipDirProvider.getParentDir());
     }
 
     private NumberedDirProvider createDirProvider(final DataDirProvider dataDirProvider, final String dirName) {
@@ -175,15 +180,15 @@ public class ZipReceiver implements Receiver {
 
             if (receiveResult.feedGroups.size() > 1) {
                 // Log if we received a multi feed zip.
-                LOGGER.debug("Received multi feed zip");
+                if (LOGGER.isDebugEnabled()) {
+                    logFeedGroupsToDebug(receiveResult);
+                }
             }
 
-            // Check all the feeds are ok.
+            // Check all the feeds are OK.
             final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-            for (final Map.Entry<FeedKey, List<ZipEntryGroup>> entry : receiveResult.feedGroups.entrySet()) {
-                final FeedKey feedKey = entry.getKey();
-                final List<ZipEntryGroup> zipEntryGroups = entry.getValue();
+            receiveResult.feedGroups.forEach((feedKey, zipEntryGroups) -> {
                 final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
                 AttributeMapUtil.addFeedAndType(entryAttributeMap, feedKey.feed(), feedKey.type());
                 // Note this call will throw an exception if any of the feeds are not allowed and will result in the
@@ -191,18 +196,18 @@ public class ZipReceiver implements Receiver {
                 if (attributeMapFilter.filter(entryAttributeMap)) {
                     allowed.put(feedKey, zipEntryGroups);
                 }
-            }
+            });
 
             // Only keep data for allowed feeds.
             if (!allowed.isEmpty()) {
-
                 // If the data we received was for a perfectly formed zip file with data for a single feed then don't
                 // bother to rewrite.
                 if (receiveResult.valid && receiveResult.feedGroups.size() == 1) {
-                    // If we only had a single feed in the incoming zip then just pass on the data as is.
 
+                    // If we only had a single feed in the incoming zip then just pass on the data as is.
                     final Map.Entry<FeedKey, List<ZipEntryGroup>> entry = allowed.entrySet().iterator().next();
                     final FeedKey feedKey = entry.getKey();
+                    LOGGER.debug("Single feedKey {}", feedKey);
                     final List<ZipEntryGroup> zipEntryGroups = entry.getValue();
 
                     // Write out entries.
@@ -217,6 +222,7 @@ public class ZipReceiver implements Receiver {
                     AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
                     // Move receiving dir to destination.
+                    LOGGER.debug("Pass {} to destination {}", receivingDir, destination);
                     destination.accept(receivingDir);
 
                 } else {
@@ -231,6 +237,7 @@ public class ZipReceiver implements Receiver {
 
                     // Move each group dir to the file store or forward if there is a single destination.
                     for (final Path groupDir : groupDirs) {
+                        LOGGER.debug("Pass {} to destination {}", groupDir, destination);
                         destination.accept(groupDir);
                     }
 
@@ -242,6 +249,7 @@ public class ZipReceiver implements Receiver {
                     deleteDir(receivingDir);
                 }
             } else {
+                LOGGER.debug("No allowed feedKeys, all are dropped");
                 // Delete the source zip.
                 Files.delete(sourceZip);
                 deleteDir(receivingDir);
@@ -255,11 +263,29 @@ public class ZipReceiver implements Receiver {
         logStream.log(
                 RECEIVE_LOG,
                 attributeMap,
-                "RECEIVE",
+                EventType.RECEIVE,
                 requestUri,
-                HttpStatus.SC_OK,
+                StroomStatusCode.OK,
+                attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
                 receiveResult.receivedBytes,
                 duration.toMillis());
+    }
+
+    private static void logFeedGroupsToDebug(final ReceiveResult receiveResult) {
+        final int count = receiveResult.feedGroups.size();
+        final int limit = 10;
+        final String suffix = count > limit
+                ? "...<TRUNCATED>"
+                : "";
+        final String feedKeysStr = receiveResult.feedGroups.keySet()
+                .stream()
+                .sorted(Comparator.comparing(FeedKey::feed)
+                        .thenComparing(FeedKey::type))
+                .limit(limit)
+                .map(Objects::toString)
+                .collect(Collectors.joining(", "));
+        LOGGER.debug("Received multi feed zip, feedGroups.size: {}, feedKeys: [{}{}]",
+                receiveResult.feedGroups.size(), feedKeysStr, suffix);
     }
 
     private void deleteDir(final Path path) {
@@ -277,28 +303,30 @@ public class ZipReceiver implements Receiver {
                                           final Path zipFilePath,
                                           final byte[] buffer) throws IOException {
         // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
+        LOGGER.debug("receiveZipStream() - defaultFeedName: '{}', defaultTypeName: '{}', zipFilePath: {}",
+                defaultFeedName, defaultTypeName, zipFilePath);
         final List<Entry> dataEntries = new ArrayList<>();
         final Map<String, ZipEntryGroup> groups = new HashMap<>();
         final ProxyZipValidator validator = new ProxyZipValidator();
         final long receivedBytes;
 
         // Receive data.
-        try (final ByteCountInputStream byteCountInputStream =
-                new ByteCountInputStream(inputStream)) {
+        try (final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream)) {
             try (final ZipArchiveInputStream zipInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
                 // Write the incoming zip data to temp and record info about the entries as we go.
                 try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, buffer)) {
 
                     ZipArchiveEntry entry = zipInputStream.getNextEntry();
                     while (entry != null) {
+                        final String entryName = entry.getName();
                         // We will validate the data as we receive it to see if the format is exactly as expected.
-                        validator.addEntry(entry.getName());
+                        validator.addEntry(entryName);
 
                         if (entry.isDirectory()) {
-                            zipWriter.writeDir(entry.getName());
+                            zipWriter.writeDir(entryName);
 
                         } else {
-                            final FileName fileName = FileName.parse(entry.getName());
+                            final FileName fileName = FileName.parse(entryName);
                             final String baseName = fileName.getBaseName();
                             final StroomZipFileType stroomZipFileType =
                                     StroomZipFileType.fromExtension(fileName.getExtension());
@@ -309,11 +337,13 @@ public class ZipReceiver implements Receiver {
                                         AttributeMapUtil.cloneAllowable(attributeMap);
                                 AttributeMapUtil.read(zipInputStream, entryAttributeMap);
 
+                                // defaultFeedName/defaultTypeName are in attributeMap, so act as fallbacks
+                                // unless they are explicitly set to null in the .meta
                                 final String feedName = entryAttributeMap.get(StandardHeaderArguments.FEED);
                                 final String typeName = entryAttributeMap.get(StandardHeaderArguments.TYPE);
 
                                 final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
-                                zipWriter.writeStream(entry.getName(), new ByteArrayInputStream(bytes));
+                                zipWriter.writeStream(entryName, new ByteArrayInputStream(bytes));
 
                                 final ZipEntryGroup zipEntryGroup = groups
                                         .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedName, typeName));
@@ -322,33 +352,33 @@ public class ZipReceiver implements Receiver {
                                 zipEntryGroup.setTypeName(typeName);
 
                                 if (zipEntryGroup.getMetaEntry() != null) {
-                                    throw new RuntimeException("Duplicate meta found: " + entry.getName());
+                                    throw new RuntimeException("Duplicate meta found: " + entryName);
                                 }
-                                zipEntryGroup.setMetaEntry(new ZipEntryGroup.Entry(entry.getName(), bytes.length));
+                                zipEntryGroup.setMetaEntry(new ZipEntryGroup.Entry(entryName, bytes.length));
 
                             } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
                                 final ZipEntryGroup zipEntryGroup = groups.computeIfAbsent(baseName, k ->
                                         new ZipEntryGroup(defaultFeedName, defaultTypeName));
                                 if (zipEntryGroup.getContextEntry() != null) {
-                                    throw new RuntimeException("Duplicate context found: " + entry.getName());
+                                    throw new RuntimeException("Duplicate context found: " + entryName);
                                 }
 
-                                final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
-                                zipEntryGroup.setContextEntry(new ZipEntryGroup.Entry(entry.getName(), size));
+                                final long size = zipWriter.writeStream(entryName, zipInputStream);
+                                zipEntryGroup.setContextEntry(new ZipEntryGroup.Entry(entryName, size));
 
                             } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
                                 final ZipEntryGroup zipEntryGroup = groups.computeIfAbsent(baseName, k ->
                                         new ZipEntryGroup(defaultFeedName, defaultTypeName));
                                 if (zipEntryGroup.getManifestEntry() != null) {
-                                    throw new RuntimeException("Duplicate manifest found: " + entry.getName());
+                                    throw new RuntimeException("Duplicate manifest found: " + entryName);
                                 }
 
-                                final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
-                                zipEntryGroup.setManifestEntry(new ZipEntryGroup.Entry(entry.getName(), size));
+                                final long size = zipWriter.writeStream(entryName, zipInputStream);
+                                zipEntryGroup.setManifestEntry(new ZipEntryGroup.Entry(entryName, size));
 
                             } else {
-                                final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
-                                dataEntries.add(new ZipEntryGroup.Entry(entry.getName(), size));
+                                final long size = zipWriter.writeStream(entryName, zipInputStream);
+                                dataEntries.add(new ZipEntryGroup.Entry(entryName, size));
                             }
 
                             entry = zipInputStream.getNextEntry();
@@ -416,11 +446,9 @@ public class ZipReceiver implements Receiver {
         });
 
         // Split the groups by feed key.
-        final Map<FeedKey, List<ZipEntryGroup>> feedGroups = new HashMap<>();
-        entryList.forEach(group -> {
-            final FeedKey feedKey = new FeedKey(group.getFeedName(), group.getTypeName());
-            feedGroups.computeIfAbsent(feedKey, k -> new ArrayList<>()).add(group);
-        });
+        final Map<FeedKey, List<ZipEntryGroup>> feedGroups = entryList.stream()
+                .collect(Collectors.groupingBy(group ->
+                        new FeedKey(group.getFeedName(), group.getTypeName())));
 
         // We might want to know what was wrong with the received data.
         if (!validator.isValid()) {
@@ -435,9 +463,10 @@ public class ZipReceiver implements Receiver {
                                final Map<FeedKey, List<ZipEntryGroup>> feedGroups,
                                final Path outputParentDir,
                                final byte[] buffer) throws IOException {
+        LOGGER.debug("splitZip() - zipFilePath: {}, outputParentDir: {}", zipFilePath, outputParentDir);
         final List<Path> groupDirs = new ArrayList<>();
         long id = 1;
-        try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
+        try (final ZipFile zipFile = createZipFile(zipFilePath)) {
             for (final Map.Entry<FeedKey, List<ZipEntryGroup>> entry : feedGroups.entrySet()) {
                 final FeedKey feedKey = entry.getKey();
                 final List<ZipEntryGroup> zipEntryGroups = entry.getValue();
@@ -446,10 +475,17 @@ public class ZipReceiver implements Receiver {
                 Files.createDirectory(groupDir);
                 final FileGroup fileGroup = new FileGroup(groupDir);
                 groupDirs.add(groupDir);
+
                 writeZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup, buffer);
             }
         }
         return groupDirs;
+    }
+
+    private static ZipFile createZipFile(final Path zipFilePath) throws IOException {
+        return ZipFile.builder()
+                .setSeekableByteChannel(Files.newByteChannel(zipFilePath))
+                .get();
     }
 
     private static void writeZip(final ZipFile zip,
@@ -458,14 +494,18 @@ public class ZipReceiver implements Receiver {
                                  final AttributeMap attributeMap,
                                  final FileGroup fileGroup,
                                  final byte[] buffer) throws IOException {
+        LOGGER.debug("writeZip() - feedKey: {}, fileGroup: {}", feedKey, fileGroup);
         try {
             // Write zip.
             int count = 1;
-            try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
+            final Path entriesFile = fileGroup.getEntries();
+            try (final Writer entryWriter = Files.newBufferedWriter(entriesFile)) {
                 try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
                     for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
                         final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
                         final String baseNameOut = NumericFileNameUtil.create(count);
+                        LOGGER.trace("feedKey: {}, baseNameOut: {}, zipEntryGroupIn: {} => zipEntryGroupOut: {}",
+                                feedKey, baseNameOut, zipEntryGroupIn, zipEntryGroupOut);
                         zipEntryGroupOut.setManifestEntry(
                                 addEntry(zip,
                                         zipWriter,
@@ -495,6 +535,7 @@ public class ZipReceiver implements Receiver {
                         count++;
 
                         // Write zip entry.
+                        LOGGER.trace("Writing entries file {}", entriesFile);
                         zipEntryGroupOut.write(entryWriter);
                     }
                 }
@@ -547,6 +588,10 @@ public class ZipReceiver implements Receiver {
     public void setDestination(final Consumer<Path> destination) {
         this.destination = destination;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     record ReceiveResult(Map<FeedKey, List<ZipEntryGroup>> feedGroups,
                          long receivedBytes,

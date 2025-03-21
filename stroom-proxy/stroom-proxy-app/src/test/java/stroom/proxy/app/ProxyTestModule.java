@@ -3,6 +3,8 @@ package stroom.proxy.app;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.proxy.app.guice.ProxyCoreModule;
 import stroom.proxy.app.handler.ForwardFileDestinationFactory;
+import stroom.proxy.app.handler.ForwardHttpPostDestinationFactory;
+import stroom.proxy.app.handler.ForwardHttpPostDestinationFactoryImpl;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 import stroom.test.common.MockMetrics;
 import stroom.util.metrics.Metrics;
@@ -42,6 +44,7 @@ public class ProxyTestModule extends AbstractModule {
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());
 
+        bind(ForwardHttpPostDestinationFactory.class).to(ForwardHttpPostDestinationFactoryImpl.class);
         bind(ForwardFileDestinationFactory.class).to(MockForwardFileDestinationFactory.class);
     }
 }

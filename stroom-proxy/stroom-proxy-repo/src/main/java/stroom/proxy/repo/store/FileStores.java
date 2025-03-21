@@ -3,6 +3,7 @@ package stroom.proxy.repo.store;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathWithAttributes;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
@@ -11,7 +12,6 @@ import stroom.util.shared.ModelStringUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -21,7 +21,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Stream;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Singleton
 public class FileStores {
@@ -47,24 +48,12 @@ public class FileStores {
         LOGGER.debug("Capturing store stats");
         final Map<Key, StoreStats> map = new HashMap<>();
         for (final Entry<Key, Path> entry : fileStores.entrySet()) {
+            final Key key = entry.getKey();
             final Path path = entry.getValue();
             final LongAdder size = new LongAdder();
             final LongAdder count = new LongAdder();
             if (Files.isDirectory(path)) {
-                try (final Stream<Path> stream = Files.walk(path)) {
-                    stream.forEach(p -> {
-                        if (Files.isRegularFile(p)) {
-                            count.increment();
-                            try {
-                                size.add(Files.size(p));
-                            } catch (final IOException e) {
-                                LOGGER.trace(e::getMessage, e);
-                            }
-                        }
-                    });
-                } catch (final IOException e) {
-                    LOGGER.trace(e::getMessage, e);
-                }
+                addRegularFileCountAndSizes(key, path, size, count);
                 map.put(entry.getKey(), new StoreStats(count.longValue(), size.longValue()));
             }
         }
@@ -93,23 +82,23 @@ public class FileStores {
                 .addNamePart(key.name)
                 .addNamePart(Metrics.FILE_COUNT)
                 .gauge(() ->
-                        NullSafe.getOrElse(
-                                statsMapUpdater.getValue(),
-                                map -> map.get(key),
-                                StoreStats::count,
-                                0L))
+                        getStat(key, StoreStats::count))
                 .register();
 
         metrics.registrationBuilder(getClass())
                 .addNamePart(key.name)
                 .addNamePart(Metrics.SIZE_IN_BYTES)
                 .gauge(() ->
-                        NullSafe.getOrElse(
-                                statsMapUpdater.getValue(),
-                                map -> map.get(key),
-                                StoreStats::sizeInBytes,
-                                0L))
+                        getStat(key, StoreStats::sizeInBytes))
                 .register();
+    }
+
+    private long getStat(final Key key, Function<StoreStats, Long> statFunc) {
+        return NullSafe.getOrElse(
+                statsMapUpdater.getValue(),
+                map -> map.get(key),
+                statFunc,
+                0L);
     }
 
     public synchronized String log() {
@@ -153,6 +142,23 @@ public class FileStores {
         sb.append("</table>");
 
         return sb.toString();
+    }
+
+    private static void addRegularFileCountAndSizes(final Key key,
+                                                    final Path path,
+                                                    final LongAdder sizeAdder,
+                                                    final LongAdder fileCountAdder) {
+        final Predicate<PathWithAttributes> isFilePredicate = pathWithAttributes -> {
+            final boolean isRegularFile = pathWithAttributes.isRegularFile();
+            if (isRegularFile) {
+                sizeAdder.add(pathWithAttributes.size());
+            }
+            return isRegularFile;
+        };
+
+        final long fileCount = FileUtil.deepListContents(path, true, isFilePredicate)
+                .size();
+        fileCountAdder.add(fileCount);
     }
 
 

@@ -26,6 +26,8 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -64,6 +66,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class App extends Application<Config> {
 
@@ -205,7 +208,7 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration, injector);
 
-        showInfo();
+        showInfo(configuration);
     }
 
     private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
@@ -254,14 +257,36 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    private void showInfo() {
+    private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
+
+        final String forwaders = configuration.getProxyConfig().streamAllForwarders()
+                .map(forwarderConfig -> {
+                    final String name = forwarderConfig.getName();
+                    final String destination = forwarderConfig.getDestinationDescription();
+                    final String state = forwarderConfig.isEnabled()
+                            ? ""
+                            : " DISABLED";
+                    final String instant = forwarderConfig.isInstant()
+                            ? " (INSTANT)"
+                            : "";
+                    final String type = switch (forwarderConfig) {
+                        case ForwardHttpPostConfig ignored -> "HTTP";
+                        case ForwardFileConfig ignored -> "FILE";
+                    };
+                    return "    " + type + ": '" + name + "' -> " + destination + instant + state;
+                })
+                .sorted()
+                .collect(Collectors.joining("\n"));
+
         LOGGER.info(""
                     + "\n  Build version:       " + buildInfo.getBuildVersion()
                     + "\n  Build date:          " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
                     + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Proxy ID:            " + proxyId.getId());
+                    + "\n  Proxy ID:            " + proxyId.getId()
+                    + "\n  Forwarders:          " + "\n" + forwaders
+                    + "\n");
     }
 
     private Injector createValidationInjector() {
