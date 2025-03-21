@@ -233,7 +233,7 @@ public class SvgImageTools {
             Files.writeString(outputPath.resolve(THEMED_ICONS_HTML_FILENAME), html);
         }
         System.out.println(LogUtil.message("""
-                                               
+
                         To view the icon contact sheets run:
                           python -m http.server 8888 --directory {}
                         Then visit
