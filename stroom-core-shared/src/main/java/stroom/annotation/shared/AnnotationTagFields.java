@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public interface AnnotationTagFields {
 
     String ID = "Id";
-    String UUID = "uuid";
+    String UUID = "UUID";
     String NAME = "Name";
     String TYPE_ID = "TypeId";
 

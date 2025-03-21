@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public interface AnnotationFields {
 
     String ID = "Id";
-    String UUID = "uuid";
+    String UUID = "UUID";
     String CREATED_ON = "CreatedOn";
     String CREATED_BY = "CreatedBy";
     String UPDATED_ON = "UpdatedOn";
@@ -27,6 +27,7 @@ public interface AnnotationFields {
     String DESCRIPTION = "Description";
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
+    String FEED = "Feed";
 
     QueryField ID_FIELD = QueryField.createId(ID);
     QueryField UUID_FIELD = QueryField.createId(UUID);
@@ -45,12 +46,11 @@ public interface AnnotationFields {
     QueryField DESCRIPTION_FIELD = QueryField.createText(DESCRIPTION);
     QueryField STREAM_ID_FIELD = QueryField.createText(STREAM_ID);
     QueryField EVENT_ID_FIELD = QueryField.createText(EVENT_ID);
+    QueryField FEED_FIELD = QueryField.createText(FEED);
 
     List<QueryField> FIELDS = Arrays.asList(
             ID_FIELD,
             UUID_FIELD,
-            STREAM_ID_FIELD,
-            EVENT_ID_FIELD,
             CREATED_ON_FIELD,
             CREATED_BY_FIELD,
             UPDATED_ON_FIELD,
@@ -63,7 +63,10 @@ public interface AnnotationFields {
             COLLECTION_FIELD,
             COMMENT_FIELD,
             HISTORY_FIELD,
-            DESCRIPTION_FIELD);
+            DESCRIPTION_FIELD,
+            STREAM_ID_FIELD,
+            EVENT_ID_FIELD,
+            FEED_FIELD);
     Map<String, QueryField> FIELD_MAP = FIELDS.stream()
             .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

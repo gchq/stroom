@@ -52,6 +52,7 @@ import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -79,6 +80,7 @@ import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.SelectJoinStep;
+import org.jooq.impl.DSL;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -113,9 +115,34 @@ class AnnotationDaoImpl implements AnnotationDao {
             ANNOTATION_TAG.as("label");
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationTag COLLECTION =
             ANNOTATION_TAG.as("collection");
-    private static stroom.annotation.impl.db.jooq.tables.AnnotationEntry COMMENT = ANNOTATION_ENTRY.as("comment");
-    private static stroom.annotation.impl.db.jooq.tables.AnnotationEntry HISTORY = ANNOTATION_ENTRY.as("history");
+    private static final stroom.annotation.impl.db.jooq.tables.AnnotationEntry COMMENT =
+            ANNOTATION_ENTRY.as("comment");
+    private static final stroom.annotation.impl.db.jooq.tables.AnnotationEntry HISTORY =
+            ANNOTATION_ENTRY.as("history");
 
+    // Create a correlated sub query for label.
+    private static final Field<String> LABEL_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
+            .from(ANNOTATION_TAG)
+            .join(ANNOTATION_TAG_LINK)
+            .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
+            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue()))
+            .asField("label");
+    // Create a correlated sub query for collection.
+    private static final Field<String> COLLECTION_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
+            .from(ANNOTATION_TAG)
+            .join(ANNOTATION_TAG_LINK)
+            .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
+            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue()))
+            .asField("collection");
+    // Create a correlated sub query for history.
+    private static final Field<String> HISTORY_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_ENTRY.DATA).separator("|"))
+            .from(ANNOTATION_ENTRY)
+            .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+            .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+            .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
+            .asField("history");
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
@@ -227,10 +254,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD,
                 ANNOTATION.ASSIGNED_TO_UUID,
                 this::mapUserUuidToValString);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL.NAME, ValString::create);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION.NAME, ValString::create);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, LABEL_FIELD, ValString::create);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, COLLECTION_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_COMMENT_FIELD, COMMENT.DATA, ValString::create);
-        valueMapper.map(AnnotationDecorationFields.ANNOTATION_HISTORY_FIELD, HISTORY.DATA, ValString::create);
+        valueMapper.map(AnnotationDecorationFields.ANNOTATION_HISTORY_FIELD, HISTORY_FIELD, ValString::create);
         valueMapper.map(AnnotationDecorationFields.ANNOTATION_DESCRIPTION_FIELD,
                 ANNOTATION.DESCRIPTION,
                 ValString::create);
@@ -246,10 +273,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
         valueMapper.map(AnnotationFields.STATUS_FIELD, STATUS.NAME, ValString::create);
         valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO_UUID, this::mapUserUuidToValString);
-        valueMapper.map(AnnotationFields.LABEL_FIELD, LABEL.NAME, ValString::create);
-        valueMapper.map(AnnotationFields.COLLECTION_FIELD, COLLECTION.NAME, ValString::create);
+        valueMapper.map(AnnotationFields.LABEL_FIELD, LABEL_FIELD, ValString::create);
+        valueMapper.map(AnnotationFields.COLLECTION_FIELD, COLLECTION_FIELD, ValString::create);
         valueMapper.map(AnnotationFields.COMMENT_FIELD, COMMENT.DATA, ValString::create);
-        valueMapper.map(AnnotationFields.HISTORY_FIELD, HISTORY.DATA, ValString::create);
+        valueMapper.map(AnnotationFields.HISTORY_FIELD, HISTORY_FIELD, ValString::create);
         valueMapper.map(AnnotationFields.DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION, ValString::create);
         valueMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
         valueMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
@@ -620,7 +647,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                                 //                        .set(ANNOTATION.HISTORY, DSL
                                 //                                .when(ANNOTATION.HISTORY.isNull(),
                                 //                                changeComment.getComment())
-                                //                                .otherwise(DSL.concat(ANNOTATION.HISTORY, "  |  " +
+                                //                                .otherwise(DSL.gtr(ANNOTATION.HISTORY, "  |  " +
                                 //                                changeComment.getComment())))
                                 .set(ANNOTATION.UPDATE_USER, currentUser.toDisplayString())
                                 .set(ANNOTATION.UPDATE_TIME_MS, nowMs)
@@ -898,6 +925,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                        final ValuesConsumer consumer,
                        final Predicate<String> uuidPredicate) {
         final String[] fieldNames = fieldIndex.getFields();
+        final Set<String> expressionFields = new HashSet<>(ExpressionUtil.fields(criteria.getExpression()));
         final Condition condition = createCondition(criteria.getExpression())
                 .and(ANNOTATION.DELETED.isFalse());
         final Set<Field<?>> dbFields = new HashSet<>(valueMapper.getDbFieldsByName(fieldNames));
@@ -908,11 +936,75 @@ class AnnotationDaoImpl implements AnnotationDao {
             SelectJoinStep<?> select = context.select(dbFields)
                     .from(ANNOTATION);
 
-            if (dbFields.contains(ANNOTATION_DATA_LINK.STREAM_ID) ||
+            if (expressionFields.contains(AnnotationFields.STREAM_ID) ||
+                expressionFields.contains(AnnotationFields.EVENT_ID) ||
+                dbFields.contains(ANNOTATION_DATA_LINK.STREAM_ID) ||
                 dbFields.contains(ANNOTATION_DATA_LINK.EVENT_ID)) {
                 select = select
                         .leftOuterJoin(ANNOTATION_DATA_LINK)
                         .on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID));
+            }
+
+            // Status join.
+            if (expressionFields.contains(AnnotationFields.STATUS) ||
+                fieldIndex.getPos(AnnotationFields.STATUS) != null) {
+                select = select
+                        .leftOuterJoin(STATUS)
+                        .on(STATUS.ID.eq(context
+                                .select(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
+                                .from(ANNOTATION_TAG_LINK)
+                                .join(ANNOTATION_TAG)
+                                .on(ANNOTATION_TAG.ID.eq(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID))
+                                .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                                .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.STATUS.getPrimitiveValue()))
+                                .orderBy(ANNOTATION_TAG_LINK.ID.desc())
+                                .limit(1)));
+            }
+
+            if (expressionFields.contains(AnnotationFields.LABEL) ||
+                expressionFields.contains(AnnotationFields.COLLECTION)) {
+                select = select
+                        .join(ANNOTATION_TAG_LINK)
+                        .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID));
+            }
+
+            // Label join.
+            if (expressionFields.contains(AnnotationFields.LABEL)) {
+                select = select
+                        .join(LABEL)
+                        .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(LABEL.ID)
+                                .and(LABEL.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue())));
+            }
+
+            // Collection join.
+            if (expressionFields.contains(AnnotationFields.COLLECTION)) {
+                select = select
+                        .join(COLLECTION)
+                        .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(COLLECTION.ID)
+                                .and(COLLECTION.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue())));
+            }
+
+            // Comment join.
+            if (expressionFields.contains(AnnotationFields.COMMENT) ||
+                fieldIndex.getPos(AnnotationFields.COMMENT) != null) {
+                select = select
+                        .leftOuterJoin(COMMENT).on(
+                                COMMENT.ID.eq(context
+                                        .select(ANNOTATION_ENTRY.ID)
+                                        .from(ANNOTATION_ENTRY)
+                                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                                        .and(ANNOTATION_ENTRY.TYPE_ID
+                                                .eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+                                        .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS.desc())
+                                        .limit(1)));
+            }
+
+            // History join.
+            if (expressionFields.contains(AnnotationFields.HISTORY)) {
+                select = select
+                        .join(HISTORY)
+                        .on(HISTORY.FK_ANNOTATION_ID.eq(ANNOTATION.ID)
+                                .and(HISTORY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue())));
             }
 
             try (final Cursor<?> cursor = select

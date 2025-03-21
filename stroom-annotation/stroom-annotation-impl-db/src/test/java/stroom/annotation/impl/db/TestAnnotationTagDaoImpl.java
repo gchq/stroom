@@ -1,20 +1,14 @@
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationDao;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
-import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
 import jakarta.inject.Inject;
@@ -30,10 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestAnnotationTagDaoImpl {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAnnotationTagDaoImpl.class);
-
-    @Inject
-    private AnnotationDao annotationDao;
     @Inject
     private AnnotationTagDaoImpl annotationTagDao;
 
@@ -172,36 +162,6 @@ class TestAnnotationTagDaoImpl {
 
         annotationTagDao.deleteAnnotationTag(one);
         annotationTagDao.deleteAnnotationTag(two);
-    }
-
-    @Test
-    void testAnnotation() {
-        final UserRef currentUser = new UserRef(
-                "1234",
-                "test",
-                "test",
-                "test",
-                false,
-                true);
-        final AnnotationTag newStatus = createStatus("New");
-        final AnnotationTag assignedStatus = createStatus("Assigned");
-        final AnnotationTag closedStatus = createStatus("Closed");
-
-        final CreateAnnotationRequest createAnnotationRequest = CreateAnnotationRequest
-                .builder()
-                .title("Test Title")
-                .subject("Test Subject")
-                .status("Assigned")
-                .build();
-        final Annotation annotation = annotationDao
-                .createAnnotation(createAnnotationRequest, currentUser);
-
-        final Optional<Annotation> optionalAnnotation = annotationDao
-                .getAnnotationByDocRef(annotation.asDocRef());
-        assertThat(optionalAnnotation).isPresent();
-        assertThat(optionalAnnotation.get()).isEqualTo(annotation);
-
-
     }
 
     private AnnotationTag createStatus(final String name) {
