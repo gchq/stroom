@@ -78,6 +78,11 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
+    public void focus() {
+        name.setFocus(true);
+    }
+
+    @Override
     public void setExpressionView(final View view) {
         expression.setWidget(view.asWidget());
     }

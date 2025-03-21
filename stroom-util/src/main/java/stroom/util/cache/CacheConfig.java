@@ -122,7 +122,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             "won't be able to show any stats for this cache. " +
             "INTERNAL means the stats are captured but are only accessible via the Stroom Caches screen, thus not " +
             "suitable for Stroom-Proxy. " +
-            "DROPWIZARD_METRICS means the stats are capture and are accessible via the Stroom Caches screen and via " +
+            "DROPWIZARD_METRICS means the stats are captured and are accessible via the Stroom Caches screen AND via " +
             "the metrics servlet on the admin port for integration with tools like Graphite/Collectd.")
     @JsonProperty(PROP_NAME_STATISTICS_MODE)
     @RequiresRestart(RestartScope.SYSTEM)

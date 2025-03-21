@@ -99,13 +99,13 @@ appConfig:
     destinationExplorerPath: "/Feeds"
     enabled: false
     templateMatchFields:
-    - "AccountId"
-    - "AccountName"
-    - "Component"
-    - "Feed"
-    - "Format"
-    - "Schema"
-    - "SchemaVersion"
+    - "accountid"
+    - "accountname"
+    - "component"
+    - "feed"
+    - "format"
+    - "schema"
+    - "schemaversion"
     templatesExplorerPath: "/Feeds/Content Templates"
   byteBufferPool:
     blockOnExhaustedPool: false

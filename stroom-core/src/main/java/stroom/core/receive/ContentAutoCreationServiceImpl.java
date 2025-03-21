@@ -55,7 +55,6 @@ import jakarta.inject.Singleton;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -129,8 +128,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         // ExpressionMatcher is currently case-sensitive so normalise to lower case
         final Map<String, QueryField> fields = NullSafe.stream(templateMatchFields)
                 .filter(NullSafe::isNonBlankString)
-                .map(String::trim)
-                .map(String::toLowerCase)
+                .map(ContentAutoCreationServiceImpl::normaliseField)
                 .collect(Collectors.toMap(Function.identity(), QueryField::createText));
         return expressionMatcherFactory.create(fields);
     }
@@ -397,11 +395,12 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     matchingTemplate = contentTemplate;
                     break;
                 } else {
+                    // Normalise the keys to lower case
                     final Map<String, Object> attributes = attributeMap.asMap(true)
                             .entrySet()
                             .stream()
                             .collect(Collectors.toMap(
-                                    Entry::getKey,
+                                    entry1 -> normaliseField(entry1.getKey()),
                                     entry -> NullSafe.get(entry.getValue(), val -> (Object) val)));
 
                     final boolean isMatch = cachedExpressionMatcher.getValue()
@@ -415,6 +414,13 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
         LOGGER.debug("matchingTemplate: {}", matchingTemplate);
         return Optional.ofNullable(matchingTemplate);
+    }
+
+    private static String normaliseField(final String field) {
+        return NullSafe.get(
+                field,
+                String::trim,
+                String::toLowerCase);
     }
 
     private void createTemplatedContent(final AttributeMap attributeMap,

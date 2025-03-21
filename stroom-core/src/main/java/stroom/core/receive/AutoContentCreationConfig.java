@@ -7,6 +7,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.UserType;
+import stroom.util.shared.validation.AllMatchPattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,9 +18,11 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -55,7 +58,9 @@ public class AutoContentCreationConfig
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
         // TreeSet to ensure consistent order in the serialised json
-        templateMatchFields = new TreeSet<>(Set.of(
+        // Make all lower case as expression matching is case-sense on field name and we
+        // can't be sure what case is used in the receipt headers.
+        templateMatchFields = normaliseFields(Set.of(
                 StandardHeaderArguments.FEED,
                 StandardHeaderArguments.ACCOUNT_ID,
                 StandardHeaderArguments.ACCOUNT_NAME,
@@ -81,7 +86,7 @@ public class AutoContentCreationConfig
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
-        this.templateMatchFields = NullSafe.unmodifialbeSet(templateMatchFields);
+        this.templateMatchFields = normaliseFields(templateMatchFields);
     }
 
     private AutoContentCreationConfig(Builder builder) {
@@ -91,7 +96,7 @@ public class AutoContentCreationConfig
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
-        this.templateMatchFields = NullSafe.unmodifialbeSet(builder.templateMatchFields);
+        this.templateMatchFields = normaliseFields(builder.templateMatchFields);
     }
 
     @JsonPropertyDescription(
@@ -144,7 +149,9 @@ public class AutoContentCreationConfig
         return createAsType;
     }
 
-    @JsonPropertyDescription("The header keys available for use when matching a request to a content template.")
+    @AllMatchPattern(pattern = "^[a-z0-9_-]+$")
+    @JsonPropertyDescription("The header keys available for use when matching a request to a content template. " +
+                             "Must be in lower case.")
     public Set<String> getTemplateMatchFields() {
         return templateMatchFields;
     }
@@ -174,6 +181,20 @@ public class AutoContentCreationConfig
                 .createAsSubjectId(createAsSubjectId)
                 .createAsType(createAsType)
                 .templateMatchFields(templateMatchFields);
+    }
+
+    private static Set<String> normaliseFields(final Set<String> fields) {
+        // TreeSet to ensure consistent order in the serialised json
+        // Make all lower case as expression matching is case-sense on field name and we
+        // can't be sure what case is used in the receipt headers.
+        if (NullSafe.isEmptyCollection(fields)) {
+            return Collections.emptySet();
+        } else {
+            return Collections.unmodifiableNavigableSet(NullSafe.stream(fields)
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .collect(Collectors.toCollection(TreeSet::new)));
+        }
     }
 
 

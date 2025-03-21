@@ -26,6 +26,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -521,31 +523,35 @@ public class ContentTemplateTabPresenter
     }
 
     private boolean isTemplateValid(final ContentTemplate contentTemplate) {
-        boolean result = true;
-        String msg = "";
+        String msg = null;
 
         if (GwtNullSafe.isBlankString(contentTemplate.getName())) {
             msg = "The template must have a name.";
-            result = false;
         } else if (contentTemplate.getTemplateType() == null) {
             msg = "The template must have a type.";
-            result = false;
+        } else if (contentTemplate.getPipeline() == null) {
+            msg = "The template must have a pipeline.";
         } else {
             final List<ContentTemplate> templates = findByName(contentTemplate.getName());
             if (templates.size() > 1) {
                 msg = "Name '" + contentTemplate.getName() + "' is already in use.";
-                result = false;
             } else if (templates.size() == 1
                        && templates.get(0).getTemplateNumber() != contentTemplate.getTemplateNumber()) {
                 msg = "Name '" + contentTemplate.getName() + "' is already in use.";
-                result = false;
             }
         }
 
-        if (!result) {
+        if (msg == null) {
+            final ExpressionOperator expression = contentTemplate.getExpression();
+            if (!ExpressionUtil.hasTerms(expression)) {
+                msg = "The expression must have at least one term.";
+            }
+        }
+
+        if (msg != null) {
             AlertEvent.fireError(ContentTemplateTabPresenter.this, msg, null);
         }
-        return result;
+        return msg == null;
     }
 
     private void edit(final ContentTemplate existingRule) {

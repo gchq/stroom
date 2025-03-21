@@ -30,6 +30,7 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -90,13 +91,15 @@ public class ContentTemplateEditPresenter
 
     @Override
     public void focus() {
-        editExpressionPresenter.focus();
+        getView().focus();
     }
 
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(contentTemplate.getExpression());
+        editExpressionPresenter.read(GwtNullSafe.requireNonNullElseGet(
+                contentTemplate.getExpression(),
+                () -> ExpressionOperator.builder().build()));
 
         final ContentTemplateEditView view = getView();
         view.setName(contentTemplate.getName());
@@ -128,6 +131,8 @@ public class ContentTemplateEditPresenter
 
 
     public interface ContentTemplateEditView extends View {
+
+        void focus();
 
         void setExpressionView(View view);
 
