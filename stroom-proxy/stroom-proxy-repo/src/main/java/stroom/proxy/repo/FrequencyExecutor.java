@@ -21,14 +21,16 @@ public class FrequencyExecutor implements Managed {
     private final ScheduledExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final long frequency;
+    private final String threadNamePrefix;
 
-    public FrequencyExecutor(final String threadName,
+    public FrequencyExecutor(final String threadNamePrefix,
                              final Supplier<Runnable> runnableSupplier,
                              final long frequency) {
         this.runnableSupplier = runnableSupplier;
         this.frequency = frequency;
+        this.threadNamePrefix = threadNamePrefix;
         final ThreadFactory threadFactory = new CustomThreadFactory(
-                threadName + " ",
+                threadNamePrefix + " ",
                 StroomThreadGroup.instance(),
                 Thread.NORM_PRIORITY - 1);
         executorService = Executors.newScheduledThreadPool(1, threadFactory);
@@ -46,11 +48,22 @@ public class FrequencyExecutor implements Managed {
                 throw e;
             }
         };
+        LOGGER.debug("Starting frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
         executorService.scheduleWithFixedDelay(runnable, 0, frequency, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void stop() {
+        LOGGER.debug("Stopping frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
         executorService.shutdownNow();
+    }
+
+    @Override
+    public String toString() {
+        return "FrequencyExecutor{" +
+               "executorService=" + executorService +
+               ", frequency=" + frequency +
+               ", threadNamePrefix='" + threadNamePrefix + '\'' +
+               '}';
     }
 }

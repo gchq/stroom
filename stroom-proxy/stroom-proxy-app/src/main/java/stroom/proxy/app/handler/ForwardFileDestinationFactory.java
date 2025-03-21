@@ -2,5 +2,5 @@ package stroom.proxy.app.handler;
 
 public interface ForwardFileDestinationFactory {
 
-    ForwardFileDestination create(ForwardFileConfig config);
+    ForwardDestination create(ForwardFileConfig config);
 }

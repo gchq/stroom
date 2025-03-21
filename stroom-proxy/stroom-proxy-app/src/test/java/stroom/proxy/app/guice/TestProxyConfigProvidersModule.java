@@ -27,6 +27,10 @@ public class TestProxyConfigProvidersModule {
     private static final Set<Class<? extends AbstractConfig>> SPECIAL_CASE_INTERFACE_CLASSES = new HashSet<>(
             GenerateProxyConfigProvidersModule.CUSTOM_CLASS_MAPPINGS.values());
 
+    /**
+     * If this fails you probably want to run {@link GenerateProxyConfigProvidersModule} to generate
+     * the missing provider methods
+     */
     @Test
     void testProviderMethodPresence() {
         final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
@@ -61,9 +65,9 @@ public class TestProxyConfigProvidersModule {
 
                     return LogUtil.message(
                             "{} should contain an @Provides method for each injectable config class. " +
-                                    "Found the following unwanted method return types {}. " +
-                                    "injectableConfigClasses: {}, methodReturnClasses: {}. " +
-                                    "See {}.",
+                            "Found the following unwanted method return types {}. " +
+                            "injectableConfigClasses: {}, methodReturnClasses: {}. " +
+                            "See {}.",
                             ProxyConfigProvidersModule.class.getSimpleName(),
                             unwantedMethods,
                             injectableConfigClasses.size(),
@@ -79,9 +83,9 @@ public class TestProxyConfigProvidersModule {
 
                     return LogUtil.message(
                             "{} should contain an @Provides method for each injectable config class. " +
-                                    "Found the following missing method return types {}. " +
-                                    "injectableConfigClasses: {}, methodReturnClasses: {}. " +
-                                    "See {}.",
+                            "Found the following missing method return types {}. " +
+                            "injectableConfigClasses: {}, methodReturnClasses: {}. " +
+                            "See {}.",
                             ProxyConfigProvidersModule.class.getSimpleName(),
                             missingMethods,
                             injectableConfigClasses.size(),

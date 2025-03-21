@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder({
         "feedName",
@@ -112,21 +114,34 @@ public class ZipEntryGroup {
 
     @JsonIgnore
     public long getTotalUncompressedSize() {
-        long size = 0;
-        if (manifestEntry != null) {
-            size += manifestEntry.getUncompressedSize();
-        }
-        if (metaEntry != null) {
-            size += metaEntry.getUncompressedSize();
-        }
-        if (contextEntry != null) {
-            size += contextEntry.getUncompressedSize();
-        }
-        if (dataEntry != null) {
-            size += dataEntry.getUncompressedSize();
-        }
-        return size;
+        return Stream.of(manifestEntry, metaEntry, contextEntry, dataEntry)
+                .filter(Objects::nonNull)
+                .mapToLong(Entry::getUncompressedSize)
+                .sum();
     }
+
+    @Override
+    public String toString() {
+        return "ZipEntryGroup{" +
+               "feedName='" + feedName + '\'' +
+               ", typeName='" + typeName + '\'' +
+               ", manifestEntry=" + entryToStr(manifestEntry) +
+               ", metaEntry=" + entryToStr(metaEntry) +
+               ", contextEntry=" + entryToStr(contextEntry) +
+               ", dataEntry=" + entryToStr(dataEntry) +
+               '}';
+    }
+
+    private String entryToStr(final Entry entry) {
+        if (entry != null) {
+            return entry.getName() + "(" + entry.getUncompressedSize() + ")";
+        } else {
+            return "null";
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     @JsonPropertyOrder({
             "name",
@@ -151,6 +166,14 @@ public class ZipEntryGroup {
 
         public long getUncompressedSize() {
             return uncompressedSize;
+        }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                   "name='" + name + '\'' +
+                   ", uncompressedSize=" + uncompressedSize +
+                   '}';
         }
     }
 }

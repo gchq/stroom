@@ -7,6 +7,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
+import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
@@ -97,27 +98,21 @@ public class ReceiveDataHelper {
                     CSVFormatter.escape(stroomStreamException.getMessage())));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
-            if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(status.getStroomStatusCode())) {
-                logStream.log(
-                        RECEIVE_LOG,
-                        status.getAttributeMap(),
-                        "REJECT",
-                        request.getRequestURI(),
-                        status.getStroomStatusCode().getCode(),
-                        -1,
-                        duration,
-                        e.getMessage());
-            } else {
-                logStream.log(
-                        RECEIVE_LOG,
-                        status.getAttributeMap(),
-                        "ERROR",
-                        request.getRequestURI(),
-                        status.getStroomStatusCode().getCode(),
-                        -1,
-                        duration,
-                        e.getMessage());
-            }
+            final StroomStatusCode stroomStatusCode = status.getStroomStatusCode();
+            final EventType eventType = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(stroomStatusCode)
+                    ? EventType.REJECT
+                    : EventType.ERROR;
+
+            logStream.log(
+                    RECEIVE_LOG,
+                    status.getAttributeMap(),
+                    eventType,
+                    request.getRequestURI(),
+                    stroomStatusCode,
+                    receiptIdStr,
+                    -1,
+                    duration,
+                    e.getMessage());
 
             throw stroomStreamException;
         }

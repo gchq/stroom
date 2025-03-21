@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class FileSystemTestUtil {
 
@@ -33,7 +34,7 @@ public abstract class FileSystemTestUtil {
     private static final Path EXPLODED_DIR = CONTENT_PACK_DOWNLOADS_DIR.resolve("exploded");
 
     private static final long TEST_PREFIX = System.currentTimeMillis();
-    private static long testSuffix = 0;
+    private static final AtomicLong TEST_SUFFIX = new AtomicLong();
 
     private FileSystemTestUtil() {
         // Utility
@@ -42,9 +43,8 @@ public abstract class FileSystemTestUtil {
     /**
      * @return a unique string for testing
      */
-    public static synchronized String getUniqueTestString() {
-        testSuffix++;
-        return TEST_PREFIX + "_" + testSuffix;
+    public static String getUniqueTestString() {
+        return TEST_PREFIX + "_" + TEST_SUFFIX.incrementAndGet();
     }
 
     /**

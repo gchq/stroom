@@ -5,7 +5,9 @@ import stroom.test.common.data.DataGenerator;
 import stroom.test.common.data.DataWriter;
 import stroom.test.common.data.FlatDataWriterBuilder;
 import stroom.test.common.data.XmlAttributesDataWriterBuilder;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 
 import io.vavr.Tuple;
@@ -44,6 +46,7 @@ public class SampleDataGenerator {
     private final Path templatesDir;
 
     private final List<CompletableFuture<Void>> futures = new ArrayList<>();
+    private final AtomicInteger taskCounter = new AtomicInteger();
 
     @Inject
     public SampleDataGenerator() {
@@ -68,16 +71,46 @@ public class SampleDataGenerator {
     public void generateData(final Path dir) {
 
         ensureAndCleanDir(dir);
+        LOGGER.info("Cleaned dir {}", dir);
 
         generateDataViewingData(dir);
+        LOGGER.info("Generated data viewing data");
 
         generateRefDataForEffectiveDateTesting(dir);
+        LOGGER.info("Generated reference data");
 
         generateCharsetData(dir);
+        LOGGER.info("Generated charset data");
 
-        LOGGER.info("Waiting for {} async tasks to complete", futures.size());
+        while (true) {
+            final int runningTasks = taskCounter.get();
+            if (runningTasks == 0) {
+                break;
+            } else {
+                LOGGER.info("Waiting for {} async tasks to complete", runningTasks);
+                ThreadUtil.sleep(2_000);
+            }
+        }
+        LOGGER.info("Joining threads");
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
         LOGGER.info("Completed generation");
+    }
+
+    private DataWriter buildXmlDataWriter() {
+        return XmlAttributesDataWriterBuilder.builder()
+                .namespace("records:2")
+                .rootElementName("records")
+                .recordElementName("record")
+                .fieldValueElementName("data")
+                .build();
+    }
+
+    private DataWriter buildCsvDataWriter() {
+        return FlatDataWriterBuilder.builder()
+                .delimitedBy(",")
+                .enclosedBy("\"")
+                .outputHeaderRow(true)
+                .build();
     }
 
     private void generateDataViewingData(final Path dir) {
@@ -86,20 +119,6 @@ public class SampleDataGenerator {
         // Increment the random seed each time so each data set has different but predictable data
         long randomSeed = 0;
 
-        final DataWriter csvDataWriter = FlatDataWriterBuilder.builder()
-                .delimitedBy(",")
-                .enclosedBy("\"")
-                .outputHeaderRow(true)
-                .build();
-
-        final DataWriter xmlDataWriter = XmlAttributesDataWriterBuilder.builder()
-                .namespace("records:2")
-                .rootElementName("records")
-                .recordElementName("record")
-                .fieldValueElementName("data")
-                .build();
-
-
         // Data that has one record per line
         // One with long lines, one with short
         generateDataViewRawData(
@@ -107,7 +126,7 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
-                csvDataWriter,
+                DataWriterMode.CSV,
                 shortLoremText,
                 LocalDateTime.of(2020, 6, 1, 0, 0),
                 randomSeed++);
@@ -117,7 +136,7 @@ public class SampleDataGenerator {
                 2,
                 "DATA_VIEWING_MULTI_LINE-EVENTS",
                 "\n",
-                csvDataWriter,
+                DataWriterMode.CSV,
                 longLoremText,
                 LocalDateTime.of(2020, 7, 1, 0, 0),
                 randomSeed++);
@@ -128,7 +147,7 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_SINGLE_LINE-EVENTS",
                 "|",
-                csvDataWriter,
+                DataWriterMode.CSV,
                 shortLoremText,
                 LocalDateTime.of(2020, 8, 1, 0, 0),
                 randomSeed++);
@@ -139,7 +158,7 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_XML_SINGLE_LINE-EVENTS",
                 "",
-                xmlDataWriter,
+                DataWriterMode.XML,
                 shortLoremText,
                 LocalDateTime.of(2020, 9, 1, 0, 0),
                 randomSeed++);
@@ -151,7 +170,7 @@ public class SampleDataGenerator {
                 1,
                 "DATA_VIEWING_XML_MULTI_LINE-EVENTS",
                 "\n",
-                xmlDataWriter,
+                DataWriterMode.XML,
                 shortLoremText,
                 LocalDateTime.of(2020, 10, 1, 0, 0),
                 randomSeed++);
@@ -161,25 +180,28 @@ public class SampleDataGenerator {
                 2,
                 "DATA_VIEWING_XML_MULTI_LINE-EVENTS",
                 "\n",
-                xmlDataWriter,
+                DataWriterMode.XML,
                 longLoremText,
                 LocalDateTime.of(2020, 11, 1, 0, 0),
                 randomSeed++);
-
     }
 
     private void generateDataViewRawData(final Path dir,
                                          final int fileNo,
                                          final String feedName,
                                          final String recordSeparator,
-                                         final DataWriter dataWriter,
+                                         final DataWriterMode dataWriterMode,
                                          final int loremWordCount,
                                          final LocalDateTime startDate,
                                          final long randomSeed) {
         final Path file = makeInputFilePath(dir, fileNo, feedName);
+        final DataWriter dataWriter = switch (dataWriterMode) {
+            case CSV -> buildCsvDataWriter();
+            case XML -> buildXmlDataWriter();
+        };
 
-        futures.add(CompletableFuture.runAsync(() -> {
-            LOGGER.info("Generating file {}", file.toAbsolutePath().normalize());
+        runAsync(() -> {
+            final DurationTimer timer = DurationTimer.start();
             DataGenerator.buildDefinition()
                     .addFieldDefinition(DataGenerator.randomDateTimeField(
                             "dateTime",
@@ -201,7 +223,7 @@ public class SampleDataGenerator {
                             faker -> faker.name().lastName()))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "username",
-                            faker -> faker.name().username()))
+                            faker -> faker.internet().username()))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "bloodGroup",
                             faker -> faker.bloodtype().bloodGroup()))
@@ -225,7 +247,9 @@ public class SampleDataGenerator {
                     .rowCount(2_000)
                     .withRandomSeed(randomSeed)
                     .generate();
-        }));
+            LOGGER.info("Generated file {} in {}",
+                    file.toAbsolutePath().normalize(), timer);
+        });
     }
 
     private void generateRefDataForEffectiveDateTesting(final Path dir) {
@@ -242,7 +266,7 @@ public class SampleDataGenerator {
             final int finalI = i;
             final LocalDateTime finalEffectiveDateTime = effectiveDateTime;
 
-            futures.add(CompletableFuture.runAsync(() -> {
+            runAsync(() -> {
                 final Path refFile = makeInputFilePath(dir, finalI, finalEffectiveDateTime, refFeed);
                 LOGGER.info("Generating file {}", refFile.toAbsolutePath().normalize().toString());
 
@@ -263,12 +287,12 @@ public class SampleDataGenerator {
                         .consumedBy(DataGenerator.getFileOutputConsumer(refFile))
                         .rowCount(userCount)
                         .generate();
-
-            }));
+            });
             effectiveDateTime = effectiveDateTime.plusDays(1);
         }
 
-        futures.add(CompletableFuture.runAsync(() -> {
+
+        runAsync(() -> {
             final Path eventsFile = makeInputFilePath(dir, 1, eventsFeed);
             LOGGER.info("Generating file {}", eventsFile.toAbsolutePath().normalize());
 
@@ -290,6 +314,17 @@ public class SampleDataGenerator {
                     .rowCount(userCount)
                     .multiThreaded()
                     .generate();
+        });
+    }
+
+    private void runAsync(final Runnable asyncTask) {
+        taskCounter.incrementAndGet();
+        futures.add(CompletableFuture.runAsync(() -> {
+            try {
+                asyncTask.run();
+            } finally {
+                taskCounter.decrementAndGet();
+            }
         }));
     }
 
@@ -340,7 +375,7 @@ public class SampleDataGenerator {
                                         final ByteOrderMark byteOrderMark,
                                         final String sourceContent,
                                         final int iteration) {
-        futures.add(CompletableFuture.runAsync(() -> {
+        runAsync(() -> {
             LOGGER.info("Creating feed {} in {} for charset {} and BOM {}",
                     feedName, dir, charset, byteOrderMark);
 
@@ -378,7 +413,7 @@ public class SampleDataGenerator {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }));
+        });
     }
 
     private Path makeInputFilePath(final Path dir,
@@ -404,6 +439,16 @@ public class SampleDataGenerator {
             throw new RuntimeException(LogUtil.message("Error ensuring directory {} exists",
                     dir.toAbsolutePath().normalize()), e);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static enum DataWriterMode {
+        XML,
+        CSV,
+        ;
     }
 
 }

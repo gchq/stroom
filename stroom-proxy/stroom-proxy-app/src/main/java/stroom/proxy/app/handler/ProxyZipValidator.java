@@ -4,12 +4,10 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.util.io.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -20,7 +18,7 @@ import java.util.Set;
  * The entry order will also be specific with associated entries having the order (manifest, meta, context, data).
  * </p><p>
  * Note that it is not necessary for a manifest file (.mf) to exist at all but if must be the first file if it is
- * present. Meta files may be omitted if there is accompanying meta data received via header arguments.
+ * present. Meta files (.meta) must come before all other file types (except .mf).
  * It is also not necessary for context files (.ctx) to exist (in fact they are rarely used), but if present
  * they must follow the meta file (.meta). Finally all entry sets must include the actual data to be valid (.dat).
  * </p><p>
@@ -41,21 +39,21 @@ public class ProxyZipValidator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyZipValidator.class);
 
-    private static final Set<StroomZipFileType> ALLOWED_BEFORE_META = Collections.singleton(
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_META = EnumSet.of(
             StroomZipFileType.MANIFEST);
-    private static final Set<StroomZipFileType> ALLOWED_BEFORE_CONTEXT = Set.of(
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_CONTEXT = EnumSet.of(
             StroomZipFileType.MANIFEST,
             StroomZipFileType.META);
-    private static final Set<StroomZipFileType> ALLOWED_BEFORE_DATA = Set.of(
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_DATA = EnumSet.of(
             StroomZipFileType.MANIFEST,
             StroomZipFileType.META,
             StroomZipFileType.CONTEXT);
-    private static final Set<StroomZipFileType> REQUIRED_BEFORE_DATA = Set.of(
+    private static final Set<StroomZipFileType> REQUIRED_BEFORE_DATA = EnumSet.of(
             StroomZipFileType.META);
 
     private String lastBaseName;
     private StroomZipFileType lastType;
-    private final Set<StroomZipFileType> lastTypes = new HashSet<>();
+    private final Set<StroomZipFileType> lastTypes = EnumSet.noneOf(StroomZipFileType.class);
     private boolean valid = true;
     private long count;
     private String errorMessage;
@@ -64,25 +62,25 @@ public class ProxyZipValidator {
         // Stop checking when entries are no longer valid.
         if (valid) {
             final FileName fileName = FileName.parse(entryName);
-            final Optional<StroomZipFileType> optionalStroomZipFileType = Arrays
-                    .stream(StroomZipFileType.values())
-                    .filter(type -> type.getExtension().equals(fileName.getExtension()))
-                    .findAny();
-            if (optionalStroomZipFileType.isEmpty()) {
+            final StroomZipFileType stroomZipFileType = StroomZipFileType.fromCanonicalExtension(
+                    fileName.getExtension());
+
+            if (stroomZipFileType == null) {
                 error("An unknown entry type was found '" + entryName + "'");
-
             } else {
-                final StroomZipFileType stroomZipFileType = optionalStroomZipFileType.get();
-
                 if (!Objects.equals(lastBaseName, fileName.getBaseName())) {
+                    if (lastBaseName != null && lastType != StroomZipFileType.DATA) {
+                        error(LogUtil.message("Expected to have found {}.{} before {}",
+                                lastBaseName, StroomZipFileType.DATA.getExtension(), entryName));
+                    }
                     // If we are switching base name then check the base name is valid.
                     final String expectedBaseName = NumericFileNameUtil.create(++count);
                     if (!expectedBaseName.equals(fileName.getBaseName())) {
                         error("Unexpected base name found '" +
-                                fileName.getBaseName() +
-                                "' expected '" +
-                                expectedBaseName +
-                                "'");
+                              fileName.getBaseName() +
+                              "' expected '" +
+                              expectedBaseName +
+                              "'");
                     } else {
                         // Set no previous extension as this is a new group.
                         lastTypes.clear();
@@ -110,37 +108,52 @@ public class ProxyZipValidator {
                 }
             }
             case META -> {
-                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_META, Collections.emptySet())) {
-                    error("An unexpected meta entry was found '" + entryName + "'");
-                }
+                checkAllowedBefore(entryName, type, lastTypes, ALLOWED_BEFORE_META);
             }
             case CONTEXT -> {
-                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_CONTEXT, Collections.emptySet())) {
-                    error("A unexpected context entry was found '" + entryName + "'");
-                }
+                checkAllowedBefore(entryName, type, lastTypes, ALLOWED_BEFORE_CONTEXT);
             }
             case DATA -> {
-                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_DATA, REQUIRED_BEFORE_DATA)) {
-                    error("An unexpected data entry was found '" + entryName + "'");
+                checkAllowedBefore(entryName, type, lastTypes, ALLOWED_BEFORE_DATA);
+                checkRequiredBefore(entryName, type, lastTypes, REQUIRED_BEFORE_DATA);
+            }
+        }
+    }
+
+    private void checkAllowedBefore(final String entryName,
+                                    final StroomZipFileType type,
+                                    final Set<StroomZipFileType> lastTypes,
+                                    final Set<StroomZipFileType> allowedTypes) {
+        // containsAll is fast, so do it first on the assumption that the zip is good
+        if (!allowedTypes.containsAll(lastTypes)) {
+            // One of lastTypes is not allowed so find out which
+            for (final StroomZipFileType aLastType : lastTypes) {
+                if (!allowedTypes.contains(aLastType)) {
+                    error(LogUtil.message(
+                            "An unexpected type {} was found before '{}'. Types allowed before {} are {}",
+                            aLastType, entryName, type, allowedTypes));
+                    break;
                 }
             }
         }
     }
 
-    private boolean isUnexpectedType(final Set<StroomZipFileType> lastTypes,
-                                     final Set<StroomZipFileType> allowed,
-                                     final Set<StroomZipFileType> required) {
-        for (final StroomZipFileType stroomZipFileType : lastTypes) {
-            if (!allowed.contains(stroomZipFileType)) {
-                return true;
+    private void checkRequiredBefore(final String entryName,
+                                     final StroomZipFileType type,
+                                     final Set<StroomZipFileType> lastTypes,
+                                     final Set<StroomZipFileType> requiredTypes) {
+        // containsAll is fast, so do it first on the assumption that the zip is good
+        if (!lastTypes.containsAll(requiredTypes)) {
+            // One of requiredTypes is not in lastTypes so find out which
+            for (final StroomZipFileType aRequiredType : requiredTypes) {
+                if (!lastTypes.contains(aRequiredType)) {
+                    error(LogUtil.message(
+                            "The type {} was not found before '{}'. Types required before {} are {}",
+                            aRequiredType, entryName, type, requiredTypes));
+                    break;
+                }
             }
         }
-        for (final StroomZipFileType stroomZipFileType : required) {
-            if (!lastTypes.contains(stroomZipFileType)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void finalCheck() {

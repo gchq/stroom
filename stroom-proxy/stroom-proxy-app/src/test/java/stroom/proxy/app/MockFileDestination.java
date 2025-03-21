@@ -6,6 +6,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
@@ -55,7 +56,11 @@ public class MockFileDestination {
                 true,
                 false,
                 "My forward file",
-                "forward_dest");
+                "forward_dest",
+                null,
+                new ForwardQueueConfig(),
+                null,
+                null);
     }
 
     /**
@@ -195,9 +200,9 @@ public class MockFileDestination {
                 },
                 (long) count,
                 () -> "Forwarded file pairs count",
-                Duration.ofMinutes(1),
-                Duration.ofMillis(100),
-                Duration.ofSeconds(1));
+                Duration.ofMinutes(2),
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5));
 
         final long actualCount = getForwardFiles(config)
                 .stream()
@@ -255,9 +260,9 @@ public class MockFileDestination {
                 () -> getForwardFileMetaCount(config),
                 (long) count,
                 () -> "Forwarded file pairs count",
-                Duration.ofMinutes(1),
-                Duration.ofMillis(100),
-                Duration.ofSeconds(1));
+                Duration.ofMinutes(2),
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5));
 
         final List<ForwardFileItem> forwardFileItems = getForwardFiles(config);
 

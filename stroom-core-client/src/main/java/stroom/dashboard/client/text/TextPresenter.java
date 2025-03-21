@@ -78,11 +78,11 @@ public class TextPresenter
 
     private static final Version CURRENT_MODEL_VERSION = new Version(7, 8, 0);
     private static final ColumnRef DEFAULT_STREAM_ID_COLUMN = new ColumnRef(
-            SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME,
-            SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+            SpecialColumns.RESERVED_STREAM_ID,
+            SpecialColumns.RESERVED_STREAM_ID);
     private static final ColumnRef DEFAULT_EVENT_ID_COLUMN = new ColumnRef(
-            SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME,
-            SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+            SpecialColumns.RESERVED_EVENT_ID,
+            SpecialColumns.RESERVED_EVENT_ID);
     private static final String OLD_STREAM_ID = "StreamId";
     private static final String OLD_EVENT_ID = "EventId";
 
@@ -347,7 +347,7 @@ public class TextPresenter
                     final ComponentSelection selected = selection.get(0);
                     currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
                     if (currentStreamId == null) {
-                        currentStreamId = getLong(selected.get(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME));
+                        currentStreamId = getLong(selected.get(SpecialColumns.RESERVED_STREAM_ID));
                         if (currentStreamId == null) {
                             currentStreamId = getLong(selected.get(OLD_STREAM_ID));
                         }
@@ -355,7 +355,7 @@ public class TextPresenter
                     currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
                     currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
                     if (currentRecordIndex == null) {
-                        currentRecordIndex = getLong(selected.get(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME));
+                        currentRecordIndex = getLong(selected.get(SpecialColumns.RESERVED_EVENT_ID));
                         if (currentRecordIndex == null) {
                             currentRecordIndex = getLong(selected.get(OLD_EVENT_ID));
                         }

@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.util.io.FileUtil;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class Dir implements AutoCloseable {
 
@@ -10,9 +11,9 @@ public class Dir implements AutoCloseable {
     private final Path path;
 
     Dir(final DirQueue dirQueue,
-                final Path path) {
-        this.dirQueue = dirQueue;
-        this.path = path;
+        final Path path) {
+        this.dirQueue = Objects.requireNonNull(dirQueue);
+        this.path = Objects.requireNonNull(path);
     }
 
     public Path getPath() {

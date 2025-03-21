@@ -4,7 +4,6 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.util.NullSafe;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.logging.LogUtil;
-import stroom.util.net.HostNameUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -27,8 +26,7 @@ public class ProxyId {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyId.class);
     private static final String PROXY_ID_FILE = "proxy-id.txt";
-    private static final String PROXY_ID = "Proxy-";
-    private static final String LOCALHOST = "localhost";
+    private static final String PROXY_ID_PREFIX = "Proxy-";
 
     private final HomeDirProvider homeDirProvider;
     private final String id;
@@ -41,10 +39,13 @@ public class ProxyId {
         final String source;
         final String proxyId = createSafeString(proxyConfig.getProxyId());
         if (NullSafe.isBlankString(proxyId)) {
-            LOGGER.info("No proxy id is configured");
+            LOGGER.warn("No proxy id is configured. " +
+                        "Unless this is a test environment or the only proxy in the environment, you are " +
+                        "recommended to set '{}' in config as it will be used in all receipt IDs returned by " +
+                        "this proxy.", ProxyConfig.PROP_NAME_PROXY_ID);
             final String storedId = readProxyId();
             if (NullSafe.isBlankString(storedId) || !PROXY_ID_PATTERN.matcher(storedId).matches()) {
-                final String createdId = createProxyId();
+                final String createdId = createUuidBasedProxyId();
                 writeProxyId(createdId);
                 LOGGER.info("No or invalid stored proxy ID '{}' found in '{}', created and stored new proxy id: {}",
                         storedId, PROXY_ID_FILE, createdId);
@@ -98,18 +99,8 @@ public class ProxyId {
         }
     }
 
-    private String createProxyId() {
-        final String hostName = HostNameUtil.determineHostName();
-        if (hostName != null && !hostName.isBlank()) {
-            final String safeHostName = createSafeString(hostName);
-            if (!LOCALHOST.equalsIgnoreCase(safeHostName)
-                && Character.isAlphabetic(safeHostName.charAt(0))) {
-
-                return PROXY_ID + safeHostName;
-            }
-        }
-        // No suitable hostname so just give it a UUID
-        return PROXY_ID + UUID.randomUUID();
+    private String createUuidBasedProxyId() {
+        return PROXY_ID_PREFIX + UUID.randomUUID();
     }
 
     static String createSafeString(final String in) {

@@ -142,7 +142,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
             response.setStatus(stroomStatusCode.getHttpCode());
 
+            // TODO Should we put receiptId in content or a resp header?
             LOGGER.debug(() -> "Writing receipt id attribute to response: " + receiptId);
+//            response.setHeader(StandardHeaderArguments.RECEIPT_ID, receiptId);
             try (final PrintWriter writer = response.getWriter()) {
                 if (writer != null) {
                     writer.println(receiptId);

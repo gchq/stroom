@@ -4,17 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class CSVFormatter {
 
     private static final String COMMA = ",";
     private static final String QUOTE = "\"";
-    private static final String DOUBLE_QUOTE = "\"\"";
-    private static final Pattern QUOTE_PATTERN = Pattern.compile(QUOTE);
+    private static final String ESCAPED_DOUBLE_QUOTE = "\"\"";
     private static final String EQUALS = "=";
     private static final String ESCAPED_EQUALS = "\\=";
-    private static final Pattern EQUALS_PATTERN = Pattern.compile(EQUALS);
 
     public static String format(final Map<String, String> map, final boolean sortByKey) {
         final List<String> keys = new ArrayList<>(map.keySet());
@@ -44,12 +41,9 @@ public class CSVFormatter {
     public static String escape(final String value) {
         if (value == null) {
             return "";
+        } else {
+            return value.replace("\"", ESCAPED_DOUBLE_QUOTE)
+                    .replace("=", ESCAPED_EQUALS);
         }
-
-        String escaped = value;
-        escaped = QUOTE_PATTERN.matcher(escaped).replaceAll(DOUBLE_QUOTE);
-        escaped = EQUALS_PATTERN.matcher(escaped).replaceAll(ESCAPED_EQUALS);
-
-        return escaped;
     }
 }
