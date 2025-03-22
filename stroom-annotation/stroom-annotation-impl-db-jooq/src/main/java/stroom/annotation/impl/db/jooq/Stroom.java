@@ -14,6 +14,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.annotation.impl.db.jooq.tables.Annotation;
 import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.AnnotationFeed;
 import stroom.annotation.impl.db.jooq.tables.AnnotationLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription;
 import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
@@ -47,6 +48,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.annotation_entry</code>.
      */
     public final AnnotationEntry ANNOTATION_ENTRY = AnnotationEntry.ANNOTATION_ENTRY;
+
+    /**
+     * The table <code>stroom.annotation_feed</code>.
+     */
+    public final AnnotationFeed ANNOTATION_FEED = AnnotationFeed.ANNOTATION_FEED;
 
     /**
      * The table <code>stroom.annotation_link</code>.
@@ -87,6 +93,7 @@ public class Stroom extends SchemaImpl {
             Annotation.ANNOTATION,
             AnnotationDataLink.ANNOTATION_DATA_LINK,
             AnnotationEntry.ANNOTATION_ENTRY,
+            AnnotationFeed.ANNOTATION_FEED,
             AnnotationLink.ANNOTATION_LINK,
             AnnotationSubscription.ANNOTATION_SUBSCRIPTION,
             AnnotationTag.ANNOTATION_TAG,

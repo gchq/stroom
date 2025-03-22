@@ -28,6 +28,7 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     private final String defaultRetentionPeriod;
     private final StroomDuration physicalDeleteAge;
     private final CacheConfig annotationTagCache;
+    private final CacheConfig annotationFeedCache;
 
     public AnnotationConfig() {
         dbConfig = new AnnotationDBConfig();
@@ -35,6 +36,10 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
         defaultRetentionPeriod = DEFAULT_RETENTION_PERIOD;
         physicalDeleteAge = StroomDuration.ofDays(7);
         annotationTagCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        annotationFeedCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
@@ -46,12 +51,14 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                             @JsonProperty("standardComments") final List<String> standardComments,
                             @JsonProperty("defaultRetentionPeriod") final String defaultRetentionPeriod,
                             @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge,
-                            @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache) {
+                            @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache,
+                            @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache) {
         this.dbConfig = dbConfig;
         this.standardComments = standardComments;
         this.defaultRetentionPeriod = defaultRetentionPeriod;
         this.physicalDeleteAge = physicalDeleteAge;
         this.annotationTagCache = annotationTagCache;
+        this.annotationFeedCache = annotationFeedCache;
     }
 
     @Override
@@ -81,6 +88,11 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     @JsonPropertyDescription("Cache config for annotation tags")
     public CacheConfig getAnnotationTagCache() {
         return annotationTagCache;
+    }
+
+    @JsonPropertyDescription("Cache config for annotation feed reference")
+    public CacheConfig getAnnotationFeedCache() {
+        return annotationFeedCache;
     }
 
     @BootStrapConfig

@@ -58,6 +58,13 @@ CREATE TABLE IF NOT EXISTS annotation_subscription (
   CONSTRAINT            annotation_subscription_fk_annotation_id FOREIGN KEY (fk_annotation_id) REFERENCES annotation (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `annotation_feed` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `annotation_feed_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
 DROP PROCEDURE IF EXISTS V07_09_00_001_annotation;
 
 DELIMITER $$
@@ -241,6 +248,20 @@ BEGIN
 
     IF object_count > 0 THEN
         ALTER TABLE `annotation` DROP COLUMN `history`;
+    END IF;
+
+    --
+    -- Add feed
+    --
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.columns
+    WHERE table_schema = database()
+    AND table_name = 'annotation_data_link'
+    AND column_name = 'feed_id';
+
+    IF object_count = 0 THEN
+        ALTER TABLE `annotation_data_link` ADD COLUMN `feed_id` int DEFAULT NULL;
     END IF;
 
 END $$

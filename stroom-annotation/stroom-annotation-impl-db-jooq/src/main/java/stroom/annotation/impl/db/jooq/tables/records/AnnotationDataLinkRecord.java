@@ -74,6 +74,20 @@ public class AnnotationDataLinkRecord extends UpdatableRecordImpl<AnnotationData
         return (Long) get(3);
     }
 
+    /**
+     * Setter for <code>stroom.annotation_data_link.feed_id</code>.
+     */
+    public void setFeedId(Integer value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_data_link.feed_id</code>.
+     */
+    public Integer getFeedId() {
+        return (Integer) get(4);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -97,13 +111,14 @@ public class AnnotationDataLinkRecord extends UpdatableRecordImpl<AnnotationData
     /**
      * Create a detached, initialised AnnotationDataLinkRecord
      */
-    public AnnotationDataLinkRecord(Long id, Long fkAnnotationId, Long streamId, Long eventId) {
+    public AnnotationDataLinkRecord(Long id, Long fkAnnotationId, Long streamId, Long eventId, Integer feedId) {
         super(AnnotationDataLink.ANNOTATION_DATA_LINK);
 
         setId(id);
         setFkAnnotationId(fkAnnotationId);
         setStreamId(streamId);
         setEventId(eventId);
+        setFeedId(feedId);
         resetChangedOnNotNull();
     }
 }

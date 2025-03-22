@@ -51,6 +51,7 @@ import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.StreamFeedProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
@@ -65,6 +66,7 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -104,7 +106,7 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION
 
 // Make this a singleton so we don't keep recreating the mappers.
 @Singleton
-class AnnotationDaoImpl implements AnnotationDao {
+class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationDaoImpl.class);
 
@@ -150,19 +152,25 @@ class AnnotationDaoImpl implements AnnotationDao {
     private final UserRefLookup userRefLookup;
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final AnnotationTagDaoImpl annotationTagDao;
+    private final StreamFeedProvider streamFeedProvider;
+    private final AnnotationFeedCache annotationFeedCache;
 
     @Inject
     AnnotationDaoImpl(final AnnotationDbConnProvider connectionProvider,
                       final ExpressionMapperFactory expressionMapperFactory,
                       final UserRefLookup userRefLookup,
                       final Provider<AnnotationConfig> annotationConfigProvider,
-                      final AnnotationTagDaoImpl annotationTagDao) {
+                      final AnnotationTagDaoImpl annotationTagDao,
+                      final StreamFeedProvider streamFeedProvider,
+                      final AnnotationFeedCache annotationFeedCache) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
         this.valueMapper = createValueMapper();
         this.annotationConfigProvider = annotationConfigProvider;
         this.annotationTagDao = annotationTagDao;
+        this.streamFeedProvider = streamFeedProvider;
+        this.annotationFeedCache = annotationFeedCache;
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
@@ -226,6 +234,8 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationFields.DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION, value -> value);
         expressionMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
+        expressionMapper.map(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID, value ->
+                annotationFeedCache.getId(value).orElse(-1));
 
         return expressionMapper;
     }
@@ -280,6 +290,8 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationFields.DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION, ValString::create);
         valueMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
         valueMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
+        valueMapper.map(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID, id ->
+                ValString.create(annotationFeedCache.getName(id).orElse("")));
 
         return valueMapper;
     }
@@ -851,6 +863,9 @@ class AnnotationDaoImpl implements AnnotationDao {
                                  final UserRef currentUser,
                                  final long annotationId,
                                  final EventId eventId) {
+        final String feedName = streamFeedProvider.getFeedName(eventId.getStreamId());
+        final Integer feedId = annotationFeedCache.getOrCreateId(feedName);
+
         try {
             // Create event link.
             try {
@@ -858,9 +873,11 @@ class AnnotationDaoImpl implements AnnotationDao {
                         JooqUtil.context(connectionProvider, context -> context
                                 .insertInto(ANNOTATION_DATA_LINK,
                                         ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+                                        ANNOTATION_DATA_LINK.FEED_ID,
                                         ANNOTATION_DATA_LINK.STREAM_ID,
                                         ANNOTATION_DATA_LINK.EVENT_ID)
                                 .values(annotationId,
+                                        feedId,
                                         eventId.getStreamId(),
                                         eventId.getEventId())
                                 .execute()));
@@ -938,8 +955,10 @@ class AnnotationDaoImpl implements AnnotationDao {
 
             if (expressionFields.contains(AnnotationFields.STREAM_ID) ||
                 expressionFields.contains(AnnotationFields.EVENT_ID) ||
+                expressionFields.contains(AnnotationFields.FEED) ||
                 dbFields.contains(ANNOTATION_DATA_LINK.STREAM_ID) ||
-                dbFields.contains(ANNOTATION_DATA_LINK.EVENT_ID)) {
+                dbFields.contains(ANNOTATION_DATA_LINK.EVENT_ID) ||
+                dbFields.contains(ANNOTATION_DATA_LINK.FEED_ID)) {
                 select = select
                         .leftOuterJoin(ANNOTATION_DATA_LINK)
                         .on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID));
@@ -1154,5 +1173,11 @@ class AnnotationDaoImpl implements AnnotationDao {
                             .where(ANNOTATION.ID.eq(id))
                             .execute();
                 }));
+    }
+
+    @Override
+    public void clear() {
+        JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_ENTRY).execute());
+        JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION).execute());
     }
 }

@@ -4,6 +4,7 @@ import stroom.cache.impl.CacheModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.meta.api.StreamFeedProvider;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
@@ -42,6 +43,12 @@ public class TestModule extends AbstractModule {
             @Override
             public UserRef decorate(final UserRef userRef) {
                 return userRef;
+            }
+        });
+        bind(StreamFeedProvider.class).toInstance(new StreamFeedProvider() {
+            @Override
+            public String getFeedName(final long id) {
+                return "TEST_FEED_NAME";
             }
         });
     }

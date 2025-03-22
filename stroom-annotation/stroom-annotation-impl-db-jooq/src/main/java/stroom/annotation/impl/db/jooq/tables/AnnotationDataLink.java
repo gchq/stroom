@@ -77,6 +77,11 @@ public class AnnotationDataLink extends TableImpl<AnnotationDataLinkRecord> {
      */
     public final TableField<AnnotationDataLinkRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.annotation_data_link.feed_id</code>.
+     */
+    public final TableField<AnnotationDataLinkRecord, Integer> FEED_ID = createField(DSL.name("feed_id"), SQLDataType.INTEGER, this, "");
+
     private AnnotationDataLink(Name alias, Table<AnnotationDataLinkRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

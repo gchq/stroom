@@ -7,6 +7,7 @@ package stroom.annotation.impl.db.jooq;
 import stroom.annotation.impl.db.jooq.tables.Annotation;
 import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.AnnotationFeed;
 import stroom.annotation.impl.db.jooq.tables.AnnotationLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription;
 import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
@@ -33,6 +34,11 @@ public class Tables {
      * The table <code>stroom.annotation_entry</code>.
      */
     public static final AnnotationEntry ANNOTATION_ENTRY = AnnotationEntry.ANNOTATION_ENTRY;
+
+    /**
+     * The table <code>stroom.annotation_feed</code>.
+     */
+    public static final AnnotationFeed ANNOTATION_FEED = AnnotationFeed.ANNOTATION_FEED;
 
     /**
      * The table <code>stroom.annotation_link</code>.

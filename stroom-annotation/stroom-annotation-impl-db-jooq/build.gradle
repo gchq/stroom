@@ -47,7 +47,8 @@ jooq {
                                 "annotation_tag|" +
                                 "annotation_tag_link|" +
                                 "annotation_link|" +
-                                "annotation_subscription"
+                                "annotation_subscription|" +
+                                "annotation_feed"
                         // We don't want to include flyway versioning
                         excludes = 'annotation_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
