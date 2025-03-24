@@ -29,8 +29,7 @@ import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.event.EventResourceImpl;
-import stroom.proxy.app.handler.ForwardFileDestinationFactory;
-import stroom.proxy.app.handler.ForwardFileDestinationFactoryImpl;
+import stroom.proxy.app.handler.ForwarderModule;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
@@ -86,8 +85,7 @@ public class ProxyModule extends AbstractModule {
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());
         install(new DropwizardModule());
-
-        bind(ForwardFileDestinationFactory.class).to(ForwardFileDestinationFactoryImpl.class);
+        install(new ForwarderModule());
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

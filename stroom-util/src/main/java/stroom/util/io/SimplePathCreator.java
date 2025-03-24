@@ -16,6 +16,8 @@
 
 package stroom.util.io;
 
+import stroom.util.NullSafe;
+
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
@@ -174,6 +176,24 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
+    public boolean containsVars(final String path) {
+        if (NullSafe.isNonBlankString(path)) {
+            char lastChar = 0;
+            boolean foundStart = false;
+            final char[] arr = path.toCharArray();
+            for (final char c : arr) {
+                if (c == '{' && lastChar == '$') {
+                    foundStart = true;
+                } else if (foundStart && c == '}') {
+                    return true;
+                }
+                lastChar = c;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public String replace(final String path,
                           final String type,
                           final LongSupplier replacementSupplier,
@@ -224,9 +244,9 @@ public class SimplePathCreator implements PathCreator {
     @Override
     public String toString() {
         return "PathCreator{" +
-                "tempDir=" + tempDirProvider.get() +
-                ", homeDir=" + homeDirProvider.get() +
-                '}';
+               "tempDir=" + tempDirProvider.get() +
+               ", homeDir=" + homeDirProvider.get() +
+               '}';
     }
 
     private Path toAbsolutePath(final String pathString) {

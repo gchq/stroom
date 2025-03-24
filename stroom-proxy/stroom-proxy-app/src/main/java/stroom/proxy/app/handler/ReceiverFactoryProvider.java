@@ -1,20 +1,26 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.List;
 
 @Singleton
 public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiverFactoryProvider.class);
+
     private ReceiverFactory receiverFactory;
+    private ThreadConfig threadConfig;
 
     @Inject
     public ReceiverFactoryProvider(final ProxyConfig proxyConfig,
@@ -27,60 +33,31 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<ZipReceiver> zipReceiverProvider,
                                    final Provider<SimpleReceiver> simpleReceiverProvider,
                                    final ProxyServices proxyServices) {
+        this.threadConfig = proxyConfig.getThreadConfig();
+        // TODO we should really be creating all forwarders regardless of state, so that
+        //  they can be initialised in a paused state, then respond to a change to the enabled
+        //  state. This is subject to fixing the hot loading of forwarder config changes.
         // Find out how many forward destinations are enabled.
-        final long enabledForwardCount = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
-                                .stream()
-                                .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations())
-                                .stream()
-                                .filter(ForwardFileConfig::isEnabled))
+        final long enabledForwardCount = proxyConfig.streamAllEnabledForwarders()
                 .count();
         // Find out how many forward destinations are set for instant forwarding.
-        final long instantForwardCount = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
-                                .stream()
-                                .filter(ForwardHttpPostConfig::isInstant),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations())
-                                .stream()
-                                .filter(ForwardFileConfig::isInstant))
+        final long enabledInstantForwardCount = proxyConfig.streamAllEnabledForwarders()
+                .filter(ForwarderConfig::isInstant)
                 .count();
 
+        // Config validation should pick these things up, but just in case
         if (enabledForwardCount == 0) {
-            throw new RuntimeException("No forward destinations are configured.");
+            throw new RuntimeException("No enabled forward destinations are configured.");
         }
 
-        if (instantForwardCount > 0) {
+        if (enabledInstantForwardCount > 0) {
             if (enabledForwardCount > 1) {
-                throw new RuntimeException("Storing is not enabled but more than one forward destination is " +
-                        "configured.");
+                throw new RuntimeException(LogUtil.message("At least one forward destination is set as " +
+                                                           "instant=true. You cannot have other enabled forward " +
+                                                           "destinations when using instant forwarding."));
             }
 
-            // See if we can create a direct HTTP POST forwarding receiver.
-            if (proxyConfig.getForwardHttpDestinations() != null) {
-                final Optional<ForwardHttpPostConfig> optional = proxyConfig
-                        .getForwardHttpDestinations()
-                        .stream()
-                        .filter(ForwardHttpPostConfig::isEnabled)
-                        .findFirst();
-                // Create a direct forwarding HTTP POST receiver.
-                optional.ifPresent(forwardHttpPostConfig ->
-                        receiverFactory = instantForwardHttpPostProvider.get().get(forwardHttpPostConfig));
-            }
-
-            // See if we can create a direct file forwarding receiver.
-            if (proxyConfig.getForwardFileDestinations() != null) {
-                final Optional<ForwardFileConfig> optional = proxyConfig
-                        .getForwardFileDestinations()
-                        .stream()
-                        .filter(ForwardFileConfig::isEnabled)
-                        .findFirst();
-                if (optional.isPresent()) {
-                    // Create a direct forwarding file receiver.
-                    optional.ifPresent(forwardFileConfig ->
-                            receiverFactory = instantForwardFileProvider.get().get(forwardFileConfig));
-                }
-            }
+            createInstantForwarders(proxyConfig, instantForwardHttpPostProvider, instantForwardFileProvider);
         } else {
             // Create forwarder.
             final Forwarder forwarder = forwarderProvider.get();
@@ -89,64 +66,117 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     DirNames.FORWARDING_INPUT_QUEUE,
                     40,
                     "Forwarding Input Queue");
-            // Move items from the forwarding queue to the forwarder.
+            // Move items from the forwarding queue to the forwarder(s).
             final DirQueueTransfer forwardingInputQueueTransfer =
                     new DirQueueTransfer(forwardInputQueue::next, forwarder::add);
             proxyServices.addParallelExecutor("Forwarding queue transfer", () ->
-                    forwardingInputQueueTransfer, 1);
+                    forwardingInputQueueTransfer, threadConfig.getForwardingInputQueueThreadCount());
 
-            if (proxyConfig.getAggregatorConfig() != null && proxyConfig.getAggregatorConfig().isEnabled()) {
+            if (NullSafe.test(proxyConfig.getAggregatorConfig(), AggregatorConfig::isEnabled)) {
                 // If we are aggregating then create the aggregating moving parts.
-
-                // Create the aggregator.
-                final Aggregator aggregator = aggregatorProvider.get();
-                aggregator.setDestination(forwardInputQueue::add);
-
-                final DirQueue aggregateInputQueue = dirQueueFactory.create(
-                        DirNames.AGGREGATE_INPUT_QUEUE,
-                        30,
-                        "Aggregate Input Queue");
-                // Move items from the pre aggregate queue to the aggregator.
-                // TODO : Could use more than one thread here.
-                final DirQueueTransfer aggregateInputQueueTransfer =
-                        new DirQueueTransfer(aggregateInputQueue::next, aggregator::addDir);
-                proxyServices.addParallelExecutor("Aggregate input queue transfer", () ->
-                        aggregateInputQueueTransfer, 1);
-
-                // Create the pre aggregator.
-                final PreAggregator preAggregator = preAggregatorProvider.get();
-                preAggregator.setDestination(aggregateInputQueue::add);
-
-                final DirQueue preAggregateInputQueue = dirQueueFactory.create(
-                        DirNames.PRE_AGGREGATE_INPUT_QUEUE,
-                        20,
-                        "Pre Aggregate Input Queue");
-                // Move items from the file store to the pre aggregator.
-                final DirQueueTransfer preAggregateInputQueueTransfer =
-                        new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);
-                proxyServices.addParallelExecutor("Pre aggregate input queue transfer", () ->
-                        preAggregateInputQueueTransfer, 1);
-
-                // Create the receivers that will add data to the file store queue on receipt.
-                final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
-                simpleReceiver.setDestination(preAggregateInputQueue::add);
-                final ZipReceiver zipReceiver = zipReceiverProvider.get();
-                zipReceiver.setDestination(preAggregateInputQueue::add);
-
-                receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
-
+                createAggregatingReceiverFactory(
+                        dirQueueFactory,
+                        aggregatorProvider,
+                        preAggregatorProvider,
+                        zipReceiverProvider,
+                        simpleReceiverProvider,
+                        proxyServices,
+                        forwardInputQueue);
             } else {
                 // If we aren't aggregating then we just need to queue items for forwarding.
-
-                // Create the receivers that will add data to the forward queue on receipt.
-                final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
-                simpleReceiver.setDestination(forwardInputQueue::add);
-                final ZipReceiver zipReceiver = zipReceiverProvider.get();
-                zipReceiver.setDestination(forwardInputQueue::add);
-
-                receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
+                createNonAggregatingReceiverFactory(
+                        zipReceiverProvider,
+                        simpleReceiverProvider,
+                        forwardInputQueue);
             }
         }
+    }
+
+    private void createNonAggregatingReceiverFactory(final Provider<ZipReceiver> zipReceiverProvider,
+                                                     final Provider<SimpleReceiver> simpleReceiverProvider,
+                                                     final DirQueue forwardInputQueue) {
+        // Create the receivers that will add data to the forward queue on receipt.
+        final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
+        simpleReceiver.setDestination(forwardInputQueue::add);
+        final ZipReceiver zipReceiver = zipReceiverProvider.get();
+        zipReceiver.setDestination(forwardInputQueue::add);
+
+        receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
+    }
+
+    private void createAggregatingReceiverFactory(final DirQueueFactory dirQueueFactory,
+                                                  final Provider<Aggregator> aggregatorProvider,
+                                                  final Provider<PreAggregator> preAggregatorProvider,
+                                                  final Provider<ZipReceiver> zipReceiverProvider,
+                                                  final Provider<SimpleReceiver> simpleReceiverProvider,
+                                                  final ProxyServices proxyServices,
+                                                  final DirQueue forwardInputQueue) {
+        // Create the aggregator.
+        final Aggregator aggregator = aggregatorProvider.get();
+        aggregator.setDestination(forwardInputQueue::add);
+
+        final DirQueue aggregateInputQueue = dirQueueFactory.create(
+                DirNames.AGGREGATE_INPUT_QUEUE,
+                30,
+                "Aggregate Input Queue");
+        // Move items from the pre aggregate queue to the aggregator.
+        // TODO : Could use more than one thread here.
+        final DirQueueTransfer aggregateInputQueueTransfer =
+                new DirQueueTransfer(aggregateInputQueue::next, aggregator::addDir);
+        proxyServices.addParallelExecutor(
+                "Aggregate input queue transfer",
+                () -> aggregateInputQueueTransfer,
+                threadConfig.getAggregateInputQueueThreadCount());
+
+        // Create the pre aggregator.
+        final PreAggregator preAggregator = preAggregatorProvider.get();
+        preAggregator.setDestination(aggregateInputQueue::add);
+
+        final DirQueue preAggregateInputQueue = dirQueueFactory.create(
+                DirNames.PRE_AGGREGATE_INPUT_QUEUE,
+                20,
+                "Pre Aggregate Input Queue");
+        // Move items from the file store to the pre aggregator.
+        final DirQueueTransfer preAggregateInputQueueTransfer =
+                new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);
+        proxyServices.addParallelExecutor(
+                "Pre aggregate input queue transfer",
+                () -> preAggregateInputQueueTransfer,
+                threadConfig.getPreAggregateInputQueueThreadCount());
+
+        // Create the receivers that will add data to the file store queue on receipt.
+        final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
+        simpleReceiver.setDestination(preAggregateInputQueue::add);
+        final ZipReceiver zipReceiver = zipReceiverProvider.get();
+        zipReceiver.setDestination(preAggregateInputQueue::add);
+
+        receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
+    }
+
+    private void createInstantForwarders(final ProxyConfig proxyConfig,
+                                         final Provider<InstantForwardHttpPost> instantForwardHttpPostProvider,
+                                         final Provider<InstantForwardFile> instantForwardFileProvider) {
+
+        final List<ForwarderConfig> instantForwarders = proxyConfig.streamAllEnabledForwarders()
+                .filter(ForwarderConfig::isInstant)
+                .toList();
+        if (instantForwarders.size() != 1) {
+            throw new RuntimeException("Expecting one enabled instant forwarder");
+        }
+
+        final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
+        receiverFactory = switch (forwarderConfig) {
+            case ForwardHttpPostConfig forwardHttpPostConfig -> {
+                LOGGER.info("Creating instant HTTP POST forward destination to {}",
+                        forwardHttpPostConfig.getForwardUrl());
+                yield instantForwardHttpPostProvider.get().get(forwardHttpPostConfig);
+            }
+            case ForwardFileConfig forwardFileConfig -> {
+                LOGGER.info("Creating instant file forward destination to {}",
+                        forwardFileConfig.getPath());
+                yield instantForwardFileProvider.get().get(forwardFileConfig);
+            }
+        };
     }
 
     @Override

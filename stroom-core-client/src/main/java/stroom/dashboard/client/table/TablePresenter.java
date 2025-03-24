@@ -864,9 +864,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (getTableComponentSettings().showDetail() || maxGroup.isEmpty()) {
             // Add special fields.
-            getTableComponentSettings().getColumns().add(SpecialColumns.ID_COLUMN);
-            getTableComponentSettings().getColumns().add(SpecialColumns.STREAM_ID_COLUMN);
-            getTableComponentSettings().getColumns().add(SpecialColumns.EVENT_ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
         }
 
 //        GWT.log(tableSettings.getFields().stream()
@@ -939,16 +939,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
         if (getTableComponentSettings().getColumns() != null) {
-            final String reservedStreamId = SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME;
-            final String reservedEventId = SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME;
+            final String reservedStreamId = SpecialColumns.RESERVED_STREAM_ID;
+            final String reservedEventId = SpecialColumns.RESERVED_EVENT_ID;
 
             final List<Column> columns = new ArrayList<>();
             getTableComponentSettings().getColumns().forEach(column -> {
                 Column col = column;
                 if (reservedStreamId.equals(col.getName())) {
-                    col = SpecialColumns.STREAM_ID_COLUMN;
+                    col = SpecialColumns.RESERVED_STREAM_ID_COLUMN;
                 } else if (reservedEventId.equals(col.getName())) {
-                    col = SpecialColumns.EVENT_ID_COLUMN;
+                    col = SpecialColumns.RESERVED_EVENT_ID_COLUMN;
                 } else if (column.getId() == null) {
                     col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
                 }

@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
@@ -77,8 +78,16 @@ public class QueryResultTableSplitPresenter
         if (tableRow == null) {
             showSplit(false);
         } else {
-            final String streamId = tableRow.getText(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
-            final String eventId = tableRow.getText(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+            String streamId = tableRow.getText(IndexConstants.STREAM_ID);
+            if (streamId == null) {
+                streamId = tableRow.getText(SpecialColumns.RESERVED_STREAM_ID);
+            }
+
+            String eventId = tableRow.getText(IndexConstants.EVENT_ID);
+            if (eventId == null) {
+                eventId = tableRow.getText(SpecialColumns.RESERVED_EVENT_ID);
+            }
+
             if (streamId != null && eventId != null && streamId.length() > 0 && eventId.length() > 0) {
                 try {
                     final long strmId = Long.parseLong(streamId);

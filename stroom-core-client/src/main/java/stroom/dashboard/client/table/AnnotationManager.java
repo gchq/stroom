@@ -124,18 +124,18 @@ public class AnnotationManager {
         if (selectedItems != null && !selectedItems.isEmpty()) {
             String streamIdFieldId = getFieldId(IndexConstants.STREAM_ID);
             if (streamIdFieldId == null) {
-                streamIdFieldId = getFieldId(SpecialColumns.RESERVED_STREAM_ID_FIELD_NAME);
+                streamIdFieldId = getFieldId(SpecialColumns.RESERVED_STREAM_ID);
             }
             String eventIdFieldId = getFieldId(IndexConstants.EVENT_ID);
             if (eventIdFieldId == null) {
-                eventIdFieldId = getFieldId(SpecialColumns.RESERVED_EVENT_ID_FIELD_NAME);
+                eventIdFieldId = getFieldId(SpecialColumns.RESERVED_EVENT_ID);
             }
             final String eventIdListFieldId = getFieldId("EventIdList");
             String annotationIdFieldId = getFieldId("annotation:Id");
             if (annotationIdFieldId == null) {
                 annotationIdFieldId = getFieldId("Id");
                 if (annotationIdFieldId == null) {
-                    annotationIdFieldId = getFieldId(SpecialColumns.RESERVED_ID_FIELD_NAME);
+                    annotationIdFieldId = getFieldId(SpecialColumns.RESERVED_ID);
                 }
             }
 

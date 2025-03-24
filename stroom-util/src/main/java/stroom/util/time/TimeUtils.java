@@ -103,4 +103,60 @@ public class TimeUtils {
                         LocalDate.ofInstant(from, ZoneOffset.UTC),
                         LocalDate.ofInstant(to, ZoneOffset.UTC)).toString();
     }
+
+    /**
+     * @return True if {@code duration1 >= duration2}
+     */
+    public static boolean isGreaterThanOrEqualTo(final Duration duration1, final Duration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) >= 0;
+    }
+
+    /**
+     * @return True if {@code duration1 >= duration2}
+     */
+    public static boolean isGreaterThanOrEqualTo(final StroomDuration duration1, final StroomDuration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) >= 0;
+    }
+
+    /**
+     * @return True if {@code duration1 > duration2}
+     */
+    public static boolean isGreaterThan(final Duration duration1, final Duration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) > 0;
+    }
+
+    /**
+     * @return True if {@code duration1 > duration2}
+     */
+    public static boolean isGreaterThan(final StroomDuration duration1, final StroomDuration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) > 0;
+    }
+
+    /**
+     * @return True if {@code duration1 <= duration2}
+     */
+    public static boolean isLessThanOrEqualTo(final Duration duration1, final Duration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) <= 0;
+    }
+
+    /**
+     * @return True if {@code duration1 <= duration2}
+     */
+    public static boolean isLessThanOrEqualTo(final StroomDuration duration1, final StroomDuration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) <= 0;
+    }
+
+    /**
+     * @return True if {@code duration1 < duration2}
+     */
+    public static boolean isLessThan(final Duration duration1, final Duration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) < 0;
+    }
+
+    /**
+     * @return True if {@code duration1 < duration2}
+     */
+    public static boolean isLessThan(final StroomDuration duration1, final StroomDuration duration2) {
+        return Objects.requireNonNull(duration1).compareTo(Objects.requireNonNull(duration2)) < 0;
+    }
 }

@@ -47,6 +47,8 @@ public class Aggregator {
         }
 
         tempAggregatesDirProvider = new NumberedDirProvider(aggregatesDir);
+
+        LOGGER.info("Initialised Aggregator with aggregatesDir: {}", aggregatesDir);
     }
 
     public void addDir(final Path dir) {

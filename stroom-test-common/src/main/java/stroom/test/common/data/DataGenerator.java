@@ -28,32 +28,25 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 // NOTE: This class and the other classes in this package were taken from stroom-test-data at commit
 // 4179064. Nothing else was using stroom-test-data, so it seemed easier to bring it back in house.
+
 /**
  * Class for generating test data by constructing field definitions. Each {@link Field} definition
  * defines how the next value will be generated. A number of different types of predefined {@link Field}
  * types are available. For examples of how to use this class see test class TestDataGenerator.
  */
 public class DataGenerator {
-
-    // These are all statics owing to the fact that the field definitions are all created by static
-    // methods.  Need to refactor them to be methods on some sort of builder that can have these things
-    // made available to them.
-    // Use a consistent random generator for all fields, so the generated data should be repeatable
-    // if a seed is provided.
-    private static volatile Random RANDOM = null;
-    private static volatile Faker FAKER = null;
-    private static volatile Locale LOCALE = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataGenerator.class);
 
@@ -114,16 +107,16 @@ public class DataGenerator {
                             writer.append(recordStr);
                         } catch (IOException e) {
                             throw new RuntimeException("Error writing line to file "
-                                    + filePath.toAbsolutePath().normalize().toString() + ": "
-                                    + e.getMessage());
+                                                       + filePath.toAbsolutePath().normalize().toString() + ": "
+                                                       + e.getMessage());
                         }
                         isFirstRecord.set(false);
                     });
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Error writing to file "
-                        + filePath.toAbsolutePath().normalize().toString() + ": "
-                        + e.getMessage());
+                                           + filePath.toAbsolutePath().normalize().toString() + ": "
+                                           + e.getMessage());
             }
         };
     }
@@ -145,10 +138,11 @@ public class DataGenerator {
         try {
             Objects.requireNonNull(name);
             Objects.requireNonNull(fakerFunction);
-
-            final Supplier<String> supplier = () ->
-                    fakerFunction.apply(FAKER);
-            return new Field(name, supplier);
+            return new Field(name, (random, faker) -> {
+//                synchronized (Faker.class) {
+                return fakerFunction.apply(faker);
+//                }
+            });
         } catch (Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building fakerField, {}, {}", name, e.getMessage()), e);
@@ -190,9 +184,8 @@ public class DataGenerator {
         try {
             Objects.requireNonNull(values);
             Utils.checkArgument(!values.isEmpty(), "values is empty");
-            final Supplier<String> supplier = () ->
-                    values.get(RANDOM.nextInt(values.size()));
-            return new Field(name, supplier);
+            return new Field(name, (random, ignoredFaker) ->
+                    values.get(random.nextInt(values.size())));
         } catch (Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomValueField, {}, {}", name, e.getMessage()), e);
@@ -240,11 +233,11 @@ public class DataGenerator {
         Objects.requireNonNull(codePoints);
         Utils.checkArgument(!codePoints.isEmpty(), "codePoints is empty");
         try {
-            final Supplier<String> supplier = () -> {
-                final int codePoint = codePoints.get(RANDOM.nextInt(codePoints.size()));
+            final ValueFunction valueFunction = (random, ignoredFaker) -> {
+                final int codePoint = codePoints.get(random.nextInt(codePoints.size()));
                 return new StringBuilder().appendCodePoint(codePoint).toString();
             };
-            return new Field(name, supplier);
+            return new Field(name, valueFunction);
         } catch (Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomEmojiField, {}, {}", name, e.getMessage()), e);
@@ -256,11 +249,11 @@ public class DataGenerator {
                                           final int maxCodePoint) {
         final int range = maxCodePoint - minCodePoint;
         try {
-            final Supplier<String> supplier = () -> {
-                final int codePoint = RANDOM.nextInt(range) + minCodePoint;
+            final ValueFunction valueFunction = (random, ignoredFaker) -> {
+                final int codePoint = random.nextInt(range) + minCodePoint;
                 return new StringBuilder().appendCodePoint(codePoint).toString();
             };
-            return new Field(name, supplier);
+            return new Field(name, valueFunction);
         } catch (Exception e) {
             throw new RuntimeException(
                     Utils.message("Error building randomEmojiField, {}, {}", name, e.getMessage()), e);
@@ -282,9 +275,9 @@ public class DataGenerator {
             Objects.requireNonNull(format);
             Utils.checkArgument(maxNumberExc > 0, "maxNumberExc must be > 0");
 
-            final Supplier<String> supplier = () ->
-                    String.format(format, RANDOM.nextInt(maxNumberExc));
-            return new Field(name, supplier);
+            final ValueFunction valueFunction = (random, ignoredFaker) ->
+                    String.format(format, random.nextInt(maxNumberExc));
+            return new Field(name, valueFunction);
         } catch (Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building randomNumberedValueField, {}, {}", name, e.getMessage()), e);
@@ -371,7 +364,9 @@ public class DataGenerator {
 
             return new Field(
                     name,
-                    () -> Integer.toString(buildRandomNumberSupplier(startInc, endExc).getAsInt()));
+                    (random, ignoredFaker) ->
+                            Integer.toString(
+                                    buildRandomNumberSupplier(startInc, endExc).applyAsInt(random)));
         } catch (Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building sequentialValueField, {}, {}", name, e.getMessage()), e);
@@ -387,15 +382,15 @@ public class DataGenerator {
     public static Field randomIpV4Field(final String name) {
 
         try {
-            final IntSupplier intSupplier = buildRandomNumberSupplier(0, 256);
+            final ToIntFunction<Random> intSupplier = buildRandomNumberSupplier(0, 256);
 
-            final Supplier<String> supplier = () ->
+            final ValueFunction valueFunction = (random, ignoredFaker) ->
                     String.format("%d.%d.%d.%d",
-                            intSupplier.getAsInt(),
-                            intSupplier.getAsInt(),
-                            intSupplier.getAsInt(),
-                            intSupplier.getAsInt());
-            return new Field(name, supplier);
+                            intSupplier.applyAsInt(random),
+                            intSupplier.applyAsInt(random),
+                            intSupplier.applyAsInt(random),
+                            intSupplier.applyAsInt(random));
+            return new Field(name, valueFunction);
         } catch (Exception e) {
             throw new RuntimeException(Utils.message(
                     "Error building randomIpV4Field, {}, {}", name, e.getMessage()), e);
@@ -454,11 +449,11 @@ public class DataGenerator {
                     startDateInc);
 
             final long millisBetween = endDateExc.toInstant(ZoneOffset.UTC).toEpochMilli()
-                    - startDateInc.toInstant(ZoneOffset.UTC).toEpochMilli();
+                                       - startDateInc.toInstant(ZoneOffset.UTC).toEpochMilli();
 
-            final Supplier<String> supplier = () -> {
+            final ValueFunction valueFunction = (random, ignoredFaker) -> {
                 try {
-                    final long randomDelta = (long) (RANDOM.nextDouble() * millisBetween);
+                    final long randomDelta = (long) (random.nextDouble() * millisBetween);
                     final LocalDateTime dateTime = startDateInc.plus(randomDelta, ChronoUnit.MILLIS);
                     return dateTime.format(formatter);
                 } catch (Exception e) {
@@ -466,7 +461,7 @@ public class DataGenerator {
                             Duration.ofMillis(Integer.MAX_VALUE).toString()), e);
                 }
             };
-            return new Field(name, supplier);
+            return new Field(name, valueFunction);
         } catch (Exception e) {
             throw new RuntimeException(Utils.message("Error building randomDateTimeField, {}, {}",
                     name,
@@ -566,16 +561,16 @@ public class DataGenerator {
             Utils.checkArgument(minCount >= 0, "minCount must be >= 0");
             Utils.checkArgument(maxCount >= minCount, "maxCount must be >= minCount");
             Objects.requireNonNull(wordList);
-            Utils.checkArgument(wordList.size() > 0,
+            Utils.checkArgument(!wordList.isEmpty(),
                     () -> Utils.message(
                             "wordList must have size greater than zero, size {}",
                             wordList.size()));
 
-            Supplier<String> supplier = () -> {
-                int wordCount = RANDOM.nextInt(maxCount - minCount + 1) + minCount;
+            final ValueFunction supplier = (random, ignoredFaker) -> {
+                int wordCount = random.nextInt(maxCount - minCount + 1) + minCount;
                 return IntStream.rangeClosed(0, wordCount)
                         .boxed()
-                        .map(i -> wordList.get(RANDOM.nextInt(wordList.size())))
+                        .map(i -> wordList.get(random.nextInt(wordList.size())))
                         .collect(Collectors.joining(" "))
                         .replaceAll("(^\\s+|\\s+$)", "") //remove leading/trailing spaces
                         .replaceAll("\\s\\s+", " "); //replace multiple spaces with one
@@ -616,15 +611,15 @@ public class DataGenerator {
         }
     }
 
-    private static IntSupplier buildRandomNumberSupplier(final int startInc,
-                                                         final int endExc) {
+    private static ToIntFunction<Random> buildRandomNumberSupplier(final int startInc,
+                                                                   final int endExc) {
         try {
             Utils.checkArgument(endExc > startInc, "endExc must be >  startInc");
 
             final int delta = endExc - startInc;
 
-            return () ->
-                    RANDOM.nextInt(delta) + startInc;
+            return (random) ->
+                    random.nextInt(delta) + startInc;
         } catch (Exception e) {
             throw new RuntimeException(Utils.message("Error building randomNumberSupplier, {}", e.getMessage()), e);
         }
@@ -636,13 +631,13 @@ public class DataGenerator {
                 Files.createDirectories(file.getParent());
             } catch (IOException e) {
                 throw new RuntimeException("Error creating parent directories for {}"
-                        + file.toAbsolutePath().normalize().toString());
+                                           + file.toAbsolutePath().normalize().toString());
             }
         }
     }
 
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // --------------------------------------------------------------------------------
 
 
     /**
@@ -687,18 +682,19 @@ public class DataGenerator {
     }
 
 
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // --------------------------------------------------------------------------------
 
 
     public static class DefinitionBuilder {
 
-        private List<Field> fieldDefinitions = new ArrayList<>();
+        private final List<Field> fieldDefinitions = new ArrayList<>();
         private Consumer<Stream<String>> rowStreamConsumer;
         private int rowCount = 1;
         private DataWriter dataWriter;
         private boolean isParallel = false;
         private Random random = null;
         private Locale locale = null;
+        private Faker faker;
 
         public DefinitionBuilder addFieldDefinition(final Field fieldDefinition) {
             boolean isNamedAlreadyUsed = fieldDefinitions.stream()
@@ -747,13 +743,15 @@ public class DataGenerator {
         }
 
         public void generate() {
-            DataGenerator.RANDOM = random != null
-                    ? random
-                    : new Random();
-            DataGenerator.LOCALE = locale != null
-                    ? locale
-                    : Locale.getDefault();
-            DataGenerator.FAKER = new Faker(DataGenerator.LOCALE, DataGenerator.RANDOM);
+            if (random == null) {
+                random = new Random();
+            }
+            locale = Locale.getDefault();
+
+            // Faker uses non thread safe static collections so sync at the class level
+//            synchronized (Faker.class) {
+            faker = new Faker(locale, random);
+//            }
 
             if (fieldDefinitions.isEmpty()) {
                 throw new RuntimeException("No field definitions defined");
@@ -781,7 +779,7 @@ public class DataGenerator {
                 List<String> values = fieldDefinitions.stream()
                         .map(field -> {
                             try {
-                                return field.getNext();
+                                return field.getNext(random, faker);
                             } catch (Exception e) {
                                 throw new RuntimeException(Utils.message("Error getting next value for field {}, {}",
                                         field.getName(), e.getMessage()), e);
@@ -803,6 +801,14 @@ public class DataGenerator {
                     .boxed()
                     .map(toRecordMapper);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface ValueFunction extends BiFunction<Random, Faker, String> {
+
     }
 }
 
