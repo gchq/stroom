@@ -40,6 +40,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 import com.google.gwt.user.client.ui.DirectionalTextHelper;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HasDirectionalSafeHtml;
 import com.google.gwt.user.client.ui.HasName;
@@ -78,7 +79,7 @@ import com.google.gwt.user.client.ui.Widget;
  * {@example com.google.gwt.examples.CheckBoxExample}
  * </p>
  */
-public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
+public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
         HasWordWrap, HasDirectionalSafeHtml, HasDirectionEstimator,
         IsEditor<LeafValueEditor<Boolean>> {
 
@@ -125,6 +126,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         // that this call is made, inputElem has not been created. So, we have
         // to call setTabIndex again, once inputElem has been created.
         setTabIndex(0);
+    }
+
+    @Override
+    public void focus() {
+        inputElem.focus();
     }
 
     @Override

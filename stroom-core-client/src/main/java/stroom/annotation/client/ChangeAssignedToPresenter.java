@@ -17,17 +17,19 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.annotation.shared.AnnotationResource;
-import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.ChangeAssignedTo;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.security.client.presenter.UserRefPopupPresenter;
+import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -35,52 +37,52 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ChangeAssignedToPresenter
         extends MyPresenterWidget<ChangeAssignedToView>
         implements ChangeAssignedToUiHandlers {
 
-    private final RestFactory restFactory;
-    private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
+    private final AnnotationResourceClient annotationResourceClient;
+    private final UserRefPopupPresenter assignedToPresenter;
     private final ClientSecurityContext clientSecurityContext;
+
+    private UserRef currentAssignedTo;
 
     @Inject
     public ChangeAssignedToPresenter(final EventBus eventBus,
                                      final ChangeAssignedToView view,
-                                     final RestFactory restFactory,
-                                     final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
+                                     final AnnotationResourceClient annotationResourceClient,
+                                     final UserRefPopupPresenter assignedToPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        this.restFactory = restFactory;
-        this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
+        this.annotationResourceClient = annotationResourceClient;
+        this.assignedToPresenter = assignedToPresenter;
         this.clientSecurityContext = clientSecurityContext;
-        getView().setUserView(userRefSelectionBoxPresenter.getView());
         getView().setUiHandlers(this);
-        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
+        assignedToPresenter.showActiveUsersOnly(true);
     }
 
     public void show(final List<Long> annotationIdList) {
+        setAssignedTo(null);
+
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(PopupSize.resizableX(500))
                 .caption("Change Assigned To")
-                .onShow(e -> userRefSelectionBoxPresenter.focus())
+                .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final SetAssignedToRequest request = new SetAssignedToRequest(
+                        final MultiAnnotationChangeRequest request = new MultiAnnotationChangeRequest(
                                 annotationIdList,
-                                userRefSelectionBoxPresenter.getSelected());
-                        restFactory
-                                .create(annotationResource)
-                                .method(res -> res.setAssignedTo(request))
-                                .onSuccess(values -> {
+                                new ChangeAssignedTo(currentAssignedTo));
+                        annotationResourceClient.batchChange(request,
+                                values -> {
                                     GWT.log("Updated " + values + " annotations");
                                     e.hide();
-                                })
-                                .onFailure(RestErrorHandler.forPopup(this, e))
-                                .taskMonitorFactory(this)
-                                .exec();
+                                },
+                                RestErrorHandler.forPopup(this, e),
+                                this);
                     } else {
                         e.hide();
                     }
@@ -88,13 +90,37 @@ public class ChangeAssignedToPresenter
                 .fire();
     }
 
-    @Override
-    public void assignYourself() {
-        userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
+    private void changeAssignedTo(final UserRef selected) {
+        if (!Objects.equals(currentAssignedTo, selected)) {
+            setAssignedTo(selected);
+        }
     }
 
-    public interface ChangeAssignedToView extends View, HasUiHandlers<ChangeAssignedToUiHandlers> {
+    private void setAssignedTo(final UserRef assignedTo) {
+        currentAssignedTo = assignedTo;
+        assignedToPresenter.resolve(assignedTo, userRef -> {
+            currentAssignedTo = userRef;
+            getView().setAssignedTo(userRef);
+            getView().setAssignYourselfVisible(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
+            assignedToPresenter.setSelected(currentAssignedTo);
+        });
+    }
 
-        void setUserView(final View view);
+    @Override
+    public void showAssignedToChooser(final Element element) {
+        assignedToPresenter.setSelected(currentAssignedTo);
+        assignedToPresenter.show(this::changeAssignedTo);
+    }
+
+    @Override
+    public void assignYourself() {
+        changeAssignedTo(clientSecurityContext.getUserRef());
+    }
+
+    public interface ChangeAssignedToView extends View, Focus, HasUiHandlers<ChangeAssignedToUiHandlers> {
+
+        void setAssignedTo(UserRef assignedTo);
+
+        void setAssignYourselfVisible(boolean visible);
     }
 }

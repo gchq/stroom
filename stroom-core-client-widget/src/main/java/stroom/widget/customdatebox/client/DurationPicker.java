@@ -10,9 +10,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasValue;
 
-public class DurationPicker extends Composite implements HasValue<SimpleDuration> {
+public class DurationPicker extends Composite implements HasValue<SimpleDuration>, Focus {
 
     private final ValueSpinner time;
     private final SelectionBox<TimeUnit> timeUnit;
@@ -45,6 +47,11 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         flowPanel.add(time);
         flowPanel.add(timeUnit);
         initWidget(flowPanel);
+    }
+
+    @Override
+    public void focus() {
+        time.focus();
     }
 
     @Override
@@ -83,5 +90,10 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
             final ValueChangeHandler<SimpleDuration> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    public void setEnabled(boolean enabled) {
+        time.setEnabled(enabled);
+        timeUnit.setEnabled(enabled);
     }
 }

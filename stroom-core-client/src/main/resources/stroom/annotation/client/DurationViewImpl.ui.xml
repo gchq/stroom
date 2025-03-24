@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="forever" identity="annotationRetentionKeepForever" label="Keep Forever"/>
+        </form:FormGroup>
+        <form:FormGroup identity="annotationRetainFor" label="Retain For">
+            <d:DurationPicker ui:field="durationPicker"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+

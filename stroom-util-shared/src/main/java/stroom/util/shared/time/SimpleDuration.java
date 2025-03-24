@@ -58,6 +58,10 @@ public class SimpleDuration {
         return time + timeUnit.getShortForm();
     }
 
+    public String toLongString() {
+        return time + " " + timeUnit.getDisplayValue();
+    }
+
     public Builder copy() {
         return new Builder(this);
     }

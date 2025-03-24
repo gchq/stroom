@@ -69,7 +69,16 @@ appConfig:
       refreshAfterWrite: "PT10M"
     timezone: "UTC"
   annotation:
-    createText: "Create Annotation"
+    annotationFeedCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+    annotationTagCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
     db:
       connection:
         jdbcDriverClassName: null
@@ -86,11 +95,9 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    defaultRetentionPeriod: "5y"
+    physicalDeleteAge: "P7D"
     standardComments: []
-    statusValues:
-    - "New"
-    - "Assigned"
-    - "Closed"
   byteBufferPool:
     blockOnExhaustedPool: false
     pooledByteBufferCounts:
