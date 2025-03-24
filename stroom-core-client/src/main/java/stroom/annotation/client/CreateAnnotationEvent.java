@@ -34,6 +34,16 @@ public class CreateAnnotationEvent extends GwtEvent<CreateAnnotationEvent.Handle
         this.linkedEvents = linkedEvents;
     }
 
+    public static void fire(final HasHandlers source) {
+        source.fireEvent(new CreateAnnotationEvent(
+                "New Annotation",
+                null,
+                null,
+                null,
+                null,
+                null));
+    }
+
     public static void fire(final HasHandlers source,
                             final String title,
                             final String subject,

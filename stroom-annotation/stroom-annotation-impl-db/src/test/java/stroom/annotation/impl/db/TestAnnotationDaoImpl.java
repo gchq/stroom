@@ -173,7 +173,7 @@ class TestAnnotationDaoImpl {
                 ValString.create("Test Description"),
                 ValLong.create(1),
                 ValLong.create(1),
-                ValNull.INSTANCE); // TODO : Fix feed.
+                ValString.create("TEST_FEED_NAME"));
 
         // Try all fields first.
         final FieldIndex fieldIndex = new FieldIndex();
@@ -218,7 +218,8 @@ class TestAnnotationDaoImpl {
                 "Comment 1",
                 "Test Description",
                 "1",
-                "1"); // TODO : Fix feed.
+                "1",
+                "TEST_FEED_NAME");
 
         for (int i = 0; i < AnnotationFields.FIELDS.size() && i < queryValues.size(); i++) {
             final QueryField field = AnnotationFields.FIELDS.get(i);

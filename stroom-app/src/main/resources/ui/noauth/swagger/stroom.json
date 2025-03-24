@@ -703,7 +703,7 @@
     },
     "/annotation/v1" : {
       "get" : {
-        "operationId" : "getAnnotationDetail",
+        "operationId" : "getAnnotationById",
         "parameters" : [ {
           "in" : "query",
           "name" : "annotationId",
@@ -717,14 +717,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AnnotationDetail"
+                  "$ref" : "#/components/schemas/Annotation"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Gets an annotation",
+        "summary" : "Gets an annotation by id",
         "tags" : [ "Annotations" ]
       }
     },
@@ -778,7 +778,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AnnotationDetail"
+                  "type" : "boolean"
                 }
               }
             },
@@ -838,7 +838,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AnnotationDetail"
+                  "$ref" : "#/components/schemas/Annotation"
                 }
               }
             },
@@ -962,6 +962,69 @@
           }
         },
         "summary" : "Finds annotation tags matching request",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getAnnotationByRef" : {
+      "post" : {
+        "operationId" : "getAnnotationByRef",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets an annotation by ref",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getAnnotationEntries" : {
+      "post" : {
+        "operationId" : "getAnnotationEntries",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AnnotationEntry"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets annotation entries",
         "tags" : [ "Annotations" ]
       }
     },
@@ -12154,20 +12217,6 @@
           },
           "version" : {
             "type" : "string"
-          }
-        }
-      },
-      "AnnotationDetail" : {
-        "type" : "object",
-        "properties" : {
-          "annotation" : {
-            "$ref" : "#/components/schemas/Annotation"
-          },
-          "entries" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AnnotationEntry"
-            }
           }
         }
       },

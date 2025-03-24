@@ -31,6 +31,7 @@ public class AnnotationModule extends PluginModule {
 
     @Override
     protected void configure() {
+        bindPlugin(AnnotationCreatePlugin.class);
         bindPlugin(AnnotationStatusPlugin.class);
         bindPlugin(AnnotationLabelPlugin.class);
         bindPlugin(AnnotationCollectionPlugin.class);

@@ -251,7 +251,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         documentPermissionService.setPermission(docRef, securityContext.getUserRef(), DocumentPermission.OWNER);
 
         // Copy feed permissions to the annotation.
-        if (!request.getLinkedEvents().isEmpty()) {
+        if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
             final EventId eventId = request.getLinkedEvents().getFirst();
             final Meta meta = metaServiceProvider.get().getMeta(eventId.getStreamId());
             if (meta != null) {

@@ -123,28 +123,31 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             ANNOTATION_ENTRY.as("history");
 
     // Create a correlated sub query for label.
-    private static final Field<String> LABEL_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
-            .from(ANNOTATION_TAG)
-            .join(ANNOTATION_TAG_LINK)
-            .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
-            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-            .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue()))
-            .asField("label");
+    private static final Field<String> LABEL_FIELD =
+            DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
+                    .from(ANNOTATION_TAG)
+                    .join(ANNOTATION_TAG_LINK)
+                    .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
+                    .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                    .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.LABEL.getPrimitiveValue()))
+                    .asField("label");
     // Create a correlated sub query for collection.
-    private static final Field<String> COLLECTION_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
-            .from(ANNOTATION_TAG)
-            .join(ANNOTATION_TAG_LINK)
-            .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
-            .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-            .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue()))
-            .asField("collection");
+    private static final Field<String> COLLECTION_FIELD =
+            DSL.select(DSL.groupConcat(ANNOTATION_TAG.NAME).separator("|"))
+                    .from(ANNOTATION_TAG)
+                    .join(ANNOTATION_TAG_LINK)
+                    .on(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID.eq(ANNOTATION_TAG.ID))
+                    .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                    .and(ANNOTATION_TAG.TYPE_ID.eq(AnnotationTagType.COLLECTION.getPrimitiveValue()))
+                    .asField("collection");
     // Create a correlated sub query for history.
-    private static final Field<String> HISTORY_FIELD = DSL.select(DSL.groupConcat(ANNOTATION_ENTRY.DATA).separator("|"))
-            .from(ANNOTATION_ENTRY)
-            .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-            .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
-            .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
-            .asField("history");
+    private static final Field<String> HISTORY_FIELD =
+            DSL.select(DSL.groupConcat(ANNOTATION_ENTRY.DATA).separator("|"))
+                    .from(ANNOTATION_ENTRY)
+                    .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                    .and(ANNOTATION_ENTRY.TYPE_ID.eq(AnnotationEntryType.COMMENT.getPrimitiveValue()))
+                    .orderBy(ANNOTATION_ENTRY.ENTRY_TIME_MS)
+                    .asField("history");
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
