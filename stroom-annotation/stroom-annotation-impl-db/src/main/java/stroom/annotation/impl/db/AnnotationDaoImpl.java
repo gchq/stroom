@@ -156,7 +156,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final AnnotationTagDaoImpl annotationTagDao;
     private final StreamFeedProvider streamFeedProvider;
-    private final AnnotationFeedCache annotationFeedCache;
+    private final AnnotationFeedNameToIdCache annotationFeedNameToIdCache;
+    private final AnnotationFeedIdToNameCache annotationFeedIdToNameCache;
 
     @Inject
     AnnotationDaoImpl(final AnnotationDbConnProvider connectionProvider,
@@ -165,7 +166,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final AnnotationTagDaoImpl annotationTagDao,
                       final StreamFeedProvider streamFeedProvider,
-                      final AnnotationFeedCache annotationFeedCache) {
+                      final AnnotationFeedNameToIdCache annotationFeedNameToIdCache,
+                      final AnnotationFeedIdToNameCache annotationFeedIdToNameCache) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
@@ -173,7 +175,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         this.annotationConfigProvider = annotationConfigProvider;
         this.annotationTagDao = annotationTagDao;
         this.streamFeedProvider = streamFeedProvider;
-        this.annotationFeedCache = annotationFeedCache;
+        this.annotationFeedNameToIdCache = annotationFeedNameToIdCache;
+        this.annotationFeedIdToNameCache = annotationFeedIdToNameCache;
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
@@ -238,7 +241,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         expressionMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID, value ->
-                annotationFeedCache.getId(value).orElse(-1));
+                annotationFeedNameToIdCache.getId(value).orElse(-1));
 
         return expressionMapper;
     }
@@ -294,7 +297,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         valueMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
         valueMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID, id ->
-                ValString.create(annotationFeedCache.getName(id).orElse("")));
+                ValString.create(annotationFeedIdToNameCache.getName(id).orElse("")));
 
         return valueMapper;
     }
@@ -867,7 +870,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                  final long annotationId,
                                  final EventId eventId) {
         final String feedName = streamFeedProvider.getFeedName(eventId.getStreamId());
-        final Integer feedId = annotationFeedCache.getOrCreateId(feedName);
+        final Integer feedId = annotationFeedNameToIdCache.getOrCreateId(feedName);
 
         try {
             // Create event link.

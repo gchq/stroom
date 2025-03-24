@@ -19,6 +19,7 @@ public class AnnotationDaoModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(AnnotationDaoImpl.class)
                 .addBinding(AnnotationTagDaoImpl.class)
-                .addBinding(AnnotationFeedCache.class);
+                .addBinding(AnnotationFeedIdToNameCache.class)
+                .addBinding(AnnotationFeedNameToIdCache.class);
     }
 }
