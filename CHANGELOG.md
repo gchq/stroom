@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.3-annotations2] - 2025-03-24
+
+* Annotations 2.0.
+
+
 ## [v7.9-beta.3] - 2025-03-24
 
 * Issue **#4733** : Fix report shutdown error.
@@ -1309,7 +1314,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.3-annotations2...HEAD
+[v7.9-beta.3-annotations2]: https://github.com/gchq/stroom/compare/v7.9-beta.3...v7.9-beta.3-annotations2
 [v7.9-beta.3]: https://github.com/gchq/stroom/compare/v7.9-beta.2...v7.9-beta.3
 [v7.9-beta.2]: https://github.com/gchq/stroom/compare/v7.9-beta.1...v7.9-beta.2
 [v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
