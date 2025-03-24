@@ -7352,6 +7352,26 @@ paths:
         user is admin or has Manage Users permission then they can see all users.
       tags:
       - Authorisation
+  /userRef/v1/getUserByUuid:
+    post:
+      operationId: getUserByUuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: uuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRef"
+          description: default response
+      summary: Resolve a user ref by UUID
+      tags:
+      - Authorisation
   /users/v1/createGroup:
     post:
       operationId: createGroup
@@ -7887,6 +7907,18 @@ components:
           $ref: "#/components/schemas/CountLong"
         totalItemCount:
           $ref: "#/components/schemas/CountLong"
+        type:
+          type: string
+      required:
+      - type
+    AbstractPlanBSettings:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        maxStoreSize:
+          type: integer
+          format: int64
         type:
           type: string
       required:
@@ -10163,6 +10195,13 @@ components:
         rememberNotifications:
           type: boolean
         suppressDuplicateNotifications:
+          type: boolean
+    DurationSetting:
+      type: object
+      properties:
+        duration:
+          $ref: "#/components/schemas/SimpleDuration"
+        enabled:
           type: boolean
     ElasticClusterDoc:
       type: object
@@ -13153,23 +13192,6 @@ components:
     PlanBDoc:
       type: object
       properties:
-        condense:
-          type: boolean
-        condenseAge:
-          type: integer
-          format: int32
-        condenseTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
         createTimeMs:
           type: integer
           format: int64
@@ -13179,23 +13201,8 @@ components:
           type: string
         name:
           type: string
-        retainAge:
-          type: integer
-          format: int32
-        retainForever:
-          type: boolean
-        retainTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
+        settings:
+          $ref: "#/components/schemas/AbstractPlanBSettings"
         stateType:
           type: string
           enum:
@@ -13956,6 +13963,14 @@ components:
         to:
           type: integer
           format: int64
+    RangedStateSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          overwrite:
+            type: boolean
     Rec:
       type: object
       properties:
@@ -15218,6 +15233,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SessionDetails"
+    SessionSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          condense:
+            $ref: "#/components/schemas/DurationSetting"
+          overwrite:
+            type: boolean
+          retention:
+            $ref: "#/components/schemas/DurationSetting"
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -15643,6 +15670,14 @@ components:
           type: string
         version:
           type: string
+    StateSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          overwrite:
+            type: boolean
     StatisticField:
       type: object
       properties:
@@ -16322,6 +16357,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
+    TemporalRangedStateSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          condense:
+            $ref: "#/components/schemas/DurationSetting"
+          overwrite:
+            type: boolean
+          retention:
+            $ref: "#/components/schemas/DurationSetting"
+    TemporalStateSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          condense:
+            $ref: "#/components/schemas/DurationSetting"
+          overwrite:
+            type: boolean
+          retention:
+            $ref: "#/components/schemas/DurationSetting"
     TerminateTaskProgressRequest:
       type: object
       properties:
