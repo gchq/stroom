@@ -44,7 +44,6 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
     @Inject
     public ContentTemplateTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-//        description.setReadOnly(true);
     }
 
     @Override
@@ -59,7 +58,7 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @Override
     public void setDescription(final String description) {
-        this.description.setHTML(SafeHtmlUtil.getSafeHtml(description));
+        this.description.setHTML(SafeHtmlUtil.toParagraphs(description));
     }
 
     @Override

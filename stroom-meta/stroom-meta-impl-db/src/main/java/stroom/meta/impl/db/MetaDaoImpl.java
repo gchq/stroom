@@ -133,6 +133,10 @@ public class MetaDaoImpl implements MetaDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
     private static final String GROUP_CONCAT_DELIMITER = "¬";
     private static final Pattern GROUP_CONCAT_DELIMITER_PATTERN = Pattern.compile(GROUP_CONCAT_DELIMITER);
+    private static final Collection<String> EXTENDED_FIELD_NAMES = MetaFields.getExtendedFields()
+            .stream()
+            .map(QueryField::getFldName)
+            .toList();
 
     // This is currently only used for testing so no need to put it in config,
     // unless it gets used in real code.
@@ -1398,12 +1402,9 @@ public class MetaDaoImpl implements MetaDao {
 
         final Collection<Condition> conditions = createCondition(criteria);
 
-        final Collection<OrderField<?>> orderFields;
-        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            orderFields = Collections.singleton(meta.ID);
-        } else {
-            orderFields = createOrderFields(criteria);
-        }
+        final Collection<OrderField<?>> orderFields = NullSafe.isEmptyCollection(criteria.getSortList())
+                ? Collections.singleton(meta.ID)
+                : createOrderFields(criteria);
 
         final int offset = JooqUtil.getOffset(pageRequest);
         final int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
@@ -1419,9 +1420,6 @@ public class MetaDaoImpl implements MetaDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(QueryField::getFldName).collect(Collectors.toList());
-
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
 
@@ -1433,7 +1431,7 @@ public class MetaDaoImpl implements MetaDao {
                 if (child instanceof ExpressionTerm) {
                     ExpressionTerm term = (ExpressionTerm) child;
 
-                    if (extendedFieldNames.contains(term.getField())) {
+                    if (EXTENDED_FIELD_NAMES.contains(term.getField())) {
                         Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
                         key.ifPresent(identified::add);
                     }
