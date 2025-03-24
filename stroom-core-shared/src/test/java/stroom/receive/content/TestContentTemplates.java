@@ -1,6 +1,7 @@
 package stroom.receive.content;
 
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
@@ -33,7 +34,9 @@ class TestContentTemplates {
                                 .uuid("uuid123")
                                 .build(),
                         null,
-                        null),
+                        null,
+                        ProcessorFilter.DEFAULT_PRIORITY,
+                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS),
                 new ContentTemplate(
                         true,
                         ++templateNumber,
@@ -44,7 +47,9 @@ class TestContentTemplates {
                                 .uuid("uuid456")
                                 .build(),
                         null,
-                        null)
+                        null,
+                        ProcessorFilter.DEFAULT_PRIORITY,
+                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS)
         ));
 
         doSerdeTest(contentTemplates, ContentTemplates.class);

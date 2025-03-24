@@ -18,11 +18,12 @@
 package stroom.receive.content.client.view;
 
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -34,15 +35,16 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @UiField
     SimplePanel table;
+    //    TextArea description;
     @UiField
-    TextArea description;
+    HTML description;
     @UiField
     SimplePanel expression;
 
     @Inject
     public ContentTemplateTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        description.setReadOnly(true);
+//        description.setReadOnly(true);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @Override
     public void setDescription(final String description) {
-        this.description.setValue(description);
+        this.description.setHTML(SafeHtmlUtil.getSafeHtml(description));
     }
 
     @Override

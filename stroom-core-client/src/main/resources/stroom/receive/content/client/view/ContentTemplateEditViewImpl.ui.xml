@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
                 identity="contentTemplateName"
@@ -39,6 +40,22 @@
                 label="Pipeline"
                 helpText="The pipeline to use as the template for content.">
             <g:SimplePanel ui:field="pipeline" styleName="max"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateProcessorPriority"
+                label="Processor Priority"
+                helpText="The priority to assign to the pipeline processor when created. The higher the number
+                        the higher the priority. Value must be between 1 and 100. The default priority is 10.">
+            <v:ValueSpinner ui:field="processorPriority" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                identity="contentTemplateProcessorMaxConcurrent"
+                label="Processor Max Concurrent Tasks"
+                helpText="The maximum number of concurrent tasks to assign to the pipeline processor when created.
+                Zero means un-bounded.">
+            <v:ValueSpinner ui:field="processorMaxConcurrent" addStyleNames="allow-focus"/>
         </form:FormGroup>
 
         <form:FormGroup identity="contentTemplateExpression"

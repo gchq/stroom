@@ -442,24 +442,28 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     }
 
                     switch (contentTemplate.getTemplateType()) {
+
                         case PROCESSOR_FILTER -> createProcessorFilter(
                                 attributeMap.get(StandardHeaderArguments.TYPE),
                                 contentTemplate.getPipeline(),
-                                feedDocRef);
+                                feedDocRef,
+                                contentTemplate);
+
                         case INHERIT_PIPELINE -> createPipelineFromParent(
                                 pipelineDoc,
                                 attributeMap.get(StandardHeaderArguments.TYPE),
                                 feedDocRef,
-                                destFolder);
+                                destFolder,
+                                contentTemplate);
                     }
                 });
     }
 
     private void createProcessorFilter(final String streamType,
                                        final DocRef pipelineDocRef,
-                                       final DocRef feedDocRef) {
+                                       final DocRef feedDocRef,
+                                       final ContentTemplate contentTemplate) {
         final String type = NullSafe.nonBlankStringElse(streamType, StreamTypeNames.RAW_EVENTS);
-
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, feedDocRef)
@@ -474,20 +478,24 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                         .build())
                 .pipeline(pipelineDocRef)
                 .processorType(ProcessorType.PIPELINE)
-                .autoPriority(true)
+                .priority(contentTemplate.getProcessorPriority())
+                .autoPriority(false)
+                .maxProcessingTasks(contentTemplate.getProcessorMaxConcurrent())
                 .enabled(true)
                 .runAsUser(runAsUser)
                 .build();
 
         processorFilterService.create(request);
 
-        LOGGER.info("Created processor filter for expression: {}, running as {}", expression, runAsUser);
+        LOGGER.info("Created processor filter using contentTemplate '{}' for expression: {}, running as {}",
+                contentTemplate.getName(), expression, runAsUser);
     }
 
     private void createPipelineFromParent(final PipelineDoc parentPipelineDoc,
                                           final String streamType,
                                           final DocRef feedDocRef,
-                                          final ExplorerNode destFolder) {
+                                          final ExplorerNode destFolder,
+                                          final ContentTemplate contentTemplate) {
 
         explorerNodeService.getNode(parentPipelineDoc.asDocRef());
         // Use feed name for the name of the new pipeline
@@ -503,11 +511,11 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         newPipelineDoc.setParentPipeline(parentPipelineDoc.asDocRef());
         pipelineService.update(newPipelineUuid, newPipelineDoc);
 
-        LOGGER.info("Created pipeline {} with parentPipeline {}",
-                newPipelineDoc.asDocRef(), parentPipelineDoc.asDocRef());
+        LOGGER.info("Created pipeline {} with parentPipeline {} using contentTemplate '{}'",
+                newPipelineDoc.asDocRef(), parentPipelineDoc.asDocRef(), contentTemplate.getName());
 
         // Now create the proc filter for the new pipe
-        createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef);
+        createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef, contentTemplate);
     }
 //    private Optional<ContentTemplate> getMatchingTemplate(final List<ContentTemplate> activeTemplates,
 //                                                          final AttributeMap attributeMap) {

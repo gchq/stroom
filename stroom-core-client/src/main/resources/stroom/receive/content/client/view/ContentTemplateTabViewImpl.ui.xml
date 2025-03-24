@@ -12,7 +12,8 @@
                         identity="contentTemplateDescription"
                         label="Description"
                         helpText="The pipeline to use as the template for content.">
-                    <g:TextArea ui:field="description" addStyleNames="w-100"/>
+<!--                    <g:TextArea ui:field="description" addStyleNames="w-100"/>-->
+                    <g:HTML ui:field="description" addStyleNames="w-100"/>
                 </form:FormGroup>
 
                 <form:FormGroup identity="contentTemplateExpression"

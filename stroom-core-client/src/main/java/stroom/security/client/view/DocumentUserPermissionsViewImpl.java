@@ -86,6 +86,10 @@ public final class DocumentUserPermissionsViewImpl
         return permissionVisibility;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, DocumentUserPermissionsViewImpl> {
 
     }

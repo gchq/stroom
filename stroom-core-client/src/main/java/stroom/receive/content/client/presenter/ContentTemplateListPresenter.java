@@ -120,14 +120,14 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                         .build(),
                 200);
 
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(ContentTemplate::getDescription)
-                        .enabledWhen(ContentTemplate::isEnabled)
-                        .build(),
-                DataGridUtil.headingBuilder("Description")
-                        .withToolTip("The description of the template.")
-                        .build(),
-                200);
+//        dataGrid.addResizableColumn(
+//                DataGridUtil.textColumnBuilder(ContentTemplate::getDescription)
+//                        .enabledWhen(ContentTemplate::isEnabled)
+//                        .build(),
+//                DataGridUtil.headingBuilder("Description")
+//                        .withToolTip("The description of the template.")
+//                        .build(),
+//                200);
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ContentTemplate::getTemplateType))
@@ -153,15 +153,42 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                         .build(),
                 300);
 
-        dataGrid.addAutoResizableColumn(
-                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ContentTemplate::getExpression))
+        dataGrid.addColumn(
+                DataGridUtil.columnBuilder(
+                                DataGridUtil.toStringFunc(ContentTemplate::getProcessorPriority),
+                                TextCell::new)
                         .enabledWhen(ContentTemplate::isEnabled)
+                        .rightAligned()
                         .build(),
-                DataGridUtil.headingBuilder("Expression")
-                        .withToolTip("The expression to match received data with. " +
-                                     "Template expressions are tested in Template No. order, lowest first.")
+                DataGridUtil.headingBuilder("Priority")
+                        .withToolTip("The priority that will be assigned to the pipeline processor on creation.")
+                        .rightAligned()
                         .build(),
                 100);
+
+        dataGrid.addColumn(
+                DataGridUtil.columnBuilder(
+                                DataGridUtil.toStringFunc(ContentTemplate::getProcessorMaxConcurrent),
+                                TextCell::new)
+                        .enabledWhen(ContentTemplate::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Max Concurrent")
+                        .withToolTip("The maximum number of concurrent tasks that will be assigned to the pipeline " +
+                                     "processor on creation.")
+                        .rightAligned()
+                        .build(),
+                130);
+
+//        dataGrid.addAutoResizableColumn(
+//                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ContentTemplate::getExpression))
+//                        .enabledWhen(ContentTemplate::isEnabled)
+//                        .build(),
+//                DataGridUtil.headingBuilder("Expression")
+//                        .withToolTip("The expression to match received data with. " +
+//                                     "Template expressions are tested in Template No. order, lowest first.")
+//                        .build(),
+//                100);
 
         dataGrid.addColumn(
                 DataGridUtil.columnBuilder(

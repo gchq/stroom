@@ -558,7 +558,7 @@ public class ContentTemplateTabPresenter
         final ContentTemplateEditPresenter editRulePresenter = editPresenterProvider.get();
         editRulePresenter.read(existingRule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(1000, 800);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

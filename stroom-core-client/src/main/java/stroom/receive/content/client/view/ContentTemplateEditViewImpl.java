@@ -18,8 +18,10 @@
 package stroom.receive.content.client.view;
 
 import stroom.item.client.SelectionBox;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.TemplateType;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -42,8 +44,6 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     private final Widget widget;
 
     @UiField
-    SimplePanel expression;
-    @UiField
     TextBox name;
     @UiField
     TextArea description;
@@ -51,6 +51,13 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     SelectionBox<TemplateType> templateTypeSelectionBox;
     @UiField
     SimplePanel pipeline;
+    @UiField
+    ValueSpinner processorPriority;
+    @UiField
+    ValueSpinner processorMaxConcurrent;
+
+    @UiField
+    SimplePanel expression;
 
     @Inject
     public ContentTemplateEditViewImpl(final ContentTemplateEditViewImpl.Binder binder) {
@@ -61,6 +68,14 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
                 .collect(Collectors.toList());
 
         templateTypeSelectionBox.addItems(templateTypes);
+
+        processorPriority.setMin(ProcessorFilter.MIN_PRIORITY);
+        processorPriority.setMax(ProcessorFilter.MAX_PRIORITY);
+        processorPriority.setValue(ProcessorFilter.DEFAULT_PRIORITY);
+
+        processorMaxConcurrent.setMin(ProcessorFilter.MIN_MAX_PROCESSING_TASKS);
+        processorMaxConcurrent.setMax(ProcessorFilter.MAX_MAX_PROCESSING_TASKS);
+        processorMaxConcurrent.setValue(ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS);
 
         // TODO @AT There must be a better way of setting the focus than having to use a timer
         new Timer() {
@@ -123,6 +138,26 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
         w.getElement().getStyle().setWidth(100, Unit.PCT);
         w.getElement().getStyle().setMargin(0, Unit.PX);
         pipeline.setWidget(w);
+    }
+
+    @Override
+    public int getProcessorPriority() {
+        return processorPriority.getIntValue();
+    }
+
+    @Override
+    public void setProcessorPriority(int value) {
+        processorPriority.setValue(value);
+    }
+
+    @Override
+    public int getProcessorMaxConcurrent() {
+        return processorMaxConcurrent.getIntValue();
+    }
+
+    @Override
+    public void setProcessorMaxConcurrent(int value) {
+        processorMaxConcurrent.setValue(value);
     }
 
 

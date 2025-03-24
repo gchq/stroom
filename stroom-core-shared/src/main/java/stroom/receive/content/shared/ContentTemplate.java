@@ -1,6 +1,7 @@
 package stroom.receive.content.shared;
 
 import stroom.docref.DocRef;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.GwtNullSafe;
 
@@ -33,6 +34,10 @@ public class ContentTemplate {
     private final String name;
     @JsonProperty
     private final String description;
+    @JsonProperty
+    private final int processorPriority;
+    @JsonProperty
+    private final int processorMaxConcurrent;
 
     @JsonCreator
     public ContentTemplate(@JsonProperty("enabled") final boolean enabled,
@@ -41,10 +46,19 @@ public class ContentTemplate {
                            @JsonProperty("templateType") final TemplateType templateType,
                            @JsonProperty("pipeline") final DocRef pipeline,
                            @JsonProperty("name") final String name,
-                           @JsonProperty("description") final String description) {
+                           @JsonProperty("description") final String description,
+                           @JsonProperty("processorPriority") final int processorPriority,
+                           @JsonProperty("processorMaxConcurrent") final int processorMaxConcurrent) {
+
         if (templateNumber < 1) {
             throw new IllegalArgumentException(
                     "Invalid templateNumber " + templateNumber + ". Must be >= 1.");
+        }
+        if (processorPriority < 0) {
+            throw new IllegalArgumentException("processorPriority must be >= 0");
+        }
+        if (processorMaxConcurrent < 0) {
+            throw new IllegalArgumentException("processorMaxConcurrent must be >= 0");
         }
         this.enabled = enabled;
         this.templateNumber = templateNumber;
@@ -55,6 +69,8 @@ public class ContentTemplate {
         this.pipeline = Objects.requireNonNull(pipeline);
         this.name = name;
         this.description = description;
+        this.processorPriority = processorPriority;
+        this.processorMaxConcurrent = processorMaxConcurrent;
     }
 
     private ContentTemplate(final Builder builder) {
@@ -65,6 +81,8 @@ public class ContentTemplate {
         pipeline = builder.pipeline;
         name = builder.name;
         description = builder.description;
+        processorPriority = builder.processorPriority;
+        processorMaxConcurrent = builder.processorMaxConcurrent;
     }
 
     public Builder copy() {
@@ -80,6 +98,8 @@ public class ContentTemplate {
         builder.pipeline = copy.getPipeline();
         builder.name = copy.getName();
         builder.description = copy.getDescription();
+        builder.processorPriority = copy.getProcessorPriority();
+        builder.processorMaxConcurrent = copy.getProcessorMaxConcurrent();
         return builder;
     }
 
@@ -131,6 +151,14 @@ public class ContentTemplate {
         return description;
     }
 
+    public int getProcessorPriority() {
+        return processorPriority;
+    }
+
+    public int getProcessorMaxConcurrent() {
+        return processorMaxConcurrent;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -140,25 +168,24 @@ public class ContentTemplate {
             return false;
         }
         final ContentTemplate that = (ContentTemplate) o;
-        return enabled == that.enabled
-               && templateNumber == that.templateNumber
-               && Objects.equals(expression, that.expression)
-               && templateType == that.templateType
-               && Objects.equals(pipeline, that.pipeline)
-               && Objects.equals(name, that.name)
-               && Objects.equals(description, that.description);
+        return enabled == that.enabled && templateNumber == that.templateNumber && processorPriority == that.processorPriority && processorMaxConcurrent == that.processorMaxConcurrent && Objects.equals(
+                expression,
+                that.expression) && templateType == that.templateType && Objects.equals(pipeline,
+                that.pipeline) && Objects.equals(name, that.name) && Objects.equals(description,
+                that.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                enabled,
+        return Objects.hash(enabled,
                 templateNumber,
                 expression,
                 templateType,
                 pipeline,
                 name,
-                description);
+                description,
+                processorPriority,
+                processorMaxConcurrent);
     }
 
     @Override
@@ -171,6 +198,8 @@ public class ContentTemplate {
                ", pipeline=" + pipeline +
                ", name='" + name + '\'' +
                ", description='" + description + '\'' +
+               ", processorPriority=" + processorPriority +
+               ", processorMaxConcurrent=" + processorMaxConcurrent +
                '}';
     }
 
@@ -182,7 +211,15 @@ public class ContentTemplate {
         return this.enabled == isEnabled
                 ? this
                 : new ContentTemplate(
-                        isEnabled, templateNumber, expression, templateType, pipeline, name, description);
+                        isEnabled,
+                        templateNumber,
+                        expression,
+                        templateType,
+                        pipeline,
+                        name,
+                        description,
+                        processorPriority,
+                        processorMaxConcurrent);
     }
 
     /**
@@ -193,7 +230,15 @@ public class ContentTemplate {
         return this.templateNumber == templateNumber
                 ? this
                 : new ContentTemplate(
-                        enabled, templateNumber, expression, templateType, pipeline, name, description);
+                        enabled,
+                        templateNumber,
+                        expression,
+                        templateType,
+                        pipeline,
+                        name,
+                        description,
+                        processorPriority,
+                        processorMaxConcurrent);
     }
 
     public static Builder builder() {
@@ -213,6 +258,8 @@ public class ContentTemplate {
         private DocRef pipeline;
         private String name;
         private String description;
+        private int processorPriority = ProcessorFilter.DEFAULT_PRIORITY;
+        private int processorMaxConcurrent = ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS;
 
         private Builder() {
         }
@@ -253,6 +300,16 @@ public class ContentTemplate {
 
         public Builder withDescription(final String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder withProcessorPriority(final int processorPriority) {
+            this.processorPriority = processorPriority;
+            return this;
+        }
+
+        public Builder withProcessorMaxConcurrent(final int processorMaxConcurrent) {
+            this.processorMaxConcurrent = processorMaxConcurrent;
             return this;
         }
 

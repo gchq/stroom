@@ -105,6 +105,8 @@ public class ContentTemplateEditPresenter
         view.setName(contentTemplate.getName());
         view.setDescription(contentTemplate.getDescription());
         view.setTemplateType(contentTemplate.getTemplateType());
+        view.setProcessorPriority(contentTemplate.getProcessorPriority());
+        view.setProcessorMaxConcurrent(contentTemplate.getProcessorMaxConcurrent());
         pipelineSelectionPresenter.setSelectedEntityReference(contentTemplate.getPipeline(), true);
     }
 
@@ -117,6 +119,8 @@ public class ContentTemplateEditPresenter
                 .withTemplateType(view.getTemplateType())
                 .withPipeline(pipelineSelectionPresenter.getSelectedEntityReference())
                 .withExpression(expression)
+                .withProcessorPriority(view.getProcessorPriority())
+                .withProcessorMaxConcurrent(view.getProcessorMaxConcurrent())
                 .build();
     }
 
@@ -149,5 +153,13 @@ public class ContentTemplateEditPresenter
         void setTemplateType(final TemplateType templateType);
 
         void setPipelineSelector(final View view);
+
+        int getProcessorPriority();
+
+        void setProcessorPriority(int value);
+
+        int getProcessorMaxConcurrent();
+
+        void setProcessorMaxConcurrent(int value);
     }
 }
