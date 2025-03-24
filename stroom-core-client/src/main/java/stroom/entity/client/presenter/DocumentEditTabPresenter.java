@@ -73,12 +73,8 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
-        toolbar = new ButtonPanel();
-        toolbar.addButton(saveButton);
-        toolbar.addButton(saveAsButton);
+        toolbar = createToolbar();
 
-        registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
         tabContentProvider = new TabContentProvider<>(eventBus);
@@ -86,6 +82,15 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         commonTabsMap = new EnumMap<>(CommonDocLinkTab.class);
         addEntry(commonTabsMap, CommonDocLinkTab.DOCUMENTATION, this::getDocumentationTab);
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
+    }
+
+    protected ButtonPanel createToolbar() {
+        final ButtonPanel toolbar = new ButtonPanel();
+        toolbar.addButton(saveButton);
+        toolbar.addButton(saveAsButton);
+        registerHandler(saveButton.addClickHandler(event -> save()));
+        registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
+        return toolbar;
     }
 
     private void addEntry(final Map<CommonDocLinkTab, TabData> commonTabsMap,
@@ -165,11 +170,10 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
                         getView().getLayerContainer().show((Layer) currentContent);
 
                         // Update the buttons.
-                        if (currentContent instanceof HasToolbar) {
+                        if (currentContent instanceof final HasToolbar hasToolbar) {
                             getView().clearToolbar();
                             getView().addToolbar(toolbar);
 
-                            final HasToolbar hasToolbar = (HasToolbar) currentContent;
                             for (final Widget widget : hasToolbar.getToolbars()) {
                                 getView().addToolbar(widget);
                             }
@@ -273,12 +277,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public DocRef getDocRef() {
         return docRef;
     }
-
-//    /**
-//     * @return The {@link TabData} instance for the default tab that the user
-//     * will see on opening this document.
-//     */
-//    protected abstract TabData getDefaultTab();
 
     /**
      * @return The {@link TabData} instance for the Permissions tab.

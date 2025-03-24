@@ -16,9 +16,9 @@
 
 package stroom.widget.util.client;
 
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.HasSelection;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
 import java.util.HashSet;
@@ -29,13 +29,13 @@ public final class MultiSelectionModelImpl<T>
         extends AbstractSelectionModel<T>
         implements MultiSelectionModel<T>, HasSelection<T> {
 
-    private final Widget widget;
+    private final HandlerManager handlerManager;
     private Selection<T> selection = new Selection<>();
     private final Set<T> changes = new HashSet<>();
 
-    public MultiSelectionModelImpl(final Widget widget) {
+    public MultiSelectionModelImpl() {
         super(null);
-        this.widget = widget;
+        this.handlerManager = new HandlerManager(this);
     }
 
     @Override
@@ -71,6 +71,16 @@ public final class MultiSelectionModelImpl<T>
     @Override
     public List<T> getSelectedItems() {
         return selection.getSelectedItems();
+    }
+
+    @Override
+    public void setSelectedItems(final List<T> selectedItems) {
+        clear(false);
+        if (selectedItems != null) {
+            for (T t : selectedItems) {
+                setSelected(t, true, new SelectionType(), false);
+            }
+        }
     }
 
     @Override
@@ -189,11 +199,11 @@ public final class MultiSelectionModelImpl<T>
 
     @Override
     public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
-        return widget.addHandler(handler, MultiSelectEvent.getType());
+        return handlerManager.addHandler(MultiSelectEvent.getType(), handler);
     }
 
     private void fireChange(final SelectionType selectionType) {
-        MultiSelectEvent.fire(widget, selectionType);
+        MultiSelectEvent.fire(handlerManager, selectionType);
     }
 
     @Override

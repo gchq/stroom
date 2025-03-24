@@ -22,6 +22,7 @@ import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
 import stroom.dashboard.shared.DashboardDoc;
@@ -233,6 +234,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         KeyBinding.addCommand(Action.GOTO_EXPLORER_TREE, () ->
                 FocusExplorerTreeEvent.fire(this));
         // Binds for creating a document of a given type
+        KeyBinding.addCommand(Action.CREATE_ANNOTATION, () ->
+                CreateAnnotationEvent.fire(this));
         KeyBinding.addCommand(Action.CREATE_ELASTIC_INDEX, () ->
                 CreateNewDocumentEvent.fire(this, ElasticIndexDoc.TYPE));
         KeyBinding.addCommand(Action.CREATE_DASHBOARD, () ->

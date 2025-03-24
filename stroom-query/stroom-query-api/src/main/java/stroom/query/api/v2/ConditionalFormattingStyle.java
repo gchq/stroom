@@ -1,31 +1,33 @@
 package stroom.query.api.v2;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public enum ConditionalFormattingStyle implements HasDisplayValue {
-    NONE("None", ""),
-    RED("Red", "cf-red"),
-    PINK("Pink", "cf-pink"),
-    PURPLE("Purple", "cf-purple"),
-    DEEP_PURPLE("Deep Purple", "cf-deep-purple"),
-    INDIGO("Indigo", "cf-indigo"),
-    BLUE("Blue", "cf-blue"),
-    LIGHT_BLUE("Light Blue", "cf-light-blue"),
-    CYAN("Cyan", "cf-cyan"),
-    TEAL("Teal", "cf-teal"),
-    GREEN("Green", "cf-green"),
-    LIGHT_GREEN("Light Green", "cf-light-green"),
-    LIME("Lime", "cf-lime"),
-    YELLOW("Yellow", "cf-yellow"),
-    AMBER("Amber", "cf-amber"),
-    ORANGE("Orange", "cf-orange"),
-    DEEP_ORANGE("Deep Orange", "cf-deep-orange"),
-    BROWN("Brown", "cf-brown"),
-    GREY("Grey", "cf-grey"),
-    BLUE_GREY("Blue Grey", "cf-blue-grey");
+public enum ConditionalFormattingStyle implements HasDisplayValue, HasPrimitiveValue {
+    NONE("None", "", 0),
+    RED("Red", "cf-red", 1),
+    PINK("Pink", "cf-pink", 2),
+    PURPLE("Purple", "cf-purple", 3),
+    DEEP_PURPLE("Deep Purple", "cf-deep-purple", 4),
+    INDIGO("Indigo", "cf-indigo", 5),
+    BLUE("Blue", "cf-blue", 6),
+    LIGHT_BLUE("Light Blue", "cf-light-blue", 7),
+    CYAN("Cyan", "cf-cyan", 8),
+    TEAL("Teal", "cf-teal", 9),
+    GREEN("Green", "cf-green", 10),
+    LIGHT_GREEN("Light Green", "cf-light-green", 11),
+    LIME("Lime", "cf-lime", 12),
+    YELLOW("Yellow", "cf-yellow", 13),
+    AMBER("Amber", "cf-amber", 14),
+    ORANGE("Orange", "cf-orange", 15),
+    DEEP_ORANGE("Deep Orange", "cf-deep-orange", 16),
+    BROWN("Brown", "cf-brown", 17),
+    GREY("Grey", "cf-grey", 18),
+    BLUE_GREY("Blue Grey", "cf-blue-grey", 19);
 
     public static final List<ConditionalFormattingStyle> LIST = new ArrayList<>();
 
@@ -52,12 +54,18 @@ public enum ConditionalFormattingStyle implements HasDisplayValue {
         LIST.add(BLUE_GREY);
     }
 
+    public static final PrimitiveValueConverter<ConditionalFormattingStyle> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(ConditionalFormattingStyle.class, ConditionalFormattingStyle.values());
     private final String displayValue;
+    private final byte primitiveValue;
     private final String cssClassName;
 
-    ConditionalFormattingStyle(final String displayValue, final String cssClassName) {
+    ConditionalFormattingStyle(final String displayValue,
+                               final String cssClassName,
+                               final int primitiveValue) {
         this.displayValue = displayValue;
         this.cssClassName = cssClassName;
+        this.primitiveValue = (byte) primitiveValue;
     }
 
     @Override
@@ -67,5 +75,10 @@ public enum ConditionalFormattingStyle implements HasDisplayValue {
 
     public String getCssClassName() {
         return cssClassName;
+    }
+
+    @Override
+    public byte getPrimitiveValue() {
+        return primitiveValue;
     }
 }

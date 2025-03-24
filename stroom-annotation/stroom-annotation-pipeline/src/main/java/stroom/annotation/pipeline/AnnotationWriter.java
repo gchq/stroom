@@ -16,11 +16,9 @@
 
 package stroom.annotation.pipeline;
 
-import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationCreator;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.StringEntryValue;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -94,7 +92,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     private final CharBuffer content = new CharBuffer();
     private Locator locator;
 
-    private Annotation currentAnnotation = new Annotation();
+    private CreateAnnotationRequest.Builder currentRequest = CreateAnnotationRequest.builder();
     private String lastEventId = null;
     private String lastStreamId = null;
 
@@ -153,22 +151,20 @@ class AnnotationWriter extends AbstractXMLFilter {
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName)) {
+            currentRequest.linkedEvents(currentEventIds);
+            final CreateAnnotationRequest request = currentRequest.build();
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(
-                        currentAnnotation,
-                        Annotation.COMMENT,
-                        (StringEntryValue) null,
-                        currentEventIds));
+                annotationCreator.createAnnotation(request);
 
             } catch (final RuntimeException e) {
-                log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject(), e);
+                log(Severity.ERROR, "Unable to create annotation " + request.getTitle(), e);
             }
-            currentAnnotation = new Annotation();
+            currentRequest = CreateAnnotationRequest.builder();
             currentEventIds = new ArrayList<>();
         } else if (TITLE_TAG.equals(localName)) {
-            currentAnnotation.setTitle(content.toString());
+            currentRequest.title(content.toString());
         } else if (DESCRIPTION_TAG.equals(localName)) {
-            currentAnnotation.setSubject(content.toString());
+            currentRequest.subject(content.toString());
         } else if (EVENTID_TAG.equals(localName)) {
             lastEventId = content.toString();
         } else if (STREAMID_TAG.equals(localName)) {

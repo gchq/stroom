@@ -17,7 +17,7 @@ public class AnnotationEntry {
     @JsonProperty
     private UserRef entryUser;
     @JsonProperty
-    private String entryType;
+    private AnnotationEntryType entryType;
     @JsonProperty
     private EntryValue entryValue;
 
@@ -28,7 +28,7 @@ public class AnnotationEntry {
     public AnnotationEntry(@JsonProperty("id") final Long id,
                            @JsonProperty("entryTime") final Long entryTime,
                            @JsonProperty("entryUser") final UserRef entryUser,
-                           @JsonProperty("entryType") final String entryType,
+                           @JsonProperty("entryType") final AnnotationEntryType entryType,
                            @JsonProperty("entryValue") final EntryValue entryValue) {
         this.id = id;
         this.entryTime = entryTime;
@@ -61,11 +61,11 @@ public class AnnotationEntry {
         this.entryUser = entryUser;
     }
 
-    public String getEntryType() {
+    public AnnotationEntryType getEntryType() {
         return entryType;
     }
 
-    public void setEntryType(final String entryType) {
+    public void setEntryType(final AnnotationEntryType entryType) {
         this.entryType = entryType;
     }
 
@@ -80,11 +80,11 @@ public class AnnotationEntry {
     @Override
     public String toString() {
         return "AnnotationEntry{" +
-                "id=" + id +
-                ", entryTime=" + entryTime +
-                ", entryUser=" + entryUser +
-                ", entryType='" + entryType + '\'' +
-                ", entryValue=" + entryValue +
-                '}';
+               "id=" + id +
+               ", entryTime=" + entryTime +
+               ", entryUser=" + entryUser +
+               ", entryType='" + entryType + '\'' +
+               ", entryValue=" + entryValue +
+               '}';
     }
 }

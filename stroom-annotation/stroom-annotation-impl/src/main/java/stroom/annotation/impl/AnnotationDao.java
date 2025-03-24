@@ -17,40 +17,59 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.UserRef;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface AnnotationDao {
 
-    Annotation get(long annotationId);
+    List<DocRef> idListToDocRefs(List<Long> idList);
 
-    AnnotationDetail getDetail(long annotationId);
+    Optional<Annotation> getAnnotationById(long id);
 
-    List<Annotation> getAnnotationsForEvents(long streamId, long eventId);
+    Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    AnnotationDetail createEntry(CreateEntryRequest request, UserRef currentUser);
+    List<Annotation> getAnnotationsForEvents(EventId eventId);
 
-    List<EventId> getLinkedEvents(Long annotationId);
+    Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 
-    List<EventId> link(UserRef currentUser, EventLink eventLink);
+    boolean change(SingleAnnotationChangeRequest request, UserRef currentUser);
 
-    List<EventId> unlink(EventLink eventLink, UserRef currentUser);
+    List<AnnotationEntry> getAnnotationEntries(DocRef annotationRef);
 
-    Integer setStatus(SetStatusRequest request, UserRef currentUser);
+    List<EventId> getLinkedEvents(DocRef annotationRef);
 
-    Integer setAssignedTo(SetAssignedToRequest request, UserRef currentUser);
-
-    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria,
+                FieldIndex fieldIndex,
+                ValuesConsumer consumer,
+                Predicate<String> uuidPredicate);
 
     List<Annotation> fetchByAssignedUser(final String userUuid);
+
+    boolean logicalDelete(DocRef annotationRef, UserRef currentUser);
+
+    /**
+     * Mark annotations deleted if they have not been updated within their specified retention time.
+     *
+     * @param currentUser The current user.
+     */
+    void markDeletedByDataRetention(UserRef currentUser);
+
+    /**
+     * Physically delete annotations that have been marked as deleted since before the provided age.
+     *
+     * @param age Anything older than this age will be deleted.
+     */
+    void physicallyDelete(Instant age);
 }

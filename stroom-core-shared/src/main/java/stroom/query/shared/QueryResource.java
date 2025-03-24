@@ -171,4 +171,12 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch the datasource referenced by a query",
             operationId = "fetchQueryDataSource")
     DocRef fetchQueryDataSource(DocRef queryDocRef);
+
+    @POST
+    @Path("/fetchDataSourceFromQueryString")
+    @Operation(
+            summary = "Fetch a data source from a query string",
+            operationId = "fetchDataSourceFromQueryString")
+    DocRef fetchDataSourceFromQueryString(
+            @Parameter(description = "query", required = true) String query);
 }

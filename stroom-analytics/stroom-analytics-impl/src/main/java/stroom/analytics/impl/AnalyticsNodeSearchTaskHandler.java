@@ -20,7 +20,7 @@ package stroom.analytics.impl;
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.annotation.api.AnnotationFields;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.query.api.v2.Column;
@@ -136,7 +136,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
         try {
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
 

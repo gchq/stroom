@@ -194,6 +194,16 @@ public class DocumentTypeRegistry {
             "Annotations",
             "Annotations",
             SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType ANNOTATION_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "Annotation",
+            "Annotation",
+            SvgImage.EDIT);
+    public static final DocumentType ANNOTATION_TAG_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "AnnotationGroup",
+            "Annotation Group",
+            SvgImage.EDIT);
     public static final DocumentType STREAM_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "StreamStore",
@@ -214,6 +224,7 @@ public class DocumentTypeRegistry {
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
         put(ANALYTIC_RULE_DOCUMENT_TYPE);
+        put(ANNOTATION_DOCUMENT_TYPE);
         put(DASHBOARD_DOCUMENT_TYPE);
         put(DICTIONARY_DOCUMENT_TYPE);
         put(DOCUMENTATION_DOCUMENT_TYPE);

@@ -1,12 +1,17 @@
 ext.moduleName = 'stroom.annotation.impl.db'
 
 dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
-    implementation project(':stroom-annotation:stroom-annotation-api')
+    implementation project(':stroom-dictionary:stroom-dictionary-api')
+    implementation project(':stroom-explorer:stroom-docrefinfo-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
+    implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -25,7 +30,15 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
+    testImplementation project(':stroom-event-logging:stroom-event-logging-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    testImplementation project(':stroom-search:stroom-searchable-api')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-task:stroom-task-mock')
 
     testImplementation libs.assertj.core
     testImplementation libs.flyway.core
