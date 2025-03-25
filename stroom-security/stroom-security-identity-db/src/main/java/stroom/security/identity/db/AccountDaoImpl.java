@@ -37,6 +37,7 @@ import stroom.util.ResultPageFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
@@ -159,23 +160,16 @@ class AccountDaoImpl implements AccountDao {
             entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
             entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
-    private static final Map<String, Comparator<Account>> FIELD_COMPARATORS = Map.of(
-            AccountFields.FIELD_NAME_USER_ID,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getUserId),
-            AccountFields.FIELD_NAME_FIRST_NAME,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getFirstName),
-            AccountFields.FIELD_NAME_LAST_NAME,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getLastName),
-            AccountFields.FIELD_NAME_EMAIL,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getEmail),
-            AccountFields.FIELD_NAME_STATUS,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getStatus),
-            AccountFields.FIELD_NAME_LAST_LOGIN_MS,
-            CompareUtil.getNullSafeComparator(Account::getLastLoginMs), // nullable
-            AccountFields.FIELD_NAME_LOGIN_FAILURES,
-            Comparator.comparingInt(Account::getLoginFailures), // not null
-            AccountFields.FIELD_NAME_COMMENTS,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getComments));
+    private static final FieldComparators<Account> FIELD_COMPARATORS = FieldComparators.builder(Account.class)
+            .addStringComparator(AccountFields.FIELD_NAME_USER_ID, Account::getUserId)
+            .addStringComparator(AccountFields.FIELD_NAME_FIRST_NAME, Account::getFirstName)
+            .addStringComparator(AccountFields.FIELD_NAME_LAST_NAME, Account::getLastName)
+            .addStringComparator(AccountFields.FIELD_NAME_EMAIL, Account::getEmail)
+            .addStringComparator(AccountFields.FIELD_NAME_STATUS, Account::getStatus)
+            .addCaseLessComparator(AccountFields.FIELD_NAME_LAST_LOGIN_MS, Account::getLastLoginMs) // nullable
+            .addLongComparator(AccountFields.FIELD_NAME_LOGIN_FAILURES, Account::getLoginFailures) // not null
+            .addStringComparator(AccountFields.FIELD_NAME_COMMENTS, Account::getComments)
+            .build();
 
     private final Provider<IdentityConfig> identityConfigProvider;
     private final IdentityDbConnProvider identityDbConnProvider;

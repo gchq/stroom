@@ -19,6 +19,7 @@ package stroom.config.global.impl;
 
 
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -41,6 +42,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
@@ -69,13 +71,19 @@ public class GlobalConfigService {
                     .put(GlobalConfigResource.FIELD_DEF_DESCRIPTION, ConfigProperty::getDescription);
     public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(GlobalConfigResource.FIELD_DEFINITIONS);
 
-    private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
-            GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
-                    ConfigProperty::getNameAsString, String::compareToIgnoreCase),
-            GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(), Comparator.comparing(
-                    (ConfigProperty prop) ->
-                            prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
-            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(ConfigProperty::getSource));
+    private static final FieldComparators<ConfigProperty> FIELD_COMPARATORS = FieldComparators.builder(
+                    ConfigProperty.class)
+            .addStringComparator(
+                    GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
+                    ConfigProperty::getNameAsString)
+            .addStringComparator(
+                    GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
+                    prop -> prop.getEffectiveValueMasked().orElse(""))
+            .addEnumComparator(
+                    GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
+                    ConfigProperty::getSource,
+                    SourceType::getName)
+            .build();
 
     private final GlobalConfigBootstrapService globalConfigBootstrapService;
     private final ConfigPropertyDao dao;
