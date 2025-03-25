@@ -31,6 +31,9 @@ import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
@@ -53,6 +56,8 @@ import java.util.stream.Collectors;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
@@ -163,6 +168,7 @@ class NodeResourceImpl implements NodeResource {
                     response.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
+            LOGGER.error("Error finding nodes for {}: {}", findNodeStatusCriteria, LogUtil.exceptionMessage(e), e);
             documentEventLogProvider.get().search(
                     typeId,
                     query,
@@ -184,7 +190,6 @@ class NodeResourceImpl implements NodeResource {
                 NodeResource.BASE_PATH,
                 NodeResource.INFO_PATH_PART,
                 nodeName);
-
 
         try {
             final long now = System.currentTimeMillis();
@@ -239,7 +244,7 @@ class NodeResourceImpl implements NodeResource {
                     SyncInvoker::get);
         } catch (WebApplicationException e) {
             throw new RuntimeException("Unable to connect to node '" + nodeName + "': "
-                    + e.getMessage());
+                                       + e.getMessage());
         }
 
         Objects.requireNonNull(ping, "Null ping");
