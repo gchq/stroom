@@ -13,9 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.9-beta.3-annotations2] - 2025-03-24
+## [v7.9-beta.4] - 2025-03-25
 
-* Annotations 2.0.
+* Issue **#4828** : Fix recursive cache invalidation for index load.
+
+* Issue **#4827** : Fix NPE when opening the Nodes screen.
 
 
 ## [v7.9-beta.3] - 2025-03-24
@@ -1314,8 +1316,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.3-annotations2...HEAD
-[v7.9-beta.3-annotations2]: https://github.com/gchq/stroom/compare/v7.9-beta.3...v7.9-beta.3-annotations2
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.4...HEAD
+[v7.9-beta.4]: https://github.com/gchq/stroom/compare/v7.9-beta.3...v7.9-beta.4
 [v7.9-beta.3]: https://github.com/gchq/stroom/compare/v7.9-beta.2...v7.9-beta.3
 [v7.9-beta.2]: https://github.com/gchq/stroom/compare/v7.9-beta.1...v7.9-beta.2
 [v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
