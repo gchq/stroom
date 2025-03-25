@@ -34,24 +34,23 @@ public class DBTableStatus {
     public static final String FIELD_DATA_SIZE = "Data Size";
     public static final String FIELD_INDEX_SIZE = "Index Size";
 
-
     @JsonProperty
-    private String db;
+    private final String db;
     @JsonProperty
-    private String table;
+    private final String table;
     @JsonProperty
-    private Long count;
+    private final long count;
     @JsonProperty
-    private Long dataSize;
+    private final long dataSize;
     @JsonProperty
-    private Long indexSize;
+    private final long indexSize;
 
     @JsonCreator
     public DBTableStatus(@JsonProperty("db") final String db,
                          @JsonProperty("table") final String table,
-                         @JsonProperty("count") final Long count,
-                         @JsonProperty("dataSize") final Long dataSize,
-                         @JsonProperty("indexSize") final Long indexSize) {
+                         @JsonProperty("count") final long count,
+                         @JsonProperty("dataSize") final long dataSize,
+                         @JsonProperty("indexSize") final long indexSize) {
         this.db = db;
         this.table = table;
         this.count = count;
@@ -63,40 +62,30 @@ public class DBTableStatus {
         return db;
     }
 
-    public void setDb(final String db) {
-        this.db = db;
-    }
-
     public String getTable() {
         return table;
     }
 
-    public void setTable(String table) {
-        this.table = table;
-    }
-
-    public Long getCount() {
+    public long getCount() {
         return count;
     }
 
-    public void setCount(Long count) {
-        this.count = count;
-    }
-
-    public Long getDataSize() {
+    public long getDataSize() {
         return dataSize;
     }
 
-    public void setDataSize(Long dataSize) {
-        this.dataSize = dataSize;
-    }
-
-    public Long getIndexSize() {
+    public long getIndexSize() {
         return indexSize;
     }
 
-    public void setIndexSize(Long indexSize) {
-        this.indexSize = indexSize;
+    @Override
+    public String toString() {
+        return "DBTableStatus{" +
+               "db='" + db + '\'' +
+               ", table='" + table + '\'' +
+               ", count=" + count +
+               ", dataSize=" + dataSize +
+               ", indexSize=" + indexSize +
+               '}';
     }
-
 }

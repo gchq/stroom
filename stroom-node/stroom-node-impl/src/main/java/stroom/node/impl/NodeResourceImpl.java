@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
@@ -48,7 +49,6 @@ import jakarta.ws.rs.client.SyncInvoker;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -64,19 +64,14 @@ class NodeResourceImpl implements NodeResource {
     private final Provider<ClusterNodeManager> clusterNodeManagerProvider;
     private final Provider<DocumentEventLog> documentEventLogProvider;
 
-    private static final Map<String, Comparator<Node>> FIELD_COMPARATORS = Map.of(
-            FindNodeStatusCriteria.FIELD_ID_NAME,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getName),
-            FindNodeStatusCriteria.FIELD_ID_URL,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getUrl),
-            FindNodeStatusCriteria.FIELD_ID_PRIORITY,
-            Comparator.comparing(Node::getPriority),
-            FindNodeStatusCriteria.FIELD_ID_ENABLED,
-            Comparator.comparing(Node::isEnabled),
-            FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION,
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Node::getBuildVersion),
-            FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS,
-            CompareUtil.getNullSafeComparator(Node::getLastBootMs));
+    private static final FieldComparators<Node> FIELD_COMPARATORS = FieldComparators.builder(Node.class)
+            .addStringComparator(FindNodeStatusCriteria.FIELD_ID_NAME, Node::getName)
+            .addStringComparator(FindNodeStatusCriteria.FIELD_ID_URL, Node::getUrl)
+            .addIntComparator(FindNodeStatusCriteria.FIELD_ID_PRIORITY, Node::getPriority)
+            .addBooleanComparator(FindNodeStatusCriteria.FIELD_ID_ENABLED, Node::isEnabled)
+            .addStringComparator(FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION, Node::getBuildVersion)
+            .addCaseLessComparator(FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS, Node::getLastBootMs)
+            .build();
 
     @Inject
     NodeResourceImpl(final Provider<NodeServiceImpl> nodeServiceProvider,
