@@ -65,6 +65,29 @@ public class IndexStoreImpl implements IndexStore {
         this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc.class);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.serialiser = serialiser;
+
+        // Transfer all legacy field data to DB.
+        list().forEach(docRef -> {
+            try {
+                transferFieldsToDb(store.readDocument(docRef));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+        });
+    }
+
+    private void transferFieldsToDb(final LuceneIndexDoc doc) {
+        if (doc != null && !NullSafe.isEmptyCollection(doc.getFields())) {
+            // Make sure we transfer all fields to the DB and remove them from the doc.
+            final List<IndexField> fields = doc
+                    .getFields()
+                    .stream()
+                    .map(field -> (IndexField) field)
+                    .toList();
+            indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
+            doc.setFields(null);
+            store.writeDocument(doc);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -142,12 +165,12 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public LuceneIndexDoc readDocument(final DocRef docRef) {
-        return transferFieldsToDb(store.readDocument(docRef));
+        return store.readDocument(docRef);
     }
 
     @Override
     public LuceneIndexDoc writeDocument(final LuceneIndexDoc document) {
-        return transferFieldsToDb(store.writeDocument(document));
+        return store.writeDocument(document);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -214,22 +237,6 @@ public class IndexStoreImpl implements IndexStore {
         }
 
         return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
-    }
-
-    private LuceneIndexDoc transferFieldsToDb(final LuceneIndexDoc doc) {
-        if (doc == null || NullSafe.isEmptyCollection(doc.getFields())) {
-            return doc;
-        }
-
-        // Make sure we transfer all fields to the DB and remove them from the doc.
-        final List<IndexField> fields = doc
-                .getFields()
-                .stream()
-                .map(field -> (IndexField) field)
-                .toList();
-        indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
-        doc.setFields(null);
-        return store.writeDocument(doc);
     }
 
     @Override
