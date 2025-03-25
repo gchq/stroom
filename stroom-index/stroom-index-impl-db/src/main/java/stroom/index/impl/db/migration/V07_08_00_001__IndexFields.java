@@ -22,30 +22,57 @@ import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
 public class V07_08_00_001__IndexFields extends BaseJavaMigration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_08_00_001__IndexFields.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(V07_08_00_001__IndexFields.class);
 
     private final Serialiser2<LuceneIndexDoc> indexDocSerialiser =
             new Serialiser2FactoryImpl().createSerialiser(LuceneIndexDoc.class);
 
     @Override
     public void migrate(final Context context) throws Exception {
+        final List<LuceneIndexDoc> docs = getDocs(context);
+        for (final LuceneIndexDoc doc : docs) {
+            if (NullSafe.hasItems(doc, LuceneIndexDoc::getFields)) {
+                final DocRef docRef = doc.asDocRef();
+
+                // Ensure field source
+                createFieldSource(context, docRef);
+
+                // Get field source
+                final int fieldSourceId = getFieldSourceId(context, docRef);
+
+                // Add fields to DB
+                addFieldsToDb(context, fieldSourceId, doc.getFields());
+
+                // Remove all fields from doc
+                doc.setFields(null);
+
+                // Write the updated doc
+                writeDoc(context, doc);
+            }
+        }
+    }
+
+    private List<LuceneIndexDoc> getDocs(final Context context) throws SQLException {
+        final List<LuceneIndexDoc> docs = new ArrayList<>();
         try (final PreparedStatement preparedStatement = context.getConnection()
                 .prepareStatement("" +
                                   "SELECT" +
@@ -66,27 +93,15 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
 
                     // Read the doc
                     final LuceneIndexDoc doc = readDoc(data);
-                    if (NullSafe.hasItems(doc, LuceneIndexDoc::getFields)) {
-                        final DocRef docRef = doc.asDocRef();
-
-                        // Ensure field source
-                        createFieldSource(context, docRef);
-
-                        // Get field source
-                        final int fieldSourceId = getFieldSourceId(context, docRef);
-
-                        // Add fields to DB
-                        addFieldsToDb(context, fieldSourceId, doc.getFields());
-
-                        // Remove all fields from doc
-                        doc.setFields(null);
-
-                        // Write the updated doc
-                        writeDoc(context, doc);
-                    }
+                    docs.add(doc);
                 }
             }
+        } catch (final SQLSyntaxErrorException e) {
+            // Ignore errors as they are due to doc not existing, which is ok because it means we have nothing to
+            // migrate.
+            LOGGER.debug(e::getMessage, e);
         }
+        return docs;
     }
 
     private void createFieldSource(final Context context, final DocRef docRef) throws SQLException {
