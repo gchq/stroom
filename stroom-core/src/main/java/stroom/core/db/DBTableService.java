@@ -22,6 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CompareUtil.FieldComparators;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -50,16 +51,14 @@ class DBTableService {
 
     // This ought to live in DBTableStatus but GWT won't allow it
     // Maps criteria field names to comparator for that field
-    private static final Map<String, Comparator<DBTableStatus>> FIELD_COMPARATORS = Map.of(
-            DBTableStatus.FIELD_DATABASE, Comparator.comparing(
-                    DBTableStatus::getDb,
-                    String::compareToIgnoreCase),
-            DBTableStatus.FIELD_TABLE, Comparator.comparing(
-                    DBTableStatus::getTable,
-                    String::compareToIgnoreCase),
-            DBTableStatus.FIELD_ROW_COUNT, Comparator.comparing(DBTableStatus::getCount),
-            DBTableStatus.FIELD_DATA_SIZE, Comparator.comparing(DBTableStatus::getDataSize),
-            DBTableStatus.FIELD_INDEX_SIZE, Comparator.comparing(DBTableStatus::getIndexSize));
+    private static final FieldComparators<DBTableStatus> FIELD_COMPARATORS = FieldComparators.builder(
+                    DBTableStatus.class)
+            .addStringComparator(DBTableStatus.FIELD_DATABASE, DBTableStatus::getDb)
+            .addStringComparator(DBTableStatus.FIELD_TABLE, DBTableStatus::getTable)
+            .addLongComparator(DBTableStatus.FIELD_ROW_COUNT, DBTableStatus::getCount)
+            .addLongComparator(DBTableStatus.FIELD_DATA_SIZE, DBTableStatus::getDataSize)
+            .addLongComparator(DBTableStatus.FIELD_INDEX_SIZE, DBTableStatus::getIndexSize)
+            .build();
 
     @Inject
     DBTableService(final Set<DataSource> dataSources,
@@ -98,8 +97,8 @@ class DBTableService {
 
         final Comparator<DBTableStatus> comparator;
         if (criteria != null
-                && criteria.getSortList() != null
-                && !criteria.getSortList().isEmpty()) {
+            && criteria.getSortList() != null
+            && !criteria.getSortList().isEmpty()) {
 
             comparator = CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria);
         } else {
@@ -119,9 +118,9 @@ class DBTableService {
 
             // Filter out any legacy tables
             final String sql = "" +
-                    "show table status " +
-                    "where comment != 'VIEW' " +
-                    "and Name not like 'OLD_%' ";
+                               "show table status " +
+                               "where comment != 'VIEW' " +
+                               "and Name not like 'OLD_%' ";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     sql,
                     ResultSet.TYPE_FORWARD_ONLY,
@@ -168,7 +167,7 @@ class DBTableService {
             }
             final TableKey tableKey = (TableKey) o;
             return dbName.equals(tableKey.dbName) &&
-                    tableName.equals(tableKey.tableName);
+                   tableName.equals(tableKey.tableName);
         }
 
         @Override
