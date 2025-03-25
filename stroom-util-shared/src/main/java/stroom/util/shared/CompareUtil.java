@@ -119,40 +119,34 @@ public final class CompareUtil {
 
         Comparator<T> comparator = null;
 
-        if (criteria.getSortList() != null) {
+        if (GwtNullSafe.hasItems(criteria.getSortList())) {
             for (final CriteriaFieldSort sort : criteria.getSortList()) {
                 final String field = sort.getId();
 
+                // TODO we are ignoring sort.isIgnoreCase() so are comparing with whatever
+                //  comparators are in the map. Might be be better to have a Map<String, ComparatorPair<T>>
+                //  such that the pair contains both case sesnse and insense versions or for non-strings
+                //  just one comparator.
                 Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
 
                 Objects.requireNonNull(fieldComparator, () ->
                         "Missing comparator for field " + field);
 
-                if (sort.isDesc()) {
-                    fieldComparator = fieldComparator.reversed();
-                }
+                fieldComparator = CompareUtil.reverseIf(fieldComparator, sort.isDesc());
 
-                comparator = comparator == null
-                        ? fieldComparator
-                        : comparator.thenComparing(fieldComparator);
+                comparator = CompareUtil.combine(comparator, fieldComparator);
             }
-        } else if (defaultSortFields.length > 0) {
+        } else {
             for (final String defaultField : defaultSortFields) {
-
-                Comparator<T> fieldComparator = fieldComparatorsMap.get(defaultField);
+                final Comparator<T> fieldComparator = fieldComparatorsMap.get(defaultField);
 
                 Objects.requireNonNull(fieldComparator, () ->
                         "Missing comparator for field " + defaultField);
 
-                comparator = comparator == null
-                        ? fieldComparator
-                        : comparator.thenComparing(fieldComparator);
+                comparator = CompareUtil.combine(comparator, fieldComparator);
             }
-        } else {
-            // No comparator
-            comparator = Comparator.comparingInt(x -> 0);
         }
-        return comparator;
+        return CompareUtil.nonNull(comparator);
     }
 
     /**
@@ -260,5 +254,55 @@ public final class CompareUtil {
      */
     public static <T> Comparator<T> name(final String name, final Comparator<T> comparator) {
         return new NamedComparator<>(name, comparator);
+    }
+
+    /**
+     * Combine two comparators in a null safe way.
+     * If one arg is null, the other arg is returned.
+     * If both are null, null is returned.
+     * If both args are non-null it is equivalent to:
+     * <pre>{@code
+     * comparator1.thenComparing(comparator2);
+     * }</pre>
+     */
+    public static <T> Comparator<T> combine(final Comparator<T> comparator1, final Comparator<T> comparator2) {
+        if (comparator1 == null) {
+            return comparator2;
+        } else if (comparator2 == null) {
+            return comparator1;
+        } else {
+            return comparator1.thenComparing(comparator2);
+        }
+    }
+
+    /**
+     * Reverse the comparator if isReversed is true, else just return comparator unchanged.
+     * Null-safe.
+     */
+    public static <T> Comparator<T> reverseIf(final Comparator<T> comparator, final boolean isReversed) {
+        if (comparator == null) {
+            return comparator;
+        } else {
+            if (isReversed) {
+                return comparator.reversed();
+            } else {
+                return comparator;
+            }
+        }
+    }
+
+    /**
+     * A comparator that always returns zero and thus does not change the order
+     */
+    public static <T> Comparator<T> noOpComparator() {
+        return (o1, o2) -> 0;
+    }
+
+    /**
+     * Returns a non-null comparator, either comparator if non-null, else a no-op
+     * comparator ({@link CompareUtil#noOpComparator()}) that does nothing.
+     */
+    public static <T> Comparator<T> nonNull(final Comparator<T> comparator) {
+        return Objects.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
     }
 }
