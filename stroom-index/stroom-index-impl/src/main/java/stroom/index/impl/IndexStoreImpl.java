@@ -77,7 +77,7 @@ public class IndexStoreImpl implements IndexStore {
     }
 
     private void transferFieldsToDb(final LuceneIndexDoc doc) {
-        if (doc != null && !NullSafe.isEmptyCollection(doc.getFields())) {
+        if (NullSafe.hasItems(doc, LuceneIndexDoc::getFields)) {
             // Make sure we transfer all fields to the DB and remove them from the doc.
             final List<IndexField> fields = doc
                     .getFields()
