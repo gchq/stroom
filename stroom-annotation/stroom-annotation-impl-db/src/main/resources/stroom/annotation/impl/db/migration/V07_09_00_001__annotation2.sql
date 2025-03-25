@@ -208,7 +208,7 @@ BEGIN
 
     IF object_count > 0 THEN
         INSERT INTO annotation_tag (uuid, type_id, name, style_id, deleted)
-        SELECT uuid(), 0, status, "", 0
+        SELECT uuid(), 0, status, null, 0
         FROM annotation
         WHERE status NOT IN (SELECT name FROM annotation_tag WHERE type_id = 0)
         GROUP BY status;
