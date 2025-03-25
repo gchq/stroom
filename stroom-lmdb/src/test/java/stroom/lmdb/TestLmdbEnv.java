@@ -2,7 +2,9 @@ package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
+import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
 import stroom.util.io.ByteSize;
@@ -15,16 +17,26 @@ import stroom.util.shared.ModelStringUtil;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Dbi;
+import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.PutFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
@@ -36,6 +48,10 @@ import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
+import static java.lang.Long.reverseBytes;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static java.util.Objects.requireNonNull;
+
 /**
  * Demonstrate the behaviour of too many readers trying to do a get() on LMDB at once
  * where concurrent readers > maxReaders setting. Tests the concurrency protection in
@@ -46,6 +62,7 @@ public class TestLmdbEnv {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbEnv.class);
 
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    private static Method MISMATCH_METHOD = getMismatchMethod();
 
     // If this value is set too high then the test will fail on gh actions as
     // that has limited cores available.
@@ -193,6 +210,191 @@ public class TestLmdbEnv {
                     Assertions.assertThat(database.getEntryCount())
                             .isEqualTo(0);
                 });
+    }
+
+    @Test
+    void testByteOrder() throws IOException {
+        final Path dbDir = Files.createTempDirectory("stroom");
+
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
+
+        try (final LmdbEnv lmdbEnv = new LmdbEnvFactory(
+                pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
+                .builder(dbDir)
+                .withMapSize(ByteSize.ofGibibytes(1))
+                .withMaxDbCount(1)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build()) {
+            final Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("test", DbiFlags.MDB_CREATE);
+            try (final WriteTxn writeTxn = lmdbEnv.openWriteTxn()) {
+                final int rows = 100000;
+                int insertCount = 0;
+                ByteBuffer[] byteBuffersIn = new ByteBuffer[rows];
+                for (int row = 0; row < rows; row++) {
+                    final byte[] bytes = new byte[(int) (Math.random() * 510) + 1];
+                    try {
+                        for (int i = 0; i < bytes.length; i++) {
+                            final byte b = (byte) (Math.random() * 255);
+                            bytes[i] = b;
+                        }
+                        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bytes.length);
+                        byteBuffer.put(bytes);
+                        byteBuffer.flip();
+
+                        if (dbi.put(writeTxn.getTxn(), byteBuffer, byteBuffer, PutFlags.MDB_NOOVERWRITE)) {
+                            byteBuffersIn[insertCount] = ByteBuffer.wrap(bytes);
+                            insertCount++;
+                        }
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                }
+
+                byteBuffersIn = Arrays.copyOf(byteBuffersIn, insertCount);
+
+                final ByteBuffer[] byteBuffersOut = new ByteBuffer[byteBuffersIn.length];
+                try (final CursorIterable<ByteBuffer> cursorIterable =
+                        dbi.iterate(writeTxn.getTxn(), KeyRange.all())) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                    int row = 0;
+                    while (iterator.hasNext()) {
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                        final ByteBuffer key = keyVal.key();
+                        final ByteBuffer copy = ByteBuffer.wrap(ByteBufferUtils.toBytes(key));
+                        byteBuffersOut[row] = copy;
+                        row++;
+                    }
+                }
+
+                Arrays.sort(byteBuffersIn, (o1, o2) -> compareBuff(o1, o2));
+//                Arrays.sort(byteBuffersIn, (o1, o2) -> compareByteBuffersUnsigned(o1, o2));
+
+                Assertions.assertThat(byteBuffersIn.length).isEqualTo(byteBuffersOut.length);
+                for (int i = 0; i < byteBuffersIn.length; i++) {
+                    final ByteBuffer in = byteBuffersIn[i];
+                    final ByteBuffer out = byteBuffersOut[i];
+
+                    if (!in.equals(out)) {
+//                        ByteBuffer[] inBefore = new ByteBuffer[10];
+//                        ByteBuffer[] inAfter = new ByteBuffer[10];
+//                        ByteBuffer[] outBefore = new ByteBuffer[10];
+//                        ByteBuffer[] outAfter = new ByteBuffer[10];
+//
+//                        for (int j = 0; j < 10; j++) {
+//                            int index = i - 10 + j;
+//                            if (index > 0 && index < byteBuffersIn.length) {
+//                                inBefore[j] = byteBuffersIn[index];
+//                                outBefore[j] = byteBuffersOut[index];
+//                            }
+//                        }
+//
+//                        for (int j = 0; j < 10; j++) {
+//                            int index = i + j + 1;
+//                            if (index > 0 && index < byteBuffersIn.length) {
+//                                inAfter[j] = byteBuffersIn[index];
+//                                outAfter[j] = byteBuffersOut[index];
+//                            }
+//                        }
+
+
+                        ByteBuffer[] inSample = new ByteBuffer[10];
+                        ByteBuffer[] outSample = new ByteBuffer[10];
+
+                        for (int j = 0; j < 10; j++) {
+                            int index = i - 5 + j;
+                            if (index > 0 && index < byteBuffersIn.length) {
+                                inSample[j] = byteBuffersIn[index];
+                                outSample[j] = byteBuffersOut[index];
+                            }
+                        }
+
+                        // Error
+                        Assertions.fail();
+                    }
+                }
+            }
+        }
+    }
+
+    public static int compareBuff(final ByteBuffer o1, final ByteBuffer o2) {
+        requireNonNull(o1);
+        requireNonNull(o2);
+        if (o1.equals(o2)) {
+            return 0;
+        }
+        final int minLength = Math.min(o1.limit(), o2.limit());
+        final int minWords = minLength / Long.BYTES;
+
+        final boolean reverse1 = o1.order() == LITTLE_ENDIAN;
+        final boolean reverse2 = o2.order() == LITTLE_ENDIAN;
+        for (int i = 0; i < minWords * Long.BYTES; i += Long.BYTES) {
+            final long lw = reverse1
+                    ? reverseBytes(o1.getLong(i))
+                    : o1.getLong(i);
+            final long rw = reverse2
+                    ? reverseBytes(o2.getLong(i))
+                    : o2.getLong(i);
+            final int diff = Long.compareUnsigned(lw, rw);
+            if (diff != 0) {
+                return diff;
+            }
+        }
+
+        for (int i = minWords * Long.BYTES; i < minLength; i++) {
+            final int lw = Byte.toUnsignedInt(o1.get(i));
+            final int rw = Byte.toUnsignedInt(o2.get(i));
+            final int result = Integer.compareUnsigned(lw, rw);
+            if (result != 0) {
+                return result;
+            }
+        }
+
+        return o1.remaining() - o2.remaining();
+    }
+
+    private int compareByteBuffersUnsigned(ByteBuffer bb1, ByteBuffer bb2) {
+        int thisPos = bb1.position();
+        int thisRem = bb1.limit() - thisPos;
+        int thatPos = bb2.position();
+        int thatRem = bb2.limit() - thatPos;
+        int length = Math.min(thisRem, thatRem);
+        if (length < 0) {
+            return -1;
+        }
+        int i = 0;
+        try {
+            i = (int) MISMATCH_METHOD.invoke(null, bb1, thisPos, bb2, thatPos, length);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        if (i >= 0) {
+            return compare(bb1.get(thisPos + i), bb2.get(thatPos + i));
+        }
+        return thisRem - thatRem;
+    }
+
+    private static int compare(byte x, byte y) {
+
+
+        return Byte.compareUnsigned(x, y);
+
+    }
+
+
+    private static Method getMismatchMethod() {
+        Method method = null;
+        try {
+            final Class<?> clazz = Class.forName("java.nio.BufferMismatch");
+            method = clazz.getDeclaredMethod("mismatch",
+                    ByteBuffer.class, int.class, ByteBuffer.class, int.class, int.class);
+            method.setAccessible(true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return method;
     }
 
     /**

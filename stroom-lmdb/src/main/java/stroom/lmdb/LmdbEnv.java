@@ -123,8 +123,8 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     public static boolean isLmdbDataFile(final Path file) {
-        return file != null
-                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
+        return file != null &&
+               (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
     }
 
     /**
@@ -163,11 +163,7 @@ public class LmdbEnv implements AutoCloseable {
      */
     public Dbi<ByteBuffer> openDbi(final String name,
                                    final DbiFlags... dbiFlags) {
-
-        final DbiFlags[] flags = (dbiFlags != null && dbiFlags.length > 0)
-                ? dbiFlags
-                : (new DbiFlags[]{DbiFlags.MDB_CREATE});
-
+        final DbiFlags[] flags = getFlags(dbiFlags);
         LOGGER.debug(() ->
                 LogUtil.message("Opening LMDB database with name: {}, flags: {}, path: {}",
                         name,
@@ -184,6 +180,25 @@ public class LmdbEnv implements AutoCloseable {
             LOGGER.error(message, e);
             throw new RuntimeException(message, e);
         }
+    }
+
+    private DbiFlags[] getFlags(final DbiFlags... dbiFlags) {
+        DbiFlags[] flags = (dbiFlags != null && dbiFlags.length > 0)
+                ? dbiFlags
+                : (new DbiFlags[]{DbiFlags.MDB_CREATE});
+
+        boolean found = false;
+        for (DbiFlags flag : flags) {
+            if (DbiFlags.MDB_UNSIGNEDKEY.equals(flag)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            flags = Arrays.copyOf(flags, flags.length + 1);
+            flags[flags.length - 1] = DbiFlags.MDB_UNSIGNEDKEY;
+        }
+        return flags;
     }
 
     /**
@@ -213,7 +228,7 @@ public class LmdbEnv implements AutoCloseable {
             writeTxnLock.lockInterruptibly();
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -259,7 +274,7 @@ public class LmdbEnv implements AutoCloseable {
             return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -286,7 +301,7 @@ public class LmdbEnv implements AutoCloseable {
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -343,7 +358,7 @@ public class LmdbEnv implements AutoCloseable {
 
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for read permit on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -372,7 +387,7 @@ public class LmdbEnv implements AutoCloseable {
 
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for read lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         try {
@@ -459,8 +474,8 @@ public class LmdbEnv implements AutoCloseable {
                             try {
                                 final long fileSizeBytes = Files.size(file);
                                 return localDir.getFileName().resolve(file.getFileName())
-                                        + " - file size: "
-                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
+                                       + " - file size: "
+                                       + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -567,10 +582,10 @@ public class LmdbEnv implements AutoCloseable {
     @Override
     public String toString() {
         return "LmdbEnv{" +
-                "localDir=" + localDir +
-                ", name='" + name + '\'' +
-                ", envFlags=" + envFlags +
-                '}';
+               "localDir=" + localDir +
+               ", name='" + name + '\'' +
+               ", envFlags=" + envFlags +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -806,9 +821,9 @@ public class LmdbEnv implements AutoCloseable {
         @Override
         public String toString() {
             return "BatchingWriteTxnWrapper{" +
-                    "maxBatchSize=" + maxBatchSize +
-                    ", batchCounter=" + batchCounter +
-                    '}';
+                   "maxBatchSize=" + maxBatchSize +
+                   ", batchCounter=" + batchCounter +
+                   '}';
         }
     }
 }

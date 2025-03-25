@@ -268,7 +268,7 @@ public class LmdbUtils {
             }
         }
         logEntryConsumer.accept(stringBuilder.toString());
-//        LOGGER.debug(stringBuilder.toString());
+        LOGGER.info(stringBuilder.toString());
     }
 
     /**
