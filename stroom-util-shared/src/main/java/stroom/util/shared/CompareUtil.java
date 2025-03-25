@@ -303,6 +303,6 @@ public final class CompareUtil {
      * comparator ({@link CompareUtil#noOpComparator()}) that does nothing.
      */
     public static <T> Comparator<T> nonNull(final Comparator<T> comparator) {
-        return Objects.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
+        return GwtNullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
     }
 }
