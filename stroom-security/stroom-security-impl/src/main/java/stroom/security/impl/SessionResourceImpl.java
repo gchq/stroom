@@ -118,7 +118,7 @@ class SessionResourceImpl implements SessionResource {
             UserIdentitySessionUtil.set(session, null);
         }
 
-        final String url = openIdManagerProvider.get().logout(request, redirectUri);
+        final String url = openIdManagerProvider.get().logout(redirectUri);
         LOGGER.debug("Returning url: {}", url);
         return new UrlResponse(url);
     }
