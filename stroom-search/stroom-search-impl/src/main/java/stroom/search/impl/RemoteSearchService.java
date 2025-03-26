@@ -108,19 +108,24 @@ public class RemoteSearchService {
                                         // Tell the coprocessors they can complete now as we won't be receiving
                                         // payloads.
                                         LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
-                                                "counting down searchCompleteLatch");
+                                                           "counting down searchCompleteLatch");
                                         coprocessors.getCompletionState().signalComplete();
 
                                         // Wait for the coprocessors to actually complete, i.e. consume last items from
-                                        // the queue and send laST payloads etc.
-                                        while (!coprocessors.getCompletionState().awaitCompletion(1,
-                                                TimeUnit.SECONDS)) {
+                                        // the queue and send last payloads etc.
+                                        while (!taskContext.isTerminated() &&
+                                               !coprocessors.getCompletionState().awaitCompletion(1,
+                                                       TimeUnit.SECONDS)) {
                                             nodeSearchTaskHandler.updateInfo();
                                         }
+
                                     } catch (final InterruptedException e) {
                                         LOGGER.trace(e::getMessage, e);
                                         // Keep interrupting this thread.
                                         Thread.currentThread().interrupt();
+
+                                    } finally {
+                                        coprocessors.clear();
                                     }
                                 }
                             });
