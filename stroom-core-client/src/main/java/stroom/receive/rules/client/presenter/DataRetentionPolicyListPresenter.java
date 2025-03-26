@@ -21,10 +21,13 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -41,6 +44,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -80,12 +84,50 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
      */
     private void initTableColumns() {
 
-        addTickBoxColumn("Enabled", ColumnSizeConstants.ENABLED_COL, DataRetentionRule::isEnabled);
-        addColumn("Rule", 40, row -> String.valueOf(row.getRuleNumber()));
-        addColumn("Name", 200, DataRetentionRule::getName);
-        addColumn("Retention", 90, DataRetentionRule::getAgeString);
-        addColumn("Expression", 500, row -> row.getExpression().toString());
-        addActionButtonColumn("", 20);
+        addEnabledCol(DataRetentionRule::isEnabled);
+
+        // Rule
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder((DataRetentionRule row) ->
+                                GwtNullSafe.toString(row.getRuleNumber()))
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Rule")
+                        .rightAligned()
+                        .withToolTip("The lower the rule number, the higher priority when matching streams. " +
+                                     "A stream's retention will be governed by the matching rule with the " +
+                                     "highest priority.")
+                        .build(),
+                50);
+
+        // Name
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionRule::getName)
+                        .build(),
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The name of the rule.")
+                        .build(),
+                200);
+
+        // Retention
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionRule::getAgeString)
+                        .build(),
+                DataGridUtil.headingBuilder("Retention")
+                        .withToolTip("The length of time streams matching this rule will be retained for.")
+                        .build(),
+                90);
+
+        // Expression
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionRule::getAgeString)
+                        .build(),
+                DataGridUtil.headingBuilder("Expression")
+                        .withToolTip("The rule expression used to match streams with.")
+                        .build(),
+                600);
+
+        addActionButtonColumn(20);
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
@@ -103,8 +145,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         dataGrid.addResizableColumn(expressionColumn, name, width);
     }
 
-    private void addActionButtonColumn(final String name,
-                                       final int width) {
+    private void addActionButtonColumn(final int width) {
 
         final ActionCell<DataRetentionRule> actionCell = new stroom.cell.info.client.ActionCell<>(this::showActionMenu);
 
@@ -125,7 +166,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 //                        GWT.log("Rule " + rule.getRuleNumber() + " clicked, event " + event.getType());
                     }
                 };
-        dataGrid.addResizableColumn(expressionColumn, name, width);
+        dataGrid.addResizableColumn(expressionColumn, "", width);
     }
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
@@ -138,9 +179,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                 .fire(this);
     }
 
-    private void addTickBoxColumn(final String name,
-                                  final int width,
-                                  final Function<DataRetentionRule, Boolean> valueFunc) {
+    private void addEnabledCol(final Function<DataRetentionRule, Boolean> valueFunc) {
 
         final Column<DataRetentionRule, TickBoxState> enabledColumn = new Column<DataRetentionRule, TickBoxState>(
                 TickBoxCell.create(false, false)) {
@@ -159,7 +198,10 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                 enabledStateHandler.accept(rule, value.toBoolean());
             }
         });
-        dataGrid.addColumn(enabledColumn, name, width);
+        final Header<SafeHtml> heading = new HeadingBuilder("Enabled")
+                .withToolTip("Disabled rules will not be considered when the 'Policy Based Data Retention' job runs.")
+                .build();
+        dataGrid.addColumn(enabledColumn, heading, ColumnSizeConstants.ENABLED_COL);
     }
 
     private boolean isDefaultRule(final DataRetentionRule rule) {
