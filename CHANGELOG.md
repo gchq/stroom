@@ -19,8 +19,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#4827** : Fix NPE when opening the Nodes screen.
 
-* 
-
 
 ## [v7.9-beta.3] - 2025-03-24
 
