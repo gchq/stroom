@@ -46,7 +46,6 @@ import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Optional;
 import java.util.Set;
 
@@ -133,7 +132,7 @@ class SecurityFilter implements Filter {
             LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-        } else if (isStaticResource(servletName, fullPath, servletPath)) {
+        } else if (isStaticResource(fullPath, servletPath)) {
             LOGGER.debug("Static content, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
@@ -190,17 +189,7 @@ class SecurityFilter implements Filter {
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                              "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-                try {
-                    final PrintWriter writer = response.getWriter();
-                    if (writer != null) {
-                        writer.println("""
-                                Unauthorised
-                                Your session may have expired in which case you \
-                                need to refresh the page in browser.""");
-                    }
-                } catch (Exception e) {
-                    // Ignore. The status will be sufficient.
-                }
+
             } else {
                 // No identity found and not an unauthenticated servlet/api so assume it is
                 // a UI request. Thus instigate an OpenID authentication flow
@@ -213,8 +202,7 @@ class SecurityFilter implements Filter {
                     LOGGER.debug("Code flow UI request so redirecting to IDP, " +
                                  "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
                             redirectUri, postAuthRedirectUri, fullPath);
-//                        response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-//                        response.sendRedirect(redirectUri);
+
                     // HTTP 1.1.
                     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
                     // HTTP 1.0.
@@ -229,11 +217,6 @@ class SecurityFilter implements Filter {
                     LOGGER.error(e.getMessage(), e);
                     throw e;
                 }
-//                } else {
-//                    final int statusCode = Status.NOT_FOUND.getStatusCode();
-//                    LOGGER.debug("Unexpected servletName: {}, fullPath: {}, servletPath: {}, returning {}",
-//                            servletName, fullPath, servletPath, statusCode);
-//                    response.setStatus(statusCode);
             }
         }
     }
@@ -270,7 +253,7 @@ class SecurityFilter implements Filter {
         return uriFactory.publicUri(originalPath).toString();
     }
 
-    private boolean isStaticResource(final String servletName, final String fullPath, final String servletPath) {
+    private boolean isStaticResource(final String fullPath, final String servletPath) {
         // Test for internal IdP sign in request.
         if (servletPath.startsWith(SIGN_IN_URL_PATH)) {
             return true;
@@ -312,24 +295,6 @@ class SecurityFilter implements Filter {
         }
         return shouldBypass;
     }
-
-//    private void authenticateAsAdmin(final HttpServletRequest request,
-//                                     final HttpServletResponse response,
-//                                     final FilterChain chain) throws IOException, ServletException {
-//
-//        bypassAuthentication(request, response, chain, UserIdentitySessionUtil.requestHasSessionCookie(request),
-//                securityContext.createIdentity(User.ADMIN_USER_NAME));
-//    }
-
-//    private void bypassAuthentication(final HttpServletRequest request,
-//                         final HttpServletResponse response,
-//                         final FilterChain chain) {
-//        try {
-//            chain.doFilter(request, response);
-//        } catch (final IOException | ServletException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     private void process(final HttpServletRequest request,
                          final HttpServletResponse response,
