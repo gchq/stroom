@@ -3,7 +3,10 @@ package stroom.receive.rules.client.presenter;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
+import stroom.util.shared.CompareUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
@@ -15,7 +18,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -28,15 +30,15 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_TYPE = "Type";
     public static final String FIELD_NAME_DELETE_COUNT = "Stream Delete Count";
 
-    public static final Comparator<DataRetentionImpactRow> FEED_COMPARATOR = Comparator.comparing(
+    public static final Comparator<DataRetentionImpactRow> FEED_COMPARATOR = CompareUtil.getNullSafeComparator(
             DataRetentionImpactRow::getFeed);
-    public static final Comparator<DataRetentionImpactRow> TYPE_COMPARATOR = Comparator.comparing(
+    public static final Comparator<DataRetentionImpactRow> TYPE_COMPARATOR = CompareUtil.getNullSafeComparator(
             DataRetentionImpactRow::getType);
     public static final Comparator<DataRetentionImpactRow> COUNT_COMPARATOR = Comparator.comparingInt(
             DataRetentionImpactRow::getCount);
-    public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = Comparator.comparingInt(
+    public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = CompareUtil.getNullSafeComparator(
             DataRetentionImpactRow::getRuleNumber);
-    public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = Comparator.comparing(
+    public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = CompareUtil.getNullSafeComparator(
             DataRetentionImpactRow::getRuleName);
     public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR =
             Comparator.comparingLong(row ->
@@ -136,21 +138,12 @@ public class DataRetentionImpactRow {
         this.expander = expander;
     }
 
-    private Comparator<DataRetentionImpactRow> chainComparators(
-            final Comparator<DataRetentionImpactRow> first,
-            final Comparator<DataRetentionImpactRow> second) {
-
-        if (first == null) {
-            return second;
-        } else {
-            return first.thenComparing(second);
-        }
-    }
-
     private static Comparator<DataRetentionImpactRow> buildComparator(final FindDataRetentionImpactCriteria criteria) {
 
-        if (criteria != null && criteria.getSortList() != null) {
-            List<Comparator<DataRetentionImpactRow>> comparators = criteria.getSortList().stream()
+        final List<CriteriaFieldSort> sortList = criteria.getSortList();
+        if (GwtNullSafe.hasItems(sortList)) {
+            //noinspection SimplifyStreamApiCallChains // Cos GWT
+            List<Comparator<DataRetentionImpactRow>> comparators = sortList.stream()
                     .filter(Objects::nonNull)
                     .map(sort ->
                             Optional.ofNullable(FIELD_TO_COMPARATOR_MAP.get(sort.getId()))
@@ -186,10 +179,9 @@ public class DataRetentionImpactRow {
 
         Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
                 .collect(Collectors.toMap(
-                        rule -> Integer.valueOf(rule.getRuleNumber()), // Manual boxing to keep GWT happy
+                        DataRetentionRule::getRuleNumber, // Manual boxing to keep GWT happy
                         Function.identity()));
 
-        final AtomicLong rowNumber = new AtomicLong(1);
         return summaries.stream()
                 .map(summary -> {
                     final DataRetentionRule rule = ruleNoToRuleMap.get(summary.getRuleNumber());
@@ -223,8 +215,6 @@ public class DataRetentionImpactRow {
                 .collect(Collectors.groupingBy(
                         DataRetentionDeleteSummary::getRuleNumber,
                         Collectors.toSet()));
-
-        final AtomicLong rowNumber = new AtomicLong(1);
 
         rules.stream()
                 .map(rule ->
@@ -274,7 +264,7 @@ public class DataRetentionImpactRow {
                                             summariesByRuleAndType.get(metaTypeRow.getType());
 
                                     if (isExpanded(treeAction, metaTypeRow, 1)
-                                            && summariesForRuleAndType != null) {
+                                        && summariesForRuleAndType != null) {
 
                                         Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
                                                 criteria,
@@ -282,6 +272,7 @@ public class DataRetentionImpactRow {
                                                 FIELD_NAME_FEED,
                                                 FIELD_NAME_DELETE_COUNT);
 
+                                        //noinspection SimplifyStreamApiCallChains // Cos GWT
                                         rows.addAll(summariesForRuleAndType.stream()
                                                 .map(summaryForRuleTypeAndFeed ->
                                                         buildFeedRow(
@@ -305,8 +296,9 @@ public class DataRetentionImpactRow {
         // If the sort list contains any of the sortableFieldNames then create a
         // comparator for it. Assumes only one sort in the sort list
 
-        if (criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
-            return criteria.getSortList().stream()
+        final List<CriteriaFieldSort> sortList = criteria.getSortList();
+        if (GwtNullSafe.hasItems(sortList)) {
+            return sortList.stream()
                     .filter(sort ->
                             Arrays.stream(sortableFieldNames)
                                     .anyMatch(fieldName ->
@@ -327,14 +319,9 @@ public class DataRetentionImpactRow {
     private static DataRetentionImpactRow buildRuleRow(final DataRetentionRule rule,
                                                        final DataRetentionImpactTreeAction treeAction,
                                                        final Set<DataRetentionDeleteSummary> summaries) {
-        final int totalCount;
-        if (summaries != null) {
-            totalCount = summaries.stream()
-                    .mapToInt(DataRetentionDeleteSummary::getCount)
-                    .sum();
-        } else {
-            totalCount = 0;
-        }
+        final int totalCount = GwtNullSafe.stream(summaries)
+                .mapToInt(DataRetentionDeleteSummary::getCount)
+                .sum();
 
         // TODO once we have built all the rows we will still have all the source data in memory.
         //   We could change this class so it holds a ref to the source summary object and then
@@ -359,7 +346,7 @@ public class DataRetentionImpactRow {
                 totalCount);
 
         final int depth = 0;
-        final boolean isLeaf = summaries == null || summaries.isEmpty();
+        final boolean isLeaf = GwtNullSafe.isEmptyCollection(summaries);
 
         setExpander(treeAction, row, depth, isLeaf);
 
@@ -372,14 +359,9 @@ public class DataRetentionImpactRow {
                                                            final Set<DataRetentionDeleteSummary> summaries,
                                                            final DataRetentionImpactTreeAction treeAction) {
 
-        final int countByRuleAndFeed;
-        if (summaries != null) {
-            countByRuleAndFeed = summaries.stream()
-                    .mapToInt(DataRetentionDeleteSummary::getCount)
-                    .sum();
-        } else {
-            countByRuleAndFeed = 0;
-        }
+        final int countByRuleAndFeed = GwtNullSafe.stream(summaries)
+                .mapToInt(DataRetentionDeleteSummary::getCount)
+                .sum();
 
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
                 buildRowKey(ruleNumber, metaType, null),
@@ -393,7 +375,7 @@ public class DataRetentionImpactRow {
                 countByRuleAndFeed);
 
         final int depth = 1;
-        final boolean isLeaf = summaries == null || summaries.isEmpty();
+        final boolean isLeaf = GwtNullSafe.isEmptyCollection(summaries);
 
         setExpander(treeAction, row, depth, isLeaf);
 
@@ -464,12 +446,12 @@ public class DataRetentionImpactRow {
         }
         final DataRetentionImpactRow that = (DataRetentionImpactRow) o;
         return count == that.count &&
-                Objects.equals(rowKey, that.rowKey) &&
-                Objects.equals(ruleNumber, that.ruleNumber) &&
-                Objects.equals(ruleName, that.ruleName) &&
-                Objects.equals(ruleAgeStr, that.ruleAgeStr) &&
-                Objects.equals(feed, that.feed) &&
-                Objects.equals(type, that.type);
+               Objects.equals(rowKey, that.rowKey) &&
+               Objects.equals(ruleNumber, that.ruleNumber) &&
+               Objects.equals(ruleName, that.ruleName) &&
+               Objects.equals(ruleAgeStr, that.ruleAgeStr) &&
+               Objects.equals(feed, that.feed) &&
+               Objects.equals(type, that.type);
     }
 
     @Override
@@ -480,15 +462,15 @@ public class DataRetentionImpactRow {
     @Override
     public String toString() {
         return "DataRetentionImpactRow{" +
-                "rowKey=" + rowKey +
-                ", ruleNumber=" + ruleNumber +
-                ", ruleName='" + ruleName + '\'' +
-                ", ruleAge='" + ruleAgeStr + '\'' +
-                ", feedName='" + feed + '\'' +
-                ", metaType='" + type + '\'' +
-                ", count=" + count +
-                ", expander=" + expander +
-                '}';
+               "rowKey=" + rowKey +
+               ", ruleNumber=" + ruleNumber +
+               ", ruleName='" + ruleName + '\'' +
+               ", ruleAge='" + ruleAgeStr + '\'' +
+               ", feedName='" + feed + '\'' +
+               ", metaType='" + type + '\'' +
+               ", count=" + count +
+               ", expander=" + expander +
+               '}';
     }
 
     /**

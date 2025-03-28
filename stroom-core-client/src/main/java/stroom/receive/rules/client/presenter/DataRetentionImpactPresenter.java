@@ -37,6 +37,7 @@ import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -351,40 +352,53 @@ public class DataRetentionImpactPresenter
                 ExpanderCell.getColumnWidth(3)); // Need space for three expander levels
 
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((DataRetentionImpactRow dataRetentionImpactRow) ->
-                                dataRetentionImpactRow.getRuleNumber().toString())
+                DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) ->
+                                GwtNullSafe.toString(row.getRuleNumber()))
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),
-                DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_RULE_NO),
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
+                        .rightAligned()
+                        .withToolTip("The lower the rule number, the higher priority when matching streams. " +
+                                     "A stream's retention will be governed by the matching rule with the " +
+                                     "highest priority.")
+                        .build(),
                 ColumnSizeConstants.SMALL_COL);
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NAME)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_RULE_NAME,
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_RULE_NAME)
+                        .withToolTip("The name of the rule.")
+                        .build(),
                 200);
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAgeStr)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_AGE)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_RULE_AGE,
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_RULE_AGE)
+                        .withToolTip("The retention age of this rule.")
+                        .build(),
                 ColumnSizeConstants.MEDIUM_COL);
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getType)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_TYPE)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_TYPE,
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_TYPE)
+                        .withToolTip("The stream type.")
+                        .build(),
                 ColumnSizeConstants.MEDIUM_COL);
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeed)
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_FEED)
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_FEED,
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_FEED)
+                        .withToolTip("The feed name.")
+                        .build(),
                 ColumnSizeConstants.BIG_COL);
 
         dataGrid.addResizableColumn(
@@ -392,7 +406,10 @@ public class DataRetentionImpactPresenter
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT)
                         .build(),
-                DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT),
+                DataGridUtil.headingBuilder(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT)
+                        .rightAligned()
+                        .withToolTip("The number of streams that would be deleted by this rule.")
+                        .build(),
                 150);
 
         DataGridUtil.addEndColumn(dataGrid);
