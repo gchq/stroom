@@ -78,6 +78,8 @@ import stroom.planb.client.gin.PlanBModule;
 import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
+import stroom.receive.content.client.gin.ContentTemplateGinjector;
+import stroom.receive.content.client.gin.ContentTemplateModule;
 import stroom.receive.rules.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
 import stroom.script.client.gin.ScriptModule;
@@ -126,6 +128,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AnnotationModule.class,
         AppModule.class,
         CacheModule.class,
+        ContentTemplateModule.class,
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
@@ -171,6 +174,7 @@ public interface AppGinjectorUser extends
         AboutGinjector,
         AlertGinjector,
         CacheGinjector,
+        ContentTemplateGinjector,
         DashboardGinjector,
         DictionaryGinjector,
         DocumentationGinjector,

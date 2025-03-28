@@ -29,6 +29,9 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
+import stroom.meta.shared.DataFormatNames;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
@@ -38,12 +41,18 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class FeedSettingsPresenter
         extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
     private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
+    @SuppressWarnings("SimplifyStreamApiCallChains") // Cos GWT
+    private static final List<String> FORMATS = DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES.stream()
+            .sorted()
+            .collect(Collectors.toUnmodifiableList());
     private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
     private final DataTypeUiManager dataTypeUiManager;
@@ -61,7 +70,10 @@ public class FeedSettingsPresenter
         updateEncodings();
         updateVolumeGroups();
         updateTypes();
+
         view.getFeedStatus().addItems(FeedStatus.values());
+        view.getDataFormat().addItems(FORMATS);
+        view.getContextFormat().addItems(FORMATS);
     }
 
     @Override
@@ -90,6 +102,10 @@ public class FeedSettingsPresenter
             }
         }));
         registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getDataFormat().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getContextFormat().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getSchema().addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(getView().getSchemaVersion().addValueChangeHandler(event -> setDirty(true)));
         registerHandler(getView().getReceivedType().addValueChangeHandler(event -> {
             final String streamType = getView().getReceivedType().getValue();
             getView().getReceivedType().setValue(streamType);
@@ -116,7 +132,7 @@ public class FeedSettingsPresenter
                     getView().getDataEncoding().clear();
                     getView().getContextEncoding().clear();
 
-                    if (result != null && result.size() > 0) {
+                    if (GwtNullSafe.hasItems(result)) {
                         for (final String encoding : result) {
                             getView().getDataEncoding().addItem(encoding);
                             getView().getContextEncoding().addItem(encoding);
@@ -140,11 +156,11 @@ public class FeedSettingsPresenter
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();
                     getView().getVolumeGroup().setNonSelectString("");
-                    if (result != null && result.getValues() != null) {
-                        for (final FsVolumeGroup volumeGroup : result.getValues()) {
+                    GwtNullSafe.consume(result, ResultPage::getValues, values -> {
+                        for (final FsVolumeGroup volumeGroup : values) {
                             getView().getVolumeGroup().addItem(volumeGroup.getName());
                         }
-                    }
+                    });
 
                     final FeedDoc feed = getEntity();
                     if (feed != null) {
@@ -175,6 +191,10 @@ public class FeedSettingsPresenter
         getView().getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));
         getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
         getView().getReceivedType().setValue(feed.getStreamType());
+        getView().getDataFormat().setValue(feed.getDataFormat());
+        getView().getContextFormat().setValue(feed.getContextFormat());
+        getView().getSchema().setValue(feed.getSchema());
+        getView().getSchemaVersion().setValue(feed.getSchemaVersion());
         getView().getFeedStatus().setValue(feed.getStatus());
         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
     }
@@ -186,19 +206,26 @@ public class FeedSettingsPresenter
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getValue()));
         feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getValue()));
         feed.setStreamType(getView().getReceivedType().getValue());
-        feed.setVolumeGroup(getView().getVolumeGroup().getValue());
-
+        feed.setDataFormat(getView().getDataFormat().getValue());
+        feed.setContextFormat(getView().getContextFormat().getValue());
+        feed.setSchema(getView().getSchema().getValue());
+        feed.setSchemaVersion(getView().getSchemaVersion().getValue());
         // Set the process stage.
         feed.setStatus(getView().getFeedStatus().getValue());
+        feed.setVolumeGroup(getView().getVolumeGroup().getValue());
         return feed;
     }
 
     private String ensureEncoding(final String encoding) {
-        if (encoding == null || encoding.trim().length() == 0) {
+        if (GwtNullSafe.isBlankString(encoding)) {
             return "UTF-8";
         }
         return encoding;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface FeedSettingsView extends View {
 
@@ -211,6 +238,14 @@ public class FeedSettingsPresenter
         SelectionBox<String> getContextEncoding();
 
         SelectionBox<String> getReceivedType();
+
+        SelectionBox<String> getDataFormat();
+
+        SelectionBox<String> getContextFormat();
+
+        TextBox getSchema();
+
+        TextBox getSchemaVersion();
 
         SelectionBox<FeedStatus> getFeedStatus();
 

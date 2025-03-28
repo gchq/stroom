@@ -11,7 +11,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * List of all the stroom codes that we return.
+ * List of all the stroom codes that we return from the datafeed interface.
+ * Both stroom and proxy use this.
  */
 public enum StroomStatusCode {
     OK(HttpServletResponse.SC_OK, 0, "OK", "Post of data successful"),
@@ -25,8 +26,26 @@ public enum StroomStatusCode {
     INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
             "If you provide a data type it must be valid"),
 
+    MISSING_MANDATORY_HEADER(
+            HttpServletResponse.SC_NOT_ACCEPTABLE,
+            103,
+            "A mandatory header is missing",
+            "You must provide all mandatory headers."),
+
+    INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 104, "Data format is invalid",
+            "If you provide a data Format header, its value must be valid"),
+
     FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
+
+    INVALID_FEED_NAME(HttpServletResponse.SC_NOT_ACCEPTABLE, 111,
+            "Feed is not valid",
+            "The feed you have provided does not match an agreed pattern"),
+
+    INVALID_DATA_FEED_KEY(HttpServletResponse.SC_NOT_ACCEPTABLE, 112,
+            "Data Feed key and/or accountId is not valid",
+            "The Data Feed Key and/or AccountId you have provided do not match " +
+            "any known Data Feed Key and AccountIds."),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
@@ -43,8 +62,21 @@ public enum StroomStatusCode {
     CLIENT_TOKEN_OR_CERT_REQUIRED(
             HttpServletResponse.SC_UNAUTHORIZED,
             302,
-            "Client Token or Certificate Required",
-            "The feed you have provided requires a client HTTPS certificate to send data"),
+            "Client token or certificate required",
+            "The feed you have provided requires a client HTTPS certificate or token to send data"),
+
+    CLIENT_DATA_FEED_KEY_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            303,
+            "Client data feed key required",
+            "A client data feed key is required to send data"),
+
+    AUTHENTICATION_REQUIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            304,
+            "Authentication of the client is required",
+            "Some form of client authentication is required, e.g. certificate, token, data feed key, etc. " +
+            "Ask administrator for supported authentication mechanism(s)."),
 
     CLIENT_CERTIFICATE_NOT_AUTHENTICATED(
             HttpServletResponse.SC_UNAUTHORIZED,
@@ -63,6 +95,18 @@ public enum StroomStatusCode {
             312,
             "Client Token or Certificate failed authentication",
             "The provided client token or certificate cannot be authorised"),
+
+    DATA_FEED_KEY_NOT_AUTHENTICATED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            313,
+            "Data feed key failed authentication",
+            "The provided data feed key cannot be authorised"),
+
+    DATA_FEED_KEY_EXPIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            314,
+            "Data feed key has expired",
+            "The provided data feed key has passed its expiry date"),
 
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,

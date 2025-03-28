@@ -164,8 +164,7 @@ proxyConfig:
   aggregator:
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1G"
-    maxAggregateAge: 10m
-    aggregationFrequency: 1m
+    aggregationFrequency: 10m
 
   # If you want multiple forward destinations then you will need to edit this file directly
   # instead of using env var substitution
@@ -205,7 +204,7 @@ proxyConfig:
   #    apiKey: ""
 
   feedStatus:
-    url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
+    url: "{{ 'http://stroom:8080/api/feedStatus/v2' | envVar('FEED_STATUS_URL') }}"
     apiKey: ""
 
 

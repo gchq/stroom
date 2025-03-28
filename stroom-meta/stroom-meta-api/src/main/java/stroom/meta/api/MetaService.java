@@ -154,6 +154,13 @@ public interface MetaService {
     Set<String> getRawTypes();
 
     /**
+     * Get a set of all data format names used by meta data records.
+     *
+     * @return A list of all unique data format names used by meta data records.
+     */
+    Set<String> getDataFormats();
+
+    /**
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */

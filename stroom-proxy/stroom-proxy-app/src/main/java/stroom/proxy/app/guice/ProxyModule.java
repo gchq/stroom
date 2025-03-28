@@ -37,6 +37,7 @@ import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
+import stroom.receive.common.FeedStatusResourceV2Impl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
@@ -48,7 +49,10 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
+import stroom.util.metrics.Metrics;
+import stroom.util.metrics.MetricsImpl;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import io.dropwizard.core.setup.Environment;
@@ -80,7 +84,9 @@ public class ProxyModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(MetricRegistry.class).toInstance(environment.metrics());
         bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
+        bind(Metrics.class).to(MetricsImpl.class);
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());
@@ -89,7 +95,7 @@ public class ProxyModule extends AbstractModule {
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(FeedStatusResourceImpl.class)
+                .bind(FeedStatusResourceV2Impl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(RemoteFeedStatusService.class);
@@ -111,6 +117,7 @@ public class ProxyModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ReceiveDataRuleSetResourceImpl.class)
                 .bind(FeedStatusResourceImpl.class)
+                .bind(FeedStatusResourceV2Impl.class)
                 .bind(EventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

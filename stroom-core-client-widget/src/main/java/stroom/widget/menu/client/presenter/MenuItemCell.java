@@ -195,7 +195,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
+                sb.append(TEMPLATE.outer(className, value.getTooltip(), inner.toSafeHtml()));
             }
         }
 
@@ -205,8 +205,8 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
-            SafeHtml outer(String className, SafeHtml inner);
+            @Template("<div class=\"{0}\" title=\"{1}\" tabindex=\"-1\">{2}</div>")
+            SafeHtml outer(String className, String tooltip, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);

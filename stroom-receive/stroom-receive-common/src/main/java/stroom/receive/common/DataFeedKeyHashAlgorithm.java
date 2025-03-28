@@ -1,0 +1,102 @@
+package stroom.receive.common;
+
+import stroom.docref.HasDisplayValue;
+import stroom.util.NullSafe;
+
+import com.google.common.base.Strings;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
+    // uniqueIds should be
+    ARGON2("Argon2", 0),
+//        BCRYPT("BCrypt", 0),
+    ;
+
+    private static final DataFeedKeyHashAlgorithm[] SPARSE_ALGORITHM_ARRAY;
+    private static final Map<String, DataFeedKeyHashAlgorithm> NAME_TO_VALUE_MAP = Arrays.stream(values())
+            .collect(Collectors.toMap(DataFeedKeyHashAlgorithm::getDisplayValue, Function.identity()));
+
+    static {
+        final DataFeedKeyHashAlgorithm[] values = DataFeedKeyHashAlgorithm.values();
+        final int maxPrimitive = Arrays.stream(values)
+                .mapToInt(dataFeedKeyHashAlgorithm -> dataFeedKeyHashAlgorithm.uniqueId)
+                .max()
+                .orElseThrow(() -> new RuntimeException("Empty values array supplied"));
+        SPARSE_ALGORITHM_ARRAY = new DataFeedKeyHashAlgorithm[maxPrimitive + 1];
+        for (final DataFeedKeyHashAlgorithm value : values) {
+            SPARSE_ALGORITHM_ARRAY[value.uniqueId] = value;
+        }
+    }
+
+    private final String displayValue;
+    private final int uniqueId;
+
+    DataFeedKeyHashAlgorithm(final String displayValue, final int uniqueId) {
+        if (uniqueId < 0) {
+            throw new IllegalArgumentException("Min uniqueId is 0");
+        }
+        if (uniqueId > 999) {
+            throw new IllegalArgumentException("Max uniqueId is 999");
+        }
+        this.displayValue = displayValue;
+        this.uniqueId = uniqueId;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
+
+    /**
+     * @return A 3 digit, zero padded number.
+     */
+    public String getUniqueId() {
+        return Strings.padStart(String.valueOf(uniqueId), 3, '0');
+    }
+
+    public static DataFeedKeyHashAlgorithm fromDisplayValue(final String displayValue) {
+        if (displayValue == null) {
+            return null;
+        } else if (NullSafe.isBlankString(displayValue)) {
+            throw new IllegalArgumentException("Blank displayValue");
+        } else {
+            final DataFeedKeyHashAlgorithm hashAlgorithm = NAME_TO_VALUE_MAP.get(displayValue);
+            if (hashAlgorithm == null) {
+                throw new IllegalArgumentException("Unknown displayValue " + displayValue);
+            }
+            return hashAlgorithm;
+        }
+    }
+
+    public static DataFeedKeyHashAlgorithm fromUniqueId(final String uniqueId) {
+        if (uniqueId == null) {
+            return null;
+        } else if (uniqueId.isBlank()) {
+            throw new IllegalArgumentException("Blank uniqueId");
+        } else {
+            final int intVal = Integer.parseInt(uniqueId);
+            DataFeedKeyHashAlgorithm dataFeedKeyHashAlgorithm;
+            try {
+                dataFeedKeyHashAlgorithm = SPARSE_ALGORITHM_ARRAY[intVal];
+                if (dataFeedKeyHashAlgorithm == null) {
+                    throw new IllegalArgumentException("Unknown uniqueId " + uniqueId);
+                }
+                return dataFeedKeyHashAlgorithm;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "DataFeedKeyHashAlgorithm{" +
+               "displayValue='" + displayValue + '\'' +
+               ", uniqueId=" + uniqueId +
+               '}';
+    }
+}

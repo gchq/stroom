@@ -8,6 +8,7 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.proxy.repo.ProxyServices;
 import stroom.security.api.UserIdentityFactory;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestResourceLocks;
 import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LambdaLogger;
@@ -125,6 +126,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
+                new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
@@ -198,6 +200,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
+                new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
@@ -267,6 +270,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
+                new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
@@ -338,6 +342,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
+                new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
@@ -384,6 +389,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
+                new MockMetrics(),
                 mockProxyServices);
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
@@ -428,6 +434,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
+                new MockMetrics(),
                 mockProxyServices);
 
         assertLivenessCheck(httpSender, true);
@@ -451,6 +458,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
+                new MockMetrics(),
                 mockProxyServices);
 
         assertLivenessCheck(httpSender, true);
@@ -474,6 +482,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
+                new MockMetrics(),
                 mockProxyServices);
 
         assertLivenessCheck(httpSender, false);

@@ -9,3 +9,4 @@ public interface DocumentSerialiser2<D> {
 
     Map<String, byte[]> write(D document) throws IOException;
 }
+

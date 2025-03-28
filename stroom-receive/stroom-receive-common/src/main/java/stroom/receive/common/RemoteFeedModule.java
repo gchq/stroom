@@ -16,20 +16,33 @@
 
 package stroom.receive.common;
 
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
 
+// TODO maybe rename to ReceiveModule
 public class RemoteFeedModule extends AbstractModule {
 
     @Override
     protected void configure() {
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
+        bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(FeedStatusResourceImpl.class);
+                .bind(FeedStatusResourceImpl.class)
+                .bind(FeedStatusResourceV2Impl.class);
 
 //        ServletBinder.create(binder())
 //                .bind(RemoteFeedServiceRPC.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(DataFeedKeyDirWatcher.class)
+                .addBinding(DataFeedKeyServiceImpl.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(DataFeedKeyServiceImpl.class);
     }
 }

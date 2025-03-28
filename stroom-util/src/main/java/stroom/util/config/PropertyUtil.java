@@ -689,6 +689,16 @@ public final class PropertyUtil {
             return fieldAnnotationsMap.containsKey(clazz) || getterAnnotationsMap.containsKey(clazz);
         }
 
+        /**
+         * @return True if prop is non-null and either the field or getter have
+         * the passed {@link Annotation} class.
+         */
+        public static boolean hasAnnotation(final Prop prop,
+                                            final Class<? extends Annotation> clazz) {
+            return prop != null
+                   && prop.hasAnnotation(clazz);
+        }
+
         public Collection<Annotation> getFieldAnnotations() {
             return fieldAnnotationsMap.values();
         }

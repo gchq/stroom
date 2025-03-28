@@ -1,0 +1,45 @@
+ext.moduleName = 'stroom.cache.service.impl'
+
+dependencies {
+    implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    // Seem to need this else it moans it can't see HasName in AbstractStroomCacheImpl
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.caffeine
+//    implementation libs.guava
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jakarta.inject
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.assertj.core
+    testImplementation libs.dropwizard.testing
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
+
+
+    // The following logging libs are needed when running junits outside dropwizard
+    testRuntimeOnly libs.jakarta.activation
+    testRuntimeOnly libs.jaxb.impl
+    testRuntimeOnly libs.jcl.over.slf4j
+    testRuntimeOnly libs.jul.to.slf4j
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.log4j.over.slf4j
+    testRuntimeOnly libs.logback.classic
+    testRuntimeOnly libs.logback.core
+
+}

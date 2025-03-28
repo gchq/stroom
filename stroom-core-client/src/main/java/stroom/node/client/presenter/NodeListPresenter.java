@@ -229,10 +229,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
 
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((NodeStatusResult result) -> GwtNullSafe.get(
-                                result,
-                                NodeStatusResult::getNode,
-                                Node::getName))
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(NodeStatusResult::getNode, Node::getName))
                         .enabledWhen(NodeListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),

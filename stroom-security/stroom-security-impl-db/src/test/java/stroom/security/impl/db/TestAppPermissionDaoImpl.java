@@ -285,6 +285,19 @@ class TestAppPermissionDaoImpl {
 
     }
 
+    @Test
+    void addPermission_idempotency() {
+        final UserRef user1 = createUser("user1");
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .containsExactlyInAnyOrder(AppPermission.STEPPING_PERMISSION);
+
+        // Do the same again
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()))
+                .containsExactlyInAnyOrder(AppPermission.STEPPING_PERMISSION);
+    }
+
     private void validateAppPermissions(final ResultPage<AppUserPermissions> resultPage,
                                         final String name,
                                         final Set<AppPermission> expectedPermissions,

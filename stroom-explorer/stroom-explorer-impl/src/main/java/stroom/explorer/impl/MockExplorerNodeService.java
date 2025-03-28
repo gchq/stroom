@@ -119,6 +119,11 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     }
 
     @Override
+    public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent, final String name, final String type) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public void deleteAllNodes() {
 
     }
