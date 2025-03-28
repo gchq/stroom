@@ -23,6 +23,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -342,9 +343,12 @@ public class ReceiveDataConfig
     }
 
     private static Set<String> cleanSet(final Set<String> set) {
-        return NullSafe.stream(set)
+        // Use a LinkedHashSet to ensure iteration order matches insert order so
+        // expected.yml doesn't change.
+        final LinkedHashSet<String> cleanedSet = NullSafe.stream(set)
                 .filter(NullSafe::isNonBlankString)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return Collections.unmodifiableSet(cleanedSet);
     }
 
 
