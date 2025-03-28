@@ -17,6 +17,7 @@
 package stroom.receive.common;
 
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -40,5 +41,8 @@ public class RemoteFeedModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(DataFeedKeyDirWatcher.class)
                 .addBinding(DataFeedKeyServiceImpl.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(DataFeedKeyServiceImpl.class);
     }
 }

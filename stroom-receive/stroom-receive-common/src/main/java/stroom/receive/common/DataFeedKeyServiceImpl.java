@@ -11,6 +11,8 @@ import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
@@ -21,9 +23,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +42,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 @Singleton
-public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
+public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyServiceImpl.class);
     private static final String CACHE_NAME = "Authenticated Data Feed Key Cache";
@@ -435,6 +440,29 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed {
         } catch (Exception e) {
             LOGGER.error("Error shutting down the timer: {}", LogUtil.exceptionMessage(e), e);
         }
+    }
+
+    @Override
+    public SystemInfoResult getSystemInfo() {
+        // sourcePath => accountId =>
+        final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
+        cacheKeyToDataFeedKeyMap.forEach((cacheKey, dataFeedKeys) -> {
+            for (final CachedHashedDataFeedKey dataFeedKey : dataFeedKeys) {
+                final String path = dataFeedKey.getSourceFile().toAbsolutePath().normalize().toString();
+                final String accountId = dataFeedKey.getAccountId();
+                final List<Map<String, String>> keysForAccountId = map.computeIfAbsent(path, k -> new HashMap<>())
+                        .computeIfAbsent(accountId, k -> new ArrayList<>());
+                final Map<String, String> leafMap = Map.of(
+                        "expiry", dataFeedKey.getExpiryDate().toString(),
+                        "remaining", Duration.between(Instant.now(), dataFeedKey.getExpiryDate()).toString(),
+                        "algorithm",
+                        DataFeedKeyHashAlgorithm.fromUniqueId(dataFeedKey.getHashAlgorithmId()).getDisplayValue());
+                keysForAccountId.add(leafMap);
+            }
+        });
+        return SystemInfoResult.builder(this)
+                .addDetail("sourceFiles", map)
+                .build();
     }
 
     // --------------------------------------------------------------------------------
