@@ -114,7 +114,7 @@ public class ContentTemplateTabPresenter
         this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
-        getView().setExpressionView(expressionPresenter.getView());
+//        getView().setExpressionView(expressionPresenter.getView());
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -136,10 +136,10 @@ public class ContentTemplateTabPresenter
 
         updateButtons();
 
-        initialiseRules(restFactory);
+        initialiseTemplates(restFactory);
     }
 
-    private void initialiseRules(final RestFactory restFactory) {
+    private void initialiseTemplates(final RestFactory restFactory) {
         restFactory
                 .create(CONTENT_TEMPLATE_RESOURCE)
                 .method(ContentTemplateResource::fetch)
@@ -258,12 +258,14 @@ public class ContentTemplateTabPresenter
             final String description;
             if (contentTemplate != null) {
                 description = contentTemplate.getDescription();
+                getView().setExpressionView(expressionPresenter.getView());
                 expressionPresenter.read(contentTemplate.getExpression());
                 if (event.getSelectionType().isDoubleSelect()) {
                     edit(contentTemplate);
                 }
             } else {
                 description = null;
+                getView().setExpressionView(null);
                 expressionPresenter.read(null);
             }
             getView().setDescription(description);

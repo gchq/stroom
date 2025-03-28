@@ -18,8 +18,11 @@
 package stroom.receive.content.client.view;
 
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
@@ -35,15 +38,20 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @UiField
     SimplePanel table;
-    //    TextArea description;
+    @UiField
+    FormGroup descriptionFormGroup;
     @UiField
     HTML description;
+    @UiField
+    FormGroup expressionFormGroup;
     @UiField
     SimplePanel expression;
 
     @Inject
     public ContentTemplateTabViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        descriptionFormGroup.setVisible(false);
+        expressionFormGroup.setVisible(false);
     }
 
     @Override
@@ -58,12 +66,24 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @Override
     public void setDescription(final String description) {
-        this.description.setHTML(SafeHtmlUtil.toParagraphs(description));
+        if (GwtNullSafe.isBlankString(description)) {
+            this.description.setHTML(SafeHtmlUtils.EMPTY_SAFE_HTML);
+            this.descriptionFormGroup.setVisible(false);
+        } else {
+            this.description.setHTML(SafeHtmlUtil.toParagraphs(description));
+            this.descriptionFormGroup.setVisible(true);
+        }
     }
 
     @Override
     public void setExpressionView(final View view) {
-        this.expression.setWidget(view.asWidget());
+        if (view != null) {
+            this.expressionFormGroup.setVisible(true);
+            this.expression.setWidget(view.asWidget());
+        } else {
+            this.expressionFormGroup.setVisible(false);
+            this.expression.setWidget(null);
+        }
     }
 
 

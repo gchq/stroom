@@ -9,17 +9,19 @@
         <g:center>
             <g:FlowPanel styleName="max form form-padding">
                 <form:FormGroup
+                        ui:field="descriptionFormGroup"
                         identity="contentTemplateDescription"
                         label="Description"
-                        helpText="The pipeline to use as the template for content.">
-<!--                    <g:TextArea ui:field="description" addStyleNames="w-100"/>-->
+                        helpText="The description of this Content Template.">
                     <g:HTML ui:field="description" addStyleNames="w-100"/>
                 </form:FormGroup>
 
-                <form:FormGroup identity="contentTemplateExpression"
-                                label="Expression"
-                                addStyleNames="dock-max"
-                                helpText="The expression to match received streams to this template.
+                <form:FormGroup
+                        ui:field="expressionFormGroup"
+                        identity="contentTemplateExpression"
+                        label="Expression"
+                        addStyleNames="dock-max"
+                        helpText="The expression to match received streams to this template.
                         The stream header attributes will be used for matching.">
                     <g:SimplePanel ui:field="expression" styleName="w-100"/>
                 </form:FormGroup>
