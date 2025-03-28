@@ -19,6 +19,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.mock.MockNodeServiceModule;
+import stroom.pipeline.PipelineService;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.api.UserIdentity;
@@ -26,6 +28,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockSecurityModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.test.common.MockMetricsModule;
+import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
@@ -61,7 +64,9 @@ public class TestBaseModule extends AbstractModule {
         install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
         install(new TaskContextModule());
-
+        GuiceTestUtil.buildMockBinder(binder())
+                .addMockBindingFor(PipelineService.class)
+                .addMockBindingFor(ProcessorFilterService.class);
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
     }
