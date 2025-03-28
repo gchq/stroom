@@ -153,7 +153,6 @@ proxyConfig:
     - enabled: true
       name: "downstream"
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
-  #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
       livenessCheckUrl: "http://localhost:8080/stroom/noauth/status"
       apiKey: ""
       queue:
@@ -171,7 +170,7 @@ proxyConfig:
   #    apiKey: ""
 
   feedStatus:
-    url: "http://localhost:8080/api/feedStatus/v1"
+    url: "http://localhost:8080/api/feedStatus/v2"
     apiKey: ""
 
   security:
