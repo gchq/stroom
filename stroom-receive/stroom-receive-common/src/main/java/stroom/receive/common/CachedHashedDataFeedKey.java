@@ -14,19 +14,31 @@ public class CachedHashedDataFeedKey {
     private final HashedDataFeedKey hashedDataFeedKey;
     private final Path sourceFile;
 
-    public CachedHashedDataFeedKey(final HashedDataFeedKey hashedDataFeedKey, final Path sourceFile) {
+    @JsonIgnore
+    private final int hashCode;
+
+    public CachedHashedDataFeedKey(final HashedDataFeedKey hashedDataFeedKey,
+                                   final Path sourceFile) {
         this.hashedDataFeedKey = Objects.requireNonNull(hashedDataFeedKey);
         this.sourceFile = Objects.requireNonNull(sourceFile);
+        this.hashCode = Objects.hash(hashedDataFeedKey, sourceFile);
     }
 
     public HashedDataFeedKey getDataFeedKey() {
         return hashedDataFeedKey;
     }
 
+    /**
+     * @return The path to the file that this {@link HashedDataFeedKey} was loaded from.
+     */
     public Path getSourceFile() {
         return sourceFile;
     }
 
+    /**
+     * @return The hash of the data feed key. The hash algorithm used is defined by
+     * {@link CachedHashedDataFeedKey#getHashAlgorithmId()}
+     */
     @NotBlank
     public String getHash() {
         return hashedDataFeedKey.getHash();
@@ -37,6 +49,9 @@ public class CachedHashedDataFeedKey {
         return hashedDataFeedKey.getHashAlgorithmId();
     }
 
+    /**
+     * @return The account ID associated with this data feed key
+     */
     @NotBlank
     public String getAccountId() {
         return hashedDataFeedKey.getAccountId();
@@ -60,11 +75,17 @@ public class CachedHashedDataFeedKey {
         return hashedDataFeedKey.getExpiryDateEpochMs();
     }
 
+    /**
+     * @return The expiry date of this data feed key
+     */
     @JsonIgnore
     public Instant getExpiryDate() {
         return hashedDataFeedKey.getExpiryDate();
     }
 
+    /**
+     * @return True if this data feed key has expired
+     */
     @JsonIgnore
     public boolean isExpired() {
         return hashedDataFeedKey.isExpired();
@@ -79,13 +100,13 @@ public class CachedHashedDataFeedKey {
             return false;
         }
         final CachedHashedDataFeedKey that = (CachedHashedDataFeedKey) object;
-        return Objects.equals(hashedDataFeedKey, that.hashedDataFeedKey) && Objects.equals(sourceFile,
-                that.sourceFile);
+        return Objects.equals(hashedDataFeedKey, that.hashedDataFeedKey)
+               && Objects.equals(sourceFile, that.sourceFile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hashedDataFeedKey, sourceFile);
+        return hashCode;
     }
 
     @Override

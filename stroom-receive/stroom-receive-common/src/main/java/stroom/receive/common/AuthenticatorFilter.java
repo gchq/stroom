@@ -22,6 +22,13 @@ public interface AuthenticatorFilter {
     AuthenticatorFilter NOT_AUTHENTICATED_FILTER = (request, attributeMap) ->
             Optional.empty();
 
+    /**
+     * Implementations may throw a {@link StroomStreamException} only if they are certain
+     * that the client is trying to use the authentication method of the impl, e.g.
+     * there is an Authorization Bearer token that matches the data feed key pattern.
+     * However, if say the token is 'foo' then this may be valid for another {@link AuthenticatorFilter}
+     * so an empty {@link Optional} should be returned.
+     */
     Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                         final AttributeMap attributeMap);
 

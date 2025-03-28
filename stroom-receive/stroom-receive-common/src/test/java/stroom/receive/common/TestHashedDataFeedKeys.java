@@ -13,8 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,23 +27,61 @@ class TestHashedDataFeedKeys {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedDataFeedKeys.class);
 
     public static void main(String[] args) throws IOException {
-        final KeyWithHash keyWithHash1 = DataFeedKeyGenerator.generateFixedTestKey1();
-        final KeyWithHash keyWithHash2 = DataFeedKeyGenerator.generateFixedTestKey2();
-        final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(List.of(
-                keyWithHash1.hashedDataFeedKey(),
-                keyWithHash2.hashedDataFeedKey()));
-
         final ObjectMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedKeys");
         Files.createDirectories(dir);
-        final Path filePath = dir.resolve("file1.json");
-        final String json = mapper.writeValueAsString(hashedDataFeedKeys);
-        Files.writeString(filePath, json, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
-        LOGGER.info("key1:\n{}", keyWithHash1.key());
-        LOGGER.info("key2:\n{}", keyWithHash2.key());
-        LOGGER.info("json\n{}", json);
-        LOGGER.info("JSON written to {}", filePath.toAbsolutePath());
+        final List<String> jsonList = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            final String fileName = "file" + i + ".json";
+            final List<KeyWithHash> keyWithHashList = new ArrayList<>();
+            final Instant expiry = switch (i) {
+                case 0 -> Instant.now().minus(Duration.ofMinutes(10)); // Expired
+                case 1 -> Instant.now().plus(Duration.ofMinutes(1)); // Soon to expire
+                case 2 -> Instant.now().plus(Duration.ofDays(10)); // Long life
+                default -> throw new RuntimeException("Unexpected i: " + i);
+            };
+
+            for (int j = 0; j < 3; j++) {
+                final String accountId = String.valueOf(j + 1000);
+                final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                        accountId,
+                        Map.of(
+                                "MetaKey1", "MetaKey1Val-" + accountId,
+                                "MetaKey2", "MetaKey2Val-" + accountId),
+                        expiry);
+                logKey("key" + i + "-" + j, keyWithHash);
+                keyWithHashList.add(keyWithHash);
+            }
+            final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(keyWithHashList.stream()
+                    .map(KeyWithHash::hashedDataFeedKey)
+                    .toList());
+            final Path filePath = dir.resolve(fileName);
+            final String json = mapper.writeValueAsString(hashedDataFeedKeys);
+            jsonList.add(json);
+            Files.writeString(filePath, json, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+            LOGGER.info("JSON written to {}", filePath.toAbsolutePath());
+        }
+
+        for (final String json : jsonList) {
+            LOGGER.info("json\n{}", json);
+        }
+    }
+
+    private static void logKey(final String name, final KeyWithHash keyWithHash) {
+        final String key = keyWithHash.key();
+        final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
+        LOGGER.info("""
+                        name: {}, accountId: {}, expires in: {}:
+                        {}
+                        export TOKEN="{}"
+                        """,
+                name,
+                hashedDataFeedKey.getAccountId(),
+                Duration.between(Instant.now(), hashedDataFeedKey.getExpiryDate()),
+                key,
+                key);
     }
 
     @Test

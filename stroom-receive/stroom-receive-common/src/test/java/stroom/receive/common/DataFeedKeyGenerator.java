@@ -11,9 +11,7 @@ public class DataFeedKeyGenerator {
 
     final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
 
-    public static KeyWithHash generateRandomKey(final String subjectId,
-                                                final String displayName,
-                                                final String accountId,
+    public static KeyWithHash generateRandomKey(final String accountId,
                                                 final Map<String, String> attributeMap,
                                                 final Instant expiry) {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
@@ -22,7 +20,9 @@ public class DataFeedKeyGenerator {
                 + hasher.getAlgorithm().getUniqueId()
                 + "_"
                 + StringUtil.createRandomCode(
-                        new SecureRandom(), 128, StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
+                        new SecureRandom(),
+                        DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
+                        StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
         return new KeyWithHash(key, new HashedDataFeedKey(
                 hasher.hash(key),

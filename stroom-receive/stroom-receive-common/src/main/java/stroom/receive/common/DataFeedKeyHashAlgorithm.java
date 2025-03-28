@@ -20,7 +20,6 @@ public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
     private static final Map<String, DataFeedKeyHashAlgorithm> NAME_TO_VALUE_MAP = Arrays.stream(values())
             .collect(Collectors.toMap(DataFeedKeyHashAlgorithm::getDisplayValue, Function.identity()));
 
-
     static {
         final DataFeedKeyHashAlgorithm[] values = DataFeedKeyHashAlgorithm.values();
         final int maxPrimitive = Arrays.stream(values)

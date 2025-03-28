@@ -168,11 +168,15 @@ public class ContentTemplate {
             return false;
         }
         final ContentTemplate that = (ContentTemplate) o;
-        return enabled == that.enabled && templateNumber == that.templateNumber && processorPriority == that.processorPriority && processorMaxConcurrent == that.processorMaxConcurrent && Objects.equals(
-                expression,
-                that.expression) && templateType == that.templateType && Objects.equals(pipeline,
-                that.pipeline) && Objects.equals(name, that.name) && Objects.equals(description,
-                that.description);
+        return enabled == that.enabled
+               && templateNumber == that.templateNumber
+               && processorPriority == that.processorPriority
+               && processorMaxConcurrent == that.processorMaxConcurrent
+               && Objects.equals(expression, that.expression)
+               && templateType == that.templateType
+               && Objects.equals(pipeline, that.pipeline)
+               && Objects.equals(name, that.name)
+               && Objects.equals(description, that.description);
     }
 
     @Override

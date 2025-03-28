@@ -48,9 +48,10 @@ public enum StroomStatusCode {
             "Feed is not valid",
             "The feed you have provided does not match an agreed pattern"),
 
-    INVALID_ACCOUNT_ID(HttpServletResponse.SC_NOT_ACCEPTABLE, 112,
-            "AccountId is not valid",
-            "The AccountId you have provided does not match the AccountId associated with the Data Feed Key"),
+    INVALID_DATA_FEED_KEY(HttpServletResponse.SC_NOT_ACCEPTABLE, 112,
+            "Data Feed key and/or accountId is not valid",
+            "The Data Feed Key and/or AccountId you have provided do not match " +
+            "any known Data Feed Key and AccountIds."),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
@@ -106,6 +107,12 @@ public enum StroomStatusCode {
             313,
             "Data feed key failed authentication",
             "The provided data feed key cannot be authorised"),
+
+    DATA_FEED_KEY_EXPIRED(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            314,
+            "Data feed key has expired",
+            "The provided data feed key has passed its expiry date"),
 
     COMPRESSED_STREAM_INVALID(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             400,

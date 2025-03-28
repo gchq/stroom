@@ -116,9 +116,10 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                     final HashedDataFeedKeys hashedDataFeedKeys = mapper.readValue(fileStream,
                             HashedDataFeedKeys.class);
                     if (hashedDataFeedKeys != null && NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
-                        dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys, path);
+                        final int addedCount = dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys,
+                                path);
                         LOGGER.info("Loaded {} datafeed keys found in {}",
-                                hashedDataFeedKeys.getDataFeedKeys().size(),
+                                addedCount,
                                 path.toAbsolutePath().normalize());
                     } else {
                         LOGGER.info("No datafeed keys found in {}", path.toAbsolutePath().normalize());

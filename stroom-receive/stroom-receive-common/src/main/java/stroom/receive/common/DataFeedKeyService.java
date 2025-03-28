@@ -14,8 +14,8 @@ public interface DataFeedKeyService extends AuthenticatorFilter {
 
     Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId);
 
-    void addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
-                         Path sourceFile);
+    int addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
+                        Path sourceFile);
 
     void evictExpired();
 
