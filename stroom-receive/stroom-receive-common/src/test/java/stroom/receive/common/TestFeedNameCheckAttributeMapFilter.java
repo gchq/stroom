@@ -3,40 +3,27 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.DataFormatNames;
+import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.FeedNameCheckAttributeMapFilter.ConfigState;
 import stroom.receive.common.FeedNameCheckAttributeMapFilter.FeedNameGenerator;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFeedNameCheckAttributeMapFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFeedNameCheckAttributeMapFilter.class);
-
-//    @Test
-//    void name() {
-//        final AttributeMap attributeMap = new AttributeMap(Map.of(
-//                StandardHeaderArguments.ACCOUNT_ID, "123456789",
-//                StandardHeaderArguments.COMPONENT, "back end",
-//                StandardHeaderArguments.FORMAT, "XML",
-//                StandardHeaderArguments.SCHEMA, "event-logging",
-//                StandardHeaderArguments.SCHEMA_VERSION, "4.0.1",
-//                StandardHeaderArguments.TYPE, StreamTypeNames.EVENTS));
-//
-//        final String name = FeedNameCheckAttributeMapFilter.deriveFeedName(
-//                attributeMap, attributeMap.get(StandardHeaderArguments.TYPE));
-//
-//        LOGGER.debug("name: {}", name);
-//
-//        assertThat(name)
-//                .isEqualTo("123456789-BACK_END-EVENT_LOGGING-XML-EVENTS");
-//    }
 
     @TestFactory
     Stream<DynamicTest> testFeedNameGenerator() {
@@ -50,10 +37,7 @@ class TestFeedNameCheckAttributeMapFilter {
                 .withInputAndOutputType(String.class)
                 .withTestFunction(testCase -> {
                     final String template = testCase.getInput();
-                    final ConfigState state = new ConfigState(
-                            true,
-                            template,
-                            null);
+                    final ConfigState state = new ConfigState(true, template);
                     final FeedNameGenerator feedNameGenerator = new FeedNameGenerator(state);
                     return feedNameGenerator.generateName(attributeMap);
                 })
@@ -72,5 +56,98 @@ class TestFeedNameCheckAttributeMapFilter {
                 .addCase("${AccountId}-${compONENT}-${FORMAT}", "123-COMPONENT_XYZ-XML")
                 .addCase("${AccountId}-${unknown}-${FORMAT}", "123--XML")
                 .build();
+    }
+
+    @Test
+    void testFeedNameGenDisabled() {
+        final AttributeMap attributeMap = new AttributeMap(Map.of(
+                StandardHeaderArguments.FEED, "MY_FEED",
+                StandardHeaderArguments.ACCOUNT_ID, "123",
+                StandardHeaderArguments.COMPONENT, "Component XYZ",
+                StandardHeaderArguments.FORMAT, DataFormatNames.XML,
+                StandardHeaderArguments.SCHEMA, "events"));
+
+        assertThat(attributeMap.get(StandardHeaderArguments.FEED))
+                .isNotNull();
+
+        final ReceiveDataConfig config = ReceiveDataConfig.copy(new ReceiveDataConfig())
+                .withFeedNameGenerationEnabled(false)
+                .withFeedNameGenerationMandatoryHeaders(Set.of(
+                        StandardHeaderArguments.ACCOUNT_ID,
+                        StandardHeaderArguments.COMPONENT,
+                        StandardHeaderArguments.FORMAT))
+                .withFeedNameTemplate("${AccountId}-${component}-${FORMAT}-FOO")
+                .build();
+
+        final FeedNameCheckAttributeMapFilter filter = new FeedNameCheckAttributeMapFilter(() -> config);
+
+        final boolean result = filter.filter(attributeMap);
+        assertThat(result)
+                .isTrue();
+
+        assertThat(attributeMap.get(StandardHeaderArguments.FEED))
+                .isEqualTo("MY_FEED");
+    }
+
+    @Test
+    void testGenerateFeedName() {
+        final AttributeMap attributeMap = new AttributeMap(Map.of(
+                StandardHeaderArguments.ACCOUNT_ID, "123",
+                StandardHeaderArguments.COMPONENT, "Component XYZ",
+                StandardHeaderArguments.FORMAT, DataFormatNames.XML,
+                StandardHeaderArguments.SCHEMA, "events"));
+
+        assertThat(attributeMap.get(StandardHeaderArguments.FEED))
+                .isNull();
+
+        final ReceiveDataConfig config = ReceiveDataConfig.copy(new ReceiveDataConfig())
+                .withFeedNameGenerationEnabled(true)
+                .withFeedNameGenerationMandatoryHeaders(Set.of(
+                        StandardHeaderArguments.ACCOUNT_ID,
+                        StandardHeaderArguments.COMPONENT,
+                        StandardHeaderArguments.FORMAT))
+                .withFeedNameTemplate("${AccountId}-${component}-${FORMAT}-FOO")
+                .build();
+
+        final FeedNameCheckAttributeMapFilter filter = new FeedNameCheckAttributeMapFilter(() -> config);
+
+        final boolean result = filter.filter(attributeMap);
+        assertThat(result)
+                .isTrue();
+
+        assertThat(attributeMap.get(StandardHeaderArguments.FEED))
+                .isEqualTo("123-COMPONENT_XYZ-XML-FOO");
+    }
+
+    @Test
+    void testMissingMandatoryHeader() {
+        final AttributeMap attributeMap = new AttributeMap(Map.of(
+                StandardHeaderArguments.ACCOUNT_ID, "123",
+                StandardHeaderArguments.COMPONENT, "Component XYZ",
+                StandardHeaderArguments.SCHEMA, "events"));
+
+        assertThat(attributeMap.get(StandardHeaderArguments.FEED))
+                .isNull();
+
+        final ReceiveDataConfig config = ReceiveDataConfig.copy(new ReceiveDataConfig())
+                .withFeedNameGenerationEnabled(true)
+                .withFeedNameGenerationMandatoryHeaders(Set.of(
+                        StandardHeaderArguments.ACCOUNT_ID,
+                        StandardHeaderArguments.COMPONENT,
+                        StandardHeaderArguments.FORMAT))
+                .build();
+
+
+        final FeedNameCheckAttributeMapFilter filter = new FeedNameCheckAttributeMapFilter(() -> config);
+
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            filter.filter(attributeMap);
+                        })
+                .isInstanceOf(StroomStreamException.class)
+                .extracting(ex -> (StroomStreamException) ex)
+                .extracting(StroomStreamException::getStroomStreamStatus)
+                .extracting(StroomStreamStatus::getStroomStatusCode)
+                .isEqualTo(StroomStatusCode.MISSING_MANDATORY_HEADER);
     }
 }

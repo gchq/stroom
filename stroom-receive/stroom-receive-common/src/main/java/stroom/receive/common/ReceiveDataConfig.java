@@ -65,7 +65,7 @@ public class ReceiveDataConfig
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
-        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
+        metaTypes = cleanSet(new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES));
         enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
@@ -83,11 +83,12 @@ public class ReceiveDataConfig
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
                 StandardHeaderArguments.SCHEMA);
-        feedNameGenerationMandatoryHeaders = new TreeSet<>(Set.of(
+        // TreeSet to ensure consistent order in expected.yml generation
+        feedNameGenerationMandatoryHeaders = Collections.unmodifiableNavigableSet(new TreeSet<>(Set.of(
                 StandardHeaderArguments.ACCOUNT_ID,
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
-                StandardHeaderArguments.SCHEMA));
+                StandardHeaderArguments.SCHEMA)));
     }
 
     @SuppressWarnings("unused")
@@ -107,19 +108,17 @@ public class ReceiveDataConfig
             @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
-        this.metaTypes = metaTypes;
+        this.metaTypes = cleanSet(metaTypes);
         this.enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, enabledAuthenticationTypes);
         this.authenticationRequired = authenticationRequired;
         this.dataFeedKeysDir = dataFeedKeysDir;
         this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
         this.x509CertificateHeader = x509CertificateHeader;
         this.x509CertificateDnHeader = x509CertificateDnHeader;
-        this.allowedCertificateProviders = NullSafe.stream(allowedCertificateProviders)
-                .filter(NullSafe::isNonBlankString)
-                .collect(Collectors.toSet());
+        this.allowedCertificateProviders = cleanSet(allowedCertificateProviders);
         this.feedNameGenerationEnabled = feedNameGenerationEnabled;
         this.feedNameTemplate = feedNameTemplate;
-        this.feedNameGenerationMandatoryHeaders = feedNameGenerationMandatoryHeaders;
+        this.feedNameGenerationMandatoryHeaders = cleanSet(feedNameGenerationMandatoryHeaders);
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -243,7 +242,8 @@ public class ReceiveDataConfig
     }
 
     @JsonPropertyDescription("The set of header keys are mandatory if feedNameGenerationEnabled is set to true. " +
-                             "Should be set to complement the header keys used in 'feedNameTemplate'.")
+                             "Should be set to complement the header keys used in 'feedNameTemplate', but may be a " +
+                             "sub-set of those in the template to allow for optional headers.")
     public Set<String> getFeedNameGenerationMandatoryHeaders() {
         return feedNameGenerationMandatoryHeaders;
     }
@@ -339,6 +339,12 @@ public class ReceiveDataConfig
 
     public static Builder builder() {
         return copy(new ReceiveDataConfig());
+    }
+
+    private static Set<String> cleanSet(final Set<String> set) {
+        return NullSafe.stream(set)
+                .filter(NullSafe::isNonBlankString)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
 

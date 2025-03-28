@@ -26,19 +26,13 @@ public enum StroomStatusCode {
     INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
             "If you provide a data type it must be valid"),
 
-    ACCOUNT_ID_MUST_BE_SPECIFIED(
+    MISSING_MANDATORY_HEADER(
             HttpServletResponse.SC_NOT_ACCEPTABLE,
             103,
-            "AccountId must be specified",
-            "You must provide AccountId as a header argument in the request"),
+            "A mandatory header is missing",
+            "You must provide all mandatory headers."),
 
-    COMPONENT_MUST_BE_SPECIFIED(
-            HttpServletResponse.SC_NOT_ACCEPTABLE,
-            104,
-            "Component must be specified",
-            "You must provide Component as a header argument in the request"),
-
-    INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 105, "Data format is invalid",
+    INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 104, "Data format is invalid",
             "If you provide a data Format header, its value must be valid"),
 
     FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",

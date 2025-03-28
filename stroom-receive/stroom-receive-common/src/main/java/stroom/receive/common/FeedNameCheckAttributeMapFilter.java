@@ -47,29 +47,33 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
+        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         // Get the type name from the header arguments if supplied.
         final String type = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
-        if (!type.isEmpty() && !getValidStreamTypes().contains(type)) {
+        if (!type.isEmpty() && !getValidStreamTypes(receiveDataConfig).contains(type)) {
             throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
         }
 
         String feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
-        if (receiveDataConfigProvider.get().isFeedNameGenerationEnabled()) {
+        if (receiveDataConfig.isFeedNameGenerationEnabled()) {
             LOGGER.debug("feedNameGenerationEnabled");
             // If they supply a feed then go with that
             if (feedName.isEmpty()) {
                 LOGGER.debug("No feed name supplied");
-                final String accountName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
-                if (accountName.isEmpty()) {
-                    throw new StroomStreamException(StroomStatusCode.ACCOUNT_ID_MUST_BE_SPECIFIED, attributeMap);
-                }
-                final String component = NullSafe.trim(attributeMap.get(StandardHeaderArguments.COMPONENT));
-                if (component.isEmpty()) {
-                    throw new StroomStreamException(StroomStatusCode.COMPONENT_MUST_BE_SPECIFIED, attributeMap);
+                final Set<String> mandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
+                if (NullSafe.hasItems(mandatoryHeaders)) {
+                    for (final String mandatoryHeader : mandatoryHeaders) {
+                        final String mandatoryHeaderValue = attributeMap.get(mandatoryHeader);
+                        if (NullSafe.isBlankString(mandatoryHeaderValue)) {
+                            throw new StroomStreamException(
+                                    StroomStatusCode.MISSING_MANDATORY_HEADER,
+                                    attributeMap,
+                                    "Mandatory header '" + mandatoryHeader + "' must be provided");
+                        }
+                    }
                 }
                 feedName = cachedFeedNameGenerator.getValue()
                         .generateName(attributeMap);
-//                feedName = deriveFeedName(attributeMap, type);
                 // Add the derived feed name as everything else depends on the feed name
                 attributeMap.put(StandardHeaderArguments.FEED, feedName);
             }
@@ -82,64 +86,23 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         return true;
     }
 
-    private Set<String> getValidStreamTypes() {
-        return NullSafe.set(receiveDataConfigProvider.get().getMetaTypes());
+    private Set<String> getValidStreamTypes(final ReceiveDataConfig receiveDataConfig) {
+        return NullSafe.set(receiveDataConfig.getMetaTypes());
     }
-
-    //pkg private for testing
-//    static String deriveFeedName(final AttributeMap attributeMap,
-//                                 final String type) {
-//
-//        final String accountId = NullSafe.trim(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
-//        if (accountId.isEmpty()) {
-//            throw new StroomStreamException(StroomStatusCode.ACCOUNT_ID_MUST_BE_SPECIFIED, attributeMap);
-//        }
-//
-//        final String component = NullSafe.trim(attributeMap.get(StandardHeaderArguments.COMPONENT));
-//        final String format = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FORMAT));
-//        final String schema = NullSafe.trim(attributeMap.get(StandardHeaderArguments.SCHEMA));
-//        String effectiveType = type.isBlank()
-//                ? StreamTypeNames.EVENTS
-//                : type;
-//
-//        final List<String> nameParts = List.of(
-//                accountId,
-//                component,
-//                schema,
-//                format,
-//                effectiveType);
-//
-//        final String feedName = buildName(nameParts);
-//        LOGGER.debug("Derived feed name: '{}' from name parts: {}, attributeMap: {}",
-//                feedName, nameParts, attributeMap);
-//        return feedName;
-//    }
-
-//    private static String buildName(final List<String> parts) {
-//        return parts.stream()
-//                .filter(Predicate.not(String::isBlank))
-//                .map(FeedNameCheckAttributeMapFilter::normaliseNamePart)
-//                .collect(Collectors.joining(NAME_PART_DELIMITER));
-//    }
-
-//    private static String normaliseNamePart(final String name) {
-//        String result = NullSafe.trim(name);
-//        result = result.toUpperCase();
-//        result = PARAM_REPLACE_PATTERN.matcher(result).replaceAll("_");
-//        return result;
-//    }
 
     private static String normaliseParam(final String name) {
         String result = NullSafe.trim(name);
         result = result.toUpperCase();
-        result = PARAM_REPLACE_PATTERN.matcher(result).replaceAll("_");
+        result = PARAM_REPLACE_PATTERN.matcher(result)
+                .replaceAll("_");
         return result;
     }
 
     private static String normaliseStaticText(final String name) {
         String result = NullSafe.trim(name);
         result = result.toUpperCase();
-        result = STATIC_REPLACE_PATTERN.matcher(result).replaceAll("_");
+        result = STATIC_REPLACE_PATTERN.matcher(result)
+                .replaceAll("_");
         return result;
     }
 
@@ -151,14 +114,12 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
      * Pkg private for testing
      */
     record ConfigState(boolean feedNameGenerationEnabled,
-                       String feedNameTemplate,
-                       Set<String> feedNameGenerationMandatoryHeaders) {
+                       String feedNameTemplate) {
 
         static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
             return new ConfigState(
                     receiveDataConfig.isFeedNameGenerationEnabled(),
-                    receiveDataConfig.getFeedNameTemplate(),
-                    receiveDataConfig.getFeedNameGenerationMandatoryHeaders());
+                    receiveDataConfig.getFeedNameTemplate());
         }
     }
 
@@ -173,7 +134,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
         private final ConfigState configState;
         private final List<Function<AttributeMap, String>> partExtractors;
-//        private final Function<String, String> deDupFunc;
 
         public FeedNameGenerator(final ConfigState configState) {
             this.configState = configState;
@@ -185,58 +145,19 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                             "Error parsing feed name template '{}'", configState.feedNameTemplate));
                 }
             } else {
+                // Feed name gen not enabled so just get the feed name from the attr map
                 partExtractors = List.of(attributeMap ->
                         NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED)));
             }
-//            if (NullSafe.isEmptyString(configState.feedNameDeDupCharacters)) {
-//                deDupFunc = Function.identity();
-//            } else {
-//                deDupFunc = buildDeDupFunc(configState.feedNameDeDupCharacters);
-//            }
         }
 
         public String generateName(final AttributeMap attributeMap) {
             final String name = partExtractors.stream()
                     .map(func -> func.apply(attributeMap))
                     .collect(Collectors.joining());
-//            name = deDupFunc.apply(name);
             LOGGER.debug("Generated name '{}' from attributeMap: {}", name, attributeMap);
             return name;
         }
-
-//        private Function<String, String> buildDeDupFunc(final String deDupChars) {
-//            final StringBuilder sb = new StringBuilder();
-//            sb.append("[");
-//
-//            for (final char chr : deDupChars.toCharArray()) {
-//                final String escaped = Pattern.quote(String.valueOf(chr));
-//                sb.append(escaped);
-//            }
-//            sb.append("]");
-//            final String charClass = sb.toString();
-//            final Pattern deDupPattern = Pattern.compile("((" + charClass + ")\\2+)");
-//            final Pattern leadingTrailingPattern = Pattern.compile(
-//                    "(^(" + charClass + ")\\2*|(" + charClass + ")\\3*$)");
-//
-//            LOGGER.debug("deDupPattern: '{}', leadingTrailingPattern: '{}'",
-//                    deDupPattern, leadingTrailingPattern);
-//
-//            return str -> {
-//                if (NullSafe.isEmptyString(str)) {
-//                    return "";
-//                } else {
-//
-//                    String output = deDupPattern.matcher(str)
-//                            .replaceAll(matchResult -> {
-//                                // Replace '-----' with '-'
-//                                return matchResult.group(2);
-//                            });
-//                    output = leadingTrailingPattern.matcher(output)
-//                            .replaceAll("");
-//                    return output;
-//                }
-//            };
-//        }
 
         /**
          * Compile the template into a list of functions that convert an {@link AttributeMap} into
@@ -252,9 +173,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 char lastChar = 0;
                 boolean inVariable = false;
                 for (final char chr : template.toCharArray()) {
-                    if (chr == '$') {
-                        // Skip over
-                    } else if (chr == '{' && lastChar == '$') {
+                    if (chr == '{' && lastChar == '$') {
                         inVariable = true;
                         if (!sb.isEmpty()) {
                             // Stuff before must be static text
@@ -266,16 +185,13 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                     } else if (inVariable && chr == '}') {
                         inVariable = false;
                         final String key = sb.toString();
-                        funcList.add(attributeMap -> {
-                            if (attributeMap == null || attributeMap.isEmpty()) {
-                                return "";
-                            } else {
-                                return normaliseParam(attributeMap.get(key));
-                            }
-                        });
+                        funcList.add(attributeMap ->
+                                NullSafe.hasEntries(attributeMap)
+                                        ? normaliseParam(attributeMap.get(key))
+                                        : "");
                         LOGGER.debug("Adding header attributeMap value func for key '{}'", key);
                         sb.setLength(0);
-                    } else {
+                    } else if (chr != '$') {
                         // might be static text or the name of the key
                         sb.append(chr);
                     }
