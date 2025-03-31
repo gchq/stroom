@@ -4,11 +4,14 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.client.Console;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Window.Location;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
@@ -157,8 +160,19 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public void exec() {
-            final RestErrorHandler errorHandler = GwtNullSafe
+            final RestErrorHandler innerErrorHandler = GwtNullSafe
                     .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
+            final RestErrorHandler errorHandler = error -> {
+                final int statusCode = GwtNullSafe
+                        .getOrElse(error, RestError::getMethod, Method::getResponse, Response::getStatusCode, -1);
+                if (statusCode == Response.SC_UNAUTHORIZED) {
+                    // Reload as we have been logged out.
+                    Console.log(() -> "Unauthorised request, assuming user session is invalid, reloading...");
+                    Location.reload();
+                } else {
+                    innerErrorHandler.onError(error);
+                }
+            };
             final TaskMonitorFactory taskMonitorFactory = GwtNullSafe
                     .requireNonNullElseGet(this.taskMonitorFactory, () -> new DefaultTaskMonitorFactory(hasHandlers));
 

@@ -17,7 +17,7 @@ public class SessionConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_MAX_INACTIVE_INTERVAL = "maxInactiveInterval";
 
-    public static final StroomDuration DEFAULT_MAX_INACTIVE_INTERVAL = StroomDuration.ofDays(1);
+    public static final StroomDuration DEFAULT_MAX_INACTIVE_INTERVAL = StroomDuration.ofDays(7);
 
     private final StroomDuration maxInactiveInterval;
 

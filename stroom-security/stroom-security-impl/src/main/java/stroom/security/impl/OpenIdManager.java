@@ -28,12 +28,15 @@ class OpenIdManager {
     private final OpenIdConfiguration openIdConfiguration;
     // We have to use the stroom specific one as only that one has the code flow
     private final StroomUserIdentityFactory userIdentityFactory;
+    private final AuthenticationStateCache authenticationStateCache;
 
     @Inject
     public OpenIdManager(final OpenIdConfiguration openIdConfiguration,
-                         final StroomUserIdentityFactory userIdentityFactory) {
+                         final StroomUserIdentityFactory userIdentityFactory,
+                         final AuthenticationStateCache authenticationStateCache) {
         this.openIdConfiguration = openIdConfiguration;
         this.userIdentityFactory = userIdentityFactory;
+        this.authenticationStateCache = authenticationStateCache;
     }
 
     public String redirect(final HttpServletRequest request,
@@ -43,42 +46,40 @@ class OpenIdManager {
         String redirectUri = null;
 
         // Retrieve state if we have a state id param.
-        final AuthenticationState state = getState(request, stateId);
+        final Optional<AuthenticationState> optionalState = getState(stateId);
 
         // If we have completed the front channel flow then we will have a code and state.
-        if (code != null && state != null) {
-            redirectUri = backChannelOIDC(request, code, state);
+        if (code != null && optionalState.isPresent()) {
+            redirectUri = backChannelOIDC(request, code, optionalState.get());
         }
 
         // If we aren't doing back channel check yet or the back channel check failed then proceed with front channel.
         if (redirectUri == null) {
-            if (state != null) {
-                // Restore the initiating URI as needed for logout.
-                redirectUri = frontChannelOIDC(request, state.getInitiatingUri(), state.isPrompt());
-            } else {
-                redirectUri = frontChannelOIDC(request, postAuthRedirectUri, false);
-            }
+            // Restore the initiating URI as needed for logout.
+            redirectUri = optionalState
+                    .map(state -> frontChannelOIDC(state.getInitiatingUri(), state.isPrompt()))
+                    .orElse(frontChannelOIDC(postAuthRedirectUri, false));
         }
 
         return redirectUri;
     }
 
-    private AuthenticationState getState(final HttpServletRequest request, final String stateId) {
-        AuthenticationState state = null;
-        if (stateId != null) {
-            // Check the state is one we requested.
-            state = AuthenticationStateSessionUtil.pop(request, stateId);
-            if (state == null) {
-                LOGGER.debug("Unable to find state {}", stateId);
-            } else {
-                LOGGER.debug("Found state {} {}", stateId, state);
-            }
+    private Optional<AuthenticationState> getState(final String stateId) {
+        if (stateId == null) {
+            return Optional.empty();
         }
-        return state;
+
+        // Check the state is one we requested.
+        final Optional<AuthenticationState> optionalState = authenticationStateCache.getAndRemove(stateId);
+        if (optionalState.isEmpty()) {
+            LOGGER.debug("Unable to find state {}", stateId);
+        } else {
+            LOGGER.debug("Found state {} {}", stateId, optionalState.get());
+        }
+        return optionalState;
     }
 
-    private String frontChannelOIDC(final HttpServletRequest request,
-                                    final String postAuthRedirectUri,
+    private String frontChannelOIDC(final String postAuthRedirectUri,
                                     final boolean prompt) {
         final String endpoint = openIdConfiguration.getAuthEndpoint();
         final String clientId = openIdConfiguration.getClientId();
@@ -87,10 +88,9 @@ class OpenIdManager {
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri, prompt);
+        final AuthenticationState state = authenticationStateCache.create(postAuthRedirectUri, prompt);
         LOGGER.debug(() -> "frontChannelOIDC state: " + state);
-//        return createAuthUri(request, endpoint, clientId, state, false, false);
-        return createAuthUri(request, endpoint, clientId, state);
+        return createAuthUri(endpoint, clientId, state);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
@@ -157,21 +157,19 @@ class OpenIdManager {
         return result;
     }
 
-    public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
+    public String logout(final String postAuthRedirectUri) {
         final String endpoint = openIdConfiguration.getLogoutEndpoint();
         final String clientId = openIdConfiguration.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri, true);
+        final AuthenticationState state = authenticationStateCache.create(postAuthRedirectUri, true);
         LOGGER.debug(() -> "logout state=" + state);
-//        return createAuthUri(request, endpoint, clientId, state, true, true);
         return createLogoutUri(endpoint, clientId, state);
     }
 
-    private String createAuthUri(final HttpServletRequest request,
-                                 final String endpoint,
+    private String createAuthUri(final String endpoint,
                                  final String clientId,
                                  final AuthenticationState state) {
 //                                final boolean isLogout) {

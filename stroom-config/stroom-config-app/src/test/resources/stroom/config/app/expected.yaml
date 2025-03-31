@@ -864,6 +864,12 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      authenticationStateCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
+        maximumSize: 1000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       maxApiKeyExpiryAge: "P365D"
       openId:
         authEndpoint: null
@@ -1033,7 +1039,7 @@ appConfig:
       strictTransportSecurity: "max-age=31536000; includeSubDomains; preload"
       xssProtection: "1; mode=block"
   session:
-    maxInactiveInterval: "P1D"
+    maxInactiveInterval: "P7D"
   sessionCookie:
     httpOnly: true
     sameSite: "STRICT"
