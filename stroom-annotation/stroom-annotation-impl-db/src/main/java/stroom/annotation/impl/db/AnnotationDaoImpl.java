@@ -170,13 +170,13 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                       final AnnotationFeedIdToNameCache annotationFeedIdToNameCache) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
-        this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
         this.valueMapper = createValueMapper();
         this.annotationConfigProvider = annotationConfigProvider;
         this.annotationTagDao = annotationTagDao;
         this.streamFeedProvider = streamFeedProvider;
         this.annotationFeedNameToIdCache = annotationFeedNameToIdCache;
         this.annotationFeedIdToNameCache = annotationFeedIdToNameCache;
+        this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory,
@@ -240,8 +240,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         expressionMapper.map(AnnotationFields.DESCRIPTION_FIELD, ANNOTATION.DESCRIPTION, value -> value);
         expressionMapper.map(AnnotationFields.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
         expressionMapper.map(AnnotationFields.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
-        expressionMapper.map(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID, value ->
-                annotationFeedNameToIdCache.getId(value).orElse(-1));
+        expressionMapper.multiMap(AnnotationFields.FEED_FIELD, ANNOTATION_DATA_LINK.FEED_ID,
+                annotationFeedNameToIdCache::getIds);
 
         return expressionMapper;
     }
