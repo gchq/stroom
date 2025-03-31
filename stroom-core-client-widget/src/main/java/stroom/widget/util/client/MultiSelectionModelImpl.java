@@ -139,6 +139,8 @@ public final class MultiSelectionModelImpl<T>
                 if (fireEvents) {
                     fireChange(selectionType);
                 }
+            } else if (selectionType.isDoubleSelect()) {
+                MultiSelectEvent.fire(handlerManager, selectionType);
             }
         }
     }
