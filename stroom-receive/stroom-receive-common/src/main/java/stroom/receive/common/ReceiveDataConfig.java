@@ -124,17 +124,17 @@ public class ReceiveDataConfig
 
     private ReceiveDataConfig(final Builder builder) {
         receiptPolicyUuid = builder.receiptPolicyUuid;
-        metaTypes = builder.metaTypes;
+        metaTypes = cleanSet(builder.metaTypes);
         enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, builder.enabledAuthenticationTypes);
         authenticationRequired = builder.authenticationRequired;
         dataFeedKeysDir = builder.dataFeedKeysDir;
         authenticatedDataFeedKeyCache = builder.authenticatedDataFeedKeyCache;
         x509CertificateHeader = builder.x509CertificateHeader;
         x509CertificateDnHeader = builder.x509CertificateDnHeader;
-        allowedCertificateProviders = builder.allowedCertificateProviders;
+        allowedCertificateProviders = cleanSet(builder.allowedCertificateProviders);
         feedNameGenerationEnabled = builder.feedNameGenerationEnabled;
         feedNameTemplate = builder.feedNameTemplate;
-        feedNameGenerationMandatoryHeaders = NullSafe.unmodifialbeSet(builder.feedNameGenerationMandatoryHeaders);
+        feedNameGenerationMandatoryHeaders = cleanSet(builder.feedNameGenerationMandatoryHeaders);
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
