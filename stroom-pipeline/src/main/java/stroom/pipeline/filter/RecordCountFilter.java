@@ -52,8 +52,20 @@ public class RecordCountFilter extends AbstractXMLFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
     private static final int LOG_COUNT = 10000;
 
+    /**
+     * The default depth of records. Set to 2 as we normally count second
+     * level elements.
+     */
+    private static final int DEFAULT_RECORD_DEPTH = 2;
+
     private final RecordCountService recordCountService;
     private final RecordCount recordCount;
+
+    /**
+     * This defines the depth at which to count records. It is zero based (root
+     * element = 0).
+     */
+    private int recordDepth = DEFAULT_RECORD_DEPTH;
 
     private boolean countRead = true;
     private int depth = 0;
@@ -77,7 +89,6 @@ public class RecordCountFilter extends AbstractXMLFilter {
     public void startProcessing() {
         try {
             recordCount.setStartMs(System.currentTimeMillis());
-//            if (recordCount != null && recordCountService != null) {
             if (countRead) {
                 incrementor = () -> {
                     recordCount.getReadIncrementor().increment();
@@ -89,19 +100,6 @@ public class RecordCountFilter extends AbstractXMLFilter {
                     recordCountService.getWriteIncrementor().increment();
                 };
             }
-//            } else if (recordCount != null) {
-//                if (countRead) {
-//                    incrementor = recordCount.getReadIncrementor();
-//                } else {
-//                    incrementor = recordCount.getWriteIncrementor();
-//                }
-//            } else if (recordCountService != null) {
-//                if (countRead) {
-//                    incrementor = recordCountService.getReadIncrementor();
-//                } else {
-//                    incrementor = recordCountService.getWriteIncrementor();
-//                }
-//            }
         } finally {
             super.startProcessing();
         }
@@ -158,7 +156,7 @@ public class RecordCountFilter extends AbstractXMLFilter {
 
         depth++;
 
-        if (depth == 2) {
+        if (depth == recordDepth) {
             // This is a first level element.
             incrementor.increment();
 
@@ -202,5 +200,14 @@ public class RecordCountFilter extends AbstractXMLFilter {
             displayPriority = 1)
     public void setCountRead(final boolean countRead) {
         this.countRead = countRead;
+    }
+
+    @PipelineProperty(
+            description = "The depth of XML elements to count records.",
+            defaultValue = "1",
+            displayPriority = 2)
+    public void setRecordDepth(final int recordDepth) {
+        // Add a fudge in here to cope with legacy depth being 0 based.
+        this.recordDepth = recordDepth + 1;
     }
 }
