@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.EventId;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
@@ -44,6 +45,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,10 +54,14 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
+
+    private static final Annotation DEFAULT_ANNOTATION = Annotation.builder().build();
+    private static AnnotationConfig ANNOTATION_CONFIG;
 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = Map.ofEntries(
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_ID, Annotation::getId),
@@ -66,7 +72,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_UPDATED_BY, Annotation::getUpdateUser),
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_TITLE, Annotation::getName),
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_SUBJECT, Annotation::getSubject),
-            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_STATUS, Annotation::getStatus),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_STATUS,
+                    AnnotationReceiverDecoratorFactory::getStatusString),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_LABEL, annotation ->
+                    getTagString(annotation.getLabels())),
+            nullSafeEntry(AnnotationDecorationFields.ANNOTATION_COLLECTION, annotation ->
+                    getTagString(annotation.getCollections())),
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             nullSafeEntry(AnnotationDecorationFields.ANNOTATION_COMMENT, Annotation::getComment),
@@ -81,7 +92,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             Map.entry(AnnotationDecorationFields.ANNOTATION_UPDATED_BY, Annotation::getUpdateUser),
             Map.entry(AnnotationDecorationFields.ANNOTATION_TITLE, Annotation::getName),
             Map.entry(AnnotationDecorationFields.ANNOTATION_SUBJECT, Annotation::getSubject),
-            Map.entry(AnnotationDecorationFields.ANNOTATION_STATUS, Annotation::getStatus),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_STATUS,
+                    AnnotationReceiverDecoratorFactory::getStatusString),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_LABEL, annotation ->
+                    getTagString(annotation.getLabels())),
+            Map.entry(AnnotationDecorationFields.ANNOTATION_COLLECTION, annotation ->
+                    getTagString(annotation.getCollections())),
             Map.entry(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO, annotation ->
                     NullSafe.get(annotation.getAssignedTo(), UserRef::toDisplayString)),
             Map.entry(AnnotationDecorationFields.ANNOTATION_COMMENT, Annotation::getComment),
@@ -89,15 +105,37 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private final AnnotationService annotationService;
     private final ExpressionMatcherFactory expressionMatcherFactory;
+
     private final SecurityContext securityContext;
 
     @Inject
     AnnotationReceiverDecoratorFactory(final AnnotationService annotationService,
                                        final ExpressionMatcherFactory expressionMatcherFactory,
+                                       final AnnotationConfig annotationConfig,
                                        final SecurityContext securityContext) {
         this.annotationService = annotationService;
         this.expressionMatcherFactory = expressionMatcherFactory;
+        ANNOTATION_CONFIG = annotationConfig;
         this.securityContext = securityContext;
+    }
+
+    private static String getTagString(final Collection<AnnotationTag> tags) {
+        if (tags == null) {
+            return null;
+        }
+        return tags.stream().map(AnnotationTag::getName).collect(Collectors.joining("|"));
+    }
+
+    private static String getStatusString(final Annotation annotation) {
+        String value = NullSafe.get(ANNOTATION_CONFIG, AnnotationConfig::getCreateText);
+        if (annotation != null) {
+            if (annotation.getStatus() != null) {
+                value = annotation.getStatus().getName();
+            } else if (annotation.getId() != null) {
+                value = "None";
+            }
+        }
+        return value;
     }
 
     @Override
@@ -121,8 +159,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         if (filter == null && usedFields.isEmpty()) {
             return valuesConsumer;
         }
-
-        final Annotation defaultAnnotation = createDefaultAnnotation();
 
         return values -> {
             // TODO : At present we are just going to do this synchronously but in future we may do asynchronously
@@ -148,7 +184,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             }
 
             if (annotations.isEmpty()) {
-                annotations.add(defaultAnnotation);
+                annotations.add(DEFAULT_ANNOTATION);
             }
 
             Val[] copy = values;
@@ -172,10 +208,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 }
             }
         };
-    }
-
-    private Annotation createDefaultAnnotation() {
-        return Annotation.builder().build();
     }
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {
@@ -237,7 +269,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                     } else {
                         val = ValNull.INSTANCE;
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException(e);
                 }
                 values[index] = val;
