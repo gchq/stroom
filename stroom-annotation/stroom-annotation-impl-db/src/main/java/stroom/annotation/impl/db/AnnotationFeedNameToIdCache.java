@@ -65,9 +65,6 @@ class AnnotationFeedNameToIdCache implements Clearable {
         return null;
     }
 
-    /**
-     * Supports wild-carded feed names
-     */
     public List<Integer> getIds(final List<String> wildCardedTypeNames) {
         if (NullSafe.isEmptyCollection(wildCardedTypeNames)) {
             return Collections.emptyList();
@@ -108,7 +105,6 @@ class AnnotationFeedNameToIdCache implements Clearable {
                 .where(condition)
                 .fetchSet(ANNOTATION_FEED.ID));
     }
-
 
     public Optional<Integer> getId(final String name) {
         if (name != null) {

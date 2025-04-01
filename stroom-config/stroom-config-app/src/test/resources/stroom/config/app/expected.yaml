@@ -79,6 +79,7 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+    createText: "Create Annotation"
     db:
       connection:
         jdbcDriverClassName: null
