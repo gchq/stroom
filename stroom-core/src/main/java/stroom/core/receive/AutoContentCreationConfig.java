@@ -38,8 +38,6 @@ public class AutoContentCreationConfig
     @JsonProperty
     private final String destinationExplorerPath;
     @JsonProperty
-    private final String templatesExplorerPath;
-    @JsonProperty
     private final String additionalGroupSuffix;
     @JsonProperty
     private final String createAsSubjectId;
@@ -51,8 +49,6 @@ public class AutoContentCreationConfig
     public AutoContentCreationConfig() {
         enabled = false;
         destinationExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
-                .toString();
-        templatesExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART, DEFAULT_TEMPLATES_PATH_PART)
                 .toString();
         additionalGroupSuffix = " (sandbox)";
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
@@ -74,7 +70,6 @@ public class AutoContentCreationConfig
     public AutoContentCreationConfig(
             @JsonProperty("enabled") final boolean enabled,
             @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
-            @JsonProperty("templatesExplorerPath") final String templatesExplorerPath,
             @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
             @JsonProperty("createAsSubjectId") final String createAsSubjectId,
             @JsonProperty("createAsType") final UserType createAsType,
@@ -82,7 +77,6 @@ public class AutoContentCreationConfig
 
         this.enabled = enabled;
         this.destinationExplorerPath = destinationExplorerPath;
-        this.templatesExplorerPath = templatesExplorerPath;
         this.additionalGroupSuffix = additionalGroupSuffix;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
@@ -92,7 +86,6 @@ public class AutoContentCreationConfig
     private AutoContentCreationConfig(Builder builder) {
         this.enabled = builder.enabled;
         this.destinationExplorerPath = builder.destinationPath;
-        this.templatesExplorerPath = builder.templatesPath;
         this.additionalGroupSuffix = builder.additionalGroupSuffix;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
@@ -115,14 +108,6 @@ public class AutoContentCreationConfig
             "folder with a name derived from the system name of the received data.")
     public String getDestinationExplorerPath() {
         return destinationExplorerPath;
-    }
-
-    @NotBlank
-    @JsonPropertyDescription(
-            "The path to a folder in the Stroom explorer tree where Stroom will look for content " +
-            "to use as a template for auto-creating content.")
-    public String getTemplatesExplorerPath() {
-        return templatesExplorerPath;
     }
 
     @JsonPropertyDescription(
@@ -176,7 +161,6 @@ public class AutoContentCreationConfig
         return new Builder()
                 .enabled(enabled)
                 .destinationPath(destinationExplorerPath)
-                .templatesPath(templatesExplorerPath)
                 .additionalGroupSuffix(additionalGroupSuffix)
                 .createAsSubjectId(createAsSubjectId)
                 .createAsType(createAsType)
@@ -205,7 +189,6 @@ public class AutoContentCreationConfig
 
         private boolean enabled;
         private String destinationPath;
-        private String templatesPath;
         private String additionalGroupSuffix;
         private String createAsSubjectId;
         private UserType createAsType;
@@ -218,11 +201,6 @@ public class AutoContentCreationConfig
 
         public Builder destinationPath(String destinationPath) {
             this.destinationPath = destinationPath;
-            return this;
-        }
-
-        public Builder templatesPath(String templatesPath) {
-            this.templatesPath = templatesPath;
             return this;
         }
 
@@ -258,7 +236,6 @@ public class AutoContentCreationConfig
             return new Builder()
                     .enabled(this.enabled)
                     .destinationPath(this.destinationPath)
-                    .templatesPath(this.templatesPath)
                     .additionalGroupSuffix(this.additionalGroupSuffix)
                     .createAsSubjectId(this.createAsSubjectId)
                     .createAsType(this.createAsType)
