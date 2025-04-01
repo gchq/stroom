@@ -21,13 +21,22 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
+import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
+import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jooq.Condition;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FEED;
 
@@ -54,6 +63,47 @@ class AnnotationFeedNameToIdCache implements Clearable {
             return cache.get(name, k -> Optional.of(load(k))).orElse(null);
         }
         return null;
+    }
+
+    public List<Integer> getIds(final List<String> wildCardedTypeNames) {
+        if (NullSafe.isEmptyCollection(wildCardedTypeNames)) {
+            return Collections.emptyList();
+        }
+        return find(wildCardedTypeNames);
+    }
+
+    private List<Integer> find(final List<String> wildCardedNames) {
+        if (NullSafe.isEmptyCollection(wildCardedNames)) {
+            return Collections.emptyList();
+        }
+
+        final Set<Integer> ids = new HashSet<>(wildCardedNames.size());
+        final List<String> namesNotInCache = new ArrayList<>(wildCardedNames.size());
+        for (final String name : wildCardedNames) {
+            if (!NullSafe.isBlankString(name)) {
+                // We can't cache wildcard names as we don't know what they will match in the DB.
+                if (PatternUtil.containsWildCards(name)) {
+                    namesNotInCache.add(name);
+                } else {
+                    final Optional<Integer> optional = getId(name);
+                    optional.ifPresent(ids::add);
+                }
+            }
+        }
+
+        ids.addAll(fetchWithWildCards(namesNotInCache));
+        return ids.stream().toList();
+    }
+
+    private Set<Integer> fetchWithWildCards(final List<String> wildCardedTypeNames) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                ANNOTATION_FEED.NAME, wildCardedTypeNames, true, BooleanOperator.OR);
+
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_FEED.NAME, ANNOTATION_FEED.ID)
+                .from(ANNOTATION_FEED)
+                .where(condition)
+                .fetchSet(ANNOTATION_FEED.ID));
     }
 
     public Optional<Integer> getId(final String name) {

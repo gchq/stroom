@@ -28,7 +28,6 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
-import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -214,7 +213,7 @@ class TestAnnotationDaoImpl {
                 "1234",
                 "Label One",
                 "Collection One",
-               "Comment 3",
+                "Comment 3",
                 "Comment 1",
                 "Test Description",
                 "1",
