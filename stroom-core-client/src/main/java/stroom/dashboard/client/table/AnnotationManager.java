@@ -50,11 +50,15 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class AnnotationManager {
 
-    private final ChangeStatusPresenter changeStatusPresenter;
-    private final ChangeAssignedToPresenter changeAssignedToPresenter;
+    private final Provider<ChangeStatusPresenter> changeStatusPresenterProvider;
+    private final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider;
+
+    private ChangeStatusPresenter changeStatusPresenter;
+    private ChangeAssignedToPresenter changeAssignedToPresenter;
 
     private List<TableRow> selectedItems;
 
@@ -62,10 +66,24 @@ public class AnnotationManager {
     private Supplier<List<Column>> columnSupplier;
 
     @Inject
-    public AnnotationManager(final ChangeStatusPresenter changeStatusPresenter,
-                             final ChangeAssignedToPresenter changeAssignedToPresenter) {
-        this.changeStatusPresenter = changeStatusPresenter;
-        this.changeAssignedToPresenter = changeAssignedToPresenter;
+    public AnnotationManager(final Provider<ChangeStatusPresenter> changeStatusPresenterProvider,
+                             final Provider<ChangeAssignedToPresenter> changeAssignedToPresenterProvider) {
+        this.changeStatusPresenterProvider = changeStatusPresenterProvider;
+        this.changeAssignedToPresenterProvider = changeAssignedToPresenterProvider;
+    }
+
+    private ChangeStatusPresenter getChangeStatusPresenter() {
+        if (changeStatusPresenter == null) {
+            changeStatusPresenter = changeStatusPresenterProvider.get();
+        }
+        return changeStatusPresenter;
+    }
+
+    private ChangeAssignedToPresenter getChangeAssignedToPresenter() {
+        if (changeAssignedToPresenter == null) {
+            changeAssignedToPresenter = changeAssignedToPresenterProvider.get();
+        }
+        return changeAssignedToPresenter;
     }
 
     public void setDataSourceSupplier(final Supplier<DocRef> dataSourceSupplier) {
@@ -90,7 +108,7 @@ public class AnnotationManager {
                 .builder()
                 .items(menuItems)
                 .popupPosition(popupPosition)
-                .fire(changeStatusPresenter);
+                .fire(getChangeStatusPresenter());
     }
 
     private List<Item> getMenuItems(final List<TableRow> selectedItems) {
@@ -306,7 +324,7 @@ public class AnnotationManager {
         }
 
         CreateAnnotationEvent.fire(
-                changeStatusPresenter,
+                getChangeStatusPresenter(),
                 title,
                 subject,
                 status,
@@ -316,14 +334,14 @@ public class AnnotationManager {
     }
 
     public void editAnnotation(final long annotationId) {
-        EditAnnotationEvent.fire(changeStatusPresenter, annotationId);
+        EditAnnotationEvent.fire(getChangeStatusPresenter(), annotationId);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {
-        changeStatusPresenter.show(annotationIdList);
+        getChangeStatusPresenter().show(annotationIdList);
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
-        changeAssignedToPresenter.show(annotationIdList);
+        getChangeAssignedToPresenter().show(annotationIdList);
     }
 }

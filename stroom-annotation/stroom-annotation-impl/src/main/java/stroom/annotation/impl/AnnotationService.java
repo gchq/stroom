@@ -32,9 +32,7 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.impl.PermissionChangeService;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.Meta;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
@@ -45,6 +43,7 @@ import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
@@ -66,6 +65,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
@@ -82,6 +82,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
     private final Provider<PermissionChangeService> permissionChangeServiceProvider;
+    private final Provider<UserGroupsService> userGroupsServiceProvider;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
@@ -93,7 +94,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<DocRefInfoService> docRefInfoServiceProvider,
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
-                      final Provider<PermissionChangeService> permissionChangeServiceProvider) {
+                      final Provider<PermissionChangeService> permissionChangeServiceProvider,
+                      final Provider<UserGroupsService> userGroupsServiceProvider) {
         this.annotationDao = annotationDao;
         this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
@@ -104,6 +106,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.annotationConfigProvider = annotationConfigProvider;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
+        this.userGroupsServiceProvider = userGroupsServiceProvider;
     }
 
     public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {
@@ -243,26 +246,36 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         // Create the annotation.
         final Annotation annotation = annotationDao.createAnnotation(request, getCurrentUser());
         final DocRef docRef = annotation.asDocRef();
+        final UserRef userRef = securityContext.getUserRef();
 
-        // Create permissions.
-        final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
+        securityContext.asProcessingUser(() -> {
+            // Create permissions.
+            final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
 
-        // Add owner permission.
-        documentPermissionService.setPermission(docRef, securityContext.getUserRef(), DocumentPermission.OWNER);
+            // Add owner permission.
+            documentPermissionService.setPermission(docRef, userRef, DocumentPermission.OWNER);
 
-        // Copy feed permissions to the annotation.
-        if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-            final EventId eventId = request.getLinkedEvents().getFirst();
-            final Meta meta = metaServiceProvider.get().getMeta(eventId.getStreamId());
-            if (meta != null) {
-                final List<DocRef> docRefs = docRefInfoServiceProvider.get()
-                        .findByName(FeedDoc.TYPE, meta.getFeedName(), false);
-                if (!docRefs.isEmpty()) {
-                    final DocRef feedDocRef = docRefs.getFirst();
-                    documentPermissionService.addDocumentPermissions(feedDocRef, docRef);
-                }
+            // Add ownership perms to parent groups.
+            final Set<UserRef> parentGroups = userGroupsServiceProvider.get().getGroups(userRef);
+            if (NullSafe.hasItems(parentGroups)) {
+                parentGroups.forEach(group ->
+                        documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
             }
-        }
+
+//            // Copy feed permissions to the annotation.
+//            if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
+//                final EventId eventId = request.getLinkedEvents().getFirst();
+//                final Meta meta = metaServiceProvider.get().getMeta(eventId.getStreamId());
+//                if (meta != null) {
+//                    final List<DocRef> docRefs = docRefInfoServiceProvider.get()
+//                            .findByName(FeedDoc.TYPE, meta.getFeedName(), false);
+//                    if (!docRefs.isEmpty()) {
+//                        final DocRef feedDocRef = docRefs.getFirst();
+//                        documentPermissionService.addDocumentPermissions(feedDocRef, docRef);
+//                    }
+//                }
+//            }
+        });
 
         return annotation;
     }
