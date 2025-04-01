@@ -29,14 +29,6 @@ public class HashedDataFeedKey {
     @JsonPropertyDescription("The hash algorithm ID used to hash the datafeed key. A zero padded 3 digit number.")
     private final String hashAlgorithmId;
 
-//    @JsonProperty
-//    @JsonPropertyDescription("The unique subject ID of the user associated with the datafeed key.")
-//    private final String subjectId;
-//
-//    @JsonProperty
-//    @JsonPropertyDescription("A more human friendly display form of the user identity. May be null.")
-//    private final String displayName;
-
     @JsonProperty
     @JsonPropertyDescription("The unique ID for the account sending the data to stroom. " +
                              "An account may comprise multiple systems and components of systems. " +
@@ -55,15 +47,11 @@ public class HashedDataFeedKey {
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
                              @JsonProperty("hashAlgorithmId") final String hashAlgorithmId,
-//                             @JsonProperty("subjectId") final String subjectId,
-//                             @JsonProperty("displayName") final String displayName,
                              @JsonProperty("accountId") final String accountId,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = hash;
         this.hashAlgorithmId = hashAlgorithmId;
-//        this.subjectId = subjectId;
-//        this.displayName = displayName;
         this.accountId = accountId;
         this.streamMetaData = streamMetaData;
         this.expiryDateEpochMs = expiryDateEpochMs;
@@ -78,18 +66,6 @@ public class HashedDataFeedKey {
     public String getHashAlgorithmId() {
         return hashAlgorithmId;
     }
-
-//    @NotBlank
-//    public String getSubjectId() {
-//        return subjectId;
-//    }
-
-//    /**
-//     * May be null.
-//     */
-//    public String getDisplayName() {
-//        return displayName;
-//    }
 
     @NotBlank
     public String getAccountId() {
