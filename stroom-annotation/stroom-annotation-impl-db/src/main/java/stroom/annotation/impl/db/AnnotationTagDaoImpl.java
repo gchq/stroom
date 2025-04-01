@@ -27,6 +27,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ConditionalFormattingStyle;
 import stroom.util.NullSafe;
@@ -41,8 +42,10 @@ import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static stroom.annotation.impl.db.jooq.tables.AnnotationTag.ANNOTATION_TAG;
@@ -208,5 +211,36 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG_LINK).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG).execute());
         cache.clear();
+    }
+
+
+    public List<Integer> getIds(final AnnotationTagType annotationTagType,
+                                final List<String> wildCardedTypeNames) {
+        if (NullSafe.isEmptyCollection(wildCardedTypeNames)) {
+            return Collections.emptyList();
+        }
+        return find(annotationTagType, wildCardedTypeNames);
+    }
+
+    private List<Integer> find(final AnnotationTagType annotationTagType,
+                               final List<String> wildCardedNames) {
+        if (NullSafe.isEmptyCollection(wildCardedNames)) {
+            return Collections.emptyList();
+        }
+
+        return fetchWithWildCards(annotationTagType, wildCardedNames).stream().toList();
+    }
+
+    private Set<Integer> fetchWithWildCards(final AnnotationTagType annotationTagType,
+                                            final List<String> wildCardedTypeNames) {
+        final Condition condition = JooqUtil.createWildCardedStringsCondition(
+                ANNOTATION_TAG.NAME, wildCardedTypeNames, true, BooleanOperator.OR);
+
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_TAG.NAME, ANNOTATION_TAG.ID)
+                .from(ANNOTATION_TAG)
+                .where(condition)
+                .and(ANNOTATION_TAG.TYPE_ID.eq(annotationTagType.getPrimitiveValue()))
+                .fetchSet(ANNOTATION_TAG.ID));
     }
 }
