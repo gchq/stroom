@@ -106,7 +106,6 @@ appConfig:
     - "format"
     - "schema"
     - "schemaversion"
-    templatesExplorerPath: "/Feeds/Content Templates"
   byteBufferPool:
     blockOnExhaustedPool: false
     pooledByteBufferCounts:
