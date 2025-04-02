@@ -16,7 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
