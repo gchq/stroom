@@ -35,6 +35,7 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -49,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -430,7 +432,42 @@ public class FlatResultCreator implements ResultCreator {
                     parent.getAggregateFilter(),
                     dataStore.getDateTimeSettings(),
                     expressionPredicateFactory);
-            final Predicate<Val[]> predicate = filter.orElse(vals -> true);
+            final Consumer<Item> consumer = filter.map(predicate -> (Consumer<Item>) item -> {
+                final List<Column> parentColumns = parent.getColumns();
+                final Val[] parentValues = new Val[parentColumns.size()];
+                for (int i = 0; i < parentValues.length; i++) {
+                    // TODO : @66 Currently evaluating more values than will be needed as we don't know what is
+                    //  needed by the filter.
+                    parentValues[i] = item.getValue(i);
+                }
+
+                if (predicate.test(parentValues)) {
+                    final Val[] values = new Val[parentFieldIndices.length];
+                    for (int i = 0; i < parentFieldIndices.length; i++) {
+                        final int index = parentFieldIndices[i];
+                        if (index != -1) {
+                            // TODO : @66 Currently evaluating more values than will be needed.
+                            values[i] = parentValues[index];
+                        } else {
+                            values[i] = ValNull.INSTANCE;
+                        }
+                    }
+                    childDataStore.accept(Val.of(values));
+                }
+            }).orElseGet(() -> item -> {
+                final Val[] values = new Val[parentFieldIndices.length];
+                for (int i = 0; i < parentFieldIndices.length; i++) {
+                    final int index = parentFieldIndices[i];
+                    if (index != -1) {
+                        // TODO : @66 Currently evaluating more values than will be needed.
+                        final Val val = item.getValue(index);
+                        values[i] = val;
+                    } else {
+                        values[i] = ValNull.INSTANCE;
+                    }
+                }
+                childDataStore.accept(Val.of(values));
+            });
 
             // Get top level items.
             // TODO : Add an option to get detail level items rather than root level items.
@@ -440,22 +477,7 @@ public class FlatResultCreator implements ResultCreator {
                     OpenGroups.NONE,
                     timeFilter,
                     IdentityItemMapper.INSTANCE,
-                    item -> {
-                        final Val[] values = new Val[parentFieldIndices.length];
-                        for (int i = 0; i < parentFieldIndices.length; i++) {
-                            final int index = parentFieldIndices[i];
-                            if (index != -1) {
-                                // TODO : @66 Currently evaluating more values than will be needed.
-                                final Val val = item.getValue(index);
-                                values[i] = val;
-                            }
-                        }
-
-                        // Filter values.
-                        if (predicate.test(values)) {
-                            childDataStore.accept(Val.of(values));
-                        }
-                    },
+                    consumer,
                     null);
 
             return childDataStore;
