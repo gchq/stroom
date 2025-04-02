@@ -28,6 +28,7 @@ import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -91,16 +92,20 @@ class FeedStatusServiceImpl implements FeedStatusService {
 
                         FeedStatus feedStatus = feedProperties.getStatus(feedName);
                         final UserDesc userDesc = request.getUserDesc();
-                        final AttributeMap attributeMap = new AttributeMap(request.getAttributeMap());
 
                         LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
                                 feedName, userDesc, feedStatus);
 
                         // Feed does not exist so auto-create it if so configured
-                        if (feedStatus == null && userDesc != null) {
+                        if (feedStatus == null) {
                             if (autoContentCreationConfigProvider.get().isEnabled()) {
+                                final AttributeMap attributeMap = NullSafe.getOrElseGet(
+                                        request.getAttributeMap(),
+                                        AttributeMap::new,
+                                        AttributeMap::new);
                                 // Create the feed if it doesn't already exist
-                                feedStatus = contentAutoCreationService.tryCreateFeed(feedName, userDesc, attributeMap)
+                                feedStatus = contentAutoCreationService.tryCreateFeed(
+                                                feedName, userDesc, attributeMap)
                                         .map(FeedDoc::getStatus)
                                         .orElse(null);
                             } else {

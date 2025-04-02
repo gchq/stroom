@@ -210,12 +210,33 @@ public class PredicateUtil {
      */
     public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
                                                      final Predicate<T> predicate) {
+        return countingPredicate(counter, true, predicate);
+    }
+
+    /**
+     * Creates a predicate that increments counter for each match encountered.
+     *
+     * @param counter     The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param countIfTrue If true counter is incremented for a match. If false, counter is incremented for
+     *                    a non-match.
+     * @param predicate   The predicate to wrap
+     * @return The wrapped predicate
+     */
+    public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
+                                                     final boolean countIfTrue,
+                                                     final Predicate<T> predicate) {
         Objects.requireNonNull(predicate);
         Objects.requireNonNull(counter);
         return val -> {
             final boolean result = predicate.test(val);
-            if (result) {
-                counter.incrementAndGet();
+            if (countIfTrue) {
+                if (result) {
+                    counter.incrementAndGet();
+                }
+            } else {
+                if (!result) {
+                    counter.incrementAndGet();
+                }
             }
             return result;
         };

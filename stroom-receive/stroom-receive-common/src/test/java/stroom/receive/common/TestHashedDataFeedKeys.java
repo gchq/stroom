@@ -1,5 +1,6 @@
 package stroom.receive.common;
 
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -78,7 +79,7 @@ class TestHashedDataFeedKeys {
                         export TOKEN="{}"
                         """,
                 name,
-                hashedDataFeedKey.getAccountId(),
+                hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID),
                 Duration.between(Instant.now(), hashedDataFeedKey.getExpiryDate()),
                 key,
                 key);
@@ -102,8 +103,8 @@ class TestHashedDataFeedKeys {
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
                 hasher.getAlgorithm().getUniqueId(),
-                "system 1",
                 Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "system 1",
                         "key1", "val1",
                         "key2", "val2"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
@@ -111,8 +112,8 @@ class TestHashedDataFeedKeys {
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
                 hasher.getAlgorithm().getUniqueId(),
-                "system 2",
                 Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "system 2",
                         "key3", "val3",
                         "key4", "val4"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());

@@ -50,11 +50,11 @@ public class CachedHashedDataFeedKey {
     }
 
     /**
-     * @return The account ID associated with this data feed key
+     * @return The value of a specified meta key.
      */
     @NotBlank
-    public String getAccountId() {
-        return hashedDataFeedKey.getAccountId();
+    public String getStreamMetaValue(final String metaKey) {
+        return hashedDataFeedKey.getStreamMetaValue(metaKey);
     }
 
     //    @NotBlank

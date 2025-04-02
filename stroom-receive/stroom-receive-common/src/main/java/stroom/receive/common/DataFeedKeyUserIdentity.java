@@ -14,9 +14,9 @@ public class DataFeedKeyUserIdentity implements UserIdentity {
     private final String subjectId;
     private final String displayName;
 
-    public DataFeedKeyUserIdentity(final HashedDataFeedKey hashedDataFeedKey) {
-        Objects.requireNonNull(hashedDataFeedKey);
-        this.subjectId = SUBJECT_ID_PREFIX + hashedDataFeedKey.getAccountId();
+    public DataFeedKeyUserIdentity(final String keyOwner) {
+        Objects.requireNonNull(keyOwner);
+        this.subjectId = SUBJECT_ID_PREFIX + keyOwner;
         this.displayName = subjectId;
     }
 

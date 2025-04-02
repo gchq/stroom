@@ -88,7 +88,8 @@ class TestDataFeedKeyServiceImpl {
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
-                StandardHeaderArguments.ACCOUNT_ID, hashedDataFeedKey.getAccountId()
+                StandardHeaderArguments.ACCOUNT_ID,
+                hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
         // Don't load the key, so the service doesn't know about it
@@ -116,7 +117,8 @@ class TestDataFeedKeyServiceImpl {
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
-                StandardHeaderArguments.ACCOUNT_ID, hashedDataFeedKey.getAccountId()
+                StandardHeaderArguments.ACCOUNT_ID,
+                hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
         dataFeedKeyService.addDataFeedKeys(
@@ -141,14 +143,16 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_validAndKnownKey() {
+        final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
-                this::getReceiveDataConfig,
+                () -> receiveDataConfig,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
-                StandardHeaderArguments.ACCOUNT_ID, hashedDataFeedKey.getAccountId()
+                StandardHeaderArguments.ACCOUNT_ID,
+                hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
         dataFeedKeyService.addDataFeedKeys(
@@ -161,7 +165,8 @@ class TestDataFeedKeyServiceImpl {
 
         final UserIdentity userIdentity = optUserIdentity.get();
         assertThat(userIdentity.getSubjectId())
-                .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX + hashedDataFeedKey.getAccountId());
+                .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
+                           + hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID));
         assertThat(userIdentity.getDisplayName())
                 .isEqualTo(userIdentity.getSubjectId());
     }

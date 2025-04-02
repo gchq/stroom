@@ -174,35 +174,29 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     public Optional<FeedDoc> tryCreateFeed(final String feedName,
                                            final UserDesc userDesc,
                                            final AttributeMap attributeMap) {
-        Objects.requireNonNull(userDesc);
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        if (isEligibleForAutoCreation(userDesc, attributeMap)) {
-            // Content gets created as the configured user
-            final UserRef runAsUserRef = getRunAsUser();
+        // Content gets created as the configured user
+        final UserRef runAsUserRef = getRunAsUser();
 
-            final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
-                    ensureFeed(feedName, userDesc, attributeMap));
+        final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
+                ensureFeed(feedName, userDesc, attributeMap));
 
-            LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                    feedName, userDesc, optFeedDoc);
+        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                feedName, userDesc, optFeedDoc);
 
-            return optFeedDoc;
-        } else {
-            LOGGER.debug("Not eligible for auto-creation");
-            return Optional.empty();
-        }
+        return optFeedDoc;
     }
 
-    private boolean isEligibleForAutoCreation(final UserDesc userDesc,
-                                              final AttributeMap attributeMap) {
-        return NullSafe.allNonNull(userDesc, userDesc.getSubjectId(), attributeMap)
-               && attributeMap.containsKey(StandardHeaderArguments.ACCOUNT_ID)
-               && attributeMap.containsKey(StandardHeaderArguments.COMPONENT)
-               && attributeMap.containsKey(StandardHeaderArguments.SCHEMA)
-               && attributeMap.containsKey(StandardHeaderArguments.FORMAT);
-    }
+//    private boolean isEligibleForAutoCreation(final UserDesc userDesc,
+//                                              final AttributeMap attributeMap) {
+//        return NullSafe.allNonNull(userDesc, userDesc.getSubjectId(), attributeMap)
+//               && attributeMap.containsKey(StandardHeaderArguments.ACCOUNT_ID)
+//               && attributeMap.containsKey(StandardHeaderArguments.COMPONENT)
+//               && attributeMap.containsKey(StandardHeaderArguments.SCHEMA)
+//               && attributeMap.containsKey(StandardHeaderArguments.FORMAT);
+//    }
 
     private UserRef getRunAsUser() {
         final AutoContentCreationConfig autoContentCreationConfig = autoContentCreationConfigProvider.get();
@@ -265,32 +259,44 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                 final UserDesc userDesc,
                                 final AttributeMap attributeMap) {
 
-        final String destinationPath = cachedDestinationPathTemplator.getValue().apply(attributeMap);
+        final String destinationPath = cachedDestinationPathTemplator.getValue()
+                .apply(attributeMap);
         final DocPath docPath = DocPath.fromPathString(destinationPath);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
         final ExplorerNode destFolder = explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
         final DocRef destFolderRef = destFolder.getDocRef();
+        final UserRef userRef;
 
-        LOGGER.info("Ensuing user with userRef: '{}' exists", userDesc);
-        final User user = userService.getOrCreateUser(userDesc);
-        final UserRef userRef = user.asRef();
+        if (userDesc != null) {
+            LOGGER.info("Ensuing user with userRef: '{}' exists", userDesc);
+            final User user = userService.getOrCreateUser(userDesc);
+            userRef = user.asRef();
+        } else {
+            LOGGER.info("No user details, won't ensure Stroom user or add any users to groups.");
+            userRef = null;
+        }
 
         final String groupName = cachedGroupTemplator.getValue().apply(attributeMap);
-        LOGGER.info("Auto-creating user group '{}', and adding userRef {} to it",
-                groupName, userRef);
+        LOGGER.info("Auto-creating user group '{}'", groupName);
         final User group = userService.getOrCreateUserGroup(groupName);
         addAppPerms(group);
-        userService.addUserToGroup(userRef, group.asRef());
+        if (userRef != null) {
+            LOGGER.info("Adding userRef {} to group '{}", userRef, groupName);
+            userService.addUserToGroup(userRef, group.asRef());
+        }
 
         Optional<User> optAdditionalGroup = Optional.empty();
-        final String additionalGroupName = cachedAdditionalGroupTemplator.getValue().apply(attributeMap);
+        final String additionalGroupName = cachedAdditionalGroupTemplator.getValue()
+                .apply(attributeMap);
         if (NullSafe.isNonBlankString(additionalGroupName)) {
-            LOGGER.info("Auto-creating additional user group '{}', and adding userRef {} to it",
-                    additionalGroupName, userRef);
+            LOGGER.info("Auto-creating user group '{}'", additionalGroupName);
             final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);
             addAppPerms(additionalGroup);
-            userService.addUserToGroup(userRef, additionalGroup.asRef());
+            if (userRef != null) {
+                LOGGER.info("Adding userRef {} to additional group '{}", userRef, additionalGroupName);
+                userService.addUserToGroup(userRef, additionalGroup.asRef());
+            }
             optAdditionalGroup = Optional.of(additionalGroup);
         }
 
@@ -338,7 +344,11 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 }
             });
 
-            feedDoc.setDescription("Auto-created for user '" + userRef.toDisplayString() + "'");
+            if (userRef != null) {
+                feedDoc.setDescription("Auto-created for user '" + userRef.toDisplayString() + "'");
+            } else {
+                feedDoc.setDescription("Auto-created");
+            }
             feedDoc.setStatus(FeedStatus.RECEIVE);
 
             consumeAttrVal(attributeMap, StandardHeaderArguments.ENCODING, val ->

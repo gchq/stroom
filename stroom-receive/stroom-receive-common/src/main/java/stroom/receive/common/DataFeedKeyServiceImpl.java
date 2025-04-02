@@ -3,7 +3,6 @@ package stroom.receive.common;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
@@ -69,7 +68,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     // cacheKeyToDataFeedKeyMap and found it to be valid (at the time of checking).
     // This cache saves us the hashing cost on every data receipt, which can be expensive.
     private final LoadingStroomCache<String, List<CachedHashedDataFeedKey>> unHashedKeyToDataFeedKeyCache;
-
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap = new EnumMap<>(
             DataFeedKeyHashAlgorithm.class);
 
@@ -78,6 +77,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     @Inject
     public DataFeedKeyServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                                   final CacheManager cacheManager) {
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
         hashFunctionMap.put(DataFeedKeyHashAlgorithm.ARGON2, new Argon2DataFeedKeyHasher());
 //        hashFunctionMap.put(DataFeedKeyHashAlgorithm.BCRYPT, new BCryptApiKeyHasher());
         unHashedKeyToDataFeedKeyCache = cacheManager.createLoadingCache(
@@ -87,9 +87,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         timer = new Timer("DataFeedKeyTimer");
     }
 
-    @Override
-    public Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
-                                                      final AttributeMap attributeMap) {
+    private Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
+                                                       final AttributeMap attributeMap,
+                                                       final ReceiveDataConfig receiveDataConfig) {
         Objects.requireNonNull(request);
         final Optional<HashedDataFeedKey> optDataFeedKey = getRequestHeader(request, AUTHORIZATION_HEADER)
                 .map(str -> {
@@ -105,22 +105,22 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
                     return key;
                 })
                 .flatMap((String key2) ->
-                        lookupAndValidateKey(key2, attributeMap));
+                        lookupAndValidateKey(key2, attributeMap, receiveDataConfig));
 
         return optDataFeedKey;
     }
 
-    @Override
-    public Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId) {
-        if (accountId == null) {
-            return Optional.empty();
-        } else {
-            return Optional.ofNullable(accountIdToDataFeedKeyMap.get(accountId))
-                    .flatMap(cachedKeys -> cachedKeys.stream()
-                            .max(Comparator.comparing(CachedHashedDataFeedKey::getExpiryDate)))
-                    .map(CachedHashedDataFeedKey::getDataFeedKey);
-        }
-    }
+//    @Override
+//    public Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId) {
+//        if (accountId == null) {
+//            return Optional.empty();
+//        } else {
+//            return Optional.ofNullable(accountIdToDataFeedKeyMap.get(accountId))
+//                    .flatMap(cachedKeys -> cachedKeys.stream()
+//                            .max(Comparator.comparing(CachedHashedDataFeedKey::getExpiryDate)))
+//                    .map(CachedHashedDataFeedKey::getDataFeedKey);
+//        }
+//    }
 
 //    @Override
 //    public Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId) {
@@ -136,32 +136,51 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
             LOGGER.debug(() -> LogUtil.message("Adding {} dataFeedKeys",
                     hashedDataFeedKeys.getDataFeedKeys().size()));
 
-            final AtomicInteger expiredCount = new AtomicInteger();
+            final AtomicInteger invalidCount = new AtomicInteger();
+            final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+            final String keyOwnerMetaKey = receiveDataConfig.getDataFeedKeyOwnerMetaKey();
 
             addedCount = hashedDataFeedKeys.getDataFeedKeys()
                     .stream()
-                    .filter(hashedDataFeedKey -> {
-                        if (hashedDataFeedKey.isExpired()) {
-                            expiredCount.incrementAndGet();
-                        }
-                        return !hashedDataFeedKey.isExpired();
-                    })
+                    .filter(Objects::nonNull)
                     .map(dataFeedKey ->
                             new CachedHashedDataFeedKey(dataFeedKey, sourceFile))
+                    .filter(dataFeedKey ->
+                            isValidDataFeedKey(dataFeedKey, keyOwnerMetaKey, invalidCount))
                     .mapToInt(cachedHashedDataFeedKey -> {
                         addDataFeedKey(cachedHashedDataFeedKey);
                         return 1;
                     })
                     .sum();
 
-            LOGGER.debug("Added: {}, ignored {} expired data feed keys, file: {}",
-                    addedCount, expiredCount, sourceFile);
+            LOGGER.debug("Added: {}, ignored {} invalid data feed keys, file: {}",
+                    addedCount, invalidCount, sourceFile);
         }
         LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", cacheKeyToDataFeedKeyMap.values()
                 .stream()
                 .mapToInt(List::size)
                 .sum()));
         return addedCount;
+    }
+
+    private boolean isValidDataFeedKey(final CachedHashedDataFeedKey dataFeedKey,
+                                       final String ownerMetaKey,
+                                       final AtomicInteger invalidCount) {
+
+        if (dataFeedKey.isExpired()) {
+            LOGGER.debug("Ignoring expired Data Feed Key in sourceFile: {}", dataFeedKey.getSourceFile());
+            invalidCount.incrementAndGet();
+            return false;
+        }
+        final String value = dataFeedKey.getStreamMetaValue(ownerMetaKey);
+        final boolean hasOwner = NullSafe.isNonBlankString(value);
+        if (!hasOwner) {
+            invalidCount.incrementAndGet();
+            LOGGER.warn("Ignoring Data Feed Key found with no value for owner key '{}' in sourceFile: {}",
+                    ownerMetaKey, dataFeedKey.getSourceFile());
+            return false;
+        }
+        return true;
     }
 
     private void addDataFeedKey(final CachedHashedDataFeedKey cachedHashedDataFeedKey) {
@@ -173,10 +192,10 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
             cacheKeyToDataFeedKeyMap.computeIfAbsent(cacheKey, k -> new CopyOnWriteArrayList<>())
                     .add(cachedHashedDataFeedKey);
             // Use CopyOnWriteArrayList as write are very infrequent
-            accountIdToDataFeedKeyMap.computeIfAbsent(
-                            cachedHashedDataFeedKey.getAccountId(),
-                            k -> new CopyOnWriteArrayList<>())
-                    .add(cachedHashedDataFeedKey);
+//            accountIdToDataFeedKeyMap.computeIfAbsent(
+//                            cachedHashedDataFeedKey.getStreamMetaValue(),
+//                            k -> new CopyOnWriteArrayList<>())
+//                    .add(cachedHashedDataFeedKey);
         }
     }
 
@@ -202,11 +221,11 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         }
 
         counter.set(0);
-        accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) ->
-                cachedHashedDataFeedKeys.removeIf(isExpiredPredicate));
-        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from subjectIdToDataFeedKeyMap", counter);
-
-        counter.set(0);
+//        accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) ->
+//                cachedHashedDataFeedKeys.removeIf(isExpiredPredicate));
+//        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from subjectIdToDataFeedKeyMap", counter);
+//
+//        counter.set(0);
 
         // In all likelihood, there will only be one item in the list per un-hashed key
         // so just invalidate the whole entry
@@ -248,12 +267,11 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
                     });
             LOGGER.debug("Removed {} CachedHashedDataFeedKeys from cacheKeyToDataFeedKeyMap", counter);
             LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", counter, sourceFile);
-            counter.set(0);
-
-            accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) -> {
-                cachedHashedDataFeedKeys.removeIf(sourceFilePredicate);
-            });
-            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
+//            counter.set(0);
+//            accountIdToDataFeedKeyMap.forEach((accountId, cachedHashedDataFeedKeys) -> {
+//                cachedHashedDataFeedKeys.removeIf(sourceFilePredicate);
+//            });
+//            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
         }
         LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", cacheKeyToDataFeedKeyMap.values()
                 .stream()
@@ -298,7 +316,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
      * @return A populated {@link Optional} if the key is known to use and is valid, else empty.
      */
     private Optional<HashedDataFeedKey> lookupAndValidateKey(final String unHashedKey,
-                                                             final AttributeMap attributeMap) {
+                                                             final AttributeMap attributeMap,
+                                                             final ReceiveDataConfig receiveDataConfig) {
         if (NullSafe.isBlankString(unHashedKey)) {
             LOGGER.debug("Blank unHashedKey, attributeMap: {}", attributeMap);
             return Optional.empty();
@@ -317,14 +336,15 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
             }
         }
 
-        final String accountId = getAccountId(attributeMap)
+        final String keyOwnerMetaKey = receiveDataConfig.getDataFeedKeyOwnerMetaKey();
+        final String ownerFromAttrMap = getAttribute(attributeMap, keyOwnerMetaKey)
                 .orElse(null);
+        final Predicate<CachedHashedDataFeedKey> filter = createKeyOwnerFilter(keyOwnerMetaKey, ownerFromAttrMap);
 
         // In the event that we have more than one key for an accountId, get the one with
         // the latest expire time.
         final List<HashedDataFeedKey> filteredKeys = dataFeedKeys.stream()
-                .filter(cachedHashedDataFeedKey ->
-                        Objects.equals(cachedHashedDataFeedKey.getAccountId(), accountId))
+                .filter(filter)
                 .sorted(HASHED_DATA_FEED_KEY_COMPARATOR)
                 .map(CachedHashedDataFeedKey::getDataFeedKey)
                 .toList();
@@ -332,8 +352,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         if (NullSafe.isEmptyCollection(filteredKeys)) {
             // Got a match on the un-hashed key, but is a bad accountId.
             // Stops someone using their own DFK to authenticate to someone else's accountId.
-            LOGGER.debug("No un-expired keys matching data feed key {}, account Id {}, dataFeedKeys: {}",
-                    unHashedKey, accountId, dataFeedKeys);
+            LOGGER.debug("No un-expired keys matching data feed key {}, ownerMetaKey: {}, " +
+                         "ownerFromAttrMap: {}, dataFeedKeys: {}",
+                    unHashedKey, keyOwnerMetaKey, ownerFromAttrMap, dataFeedKeys);
             if (DATA_FEED_KEY_PATTERN.matcher(unHashedKey).matches()) {
                 // It looks like a DFK, but we go no match, so we can throw
                 throw new StroomStreamException(StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
@@ -352,6 +373,23 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
             }
             return optValidKey;
         }
+    }
+
+    private static Predicate<CachedHashedDataFeedKey> createKeyOwnerFilter(final String keyOwnerMetaKey,
+                                                                           final String ownerFromAttrMap) {
+        Predicate<CachedHashedDataFeedKey> filter;
+        if (NullSafe.isNonBlankString(keyOwnerMetaKey)) {
+            filter = (CachedHashedDataFeedKey key) -> {
+                final String ownerFromKey = key.getStreamMetaValue(keyOwnerMetaKey);
+                final boolean result = Objects.equals(ownerFromKey, ownerFromAttrMap);
+                LOGGER.debug("keyOwnerMetaKey: {}, ownerFromAttrMap: {}, ownerFromKey: {}, result: {}",
+                        keyOwnerMetaKey, ownerFromAttrMap, ownerFromKey, result);
+                return result;
+            };
+        } else {
+            filter = key -> true;
+        }
+        return filter;
     }
 
     private List<CachedHashedDataFeedKey> createHashedDataFeedKey(final String unHashedKey) {
@@ -380,11 +418,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
                 .filter(StringUtils::isNotBlank);
     }
 
-    private Optional<String> getAccountId(final AttributeMap attributeMap) {
-        return getAttribute(attributeMap, StandardHeaderArguments.ACCOUNT_ID)
-                .map(String::trim);
-    }
-
     private Optional<String> getRequestHeader(final HttpServletRequest request, final String header) {
         final String value = request.getHeader(header);
         return Optional.ofNullable(value)
@@ -395,16 +428,17 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                                final AttributeMap attributeMap) {
         try {
-            final Optional<UserIdentity> optUserIdentity = getDataFeedKey(request, attributeMap)
+            final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+            final Optional<UserIdentity> optUserIdentity = getDataFeedKey(request, attributeMap, receiveDataConfig)
                     .map(dataFeedKey -> {
+                        final String keyOwnerMetaKey = receiveDataConfig.getDataFeedKeyOwnerMetaKey();
+                        final String keyOwner = dataFeedKey.getStreamMetaValue(keyOwnerMetaKey);
                         // Ensure the stream attributes from the data feed key are set in the attributeMap so
                         // that the AttributeMapFilters have access to them and any attributes that are static
                         // to this key are applied to all streams that use it, e.g. aws account number.
-                        final Map<String, String> streamMeta = NullSafe.map(dataFeedKey.getStreamMetaData());
                         // Entries from the data feed key trump what is in the headers
-                        attributeMap.putAll(streamMeta);
-
-                        return new DataFeedKeyUserIdentity(dataFeedKey);
+                        attributeMap.putAll(dataFeedKey.getStreamMetaData());
+                        return new DataFeedKeyUserIdentity(keyOwner);
                     });
             LOGGER.debug("Returning {}, attributeMap: {}", optUserIdentity, attributeMap);
             return optUserIdentity;
@@ -444,14 +478,17 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        // sourcePath => accountId =>
+        // sourcePath => accountId => Map
         final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
+        final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedKeyOwnerMetaKey();
         cacheKeyToDataFeedKeyMap.forEach((cacheKey, dataFeedKeys) -> {
             for (final CachedHashedDataFeedKey dataFeedKey : dataFeedKeys) {
                 final String path = dataFeedKey.getSourceFile().toAbsolutePath().normalize().toString();
-                final String accountId = dataFeedKey.getAccountId();
+                final String keyOwner = Objects.requireNonNullElse(
+                        dataFeedKey.getStreamMetaValue(keyOwnerMetaKey),
+                        "null");
                 final List<Map<String, String>> keysForAccountId = map.computeIfAbsent(path, k -> new HashMap<>())
-                        .computeIfAbsent(accountId, k -> new ArrayList<>());
+                        .computeIfAbsent(keyOwner, k -> new ArrayList<>());
                 final Map<String, String> leafMap = Map.of(
                         "expiry", dataFeedKey.getExpiryDate().toString(),
                         "remaining", Duration.between(Instant.now(), dataFeedKey.getExpiryDate()).toString(),

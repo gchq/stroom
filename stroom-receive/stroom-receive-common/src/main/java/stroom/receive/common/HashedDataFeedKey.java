@@ -29,11 +29,11 @@ public class HashedDataFeedKey {
     @JsonPropertyDescription("The hash algorithm ID used to hash the datafeed key. A zero padded 3 digit number.")
     private final String hashAlgorithmId;
 
-    @JsonProperty
-    @JsonPropertyDescription("The unique ID for the account sending the data to stroom. " +
-                             "An account may comprise multiple systems and components of systems. " +
-                             "This will be used to name auto-created folders and documents in Stroom")
-    private final String accountId;
+//    @JsonProperty
+//    @JsonPropertyDescription("The unique ID for the account sending the data to stroom. " +
+//                             "An account may comprise multiple systems and components of systems. " +
+//                             "This will be used to name auto-created folders and documents in Stroom")
+//    private final String accountId;
 
     @JsonProperty
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
@@ -47,13 +47,13 @@ public class HashedDataFeedKey {
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
                              @JsonProperty("hashAlgorithmId") final String hashAlgorithmId,
-                             @JsonProperty("accountId") final String accountId,
+//                             @JsonProperty("accountId") final String accountId,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = hash;
         this.hashAlgorithmId = hashAlgorithmId;
-        this.accountId = accountId;
-        this.streamMetaData = streamMetaData;
+//        this.accountId = accountId;
+        this.streamMetaData = NullSafe.map(streamMetaData);
         this.expiryDateEpochMs = expiryDateEpochMs;
     }
 
@@ -67,13 +67,20 @@ public class HashedDataFeedKey {
         return hashAlgorithmId;
     }
 
-    @NotBlank
-    public String getAccountId() {
-        return accountId;
-    }
+//    @NotBlank
+//    public String getAccountId() {
+//        return accountId;
+//    }
 
     public Map<String, String> getStreamMetaData() {
-        return NullSafe.map(streamMetaData);
+        return streamMetaData;
+    }
+
+    @JsonIgnore
+    public String getStreamMetaValue(final String metaKey) {
+        return NullSafe.isNonBlankString(metaKey)
+                ? streamMetaData.get(metaKey)
+                : null;
     }
 
     @Min(0)
@@ -105,7 +112,7 @@ public class HashedDataFeedKey {
                && Objects.equals(hashAlgorithmId, that.hashAlgorithmId)
 //               && Objects.equals(subjectId, that.subjectId)
 //               && Objects.equals(displayName, that.displayName)
-               && Objects.equals(accountId, that.accountId)
+//               && Objects.equals(accountId, that.accountId)
                && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
@@ -115,7 +122,7 @@ public class HashedDataFeedKey {
                 hashAlgorithmId,
 //                subjectId,
 //                displayName,
-                accountId,
+//                accountId,
                 streamMetaData,
                 expiryDateEpochMs);
     }
@@ -127,7 +134,7 @@ public class HashedDataFeedKey {
                ", hashAlgorithmId='" + hashAlgorithmId + '\'' +
 //               ", subjectId='" + subjectId + '\'' +
 //               ", displayName='" + displayName + '\'' +
-               ", accountId='" + accountId + '\'' +
+//               ", accountId='" + accountId + '\'' +
                ", streamMetaData=" + streamMetaData +
                ", expiryDateEpochMs=" + expiryDateEpochMs +
                '}';

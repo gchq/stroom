@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -37,6 +38,7 @@ public class ReceiveDataConfig
     public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
     public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
     public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
+    public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
 
     @JsonProperty
     private final String receiptPolicyUuid;
@@ -46,6 +48,8 @@ public class ReceiveDataConfig
     private final boolean authenticationRequired;
     @JsonProperty
     private final String dataFeedKeysDir;
+    @JsonProperty
+    private final String dataFeedKeyOwnerMetaKey;
     @JsonProperty
     private final CacheConfig authenticatedDataFeedKeyCache;
     @JsonProperty
@@ -70,6 +74,7 @@ public class ReceiveDataConfig
         enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
+        dataFeedKeyOwnerMetaKey = DEFAULT_OWNER_META_KEY;
         authenticatedDataFeedKeyCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(5))
@@ -100,6 +105,7 @@ public class ReceiveDataConfig
             @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
             @JsonProperty("authenticationRequired") final boolean authenticationRequired,
             @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
+            @JsonProperty("dataFeedKeyOwnerMetaKey") final String dataFeedKeyOwnerMetaKey,
             @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
@@ -113,6 +119,7 @@ public class ReceiveDataConfig
         this.enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, enabledAuthenticationTypes);
         this.authenticationRequired = authenticationRequired;
         this.dataFeedKeysDir = dataFeedKeysDir;
+        this.dataFeedKeyOwnerMetaKey = Objects.requireNonNullElse(dataFeedKeyOwnerMetaKey, DEFAULT_OWNER_META_KEY);
         this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
         this.x509CertificateHeader = x509CertificateHeader;
         this.x509CertificateDnHeader = x509CertificateDnHeader;
@@ -123,18 +130,20 @@ public class ReceiveDataConfig
     }
 
     private ReceiveDataConfig(final Builder builder) {
-        receiptPolicyUuid = builder.receiptPolicyUuid;
-        metaTypes = cleanSet(builder.metaTypes);
-        enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, builder.enabledAuthenticationTypes);
-        authenticationRequired = builder.authenticationRequired;
-        dataFeedKeysDir = builder.dataFeedKeysDir;
-        authenticatedDataFeedKeyCache = builder.authenticatedDataFeedKeyCache;
-        x509CertificateHeader = builder.x509CertificateHeader;
-        x509CertificateDnHeader = builder.x509CertificateDnHeader;
-        allowedCertificateProviders = cleanSet(builder.allowedCertificateProviders);
-        feedNameGenerationEnabled = builder.feedNameGenerationEnabled;
-        feedNameTemplate = builder.feedNameTemplate;
-        feedNameGenerationMandatoryHeaders = cleanSet(builder.feedNameGenerationMandatoryHeaders);
+        this(
+                builder.receiptPolicyUuid,
+                builder.metaTypes,
+                builder.enabledAuthenticationTypes,
+                builder.authenticationRequired,
+                builder.dataFeedKeysDir,
+                builder.dataFeedKeyOwnerMetaKey,
+                builder.authenticatedDataFeedKeyCache,
+                builder.x509CertificateHeader,
+                builder.x509CertificateDnHeader,
+                builder.allowedCertificateProviders,
+                builder.feedNameGenerationEnabled,
+                builder.feedNameTemplate,
+                builder.feedNameGenerationMandatoryHeaders);
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -192,6 +201,16 @@ public class ReceiveDataConfig
                              "will be ignored.")
     public String getDataFeedKeysDir() {
         return dataFeedKeysDir;
+    }
+
+    @NotBlank
+    @JsonPropertyDescription("The meta key that is used to identify the owner of a Data Feed Key. This " +
+                             "may be an AccountId or similar. It must be provided as a header when sending data " +
+                             "using the associated Data Feed Key, and its value will be checked against the value " +
+                             "held with the hashed Data Feed Key by Stroom. Default value is 'AccountId'. " +
+                             "Case does not matter.")
+    public String getDataFeedKeyOwnerMetaKey() {
+        return dataFeedKeyOwnerMetaKey;
     }
 
     @NotNull
@@ -356,6 +375,7 @@ public class ReceiveDataConfig
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
         private boolean authenticationRequired;
         private String dataFeedKeysDir;
+        private String dataFeedKeyOwnerMetaKey;
         private CacheConfig authenticatedDataFeedKeyCache;
         private String x509CertificateHeader;
         private String x509CertificateDnHeader;
@@ -405,6 +425,11 @@ public class ReceiveDataConfig
 
         public Builder withDataFeedKeysDir(final String val) {
             dataFeedKeysDir = val;
+            return this;
+        }
+
+        public Builder withDataFeedKeyOwnerMetaKey(final String val) {
+            dataFeedKeyOwnerMetaKey = val;
             return this;
         }
 

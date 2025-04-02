@@ -23,7 +23,9 @@ public interface FeedProperties {
 
     boolean isReference(String feedName);
 
+    /**
+     * DEPRECATED: To be replaced with policy based status decision, one day, maybe.
+     */
     @Deprecated
-        // To be replaced with policy based status decision.
     FeedStatus getStatus(String feedName);
 }

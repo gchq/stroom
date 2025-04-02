@@ -58,8 +58,8 @@ public class AutoContentCreationConfig
         additionalGroupTemplate = DEFAULT_ADDITIONAL_GROUP_TEMPLATE;
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
-        // TreeSet to ensure consistent order in the serialised json
-        // Make all lower case as expression matching is case-sense on field name and we
+        // Ensure consistent order in the serialised json
+        // Make all lower case as expression matching is case-sense on field name, and we
         // can't be sure what case is used in the receipt headers.
         templateMatchFields = CollectionUtil.asUnmodifiabledConsistentOrderSet(normaliseFields(Set.of(
                 StandardHeaderArguments.FEED,
@@ -136,7 +136,8 @@ public class AutoContentCreationConfig
 
     @NotNull
     @JsonPropertyDescription(
-            "The subjectId of the user/group who the auto-created content will be created by. " +
+            "The subjectId of the user/group who the auto-created content will be created by, " +
+            "typically a group with administrator privileges. " +
             "This user/group must have the permission to create all content required. It will also be the " +
             "'run as' user for created pipeline processor filters.")
     public String getCreateAsSubjectId() {

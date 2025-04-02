@@ -1,10 +1,13 @@
 package stroom.receive.common;
 
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.NullSafe;
 import stroom.util.string.StringUtil;
 
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DataFeedKeyGenerator {
@@ -24,11 +27,13 @@ public class DataFeedKeyGenerator {
                         DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
                         StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
+        final HashMap<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
+        attrMap.put(StandardHeaderArguments.ACCOUNT_ID, accountId);
+
         return new KeyWithHash(key, new HashedDataFeedKey(
                 hasher.hash(key),
                 hasher.getAlgorithm().getUniqueId(),
-                accountId,
-                attributeMap,
+                attrMap,
                 expiry.toEpochMilli()));
     }
 
@@ -43,8 +48,8 @@ public class DataFeedKeyGenerator {
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
                 hasher.hash(key1),
                 hasher.getAlgorithm().getUniqueId(),
-                "1234",
                 Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "1234",
                         "key1", "val1",
                         "key2", "val2"),
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli());
@@ -63,8 +68,8 @@ public class DataFeedKeyGenerator {
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
                 hasher.hash(key2),
                 hasher.getAlgorithm().getUniqueId(),
-                "6789",
                 Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "6789",
                         "key3", "val3",
                         "key4", "val4"),
                 Instant.now().plus(10, ChronoUnit.DAYS).toEpochMilli());
