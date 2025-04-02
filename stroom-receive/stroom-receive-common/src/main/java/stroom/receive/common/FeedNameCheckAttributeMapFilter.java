@@ -8,17 +8,14 @@ import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Templator;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Checks the Feed and Type attributes are supplied. If auto content creation is enabled
@@ -28,8 +25,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedNameCheckAttributeMapFilter.class);
 
-    private static final Pattern PARAM_REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
-    private static final Pattern STATIC_REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_-]");
 //    public static final String NAME_PART_DELIMITER = "-";
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
@@ -90,22 +85,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         return NullSafe.set(receiveDataConfig.getMetaTypes());
     }
 
-    private static String normaliseParam(final String name) {
-        String result = NullSafe.trim(name);
-        result = result.toUpperCase();
-        result = PARAM_REPLACE_PATTERN.matcher(result)
-                .replaceAll("_");
-        return result;
-    }
-
-    private static String normaliseStaticText(final String name) {
-        String result = NullSafe.trim(name);
-        result = result.toUpperCase();
-        result = STATIC_REPLACE_PATTERN.matcher(result)
-                .replaceAll("_");
-        return result;
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -132,92 +111,50 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
      */
     static class FeedNameGenerator {
 
-        private final ConfigState configState;
-        private final List<Function<AttributeMap, String>> partExtractors;
+        private static final Pattern PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
+        private static final Pattern STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_-]");
+
+        private static final String FEED_ONLY_TEMPLATE = "${feed}";
+
+        private final Templator templator;
 
         public FeedNameGenerator(final ConfigState configState) {
-            this.configState = configState;
             if (configState.feedNameGenerationEnabled) {
                 try {
-                    partExtractors = parseTemplate(configState.feedNameTemplate);
+                    this.templator = TemplateUtil.parseTemplate(
+                            configState.feedNameTemplate,
+                            FeedNameGenerator::normaliseParam,
+                            FeedNameGenerator::normaliseStaticText);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(LogUtil.message(
                             "Error parsing feed name template '{}'", configState.feedNameTemplate));
                 }
             } else {
                 // Feed name gen not enabled so just get the feed name from the attr map
-                partExtractors = List.of(attributeMap ->
-                        NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED)));
+                this.templator = TemplateUtil.parseTemplate(
+                        FEED_ONLY_TEMPLATE,
+                        str -> NullSafe.string(str).toUpperCase());
             }
         }
 
         public String generateName(final AttributeMap attributeMap) {
-            final String name = partExtractors.stream()
-                    .map(func -> func.apply(attributeMap))
-                    .collect(Collectors.joining());
-            LOGGER.debug("Generated name '{}' from attributeMap: {}", name, attributeMap);
-            return name;
+            return templator.apply(attributeMap);
         }
 
-        /**
-         * Compile the template into a list of functions that convert an {@link AttributeMap} into
-         * a name part. On generation of a name, each function is called in turned and the outputs
-         * concatenated together.
-         */
-        private List<Function<AttributeMap, String>> parseTemplate(final String template) {
-            if (NullSafe.isEmptyString(template)) {
-                return Collections.emptyList();
-            } else {
-                final List<Function<AttributeMap, String>> funcList = new ArrayList<>();
-                final StringBuilder sb = new StringBuilder();
-                char lastChar = 0;
-                boolean inVariable = false;
-                for (final char chr : template.toCharArray()) {
-                    if (chr == '{' && lastChar == '$') {
-                        inVariable = true;
-                        if (!sb.isEmpty()) {
-                            // Stuff before must be static text
-                            final String staticText = normaliseStaticText(sb.toString());
-                            funcList.add(attributeMap -> staticText);
-                            LOGGER.debug("Adding static text func for '{}'", staticText);
-                            sb.setLength(0);
-                        }
-                    } else if (inVariable && chr == '}') {
-                        inVariable = false;
-                        final String key = sb.toString();
-                        funcList.add(attributeMap ->
-                                NullSafe.hasEntries(attributeMap)
-                                        ? normaliseParam(attributeMap.get(key))
-                                        : "");
-                        LOGGER.debug("Adding header attributeMap value func for key '{}'", key);
-                        sb.setLength(0);
-                    } else if (chr != '$') {
-                        // might be static text or the name of the key
-                        sb.append(chr);
-                    }
-                    lastChar = chr;
-                }
-                if (inVariable) {
-                    throw new IllegalArgumentException(LogUtil.message(
-                            "Unclosed variable in template '{}'", template));
-                }
-
-                // Pick up any trailing static text
-                if (!sb.isEmpty()) {
-                    // Stuff before must be static text
-                    final String staticText = normaliseStaticText(sb.toString());
-                    funcList.add(attributeMap -> staticText);
-                    sb.setLength(0);
-                }
-                return funcList;
-            }
+        private static String normaliseParam(final String name) {
+            String result = NullSafe.trim(name);
+            result = result.toUpperCase();
+            result = PARAM_REPLACE_PATTERN.matcher(result)
+                    .replaceAll("_");
+            return result;
         }
 
-        @Override
-        public String toString() {
-            return "FeedNameGenerator{" +
-                   "configState=" + configState +
-                   '}';
+        private static String normaliseStaticText(final String name) {
+            String result = NullSafe.trim(name);
+            result = result.toUpperCase();
+            result = STATIC_REPLACE_PATTERN.matcher(result)
+                    .replaceAll("_");
+            return result;
         }
     }
 }

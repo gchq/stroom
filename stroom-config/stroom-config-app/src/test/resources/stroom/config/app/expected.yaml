@@ -93,11 +93,12 @@ appConfig:
     - "Assigned"
     - "Closed"
   autoContentCreation:
-    additionalGroupSuffix: " (sandbox)"
+    additionalGroupTemplate: "grp-${accountid}-sandbox"
     createAsSubjectId: "Administrators"
     createAsType: "GROUP"
-    destinationExplorerPath: "/Feeds"
+    destinationExplorerPathTemplate: "/Feeds/${accountid}"
     enabled: false
+    groupTemplate: "grp-${accountid}"
     templateMatchFields:
     - "accountid"
     - "accountname"
@@ -792,16 +793,16 @@ appConfig:
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
     metaTypes:
     - "Context"
-    - "Raw Reference"
-    - "Events"
-    - "Raw Events"
-    - "Reference"
+    - "Detections"
     - "Error"
+    - "Events"
+    - "Meta Data"
+    - "Raw Events"
+    - "Raw Reference"
+    - "Records"
+    - "Reference"
     - "Test Events"
     - "Test Reference"
-    - "Detections"
-    - "Meta Data"
-    - "Records"
     receiptPolicyUuid: null
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

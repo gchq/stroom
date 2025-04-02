@@ -110,6 +110,16 @@ class TestDocPath {
     }
 
     @Test
+    void testWhitespace3() {
+        DocPath docPath = DocPath.fromPathString("  stroom / has a few spaces / name /");
+        Assertions.assertThat(docPath.isAbsolute())
+                .isEqualTo(!docPath.isRelative())
+                .isFalse();
+        Assertions.assertThat(docPath.toString())
+                .isEqualTo("stroom/has a few spaces/name");
+    }
+
+    @Test
     void getDocPath() {
         DocPath docPath = DocPath.fromParts("stroom", "node", "name");
 

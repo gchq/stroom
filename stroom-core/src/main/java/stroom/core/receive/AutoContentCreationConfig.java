@@ -3,6 +3,7 @@ package stroom.core.receive;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.IsStroomConfig;
@@ -18,11 +19,8 @@ import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -30,15 +28,19 @@ public class AutoContentCreationConfig
         extends AbstractConfig
         implements IsStroomConfig {
 
-    public static final String DEFAULT_DESTINATION_PATH_PART = "Feeds";
-    public static final String DEFAULT_TEMPLATES_PATH_PART = "Content Templates";
+    public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
+    public static final String DEFAULT_DESTINATION_SUB_DIR_PART = "${accountid}";
+    public static final String DEFAULT_GROUP_TEMPLATE = "grp-${accountid}";
+    public static final String DEFAULT_ADDITIONAL_GROUP_TEMPLATE = "grp-${accountid}-sandbox";
 
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final String destinationExplorerPath;
+    private final String destinationExplorerPathTemplate;
     @JsonProperty
-    private final String additionalGroupSuffix;
+    private final String groupTemplate;
+    @JsonProperty
+    private final String additionalGroupTemplate;
     @JsonProperty
     private final String createAsSubjectId;
     @JsonProperty
@@ -48,36 +50,41 @@ public class AutoContentCreationConfig
 
     public AutoContentCreationConfig() {
         enabled = false;
-        destinationExplorerPath = DocPath.fromParts(DEFAULT_DESTINATION_PATH_PART)
+        destinationExplorerPathTemplate = DocPath.fromParts(
+                        DEFAULT_DESTINATION_BASE_PART,
+                        DEFAULT_DESTINATION_SUB_DIR_PART)
                 .toString();
-        additionalGroupSuffix = " (sandbox)";
+        groupTemplate = DEFAULT_GROUP_TEMPLATE;
+        additionalGroupTemplate = DEFAULT_ADDITIONAL_GROUP_TEMPLATE;
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
         // TreeSet to ensure consistent order in the serialised json
         // Make all lower case as expression matching is case-sense on field name and we
         // can't be sure what case is used in the receipt headers.
-        templateMatchFields = normaliseFields(Set.of(
+        templateMatchFields = CollectionUtil.asUnmodifiabledConsistentOrderSet(normaliseFields(Set.of(
                 StandardHeaderArguments.FEED,
                 StandardHeaderArguments.ACCOUNT_ID,
                 StandardHeaderArguments.ACCOUNT_NAME,
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
                 StandardHeaderArguments.SCHEMA,
-                StandardHeaderArguments.SCHEMA_VERSION));
+                StandardHeaderArguments.SCHEMA_VERSION)));
     }
 
     @JsonCreator
     public AutoContentCreationConfig(
             @JsonProperty("enabled") final boolean enabled,
-            @JsonProperty("destinationExplorerPath") final String destinationExplorerPath,
-            @JsonProperty("additionalGroupSuffix") final String additionalGroupSuffix,
+            @JsonProperty("destinationExplorerPathTemplate") final String destinationExplorerPathTemplate,
+            @JsonProperty("groupTemplate") final String groupTemplate,
+            @JsonProperty("additionalGroupTemplate") final String additionalGroupTemplate,
             @JsonProperty("createAsSubjectId") final String createAsSubjectId,
             @JsonProperty("createAsType") final UserType createAsType,
             @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
 
         this.enabled = enabled;
-        this.destinationExplorerPath = destinationExplorerPath;
-        this.additionalGroupSuffix = additionalGroupSuffix;
+        this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
+        this.groupTemplate = NullSafe.nonBlankStringElse(groupTemplate, DEFAULT_GROUP_TEMPLATE);
+        this.additionalGroupTemplate = additionalGroupTemplate;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
         this.templateMatchFields = normaliseFields(templateMatchFields);
@@ -85,8 +92,9 @@ public class AutoContentCreationConfig
 
     private AutoContentCreationConfig(Builder builder) {
         this.enabled = builder.enabled;
-        this.destinationExplorerPath = builder.destinationPath;
-        this.additionalGroupSuffix = builder.additionalGroupSuffix;
+        this.destinationExplorerPathTemplate = builder.destinationExplorerPathTemplate;
+        this.groupTemplate = builder.groupTemplate;
+        this.additionalGroupTemplate = builder.additionalGroupTemplate;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
         this.templateMatchFields = normaliseFields(builder.templateMatchFields);
@@ -103,24 +111,32 @@ public class AutoContentCreationConfig
 
     @NotBlank
     @JsonPropertyDescription(
-            "The path to a folder in the Stroom explorer tree where Stroom will auto-create " +
+            "The templated path to a folder in the Stroom explorer tree where Stroom will auto-create " +
             "content. If it doesn't exist it will be created. Content will be created in a sub-folder of this " +
-            "folder with a name derived from the system name of the received data.")
-    public String getDestinationExplorerPath() {
-        return destinationExplorerPath;
+            "folder with a name derived from the system name of the received data. By default this is " +
+            "'Feeds/${accountid}'.")
+    public String getDestinationExplorerPathTemplate() {
+        return destinationExplorerPathTemplate;
     }
 
     @JsonPropertyDescription(
-            "If set, when Stroom auto-creates a feed, it will create an addition user group with " +
-            "name '<system name><additionalGroupSuffix>'. This is in addition to creating a user group " +
-            "called '<system name>'. If not set, only the latter user group will be created.")
-    public String getAdditionalGroupSuffix() {
-        return additionalGroupSuffix;
+            "When Stroom auto-creates a feed, it will create a user group with a " +
+            "name derived from this template. Default value is 'grp-${accountid}'.")
+    public String getGroupTemplate() {
+        return groupTemplate;
+    }
+
+    @JsonPropertyDescription(
+            "If set, when Stroom auto-creates a feed, it will create an additional user group with a " +
+            "name derived from this template. This is in addition to the user group defined by 'groupTemplate'." +
+            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'.")
+    public String getAdditionalGroupTemplate() {
+        return additionalGroupTemplate;
     }
 
     @NotNull
     @JsonPropertyDescription(
-            "The subjectId of the user/group who will be the owner of any auto-created content. " +
+            "The subjectId of the user/group who the auto-created content will be created by. " +
             "This user/group must have the permission to create all content required. It will also be the " +
             "'run as' user for created pipeline processor filters.")
     public String getCreateAsSubjectId() {
@@ -145,10 +161,10 @@ public class AutoContentCreationConfig
     @JsonIgnore
     @ValidationMethod(message = "destinationPath must be an absolute path.")
     public boolean isDestinationPathValid() {
-        if (destinationExplorerPath == null) {
+        if (destinationExplorerPathTemplate == null) {
             return true;
         } else {
-            final DocPath docPath = DocPath.fromParts(destinationExplorerPath);
+            final DocPath docPath = DocPath.fromParts(destinationExplorerPathTemplate);
             return docPath.isAbsolute();
         }
     }
@@ -160,25 +176,16 @@ public class AutoContentCreationConfig
     public Builder copy() {
         return new Builder()
                 .enabled(enabled)
-                .destinationPath(destinationExplorerPath)
-                .additionalGroupSuffix(additionalGroupSuffix)
+                .destinationPathTemplate(destinationExplorerPathTemplate)
+                .groupTemplate(groupTemplate)
+                .additionalGroupTemplate(additionalGroupTemplate)
                 .createAsSubjectId(createAsSubjectId)
                 .createAsType(createAsType)
                 .templateMatchFields(templateMatchFields);
     }
 
     private static Set<String> normaliseFields(final Set<String> fields) {
-        // TreeSet to ensure consistent order in the serialised json
-        // Make all lower case as expression matching is case-sense on field name and we
-        // can't be sure what case is used in the receipt headers.
-        if (NullSafe.isEmptyCollection(fields)) {
-            return Collections.emptySet();
-        } else {
-            return Collections.unmodifiableNavigableSet(NullSafe.stream(fields)
-                    .map(String::trim)
-                    .map(String::toLowerCase)
-                    .collect(Collectors.toCollection(TreeSet::new)));
-        }
+        return CollectionUtil.cleanItems(fields, s -> s.trim().toLowerCase());
     }
 
 
@@ -188,8 +195,9 @@ public class AutoContentCreationConfig
     public static class Builder {
 
         private boolean enabled;
-        private String destinationPath;
-        private String additionalGroupSuffix;
+        private String destinationExplorerPathTemplate;
+        private String groupTemplate;
+        private String additionalGroupTemplate;
         private String createAsSubjectId;
         private UserType createAsType;
         private Set<String> templateMatchFields;
@@ -199,13 +207,18 @@ public class AutoContentCreationConfig
             return this;
         }
 
-        public Builder destinationPath(String destinationPath) {
-            this.destinationPath = destinationPath;
+        public Builder destinationPathTemplate(String destinationPathTemplate) {
+            this.destinationExplorerPathTemplate = destinationPathTemplate;
             return this;
         }
 
-        public Builder additionalGroupSuffix(String additionalGroupSuffix) {
-            this.additionalGroupSuffix = additionalGroupSuffix;
+        public Builder groupTemplate(String groupTemplate) {
+            this.groupTemplate = groupTemplate;
+            return this;
+        }
+
+        public Builder additionalGroupTemplate(String additionalGroupSuffix) {
+            this.additionalGroupTemplate = additionalGroupSuffix;
             return this;
         }
 
@@ -235,8 +248,9 @@ public class AutoContentCreationConfig
         public Builder copy() {
             return new Builder()
                     .enabled(this.enabled)
-                    .destinationPath(this.destinationPath)
-                    .additionalGroupSuffix(this.additionalGroupSuffix)
+                    .destinationPathTemplate(this.destinationExplorerPathTemplate)
+                    .groupTemplate(this.groupTemplate)
+                    .additionalGroupTemplate(this.additionalGroupTemplate)
                     .createAsSubjectId(this.createAsSubjectId)
                     .createAsType(this.createAsType)
                     .templateMatchFields(this.templateMatchFields);

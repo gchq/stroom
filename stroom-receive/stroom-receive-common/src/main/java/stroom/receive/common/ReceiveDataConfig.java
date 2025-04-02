@@ -4,6 +4,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -22,11 +23,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 
@@ -66,7 +65,8 @@ public class ReceiveDataConfig
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
-        metaTypes = cleanSet(new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES));
+        // Sort them to ensure consistent order on serialisation
+        metaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
         authenticationRequired = true;
         dataFeedKeysDir = "data_feed_keys";
@@ -84,12 +84,12 @@ public class ReceiveDataConfig
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
                 StandardHeaderArguments.SCHEMA);
-        // TreeSet to ensure consistent order in expected.yml generation
-        feedNameGenerationMandatoryHeaders = Collections.unmodifiableNavigableSet(new TreeSet<>(Set.of(
+
+        feedNameGenerationMandatoryHeaders = CollectionUtil.asUnmodifiabledConsistentOrderSet(List.of(
                 StandardHeaderArguments.ACCOUNT_ID,
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
-                StandardHeaderArguments.SCHEMA)));
+                StandardHeaderArguments.SCHEMA));
     }
 
     @SuppressWarnings("unused")
@@ -227,10 +227,9 @@ public class ReceiveDataConfig
     }
 
     @JsonPropertyDescription("If true the client is not required to set the 'Feed' header. If Feed is not present " +
-                             "a feed name will be generated based on the values of the following headers: " +
-                             "'AccountId', 'Component', 'Format', 'Schema', 'Type'. If there is insufficient " +
-                             "information to generate a Feed name, the request will be rejected. If false, " +
-                             "the default, a populated 'Feed' header will be required.")
+                             "a feed name will be generated based on the template specified by the " +
+                             "'feedNameTemplate' property. If false (the default), a populated 'Feed' " +
+                             "header will be required.")
     public boolean isFeedNameGenerationEnabled() {
         return feedNameGenerationEnabled;
     }
@@ -343,12 +342,7 @@ public class ReceiveDataConfig
     }
 
     private static Set<String> cleanSet(final Set<String> set) {
-        // Use a LinkedHashSet to ensure iteration order matches insert order so
-        // expected.yml doesn't change.
-        final LinkedHashSet<String> cleanedSet = NullSafe.stream(set)
-                .filter(NullSafe::isNonBlankString)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        return Collections.unmodifiableSet(cleanedSet);
+        return CollectionUtil.cleanItems(set, String::trim);
     }
 
 

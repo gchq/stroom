@@ -47,6 +47,8 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserType;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Templator;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -60,6 +62,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -67,6 +70,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentAutoCreationServiceImpl.class);
     private static final String LOCK_NAME = "AUTO_CONTENT_CREATION";
+    private static final Pattern PATH_PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 _-]");
+    private static final Pattern PATH_STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 /_-]");
+    private static final Pattern GROUP_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9-]");
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
@@ -83,6 +89,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final ProcessorFilterService processorFilterService;
     private final PipelineService pipelineService;
     private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
+    private final CachedValue<Templator, String> cachedDestinationPathTemplator;
+    private final CachedValue<Templator, String> cachedGroupTemplator;
+    private final CachedValue<Templator, String> cachedAdditionalGroupTemplator;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -121,6 +130,34 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 .withValueFunction(templateMatchFields ->
                         createExpressionMatcher(expressionMatcherFactory, templateMatchFields))
                 .build();
+        this.cachedDestinationPathTemplator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getDestinationExplorerPathTemplate())
+                .withValueFunction(template -> TemplateUtil.parseTemplate(
+                        template,
+                        str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_"),
+                        str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_")
+                ))
+                .build();
+        this.cachedGroupTemplator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getGroupTemplate())
+                .withValueFunction(template -> TemplateUtil.parseTemplate(
+                        template,
+                        ContentAutoCreationServiceImpl::cleanGroupString))
+                .build();
+        this.cachedAdditionalGroupTemplator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getAdditionalGroupTemplate())
+                .withValueFunction(template -> TemplateUtil.parseTemplate(
+                        template,
+                        ContentAutoCreationServiceImpl::cleanGroupString))
+                .build();
+    }
+
+    private static String cleanGroupString(final String group) {
+        return GROUP_REPLACE_PATTERN.matcher(NullSafe.trim(group))
+                .replaceAll("-");
     }
 
     private static ExpressionMatcher createExpressionMatcher(final ExpressionMatcherFactory expressionMatcherFactory,
@@ -228,11 +265,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                 final UserDesc userDesc,
                                 final AttributeMap attributeMap) {
 
-        final AutoContentCreationConfig config = autoContentCreationConfigProvider.get();
-        final String destinationPath = config.getDestinationExplorerPath();
-        final String accountId = Objects.requireNonNull(attributeMap.get(StandardHeaderArguments.ACCOUNT_ID));
-        final DocPath docPath = DocPath.fromPathString(destinationPath)
-                .append(accountId);
+        final String destinationPath = cachedDestinationPathTemplator.getValue().apply(attributeMap);
+        final DocPath docPath = DocPath.fromPathString(destinationPath);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
         final ExplorerNode destFolder = explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
@@ -242,7 +276,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final User user = userService.getOrCreateUser(userDesc);
         final UserRef userRef = user.asRef();
 
-        final String groupName = "grp-" + accountId;
+        final String groupName = cachedGroupTemplator.getValue().apply(attributeMap);
         LOGGER.info("Auto-creating user group '{}', and adding userRef {} to it",
                 groupName, userRef);
         final User group = userService.getOrCreateUserGroup(groupName);
@@ -250,9 +284,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         userService.addUserToGroup(userRef, group.asRef());
 
         Optional<User> optAdditionalGroup = Optional.empty();
-        if (!NullSafe.isBlankString(config.getAdditionalGroupSuffix())) {
-            final String additionalGroupName = groupName + config.getAdditionalGroupSuffix();
-            LOGGER.info("Auto-creating user group '{}', and adding userRef {} to it",
+        final String additionalGroupName = cachedAdditionalGroupTemplator.getValue().apply(attributeMap);
+        if (NullSafe.isNonBlankString(additionalGroupName)) {
+            LOGGER.info("Auto-creating additional user group '{}', and adding userRef {} to it",
                     additionalGroupName, userRef);
             final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);
             addAppPerms(additionalGroup);
@@ -270,7 +304,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
         // Set up the feed doc using the information in the data feed key
-        configureFeed(feedDoc, attributeMap, accountId);
+        configureFeed(feedDoc, attributeMap, userRef);
         feedDoc = feedStore.writeDocument(feedDoc);
 
         LOGGER.info("Granting READ permission on {} and {}", destFolderRef, feedDocRef);
@@ -292,7 +326,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private void configureFeed(final FeedDoc feedDoc,
                                final AttributeMap attributeMap,
-                               final String accountId) {
+                               final UserRef userRef) {
         if (NullSafe.hasEntries(attributeMap)) {
             final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
@@ -304,7 +338,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 }
             });
 
-            feedDoc.setDescription("Auto-created for accountId '" + accountId + "'");
+            feedDoc.setDescription("Auto-created for user '" + userRef.toDisplayString() + "'");
             feedDoc.setStatus(FeedStatus.RECEIVE);
 
             consumeAttrVal(attributeMap, StandardHeaderArguments.ENCODING, val ->
