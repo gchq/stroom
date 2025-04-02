@@ -54,7 +54,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -189,15 +188,6 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         return optFeedDoc;
     }
 
-//    private boolean isEligibleForAutoCreation(final UserDesc userDesc,
-//                                              final AttributeMap attributeMap) {
-//        return NullSafe.allNonNull(userDesc, userDesc.getSubjectId(), attributeMap)
-//               && attributeMap.containsKey(StandardHeaderArguments.ACCOUNT_ID)
-//               && attributeMap.containsKey(StandardHeaderArguments.COMPONENT)
-//               && attributeMap.containsKey(StandardHeaderArguments.SCHEMA)
-//               && attributeMap.containsKey(StandardHeaderArguments.FORMAT);
-//    }
-
     private UserRef getRunAsUser() {
         final AutoContentCreationConfig autoContentCreationConfig = autoContentCreationConfigProvider.get();
         final String createAsSubjectId = Objects.requireNonNull(autoContentCreationConfig.getCreateAsSubjectId());
@@ -233,7 +223,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             final List<DocRef> feeds = feedStore.findByName(feedName);
             if (feeds.isEmpty()) {
                 try {
-                    docRef = doCreateFeed(feedName, userDesc, attributeMap);
+                    docRef = createFeedAndContent(feedName, userDesc, attributeMap);
                 } catch (EntityServiceException e) {
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
@@ -255,9 +245,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         return Optional.of(feedStore.readDocument(feedDocRef));
     }
 
-    private DocRef doCreateFeed(final String feedName,
-                                final UserDesc userDesc,
-                                final AttributeMap attributeMap) {
+    private DocRef createFeedAndContent(final String feedName,
+                                        final UserDesc userDesc,
+                                        final AttributeMap attributeMap) {
 
         final String destinationPath = cachedDestinationPathTemplator.getValue()
                 .apply(attributeMap);
@@ -560,63 +550,5 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Now create the proc filter for the new pipe
         createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef, contentTemplate);
-    }
-//    private Optional<ContentTemplate> getMatchingTemplate(final List<ContentTemplate> activeTemplates,
-//                                                          final AttributeMap attributeMap) {
-//        final Map<CIKey, String> caseInSenseAttributes = NullSafe.map(attributeMap)
-//                .entrySet()
-//                .stream()
-//                .collect(Collectors.toMap(
-//                        entry -> CIKey.of(entry.getKey()),
-//                        Entry::getValue));
-//
-//        return activeTemplates.stream()
-//                .filter(template -> isMatch(template, caseInSenseAttributes))
-//                .findFirst();
-//    }
-//
-//    private boolean isMatch(final ContentTemplate contentTemplate,
-//                            final Map<CIKey, String> attributeMap) {
-//        //T
-////        final ExpressionOperator expressionOperator = contentTemplate.getExpression();
-////
-////        e
-////        if (expressionOperator == n)
-////        if (expressionOperator instanceof )
-//
-//
-//    }
-
-//    private boolean isMatch(final ExpressionItem expressionItem,
-//                            final Map<CIKey, String> attributeMap) {
-//        if (expressionItem == null || !expressionItem.enabled()) {
-//            return false;
-//        } else if (expressionItem instanceof ExpressionTerm expressionTerm) {
-//
-//        } else if (expressionItem instanceof ExpressionOperator expressionOperator) {
-//            expressionOperator.op();
-//
-//        } else {
-//            throw new RuntimeException("Unexpected ExpressionItem " + expressionItem.getClass());
-//        }
-//
-//        final ExpressionOperator expressionOperator = contentTemplate.getExpression();
-//        if (expressionOperator instanceof )
-//
-//
-//    }
-//
-//    private boolean isMatch(final ExpressionTerm expressionTerm,
-//                            final Map<CIKey, String> attributeMap) {
-//
-//    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private record SourcedContentTemplate(ContentTemplate contentTemplate,
-                                          Path sourceFile) {
-
     }
 }
