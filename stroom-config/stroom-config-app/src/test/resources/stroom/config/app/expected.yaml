@@ -794,7 +794,6 @@ appConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
-        httpClient: null
         identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null

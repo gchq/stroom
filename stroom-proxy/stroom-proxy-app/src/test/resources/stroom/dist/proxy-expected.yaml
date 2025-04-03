@@ -119,7 +119,6 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
-        httpClient: null
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
