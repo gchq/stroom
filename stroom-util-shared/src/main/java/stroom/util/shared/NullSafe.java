@@ -259,6 +259,39 @@ public class NullSafe {
     }
 
     /**
+     * @return True if value is null or the string property is null/empty/blank
+     */
+    public static <T> boolean isBlankString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || isBlankString(str);
+        }
+    }
+
+    /**
+     * @return True if str is null or empty
+     */
+    public static boolean isEmptyString(final String str) {
+        return str == null || str.isEmpty();
+    }
+
+    /**
+     * @return True if value is null or the string property is null or empty
+     */
+    public static <T> boolean isEmptyString(final T value,
+                                            final Function<T, String> stringGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final String str = Objects.requireNonNull(stringGetter).apply(value);
+            return str == null || str.isEmpty();
+        }
+    }
+
+    /**
      * @return True if str is non-null and has at least one character that is not
      * whitespace
      */
@@ -272,6 +305,13 @@ public class NullSafe {
             }
         }
         return false;
+    }
+
+    /**
+     * @return True if str is non-null and not empty
+     */
+    public static boolean isNonEmptyString(final String str) {
+        return str != null && !str.isEmpty();
     }
 
     /**
@@ -316,20 +356,6 @@ public class NullSafe {
                 consumer.accept(str);
             }
         }
-    }
-
-    /**
-     * @return True if str is null or empty
-     */
-    public static boolean isEmptyString(final String str) {
-        return str == null || str.isEmpty();
-    }
-
-    /**
-     * @return True if str is non-null and not empty
-     */
-    public static boolean isNonEmptyString(final String str) {
-        return str != null && !str.isEmpty();
     }
 
     public static Optional<String> nonBlank(final String str) {
@@ -439,6 +465,20 @@ public class NullSafe {
     }
 
     /**
+     * @return True if value is null or the collection is null or empty
+     */
+    public static <T1, T2 extends Collection<E>, E> boolean isEmptyCollection(final T1 value,
+                                                                              final Function<T1, T2> collectionGetter) {
+        if (value == null) {
+            return true;
+        } else {
+            final T2 collection = Objects.requireNonNull(collectionGetter)
+                    .apply(value);
+            return collection == null || collection.isEmpty();
+        }
+    }
+
+    /**
      * @return True if the array is null or empty
      */
     public static <T> boolean isEmptyArray(final T[] arr) {
@@ -453,28 +493,16 @@ public class NullSafe {
     }
 
     /**
-     * @return True if value is null or the string property is null or empty
+     * @return True if value is null or the map is null or empty
      */
-    public static <T> boolean isEmptyString(final T value,
-                                            final Function<T, String> stringGetter) {
+    public static <T1, T2 extends Map<K, V>, K, V> boolean isEmptyMap(final T1 value,
+                                                                      final Function<T1, T2> mapGetter) {
         if (value == null) {
             return true;
         } else {
-            final String str = Objects.requireNonNull(stringGetter).apply(value);
-            return str == null || str.isEmpty();
-        }
-    }
-
-    /**
-     * @return True if value is null or the string property is null/empty/blank
-     */
-    public static <T> boolean isBlankString(final T value,
-                                            final Function<T, String> stringGetter) {
-        if (value == null) {
-            return true;
-        } else {
-            final String str = Objects.requireNonNull(stringGetter).apply(value);
-            return str == null || isBlankString(str);
+            final T2 map = Objects.requireNonNull(mapGetter)
+                    .apply(value);
+            return map == null || map.isEmpty();
         }
     }
 
@@ -491,34 +519,6 @@ public class NullSafe {
             if (!isBlankString(str)) {
                 Objects.requireNonNull(consumer).accept(str);
             }
-        }
-    }
-
-    /**
-     * @return True if value is null or the collection is null or empty
-     */
-    public static <T1, T2 extends Collection<E>, E> boolean isEmptyCollection(final T1 value,
-                                                                              final Function<T1, T2> collectionGetter) {
-        if (value == null) {
-            return true;
-        } else {
-            final T2 collection = Objects.requireNonNull(collectionGetter)
-                    .apply(value);
-            return collection == null || collection.isEmpty();
-        }
-    }
-
-    /**
-     * @return True if value is null or the map is null or empty
-     */
-    public static <T1, T2 extends Map<K, V>, K, V> boolean isEmptyMap(final T1 value,
-                                                                      final Function<T1, T2> mapGetter) {
-        if (value == null) {
-            return true;
-        } else {
-            final T2 map = Objects.requireNonNull(mapGetter)
-                    .apply(value);
-            return map == null || map.isEmpty();
         }
     }
 
@@ -847,6 +847,7 @@ public class NullSafe {
 //        return duration != null
 //                ? duration
 //                : Duration.ZERO;
+
 //    }
 
     /**
@@ -863,6 +864,69 @@ public class NullSafe {
         }
     }
 
+    public static <T1, T2, R> R get(final T1 value,
+                                    final Function<T1, T2> getter1,
+                                    final Function<T2, R> getter2) {
+        if (value == null) {
+            return null;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return null;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2);
+            }
+        }
+    }
+
+    public static <T1, T2, T3, R> R get(final T1 value,
+                                        final Function<T1, T2> getter1,
+                                        final Function<T2, T3> getter2,
+                                        final Function<T3, R> getter3) {
+        if (value == null) {
+            return null;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return null;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return null;
+                } else {
+                    return Objects.requireNonNull(getter3).apply(value3);
+                }
+            }
+        }
+    }
+
+    public static <T1, T2, T3, T4, R> R get(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final Function<T3, T4> getter3,
+                                            final Function<T4, R> getter4) {
+        if (value == null) {
+            return null;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return null;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return null;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return null;
+                    } else {
+                        return Objects.requireNonNull(getter4).apply(value4);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Apply getter to value if value is non-null. If value or the result of
      * applying getter to value is null, return other.
@@ -871,6 +935,30 @@ public class NullSafe {
                                       final Function<T1, R> getter,
                                       final R other) {
         return requireNonNullElse(get(value, getter), other);
+    }
+
+    public static <T1, T2, R> R getOrElse(final T1 value,
+                                          final Function<T1, T2> getter1,
+                                          final Function<T2, R> getter2,
+                                          final R other) {
+        return requireNonNullElse(get(value, getter1, getter2), other);
+    }
+
+    public static <T1, T2, T3, R> R getOrElse(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Function<T3, R> getter3,
+                                              final R other) {
+        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
+    }
+
+    public static <T1, T2, T3, T4, R> R getOrElse(final T1 value,
+                                                  final Function<T1, T2> getter1,
+                                                  final Function<T2, T3> getter2,
+                                                  final Function<T3, T4> getter3,
+                                                  final Function<T4, R> getter4,
+                                                  final R other) {
+        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
     }
 
     public static <T1> String toStringOrElse(final T1 value,
@@ -892,6 +980,30 @@ public class NullSafe {
         return requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
+    public static <T1, T2, R> R getOrElseGet(final T1 value,
+                                             final Function<T1, T2> getter1,
+                                             final Function<T2, R> getter2,
+                                             final Supplier<R> otherSupplier) {
+        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
+    }
+
+    public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
+                                                 final Function<T1, T2> getter1,
+                                                 final Function<T2, T3> getter2,
+                                                 final Function<T3, R> getter3,
+                                                 final Supplier<R> otherSupplier) {
+        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
+    }
+
+    public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
+                                                     final Function<T1, T2> getter1,
+                                                     final Function<T2, T3> getter2,
+                                                     final Function<T3, T4> getter3,
+                                                     final Function<T4, R> getter4,
+                                                     final Supplier<R> otherSupplier) {
+        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
+    }
+
     /**
      * Apply getter to value if value is non-null and return wrapper in an {@link Optional}.
      * If this result or value are null return an empty {@link Optional}.
@@ -902,6 +1014,70 @@ public class NullSafe {
             return Optional.empty();
         } else {
             return Optional.ofNullable(Objects.requireNonNull(getter).apply(value));
+        }
+    }
+
+    public static <T1, T2, R> Optional<R> getAsOptional(final T1 value,
+                                                        final Function<T1, T2> getter1,
+                                                        final Function<T2, R> getter2) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return Optional.empty();
+            } else {
+                return Optional.ofNullable(Objects.requireNonNull(getter2).apply(value2));
+            }
+        }
+    }
+
+    public static <T1, T2, T3, R> Optional<R> getAsOptional(final T1 value,
+                                                            final Function<T1, T2> getter1,
+                                                            final Function<T2, T3> getter2,
+                                                            final Function<T3, R> getter3) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return Optional.empty();
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return Optional.empty();
+                } else {
+                    return Optional.ofNullable(Objects.requireNonNull(getter3).apply(value3));
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static <T1, T2, T3, T4, R> Optional<R> getAsOptional(final T1 value,
+                                                                final Function<T1, T2> getter1,
+                                                                final Function<T2, T3> getter2,
+                                                                final Function<T3, T4> getter3,
+                                                                final Function<T4, R> getter4) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return Optional.empty();
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return Optional.empty();
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return Optional.empty();
+                    } else {
+                        return Optional.ofNullable(Objects.requireNonNull(getter4).apply(value4));
+                    }
+                }
+            }
         }
     }
 
@@ -945,6 +1121,51 @@ public class NullSafe {
     }
 
     /**
+     * If value is non-null pass it to the consumer, else it is a no-op.
+     */
+    public static <T> void consume(final T value,
+                                   final Consumer<T> consumer) {
+        if (value != null && consumer != null) {
+            consumer.accept(value);
+        }
+    }
+
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2> void consume(final T1 value,
+                                        final Function<T1, T2> getter1,
+                                        final Consumer<T2> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                consumer.accept(value2);
+            }
+        }
+    }
+
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null apply getter2 to the result.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2, T3> void consume(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final Consumer<T3> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 != null) {
+                    consumer.accept(value3);
+                }
+            }
+        }
+    }
+
+    /**
      * If value is non-null pass it to the consumer, else execute runnable.
      */
     public static <T> void consumeOr(final T value,
@@ -962,12 +1183,30 @@ public class NullSafe {
     }
 
     /**
-     * If value is non-null pass it to the consumer, else it is a no-op.
+     * If value and the result of passing value to getter are both non-null then pass the result
+     * of getter to consumer, else call runnable.
+     * consume and runnable can both be null for a no-op.
      */
-    public static <T> void consume(final T value,
-                                   final Consumer<T> consumer) {
-        if (value != null && consumer != null) {
-            consumer.accept(value);
+    public static <T1, T2> void consumeOr(final T1 value,
+                                          final Function<T1, T2> getter,
+                                          final Consumer<T2> consumer,
+                                          final Runnable runnable) {
+        if (value != null) {
+            final T2 value2 = Objects.requireNonNull(getter)
+                    .apply(value);
+            if (value2 != null) {
+                if (consumer != null) {
+                    consumer.accept(value2);
+                }
+            } else {
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        } else {
+            if (runnable != null) {
+                runnable.run();
+            }
         }
     }
 
@@ -1012,130 +1251,6 @@ public class NullSafe {
             return result != null
                    && Objects.requireNonNull(predicate)
                            .test(result);
-        }
-    }
-
-    /**
-     * @return The result of calling {@link Object#toString()} on value
-     * or an empty string if value is null.
-     */
-    public static String toString(final Object value) {
-        return value != null
-                ? value.toString()
-                : "";
-    }
-
-    public static <T1> String toString(final T1 value,
-                                       final Function<T1, Object> getter) {
-        return toStringOrElse(value, getter, null);
-    }
-
-    public static <T1> String toStringOrElse(final T1 value,
-                                             final Function<T1, Object> getter,
-                                             final String other) {
-        if (value == null) {
-            return other;
-        } else {
-            final Object value2 = Objects.requireNonNull(getter).apply(value);
-            return convertToString(value2, other);
-        }
-    }
-
-    public static <T1> String toStringOrElseGet(final T1 value,
-                                                final Function<T1, Object> getter,
-                                                final Supplier<String> otherSupplier) {
-        if (value == null) {
-            return handleNull(otherSupplier);
-        } else {
-            final Object value2 = Objects.requireNonNull(getter).apply(value);
-            return convertToString(value2, otherSupplier);
-        }
-    }
-
-    public static <T1, T2, R> R get(final T1 value,
-                                    final Function<T1, T2> getter1,
-                                    final Function<T2, R> getter2) {
-        if (value == null) {
-            return null;
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return null;
-            } else {
-                return Objects.requireNonNull(getter2).apply(value2);
-            }
-        }
-    }
-
-    public static <T1, T2, R> R getOrElse(final T1 value,
-                                          final Function<T1, T2> getter1,
-                                          final Function<T2, R> getter2,
-                                          final R other) {
-        return requireNonNullElse(get(value, getter1, getter2), other);
-    }
-
-    public static <T1, T2, R> R getOrElseGet(final T1 value,
-                                             final Function<T1, T2> getter1,
-                                             final Function<T2, R> getter2,
-                                             final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
-    }
-
-    public static <T1, T2, R> Optional<R> getAsOptional(final T1 value,
-                                                        final Function<T1, T2> getter1,
-                                                        final Function<T2, R> getter2) {
-        if (value == null) {
-            return Optional.empty();
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return Optional.empty();
-            } else {
-                return Optional.ofNullable(Objects.requireNonNull(getter2).apply(value2));
-            }
-        }
-    }
-
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null consume the result.
-     */
-    public static <T1, T2> void consume(final T1 value,
-                                        final Function<T1, T2> getter1,
-                                        final Consumer<T2> consumer) {
-        if (value != null && consumer != null) {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 != null) {
-                consumer.accept(value2);
-            }
-        }
-    }
-
-    /**
-     * If value and the result of passing value to getter are both non-null then pass the result
-     * of getter to consumer, else call runnable.
-     * consume and runnable can both be null for a no-op.
-     */
-    public static <T1, T2> void consumeOr(final T1 value,
-                                          final Function<T1, T2> getter,
-                                          final Consumer<T2> consumer,
-                                          final Runnable runnable) {
-        if (value != null) {
-            final T2 value2 = Objects.requireNonNull(getter)
-                    .apply(value);
-            if (value2 != null) {
-                if (consumer != null) {
-                    consumer.accept(value2);
-                }
-            } else {
-                if (runnable != null) {
-                    runnable.run();
-                }
-            }
-        } else {
-            if (runnable != null) {
-                runnable.run();
-            }
         }
     }
 
@@ -1204,10 +1319,43 @@ public class NullSafe {
         }
     }
 
+    /**
+     * @return The result of calling {@link Object#toString()} on value
+     * or an empty string if value is null.
+     */
+    public static String toString(final Object value) {
+        return value != null
+                ? value.toString()
+                : "";
+    }
+
+    public static <T1> String toString(final T1 value,
+                                       final Function<T1, Object> getter) {
+        return toStringOrElse(value, getter, null);
+    }
+
     public static <T1, T2> String toString(final T1 value,
                                            final Function<T1, T2> getter1,
                                            final Function<T2, Object> getter2) {
         return toStringOrElse(value, getter1, getter2, null);
+    }
+
+    public static <T1, T2, T3> String toString(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, T3> getter2,
+                                               final Function<T3, Object> getter3) {
+        return toStringOrElse(value, getter1, getter2, getter3, null);
+    }
+
+    public static <T1> String toStringOrElse(final T1 value,
+                                             final Function<T1, Object> getter,
+                                             final String other) {
+        if (value == null) {
+            return other;
+        } else {
+            final Object value2 = Objects.requireNonNull(getter).apply(value);
+            return convertToString(value2, other);
+        }
     }
 
     public static <T1, T2> String toStringOrElse(final T1 value,
@@ -1225,108 +1373,6 @@ public class NullSafe {
                 return convertToString(value3, other);
             }
         }
-    }
-
-    public static <T1, T2> String toStringOrElseGet(final T1 value,
-                                                    final Function<T1, T2> getter1,
-                                                    final Function<T2, Object> getter2,
-                                                    final Supplier<String> otherSupplier) {
-        if (value == null) {
-            return handleNull(otherSupplier);
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return handleNull(otherSupplier);
-            } else {
-                final Object value3 = Objects.requireNonNull(getter2).apply(value2);
-                return convertToString(value3, otherSupplier);
-            }
-        }
-    }
-
-    public static <T1, T2, T3, R> R get(final T1 value,
-                                        final Function<T1, T2> getter1,
-                                        final Function<T2, T3> getter2,
-                                        final Function<T3, R> getter3) {
-        if (value == null) {
-            return null;
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return null;
-            } else {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 == null) {
-                    return null;
-                } else {
-                    return Objects.requireNonNull(getter3).apply(value3);
-                }
-            }
-        }
-    }
-
-    public static <T1, T2, T3, R> R getOrElse(final T1 value,
-                                              final Function<T1, T2> getter1,
-                                              final Function<T2, T3> getter2,
-                                              final Function<T3, R> getter3,
-                                              final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
-    }
-
-    public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
-                                                 final Function<T1, T2> getter1,
-                                                 final Function<T2, T3> getter2,
-                                                 final Function<T3, R> getter3,
-                                                 final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
-    }
-
-    public static <T1, T2, T3, R> Optional<R> getAsOptional(final T1 value,
-                                                            final Function<T1, T2> getter1,
-                                                            final Function<T2, T3> getter2,
-                                                            final Function<T3, R> getter3) {
-        if (value == null) {
-            return Optional.empty();
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return Optional.empty();
-            } else {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 == null) {
-                    return Optional.empty();
-                } else {
-                    return Optional.ofNullable(Objects.requireNonNull(getter3).apply(value3));
-                }
-            }
-        }
-    }
-
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null apply getter2 to the result.
-     * If the result of that is non-null consume the result.
-     */
-    public static <T1, T2, T3> void consume(final T1 value,
-                                            final Function<T1, T2> getter1,
-                                            final Function<T2, T3> getter2,
-                                            final Consumer<T3> consumer) {
-        if (value != null && consumer != null) {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 != null) {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 != null) {
-                    consumer.accept(value3);
-                }
-            }
-        }
-    }
-
-    public static <T1, T2, T3> String toString(final T1 value,
-                                               final Function<T1, T2> getter1,
-                                               final Function<T2, T3> getter2,
-                                               final Function<T3, Object> getter3) {
-        return toStringOrElse(value, getter1, getter2, getter3, null);
     }
 
     public static <T1, T2, T3> String toStringOrElse(final T1 value,
@@ -1347,103 +1393,6 @@ public class NullSafe {
                 } else {
                     final Object value4 = Objects.requireNonNull(getter3).apply(value3);
                     return convertToString(value4, otherSupplier);
-                }
-            }
-        }
-    }
-
-    public static <T1, T2, T3, T4, R> R get(final T1 value,
-                                            final Function<T1, T2> getter1,
-                                            final Function<T2, T3> getter2,
-                                            final Function<T3, T4> getter3,
-                                            final Function<T4, R> getter4) {
-        if (value == null) {
-            return null;
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return null;
-            } else {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 == null) {
-                    return null;
-                } else {
-                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
-                    if (value4 == null) {
-                        return null;
-                    } else {
-                        return Objects.requireNonNull(getter4).apply(value4);
-                    }
-                }
-            }
-        }
-    }
-
-    public static <T1, T2, T3, T4, R> R getOrElse(final T1 value,
-                                                  final Function<T1, T2> getter1,
-                                                  final Function<T2, T3> getter2,
-                                                  final Function<T3, T4> getter3,
-                                                  final Function<T4, R> getter4,
-                                                  final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
-    }
-
-    public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
-                                                     final Function<T1, T2> getter1,
-                                                     final Function<T2, T3> getter2,
-                                                     final Function<T3, T4> getter3,
-                                                     final Function<T4, R> getter4,
-                                                     final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
-    }
-
-    @SuppressWarnings("unused")
-    public static <T1, T2, T3, T4, R> Optional<R> getAsOptional(final T1 value,
-                                                                final Function<T1, T2> getter1,
-                                                                final Function<T2, T3> getter2,
-                                                                final Function<T3, T4> getter3,
-                                                                final Function<T4, R> getter4) {
-        if (value == null) {
-            return Optional.empty();
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return Optional.empty();
-            } else {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 == null) {
-                    return Optional.empty();
-                } else {
-                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
-                    if (value4 == null) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.ofNullable(Objects.requireNonNull(getter4).apply(value4));
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null apply getter2 to the result.
-     * If the result of that is non-null consume the result.
-     */
-    public static <T1, T2, T3, T4> void consume(final T1 value,
-                                                final Function<T1, T2> getter1,
-                                                final Function<T2, T3> getter2,
-                                                final Function<T3, T4> getter3,
-                                                final Consumer<T4> consumer) {
-        if (value != null && consumer != null) {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 != null) {
-                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
-                if (value3 != null) {
-                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
-                    if (value4 != null) {
-                        consumer.accept(value4);
-                    }
                 }
             }
         }
@@ -1472,6 +1421,58 @@ public class NullSafe {
                     } else {
                         final Object value5 = Objects.requireNonNull(getter4).apply(value4);
                         return convertToString(value5, otherSupplier);
+                    }
+                }
+            }
+        }
+    }
+
+    public static <T1> String toStringOrElseGet(final T1 value,
+                                                final Function<T1, Object> getter,
+                                                final Supplier<String> otherSupplier) {
+        if (value == null) {
+            return handleNull(otherSupplier);
+        } else {
+            final Object value2 = Objects.requireNonNull(getter).apply(value);
+            return convertToString(value2, otherSupplier);
+        }
+    }
+
+    public static <T1, T2> String toStringOrElseGet(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final Function<T2, Object> getter2,
+                                                    final Supplier<String> otherSupplier) {
+        if (value == null) {
+            return handleNull(otherSupplier);
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return handleNull(otherSupplier);
+            } else {
+                final Object value3 = Objects.requireNonNull(getter2).apply(value2);
+                return convertToString(value3, otherSupplier);
+            }
+        }
+    }
+
+    /**
+     * If value is non-null apply getter1 to it.
+     * If the result of that is non-null apply getter2 to the result.
+     * If the result of that is non-null consume the result.
+     */
+    public static <T1, T2, T3, T4> void consume(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final Function<T3, T4> getter3,
+                                                final Consumer<T4> consumer) {
+        if (value != null && consumer != null) {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 != null) {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 != null) {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 != null) {
+                        consumer.accept(value4);
                     }
                 }
             }
@@ -1520,6 +1521,25 @@ public class NullSafe {
     }
 
     /**
+     * @return True if any of value, the result of getter1 or the result of getter2 are
+     * null, else false.
+     */
+    public static <T1, T2, R> boolean isNull(final T1 value,
+                                             final Function<T1, T2> getter1,
+                                             final Function<T2, R> getter2) {
+        if (value == null) {
+            return true;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return true;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) == null;
+            }
+        }
+    }
+
+    /**
      * @return True if value and the result of getter
      * are non-null, else false.
      */
@@ -1529,6 +1549,25 @@ public class NullSafe {
             return false;
         } else {
             return Objects.requireNonNull(getter).apply(value) != null;
+        }
+    }
+
+    /**
+     * @return True if all of, value; the result of getter1 and the result of getter2
+     * are non-null, else false.
+     */
+    public static <T1, T2, R> boolean nonNull(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, R> getter2) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) != null;
+            }
         }
     }
 
@@ -1550,44 +1589,6 @@ public class NullSafe {
                 throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
             } else {
                 return result;
-            }
-        }
-    }
-
-    /**
-     * @return True if any of value, the result of getter1 or the result of getter2 are
-     * null, else false.
-     */
-    public static <T1, T2, R> boolean isNull(final T1 value,
-                                             final Function<T1, T2> getter1,
-                                             final Function<T2, R> getter2) {
-        if (value == null) {
-            return true;
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return true;
-            } else {
-                return Objects.requireNonNull(getter2).apply(value2) == null;
-            }
-        }
-    }
-
-    /**
-     * @return True if all of, value; the result of getter1 and the result of getter2
-     * are non-null, else false.
-     */
-    public static <T1, T2, R> boolean nonNull(final T1 value,
-                                              final Function<T1, T2> getter1,
-                                              final Function<T2, R> getter2) {
-        if (value == null) {
-            return false;
-        } else {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
-            if (value2 == null) {
-                return false;
-            } else {
-                return Objects.requireNonNull(getter2).apply(value2) != null;
             }
         }
     }
@@ -1622,20 +1623,6 @@ public class NullSafe {
         }
     }
 
-    private static String buildNullValueMsg(final String variableName,
-                                            final Supplier<String> messageSupplier) {
-        return messageSupplier.get()
-               + " (Value of argument " + variableName + " is null)";
-    }
-
-    private static String buildNullGetterResultMsg(final int getterNo,
-                                                   final Supplier<String> messageSupplier) {
-        final String getterNoStr = getterNo == 0
-                ? ""
-                : String.valueOf(getterNo);
-        return messageSupplier.get() + " (Result of applying getter" + getterNoStr + " is null)";
-    }
-
     /**
      * GWT currently doesn't emulate requireNonNullElse
      */
@@ -1654,6 +1641,20 @@ public class NullSafe {
                 : Objects.requireNonNull(
                         Objects.requireNonNull(supplier, "supplier").get(),
                         "supplier.get()");
+    }
+
+    private static String buildNullValueMsg(final String variableName,
+                                            final Supplier<String> messageSupplier) {
+        return messageSupplier.get()
+               + " (Value of argument " + variableName + " is null)";
+    }
+
+    private static String buildNullGetterResultMsg(final int getterNo,
+                                                   final Supplier<String> messageSupplier) {
+        final String getterNoStr = getterNo == 0
+                ? ""
+                : String.valueOf(getterNo);
+        return messageSupplier.get() + " (Result of applying getter" + getterNoStr + " is null)";
     }
 
 }
