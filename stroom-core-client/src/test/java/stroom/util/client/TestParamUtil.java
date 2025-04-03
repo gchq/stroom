@@ -93,6 +93,30 @@ class TestParamUtil {
         assertThat(result).isEqualTo("user1 user2");
     }
 
+    @Test
+    void testGetKeys() {
+        List<String> result = ParamUtil.getKeys("this is ${key1}");
+        assertThat(result).containsAll(List.of("key1"));
+
+        result = ParamUtil.getKeys("this is $${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key2"));
+
+        result = ParamUtil.getKeys("this is $$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("this is $$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("this is $$$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("$this is $$$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("${user}");
+        assertThat(result).containsAll(List.of("user"));
+    }
+
     private Map<String, String> getMap(final String input) {
         final List<Param> list = ParamUtil.parse(input);
         return ParamUtil.createParamMap(list);

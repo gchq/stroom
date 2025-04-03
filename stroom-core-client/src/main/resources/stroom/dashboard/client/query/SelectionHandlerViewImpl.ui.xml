@@ -15,7 +15,7 @@
             <g:north size="400">
                 <form:FormGroup addStyleNames="max" identity="selectionHandlerExpression"
                                 label="Additional Query Expression">
-                    <g:SimplePanel ui:field="layout" styleName="dock-max stroom-control"/>
+                    <g:SimplePanel ui:field="layout" styleName="dock-max form-control-border form-control-background"/>
                 </form:FormGroup>
             </g:north>
             <g:center>

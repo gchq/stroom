@@ -174,6 +174,54 @@ public final class ParamUtil {
         return sb.toString();
     }
 
+    public static List<String> getKeys(final String value) {
+        if (value == null) {
+            return Collections.emptyList();
+        }
+
+        final List<String> keys = new ArrayList<>();
+        int paramStart = -1;
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            switch (chars[i]) {
+                case '$':
+                    if (paramStart == -1) {
+                        int dollarCount = 0;
+                        int bracketCount = 0;
+                        for (int j = i; j < chars.length; j++) {
+                            if (chars[j] == '$') {
+                                dollarCount++;
+                            } else if (chars[j] == '{') {
+                                bracketCount++;
+                                break;
+                            } else {
+                                break;
+                            }
+                        }
+
+                        i += dollarCount - 1;
+                        if (bracketCount == 1) {
+                            if (dollarCount % 2 != 0) {
+                                paramStart = i;
+                            }
+                        }
+                    }
+
+                    break;
+                case '}':
+                    if (paramStart != -1) {
+                        final String key = value.substring(paramStart + 2, i);
+                        keys.add(key);
+
+                        paramStart = -1;
+                    }
+                    break;
+            }
+        }
+
+        return keys;
+    }
+
 
     public static Map<String, String> createParamMap(final List<Param> params) {
         // Create a parameter map.

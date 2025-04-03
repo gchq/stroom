@@ -280,6 +280,17 @@ public final class ExpressionOperator extends ExpressionItem {
         }
 
         /**
+         * Adds child items to this builder.
+         *
+         * @param items The expression items to add as children
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder add(Collection<ExpressionItem> items) {
+            children.addAll(items);
+            return this;
+        }
+
+        /**
          * Adds an {@link ExpressionOperator} to this builder
          *
          * @param item The expression item to add as children

@@ -30,7 +30,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -218,7 +217,7 @@ public class QueryPresenter
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (!menuItems.isEmpty()) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -249,7 +248,8 @@ public class QueryPresenter
         }));
         registerHandler(historyButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
+                historyPresenter.show(QueryPresenter.this,
+                        getDashboardContext().getDashboardDocRef().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
@@ -257,7 +257,7 @@ public class QueryPresenter
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
-                        getComponents().getDashboard().getUuid(),
+                        getDashboardContext().getDashboardDocRef().getUuid(),
                         getQuerySettings().getDataSource(),
                         root);
 
@@ -287,13 +287,12 @@ public class QueryPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (initialised) {
-                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
-                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                final ExpressionOperator selectionQuery = dashboardContext
+                        .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
                         .orElse(null);
                 if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
                     currentSelectionQuery = selectionQuery;
@@ -660,9 +659,16 @@ public class QueryPresenter
                     .build());
         }
 
+        // Fix legacy selection filters.
+        setSettings(getQuerySettings()
+                .copy()
+                .selectionQuery(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionQuery()))
+                .build());
+
         // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
-        final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(dashboard.asDocRef(), componentConfig.getId());
+        final DocRef dashboardDocRef = getDashboardContext().getDashboardDocRef();
+        searchModel.init(dashboardDocRef, componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());

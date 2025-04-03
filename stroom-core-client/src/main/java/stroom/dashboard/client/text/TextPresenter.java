@@ -21,7 +21,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
@@ -220,7 +220,7 @@ public class TextPresenter
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
-        if (input != null && highlightStrings != null && highlightStrings.size() > 0) {
+        if (input != null && highlightStrings != null && !highlightStrings.isEmpty()) {
             final char[] inputChars = input.toLowerCase().toCharArray();
             final int inputLength = inputChars.length;
 
@@ -304,9 +304,9 @@ public class TextPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (getTextSettings() != null) {
                 final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
@@ -594,12 +594,11 @@ public class TextPresenter
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
-                                if (fetchDataQueue.size() == 0) {
+                                if (fetchDataQueue.isEmpty()) {
                                     String data = "The data has been deleted or reprocessed since this index was built";
                                     boolean isHtml = false;
                                     if (result != null) {
-                                        if (result instanceof FetchDataResult) {
-                                            final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                        if (result instanceof final FetchDataResult fetchDataResult) {
                                             isHtml = fetchDataResult.isHtml();
                                             if (fetchDataResult.hasErrors()) {
                                                 showError(request, fetchDataResult);
@@ -632,8 +631,7 @@ public class TextPresenter
         final TextComponentSettings.Builder builder;
         final ComponentSettings settings = componentConfig.getSettings();
 
-        if (settings instanceof TextComponentSettings) {
-            final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+        if (settings instanceof final TextComponentSettings textComponentSettings) {
             builder = textComponentSettings.copy();
 
             final Version version = Version.parse(textComponentSettings.getModelVersion());
@@ -667,7 +665,8 @@ public class TextPresenter
     @Override
     public void link() {
         final String tableId = getTextSettings().getTableId();
-        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+        String newTableId = getDashboardContext()
+                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
         if (!Objects.equals(tableId, newTableId)) {

@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,13 +36,13 @@ import java.util.Objects;
 public class TimeRange {
 
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private Condition condition;
+    private final Condition condition;
     @JsonProperty
-    private String from;
+    private final String from;
     @JsonProperty
-    private String to;
+    private final String to;
 
     @SuppressWarnings("unused") // For XML de-ser
     private TimeRange() {
@@ -109,7 +110,7 @@ public class TimeRange {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(condition.getDisplayValue());
+        sb.append(GwtNullSafe.getOrElse(condition, Condition::getDisplayValue, Condition.EQUALS.getDisplayValue()));
         sb.append(" ");
         if (from != null) {
             sb.append(from);

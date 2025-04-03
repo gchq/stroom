@@ -73,7 +73,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
-                event -> openParameterisedDashboard(event.getHref())));
+                event -> openParameterisedDashboard(event.getContext(), event.getHref())));
         registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
                 event -> reopen(event.getResultStoreInfo())));
     }
@@ -90,18 +90,18 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, taskMonitorFactory);
     }
 
-    private void openParameterisedDashboard(final String href) {
+    private void openParameterisedDashboard(final Object context, final String href) {
         final Map<String, String> map = buildListParamMap(href);
         final String title = map.get("title");
         String uuid = map.get("uuid");
         final String params = map.get("params");
         final boolean queryOnOpen = !Boolean.FALSE.toString().equalsIgnoreCase(map.get("queryOnOpen"));
 
-        if (uuid == null || uuid.trim().length() == 0) {
+        if (uuid == null || uuid.trim().isEmpty()) {
             uuid = currentUuid;
         }
 
-        if (uuid == null || uuid.trim().length() == 0) {
+        if (uuid == null || uuid.trim().isEmpty()) {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
         } else {
             final DocRef docRef = new DocRef(DashboardDoc.TYPE, uuid);
@@ -109,6 +109,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
             final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
+            presenter.setParentContext(context);
             presenter.setParamsFromLink(params);
             presenter.setCustomTitle(title);
             presenter.setQueryOnOpen(queryOnOpen);

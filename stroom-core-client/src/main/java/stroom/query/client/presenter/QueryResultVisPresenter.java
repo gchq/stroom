@@ -631,7 +631,7 @@ public class QueryResultVisPresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getSelection);
+        return GwtNullSafe.list(GwtNullSafe.get(visSelectionModel, VisSelectionModel::getSelection));
     }
 
     @Override

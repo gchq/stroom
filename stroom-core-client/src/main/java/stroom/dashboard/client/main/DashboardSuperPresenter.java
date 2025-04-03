@@ -81,6 +81,12 @@ public class DashboardSuperPresenter
         selectTab(DASHBOARD);
     }
 
+    public void setParentContext(final Object context) {
+        if (context instanceof final DashboardContext dashboardContext) {
+            dashboardPresenter.setParentContext(dashboardContext);
+        }
+    }
+
     @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action

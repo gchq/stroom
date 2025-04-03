@@ -24,11 +24,9 @@ import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -120,8 +118,8 @@ public class SelectionHandlerViewImpl
     }
 
     @Override
-    public void setCurrentSelection(final SafeHtml selection) {
-        this.currentSelection.setWidget(new HTML(selection));
+    public void setCurrentSelection(final View view) {
+        this.currentSelection.setWidget(view.asWidget());
     }
 
     @UiHandler("component")

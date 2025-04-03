@@ -26,6 +26,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
@@ -57,6 +58,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.expression.api.DateTimeSettings;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
@@ -285,7 +287,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableAnnotate();
-            getComponents().fireComponentChangeEvent(this);
+            getDashboardContext().fireComponentChangeEvent(this);
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final Range range = event.getNewRange();
@@ -297,7 +299,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 refresh();
             }
         }));
-        registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
         registerHandler(addColumnButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 onAddColumn(event);
@@ -335,9 +338,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(getDashboardContext().addComponentChangeHandler(event -> {
             if (updateSelectionFilter()) {
                 onColumnFilterChange();
             }
@@ -345,15 +348,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private boolean updateSelectionFilter() {
-        final Components components = getComponents();
-        if (components != null) {
-            final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
-                    .create(components.getComponents(), getTableComponentSettings().getSelectionFilter())
-                    .orElse(null);
-            if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
-                currentSelectionFilter = selectionFilter;
-                return true;
-            }
+        final ExpressionOperator selectionFilter = getDashboardContext()
+                .createSelectionHandlerExpression(getTableComponentSettings().getSelectionFilter())
+                .orElse(null);
+        if (!Objects.equals(currentSelectionFilter, selectionFilter)) {
+            currentSelectionFilter = selectionFilter;
+            return true;
         }
         return false;
     }
@@ -506,7 +506,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private String getTableName(final String componentId) {
-        return Optional.ofNullable(getComponents().get(componentId))
+        return Optional.ofNullable(getDashboardContext().getComponents().get(componentId))
                 .map(component -> component.getComponentConfig().getName())
                 .orElse(null);
     }
@@ -773,7 +773,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         cleanupSearchModelAssociation();
 
         if (queryId != null) {
-            final Component component = getComponents().get(queryId);
+            final Component component = getDashboardContext().getComponents().get(queryId);
             if (component instanceof final QueryPresenter queryPresenter) {
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
@@ -936,6 +936,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             setSettings(createSettings());
         }
 
+        // Fix legacy selection filters.
+        setSettings(getTableComponentSettings()
+                .copy()
+                .selectionFilter(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getTableComponentSettings().getSelectionFilter()))
+                .build());
+
         // Update the page size for the data grid.
         updatePageSize();
 
@@ -998,7 +1005,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void link() {
         String queryId = getTableComponentSettings().getQueryId();
-        queryId = getComponents().validateOrGetLastComponentId(queryId, QueryPresenter.TYPE.getId());
+        queryId = getDashboardContext().getComponents().validateOrGetLastComponentId(queryId,
+                QueryPresenter.TYPE.getId());
         setSettings(getTableComponentSettings().copy().queryId(queryId).build());
         setQueryId(queryId);
     }
@@ -1078,7 +1086,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void onColumnFilterChange() {
         reset();
         refresh();
-        getComponents().fireComponentChangeEvent(this);
+        getDashboardContext().fireComponentChangeEvent(this);
     }
 
     public void setFocused(final boolean focused) {

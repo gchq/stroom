@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.hyperlink.client;
+package stroom.dashboard.client.main;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
+public class DashboardContextChangeEvent extends GwtEvent<DashboardContextChangeEvent.Handler> {
 
     private static Type<Handler> TYPE;
+    private final DashboardContext dashboardContext;
 
-    private final Object context;
-    private final String href;
-
-    private ShowDashboardEvent(final Object context,
-                               final String href) {
-        this.context = context;
-        this.href = href;
+    private DashboardContextChangeEvent(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
     }
 
-    public static void fire(final HasHandlers handlers, final Object context, final String href) {
-        handlers.fireEvent(new ShowDashboardEvent(context, href));
+    public static <T> void fire(final HasHandlers source, final DashboardContext component) {
+        source.fireEvent(new DashboardContextChangeEvent(component));
     }
 
     public static Type<Handler> getType() {
@@ -46,7 +42,7 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
 
     @Override
     public Type<Handler> getAssociatedType() {
-        return getType();
+        return TYPE;
     }
 
     @Override
@@ -54,16 +50,12 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
         handler.onChange(this);
     }
 
-    public Object getContext() {
-        return context;
-    }
-
-    public String getHref() {
-        return href;
+    public DashboardContext getDashboardContext() {
+        return dashboardContext;
     }
 
     public interface Handler extends EventHandler {
 
-        void onChange(ShowDashboardEvent event);
+        void onChange(DashboardContextChangeEvent event);
     }
 }

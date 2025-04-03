@@ -21,7 +21,6 @@ import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQuer
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
@@ -174,12 +173,12 @@ public class EmbeddedQueryPresenter
                         start = false;
                     }
 
-                    if (tableResult.getRows() != null && tableResult.getRows().size() > 0) {
+                    if (tableResult.getRows() != null && !tableResult.getRows().isEmpty()) {
                         hasData = true;
                     }
 
                     // Update the columns that are known to the query table preferences.
-                    if (tableResult.getColumns() != null && tableResult.getColumns().size() > 0) {
+                    if (tableResult.getColumns() != null && !tableResult.getColumns().isEmpty()) {
                         final QueryTablePreferences queryTablePreferences = QueryTablePreferences
                                 .copy(getQuerySettings().getQueryTablePreferences())
                                 .columns(tableResult.getColumns())
@@ -354,13 +353,12 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (initialised) {
-                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
-                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                final ExpressionOperator selectionQuery = dashboardContext
+                        .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
                         .orElse(null);
 
                 if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
@@ -370,8 +368,9 @@ public class EmbeddedQueryPresenter
                 }
 
                 if (currentTablePresenter != null) {
-                    final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
-                            .create(components.getComponents(), getQuerySettings().getSelectionFilter())
+                    currentTablePresenter.setDashboardContext(dashboardContext);
+                    final ExpressionOperator selectionFilter = dashboardContext
+                            .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
                             .orElse(null);
                     if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
                         currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
@@ -421,6 +420,7 @@ public class EmbeddedQueryPresenter
     private void createNewTable() {
         if (currentTablePresenter == null) {
             currentTablePresenter = tablePresenterProvider.get();
+            currentTablePresenter.setDashboardContext(getDashboardContext());
             currentTablePresenter.setQueryTablePreferencesSupplier(() ->
                     getQuerySettings().getQueryTablePreferences());
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
@@ -430,7 +430,8 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.updateQueryTablePreferences();
             tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
-                    .addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
+                    .addSelectionHandler(event ->
+                            getDashboardContext().fireComponentChangeEvent(this)));
 
             if (currentVisPresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
@@ -452,7 +453,7 @@ public class EmbeddedQueryPresenter
         if (currentVisPresenter == null) {
             final VisSelectionModel visSelectionModel = new VisSelectionModel();
             visSelectionModel.addSelectionHandler(event ->
-                    getComponents().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
+                    getDashboardContext().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
 
             currentVisPresenter = visPresenterProvider.get();
             currentVisPresenter.setQueryModel(queryModel);
@@ -470,7 +471,7 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.onRemove();
             currentVisPresenter = null;
             if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+                currentTablePresenter.setQueryResultVisPresenter(null);
             }
         }
     }
@@ -566,6 +567,15 @@ public class EmbeddedQueryPresenter
             setSettings(EmbeddedQueryComponentSettings.builder()
                     .build());
         }
+
+        // Fix legacy selection filters.
+        setSettings(getQuerySettings()
+                .copy()
+                .selectionQuery(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionQuery()))
+                .selectionFilter(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionFilter()))
+                .build());
 
         loadEmbeddedQuery();
     }

@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
@@ -39,6 +40,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnRef;
@@ -130,6 +132,7 @@ public class QueryResultTablePresenter
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
+    private DashboardContext dashboardContext;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -203,6 +206,14 @@ public class QueryResultTablePresenter
         pagerView.addButton(valueFilterButton);
     }
 
+    public DashboardContext getDashboardContext() {
+        return dashboardContext;
+    }
+
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
+    }
+
     private void toggleOpenGroup(final String group) {
         openGroup(group, !isGroupOpen(group));
     }
@@ -246,7 +257,8 @@ public class QueryResultTablePresenter
                 refresh();
             }
         }));
-        registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
 
 //        registerHandler(dataGrid.addColumnSortHandler(event -> {
 //            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
