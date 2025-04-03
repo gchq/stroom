@@ -30,7 +30,7 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.DataFormatNames;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -132,7 +132,7 @@ public class FeedSettingsPresenter
                     getView().getDataEncoding().clear();
                     getView().getContextEncoding().clear();
 
-                    if (GwtNullSafe.hasItems(result)) {
+                    if (NullSafe.hasItems(result)) {
                         for (final String encoding : result) {
                             getView().getDataEncoding().addItem(encoding);
                             getView().getContextEncoding().addItem(encoding);
@@ -156,7 +156,7 @@ public class FeedSettingsPresenter
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();
                     getView().getVolumeGroup().setNonSelectString("");
-                    GwtNullSafe.consume(result, ResultPage::getValues, values -> {
+                    NullSafe.consume(result, ResultPage::getValues, values -> {
                         for (final FsVolumeGroup volumeGroup : values) {
                             getView().getVolumeGroup().addItem(volumeGroup.getName());
                         }
@@ -217,7 +217,7 @@ public class FeedSettingsPresenter
     }
 
     private String ensureEncoding(final String encoding) {
-        if (GwtNullSafe.isBlankString(encoding)) {
+        if (NullSafe.isBlankString(encoding)) {
             return "UTF-8";
         }
         return encoding;

@@ -3,13 +3,13 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;

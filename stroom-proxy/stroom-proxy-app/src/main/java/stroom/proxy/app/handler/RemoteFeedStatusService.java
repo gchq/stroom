@@ -11,12 +11,12 @@ import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
-import stroom.util.NullSafe;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;

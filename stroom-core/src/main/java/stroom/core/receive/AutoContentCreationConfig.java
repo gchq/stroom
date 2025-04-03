@@ -2,11 +2,11 @@ package stroom.core.receive;
 
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.shared.User;
-import stroom.util.NullSafe;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.DocPath;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserType;
 import stroom.util.shared.validation.AllMatchPattern;
 

@@ -72,7 +72,7 @@ public enum Severity implements HasDisplayValue {
     }
 
     public static Severity getSeverity(final String displayValue) {
-        if (GwtNullSafe.isBlankString(displayValue)) {
+        if (NullSafe.isBlankString(displayValue)) {
             return null;
         } else {
             return NAME_TO_SEVERITY_MAP.get(displayValue.trim().toLowerCase());

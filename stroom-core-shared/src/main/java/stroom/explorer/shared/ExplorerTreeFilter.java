@@ -18,7 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -180,7 +180,7 @@ public class ExplorerTreeFilter {
      */
     public static String createTagQuickFilterInput(final Set<String> tags) {
         final String quickFilterInput;
-        if (GwtNullSafe.hasItems(tags)) {
+        if (NullSafe.hasItems(tags)) {
             // Add a space on the end so the user is ready to type any extra terms
             quickFilterInput = tags.stream()
                     .map(tag ->
@@ -271,7 +271,7 @@ public class ExplorerTreeFilter {
          * returns false is the filter is set to the same value that is already set.
          */
         public Builder nameFilter(final String nameFilter) {
-            final String filter = GwtNullSafe.get(
+            final String filter = NullSafe.get(
                     nameFilter,
                     String::trim,
                     str -> str.length() == 0
@@ -295,14 +295,14 @@ public class ExplorerTreeFilter {
          * returns false is the filter is set to the same value that is already set.
          */
         public boolean setNameFilter(final String nameFilter, final boolean forceChange) {
-            final String filter = GwtNullSafe.get(
+            final String filter = NullSafe.get(
                     nameFilter,
                     String::trim,
                     str -> str.length() == 0
                             ? null
                             : str);
 
-            if (!forceChange && ((GwtNullSafe.allNull(filter, this.nameFilter))
+            if (!forceChange && ((NullSafe.allNull(filter, this.nameFilter))
                     || (filter != null && filter.equals(this.nameFilter)))) {
                 return false;
             } else {

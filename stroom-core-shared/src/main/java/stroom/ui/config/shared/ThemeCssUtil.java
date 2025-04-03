@@ -1,6 +1,6 @@
 package stroom.ui.config.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,10 +42,10 @@ public class ThemeCssUtil {
                 .add("stroom");
 
         if (currentUserPreferences != null) {
-            GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
+            NullSafe.consume(currentUserPreferences.getTheme(), theme ->
                     classJoiner.add(Theme.getClassName(theme)));
 
-            if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
+            if (NullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
                 classJoiner.add("transparency");
             }
 

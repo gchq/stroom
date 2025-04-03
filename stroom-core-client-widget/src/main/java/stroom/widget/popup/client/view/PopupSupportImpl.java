@@ -18,7 +18,7 @@ package stroom.widget.popup.client.view;
 
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -94,13 +94,13 @@ public class PopupSupportImpl implements PopupSupport {
         final PopupPanel popupPanel = (PopupPanel) popup;
 
         // Add auto hide partners.
-        for (final Element element : GwtNullSafe.list(autoHidePartners)) {
+        for (final Element element : NullSafe.list(autoHidePartners)) {
             popupPanel.addAutoHidePartner(element);
         }
 
         PopupUtil.showPopup(
                 popup,
-                GwtNullSafe.isTrue(modal),
+                NullSafe.isTrue(modal),
                 popupPosition,
                 popupSize,
                 popupType,

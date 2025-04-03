@@ -64,7 +64,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -323,7 +323,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                     explorerTree.getSelectionModel(),
                     event.getSelectionType()));
             final ExplorerNode selectedNode = explorerTree.getSelectionModel().getSelected();
-            final boolean enabled = GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
+            final boolean enabled = NullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems()) &&
                                     !ExplorerConstants.isFavouritesNode(selectedNode) &&
                                     !ExplorerConstants.isSystemNode(selectedNode);
             add.setEnabled(enabled);
@@ -366,7 +366,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     }
 
     public void deleteItem() {
-        if (GwtNullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems())) {
+        if (NullSafe.hasItems(explorerTree.getSelectionModel().getSelectedItems())) {
             ExplorerTreeDeleteEvent.fire(this);
         }
     }
@@ -404,7 +404,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         // Tell all plugins to add new menu items.
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (GwtNullSafe.hasItems(items)) {
+        if (NullSafe.hasItems(items)) {
             ShowMenuEvent
                     .builder()
                     .items(items)

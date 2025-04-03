@@ -7,12 +7,12 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
-import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

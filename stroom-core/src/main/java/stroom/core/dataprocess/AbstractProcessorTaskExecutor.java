@@ -81,13 +81,13 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
@@ -289,8 +289,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // Only do this where the task has specific data ranges that need extracting as this is only the case
             // with a batch search.
             if (processorFilter != null
-                    && processorTask.getData() != null
-                    && !processorTask.getData().isEmpty()) {
+                && processorTask.getData() != null
+                && !processorTask.getData().isEmpty()) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
@@ -305,7 +305,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             pipelineDoc = pipelineStore.readDocument(getProcessDecorator().getPipeline());
             if (pipelineDoc == null) {
                 final String msg = "Pipeline " + processor.getPipelineUuid()
-                        + " cannot be found for processor with id " + processor.getId();
+                                   + " cannot be found for processor with id " + processor.getId();
                 LOGGER.error(msg);
                 throw new RuntimeException(msg);
             }
@@ -313,17 +313,17 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
 
             // Create some processing info.
             final String info = " pipeline=" +
-                    pipelineDoc.getName() +
-                    ", feed=" +
-                    feedName +
-                    ", meta_id=" +
-                    meta.getId() +
-                    ", created=" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    ", processor_filter_id=" +
-                    processorFilter.getId() +
-                    ", task_id=" +
-                    processorTask.getId();
+                                pipelineDoc.getName() +
+                                ", feed=" +
+                                feedName +
+                                ", meta_id=" +
+                                meta.getId() +
+                                ", created=" +
+                                DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                                ", processor_filter_id=" +
+                                processorFilter.getId() +
+                                ", task_id=" +
+                                processorTask.getId();
 
             // Create processing start message.
             final String processingInfo = PROCESSING + info;
@@ -341,9 +341,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             processNestedStreams(pipeline, meta, streamSource, taskContext);
 
             final String finishedInfo = FINISHED +
-                    info +
-                    ", finished in  " +
-                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+                                        info +
+                                        ", finished in  " +
+                                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
 
             // Log that we have finished processing.
             taskContext.info(() -> finishedInfo);
@@ -489,7 +489,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // The exception has already been logged so ignore it.
             LOGGER.trace(() -> "Error while processing data task: id = " + NullSafe.get(meta, Meta::getId), e);
         } else if (e instanceof IOException
-                || e instanceof RuntimeException) {
+                   || e instanceof RuntimeException) {
             // An exception that's gets here is definitely a failure.
             outputFatalError(e);
         } else if (e instanceof Error err) {
@@ -585,8 +585,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
 
                             final ProcessorTask task = taskMap.get(oldMeta.getProcessorTaskId());
                             if (task == null ||
-                                    TaskStatus.COMPLETE.equals(task.getStatus()) ||
-                                    TaskStatus.DELETED.equals(task.getStatus())) {
+                                TaskStatus.COMPLETE.equals(task.getStatus()) ||
+                                TaskStatus.DELETED.equals(task.getStatus())) {
                                 // If the task associated with the other output is complete in some way then delete the
                                 // output.
                                 metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);

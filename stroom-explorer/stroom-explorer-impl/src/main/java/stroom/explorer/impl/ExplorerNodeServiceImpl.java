@@ -26,7 +26,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

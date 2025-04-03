@@ -17,7 +17,7 @@
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +47,6 @@ public class QueryHelpDocument extends QueryHelpData {
 
     @JsonIgnore
     public String getType() {
-        return GwtNullSafe.get(docRef, DocRef::getType);
+        return NullSafe.get(docRef, DocRef::getType);
     }
 }

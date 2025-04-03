@@ -29,7 +29,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
@@ -303,7 +303,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void onSelection() {
         final User selected = userList.getSelectionModel().getSelected();
 //        GWT.log("onSelection - selected: " + selected);
-        onSelection(GwtNullSafe.get(selected, User::asRef));
+        onSelection(NullSafe.get(selected, User::asRef));
     }
 
     private void onSelection(final UserRef selected) {
@@ -386,7 +386,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     private void removeUserFromGroup(final User user,
                                      final User group,
                                      final UserListPresenter userListPresenter) {
-        if (GwtNullSafe.allNonNull(user, group)) {
+        if (NullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(userListPresenter);
 
             restFactory

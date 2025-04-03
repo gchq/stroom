@@ -2,12 +2,12 @@ package stroom.core.receive;
 
 import stroom.node.api.NodeInfo;
 import stroom.receive.common.ReceiptIdGenerator;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.concurrent.UniqueIdGenerator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

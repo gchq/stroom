@@ -112,8 +112,8 @@ class AccountResourceImpl implements AccountResource {
 
         return result;
 
-//        if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
-//                && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
+//        if (GwtNullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
+//                && GwtNullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
 //            return list();
 //        } else {
 //

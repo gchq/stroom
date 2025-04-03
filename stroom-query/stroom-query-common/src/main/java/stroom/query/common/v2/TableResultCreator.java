@@ -27,9 +27,9 @@ import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;

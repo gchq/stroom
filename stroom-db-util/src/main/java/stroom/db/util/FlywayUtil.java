@@ -1,12 +1,12 @@
 package stroom.db.util;
 
-import stroom.util.NullSafe;
 import stroom.util.db.DbMigrationState;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -107,7 +107,7 @@ public final class FlywayUtil {
             // Either this is a reboot of the node with no change to the version of stroom being run
             // or another node has done the migration for us.
             LOGGER.info("Skipping database migration for module {} because Stroom is already " +
-                    "at the correct version", moduleName);
+                        "at the correct version", moduleName);
         } else {
             LOGGER.info(LogUtil.inBoxOnNewLine("Migrating database module: {}", moduleName));
 
@@ -156,7 +156,7 @@ public final class FlywayUtil {
 
             try {
                 LOGGER.info("{} - Validating existing and pending Flyway DB migration(s) ({}) " +
-                                "using history table '{}' from path {}",
+                            "using history table '{}' from path {}",
                         moduleName,
                         statesInfo,
                         flywayTableName,

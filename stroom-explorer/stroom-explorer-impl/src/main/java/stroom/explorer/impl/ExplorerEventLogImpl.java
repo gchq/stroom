@@ -23,7 +23,7 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import event.logging.CopyEventAction;
 import event.logging.CreateEventAction;
@@ -212,7 +212,7 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
         String desc = description;
         if (docRef != null) {
             desc = description + " " + docRef.getType() + " \"" + docRef.getName() + "\" uuid="
-                    + docRef.getUuid();
+                   + docRef.getUuid();
         }
         desc += getPermissionString(permissionInheritance);
         return desc;
@@ -223,11 +223,11 @@ class ExplorerEventLogImpl implements ExplorerEventLog {
                                           final String objectName,
                                           final PermissionInheritance permissionInheritance) {
         return description
-                + " "
-                + objectType
-                + " \""
-                + objectName + "\""
-                + getPermissionString(permissionInheritance);
+               + " "
+               + objectType
+               + " \""
+               + objectName + "\""
+               + getPermissionString(permissionInheritance);
     }
 
 

@@ -23,7 +23,7 @@ import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.QueryResource;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 
 import com.google.gwt.core.client.GWT;
@@ -52,7 +52,7 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
         getView().asWidget().addStyleName("settingsPresenter");
 
         final Consumer<Consumer<DocRef>> dataSourceRefConsumer = consumer -> {
-            final DocRef queryDocRef = GwtNullSafe
+            final DocRef queryDocRef = NullSafe
                     .get(basicSettingsPresenter, BasicEmbeddedQuerySettingsPresenter::getQuery);
             if (Objects.equals(queryDocRef, currentQueryReference)) {
                 consumer.accept(currentDataSource);

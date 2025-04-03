@@ -35,7 +35,7 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;

@@ -1,7 +1,7 @@
 package stroom.job.client.event;
 
 import stroom.job.shared.JobNode;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -56,11 +56,11 @@ public class JobNodeChangeEvent extends GwtEvent<JobNodeChangeEvent.Handler> {
     @Override
     public String toString() {
         return "JobNodeChangeEvent{" +
-                "jobNodes=" + GwtNullSafe.get(jobNodes, jobNodes2 -> jobNodes2
+               "jobNodes=" + NullSafe.get(jobNodes, jobNodes2 -> jobNodes2
                 .stream()
                 .map(jobNode -> jobNode.getJobName() + " - " + jobNode.getNodeName() + " (" + jobNode.getId() + ")")
                 .collect(Collectors.joining(", "))) +
-                '}';
+               '}';
     }
 
     // --------------------------------------------------------------------------------

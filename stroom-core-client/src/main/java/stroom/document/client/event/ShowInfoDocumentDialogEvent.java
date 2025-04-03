@@ -21,7 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -62,7 +62,7 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
     }
 
     public DocRef getDocRef() {
-        return GwtNullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
+        return NullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
     }
 
     public DocRefInfo getDocRefInfo() {

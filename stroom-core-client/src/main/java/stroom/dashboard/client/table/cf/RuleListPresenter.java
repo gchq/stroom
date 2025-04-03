@@ -28,7 +28,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -105,7 +105,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
         enabledColumn.setFieldUpdater((index, row, tickBoxState) -> {
             replaceRow(row, row
                     .copy()
-                    .enabled(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .enabled(NullSafe.isTrue(tickBoxState.toBoolean()))
                     .build());
         });
 
@@ -128,7 +128,7 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
         hideColumn.setFieldUpdater((index, row, tickBoxState) -> {
             replaceRow(row, row
                     .copy()
-                    .hide(GwtNullSafe.isTrue(tickBoxState.toBoolean()))
+                    .hide(NullSafe.isTrue(tickBoxState.toBoolean()))
                     .build());
         });
 

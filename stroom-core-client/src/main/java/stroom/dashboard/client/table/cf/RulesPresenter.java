@@ -32,7 +32,7 @@ import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -323,7 +323,7 @@ public class RulesPresenter
             // We have to deal in field names (aka column names) here as all the
             // exp tree code only has a single field/term name so can't cope with working with
             // ids and mapping to col name for the ui.
-            this.fields = GwtNullSafe.list(queryTablePreferences.getColumns())
+            this.fields = NullSafe.list(queryTablePreferences.getColumns())
                     .stream()
                     .map(TablePresenter::buildDsField)
                     .collect(Collectors.toList());

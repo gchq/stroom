@@ -37,11 +37,11 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;

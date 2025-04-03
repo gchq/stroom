@@ -24,10 +24,10 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.resource.api.ResourceStore;
-import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 

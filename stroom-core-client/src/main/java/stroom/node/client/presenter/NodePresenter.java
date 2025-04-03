@@ -24,7 +24,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -60,7 +60,7 @@ public class NodePresenter
 
         registerHandler(nodeListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final NodeStatusResult row = nodeListPresenter.getSelectionModel().getSelected();
-            final String nodeName = GwtNullSafe.get(row, NodeStatusResult::getNode, Node::getName);
+            final String nodeName = NullSafe.get(row, NodeStatusResult::getNode, Node::getName);
             nodeJobListPresenter.read(nodeName);
         }));
     }
@@ -97,7 +97,7 @@ public class NodePresenter
     }
 
     public void setSelected(final JobNode jobNode) {
-        final String nodeName = GwtNullSafe.get(jobNode, JobNode::getNodeName);
+        final String nodeName = NullSafe.get(jobNode, JobNode::getNodeName);
         nodeJobListPresenter.read(nodeName);
         nodeListPresenter.setSelected(nodeName);
         nodeJobListPresenter.setSelected(jobNode);

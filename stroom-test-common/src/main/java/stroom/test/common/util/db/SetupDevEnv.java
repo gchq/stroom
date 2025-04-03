@@ -2,7 +2,6 @@ package stroom.test.common.util.db;
 
 import stroom.config.common.ConnectionConfig;
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileUtil;
@@ -10,6 +9,7 @@ import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;

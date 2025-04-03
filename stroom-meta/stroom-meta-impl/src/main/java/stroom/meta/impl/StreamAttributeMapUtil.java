@@ -4,8 +4,8 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

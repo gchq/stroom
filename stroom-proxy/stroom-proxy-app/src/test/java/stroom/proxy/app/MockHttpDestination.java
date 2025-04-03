@@ -13,7 +13,6 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
@@ -24,6 +23,7 @@ import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 

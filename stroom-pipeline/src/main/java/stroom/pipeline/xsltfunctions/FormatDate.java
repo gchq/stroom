@@ -21,11 +21,11 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
-import stroom.util.NullSafe;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -245,9 +245,9 @@ class FormatDate extends StroomExtensionFunctionCall {
 
         // See if we need to deal with week based date parsing.
         if (fieldSet.contains(WEEK_BASED_YEAR)
-                || fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
-                || fieldSet.contains(WEEK_OF_YEAR)
-                || fieldSet.contains(WEEK_OF_MONTH)) {
+            || fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
+            || fieldSet.contains(WEEK_OF_YEAR)
+            || fieldSet.contains(WEEK_OF_MONTH)) {
             // Week based date parsing.
             return createWeekBasedParser(fieldSet, builder, zoneId);
         } else if (fieldSet.contains(DAY_OF_WEEK) && !fieldSet.contains(DAY_OF_MONTH)) {
@@ -269,13 +269,13 @@ class FormatDate extends StroomExtensionFunctionCall {
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
 
         if (!fieldSet.contains(WEEK_BASED_YEAR)
-                && !fieldSet.contains(YEAR_OF_ERA)
-                && !fieldSet.contains(YEAR)) {
+            && !fieldSet.contains(YEAR_OF_ERA)
+            && !fieldSet.contains(YEAR)) {
             builder.parseDefaulting(WEEK_FIELDS.weekBasedYear(), referenceDateTime.get(WEEK_FIELDS.weekBasedYear()));
         }
         if (!fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)) {
             if (!fieldSet.contains(WEEK_OF_YEAR)
-                    && !fieldSet.contains(WEEK_OF_MONTH)) {
+                && !fieldSet.contains(WEEK_OF_MONTH)) {
                 builder.parseDefaulting(WEEK_FIELDS.weekOfWeekBasedYear(),
                         referenceDateTime.get(WEEK_FIELDS.weekOfWeekBasedYear()));
             } else if (fieldSet.contains(WEEK_OF_MONTH)) {
@@ -298,8 +298,8 @@ class FormatDate extends StroomExtensionFunctionCall {
                                                        final ZoneId zoneId) {
         // Don't use the defaulting formatter if we can help it.
         if ((fieldSet.contains(YEAR) || fieldSet.contains(YEAR_OF_ERA))
-                && fieldSet.contains(MONTH_OF_YEAR)
-                && fieldSet.contains(DAY_OF_MONTH)) {
+            && fieldSet.contains(MONTH_OF_YEAR)
+            && fieldSet.contains(DAY_OF_MONTH)) {
             final DateTimeFormatter formatter = builder.toFormatter(LOCALE);
             return new RegularParser(formatter, zoneId);
 
@@ -436,7 +436,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             }
             final Key key = (Key) o;
             return Objects.equals(pattern, key.pattern) &&
-                    Objects.equals(timeZone, key.timeZone);
+                   Objects.equals(timeZone, key.timeZone);
         }
 
         @Override
@@ -488,7 +488,7 @@ class FormatDate extends StroomExtensionFunctionCall {
             this.referenceDateTime = referenceDateTime;
 
             if (!fieldSet.contains(YEAR_OF_ERA)
-                    && !fieldSet.contains(YEAR)) {
+                && !fieldSet.contains(YEAR)) {
                 if (!fieldSet.contains(MONTH_OF_YEAR)) {
                     // Subtract a month if the date appears to be after our reference time and no month is provided.
                     adjustment = value -> value.minusMonths(1);
@@ -535,11 +535,11 @@ class FormatDate extends StroomExtensionFunctionCall {
             this.referenceDateTime = referenceDateTime;
 
             if (!fieldSet.contains(YEAR_OF_ERA)
-                    && !fieldSet.contains(YEAR)
-                    && !fieldSet.contains(WEEK_BASED_YEAR)) {
+                && !fieldSet.contains(YEAR)
+                && !fieldSet.contains(WEEK_BASED_YEAR)) {
                 if (!fieldSet.contains(MONTH_OF_YEAR)
-                        && !fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
-                        && !fieldSet.contains(WEEK_OF_YEAR)) {
+                    && !fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
+                    && !fieldSet.contains(WEEK_OF_YEAR)) {
                     adjustment = value -> value.minusWeeks(1);
                 } else {
                     adjustment = value -> value.minusWeeks(52);

@@ -13,7 +13,7 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;

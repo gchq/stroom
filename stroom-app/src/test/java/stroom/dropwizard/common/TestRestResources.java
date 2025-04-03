@@ -5,11 +5,11 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.Unauthenticated;
 
@@ -90,7 +90,10 @@ class TestRestResources {
             return classes.stream()
                     .map(resourceClass ->
                             DynamicTest.dynamicTest(
-                                    resourceClass.getSimpleName() + " (" + resourceClass.getPackageName() + ")",
+                                    resourceClass.getSimpleName()
+                                    + " ("
+                                    + resourceClass.getPackageName()
+                                    + ")",
                                     () ->
                                             doResourceClassAsserts(resourceClass)));
         }
@@ -228,19 +231,19 @@ class TestRestResources {
     private String getMethodSig(final Class<?> clazz,
                                 final Method method) {
         final String methodeSig = method.getReturnType().getSimpleName() +
-                " " +
-                ConsoleColour.yellow(method.getName()) +
-                "(" +
-                Arrays.stream(method.getParameters())
-                        .map(parameter ->
-                                parameter.getType().getSimpleName())
-                        .collect(Collectors.joining(", ")) +
-                ")";
+                                  " " +
+                                  ConsoleColour.yellow(method.getName()) +
+                                  "(" +
+                                  Arrays.stream(method.getParameters())
+                                          .map(parameter ->
+                                                  parameter.getType().getSimpleName())
+                                          .collect(Collectors.joining(", ")) +
+                                  ")";
 
         return Strings.padEnd(methodeSig, 80, ' ') +
-                " [" +
-                ConsoleColour.cyan(clazz.getSimpleName()) +
-                "]";
+               " [" +
+               ConsoleColour.cyan(clazz.getSimpleName()) +
+               "]";
     }
 
     private String getJaxRsPath(final Class<? extends RestResource> clazz,
@@ -313,7 +316,7 @@ class TestRestResources {
 
         softAssertions.assertThat(classHasTagAnnotation)
                 .withFailMessage(() -> typeName + " must have class annotation like " +
-                        "@Tag(tags = \"Nodes\")")
+                                       "@Tag(tags = \"Nodes\")")
                 .isTrue();
 
         if (classHasTagAnnotation) {
@@ -354,7 +357,8 @@ class TestRestResources {
 
                         softAssertions
                                 .assertThat(hasOperationAnno)
-                                .withFailMessage(() -> "Method '" + method.getName() + "' must be annotated " +
+                                .withFailMessage(() ->
+                                        "Method '" + method.getName() + "' must be annotated " +
                                         "with @Operation(summary = \"Some description of what the method does\")")
                                 .isTrue();
 
@@ -370,8 +374,8 @@ class TestRestResources {
                                     .assertThat(operation.operationId())
                                     .withFailMessage(() ->
                                             "Method '" +
-                                                    method.getName() +
-                                                    "' declares an @Operation annotation but has no `operationId`")
+                                            method.getName() +
+                                            "' declares an @Operation annotation but has no `operationId`")
                                     .isNotBlank();
 
                             if (!operation.operationId().isBlank()) {
@@ -384,26 +388,26 @@ class TestRestResources {
                                         : resourceClass.getName() + "::" + methodSignature.getName();
 
                                 if (!existingOperation.equals(resourceClass.getName() + "::" +
-                                        methodSignature.getName())) {
+                                                              methodSignature.getName())) {
                                     LOGGER.warn("Method '" +
-                                            method.getName() +
-                                            "' does not have a globally unique `operationId` '" +
-                                            operation.operationId() +
-                                            "'" +
-                                            " exists in " +
-                                            existingOperation);
+                                                method.getName() +
+                                                "' does not have a globally unique `operationId` '" +
+                                                operation.operationId() +
+                                                "'" +
+                                                " exists in " +
+                                                existingOperation);
                                 }
 
                                 softAssertions
                                         .assertThat(existingOperation)
                                         .withFailMessage(() ->
                                                 "Method '" +
-                                                        method.getName() +
-                                                        "' does not have a globally unique `operationId` '" +
-                                                        operation.operationId() +
-                                                        "'" +
-                                                        " exists in " +
-                                                        existingOperation)
+                                                method.getName() +
+                                                "' does not have a globally unique `operationId` '" +
+                                                operation.operationId() +
+                                                "'" +
+                                                " exists in " +
+                                                existingOperation)
                                         .isEqualTo(resourceClass.getName() + "::" + methodSignature.getName());
                             }
 
@@ -413,8 +417,8 @@ class TestRestResources {
                                         .assertThat(responses.length)
                                         .withFailMessage(() ->
                                                 "Method '" + method.getName() + "' must have response " +
-                                                        "set in @Operation, e.g. @Operation(summary = \"xxx\" " +
-                                                        "response = Node.class)")
+                                                "set in @Operation, e.g. @Operation(summary = \"xxx\" " +
+                                                "response = Node.class)")
                                         .isNotZero();
                             }
                         }
@@ -441,7 +445,7 @@ class TestRestResources {
         softAssertions.assertThat(superImplementsRestResource)
                 .withFailMessage(
                         "Unexpected class that is not an interface and does not implement " +
-                                RestResource.class.getName())
+                        RestResource.class.getName())
                 .isTrue();
 
         // Check that we have no JAX_RS annotations.
@@ -476,7 +480,7 @@ class TestRestResources {
 
                     softAssertions.assertThat(classIsAutoLogged || methodIsAutoLogged)
                             .withFailMessage(() -> "Method " + method.getName() +
-                                    "(...) or its class must be annotated with @AutoLogged")
+                                                   "(...) or its class must be annotated with @AutoLogged")
                             .isTrue();
 
                     OperationType effectiveLoggingType = null;
@@ -490,10 +494,10 @@ class TestRestResources {
                     if (method.getReturnType().equals(Void.TYPE)) {
                         softAssertions.assertThat(effectiveLoggingType)
                                 .withFailMessage(() -> "Method " + method.getName() +
-                                        "(...) returns void, so autologger can't operate on it. " +
-                                        "Either change the return type, manually log and annotate" +
-                                        " with @AutoLogged(MANUALLY_LOGGED), or " +
-                                        "annotate with @AutoLogged(UNLOGGED).")
+                                                       "(...) returns void, so autologger can't operate on it. " +
+                                                       "Either change the return type, manually log and annotate" +
+                                                       " with @AutoLogged(MANUALLY_LOGGED), or " +
+                                                       "annotate with @AutoLogged(UNLOGGED).")
                                 .isIn(OperationType.MANUALLY_LOGGED, OperationType.UNLOGGED);
                     }
                 });
@@ -509,11 +513,11 @@ class TestRestResources {
                 .anyMatch(m -> m.getName().equals("update") || m.getName().equals("delete"));
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
-                    !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
-                    !FetchWithLongId.class.isAssignableFrom(resourceClass) &&
-                    !FetchWithTemplate.class.isAssignableFrom(resourceClass)) {
+                !FetchWithIntegerId.class.isAssignableFrom(resourceClass) &&
+                !FetchWithLongId.class.isAssignableFrom(resourceClass) &&
+                !FetchWithTemplate.class.isAssignableFrom(resourceClass)) {
                 softAssertions.fail("Resource classes that support fetch() should" +
-                        " declare the appropriate FetchWithSomething<FetchedThing> interface");
+                                    " declare the appropriate FetchWithSomething<FetchedThing> interface");
             }
         }
     }
@@ -523,8 +527,8 @@ class TestRestResources {
         List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field ->
                         Modifier.isPrivate(field.getModifiers())
-                                && Modifier.isFinal(field.getModifiers())
-                                && !Modifier.isStatic(field.getModifiers()))
+                        && Modifier.isFinal(field.getModifiers())
+                        && !Modifier.isStatic(field.getModifiers()))
                 .map(Field::getType)
                 .filter(clazz ->
                         !Provider.class.equals(clazz))
@@ -534,7 +538,7 @@ class TestRestResources {
             LOGGER.warn("Non provided fields {}", nonProvidedFields);
             softAssertions.assertThat(nonProvidedFields)
                     .withFailMessage("Resource implementations/classes must inject all objects " +
-                            "via Providers.")
+                                     "via Providers.")
                     .isEmpty();
         }
     }
@@ -563,7 +567,8 @@ class TestRestResources {
         if (!securityContextFields.isEmpty()) {
             LOGGER.warn("SecurityContext fields {}", securityContextFields);
             softAssertions.assertThat(securityContextFields)
-                    .withFailMessage("Resource implementations/classes should delegate SecurityContext " +
+                    .withFailMessage(
+                            "Resource implementations/classes should delegate SecurityContext " +
                             "operations to an internal service.")
                     .isEmpty();
         }
@@ -606,10 +611,10 @@ class TestRestResources {
             return true;
         } else {
             return method1.getName().equals(method2.getName())
-                    && method1.getReturnType().equals(method2.getReturnType())
-                    && method1.getGenericReturnType().equals(method2.getGenericReturnType())
-                    && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
-                    && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
+                   && method1.getReturnType().equals(method2.getReturnType())
+                   && method1.getGenericReturnType().equals(method2.getGenericReturnType())
+                   && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
+                   && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
         }
     }
 
@@ -625,10 +630,10 @@ class TestRestResources {
         softAssertions.assertThat(hasClassAnnotation)
                 .withFailMessage(
                         "Class " +
-                                resourceClass.getName() +
-                                " name Unexpected " +
-                                annotationType +
-                                " annotations")
+                        resourceClass.getName() +
+                        " name Unexpected " +
+                        annotationType +
+                        " annotations")
                 .isFalse();
 
         // 'default' methods effectively drag iface annos onto the impl, so ignore those methods
@@ -642,11 +647,11 @@ class TestRestResources {
                     softAssertions.assertThat(hasMethodAnnotation)
                             .withFailMessage(
                                     "Class " +
-                                            resourceClass.getName() +
-                                            " name Unexpected " +
-                                            annotationType +
-                                            " annotations on " +
-                                            method.getName())
+                                    resourceClass.getName() +
+                                    " name Unexpected " +
+                                    annotationType +
+                                    " annotations on " +
+                                    method.getName())
                             .isFalse();
                 });
     }
@@ -695,9 +700,9 @@ class TestRestResources {
         @Override
         public String toString() {
             return "MethodSignature{" +
-                    "name='" + name + '\'' +
-                    ", parameterTypes=" + Arrays.toString(parameterTypes) +
-                    '}';
+                   "name='" + name + '\'' +
+                   ", parameterTypes=" + Arrays.toString(parameterTypes) +
+                   '}';
         }
     }
 

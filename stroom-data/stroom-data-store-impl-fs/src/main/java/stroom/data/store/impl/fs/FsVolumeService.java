@@ -34,7 +34,6 @@ import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -51,6 +50,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -293,7 +293,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     filteredVolumeList.size()));
             if (selectedVolume == null) {
                 LOGGER.warn("Selector {} returned null, this should not happen. " +
-                                "all vols: {}, non-full vols: {}, non-full {} vols: 0",
+                            "all vols: {}, non-full vols: {}, non-full {} vols: 0",
                         volumeSelector.getClass().getSimpleName(),
                         allVolumeList.size(),
                         freeVolumes.size(),
@@ -369,8 +369,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         final HasCapacitySelector currentSelector = volumeSelector.get();
         if (currentSelector != null
-                && requiredSelectorName != null
-                && currentSelector.getName().equals(requiredSelectorName)) {
+            && requiredSelectorName != null
+            && currentSelector.getName().equals(requiredSelectorName)) {
             return currentSelector;
         } else {
             final String requiredSelectorNameCopy = requiredSelectorName;
@@ -379,8 +379,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     null,
                     (curr, next) -> {
                         if (curr == null
-                                || requiredSelectorNameCopy == null
-                                || !curr.getName().equals(requiredSelectorNameCopy)) {
+                            || requiredSelectorNameCopy == null
+                            || !curr.getName().equals(requiredSelectorNameCopy)) {
                             return hasCapacitySelectorFactory.createSelectorOrDefault(
                                     requiredSelectorNameCopy);
                         } else {
@@ -502,8 +502,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .min(Comparator.naturalOrder());
 
         if (optMinUpdateTimeEpochMs.isEmpty()
-                || isForcedRefresh
-                || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
+            || isForcedRefresh
+            || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
                 taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                 // Update the volume state and save in the DB.
@@ -701,7 +701,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     .getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                            " Please manually set limit for index volume. {}",
+                                              " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(path), e.getMessage()));
             return OptionalLong.empty();
         }
@@ -777,7 +777,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final boolean foundDup = volumes.stream()
                 .anyMatch(dbVol ->
                         !Objects.equals(dbVol.getId(), volume.getId())
-                                && Objects.equals(getAbsVolumePath(dbVol), absPath));
+                        && Objects.equals(getAbsVolumePath(dbVol), absPath));
         if (foundDup) {
             return ValidationResult.error(LogUtil.message(
                     "Another volume already exists with path '{}'", absPath));
@@ -822,8 +822,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         } catch (IOException e) {
             return ValidationResult.error(LogUtil.message(
                     "Error creating test file in directory {}. " +
-                            "Does Stroom have the right permissions on this directory? " +
-                            "Error message: {} {}",
+                    "Does Stroom have the right permissions on this directory? " +
+                    "Error message: {} {}",
                     absPath,
                     e.getClass().getSimpleName(),
                     e.getMessage()));

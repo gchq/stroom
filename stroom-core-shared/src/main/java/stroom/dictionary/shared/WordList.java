@@ -17,7 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -93,7 +93,7 @@ public class WordList {
     }
 
     public Optional<Word> getWord(final String word) {
-        if (GwtNullSafe.isNonBlankString(word)) {
+        if (NullSafe.isNonBlankString(word)) {
             return wordList.stream()
                     .filter(wordObj -> Objects.equals(wordObj.getWord(), word))
                     .findFirst();
@@ -172,7 +172,7 @@ public class WordList {
 
         public Builder addWord(final String word, final DocRef source) {
             // Silently ignore blank/null words
-            if (GwtNullSafe.isNonBlankString(word)) {
+            if (NullSafe.isNonBlankString(word)) {
                 final String sourceUuid = Objects.requireNonNull(
                         source,
                         "Source DocRef required for word").getUuid();
@@ -212,7 +212,7 @@ public class WordList {
                     final String sourceUuid = sourcedWord.sourceUuid;
 
                     List<String> additionalSources = null;
-                    final List<String> allSources = GwtNullSafe.list(wordToSourceUuidsMap.get(word));
+                    final List<String> allSources = NullSafe.list(wordToSourceUuidsMap.get(word));
                     if (deDup) {
                         // First one is the primary source, so ignore it
                         if (allSources.size() > 1) {

@@ -2,7 +2,7 @@ package stroom.cell.info.client;
 
 import stroom.data.grid.client.EventCell;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -60,7 +60,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
                                   final ValueUpdater<CommandLink> valueUpdater) {
         final Element element = event.getEventTarget().cast();
         if (ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5)) {
-            final Command command = GwtNullSafe.get(value, CommandLink::getCommand);
+            final Command command = NullSafe.get(value, CommandLink::getCommand);
             if (command != null) {
                 command.execute();
             }

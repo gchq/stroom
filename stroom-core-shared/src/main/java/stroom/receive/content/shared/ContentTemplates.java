@@ -6,7 +6,7 @@ import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -62,7 +62,7 @@ public class ContentTemplates extends Doc {
 
     public static List<ContentTemplate> resetTemplateNumbers(final List<ContentTemplate> contentTemplates) {
         List<ContentTemplate> workingList;
-        if (GwtNullSafe.isEmptyCollection(contentTemplates)) {
+        if (NullSafe.isEmptyCollection(contentTemplates)) {
             workingList = List.of();
         } else {
             // Ensure the template numbers are correct
@@ -155,7 +155,7 @@ public class ContentTemplates extends Doc {
     @JsonIgnore
     public List<ContentTemplate> getActiveTemplates() {
         //noinspection SimplifyStreamApiCallChains // Cos GWT
-        return GwtNullSafe.stream(contentTemplates)
+        return NullSafe.stream(contentTemplates)
                 .filter(Objects::nonNull)
                 .filter(ContentTemplate::isEnabled)
                 .sorted(Comparator.comparing(ContentTemplate::getTemplateNumber))

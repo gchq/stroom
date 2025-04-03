@@ -30,7 +30,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -91,17 +91,17 @@ public class AnalyticNotificationEditPresenter
                     defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
                 }
 
-                final NotificationDestination destination = GwtNullSafe.get(
+                final NotificationDestination destination = NullSafe.get(
                         config,
                         NotificationConfig::getDestination);
 
                 NotificationEmailDestination emailDestination = getOrDefaultEmailDestination(
                         destination, defaultConfig);
-                GwtNullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
+                NullSafe.consume(emailDestination, analyticEmailDestinationPresenter::read);
 
                 NotificationStreamDestination streamDestination = getOrDefaultStreamDestination(
                         destination, defaultConfig);
-                GwtNullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
+                NullSafe.consume(streamDestination, analyticStreamDestinationPresenter::read);
             }
         }, this);
     }

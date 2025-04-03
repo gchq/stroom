@@ -33,7 +33,7 @@ import stroom.explorer.shared.FindInContentResult;
 import stroom.explorer.shared.StringMatch;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.TextRangeUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.TextRange;
@@ -145,7 +145,7 @@ public class FindInContentPresenter
                 final boolean filterChange = !Objects.equals(lastFilter, currentQuery.getFilter());
                 lastFilter = currentQuery.getFilter();
 
-                if (GwtNullSafe.isBlankString(currentQuery.getFilter().getPattern())) {
+                if (NullSafe.isBlankString(currentQuery.getFilter().getPattern())) {
                     final ResultPage<FindInContentResult> resultPage = ResultPage.empty();
                     if (resultPage.getPageStart() != cellTable.getPageStart()) {
                         cellTable.setPageStart(resultPage.getPageStart());

@@ -36,7 +36,7 @@ import stroom.receive.content.shared.ContentTemplates;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
@@ -527,7 +527,7 @@ public class ContentTemplateTabPresenter
     private boolean isTemplateValid(final ContentTemplate contentTemplate) {
         String msg = null;
 
-        if (GwtNullSafe.isBlankString(contentTemplate.getName())) {
+        if (NullSafe.isBlankString(contentTemplate.getName())) {
             msg = "The template must have a name.";
         } else if (contentTemplate.getTemplateType() == null) {
             msg = "The template must have a type.";

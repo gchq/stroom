@@ -16,7 +16,7 @@
 
 package stroom.util.shared.string;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -138,7 +138,7 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
      * Equivalent to {@link Map#putAll(Map)} but for a map keyed by strings.
      */
     public void putAllWithStringKeys(final Map<String, V> map) {
-        GwtNullSafe.map(map)
+        NullSafe.map(map)
                 .forEach(this::put);
     }
 
@@ -271,7 +271,7 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
      */
     @SafeVarargs
     public static <V> CIHashMap<V> ofEntries(final Entry<String, ? extends V>... entries) {
-        return GwtNullSafe.stream(entries)
+        return NullSafe.stream(entries)
                 .collect(Collectors.toMap(
                         entry ->
                                 CIKey.of(entry.getKey()),
@@ -285,7 +285,7 @@ public class CIHashMap<V> extends HashMap<CIKey, V> {
      * Accepts nulls and never returns a null.
      */
     public static <V> CIHashMap<V> of(final Map<String, ? extends V> map) {
-        return GwtNullSafe.map(map)
+        return NullSafe.map(map)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(

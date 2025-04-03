@@ -23,13 +23,13 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.SimpleScheduleExec;
 import stroom.util.scheduler.TriggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.util.thread.CustomThreadFactory;
@@ -207,7 +207,7 @@ class ScheduledTaskExecutor {
             }
         }
         if (LOGGER.isDebugEnabled()
-                && (unManagedTaskCount > 0 || managedTaskCount > 0)) {
+            && (unManagedTaskCount > 0 || managedTaskCount > 0)) {
             LOGGER.debug("Initiated {} un-managed and {} managed tasks asynchronously",
                     unManagedTaskCount, managedTaskCount);
         }
@@ -255,7 +255,7 @@ class ScheduledTaskExecutor {
                             LOGGER.error("Job node tracker has null job node for: " + scheduledJob.getName());
                         } else {
                             isJobEnabledOnNode = jobNode.getJob().isEnabled()
-                                    && jobNode.isEnabled();
+                                                 && jobNode.isEnabled();
                             scheduler = trackers.getScheduleExec(jobNode);
                         }
                     }
@@ -264,8 +264,8 @@ class ScheduledTaskExecutor {
                 }
 
                 if (scheduler != null
-                        && (isJobEnabledOnNode || scheduler.isRunIfDisabled())
-                        && scheduler.execute()) {
+                    && (isJobEnabledOnNode || scheduler.isRunIfDisabled())
+                    && scheduler.execute()) {
 //                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                     if (jobNodeTracker != null) {

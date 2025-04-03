@@ -34,12 +34,12 @@ import stroom.node.api.NodeCallException;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.NullSafe;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.scheduler.Schedule;
 
@@ -216,7 +216,7 @@ class JobNodeResourceImpl implements JobNodeResource {
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
                     nodeServiceProvider.get(), nodeName) +
-                    ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
+                               ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
             try {
                 WebTarget webTarget = webTargetFactoryProvider.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);

@@ -43,7 +43,7 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
@@ -563,7 +563,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     }
 
     public List<DocumentTabData> getOpenDocuments(final List<DocRef> docRefs) {
-        return GwtNullSafe.stream(docRefs)
+        return NullSafe.stream(docRefs)
                 .map(documentToTabDataMap::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

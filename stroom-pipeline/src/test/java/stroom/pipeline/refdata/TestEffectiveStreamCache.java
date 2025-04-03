@@ -30,11 +30,11 @@ import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 

@@ -2,8 +2,8 @@ package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.authentication.HasRefreshable;
+import stroom.util.shared.NullSafe;
 
 import org.jose4j.jwt.JwtClaims;
 
@@ -75,9 +75,9 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasJwt, 
     @Override
     public String toString() {
         return "ServiceUserIdentity{" +
-                "id='" + id + '\'' +
-                ", updatableToken=" + updatableToken +
-                '}';
+               "id='" + id + '\'' +
+               ", updatableToken=" + updatableToken +
+               '}';
     }
 
 }

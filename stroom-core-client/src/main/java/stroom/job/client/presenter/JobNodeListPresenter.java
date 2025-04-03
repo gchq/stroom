@@ -43,7 +43,7 @@ import stroom.schedule.client.SchedulePopup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -171,7 +171,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                 JobChangeEvent.getType(), event -> {
                     GWT.log("Handling JobChangeEvent " + event);
                     final String currentJobName = getJobNameCriteria();
-                    final String affectedJobName = GwtNullSafe.get(event, JobChangeEvent::getJob, Job::getName);
+                    final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
                     if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
                         internalRefresh();
                     }
@@ -352,7 +352,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         if (dataProvider.getDataDisplays().isEmpty()) {
             dataProvider.addDataDisplay(dataGrid);
         }
-        setJobNameCriteria(GwtNullSafe.get(job, Job::getName));
+        setJobNameCriteria(NullSafe.get(job, Job::getName));
         internalRefresh();
     }
 
@@ -395,7 +395,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         final String stateStr = isShowEnabled
                 ? "enabled"
                 : "all";
-        getView().setHeading(GwtNullSafe.getOrElse(
+        getView().setHeading(NullSafe.getOrElse(
                 jobName,
                 name -> "Scheduling of job '" + jobName + "' on " + stateStr + " nodes",
                 null));

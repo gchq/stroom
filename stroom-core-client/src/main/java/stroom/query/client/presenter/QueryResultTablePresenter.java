@@ -60,7 +60,7 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
@@ -746,7 +746,7 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ColumnRef> getColumns() {
-        return GwtNullSafe.list(currentColumns)
+        return NullSafe.list(currentColumns)
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
                 .collect(Collectors.toList());
@@ -772,13 +772,13 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumns());
         return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
     @Override
     public Set<String> getHighlights() {
-        return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
+        return NullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
     }
 
     public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {

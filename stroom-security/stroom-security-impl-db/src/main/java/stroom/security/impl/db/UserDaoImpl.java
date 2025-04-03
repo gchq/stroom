@@ -9,13 +9,13 @@ import stroom.security.impl.UserDao;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
-import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserInfo;
 import stroom.util.shared.UserRef;
@@ -381,8 +381,8 @@ public class UserDaoImpl implements UserDao {
             nameToFieldMap = SORT_FIELD_NAME_TO_FIELD_MAP;
         }
 
-        final List<CriteriaFieldSort> sortList = new ArrayList<>(NullSafe
-                .getOrElseGet(criteria, BaseCriteria::getSortList, Collections::emptyList));
+        final List<CriteriaFieldSort> sortList = NullSafe.mutableList(
+                NullSafe.get(criteria, BaseCriteria::getSortList));
         if (sortList.isEmpty()) {
             return Collections.singleton(DEFAULT_SORT_FIELD);
         }

@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -128,7 +128,7 @@ public class PipelineElement implements Comparable<PipelineElement> {
     }
 
     public boolean hasActiveFilters() {
-        return GwtNullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
+        return NullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
     }
 
     @Override

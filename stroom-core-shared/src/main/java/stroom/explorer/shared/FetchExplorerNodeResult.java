@@ -16,7 +16,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -93,7 +93,7 @@ public class FetchExplorerNodeResult {
 
     public String dumpTree() {
         final StringBuilder stringBuilder = new StringBuilder();
-        GwtNullSafe.list(rootNodes)
+        NullSafe.list(rootNodes)
                 .forEach(node -> {
                     dumpNode(stringBuilder, 0, node);
                 });
@@ -111,7 +111,7 @@ public class FetchExplorerNodeResult {
         }
         if (node.hasNodeFlag(NodeFlag.FOLDER)) {
             if (node.hasChildren()) {
-                if (GwtNullSafe.set(temporaryOpenedItems).contains(node.getUniqueKey())) {
+                if (NullSafe.set(temporaryOpenedItems).contains(node.getUniqueKey())) {
                     stringBuilder.append("▼ ");
                 } else {
                     stringBuilder.append("▶ ");
@@ -143,7 +143,7 @@ public class FetchExplorerNodeResult {
         stringBuilder
                 .append(")")
                 .append("\n");
-        for (final ExplorerNode childNode : GwtNullSafe.list(node.getChildren())) {
+        for (final ExplorerNode childNode : NullSafe.list(node.getChildren())) {
             dumpNode(stringBuilder, depth + 1, childNode);
         }
     }

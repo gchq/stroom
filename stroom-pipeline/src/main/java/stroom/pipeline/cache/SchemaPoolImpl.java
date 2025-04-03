@@ -21,12 +21,12 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.common.collect.ImmutableMap;

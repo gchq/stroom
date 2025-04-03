@@ -1,7 +1,6 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.StroomCache;
-import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.cache.CacheConfig.StatisticsMode;
 import stroom.util.logging.LambdaLogger;
@@ -10,6 +9,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheInfo;
 import stroom.util.time.StroomDuration;

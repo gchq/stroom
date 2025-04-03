@@ -3,7 +3,7 @@ package stroom.security.impl;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
 import stroom.security.openid.api.IdpType;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -19,6 +19,7 @@ import java.util.Optional;
 // * user request which always uses the internal idp. It also takes into account whether
 // * an external IDP is in use.
 // */
+
 /**
  * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
  * that picks the delegate based on the identity provider that has been configured, e.g.
@@ -73,10 +74,8 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     private JwtContextFactory getDelegate() {
         return switch (openIdConfigProvider.get().getIdentityProviderType()) {
-            case INTERNAL_IDP, TEST_CREDENTIALS ->
-                    internalJwtContextFactory;
-            case EXTERNAL_IDP ->
-                    standardJwtContextFactory;
+            case INTERNAL_IDP, TEST_CREDENTIALS -> internalJwtContextFactory;
+            case EXTERNAL_IDP -> standardJwtContextFactory;
             case NO_IDP ->
                     throw new UnsupportedOperationException("No JwtContextFactory when IDP type is " + IdpType.NO_IDP);
         };

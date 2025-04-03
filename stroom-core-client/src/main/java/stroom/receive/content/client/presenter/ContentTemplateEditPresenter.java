@@ -30,7 +30,7 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -97,7 +97,7 @@ public class ContentTemplateEditPresenter
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(GwtNullSafe.requireNonNullElseGet(
+        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
                 contentTemplate.getExpression(),
                 () -> ExpressionOperator.builder().build()));
 

@@ -26,7 +26,7 @@ import stroom.query.api.v2.ColumnValueSelection;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -298,7 +298,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
             replaceColumn(oldField, newField);
 
             if (newField.getColumnFilter() != null &&
-                GwtNullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
+                NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
                 if (!tablePresenter.getTableSettings().applyValueFilters()) {
                     tablePresenter.toggleApplyValueFilters();
                 }
@@ -400,7 +400,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     public void setValueFilter(final Column column,
                                final String valueFilter) {
         ColumnFilter columnFilter = null;
-        if (GwtNullSafe.isNonBlankString(valueFilter)) {
+        if (NullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
             columnFilter = new ColumnFilter(valueFilter);
         }

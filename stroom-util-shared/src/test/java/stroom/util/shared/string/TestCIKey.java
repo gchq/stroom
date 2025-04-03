@@ -22,7 +22,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -480,7 +480,7 @@ public class TestCIKey {
                 .collect(Collectors.toMap(CIKey::get, Function.identity()));
 
         final List<String> lowerKeys = keys.stream()
-                .map(key -> GwtNullSafe.get(key, String::toLowerCase))
+                .map(key -> NullSafe.get(key, String::toLowerCase))
                 .toList();
 
         final int cpuCount = Runtime.getRuntime().availableProcessors();

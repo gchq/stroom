@@ -20,9 +20,9 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 

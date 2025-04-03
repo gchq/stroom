@@ -22,12 +22,12 @@ import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;

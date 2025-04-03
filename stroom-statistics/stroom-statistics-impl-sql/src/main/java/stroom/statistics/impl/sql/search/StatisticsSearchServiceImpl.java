@@ -35,9 +35,9 @@ import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
@@ -464,7 +464,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                     // TODO prob needs to change in 6.1
                     while (resultSet.next() &&
-                            !Thread.currentThread().isInterrupted()) {
+                           !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding result");
                         final Val[] values = resultSetMapper.apply(resultSet);
                         valuesConsumer.accept(values);

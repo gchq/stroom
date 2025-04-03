@@ -1,6 +1,6 @@
 package stroom.meta.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -74,7 +74,7 @@ public class SelectionSummary {
      * establish if truncation has happened.
      */
     public Set<String> getDistinctFeeds() {
-        return GwtNullSafe.set(distinctFeeds);
+        return NullSafe.set(distinctFeeds);
     }
 
     public long getTypeCount() {
@@ -87,7 +87,7 @@ public class SelectionSummary {
      * establish if truncation has happened.
      */
     public Set<String> getDistinctTypes() {
-        return GwtNullSafe.set(distinctTypes);
+        return NullSafe.set(distinctTypes);
     }
 
     public long getProcessorCount() {

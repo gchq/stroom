@@ -13,7 +13,6 @@ import stroom.db.util.DbUtil;
 import stroom.db.util.JooqUtil;
 import stroom.node.impl.NodeConfig;
 import stroom.util.BuildInfoProvider;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.db.DbMigrationState;
 import stroom.util.guice.GuiceUtil;
@@ -21,6 +20,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -214,13 +214,13 @@ public class BootstrapUtil {
                 } else {
                     if (bootstrapInfo.getUpgradeOutcome().isPresent()) {
                         LOGGER.info("Found old build version '{}' in table '{}' with upgrade outcome {}. " +
-                                        "Bootstrap lock required to upgrade the version.",
+                                    "Bootstrap lock required to upgrade the version.",
                                 bootstrapInfo.getBuildVersion(),
                                 BUILD_VERSION_TABLE_NAME,
                                 bootstrapInfo.getUpgradeOutcome().get());
                     } else {
                         LOGGER.info("Found build version '{}' in table '{}' with empty upgrade outcome. " +
-                                        "Bootstrap lock required to re-run the version upgrade.",
+                                    "Bootstrap lock required to re-run the version upgrade.",
                                 bootstrapInfo.getBuildVersion(),
                                 BUILD_VERSION_TABLE_NAME);
                     }
@@ -302,7 +302,7 @@ public class BootstrapUtil {
         // Also, empty outcome means we haven't yet attempted to boot with this version
         // or, it has been cleared by an admin after a failed boot.
         return !Objects.equals(bootstrapInfo.getBuildVersion(), buildVersion)
-                || bootstrapInfo.getUpgradeOutcome().isEmpty();
+               || bootstrapInfo.getUpgradeOutcome().isEmpty();
     }
 
     private static void handleCorrectBuildVersion(final BootstrapInfo bootstrapInfo,
@@ -312,7 +312,7 @@ public class BootstrapUtil {
         switch (upgradeOutcome) {
             case SUCCESS -> {
                 LOGGER.info("Found required build version '{}' in table '{}' with upgrade outcome {}, " +
-                                msgSuffix,
+                            msgSuffix,
                         bootstrapInfo.getBuildVersion(),
                         BUILD_VERSION_TABLE_NAME,
                         upgradeOutcome);
@@ -332,8 +332,8 @@ public class BootstrapUtil {
                 .map(UpgradeOutcome::toString)
                 .orElse("empty");
         final String msg = LogUtil.message("Build version '{}' has an upgrade outcome of {} on node {}. " +
-                        "Either deploy a new version; or fix the issue, set column {}.{} to null " +
-                        "then re-try this version. Aborting application startup.",
+                                           "Either deploy a new version; or fix the issue, set column {}.{} to null " +
+                                           "then re-try this version. Aborting application startup.",
                 bootstrapInfo.getBuildVersion(),
                 outcome,
                 bootstrapInfo.getExecutingNode(),
@@ -421,8 +421,8 @@ public class BootstrapUtil {
                 // If the node that gets the lock has to run lengthy db= migrations it is almost certain
                 // that we will get a lock timeout error so need to handle that and keep trying to get the lock
                 if (e.getCause() != null
-                        && e.getCause() instanceof MySQLTransactionRollbackException
-                        && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
+                    && e.getCause() instanceof MySQLTransactionRollbackException
+                    && e.getCause().getMessage().contains("Lock wait timeout exceeded")) {
                     LOGGER.info("Still waiting for bootstrap lock, waited {} so far.",
                             Duration.between(startTime, Instant.now()));
                 } else {
@@ -516,8 +516,8 @@ public class BootstrapUtil {
             }
         } catch (Exception e) {
             throw new RuntimeException("Error ensuring table "
-                    + BUILD_VERSION_TABLE_NAME + ": "
-                    + e.getMessage(), e);
+                                       + BUILD_VERSION_TABLE_NAME + ": "
+                                       + e.getMessage(), e);
         }
     }
 
@@ -614,10 +614,10 @@ public class BootstrapUtil {
         @Override
         public String toString() {
             return "BootstrapInfo{" +
-                    "buildVersion='" + buildVersion + '\'' +
-                    ", executingNode='" + executingNode + '\'' +
-                    ", upgradeOutcome=" + upgradeOutcome +
-                    '}';
+                   "buildVersion='" + buildVersion + '\'' +
+                   ", executingNode='" + executingNode + '\'' +
+                   ", upgradeOutcome=" + upgradeOutcome +
+                   '}';
         }
     }
 

@@ -1,7 +1,7 @@
 package stroom.meta.api;
 
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
 import java.time.Instant;
 import java.util.Collection;

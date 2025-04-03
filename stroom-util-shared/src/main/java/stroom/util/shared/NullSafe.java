@@ -18,9 +18,11 @@ package stroom.util.shared;
 
 import stroom.util.shared.time.SimpleDuration;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,16 +36,15 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
+ * Utility methods for safely dealing with things that may be null.
  * <p>
- * This is pretty much a copy of NullSafe but with things GWT doesn't emulate removed
- * or implemented in a different way.
+ * Must contain only methods that are compatible with GWT compilation, else they need
+ * to go into NullSafeExtra.
  * </p>
- * Utility methods for safely getting properties (or properties of properties of ...) from
- * a value with protection from null values anywhere in the chain.
  */
-public class GwtNullSafe {
+public class NullSafe {
 
-    private GwtNullSafe() {
+    private NullSafe() {
     }
 
     /**
@@ -143,6 +144,60 @@ public class GwtNullSafe {
             }
             return allNonNull;
         }
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     * <p>
+     * Alias for {@link NullSafe#coalesce(T[])}
+     */
+    public static <T> Optional<T> firstNonNull(final T... vals) {
+        if (vals != null) {
+            for (final T val : vals) {
+                if (val != null) {
+                    return Optional.of(val);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T first(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            // GWT can't do getFirst()
+            return list.get(0);
+        }
+    }
+
+    /**
+     * @return The first item in the list or null if list is null or empty.
+     */
+    public static <T> T last(final List<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            // GWT can't do getLast()
+            return list.get(list.size() - 1);
+        }
+    }
+
+    /**
+     * Return first non-null value or an empty {@link Optional} if all are null
+     */
+    public static <T> Optional<T> coalesce(final T... vals) {
+        if (vals != null) {
+            for (final T val : vals) {
+                if (val != null) {
+                    return Optional.of(val);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -303,6 +358,24 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static int getInt(final Integer val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static long getLong(final Long val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
      * @return True if val is not null and true
      */
     public static boolean isTrue(final Boolean val) {
@@ -333,6 +406,16 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if both str and subStr are non-null and str contains subStr
+     * Case-insensitive.
+     */
+    public static boolean containsIgnoringCase(final String str, final String subStr) {
+        return str != null
+               && subStr != null
+               && str.toLowerCase().contains(subStr.toLowerCase());
+    }
+
+    /**
      * @return True if collection is non-null and contains item.
      */
     public static <E> boolean collectionContains(final Collection<E> collection, final E item) {
@@ -353,6 +436,13 @@ public class GwtNullSafe {
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * @return True if the array is null or empty
+     */
+    public static <T> boolean isEmptyArray(final T[] arr) {
+        return arr == null || arr.length == 0;
     }
 
     /**
@@ -543,8 +633,31 @@ public class GwtNullSafe {
     }
 
     /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
+        if (iterable != null && consumer != null) {
+            for (final T item : iterable) {
+                if (item != null) {
+                    consumer.accept(item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the passed value as a singleton list if non-null, else an empty list
+     */
+    public static <T> List<T> singletonList(final T item) {
+        return item != null
+                ? Collections.singletonList(item)
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns the passed array of items or varargs items as a non-null list.
-     * Does not support null items in the list.
+     * Allows null items in the list.
      *
      * @return A non-null list of items. List should be assumed to be immutable.
      */
@@ -586,6 +699,26 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns a new {@link ArrayList} instance. If list is not null, the new {@link ArrayList} will
+     * contain the contents of list, else it will be empty.
+     */
+    public static <L extends List<T>, T> List<T> mutableList(final L list) {
+        return list != null
+                ? new ArrayList<>(list)
+                : new ArrayList<>();
+    }
+
+    /**
+     * Returns a new {@link java.util.HashSet} instance. If set is not null, the new {@link java.util.HashSet} will
+     * contain the contents of set, else it will be empty.
+     */
+    public static <C extends Collection<T>, T> Set<T> mutableSet(final C set) {
+        return set != null
+                ? new HashSet<>(set)
+                : new HashSet<>();
+    }
+
+    /**
      * Returns the passed list if it is non-null else returns an empty list.
      */
     public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
@@ -604,12 +737,80 @@ public class GwtNullSafe {
     }
 
     /**
+     * Returns an unmodifiable view of the passed set if it is non-null else returns an immutable empty set.
+     */
+    public static <S extends Set<T>, T> Set<T> unmodifialbeSet(final S set) {
+        return set != null
+                ? Collections.unmodifiableSet(set)
+                : Collections.emptySet();
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing the items in set.
+     * If set is not itself an {@link EnumSet} then the items will be copied into
+     * a new {@link EnumSet}.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <S extends Set<T>, T extends Enum<T>> Set<T> enumSet(final Class<T> type,
+                                                                       final S set) {
+        if (set instanceof EnumSet<?>) {
+            return set;
+        } else if (set == null || set.isEmpty()) {
+            return EnumSet.noneOf(type);
+        } else {
+            // Make sure we get back an EnumSet as they are faster and more memory efficient
+            return EnumSet.copyOf(set);
+        }
+    }
+
+    /**
+     * Returns a non-null {@link EnumSet} containing all non-null items.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <T extends Enum<T>> Set<T> enumSetOf(final Class<T> type, final T... items) {
+        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+        if (items != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    enumSet.add(item);
+                }
+            }
+        }
+        return enumSet;
+    }
+
+    /**
+     * Returns the passed value as a singleton set if non-null, else an empty set
+     */
+    public static <T> Set<T> singletonSet(final T item) {
+        return item != null
+                ? Collections.singleton(item)
+                : Collections.emptySet();
+    }
+
+    /**
      * Returns the passed map if it is non-null else returns an empty map.
      */
     public static <M extends Map<K, V>, K, V> Map<K, V> map(final M map) {
         return map != null
                 ? map
                 : Collections.emptyMap();
+    }
+
+    public static <M extends Map<K, V>, K, V> Collection<K> keySetOf(final Map<K, V> map) {
+        return map != null
+                ? map.keySet()
+                : Collections.emptySet();
+    }
+
+    public static <M extends Map<K, V>, K, V> Collection<V> valuesOf(final Map<K, V> map) {
+        return map != null
+                ? map.values()
+                : Collections.emptySet();
     }
 
     /**
@@ -621,6 +822,15 @@ public class GwtNullSafe {
                 : "";
     }
 
+//    /**
+//     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
+//     */
+//    public static StroomDuration duration(final StroomDuration stroomDuration) {
+//        return stroomDuration != null
+//                ? stroomDuration
+//                : StroomDuration.ZERO;
+//    }
+
     /**
      * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
      */
@@ -629,6 +839,15 @@ public class GwtNullSafe {
                 ? duration
                 : SimpleDuration.ZERO;
     }
+
+//    /**
+//     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
+//     */
+//    public static Duration duration(final Duration duration) {
+//        return duration != null
+//                ? duration
+//                : Duration.ZERO;
+//    }
 
     /**
      * Apply getter to value if value is non-null.
@@ -696,6 +915,53 @@ public class GwtNullSafe {
     }
 
     /**
+     * Return the value supplied by supplier or null if supplier is itself null.
+     */
+    public static <T> T supply(final Supplier<T> supplier) {
+        if (supplier != null) {
+            return supplier.get();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Return the result of applying mapper to the value supplied by supplier.
+     * Will return null if supplier is null, the supplied value is null or
+     * the result of mapper is null.
+     */
+    public static <T1, T2> T2 supplyAndMap(final Supplier<T1> supplier,
+                                           final Function<T1, T2> mapper) {
+        if (supplier != null) {
+            final T1 t1 = supplier.get();
+            if (t1 != null) {
+                return Objects.requireNonNull(mapper).apply(t1);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * If value is non-null pass it to the consumer, else execute runnable.
+     */
+    public static <T> void consumeOr(final T value,
+                                     final Consumer<T> consumer,
+                                     final Runnable runnable) {
+        if (value != null) {
+            if (consumer != null) {
+                consumer.accept(value);
+            }
+        } else {
+            if (runnable != null) {
+                runnable.run();
+            }
+        }
+    }
+
+    /**
      * If value is non-null pass it to the consumer, else it is a no-op.
      */
     public static <T> void consume(final T value,
@@ -708,7 +974,7 @@ public class GwtNullSafe {
     /**
      * Allows you to test a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
+     *    boolean hasValues = GwtNullSafe.test(myList, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null
@@ -728,7 +994,7 @@ public class GwtNullSafe {
     /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
+     *    boolean hasValues = GwtNullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null or the getter returns null,
@@ -846,10 +1112,38 @@ public class GwtNullSafe {
     }
 
     /**
+     * If value and the result of passing value to getter are both non-null then pass the result
+     * of getter to consumer, else call runnable.
+     * consume and runnable can both be null for a no-op.
+     */
+    public static <T1, T2> void consumeOr(final T1 value,
+                                          final Function<T1, T2> getter,
+                                          final Consumer<T2> consumer,
+                                          final Runnable runnable) {
+        if (value != null) {
+            final T2 value2 = Objects.requireNonNull(getter)
+                    .apply(value);
+            if (value2 != null) {
+                if (consumer != null) {
+                    consumer.accept(value2);
+                }
+            } else {
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        } else {
+            if (runnable != null) {
+                runnable.run();
+            }
+        }
+    }
+
+    /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
      *    List<Sting> list = null;
-     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
+     *    boolean hasValues = GwtNullSafe.test(list, list -> list.size > 0);
      * </code></pre>
      *
      * @return false if value is null, else return the value of the predicate when applied
@@ -871,6 +1165,41 @@ public class GwtNullSafe {
                 return result != null
                        && Objects.requireNonNull(predicate)
                                .test(result);
+            }
+        }
+    }
+
+    /**
+     * Apply each getter to the value of <code>value</code> or the result from the previous
+     * getter while the result is non-null. The <code>predicate</code> is applied to the result of
+     * the last getter.
+     *
+     * @return false if any of the values/results are null, else return the value of the predicate when applied
+     * to the result of the last getter.
+     */
+    public static <T1, T2, T3, R> boolean test(final T1 value,
+                                               final Function<T1, T2> getter1,
+                                               final Function<T2, T3> getter2,
+                                               final Function<T3, R> getter3,
+                                               final Predicate<R> predicate) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1)
+                    .apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2)
+                        .apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    final R result = Objects.requireNonNull(getter3).apply(value3);
+                    return result != null
+                           && Objects.requireNonNull(predicate)
+                                   .test(result);
+                }
             }
         }
     }
@@ -1178,6 +1507,32 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if any of value or the result of getter1 are
+     * null, else false.
+     */
+    public static <T1, R> boolean isNull(final T1 value,
+                                         final Function<T1, R> getter) {
+        if (value == null) {
+            return true;
+        } else {
+            return Objects.requireNonNull(getter).apply(value) == null;
+        }
+    }
+
+    /**
+     * @return True if value and the result of getter
+     * are non-null, else false.
+     */
+    public static <T1, R> boolean nonNull(final T1 value,
+                                          final Function<T1, R> getter) {
+        if (value == null) {
+            return false;
+        } else {
+            return Objects.requireNonNull(getter).apply(value) != null;
+        }
+    }
+
+    /**
      * Require that both {@code value} is non-null and the result of applying {@code getter} to
      * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
      *
@@ -1195,6 +1550,44 @@ public class GwtNullSafe {
                 throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
             } else {
                 return result;
+            }
+        }
+    }
+
+    /**
+     * @return True if any of value, the result of getter1 or the result of getter2 are
+     * null, else false.
+     */
+    public static <T1, T2, R> boolean isNull(final T1 value,
+                                             final Function<T1, T2> getter1,
+                                             final Function<T2, R> getter2) {
+        if (value == null) {
+            return true;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return true;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) == null;
+            }
+        }
+    }
+
+    /**
+     * @return True if all of, value; the result of getter1 and the result of getter2
+     * are non-null, else false.
+     */
+    public static <T1, T2, R> boolean nonNull(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, R> getter2) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                return Objects.requireNonNull(getter2).apply(value2) != null;
             }
         }
     }

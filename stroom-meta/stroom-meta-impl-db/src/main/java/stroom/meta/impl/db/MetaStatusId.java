@@ -17,8 +17,8 @@
 package stroom.meta.impl.db;
 
 import stroom.meta.shared.Status;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.Objects;

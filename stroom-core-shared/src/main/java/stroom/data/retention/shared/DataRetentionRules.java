@@ -21,7 +21,7 @@ import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -107,7 +107,7 @@ public class DataRetentionRules extends Doc {
 
     @JsonIgnore
     public List<DataRetentionRule> getActiveRules() {
-        return GwtNullSafe.stream(rules)
+        return NullSafe.stream(rules)
                 .filter(DataRetentionRule::isEnabled)
                 .collect(Collectors.toList());
     }

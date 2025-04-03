@@ -10,8 +10,8 @@ import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.Injector;
@@ -149,7 +149,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                         },
                         () -> {
                             final String msg = LogUtil.message("Cannot issue API key as Stroom user '{}' " +
-                                    "does not exist", userId);
+                                                               "does not exist", userId);
                             logEvent(userId, false, msg);
                             throw new RuntimeException(msg);
                         });

@@ -6,7 +6,7 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
@@ -141,7 +141,7 @@ public class DataRetentionImpactRow {
     private static Comparator<DataRetentionImpactRow> buildComparator(final FindDataRetentionImpactCriteria criteria) {
 
         final List<CriteriaFieldSort> sortList = criteria.getSortList();
-        if (GwtNullSafe.hasItems(sortList)) {
+        if (NullSafe.hasItems(sortList)) {
             //noinspection SimplifyStreamApiCallChains // Cos GWT
             List<Comparator<DataRetentionImpactRow>> comparators = sortList.stream()
                     .filter(Objects::nonNull)
@@ -297,7 +297,7 @@ public class DataRetentionImpactRow {
         // comparator for it. Assumes only one sort in the sort list
 
         final List<CriteriaFieldSort> sortList = criteria.getSortList();
-        if (GwtNullSafe.hasItems(sortList)) {
+        if (NullSafe.hasItems(sortList)) {
             return sortList.stream()
                     .filter(sort ->
                             Arrays.stream(sortableFieldNames)
@@ -319,7 +319,7 @@ public class DataRetentionImpactRow {
     private static DataRetentionImpactRow buildRuleRow(final DataRetentionRule rule,
                                                        final DataRetentionImpactTreeAction treeAction,
                                                        final Set<DataRetentionDeleteSummary> summaries) {
-        final int totalCount = GwtNullSafe.stream(summaries)
+        final int totalCount = NullSafe.stream(summaries)
                 .mapToInt(DataRetentionDeleteSummary::getCount)
                 .sum();
 
@@ -346,7 +346,7 @@ public class DataRetentionImpactRow {
                 totalCount);
 
         final int depth = 0;
-        final boolean isLeaf = GwtNullSafe.isEmptyCollection(summaries);
+        final boolean isLeaf = NullSafe.isEmptyCollection(summaries);
 
         setExpander(treeAction, row, depth, isLeaf);
 
@@ -359,7 +359,7 @@ public class DataRetentionImpactRow {
                                                            final Set<DataRetentionDeleteSummary> summaries,
                                                            final DataRetentionImpactTreeAction treeAction) {
 
-        final int countByRuleAndFeed = GwtNullSafe.stream(summaries)
+        final int countByRuleAndFeed = NullSafe.stream(summaries)
                 .mapToInt(DataRetentionDeleteSummary::getCount)
                 .sum();
 
@@ -375,7 +375,7 @@ public class DataRetentionImpactRow {
                 countByRuleAndFeed);
 
         final int depth = 1;
-        final boolean isLeaf = GwtNullSafe.isEmptyCollection(summaries);
+        final boolean isLeaf = NullSafe.isEmptyCollection(summaries);
 
         setExpander(treeAction, row, depth, isLeaf);
 

@@ -48,9 +48,9 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -169,14 +169,14 @@ class ReferenceDataLoadTaskHandler {
 
                 // Set the pipeline so it can be used by a filter if needed.
                 if (refStreamDefinition.getPipelineDocRef() == null ||
-                        refStreamDefinition.getPipelineDocRef().getUuid() == null) {
+                    refStreamDefinition.getPipelineDocRef().getUuid() == null) {
                     throw new RuntimeException("Null reference pipeline");
                 }
                 final PipelineDoc pipelineDoc = pipelineStore
                         .readDocument(refStreamDefinition.getPipelineDocRef());
                 if (pipelineDoc == null) {
                     throw new RuntimeException("Unable to find pipeline with UUID: " +
-                            refStreamDefinition.getPipelineDocRef().getUuid());
+                                               refStreamDefinition.getPipelineDocRef().getUuid());
                 }
                 pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
 
@@ -283,11 +283,11 @@ class ReferenceDataLoadTaskHandler {
             } catch (UncheckedIOException | IOException e) {
                 // Missing ref strm file or unable to read it
                 final String msg = "Error reading reference stream "
-                        + refStreamDefinition.getStreamId()
-                        + ":"
-                        + refStreamDefinition.getPartNumber()
-                        + " - "
-                        + e.getMessage();
+                                   + refStreamDefinition.getStreamId()
+                                   + ":"
+                                   + refStreamDefinition.getPartNumber()
+                                   + " - "
+                                   + e.getMessage();
                 logAndCompleteProcessing(refDataLoader, Severity.FATAL_ERROR, ProcessingState.FAILED, msg, e);
             } catch (Exception e) {
                 handleException(refDataLoader, e);
@@ -313,9 +313,9 @@ class ReferenceDataLoadTaskHandler {
         } else {
             // The UIE/TTE may have been buried under a chain of runtime exceptions, so go digging for them
             if (e instanceof UncheckedInterruptedException
-                    || e instanceof TaskTerminatedException
-                    || ExceptionUtils.indexOfThrowable(e, UncheckedInterruptedException.class) >= 0
-                    || ExceptionUtils.indexOfThrowable(e, TaskTerminatedException.class) >= 0) {
+                || e instanceof TaskTerminatedException
+                || ExceptionUtils.indexOfThrowable(e, UncheckedInterruptedException.class) >= 0
+                || ExceptionUtils.indexOfThrowable(e, TaskTerminatedException.class) >= 0) {
                 logAndCompleteProcessing(refDataLoader, Severity.INFO, ProcessingState.TERMINATED, e);
                 throw new TaskTerminatedException();
             } else {

@@ -2,7 +2,7 @@ package stroom.cell.info.client;
 
 import stroom.data.grid.client.EventCell;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -105,8 +105,8 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                                   final ValueUpdater<T> valueUpdater) {
         final Element element = event.getEventTarget().cast();
         if (ElementUtil.hasClassName(element, HOVER_ACTION_MENU_CLASS_NAME, 5)) {
-            final List<Item> items = GwtNullSafe.get(menuCreator, mc -> mc.apply(value));
-            if (GwtNullSafe.hasItems(items)) {
+            final List<Item> items = NullSafe.get(menuCreator, mc -> mc.apply(value));
+            if (NullSafe.hasItems(items)) {
                 if (items.size() == 1
                     && items.get(0) instanceof MenuItem
                     && ((MenuItem) items.get(0)).getCommand() != null) {
@@ -146,8 +146,8 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                 cellText = cellTextExtractor.apply(value);
             }
 
-            final List<Item> menuItems = GwtNullSafe.get(menuCreator, mc -> mc.apply(value));
-            if (GwtNullSafe.hasItems(menuItems)) {
+            final List<Item> menuItems = NullSafe.get(menuCreator, mc -> mc.apply(value));
+            if (NullSafe.hasItems(menuItems)) {
                 final SafeHtml textSafeHtml = template
                         .div("commandLinkText", SafeHtmlUtils.fromString(cellText));
 
@@ -163,7 +163,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                     menuItems.get(0) instanceof final MenuItem menuItem &&
                     menuItem.getCommand() != null) {
                     // Single item with a command so no menu popup needed
-                    sb.append(template.divWithToolTip(GwtNullSafe
+                    sb.append(template.divWithToolTip(NullSafe
                             .getOrElse(menuItem.getText(), SafeHtml::asString, ""), icon));
                 } else {
                     // Build the menu popup
@@ -173,7 +173,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                 sb.appendHtmlConstant("</div>");
             } else {
                 // No menu items so just show the text
-                if (GwtNullSafe.isBlankString(cellText)) {
+                if (NullSafe.isBlankString(cellText)) {
                     sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
                 } else {
                     sb.append(SafeHtmlUtils.fromString(cellText));

@@ -19,7 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.FilterCell.ViewData;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -242,6 +242,6 @@ public class FilterCell
     }
 
     private String getValue(final Column column) {
-        return GwtNullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
+        return NullSafe.get(column.getColumnFilter(), ColumnFilter::getFilter);
     }
 }

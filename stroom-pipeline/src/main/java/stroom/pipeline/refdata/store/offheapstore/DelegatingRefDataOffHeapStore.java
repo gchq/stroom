@@ -23,12 +23,12 @@ import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.RefDataLmdbEnv.Factory;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -560,8 +560,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         // RefStreamDefinition objects which will be more costly to check against. In most cases there
         // will only be one RefStreamDefinition per refStreamId
         if (legacyRefDataStore != null
-                && migrationCheckRequired
-                && !migratedRefStreamIds.contains(refStreamId)) {
+            && migrationCheckRequired
+            && !migratedRefStreamIds.contains(refStreamId)) {
 
             if (feedSpecificStore.exists(refStreamId)) {
                 // Already migrated, therefore add it to our set, so we don't need to do the
@@ -576,8 +576,8 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                     // The caller will then get a feed specific store that doesn't contain the stream so will try to
                     // load it as normal.
                     LOGGER.error("Error migrating refStreamId: {} to feed store '{}'. " +
-                                    "This stream will not be migrated so will have to be re-loaded as normal. " +
-                                    "Migration may be tried again if stroom is re-booted. {}",
+                                 "This stream will not be migrated so will have to be re-loaded as normal. " +
+                                 "Migration may be tried again if stroom is re-booted. {}",
                             refStreamId, feedName, e.getMessage(), e);
                 } finally {
                     // Even though we haven't migrated it, mark it as such, so we don't try again.
@@ -651,7 +651,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                         DocRef::getName);
             } catch (DocumentNotFoundException e) {
                 LOGGER.error("Feed with UUID '{}' not found for ref store directory {} (parts: {}). " +
-                                "Ignoring this directory. Consider deleting it if refers to a non-existent fee.",
+                             "Ignoring this directory. Consider deleting it if refers to a non-existent fee.",
                         feedDocUuid, storeDir, parts);
                 return 0;
             } catch (Exception e) {
@@ -691,7 +691,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
                     closeAndDeleteLegacyStore();
                 } else {
                     LOGGER.info("Found a non-empty legacy reference data store in {}. Migration of reference data " +
-                                    "will be performed on a stream by stream basis on demand.",
+                                "will be performed on a stream by stream basis on demand.",
                             localDir.toAbsolutePath());
                     migrationCheckRequired = true;
                 }
@@ -785,7 +785,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
             throw new RuntimeException(LogUtil.message("Expecting to find feed doc for name " + feedName));
         } else if (feedDocRefs.size() > 1) {
             throw new RuntimeException(LogUtil.message("Found " + feedDocRefs.size() + " feed docs for name "
-                    + feedName + ". Feed names should be unique."));
+                                                       + feedName + ". Feed names should be unique."));
         }
         final String feedDocUuid = feedDocRefs.getFirst().getUuid();
 
@@ -834,9 +834,9 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
         @Override
         public String toString() {
             return "FeedSpecificStore{" +
-                    "feedName='" + feedName + '\'' +
-                    ", refDataOffHeapStore=" + refDataOffHeapStore +
-                    '}';
+                   "feedName='" + feedName + '\'' +
+                   ", refDataOffHeapStore=" + refDataOffHeapStore +
+                   '}';
         }
     }
 }

@@ -24,10 +24,10 @@ import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.DataStoreFactory.StoreSizeSummary;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
-import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.collect.ImmutableSortedMap;
 import jakarta.inject.Inject;
@@ -229,7 +229,7 @@ class NodeStatusServiceUtil {
         // No point in holding a load of zeros, e.g. nodes not running processing
         final long sizeOnDisk = feedSpecificStore.getSizeOnDisk();
         final long combinedEntryCount = feedSpecificStore.getKeyValueEntryCount()
-                + feedSpecificStore.getRangeValueEntryCount();
+                                        + feedSpecificStore.getRangeValueEntryCount();
         final long processingInfoEntryCount = feedSpecificStore.getProcessingInfoEntryCount();
 
         if (sizeOnDisk > 0) {

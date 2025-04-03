@@ -1,6 +1,6 @@
 package stroom.widget.util.client;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -24,7 +24,7 @@ public class SafeHtmlUtil {
      * Null safe way to escape string and return {@link SafeHtml}
      */
     public static SafeHtml getSafeHtml(final String string) {
-        if (GwtNullSafe.isBlankString(string)) {
+        if (NullSafe.isBlankString(string)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             return SafeHtmlUtils.fromString(string);
@@ -35,7 +35,7 @@ public class SafeHtmlUtil {
      * Null safe way to escape string and return {@link SafeHtml}
      */
     public static SafeHtml getSafeHtmlFromSafeConstant(final String string) {
-        if (GwtNullSafe.isBlankString(string)) {
+        if (NullSafe.isBlankString(string)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             return SafeHtmlUtils.fromSafeConstant(string);
@@ -46,7 +46,7 @@ public class SafeHtmlUtil {
      * Null safe way to escape string and return {@link SafeHtml}
      */
     public static SafeHtml getSafeHtmlFromTrustedString(final String string) {
-        if (GwtNullSafe.isBlankString(string)) {
+        if (NullSafe.isBlankString(string)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             return SafeHtmlUtils.fromTrustedString(string);

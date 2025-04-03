@@ -5,7 +5,7 @@
 
 package com.google.gwt.user.cellview.client;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.dom.builder.shared.ElementBuilderBase;
@@ -168,7 +168,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
             return null;
         } else {
             String value = elem.getAttribute(attribute);
-            return GwtNullSafe.isNonEmptyString(value)
+            return NullSafe.isNonEmptyString(value)
                     ? value
                     : null;
         }

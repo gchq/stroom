@@ -6,8 +6,8 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.StringUtil;
 
 import java.time.ZonedDateTime;
@@ -61,20 +61,20 @@ public class ExpressionValidator {
         if (term.enabled()) {
             if (term.getField() == null || term.getField().trim().isEmpty()) {
                 throw new ExpressionValidationException("" +
-                        "Expression term has a missing field");
+                                                        "Expression term has a missing field");
             }
             final QueryField field = fieldMap.get(term.getField());
             if (field == null) {
                 throw new ExpressionValidationException("" +
-                        "Expression term has an unknown field '" +
-                        term.getField() +
-                        "'");
+                                                        "Expression term has an unknown field '" +
+                                                        term.getField() +
+                                                        "'");
             }
             if (term.getCondition() == null) {
                 throw new ExpressionValidationException("" +
-                        "Expression term has no condition set for '" +
-                        term.getField() +
-                        "'");
+                                                        "Expression term has no condition set for '" +
+                                                        term.getField() +
+                                                        "'");
             }
             final boolean isNumeric = field.isNumeric();
             if (isNumeric) {
@@ -149,18 +149,18 @@ public class ExpressionValidator {
         final String value = term.getValue();
         if (value == null || value.isEmpty()) {
             throw new ExpressionValidationException("" +
-                    "Expression term has no value set for '" +
-                    term.getField() +
-                    "'");
+                                                    "Expression term has no value set for '" +
+                                                    term.getField() +
+                                                    "'");
         }
         final String[] parts = value.split(",");
         if (parts.length < min || parts.length > max) {
             throw new ExpressionValidationException("" +
-                    "Expression term has unexpected number of values '" +
-                    term.getValue() +
-                    "' for '" +
-                    term.getField() +
-                    "'");
+                                                    "Expression term has unexpected number of values '" +
+                                                    term.getValue() +
+                                                    "' for '" +
+                                                    term.getField() +
+                                                    "'");
         }
         return parts;
     }
@@ -172,8 +172,8 @@ public class ExpressionValidator {
             if (optDateTime.isEmpty()) {
                 throw new ExpressionValidationException(LogUtil.message(
                         "Date value '{}' is not a valid. The date value should be one of:" +
-                                "\n\nAn absolute date time value, e.g. '2016-01-23T12:34:11.844Z'." +
-                                "\n\nA relative date time expression, e.g. 'now() - 7d'.",
+                        "\n\nAn absolute date time value, e.g. '2016-01-23T12:34:11.844Z'." +
+                        "\n\nA relative date time expression, e.g. 'now() - 7d'.",
                         dateStr));
             }
         } catch (Exception e) {
@@ -187,10 +187,10 @@ public class ExpressionValidator {
 
             throw new ExpressionValidationException(LogUtil.message(
                     "Date value '{}' is not a valid." +
-                            "{}" +
-                            "The date value should be one of:" +
-                            "\n\nAn absolute date time value, e.g. '2016-01-23T12:34:11.844Z'." +
-                            "\n\nA relative date time expression, e.g. 'now() - 7d'.",
+                    "{}" +
+                    "The date value should be one of:" +
+                    "\n\nAn absolute date time value, e.g. '2016-01-23T12:34:11.844Z'." +
+                    "\n\nA relative date time expression, e.g. 'now() - 7d'.",
                     dateStr, msg));
         }
     }
@@ -199,19 +199,19 @@ public class ExpressionValidator {
         final String value = term.getValue();
         if (value == null || value.isEmpty()) {
             throw new ExpressionValidationException("" +
-                    "Expression term has no value set for '" +
-                    term.getField() +
-                    "'");
+                                                    "Expression term has no value set for '" +
+                                                    term.getField() +
+                                                    "'");
         }
         try {
             Long.parseLong(term.getValue());
         } catch (final NumberFormatException e) {
             throw new ExpressionValidationException("" +
-                    "Expression term has a non numeric value '" +
-                    term.getValue() +
-                    "' set for '" +
-                    term.getField() +
-                    "'");
+                                                    "Expression term has a non numeric value '" +
+                                                    term.getValue() +
+                                                    "' set for '" +
+                                                    term.getField() +
+                                                    "'");
         }
     }
 
@@ -223,20 +223,20 @@ public class ExpressionValidator {
             }
         } catch (final NumberFormatException e) {
             throw new ExpressionValidationException("" +
-                    "Expression term has a non numeric array value '" +
-                    term.getValue() +
-                    "' set for '" +
-                    term.getField() +
-                    "'");
+                                                    "Expression term has a non numeric array value '" +
+                                                    term.getValue() +
+                                                    "' set for '" +
+                                                    term.getField() +
+                                                    "'");
         }
     }
 
     private void invalidCondition(final ExpressionTerm term) {
         throw new ExpressionValidationException("" +
-                "Expression term has an invalid condition '" +
-                term.getCondition().getDisplayValue() +
-                "' set for '" +
-                term.getField() +
-                "'");
+                                                "Expression term has an invalid condition '" +
+                                                term.getCondition().getDisplayValue() +
+                                                "' set for '" +
+                                                term.getField() +
+                                                "'");
     }
 }

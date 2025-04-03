@@ -12,7 +12,7 @@ import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -94,7 +94,7 @@ public class EditApiKeyPresenter
         final PopupSize popupSize = PopupSize.resizableX(600);
         uiConfigCache.get(uiConfigCache -> {
             if (Mode.PRE_CREATE.equals(mode)) {
-                getView().setHashAlgorithm(GwtNullSafe.requireNonNullElse(
+                getView().setHashAlgorithm(NullSafe.requireNonNullElse(
                         uiConfigCache.getDefaultApiKeyHashAlgorithm(),
                         HashAlgorithm.DEFAULT));
             }
@@ -168,7 +168,7 @@ public class EditApiKeyPresenter
 
     private void handleEditModeHide(final HidePopupRequestEvent e) {
         if (e.isOk()) {
-            if (GwtNullSafe.isBlankString(getView().getName())) {
+            if (NullSafe.isBlankString(getView().getName())) {
                 AlertEvent.fireError(this, "A name must be provided for the API key.", e::reset);
             } else {
                 final HashedApiKey updatedApiKey = HashedApiKey.builder(this.apiKey)
@@ -248,7 +248,7 @@ public class EditApiKeyPresenter
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {
             AlertEvent.fireError(this, "API Key expiry date cannot be after "
                                        + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
-        } else if (GwtNullSafe.isBlankString(getView().getName())) {
+        } else if (NullSafe.isBlankString(getView().getName())) {
             AlertEvent.fireError(this, "A name must be provided for the API key.", event::reset);
         } else if (owner == null) {
             AlertEvent.fireError(this, "An owner must be provided for the API key.", event::reset);

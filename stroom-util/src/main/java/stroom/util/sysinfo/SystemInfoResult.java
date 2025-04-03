@@ -1,6 +1,6 @@
 package stroom.util.sysinfo;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -52,10 +52,10 @@ public class SystemInfoResult {
     @Override
     public String toString() {
         return "SystemInfoResult{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", details=" + details +
-                '}';
+               "name='" + name + '\'' +
+               ", description='" + description + '\'' +
+               ", details=" + details +
+               '}';
     }
 
     @Override
@@ -68,8 +68,8 @@ public class SystemInfoResult {
         }
         final SystemInfoResult that = (SystemInfoResult) o;
         return name.equals(that.name) &&
-                Objects.equals(description, that.description) &&
-                details.equals(that.details);
+               Objects.equals(description, that.description) &&
+               details.equals(that.details);
     }
 
     @Override

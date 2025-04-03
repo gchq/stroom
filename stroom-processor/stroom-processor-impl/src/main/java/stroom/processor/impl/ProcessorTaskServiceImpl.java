@@ -33,7 +33,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;

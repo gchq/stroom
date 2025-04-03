@@ -25,8 +25,8 @@ import stroom.query.language.token.KeywordGroup;
 import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
-import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
@@ -200,10 +200,10 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             if (control == null) {
                 throw new TokenException(t,
                         "Unknown visualisation control id '" +
-                                controlId +
-                                "' found for '" +
-                                visName +
-                                "'");
+                        controlId +
+                        "' found for '" +
+                        visName +
+                        "'");
             }
 
             // Get equals.

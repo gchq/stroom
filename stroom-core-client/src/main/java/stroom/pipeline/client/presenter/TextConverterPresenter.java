@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -65,7 +65,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
                 editorPresenter.getFormatAction().setAvailable(!isReadOnly());
                 setEditorMode(editorPresenter, getEntity());
 
-                GwtNullSafe.consume(
+                NullSafe.consume(
                         getEntity(),
                         TextConverterDoc::getData,
                         editorPresenter::setText);
@@ -120,7 +120,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
 
     private void setEditorMode(final EditorPresenter editorPresenter,
                                final TextConverterDoc document) {
-        final TextConverterType converterType = GwtNullSafe.get(
+        final TextConverterType converterType = NullSafe.get(
                 document,
                 TextConverterDoc::getConverterType);
         // Fall back option if we don't know the type
@@ -137,7 +137,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             }
         } else {
             final String code = editorPresenter.getText();
-            if (!GwtNullSafe.isBlankString(code)) {
+            if (!NullSafe.isBlankString(code)) {
                 if (code.contains("dataSplitter")) {
                     mode = AceEditorMode.STROOM_DATA_SPLITTER;
                 } else if (code.contains("!ENTITY")) {

@@ -16,7 +16,7 @@
 
 package stroom.util.shared.string;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -104,7 +104,7 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return GwtNullSafe.requireNonNullElseGet(
+            return NullSafe.requireNonNullElseGet(
                     CIKeys.getCommonKey(key),
                     () -> new CIKey(key));
         }
@@ -137,7 +137,7 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return GwtNullSafe.requireNonNullElseGet(
+            return NullSafe.requireNonNullElseGet(
                     CIKeys.getCommonKey(key),
                     () -> new CIKey(key, lowerKey));
         }
@@ -183,7 +183,7 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return GwtNullSafe.requireNonNullElseGet(
+            return NullSafe.requireNonNullElseGet(
                     CIKeys.getCommonKey(lowerKey),
                     () -> new CIKey(lowerKey, lowerKey));
         }
@@ -234,7 +234,7 @@ public class CIKey implements Comparable<CIKey> {
             return EMPTY_STRING;
         } else {
             final String lowerKey = toLowerCase(key);
-            return GwtNullSafe.requireNonNullElseGet(
+            return NullSafe.requireNonNullElseGet(
                     CIKeys.getCommonKeyByLowerCase(lowerKey),
                     () -> CIKey.ofLowerCase(lowerKey));
         }
@@ -340,7 +340,7 @@ public class CIKey implements Comparable<CIKey> {
      * @return True if this key matches one of keys (ignoring case)
      */
     public boolean in(final Collection<String> keys) {
-        if (GwtNullSafe.hasItems(keys)) {
+        if (NullSafe.hasItems(keys)) {
             return keys.stream()
                     .anyMatch(aKey ->
                             CIKey.equalsIgnoreCase(this, aKey));
@@ -384,13 +384,13 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     public static List<CIKey> listOf(final String... keys) {
-        return GwtNullSafe.stream(keys)
+        return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toList());
     }
 
     public static Set<CIKey> setOf(final String... keys) {
-        return GwtNullSafe.stream(keys)
+        return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toSet());
     }
@@ -518,7 +518,7 @@ public class CIKey implements Comparable<CIKey> {
      */
     @SafeVarargs
     public static <V> Map<CIKey, V> mapOfEntries(final Entry<String, ? extends V>... entries) {
-        return GwtNullSafe.stream(entries)
+        return NullSafe.stream(entries)
                 .collect(Collectors.toMap(
                         entry ->
                                 CIKey.of(entry.getKey()),
@@ -530,7 +530,7 @@ public class CIKey implements Comparable<CIKey> {
      * Accepts nulls and never returns a null.
      */
     public static <V> Map<CIKey, V> mapOf(final Map<String, ? extends V> map) {
-        return GwtNullSafe.map(map)
+        return NullSafe.map(map)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
@@ -540,7 +540,7 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     public static <V> Map<String, V> convertToStringMap(final Map<CIKey, ? extends V> map) {
-        return GwtNullSafe.map(map)
+        return NullSafe.map(map)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
@@ -549,7 +549,7 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     public static <V> Map<String, V> convertToLowerCaseStringMap(final Map<CIKey, ? extends V> map) {
-        return GwtNullSafe.map(map)
+        return NullSafe.map(map)
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
@@ -597,6 +597,6 @@ public class CIKey implements Comparable<CIKey> {
      * Method so we have a consistent way of doing it, in the unlikely event it changes.
      */
     static String toLowerCase(final String str) {
-        return GwtNullSafe.get(str, s -> s.toLowerCase(Locale.ENGLISH));
+        return NullSafe.get(str, s -> s.toLowerCase(Locale.ENGLISH));
     }
 }

@@ -25,9 +25,9 @@ import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.UserRef;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -563,7 +563,7 @@ public class DataGridUtil {
 
     public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
-            if (GwtNullSafe.allNonNull(value, value.getCommand())) {
+            if (NullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();
             }
         });
@@ -594,7 +594,7 @@ public class DataGridUtil {
      */
     public static <T_ROW> Function<T_ROW, String> toStringFunc(final Function<T_ROW, Object> valueExtractor) {
         return (T_ROW row) ->
-                GwtNullSafe.toStringOrElse(row, valueExtractor, "");
+                NullSafe.toStringOrElse(row, valueExtractor, "");
     }
 
     /**
@@ -606,6 +606,6 @@ public class DataGridUtil {
             final Function<T_ROW, T_VAL1> valueExtractor1,
             final Function<T_VAL1, Object> valueExtractor2) {
         return (T_ROW row) ->
-                GwtNullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
+                NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
     }
 }

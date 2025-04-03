@@ -29,11 +29,11 @@ import stroom.importexport.shared.ImportState;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 

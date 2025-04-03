@@ -5,7 +5,6 @@ import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
@@ -13,6 +12,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -498,9 +498,9 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         if (!isExpectedSigner) {
             throw new RuntimeException(LogUtil.message(
                     "The value for key '{}' in the JWS header '{}' does not match any of the values in the '{}' " +
-                            "configuration property: [{}]. You need to set '{}' to the partial ARN(s) of the " +
-                            "AWS load balancer that is handling authentication for Stroom. The partial " +
-                            "ARN needs to include at least up to the account ID part.",
+                    "configuration property: [{}]. You need to set '{}' to the partial ARN(s) of the " +
+                    "AWS load balancer that is handling authentication for Stroom. The partial " +
+                    "ARN needs to include at least up to the account ID part.",
                     SIGNER_HEADER_KEY,
                     signer,
                     AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES,
@@ -536,7 +536,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             if (!AMZN_REGION_PATTERN.matcher(awsRegion).matches()) {
                 throw new RuntimeException(LogUtil.message(
                         "AWS region '{}' extracted from '{}' in property '{}' does not match " +
-                                "pattern '{}'",
+                        "pattern '{}'",
                         awsRegion,
                         signer,
                         AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES,
@@ -566,11 +566,11 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             return decodePublicKey(pubKey, "EC");
         } else {
             throw new RuntimeException("Unable to retrieve public key from \"" +
-                    uri +
-                    "\"" +
-                    res.getStatus() +
-                    ": " +
-                    res.readEntity(String.class));
+                                       uri +
+                                       "\"" +
+                                       res.getStatus() +
+                                       ": " +
+                                       res.readEntity(String.class));
         }
     }
 

@@ -1,7 +1,7 @@
 package stroom.util.concurrent;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 

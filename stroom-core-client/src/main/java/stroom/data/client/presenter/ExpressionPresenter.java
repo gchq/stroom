@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -63,7 +63,7 @@ public class ExpressionPresenter
         fieldSelectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);
 
-        editExpressionPresenter.read(GwtNullSafe.requireNonNullElseGet(
+        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
                 expression,
                 () -> ExpressionOperator.builder().build()));
     }

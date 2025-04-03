@@ -5,12 +5,12 @@ import stroom.security.common.impl.AuthenticationState;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.NullSafe;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;

@@ -16,10 +16,10 @@
 
 package stroom.pipeline.errorhandler;
 
-import stroom.util.NullSafe;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 

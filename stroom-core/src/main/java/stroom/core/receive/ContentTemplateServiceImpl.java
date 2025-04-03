@@ -5,8 +5,8 @@ import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

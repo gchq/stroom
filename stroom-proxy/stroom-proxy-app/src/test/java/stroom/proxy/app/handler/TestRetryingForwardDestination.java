@@ -7,13 +7,13 @@ import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.BeforeEach;

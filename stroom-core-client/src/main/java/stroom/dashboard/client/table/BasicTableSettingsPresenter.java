@@ -29,7 +29,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -63,7 +63,7 @@ public class BasicTableSettingsPresenter
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                GwtNullSafe.consume(
+                NullSafe.consume(
                         extendedUiConfig.getQuery(),
                         QueryConfig::getDashboardPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
@@ -215,7 +215,7 @@ public class BasicTableSettingsPresenter
     }
 
     private String fromList(final List<Long> maxResults) {
-        if (GwtNullSafe.isEmptyCollection(maxResults)) {
+        if (NullSafe.isEmptyCollection(maxResults)) {
             return "";
         }
 
@@ -230,7 +230,7 @@ public class BasicTableSettingsPresenter
     }
 
     private List<Long> toList(final String string) {
-        if (GwtNullSafe.isEmptyString(string)) {
+        if (NullSafe.isEmptyString(string)) {
             return null;
         }
 

@@ -25,11 +25,11 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;

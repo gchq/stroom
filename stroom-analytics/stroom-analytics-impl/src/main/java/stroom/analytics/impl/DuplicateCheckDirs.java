@@ -4,10 +4,10 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

@@ -1,10 +1,10 @@
 package stroom.security.common.impl;
 
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -65,6 +65,6 @@ public final class UserIdentitySessionUtil {
                 .stream(request.getCookies())
                 .anyMatch(cookie ->
                         cookie.getName().equalsIgnoreCase(STROOM_SESSION_ID) ||
-                                cookie.getName().equalsIgnoreCase(JSESSIONID));
+                        cookie.getName().equalsIgnoreCase(JSESSIONID));
     }
 }

@@ -1,6 +1,6 @@
 package stroom.util.authentication;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -72,8 +72,8 @@ public class RefreshableItem<T> implements Refreshable {
     @Override
     public String toString() {
         return "RefreshableItem{" +
-                "perishableItem=" + perishableItem +
-                ", refreshBuffer=" + refreshBuffer +
-                '}';
+               "perishableItem=" + perishableItem +
+               ", refreshBuffer=" + refreshBuffer +
+               '}';
     }
 }

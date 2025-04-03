@@ -47,12 +47,12 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.AuditUtil;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.HasUserDependencies;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
@@ -643,7 +643,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 })
                 .filter(Objects::nonNull)
 //                    .filter(userDependency ->
-//                            NullSafe.getOrElse(
+//                            GwtNullSafe.getOrElse(
 //                                    userDependency.getDocRef(),
 //                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
 //                                    true))

@@ -46,9 +46,9 @@ import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;

@@ -45,10 +45,10 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;

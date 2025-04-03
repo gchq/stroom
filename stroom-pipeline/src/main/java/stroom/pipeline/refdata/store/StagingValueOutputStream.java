@@ -4,10 +4,10 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -107,7 +107,7 @@ public class StagingValueOutputStream
     @Override
     public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
         if (valueStoreHashAlgorithm != null
-                && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
+            && !Objects.equals(this.valueStoreHashAlgorithm, valueStoreHashAlgorithm)) {
             return valueStoreHashAlgorithm.hash(getValueBuffer());
         } else {
             return getValueHashCode();
@@ -137,7 +137,7 @@ public class StagingValueOutputStream
     @Override
     public boolean isNullValue() {
         return NullValue.TYPE_ID == getTypeId()
-                || getValueBuffer().remaining() == 0;
+               || getValueBuffer().remaining() == 0;
     }
 
     @Override

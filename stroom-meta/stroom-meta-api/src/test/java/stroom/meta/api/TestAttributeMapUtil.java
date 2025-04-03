@@ -1,8 +1,8 @@
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.shared.NullSafe;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DynamicTest;

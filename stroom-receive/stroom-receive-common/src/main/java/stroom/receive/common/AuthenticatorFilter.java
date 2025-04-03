@@ -2,9 +2,9 @@ package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
 

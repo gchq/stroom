@@ -1,9 +1,9 @@
 package stroom.util.string;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;

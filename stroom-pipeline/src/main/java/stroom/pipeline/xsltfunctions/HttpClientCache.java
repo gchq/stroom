@@ -164,7 +164,7 @@ public class HttpClientCache {
 //    }
 //
 //    private void configureHttpProtocolVersions(final Builder builder, OkHttpClientConfig clientConfig) {
-//        if (!NullSafe.isEmptyCollection(clientConfig.getHttpProtocols())) {
+//        if (!GwtNullSafe.isEmptyCollection(clientConfig.getHttpProtocols())) {
 //            final List<Protocol> protocols = clientConfig.getHttpProtocols()
 //                    .stream()
 //                    .map(String::toLowerCase)

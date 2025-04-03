@@ -20,7 +20,7 @@ import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValDuration;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

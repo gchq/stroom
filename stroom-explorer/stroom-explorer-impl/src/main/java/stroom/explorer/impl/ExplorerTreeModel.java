@@ -21,13 +21,13 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -256,10 +256,10 @@ class ExplorerTreeModel implements EntityEvent.Handler {
                 // The model doesn't care about UPDATE as that is an update of the content of the doc
                 // rather than an update to the node (e.g. tags).
                 case CREATE,
-                     DELETE,
-                     UPDATE_EXPLORER_NODE,
-                     DELETE_EXPLORER_NODE,
-                     CREATE_EXPLORER_NODE -> {
+                        DELETE,
+                        UPDATE_EXPLORER_NODE,
+                        DELETE_EXPLORER_NODE,
+                        CREATE_EXPLORER_NODE -> {
                     // E.g. tags on a node have changed
                     LOGGER.debug("Rebuilding tree model due to entity event {}", event);
                     rebuild();

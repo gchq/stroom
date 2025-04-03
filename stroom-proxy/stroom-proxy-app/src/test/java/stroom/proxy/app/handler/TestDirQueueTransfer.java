@@ -5,11 +5,11 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.test.common.MockMetrics;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

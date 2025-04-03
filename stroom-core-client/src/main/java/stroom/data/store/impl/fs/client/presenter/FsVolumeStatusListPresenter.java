@@ -33,8 +33,8 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -113,7 +113,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
             return null;
         }
         if (FsVolumeType.S3.equals(volume.getVolumeType())) {
-            return GwtNullSafe.getOrElse(
+            return NullSafe.getOrElse(
                     volume.getS3ClientConfig(),
                     S3ClientConfig::getBucketName,
                     S3ClientConfig.DEFAULT_BUCKET_NAME);
@@ -123,7 +123,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private boolean isEnabled(final FsVolume volume) {
-        final VolumeUseStatus volumeUseStatus = GwtNullSafe.get(volume, FsVolume::getStatus);
+        final VolumeUseStatus volumeUseStatus = NullSafe.get(volume, FsVolume::getStatus);
         return VolumeUseStatus.ACTIVE == volumeUseStatus;
     }
 

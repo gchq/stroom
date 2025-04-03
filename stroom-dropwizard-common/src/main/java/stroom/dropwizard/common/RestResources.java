@@ -1,11 +1,11 @@
 package stroom.dropwizard.common;
 
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.Unauthenticated;
@@ -186,10 +186,10 @@ public class RestResources {
             return true;
         } else {
             return method1.getName().equals(method2.getName())
-                    && method1.getReturnType().equals(method2.getReturnType())
-                    && method1.getGenericReturnType().equals(method2.getGenericReturnType())
-                    && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
-                    && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
+                   && method1.getReturnType().equals(method2.getReturnType())
+                   && method1.getGenericReturnType().equals(method2.getGenericReturnType())
+                   && Arrays.equals(method1.getParameterTypes(), method2.getParameterTypes())
+                   && Arrays.equals(method1.getGenericParameterTypes(), method2.getGenericParameterTypes());
         }
     }
 

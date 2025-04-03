@@ -13,12 +13,12 @@ import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.util.NullSafe;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 

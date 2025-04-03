@@ -32,10 +32,10 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
@@ -206,7 +206,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                     LogUtil.message(
                             "A processing info entry already exists for this reference pipeline {}, " +
-                                    "version {}, streamId {}",
+                            "version {}, streamId {}",
                             refStreamDefinition.getPipelineDocRef(),
                             refStreamDefinition.getPipelineVersion(),
                             refStreamDefinition.getStreamId()), null);
@@ -543,7 +543,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     if (rangeFrom > rangeTo) {
                         errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                                 "Range from '" + rangeFrom
-                                        + "' must be less than or equal to range to '" + rangeTo + "'",
+                                + "' must be less than or equal to range to '" + rangeTo + "'",
                                 null);
                     } else if (rangeFrom < 0) {
                         // negative values cause problems for the ordering of data in LMDB so prevent their use
@@ -613,27 +613,27 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                     final PutOutcome putOutcome) {
         if (warnOnDuplicateKeys) {
             if (overrideExistingValues
-                    && putOutcome.isSuccess()
-                    && putOutcome.isDuplicate().orElse(false)) {
+                && putOutcome.isSuccess()
+                && putOutcome.isDuplicate().orElse(false)) {
 
                 final MapDefinition mapDefinition = mapDefSupplier.get();
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
                                 "Replaced entry for {} in map {} from stream {} as an entry already exists in the " +
-                                        "store and overrideExistingValues is set to true on the reference " +
-                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
+                                "store and overrideExistingValues is set to true on the reference " +
+                                "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
                                 keyTextSupplier.get(),
                                 mapDefinition.getMapName(),
                                 mapDefinition.getRefStreamDefinition().getStreamId()), null);
 
             } else if (!overrideExistingValues
-                    && putOutcome.isDuplicate().orElse(false)) {
+                       && putOutcome.isDuplicate().orElse(false)) {
                 final MapDefinition mapDefinition = mapDefSupplier.get();
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
                                 "Unable to load entry for {} into map {} from stream {} as an entry already exists " +
-                                        "in the store and overrideExistingValues is set to false on the reference " +
-                                        "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
+                                "in the store and overrideExistingValues is set to false on the reference " +
+                                "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
                                 keyTextSupplier.get(),
                                 mapDefinition.getMapName(),
                                 mapDefinition.getRefStreamDefinition().getStreamId()), null);
@@ -658,7 +658,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 //            // Not seen any XML content so treat as string or null
 //            final String content = contentBuffer.toString();
 //            // simple string value so use content buffer
-//            if (NullSafe.isBlankString(content)) {
+//            if (GwtNullSafe.isBlankString(content)) {
 //                LOGGER.trace("Null value");
 //                refDataValue = NullValue.getInstance();
 //            } else {
@@ -827,7 +827,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 .stream()
                 .anyMatch(prefixToUriEntry ->
                         Objects.equals(prefixToUriEntry.getKey(), prefix)
-                                && Objects.equals(prefixToUriEntry.getValue(), uri));
+                        && Objects.equals(prefixToUriEntry.getValue(), uri));
     }
 
     private boolean hasUriBeenApplied(final String prefix) {

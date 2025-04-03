@@ -35,7 +35,7 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -277,9 +277,9 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
             final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
-            final Set<String> openGroups = GwtNullSafe
+            final Set<String> openGroups = NullSafe
                     .getOrElse(tablePresenter, ResultComponent::getOpenGroups, Collections.emptySet());
-            final OffsetRange requestedRange = GwtNullSafe
+            final OffsetRange requestedRange = NullSafe
                     .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
 
             final QuerySearchRequest request = currentSearch

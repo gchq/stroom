@@ -19,10 +19,10 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.security.impl.event.PermissionChangeEvent;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserInfo;
 import stroom.util.shared.UserRef;
 

@@ -16,9 +16,9 @@
 
 package stroom.util.json;
 
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -190,9 +190,9 @@ public final class JsonUtil {
                     LOGGER.trace("jsonToken: {}", jsonToken);
 
                     if (jsonToken == null
-                            || (startRootToken == null && !(jsonToken == JsonToken.START_OBJECT))
-                            || jsonToken == endRootToken
-                            || remainingFields.isEmpty()) {
+                        || (startRootToken == null && !(jsonToken == JsonToken.START_OBJECT))
+                        || jsonToken == endRootToken
+                        || remainingFields.isEmpty()) {
                         break;
                     }
 

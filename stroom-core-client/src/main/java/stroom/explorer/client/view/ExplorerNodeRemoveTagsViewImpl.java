@@ -19,7 +19,7 @@ package stroom.explorer.client.view;
 
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -119,7 +119,7 @@ public class ExplorerNodeRemoveTagsViewImpl
 
     private void updateNodeTagsListBoxContents() {
         //noinspection SimplifyStreamApiCallChains
-        final List<String> tagsList = GwtNullSafe.stream(nodeTags)
+        final List<String> tagsList = NullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
 
@@ -135,7 +135,7 @@ public class ExplorerNodeRemoveTagsViewImpl
 
         this.nodeTags.clear();
         this.docRefs = nodeDocRefs;
-        this.nodeTags.addAll(GwtNullSafe.set(nodeTags));
+        this.nodeTags.addAll(NullSafe.set(nodeTags));
         updateNodeTagsListBoxContents();
     }
 

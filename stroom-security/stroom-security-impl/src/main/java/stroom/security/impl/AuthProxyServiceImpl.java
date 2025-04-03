@@ -9,7 +9,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
@@ -18,6 +17,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -85,7 +85,7 @@ public class AuthProxyServiceImpl implements AuthProxyService {
                     "No getAccessToken in response");
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error fetching client credentials flow access token for " +
-                            "clientId '{}' at endpoint '{}': {}",
+                                                       "clientId '{}' at endpoint '{}': {}",
                     openIdConfiguration.getClientId(),
                     tokenEndpoint,
                     e.getMessage()), e);
@@ -104,10 +104,10 @@ public class AuthProxyServiceImpl implements AuthProxyService {
                                            final OpenIdConfiguration openIdConfiguration) {
         Objects.requireNonNull(clientCredentials);
         if (!Objects.equals(clientCredentials.getClientId(), openIdConfiguration.getClientId())
-                || !Objects.equals(clientCredentials.getClientSecret(), openIdConfiguration.getClientSecret())) {
+            || !Objects.equals(clientCredentials.getClientSecret(), openIdConfiguration.getClientSecret())) {
             throw new IllegalArgumentException(LogUtil.message(
                     "When identityProviderType is {}, the provided clientId and clientSecret must match " +
-                            "those in Stroom's config", IdpType.INTERNAL_IDP));
+                    "those in Stroom's config", IdpType.INTERNAL_IDP));
         }
     }
 

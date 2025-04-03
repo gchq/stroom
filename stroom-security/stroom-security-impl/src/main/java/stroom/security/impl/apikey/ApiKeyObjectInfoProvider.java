@@ -2,9 +2,9 @@ package stroom.security.impl.apikey;
 
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.security.shared.HashedApiKey;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import event.logging.BaseObject;

@@ -10,7 +10,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
@@ -21,6 +20,7 @@ import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -109,7 +109,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         if (IdpType.NO_IDP.equals(idpType)) {
             throw new IllegalStateException(
                     "Attempting to get user identity from tokens in request when " +
-                            "identityProviderType set to NONE.");
+                    "identityProviderType set to NONE.");
         } else {
             // See if we can log in with a token if one is supplied. It is valid for it to not be present.
             // e.g. the front end calling API methods, as the user is held in session.
@@ -125,7 +125,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                         });
             } catch (final RuntimeException e) {
                 throw new AuthenticationException("Error authenticating request to "
-                        + request.getRequestURI() + " - " + e.getMessage(), e);
+                                                  + request.getRequestURI() + " - " + e.getMessage(), e);
             }
 
             if (optUserIdentity.isEmpty()) {
@@ -133,7 +133,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             } else {
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("Got API user identity "
-                            + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
+                                 + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
                 }
             }
 
@@ -182,7 +182,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 return Collections.emptyMap();
 
             } else if (IdpType.TEST_CREDENTIALS.equals(idpType)
-                    && !serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity())) {
+                       && !serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity())) {
                 // The processing user is a bit special so even when using hard-coded default open id
                 // creds the proc user uses tokens created by the internal IDP.
                 LOGGER.debug("Using default token");
@@ -249,7 +249,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 });
 
         LOGGER.debug(() -> "Got auth flow user identity "
-                + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
+                           + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
 
         return optUserIdentity;
     }
@@ -339,7 +339,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         if (hasRefreshTokenExpired(currentTokenResponse)) {
             if (identity instanceof final HasSession userWithSession) {
                 LOGGER.info("Refresh token has expired, removing user identity from " +
-                        "session to force re-authentication. userIdentity: {}", userWithSession);
+                            "session to force re-authentication. userIdentity: {}", userWithSession);
                 userWithSession.removeUserFromSession();
             } else {
                 LOGGER.warn("Refresh token has expired, can't refresh token or create new.");
@@ -372,8 +372,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             } finally {
                 // Some IDPs don't seem to send updated refresh tokens so keep the existing refresh token.
                 if (newTokenResponse != null
-                        && newTokenResponse.getRefreshToken() == null
-                        && currentTokenResponse.getRefreshToken() != null) {
+                    && newTokenResponse.getRefreshToken() == null
+                    && currentTokenResponse.getRefreshToken() != null) {
                     newTokenResponse = newTokenResponse
                             .copy()
                             .refreshToken(currentTokenResponse.getRefreshToken())

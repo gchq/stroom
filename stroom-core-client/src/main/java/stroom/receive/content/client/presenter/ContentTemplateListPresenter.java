@@ -28,7 +28,7 @@ import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -142,7 +142,7 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                 new DocRefCell.Builder<ContentTemplate>()
                         .eventBus(getEventBus())
                         .docRefFunction(row ->
-                                GwtNullSafe.get(row, ContentTemplate::getPipeline))
+                                NullSafe.get(row, ContentTemplate::getPipeline))
                         .showIcon(true);
         dataGrid.addResizableColumn(
                 DataGridUtil.docRefColumnBuilder(docRefCellBuilder)

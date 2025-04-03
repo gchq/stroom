@@ -15,10 +15,10 @@ import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

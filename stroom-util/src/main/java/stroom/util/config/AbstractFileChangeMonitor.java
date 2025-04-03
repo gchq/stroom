@@ -1,12 +1,12 @@
 package stroom.util.config;
 
 import stroom.util.HasHealthCheck;
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 
@@ -254,8 +254,8 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
             if (executorService != null) {
                 watchService.close();
                 if (watcherFuture != null
-                        && !watcherFuture.isCancelled()
-                        && !watcherFuture.isDone()) {
+                    && !watcherFuture.isCancelled()
+                    && !watcherFuture.isDone()) {
                     watcherFuture.cancel(true);
                 }
                 executorService.shutdown();

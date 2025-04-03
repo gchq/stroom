@@ -2,7 +2,7 @@ package stroom.app.guice;
 
 import stroom.app.db.migration.CrossModuleDbConnProvider;
 import stroom.app.db.migration.CrossModuleDbMigrationsModule;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;

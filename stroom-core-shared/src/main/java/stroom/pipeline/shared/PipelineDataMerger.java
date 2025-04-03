@@ -22,7 +22,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,7 +70,7 @@ public class PipelineDataMerger {
     }
 
     public PipelineDataMerger merge(final List<PipelineData> configStack) throws PipelineModelException {
-        if (GwtNullSafe.hasItems(configStack)) {
+        if (NullSafe.hasItems(configStack)) {
             final Map<String, PipelineElement> allElementMap = new HashMap<>();
             boolean sourceProvided = false;
 

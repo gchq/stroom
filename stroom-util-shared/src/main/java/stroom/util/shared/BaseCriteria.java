@@ -125,7 +125,7 @@ public abstract class BaseCriteria {
      * @return True if fieldId is included in the sortList
      */
     public boolean isFieldInSort(final String fieldId) {
-        if (sortList != null && GwtNullSafe.isNonBlankString(fieldId)) {
+        if (sortList != null && NullSafe.isNonBlankString(fieldId)) {
             return sortList.stream()
                     .map(CriteriaFieldSort::getId)
                     .anyMatch(fieldId::equals);

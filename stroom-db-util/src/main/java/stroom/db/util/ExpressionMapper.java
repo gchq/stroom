@@ -2,7 +2,7 @@ package stroom.db.util;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import org.jooq.Condition;
 import org.jooq.Field;

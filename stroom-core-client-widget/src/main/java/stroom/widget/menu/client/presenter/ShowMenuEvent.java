@@ -1,6 +1,6 @@
 package stroom.widget.menu.client.presenter;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -176,7 +176,7 @@ public class ShowMenuEvent
                     showHandler,
                     hideHandler,
                     elements,
-                    GwtNullSafe.requireNonNullElse(allowCloseOnMoveLeft, false)));
+                    NullSafe.requireNonNullElse(allowCloseOnMoveLeft, false)));
         }
     }
 }

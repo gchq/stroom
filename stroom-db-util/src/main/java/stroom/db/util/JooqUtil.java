@@ -16,7 +16,6 @@
 
 package stroom.db.util;
 
-import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.AsciiTable;
@@ -29,8 +28,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Selection;
@@ -886,8 +885,8 @@ public final class JooqUtil {
     public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
                                                            final BaseCriteria criteria,
                                                            final OrderField<?>... defaultSortFields) {
-        final List<OrderField<?>> defaults = GwtNullSafe.asList(defaultSortFields);
-        if (GwtNullSafe.isEmptyCollection(criteria.getSortList())) {
+        final List<OrderField<?>> defaults = NullSafe.asList(defaultSortFields);
+        if (NullSafe.isEmptyCollection(criteria.getSortList())) {
             return defaults;
         } else {
             final List<OrderField<?>> defaultsNotSeen = new ArrayList<>(defaults);
@@ -921,9 +920,9 @@ public final class JooqUtil {
 
     private static OrderField<?> getOrderField(final Map<String, Field<?>> fieldMap,
                                                final CriteriaFieldSort sort) {
-        final Field<?> field = GwtNullSafe.map(fieldMap)
+        final Field<?> field = NullSafe.map(fieldMap)
                 .get(sort.getId());
-        return GwtNullSafe.get(
+        return NullSafe.get(
                 field,
                 fld -> (sort.isDesc()
                         ? fld.desc()

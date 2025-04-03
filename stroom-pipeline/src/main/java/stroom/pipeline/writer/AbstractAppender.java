@@ -19,10 +19,10 @@ package stroom.pipeline.writer;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;

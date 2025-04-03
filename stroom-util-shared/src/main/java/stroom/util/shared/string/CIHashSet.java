@@ -16,7 +16,7 @@
 
 package stroom.util.shared.string;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class CIHashSet extends HashSet<CIKey> {
 
     public CIHashSet(final Collection<String> collection) {
-        super(GwtNullSafe.stream(collection)
+        super(NullSafe.stream(collection)
                 .map(CIKey::of)
                 .collect(Collectors.toList()));
     }

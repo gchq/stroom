@@ -11,7 +11,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.xsltfunctions.HttpClientCache;
 import stroom.svg.shared.SvgImage;
-import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
@@ -22,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.time.StroomDuration;
 

@@ -1,9 +1,9 @@
 package stroom.receive.common;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;

@@ -2,7 +2,6 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyConfigHolder;
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.RequiresProxyRestart;
@@ -13,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -123,7 +123,7 @@ public class ProxyConfigProvider {
             }
 
             // If it is not in the map then it is not injectable
-//            final AbstractConfig existingConfig = NullSafe.getOrElseGet(
+//            final AbstractConfig existingConfig = GwtNullSafe.getOrElseGet(
 //                    this.configInstanceMap,
 //                    map -> map.get(clazz),
 //                    ThrowingSupplier.unchecked(() -> clazz.getConstructor().newInstance()));

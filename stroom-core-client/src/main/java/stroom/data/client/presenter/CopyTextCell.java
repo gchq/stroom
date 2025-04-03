@@ -3,7 +3,7 @@ package stroom.data.client.presenter;
 import stroom.data.grid.client.EventCell;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -55,7 +55,7 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
         if (MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
-            } else if (GwtNullSafe.isNonBlankString(value)) {
+            } else if (NullSafe.isNonBlankString(value)) {
                 final List<Item> menuItems = new ArrayList<>();
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(1)

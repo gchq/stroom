@@ -4,8 +4,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
-import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.NullSafe;
 
 public class StoringReceiverFactory implements ReceiverFactory {
 

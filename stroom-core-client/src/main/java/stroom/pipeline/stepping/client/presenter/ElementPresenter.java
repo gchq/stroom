@@ -37,10 +37,10 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.ErrorType;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasData;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -219,7 +219,7 @@ public class ElementPresenter
                     return new LogPaneEntry(
                             paneType,
                             storedError.getSeverity(),
-                            GwtNullSafe.get(storedError.getLocation(), Location::getLineNo),
+                            NullSafe.get(storedError.getLocation(), Location::getLineNo),
                             storedError.getLocation(),
                             storedError.getMessage());
                 })
@@ -336,7 +336,7 @@ public class ElementPresenter
     private void setIndicatorsOnEditor(final IndicatorType indicatorType,
                                        final Indicators indicators) {
         final ErrorType[] types = getErrorTypesForPane(indicatorType);
-        final IndicatorLines indicatorLines = GwtNullSafe.get(
+        final IndicatorLines indicatorLines = NullSafe.get(
                 indicators,
                 indicators2 -> IndicatorLines.filter(indicators2, false, types));
 
@@ -444,7 +444,7 @@ public class ElementPresenter
     }
 
     public boolean hasCodePane() {
-        return GwtNullSafe.test(
+        return NullSafe.test(
                 element,
                 elm -> elm.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE));
     }
@@ -488,7 +488,7 @@ public class ElementPresenter
     private EditorPresenter getCodePresenter(final PipelineElement element) {
         GWT.log("id: " + element.getId()
                 + ", type: " + element.getType()
-                + ", typeType: " + GwtNullSafe.get(element.getElementType(), PipelineElementType::getType));
+                + ", typeType: " + NullSafe.get(element.getElementType(), PipelineElementType::getType));
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
             presenterMap.put(IndicatorType.CODE, codePresenter);
@@ -522,7 +522,7 @@ public class ElementPresenter
                 // Bit hacky, but we have no access to the type of the text converter
                 // CombinedParser ought to be deprecated
                 final String code = getCode();
-                if (!GwtNullSafe.isBlankString(code)) {
+                if (!NullSafe.isBlankString(code)) {
                     if (code.contains("dataSplitter")) {
                         mode = AceEditorMode.STROOM_DATA_SPLITTER;
                     } else if (code.contains("!ENTITY")) {

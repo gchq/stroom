@@ -267,7 +267,7 @@ public class Dictionaries {
 //                        .appendKVRow("Type:", doc.getType())
 //                        .appendKVRow("UUID:", doc.getUuid())));
 //
-//        NullSafe.consume(doc.getDescription(), detail::append);
+//        GwtNullSafe.consume(doc.getDescription(), detail::append);
 //
 //        return detail.build();
 //    }

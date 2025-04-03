@@ -1,10 +1,10 @@
 package stroom.test.common.util.guice;
 
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Binder;
 import com.google.inject.Binding;

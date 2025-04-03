@@ -65,7 +65,6 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -77,6 +76,7 @@ import stroom.util.logging.SimpleMetrics;
 import stroom.util.logging.SimpleMetrics.LocalMetrics;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.DocPath;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -325,13 +325,13 @@ class ExplorerServiceImpl
                                      final OpenItems openItems,
                                      final OpenItems tempOpenItems,
                                      final OpenItems ensureVisible) {
-        if (NullSafe.hasItems(openItems)) {
+        if (openItems != null) {
             LOGGER.trace(() -> LogUtil.message("openItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
-        if (NullSafe.hasItems(tempOpenItems)) {
+        if (tempOpenItems != null) {
             LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
-        if (NullSafe.hasItems(ensureVisible)) {
+        if (ensureVisible != null) {
             LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", openItemsToStr(treeModel, openItems)));
         }
     }

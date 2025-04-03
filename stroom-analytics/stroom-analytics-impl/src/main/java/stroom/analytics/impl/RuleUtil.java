@@ -1,7 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.docstore.shared.Doc;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 public class RuleUtil {
 

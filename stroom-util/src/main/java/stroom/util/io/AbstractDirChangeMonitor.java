@@ -1,10 +1,10 @@
 package stroom.util.io;
 
 import stroom.util.HasHealthCheck;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;

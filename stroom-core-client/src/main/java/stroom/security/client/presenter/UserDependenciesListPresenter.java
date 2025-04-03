@@ -15,7 +15,7 @@ import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
@@ -88,7 +88,7 @@ public class UserDependenciesListPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        filter = GwtNullSafe.trim(text);
+        filter = NullSafe.trim(text);
         if (filter.isEmpty()) {
             filter = null;
         }

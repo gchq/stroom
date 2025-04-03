@@ -46,9 +46,9 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.user.api.UserRefLookup;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

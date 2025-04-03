@@ -1,8 +1,8 @@
 package stroom.query.language.functions;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -26,7 +26,7 @@ public class ValComparators {
      * This comparator is likely not transitive so breaks the compare contract, so should not be used
      * for sorting purposes.
      */
-    public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR =  CompareUtil.name(
+    public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR = CompareUtil.name(
             "GenericCaseSensitiveValComparator", getComparator(true));
 
     // Comparators for comparing Val instances in the different ways you can get a value out of them.
@@ -192,7 +192,7 @@ public class ValComparators {
         final ValComparatorFactory existingComparatorFactory = getComparatorFactory(type1, type2)
                 .orElse(null);
         if (existingComparatorFactory != null
-                && !Objects.equals(existingComparatorFactory, comparatorFactory)) {
+            && !Objects.equals(existingComparatorFactory, comparatorFactory)) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Trying to put a different comparator factory for types {} & {}",
                     type1, type2));
@@ -338,8 +338,8 @@ public class ValComparators {
         final Double d2 = val2.toDouble();
 
         if (d1 != null
-                && d2 != null
-                && Math.abs(d1 - d2) < DOUBLE_TOLERANCE_FRACTION * Math.abs(d2)) {
+            && d2 != null
+            && Math.abs(d1 - d2) < DOUBLE_TOLERANCE_FRACTION * Math.abs(d2)) {
             return 0;
         } else {
             return AS_DOUBLE_COMPARATOR.compare(val1, val2);
@@ -357,14 +357,14 @@ public class ValComparators {
                              final Class<?> typeA,
                              final Class<?> typeB) {
         return (typeA.isInstance(val1) && typeB.isInstance(val2))
-                || (typeB.isInstance(val1) && typeA.isInstance(val2));
+               || (typeB.isInstance(val1) && typeA.isInstance(val2));
     }
 
     private static boolean bothAreNumeric(final Val a, final Val b) {
         return a != null
-                && b != null
-                && a.hasNumericValue()
-                && b.hasNumericValue();
+               && b != null
+               && a.hasNumericValue()
+               && b.hasNumericValue();
     }
 
     /**
@@ -372,7 +372,7 @@ public class ValComparators {
      */
     private static boolean noFractionalParts(final Val a, final Val b) {
         return !hasFractionalPart(a)
-                && !hasFractionalPart(b);
+               && !hasFractionalPart(b);
     }
 
     static boolean hasFractionalPart(final Val val) {

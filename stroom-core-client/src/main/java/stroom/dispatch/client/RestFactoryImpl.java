@@ -5,7 +5,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.Console;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -160,10 +160,10 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public void exec() {
-            final RestErrorHandler innerErrorHandler = GwtNullSafe
+            final RestErrorHandler innerErrorHandler = NullSafe
                     .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
             final RestErrorHandler errorHandler = error -> {
-                final int statusCode = GwtNullSafe
+                final int statusCode = NullSafe
                         .getOrElse(error, RestError::getMethod, Method::getResponse, Response::getStatusCode, -1);
                 if (statusCode == Response.SC_UNAUTHORIZED) {
                     // Reload as we have been logged out.
@@ -173,7 +173,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     innerErrorHandler.onError(error);
                 }
             };
-            final TaskMonitorFactory taskMonitorFactory = GwtNullSafe
+            final TaskMonitorFactory taskMonitorFactory = NullSafe
                     .requireNonNullElseGet(this.taskMonitorFactory, () -> new DefaultTaskMonitorFactory(hasHandlers));
 
             final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
