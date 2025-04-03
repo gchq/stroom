@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.test.common.TestResourceLocks;
-import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
@@ -12,6 +11,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
 import io.dropwizard.configuration.ConfigurationException;

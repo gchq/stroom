@@ -19,7 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

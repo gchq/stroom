@@ -13,10 +13,10 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 
 import org.slf4j.Logger;
@@ -152,7 +152,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                         refStreamDefinition);
             } else {
                 LOGGER.error("Failed to load {} entries out of {} attempts with outcome {}, " +
-                                "map names [{}] in {} for {}",
+                             "map names [{}] in {} for {}",
                         successfulPutsCounter,
                         putsCounter,
                         processingState,
@@ -204,8 +204,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
     @Override
     public void put(final MapDefinition mapDefinition,
-                          final Range<Long> keyRange,
-                          final StagingValue refDataValue) {
+                    final Range<Long> keyRange,
+                    final StagingValue refDataValue) {
 
         checkCurrentState(LoaderState.INITIALISED);
         // ensure we have a sub map for our mapDef

@@ -1,12 +1,12 @@
 package stroom.dropwizard.common;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.HasMetrics;
 import stroom.util.metrics.MetricsUtil;
 import stroom.util.metrics.MetricsUtil.NamedMetric;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -43,7 +43,7 @@ public class DropWizardMetrics {
     }
 
 //    private void registerMetricConsumers(final Set<HasMetrics> hasMetricsSet) {
-//        for (final HasMetrics hasMetrics : NullSafe.set(hasMetricsSet)) {
+//        for (final HasMetrics hasMetrics : GwtNullSafe.set(hasMetricsSet)) {
 //            // Allow HasMetrics to tell us about metrics
 //            hasMetrics.registerAdditionalMetricConsumer(additionalMetric -> {
 //

@@ -4,11 +4,11 @@ import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.NullSafe;
 import stroom.util.authentication.Refreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpSession;
 import org.jose4j.jwt.JwtClaims;
@@ -165,7 +165,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
             final Instant expireTimeWithBuffer = expireTime.minusMillis(expiryBufferMs);
 
             LOGGER.debug("Updating refresh time - " +
-                            "expiryTime: {}, timeToExpire: {}, expiryBufferMs: {}, refreshTime: {}",
+                         "expiryTime: {}, timeToExpire: {}, expiryBufferMs: {}, refreshTime: {}",
                     expireTime, timeTilExpiry, expiryBufferMs, expireTimeWithBuffer);
 
             return new MutableState(
@@ -183,13 +183,13 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
     @Override
     public String toString() {
         return "UpdatableToken{" +
-                "sub=" + NullSafe.get(mutableState.jwtClaims, claims ->
+               "sub=" + NullSafe.get(mutableState.jwtClaims, claims ->
                 JwtUtil.getClaimValue(claims, OpenId.CLAIM__SUBJECT).orElse(null)) +
-                ", preferredUsername=" + NullSafe.get(mutableState.jwtClaims, claims ->
+               ", preferredUsername=" + NullSafe.get(mutableState.jwtClaims, claims ->
                 JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME).orElse(null)) +
-                ", expireTimeWithBuffer=" + Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs) +
-                ", timeTilExpire=" + Duration.between(Instant.now(), getExpireTime()) +
-                '}';
+               ", expireTimeWithBuffer=" + Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs) +
+               ", timeTilExpire=" + Duration.between(Instant.now(), getExpireTime()) +
+               '}';
     }
 
     private boolean isSessionValid(final HttpSession session) {

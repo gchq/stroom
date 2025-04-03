@@ -53,8 +53,8 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
@@ -340,7 +340,7 @@ public class TaskManagerListPresenter
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
                                 TaskProgress::getUserRef, getEventBus(), securityContext, DisplayType.AUTO)
-                        .enabledWhen(taskProgress -> GwtNullSafe
+                        .enabledWhen(taskProgress -> NullSafe
                                 .getOrElse(taskProgress, TaskProgress::getUserRef, UserRef::isEnabled, false))
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)
                         .build(),
@@ -392,17 +392,17 @@ public class TaskManagerListPresenter
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
                 .row("Node", getNodeName(row))
-                .row("User", GwtNullSafe.get(row, TaskProgress::getUserRef, UserRef::getDisplayName))
+                .row("User", NullSafe.get(row, TaskProgress::getUserRef, UserRef::getDisplayName))
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                .row("Id", GwtNullSafe.get(row.getId(), TaskId::getId));
+                .row("Id", NullSafe.get(row.getId(), TaskId::getId));
 
-        GwtNullSafe.consume(row.getId(), TaskId::getParentId, TaskId::getId, parentId ->
+        NullSafe.consume(row.getId(), TaskId::getParentId, TaskId::getId, parentId ->
                 tableBuilder.row("Parent Id", parentId));
 
         tableBuilder.row("Thread Name", row.getThreadName());
 
-        GwtNullSafe.consume(row.getTaskInfo(), info ->
+        NullSafe.consume(row.getTaskInfo(), info ->
                 tableBuilder.row(
                         TableCell.builder()
                                 .value("Info")

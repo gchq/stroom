@@ -21,12 +21,11 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.EmailContent;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.ReportDoc;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Preconditions;
 import jakarta.activation.FileDataSource;
@@ -223,20 +222,20 @@ public class EmailSender {
         final String subject = emailDestination.getSubjectTemplate();
         final String body = emailDestination.getBodyTemplate();
 
-        if (GwtNullSafe.isBlankString(subject)) {
+        if (NullSafe.isBlankString(subject)) {
             msgs.add("Subject cannot be blank.");
         }
         if (subject.contains("\n") || subject.contains("\r")) {
             msgs.add("Subject contains line breaks or carriage returns. It must be one line only.");
         }
-        if (GwtNullSafe.isBlankString(body)) {
+        if (NullSafe.isBlankString(body)) {
             msgs.add("Body cannot be blank.");
         }
         final boolean hasRecipients = Stream.of(
                         emailDestination.getTo(),
                         emailDestination.getCc(),
                         emailDestination.getBcc())
-                .anyMatch(str -> !GwtNullSafe.isBlankString(str));
+                .anyMatch(str -> !NullSafe.isBlankString(str));
 
         if (!hasRecipients) {
             msgs.add("You must enter at least one recipient (To, Cc, Bcc).");

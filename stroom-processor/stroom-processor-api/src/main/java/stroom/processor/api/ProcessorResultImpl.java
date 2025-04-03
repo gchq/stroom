@@ -1,6 +1,6 @@
 package stroom.processor.api;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import java.util.Map;
@@ -40,9 +40,9 @@ public class ProcessorResultImpl implements ProcessorResult {
     @Override
     public String toString() {
         return "ProcessorResultImpl{" +
-                "read=" + read +
-                ", written=" + written +
-                ", markerCounts=" + markerCounts +
-                '}';
+               "read=" + read +
+               ", written=" + written +
+               ", markerCounts=" + markerCounts +
+               '}';
     }
 }

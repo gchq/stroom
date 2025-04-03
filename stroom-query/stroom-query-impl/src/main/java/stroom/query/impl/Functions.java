@@ -42,13 +42,12 @@ import stroom.query.shared.QueryHelpFunctionSignature.Type;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.NullSafe;
 import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.resultpage.ResultPageBuilder;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
@@ -633,7 +632,7 @@ public class Functions {
 
     private static String functionSignatureToAnchor(final QueryHelpFunctionSignature signature) {
         final String helpAnchor = signature.getHelpAnchor();
-        if (GwtNullSafe.isBlankString(helpAnchor)) {
+        if (NullSafe.isBlankString(helpAnchor)) {
             return functionNameToAnchor(signature.getName());
         } else {
             return helpAnchor;

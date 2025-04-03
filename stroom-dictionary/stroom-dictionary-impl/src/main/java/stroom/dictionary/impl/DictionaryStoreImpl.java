@@ -31,11 +31,11 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.string.StringUtil;
 
@@ -165,7 +165,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 //     * Ensure all the imports have the correct names. Modifies the import list.
 //     */
 //    private void decorateImports(final DictionaryDoc dictionaryDoc) {
-//        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
+//        if (dictionaryDoc != null && GwtNullSafe.hasItems(dictionaryDoc.getImports())) {
 //            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
 //            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
 //                    .stream()

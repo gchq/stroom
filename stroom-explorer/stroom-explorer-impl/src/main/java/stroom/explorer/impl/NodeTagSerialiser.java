@@ -1,7 +1,7 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collections;
 import java.util.Set;

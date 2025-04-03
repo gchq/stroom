@@ -20,7 +20,7 @@ package stroom.explorer.client.view;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNodeEditTagsView;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.form.client.FormGroup;
@@ -188,7 +188,7 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     private void handleNodeTagsDoubleClickEvent(final DoubleClickEvent event) {
-        GwtNullSafe.consume(nodeTagsListBox.getSelectedValue(), selectedTag -> {
+        NullSafe.consume(nodeTagsListBox.getSelectedValue(), selectedTag -> {
             nodeTags.remove(selectedTag);
             updateAllListBoxes();
         });
@@ -318,7 +318,7 @@ public class ExplorerNodeEditTagsViewImpl
 
     private void addTagsFromTextInput() {
         final String input = textBox.getText();
-        if (!GwtNullSafe.isBlankString(input)) {
+        if (!NullSafe.isBlankString(input)) {
             // Add the tags from the text box
             nodeTags.addAll(inputToTags(input));
             clearInput();
@@ -348,7 +348,7 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     private List<String> inputToTags(final String tagInput) {
-        if (GwtNullSafe.isBlankString(tagInput)) {
+        if (NullSafe.isBlankString(tagInput)) {
             return Collections.emptyList();
         } else {
             final SplitResult split = TAG_SPLIT_REGEX.split(cleanTag(tagInput));
@@ -391,10 +391,10 @@ public class ExplorerNodeEditTagsViewImpl
 
     private void updateNodeTagsListBoxContents() {
         //noinspection SimplifyStreamApiCallChains
-        final List<String> tagsList = GwtNullSafe.stream(nodeTags)
+        final List<String> tagsList = NullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
-        final int documentCount = GwtNullSafe.size(docRefs);
+        final int documentCount = NullSafe.size(docRefs);
         nodeTagsFormGroup.setLabel(documentCount > 1
                 ? "Tags to add to " + documentCount + " Documents"
                 : "Document Tags");
@@ -418,7 +418,7 @@ public class ExplorerNodeEditTagsViewImpl
         allTagsListBox.clear();
 
         final Predicate<String> predicate;
-        if (GwtNullSafe.isBlankString(filter)) {
+        if (NullSafe.isBlankString(filter)) {
             predicate = ALWAYS_TRUE_PREDICATE;
         } else {
             final String lowerCaseFilter = cleanTag(filter);
@@ -469,7 +469,7 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     private void updateClearInputVisibleState() {
-        final boolean isInputEmpty = GwtNullSafe.isEmptyString(textBox.getText());
+        final boolean isInputEmpty = NullSafe.isEmptyString(textBox.getText());
         clearInputButton.setVisible(!isInputEmpty);
         final String text = "All known tags"
                 + (isInputEmpty
@@ -479,7 +479,7 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     private void updateAddFromInputEnabledState() {
-        addFromInputButton.setEnabled(!GwtNullSafe.isBlankString(textBox.getText()));
+        addFromInputButton.setEnabled(!NullSafe.isBlankString(textBox.getText()));
     }
 
     private void updateRemoveEnabledState() {
@@ -496,8 +496,8 @@ public class ExplorerNodeEditTagsViewImpl
         this.nodeTags.clear();
         this.allTags.clear();
         this.docRefs = nodeDocRefs;
-        this.nodeTags.addAll(GwtNullSafe.set(nodeTags));
-        this.allTags.addAll(GwtNullSafe.set(allTags));
+        this.nodeTags.addAll(NullSafe.set(nodeTags));
+        this.allTags.addAll(NullSafe.set(allTags));
         updateNodeTagsListBoxContents();
         updateAllTagsListBoxContents();
     }

@@ -1,6 +1,6 @@
 package stroom.widget.form.client;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.help.client.HelpButton;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
@@ -127,7 +127,7 @@ public class FormGroup extends Composite implements HasWidgets {
         if (!Objects.equals(getLabel(), label)) {
             formLabel.setLabel(label);
 
-            if (GwtNullSafe.isBlankString(label)) {
+            if (NullSafe.isBlankString(label)) {
                 helpButton.setTitle("Click for help");
             } else {
                 helpButton.setTitle(label + " - Click for help");
@@ -189,7 +189,7 @@ public class FormGroup extends Composite implements HasWidgets {
         if (helpTextOverride != null) {
 //            haveHelpText = true;
             effectiveHelpText = helpTextOverride;
-        } else if (GwtNullSafe.isNonBlankString(plainHelpText)) {
+        } else if (NullSafe.isNonBlankString(plainHelpText)) {
 //            haveHelpText = true;
             // Escape any html in there, wrap it in a para so styling is consistent
             effectiveHelpText = HtmlBuilder.builder()
@@ -317,7 +317,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void updateLabelPanel() {
         labelPanel.clear();
-        if (GwtNullSafe.isNonBlankString(formLabel.getLabel())) {
+        if (NullSafe.isNonBlankString(formLabel.getLabel())) {
             labelPanel.add(formLabel);
         }
 
@@ -328,7 +328,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     private void updateDescriptionPanel() {
         descriptionPanel.clear();
-        GwtNullSafe.consume(descriptionHTML, descriptionPanel::add);
+        NullSafe.consume(descriptionHTML, descriptionPanel::add);
     }
 
     @Override

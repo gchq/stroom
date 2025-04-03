@@ -6,7 +6,6 @@ import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.NullSafe;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
@@ -15,6 +14,7 @@ import stroom.util.jersey.WebTargetProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;

@@ -23,7 +23,7 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -148,7 +148,7 @@ public class GlobalPropertyTabPresenter
 
     @Override
     public void changeNameFilter(final String name) {
-        if (GwtNullSafe.isNonEmptyString(name)) {
+        if (NullSafe.isNonEmptyString(name)) {
             // This will initiate a timer to refresh the data
             listPresenter.setPartialName(name);
         } else {

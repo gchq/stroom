@@ -1,6 +1,6 @@
 package stroom.util.string;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

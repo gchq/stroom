@@ -18,7 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;

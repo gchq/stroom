@@ -19,8 +19,8 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.NullSafe;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;

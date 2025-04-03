@@ -18,7 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -58,7 +58,7 @@ public class DocumentTypes {
                          @JsonProperty("visibleTypes") final List<DocumentType> visibleTypes) {
         this.types = types;
         this.visibleTypes = visibleTypes;
-        this.typeToDocumentTypeMap = GwtNullSafe.stream(types)
+        this.typeToDocumentTypeMap = NullSafe.stream(types)
                 .collect(Collectors.toMap(DocumentType::getType, Function.identity()));
     }
 

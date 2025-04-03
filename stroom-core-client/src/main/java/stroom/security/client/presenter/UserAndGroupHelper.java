@@ -22,7 +22,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
@@ -104,12 +104,12 @@ public class UserAndGroupHelper {
     }
 
     public static Preset mapUserRefTypeToIcon(final UserRef userRef) {
-        return GwtNullSafe.get(userRef,
+        return NullSafe.get(userRef,
                 userRef2 -> mapUserTypeToIcon(userRef2.isGroup(), userRef.isEnabled()));
     }
 
     public static Preset mapUserTypeToIcon(final User user) {
-        return GwtNullSafe.get(user,
+        return NullSafe.get(user,
                 usr -> mapUserTypeToIcon(usr.isGroup(), usr.isEnabled()));
     }
 
@@ -221,7 +221,7 @@ public class UserAndGroupHelper {
                         Scheduler.get().scheduleDeferred(() -> {
                             try {
                                 final TableRowElement rowElement = dataGrid.getRowElement(idx.get());
-                                GwtNullSafe.consume(rowElement, FocusUtil::focusRow);
+                                NullSafe.consume(rowElement, FocusUtil::focusRow);
                             } catch (IndexOutOfBoundsException e) {
                                 GWT.log(idx.get() + " is out of bounds");
                             }
@@ -239,7 +239,7 @@ public class UserAndGroupHelper {
                                                  final boolean isExternalIdp,
                                                  final Set<UserScreen> userScreens,
                                                  final HasHandlers hasHandlers) {
-        final Set<UserScreen> screens = GwtNullSafe.set(userScreens);
+        final Set<UserScreen> screens = NullSafe.set(userScreens);
         if (userRef == null) {
             return Collections.emptyList();
         } else {

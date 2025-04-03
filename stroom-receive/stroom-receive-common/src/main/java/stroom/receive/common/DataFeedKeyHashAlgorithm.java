@@ -1,7 +1,7 @@
 package stroom.receive.common;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 

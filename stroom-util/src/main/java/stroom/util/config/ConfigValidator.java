@@ -1,11 +1,11 @@
 package stroom.util.config;
 
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import jakarta.validation.ConstraintViolation;
@@ -183,10 +183,10 @@ public class ConfigValidator<T> {
         // Value might be a collection so strip the square brackets as
         final String valueStr = NullSafe.getOrElse(
                 constraintViolation.getInvalidValue(),
-                        Object::toString,
-                        str -> str.startsWith("[") && str.endsWith("]")
-                                ? str
-                                : "[" + str + "]",
+                Object::toString,
+                str -> str.startsWith("[") && str.endsWith("]")
+                        ? str
+                        : "[" + str + "]",
                 "[null]");
 
         logFunc.accept(LogUtil.message("  Validation {} for property {} with value {} - {}",
@@ -343,9 +343,9 @@ public class ConfigValidator<T> {
         @Override
         public String toString() {
             return "Result{" +
-                    "errorCount=" + errorCount +
-                    ", warningCount=" + warningCount +
-                    '}';
+                   "errorCount=" + errorCount +
+                   ", warningCount=" + warningCount +
+                   '}';
         }
     }
 }

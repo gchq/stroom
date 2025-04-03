@@ -1,11 +1,11 @@
 package stroom.receive.common;
 
-import stroom.util.NullSafe;
 import stroom.util.io.AbstractDirChangeMonitor;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;

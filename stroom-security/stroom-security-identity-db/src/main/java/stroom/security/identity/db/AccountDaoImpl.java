@@ -32,12 +32,12 @@ import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
 import stroom.security.shared.User;
-import stroom.util.NullSafe;
 import stroom.util.ResultPageFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CompareUtil.FieldComparators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;

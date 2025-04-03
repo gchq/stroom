@@ -20,7 +20,6 @@ import stroom.security.api.SecurityContext;
 import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomTest;
-import stroom.util.NullSafe;
 import stroom.util.io.CommonDirSetup;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
@@ -28,6 +27,7 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
@@ -156,7 +156,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
                     System::identityHashCode, i -> Integer.toString(i));
 
             return LogUtil.message("{} {}.{}, test instance: {}, thread: '{}' ({}), " +
-                            "injector instance: {}, cleanupBetweenTests: {}",
+                                   "injector instance: {}, cleanupBetweenTests: {}",
                     message,
                     className,
                     testName,

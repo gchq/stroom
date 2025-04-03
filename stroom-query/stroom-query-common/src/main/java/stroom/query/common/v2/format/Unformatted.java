@@ -18,7 +18,7 @@ package stroom.query.common.v2.format;
 
 
 import stroom.query.language.functions.Val;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 

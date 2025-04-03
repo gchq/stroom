@@ -5,7 +5,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import org.assertj.core.api.Assertions;

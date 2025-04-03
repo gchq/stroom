@@ -18,7 +18,7 @@
 package stroom.receive.content.client.view;
 
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -66,7 +66,7 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
 
     @Override
     public void setDescription(final String description) {
-        if (GwtNullSafe.isBlankString(description)) {
+        if (NullSafe.isBlankString(description)) {
             this.description.setHTML(SafeHtmlUtils.EMPTY_SAFE_HTML);
             this.descriptionFormGroup.setVisible(false);
         } else {

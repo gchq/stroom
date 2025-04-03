@@ -18,7 +18,7 @@ package stroom.cell.info.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -103,8 +103,8 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
                                   final ValueUpdater<R> valueUpdater) {
         final Element element = event.getEventTarget().cast();
         if (ElementUtil.hasClassName(element, ACTION_MENU_CELL_CLASS_NAME, 5)) {
-            final List<Item> items = GwtNullSafe.get(menuCreator, mc -> mc.apply(row));
-            if (GwtNullSafe.hasItems(items)) {
+            final List<Item> items = NullSafe.get(menuCreator, mc -> mc.apply(row));
+            if (NullSafe.hasItems(items)) {
                 showActionMenu(row, event);
             }
         }
@@ -138,7 +138,7 @@ public class ActionMenuCell<R> extends AbstractCell<R> {
         if (row == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final String tooltipText = GwtNullSafe.getOrElse(
+            final String tooltipText = NullSafe.getOrElse(
                     tooltipExtractor,
                     func -> func.apply(row),
                     "Actions...");

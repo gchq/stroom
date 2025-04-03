@@ -3,7 +3,7 @@ package stroom.receive.content.shared;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -62,10 +62,10 @@ public class ContentTemplate {
         }
         this.enabled = enabled;
         this.templateNumber = templateNumber;
-        this.expression = GwtNullSafe.requireNonNullElseGet(
+        this.expression = NullSafe.requireNonNullElseGet(
                 expression,
                 () -> ExpressionOperator.builder().build());
-        this.templateType = GwtNullSafe.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
+        this.templateType = NullSafe.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
         this.pipeline = Objects.requireNonNull(pipeline);
         this.name = name;
         this.description = description;

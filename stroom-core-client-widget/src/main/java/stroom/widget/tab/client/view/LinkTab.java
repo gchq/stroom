@@ -16,7 +16,7 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
@@ -31,7 +31,7 @@ public class LinkTab extends AbstractTab {
     public LinkTab(final String text, final String tooltip) {
         element = DOM.createDiv();
         element.setClassName("linkTab");
-        GwtNullSafe.consumeNonBlankString(tooltip, element::setTitle);
+        NullSafe.consumeNonBlankString(tooltip, element::setTitle);
 
         background = DOM.createDiv();
         background.setClassName("linkTab-background");

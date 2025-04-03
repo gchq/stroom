@@ -1,6 +1,6 @@
 package stroom.util.sysinfo;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,7 +41,7 @@ public interface HasSystemInfo {
             return getSystemInfo();
         } else {
             throw new UnsupportedOperationException("This system info provider does not support parameters. " +
-                    "Has getSystemInfo(params) been implemented for it.");
+                                                    "Has getSystemInfo(params) been implemented for it.");
         }
     }
 

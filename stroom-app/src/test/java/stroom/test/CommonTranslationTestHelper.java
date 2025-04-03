@@ -30,8 +30,8 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.task.shared.TaskId;
 import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import io.vavr.Tuple;

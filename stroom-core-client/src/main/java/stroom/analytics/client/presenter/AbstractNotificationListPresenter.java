@@ -32,7 +32,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -202,7 +202,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                         if (row.getDestination() instanceof NotificationStreamDestination) {
                             final NotificationStreamDestination analyticNotificationStreamDestination =
                                     (NotificationStreamDestination) row.getDestination();
-                            return GwtNullSafe.get(analyticNotificationStreamDestination.getDestinationFeed(),
+                            return NullSafe.get(analyticNotificationStreamDestination.getDestinationFeed(),
                                     DocRef::getDisplayValue);
                         } else if (row.getDestination() instanceof NotificationEmailDestination) {
                             final NotificationEmailDestination notificationEmailDestination =

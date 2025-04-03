@@ -6,7 +6,7 @@ import stroom.query.api.v2.ConditionalFormattingType;
 import stroom.query.api.v2.CustomConditionalFormattingStyle;
 import stroom.query.api.v2.TextAttributes;
 import stroom.security.client.presenter.ClassNameBuilder;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safecss.shared.SafeStylesHostedModeUtils;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -87,12 +87,12 @@ public class ConditionalFormattingSwatchUtil {
         sb.appendHtmlConstant("<div");
         sb.appendHtmlConstant(classNameBuilder.buildClassAttribute());
         sb.appendHtmlConstant(" style=\"");
-        if (GwtNullSafe.isNonBlankString(backgroundColour) &&
+        if (NullSafe.isNonBlankString(backgroundColour) &&
             SafeStylesHostedModeUtils.isValidStyleValue(backgroundColour) == null) {
             sb.appendHtmlConstant("background-color:");
             sb.appendEscaped(backgroundColour);
         }
-        if (GwtNullSafe.isNonBlankString(textColour) &&
+        if (NullSafe.isNonBlankString(textColour) &&
             SafeStylesHostedModeUtils.isValidStyleValue(textColour) == null) {
             sb.appendHtmlConstant(";color:");
             sb.appendEscaped(textColour);

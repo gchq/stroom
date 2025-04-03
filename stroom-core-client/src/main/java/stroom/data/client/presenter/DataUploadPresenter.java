@@ -29,7 +29,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -130,7 +130,7 @@ public class DataUploadPresenter
         }
 
         final String fileName = getView().getFileUpload().getFilename();
-        if (GwtNullSafe.isEmptyString(fileName)) {
+        if (NullSafe.isEmptyString(fileName)) {
             AlertEvent.fireWarn(this, "File not set!", null);
             return false;
         }
@@ -187,7 +187,7 @@ public class DataUploadPresenter
     private void onShow(final FeedDoc feedDoc) {
         dataTypeUiManager.getTypes(list -> {
             getView().getType().clear();
-            if (GwtNullSafe.hasItems(list)) {
+            if (NullSafe.hasItems(list)) {
                 getView().getType().addItems(list);
                 String streamType = feedDoc.getStreamType();
 

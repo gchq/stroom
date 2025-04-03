@@ -1,6 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,8 +29,8 @@ public class CustomRowStyle {
     }
 
     public static CustomRowStyle create(final String backgroundColour, final String textColour) {
-        final String backgroundColourTrimmed = GwtNullSafe.trim(backgroundColour);
-        final String textColourTrimmed = GwtNullSafe.trim(textColour);
+        final String backgroundColourTrimmed = NullSafe.trim(backgroundColour);
+        final String textColourTrimmed = NullSafe.trim(textColour);
         if (backgroundColourTrimmed.length() > 0 || textColourTrimmed.length() > 0) {
             return new CustomRowStyle(
                     backgroundColourTrimmed.length() == 0

@@ -92,7 +92,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -349,14 +349,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the copy document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
+                    if (NullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to copy some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
+                    if (NullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -368,14 +368,14 @@ public class DocumentPluginEventManager extends Plugin {
                     // Hide the move document presenter.
                     event.getHidePopupRequestEvent().hide();
 
-                    if (GwtNullSafe.isNonEmptyString(result.getMessage())) {
+                    if (NullSafe.isNonEmptyString(result.getMessage())) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
                                 "Unable to move some items",
                                 result.getMessage(),
                                 null);
                     }
 
-                    if (GwtNullSafe.hasItems(result.getExplorerNodes())) {
+                    if (NullSafe.hasItems(result.getExplorerNodes())) {
                         highlight(result.getExplorerNodes().get(0));
                     }
                 }, explorerListener,
@@ -388,8 +388,8 @@ public class DocumentPluginEventManager extends Plugin {
                             handleDeleteResult(result, event.getCallback()), explorerListener);
 
             if (event.getConfirm()) {
-                final int cnt = GwtNullSafe.size(event.getDocRefs());
-                final String msg = GwtNullSafe.size(event.getDocRefs()) > 1
+                final int cnt = NullSafe.size(event.getDocRefs());
+                final String msg = NullSafe.size(event.getDocRefs()) > 1
                         ? "Are you sure you want to delete these " + cnt + " items?"
                         : "Are you sure you want to delete this item?";
                 ConfirmEvent.fire(DocumentPluginEventManager.this, msg, ok -> {
@@ -415,7 +415,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 10. Handle entity delete events.
         registerHandler(getEventBus().addHandler(ExplorerTreeDeleteEvent.getType(), event -> {
-            if (GwtNullSafe.hasItems(getSelectedItems())) {
+            if (NullSafe.hasItems(getSelectedItems())) {
                 fetchPermissions(getSelectedItems(), documentPermissionMap -> {
                     final List<ExplorerNode> deletableItems = getExplorerNodeListWithPermission(
                             documentPermissionMap,
@@ -558,7 +558,7 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void deleteItems(final List<ExplorerNode> explorerNodeList, final TaskMonitorFactory taskMonitorFactory) {
-        if (GwtNullSafe.hasItems(explorerNodeList)) {
+        if (NullSafe.hasItems(explorerNodeList)) {
             final List<DocRef> docRefs = explorerNodeList
                     .stream()
                     .map(ExplorerNode::getDocRef)
@@ -573,7 +573,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void handleDeleteResult(final BulkActionResult result, ResultCallback callback) {
         boolean success = true;
-        if (GwtNullSafe.isNonBlankString(result.getMessage())) {
+        if (NullSafe.isNonBlankString(result.getMessage())) {
             AlertEvent.fireInfo(DocumentPluginEventManager.this,
                     "Unable to delete some items",
                     result.getMessage(),
@@ -584,7 +584,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // results contains only the docs that were actually deleted, not the ones that failed
         // to delete. So we need to close the open tab of any deleted doc.
-        final Map<String, List<DocRef>> typeToDocRefsMap = GwtNullSafe.stream(result.getExplorerNodes())
+        final Map<String, List<DocRef>> typeToDocRefsMap = NullSafe.stream(result.getExplorerNodes())
                 .map(ExplorerNode::getDocRef)
                 .collect(Collectors.groupingBy(DocRef::getType, Collectors.toList()));
 
@@ -782,7 +782,7 @@ public class DocumentPluginEventManager extends Plugin {
         if (docRef != null) {
             final String type = docRef.getType();
             final String uuid = docRef.getUuid();
-            final String displayName = GwtNullSafe.getOrElse(
+            final String displayName = NullSafe.getOrElse(
                     docRef.getName(),
                     name -> "'" + name + "' (" + uuid + ")",
                     uuid);
@@ -1306,7 +1306,7 @@ public class DocumentPluginEventManager extends Plugin {
                 ? () -> ShowEditNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
                 : null;
 
-        final String text = GwtNullSafe.size(explorerNodes) > 1
+        final String text = NullSafe.size(explorerNodes) > 1
                 ? "Add Tags"
                 : "Edit Tags";
 
@@ -1387,8 +1387,8 @@ public class DocumentPluginEventManager extends Plugin {
         // docs, so we need to only allow 'copy name' for these 'see but not view' cases.
         // Thus, totalCount may be bigger than readableCount
         final List<Item> childMenuItems = new ArrayList<>();
-        final int totalCount = GwtNullSafe.size(allNodes);
-        final int readableCount = GwtNullSafe.size(readableNodes);
+        final int totalCount = NullSafe.size(allNodes);
+        final int readableCount = NullSafe.size(readableNodes);
         int priority = 1;
         if (totalCount == 1) {
             childMenuItems.add(new IconMenuItem.Builder()
@@ -1452,13 +1452,13 @@ public class DocumentPluginEventManager extends Plugin {
         if (nodes.isEmpty()) {
             value = "";
         } else if (nodes.size() == 1) {
-            value = GwtNullSafe.getOrElse(nodes.get(0), extractor, "");
+            value = NullSafe.getOrElse(nodes.get(0), extractor, "");
         } else {
             value = nodes.stream()
                     .map(extractor)
                     .collect(Collectors.joining(delimter));
         }
-        if (!GwtNullSafe.isBlankString(value)) {
+        if (!NullSafe.isBlankString(value)) {
             ClipboardUtil.copy(value);
         }
     }

@@ -38,8 +38,8 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -129,10 +129,10 @@ public class MockMetaService implements MetaService, Clearable {
         if (result != null) {
             if (currentStatus != result.getStatus()) {
                 throw new RuntimeException("Unexpected status " +
-                        result.getStatus() +
-                        " (expected " +
-                        currentStatus +
-                        ")");
+                                           result.getStatus() +
+                                           " (expected " +
+                                           currentStatus +
+                                           ")");
             }
 
             result = meta

@@ -22,9 +22,9 @@ import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import org.apache.lucene980.index.LeafReaderContext;
 import org.apache.lucene980.search.Query;
@@ -51,11 +51,11 @@ class IndexShardHitCollector extends SimpleCollector {
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
-                                  final QueryKey queryKey,
-                                  final IndexShard indexShard,
-                                  final Query query,
-                                  final DocIdQueue docIdQueue,
-                                  final LongAdder totalHitCount) {
+                           final QueryKey queryKey,
+                           final IndexShard indexShard,
+                           final Query query,
+                           final DocIdQueue docIdQueue,
+                           final LongAdder totalHitCount) {
         this.taskContext = taskContext;
         this.indexShard = indexShard;
         this.queryKey = queryKey;
@@ -114,9 +114,9 @@ class IndexShardHitCollector extends SimpleCollector {
     @Override
     public String toString() {
         return "Query key: " + queryKey
-                + ", shard: " + NullSafe.get(indexShard, IndexShard::getId)
-                + ", shard hits: " + localHitCount.sum()
-                + ", total hits: " + NullSafe.getOrElse(totalHitCount, LongAdder::sum, -1);
+               + ", shard: " + NullSafe.get(indexShard, IndexShard::getId)
+               + ", shard hits: " + localHitCount.sum()
+               + ", total hits: " + NullSafe.getOrElse(totalHitCount, LongAdder::sum, -1);
     }
 }
 

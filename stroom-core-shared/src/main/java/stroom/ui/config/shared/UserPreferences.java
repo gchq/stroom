@@ -18,7 +18,7 @@ package stroom.ui.config.shared;
 
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -97,16 +97,16 @@ public class UserPreferences {
                            @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
         this.theme = theme;
         this.editorTheme = editorTheme;
-        this.editorKeyBindings = GwtNullSafe.requireNonNullElse(
+        this.editorKeyBindings = NullSafe.requireNonNullElse(
                 editorKeyBindings, DEFAULT_EDITOR_KEY_BINDINGS);
-        this.editorLiveAutoCompletion = GwtNullSafe.requireNonNullElse(
+        this.editorLiveAutoCompletion = NullSafe.requireNonNullElse(
                 editorLiveAutoCompletion, DEFAULT_EDITOR_LIVE_AUTO_COMPLETION);
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
-        this.enableTransparency = GwtNullSafe.requireNonNullElse(enableTransparency, true);
+        this.enableTransparency = NullSafe.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
     }
 

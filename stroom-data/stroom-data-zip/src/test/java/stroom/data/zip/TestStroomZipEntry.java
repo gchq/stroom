@@ -1,7 +1,7 @@
 package stroom.data.zip;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;

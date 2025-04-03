@@ -1,10 +1,10 @@
 package stroom.meta.impl.db;
 
 import stroom.cache.api.LoadingStroomCache;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import java.util.ArrayList;
@@ -28,9 +28,9 @@ public class WildCardHelper {
      * If no wildCardedNames are provided, returns an empty map.
      *
      * @param wildCardedNames e.g. 'TEST_*' or 'TEST_FEED'
-     * @param cache The cache to use for getting/putting items. The cache's own load function
-     *              will not be used.
-     * @param fetchFunc Function to call to provide values if the cache get is a miss.
+     * @param cache           The cache to use for getting/putting items. The cache's own load function
+     *                        will not be used.
+     * @param fetchFunc       Function to call to provide values if the cache get is a miss.
      */
     static Map<String, Integer> find(
             final List<String> wildCardedNames,

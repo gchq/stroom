@@ -21,7 +21,7 @@ import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.Val;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

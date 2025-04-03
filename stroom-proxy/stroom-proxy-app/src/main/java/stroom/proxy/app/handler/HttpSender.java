@@ -9,12 +9,12 @@ import stroom.proxy.repo.LogStream.EventType;
 import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.Timer;
 import org.apache.commons.io.IOUtils;

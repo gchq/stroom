@@ -121,7 +121,7 @@ public final class CompareUtil {
 
         Comparator<T> comparator = null;
 
-        if (GwtNullSafe.hasItems(criteria.getSortList())) {
+        if (NullSafe.hasItems(criteria.getSortList())) {
             for (final CriteriaFieldSort sort : criteria.getSortList()) {
                 final String field = sort.getId();
 
@@ -314,7 +314,7 @@ public final class CompareUtil {
      * comparator ({@link CompareUtil#noOpComparator()}) that does nothing.
      */
     public static <T> Comparator<T> nonNull(final Comparator<T> comparator) {
-        return GwtNullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
+        return NullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
     }
 
 
@@ -345,7 +345,7 @@ public final class CompareUtil {
          */
         public Comparator<T> get(final String fieldId, final boolean ignoreCase) {
             Objects.requireNonNull(fieldId);
-            return GwtNullSafe.get(comparatorMap.get(fieldId),
+            return NullSafe.get(comparatorMap.get(fieldId),
                     caseAwareComparator -> caseAwareComparator.get(ignoreCase));
         }
 

@@ -10,7 +10,7 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FindResult;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -99,8 +99,8 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                         currentQuery.getSortList(),
                         filter);
 
-                if ((filter.getRecentItems() == null && GwtNullSafe.isBlankString(filter.getNameFilter())) ||
-                        (filter.getRecentItems() != null && filter.getRecentItems().size() == 0)) {
+                if ((filter.getRecentItems() == null && NullSafe.isBlankString(filter.getNameFilter())) ||
+                    (filter.getRecentItems() != null && filter.getRecentItems().size() == 0)) {
                     final ResultPage<FindResult> resultPage = ResultPage.empty();
                     if (resultPage.getPageStart() != cellTable.getPageStart()) {
                         cellTable.setPageStart(resultPage.getPageStart());

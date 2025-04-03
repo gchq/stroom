@@ -25,7 +25,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -152,7 +152,7 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
                 throw new PermissionException(
                         securityContext.getUserRef(),
                         "You do not have permission to decorate this "
-                                + Objects.requireNonNullElse(docRef.getType(), "document"));
+                        + Objects.requireNonNullElse(docRef.getType(), "document"));
             }
         });
 
@@ -176,8 +176,8 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         // The passed docRef may have all the parts, but it may be from before a rename, so if force
         // is set, use the cached copy which should be up-to-date.
         if (NullSafe.isEmptyString(docRef.getType())
-                || NullSafe.isEmptyString(docRef.getName())
-                || force) {
+            || NullSafe.isEmptyString(docRef.getName())
+            || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .orElseThrow(() ->

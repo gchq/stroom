@@ -25,7 +25,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.Steppin
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
@@ -97,7 +97,7 @@ public class SteppingFilterPresenter extends
         // Pipe element icon column
         final Column<PipelineElement, Preset> iconColumn = DataGridUtil.svgPresetColumnBuilder(false,
                         (PipelineElement pipelineElement) -> {
-                            final PipelineElementType pipelineElementType = GwtNullSafe.get(
+                            final PipelineElementType pipelineElementType = NullSafe.get(
                                     pipelineElement,
                                     PipelineElement::getElementType);
                             if (pipelineElementType != null && pipelineElementType.getIcon() != null) {
@@ -116,7 +116,7 @@ public class SteppingFilterPresenter extends
         elementChooser.setColumnWidth(iconColumn, ICON_COL_WIDTH, Unit.PX);
 
         final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
-                GwtNullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
+                NullSafe.isTrue(elementIdToHasActiveFilterMap.get(pipelineElement.getId()))
                         ? BASE_CLASS + "-filterOn"
                         : BASE_CLASS + "-filterOff";
 
@@ -226,7 +226,7 @@ public class SteppingFilterPresenter extends
             settingsMap.forEach((elementId, filterSettings) ->
                     elementIdToHasActiveFilterMap.put(
                             elementId,
-                            GwtNullSafe.test(filterSettings, SteppingFilterSettings::hasActiveFilters)));
+                            NullSafe.test(filterSettings, SteppingFilterSettings::hasActiveFilters)));
         } else {
             this.settingsMap = new HashMap<>();
         }
@@ -291,7 +291,7 @@ public class SteppingFilterPresenter extends
             settingsMap.put(currentElementId, settings);
         }
 
-        final String elementId = GwtNullSafe.get(element, PipelineElement::getId);
+        final String elementId = NullSafe.get(element, PipelineElement::getId);
         if (elementId != null && !elementId.equals(currentElementId)) {
             getView().setName(element.getDisplayName());
             xPathFilters = xPathListPresenter.getDataProvider().getList();
@@ -299,9 +299,9 @@ public class SteppingFilterPresenter extends
 
             final SteppingFilterSettings settings = settingsMap.get(element.getId());
             if (settings != null) {
-                getView().setSkipToErrors(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToSeverity));
-                getView().setSkipToOutput(GwtNullSafe.get(settings, SteppingFilterSettings::getSkipToOutput));
-                if (GwtNullSafe.hasItems(settings.getFilters())) {
+                getView().setSkipToErrors(NullSafe.get(settings, SteppingFilterSettings::getSkipToSeverity));
+                getView().setSkipToOutput(NullSafe.get(settings, SteppingFilterSettings::getSkipToOutput));
+                if (NullSafe.hasItems(settings.getFilters())) {
                     xPathFilters.addAll(settings.getFilters());
                 }
             }

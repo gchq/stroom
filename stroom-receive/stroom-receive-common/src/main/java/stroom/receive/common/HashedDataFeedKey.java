@@ -1,6 +1,6 @@
 package stroom.receive.common;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

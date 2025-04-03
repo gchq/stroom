@@ -18,8 +18,8 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.util.NullSafe;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.NullSafe;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -150,11 +150,11 @@ public class ExplorerTreeNode implements HasIntegerId {
     @Override
     public String toString() {
         return "ExplorerTreeNode{" +
-                "id=" + id +
-                ", type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", name='" + name + '\'' +
-                ", tags='" + tags + '\'' +
-                '}';
+               "id=" + id +
+               ", type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", name='" + name + '\'' +
+               ", tags='" + tags + '\'' +
+               '}';
     }
 }

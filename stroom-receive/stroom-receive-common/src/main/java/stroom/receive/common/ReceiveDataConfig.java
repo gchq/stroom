@@ -2,12 +2,12 @@ package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.time.StroomDuration;

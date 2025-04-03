@@ -39,7 +39,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -162,7 +162,7 @@ public class PropertyListPresenter
                         final PipelinePropertyValue value = property.getValue();
                         if (value.getEntity() != null) {
                             return SafeHtmlUtils.fromString(value.getEntity()
-                                    .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                    .getDisplayValue(NullSafe.requireNonNullElse(
                                             DisplayType.AUTO,
                                             DisplayType.AUTO)));
                         } else {
@@ -170,7 +170,7 @@ public class PropertyListPresenter
                         }
                     }
                 })
-                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                .docRefFunction(pipelineProperty -> NullSafe.get(
                         pipelineProperty,
                         PipelineProperty::getValue,
                         PipelinePropertyValue::getEntity));

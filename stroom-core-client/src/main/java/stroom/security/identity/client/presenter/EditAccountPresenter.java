@@ -9,7 +9,7 @@ import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -126,11 +126,11 @@ public class EditAccountPresenter
 
     private void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
-            if (GwtNullSafe.isBlankString(getView().getUserId())) {
+            if (NullSafe.isBlankString(getView().getUserId())) {
                 AlertEvent.fireError(this, "A user id must be provided for the account.", e::reset);
             } else if (getView().getUserId().length() < 3) {
                 AlertEvent.fireError(this, "A user id must be at least 3 characters.", e::reset);
-            } else if (!GwtNullSafe.isBlankString(getView().getEmail()) &&
+            } else if (!NullSafe.isBlankString(getView().getEmail()) &&
                        !EmailValidator.validate(getView().getEmail())) {
                 AlertEvent.fireError(this, "Invalid email address.", e::reset);
             } else {

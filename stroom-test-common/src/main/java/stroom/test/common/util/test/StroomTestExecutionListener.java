@@ -2,7 +2,7 @@ package stroom.test.common.util.test;
 
 import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;

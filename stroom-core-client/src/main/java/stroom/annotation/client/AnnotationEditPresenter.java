@@ -34,7 +34,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -481,7 +481,7 @@ public class AnnotationEditPresenter
     private void addEntryText(final StringBuilder text,
                               final AnnotationEntry entry,
                               final Optional<EntryValue> currentValue) {
-        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
+        final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (Annotation.COMMENT.equals(entry.getEntryType())) {
             text.append(dateTimeFormatter.format(entry.getEntryTime()));
@@ -570,7 +570,7 @@ public class AnnotationEditPresenter
                               final AnnotationEntry entry,
                               final Optional<EntryValue> currentValue,
                               final Date now) {
-        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
+        final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (Annotation.COMMENT.equals(entry.getEntryType())) {
             html.appendHtmlConstant(HISTORY_LINE_START);

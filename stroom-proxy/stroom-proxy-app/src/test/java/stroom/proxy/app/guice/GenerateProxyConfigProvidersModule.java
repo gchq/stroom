@@ -4,13 +4,13 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyOpenIdConfig;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
-import stroom.util.NullSafe;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
@@ -96,10 +96,10 @@ public class GenerateProxyConfigProvidersModule {
                                     .append(interfaceClass.getSimpleName())
                                     .append("\n")
                                     .append(buildMethod(
-                                    simpleNames,
-                                    simpleNameToFullNamesMap,
-                                    clazz,
-                                    interfaceClass)));
+                                            simpleNames,
+                                            simpleNameToFullNamesMap,
+                                            clazz,
+                                            interfaceClass)));
                     return stringBuilder.toString();
                 })
                 .collect(Collectors.joining("\n"));

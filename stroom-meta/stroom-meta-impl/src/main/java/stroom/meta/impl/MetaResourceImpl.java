@@ -33,11 +33,11 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
@@ -105,8 +105,8 @@ class MetaResourceImpl implements MetaResource {
         final List<Data> dataItems = new ArrayList<>();
 
         if (expression.getChildren().size() == 1
-                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
-                && term.hasCondition(Condition.EQUALS)) {
+            && expression.getChildren().getFirst() instanceof final ExpressionTerm term
+            && term.hasCondition(Condition.EQUALS)) {
             final String metaIdStr = term.getValue();
 
             try {
@@ -137,10 +137,10 @@ class MetaResourceImpl implements MetaResource {
             description = isDelete
                     ? "Delete stream with ID " + metaIdStr
                     : "Update the status of stream with ID " + metaIdStr
-                            + " from " + currentStatus + " to " + newStatus;
+                      + " from " + currentStatus + " to " + newStatus;
         } else if (expression.getChildren().size() == 1
-                && expression.getChildren().getFirst() instanceof final ExpressionTerm term
-                && term.hasCondition(Condition.IN)) {
+                   && expression.getChildren().getFirst() instanceof final ExpressionTerm term
+                   && term.hasCondition(Condition.IN)) {
             final String streamIdsStr = term.getValue();
             final String[] idArr = NullSafe.getOrElse(
                     streamIdsStr,

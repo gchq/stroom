@@ -16,9 +16,9 @@
 
 package stroom.meta.api;
 
-import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

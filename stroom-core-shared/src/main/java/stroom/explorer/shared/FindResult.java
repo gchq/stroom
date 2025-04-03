@@ -17,7 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -80,7 +80,7 @@ public class FindResult {
 
     @Override
     public String toString() {
-        return path + " / " + GwtNullSafe.get(docRef, DocRef::toShortString);
+        return path + " / " + NullSafe.get(docRef, DocRef::toShortString);
     }
 
     // --------------------------------------------------------------------------------

@@ -9,10 +9,10 @@ import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.index.shared.Partition;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -67,7 +67,7 @@ public class IndexShardCreatorImpl implements IndexShardCreator {
                     indexVersion.getDisplayValue());
 
             LOGGER.info("Created index shard for index: {} ({}), partition: '{}', ownerNodeName: {}, " +
-                            "index version: {}, volume group: '{}', volume state: {}, path: {}",
+                        "index version: {}, volume group: '{}', volume state: {}, path: {}",
                     index.getName(),
                     index.getUuid(),
                     NullSafe.get(indexShardKey.getPartition(), Partition::getLabel),

@@ -1,8 +1,8 @@
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;

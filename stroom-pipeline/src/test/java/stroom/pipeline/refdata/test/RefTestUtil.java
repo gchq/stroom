@@ -10,10 +10,10 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StagingValueOutputStream;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 
 import org.assertj.core.api.Assertions;
@@ -35,11 +35,11 @@ public class RefTestUtil {
     }
 
     public static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
-                              final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
-                              final RefDataLoader refDataLoader,
-                              final MapDefinition mapDefinition,
-                              final String key,
-                              final RefDataValue refDataValue) {
+                             final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
+                             final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final String key,
+                             final RefDataValue refDataValue) {
         try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory)) {
             writeValue(stagingValueOutputStream, refDataValue);
@@ -48,11 +48,11 @@ public class RefTestUtil {
     }
 
     public static void doPut(final ValueStoreHashAlgorithm valueStoreHashAlgorithm,
-                              final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
-                              final RefDataLoader refDataLoader,
-                              final MapDefinition mapDefinition,
-                              final Range<Long> range,
-                              final RefDataValue refDataValue) {
+                             final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory,
+                             final RefDataLoader refDataLoader,
+                             final MapDefinition mapDefinition,
+                             final Range<Long> range,
+                             final RefDataValue refDataValue) {
         try (StagingValueOutputStream stagingValueOutputStream = new StagingValueOutputStream(valueStoreHashAlgorithm,
                 pooledByteBufferOutputStreamFactory)) {
             writeValue(stagingValueOutputStream, refDataValue);
@@ -61,7 +61,7 @@ public class RefTestUtil {
     }
 
     public static void writeValue(final StagingValueOutputStream stagingValueOutputStream,
-                                   final RefDataValue refDataValue) {
+                                  final RefDataValue refDataValue) {
         stagingValueOutputStream.clear();
         try {
             if (refDataValue instanceof StringValue) {

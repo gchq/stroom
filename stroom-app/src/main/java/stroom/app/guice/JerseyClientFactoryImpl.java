@@ -2,9 +2,9 @@ package stroom.app.guice;
 
 import stroom.config.app.Config;
 import stroom.dropwizard.common.AbstractJerseyClientFactory;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.NullSafe;
 
 import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;

@@ -1,9 +1,9 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
-import stroom.util.NullSafe;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

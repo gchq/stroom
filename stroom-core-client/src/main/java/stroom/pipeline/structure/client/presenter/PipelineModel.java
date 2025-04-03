@@ -30,7 +30,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -487,8 +487,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
      * Set the provided filters on the pipeline elements in our model
      */
     public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-        GwtNullSafe.map(combinedData.getElements()).values().forEach(element -> {
-            element.setSteppingFilterSettings(GwtNullSafe.map(elementIdToStepFilterMap).get(element.getId()));
+        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
+            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
         });
         refresh();
     }

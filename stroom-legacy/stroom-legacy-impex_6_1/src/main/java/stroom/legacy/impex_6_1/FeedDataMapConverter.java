@@ -8,8 +8,8 @@ import stroom.importexport.shared.ImportState;
 import stroom.legacy.model_6_1.Feed;
 import stroom.legacy.model_6_1.StreamType;
 import stroom.meta.api.MetaService;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;

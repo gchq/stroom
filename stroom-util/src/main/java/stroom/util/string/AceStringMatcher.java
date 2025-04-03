@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package stroom.util.string;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -190,8 +190,8 @@ public class AceStringMatcher {
         @Override
         public String toString() {
             return name
-                    + " score: " + score
-                    + " exactMatch: " + exactMatch;
+                   + " score: " + score
+                   + " exactMatch: " + exactMatch;
         }
     }
 }

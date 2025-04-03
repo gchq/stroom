@@ -1,9 +1,9 @@
 package stroom.security.impl.apikey;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.Base58;
 import stroom.util.string.StringUtil;
 
@@ -30,9 +30,9 @@ public class ApiKeyGenerator {
     public static final int TRUNCATED_HASH_LENGTH = 10;
     public static final int API_KEY_TOTAL_LENGTH =
             API_KEY_TYPE.length()
-                    + (API_KEY_SEPARATOR.length() * 2)
-                    + TRUNCATED_HASH_LENGTH
-                    + API_KEY_RANDOM_CODE_LENGTH;
+            + (API_KEY_SEPARATOR.length() * 2)
+            + TRUNCATED_HASH_LENGTH
+            + API_KEY_RANDOM_CODE_LENGTH;
 
     private static final String BASE_58_ALPHABET = new String(Base58.ALPHABET);
     private static final String BASE_58_CHAR_CLASS = "[" + BASE_58_ALPHABET + "]";
@@ -41,11 +41,11 @@ public class ApiKeyGenerator {
     // A regex pattern that will match a full api key
     private static final Pattern API_KEY_PATTERN = Pattern.compile(
             "^"
-                    + Pattern.quote(API_KEY_TYPE + API_KEY_SEPARATOR)
-                    + HEX_CHAR_CLASS + "{" + TRUNCATED_HASH_LENGTH + "}"
-                    + Pattern.quote(API_KEY_SEPARATOR)
-                    + BASE_58_CHAR_CLASS + "{" + API_KEY_RANDOM_CODE_LENGTH + "}"
-                    + "$");
+            + Pattern.quote(API_KEY_TYPE + API_KEY_SEPARATOR)
+            + HEX_CHAR_CLASS + "{" + TRUNCATED_HASH_LENGTH + "}"
+            + Pattern.quote(API_KEY_SEPARATOR)
+            + BASE_58_CHAR_CLASS + "{" + API_KEY_RANDOM_CODE_LENGTH + "}"
+            + "$");
     private static final Predicate<String> API_KEY_MATCH_PREDICATE = API_KEY_PATTERN.asMatchPredicate();
 
     private final SecureRandom secureRandom;

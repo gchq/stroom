@@ -6,7 +6,7 @@ import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -62,7 +62,7 @@ public class DependenciesTabPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        if (GwtNullSafe.isNonEmptyString(name)) {
+        if (NullSafe.isNonEmptyString(name)) {
             dependenciesPresenter.setFilterInput(name);
         } else {
             dependenciesPresenter.clearFilterInput();

@@ -34,9 +34,8 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Message;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
 
 import jakarta.inject.Inject;
@@ -233,7 +232,7 @@ class DashboardStoreImpl implements DashboardStore {
                                                                final DependencyRemapper dependencyRemapper) {
         final TableComponentSettings.Builder builder = tableComponentSettings.copy();
 
-        final String uuid = GwtNullSafe.get(tableComponentSettings.getExtractionPipeline(), DocRef::getUuid);
+        final String uuid = NullSafe.get(tableComponentSettings.getExtractionPipeline(), DocRef::getUuid);
         if (NullSafe.isNonEmptyString(uuid)) {
             builder.extractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
         }

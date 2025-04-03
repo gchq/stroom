@@ -3,7 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 

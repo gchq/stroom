@@ -8,7 +8,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -53,10 +53,10 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                                     .collect(Collectors.toList());
                         } catch (final NumberFormatException e) {
                             throw new NumberFormatException("Error parsing value \"" +
-                                    values +
-                                    "\" as number for field '" +
-                                    dataSourceField.getFldName() +
-                                    "'");
+                                                            values +
+                                                            "\" as number for field '" +
+                                                            dataSourceField.getFldName() +
+                                                            "'");
                         }
                     });
 

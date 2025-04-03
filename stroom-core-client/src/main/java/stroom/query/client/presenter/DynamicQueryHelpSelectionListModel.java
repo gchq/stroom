@@ -29,7 +29,7 @@ import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -111,7 +111,7 @@ public class DynamicQueryHelpSelectionListModel
                         // Only update if the request is still current.
                         if (request == lastRequest) {
                             final ResultPage<QueryHelpSelectionItem> resultPage;
-                            if (GwtNullSafe.hasItems(response.getValues())) {
+                            if (NullSafe.hasItems(response.getValues())) {
                                 List<QueryHelpSelectionItem> items = response
                                         .getValues()
                                         .stream()

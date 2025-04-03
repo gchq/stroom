@@ -6,11 +6,11 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
-import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
 import stroom.util.time.StroomDuration;
 
@@ -44,8 +44,8 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         suggestedTags = Arrays.stream(StandardExplorerTags.values())
-                        .map(StandardExplorerTags::getTagName)
-                                .collect(Collectors.toSet());
+                .map(StandardExplorerTags::getTagName)
+                .collect(Collectors.toSet());
         dependencyWarningsEnabled = false;
     }
 

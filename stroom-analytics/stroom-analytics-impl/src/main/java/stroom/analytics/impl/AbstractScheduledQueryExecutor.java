@@ -32,7 +32,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.WorkQueue;
 import stroom.util.date.DateUtil;
@@ -43,6 +42,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
 import stroom.util.scheduler.TriggerFactory;
 import stroom.util.shared.HasUserDependencies;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
@@ -307,7 +307,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                     return new UserDependency(userRef, details, executionSchedule.getOwningDoc());
                 })
 //                    .filter(userDependency ->
-//                            NullSafe.getOrElse(
+//                            GwtNullSafe.getOrElse(
 //                                    userDependency.getDocRef(),
 //                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
 //                                    true))

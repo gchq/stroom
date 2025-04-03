@@ -18,7 +18,7 @@ package stroom.editor.client.view;
 
 import stroom.editor.client.presenter.Option;
 import stroom.ui.config.shared.AceEditorTheme;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -56,7 +56,7 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
 
     public AbstractEditorViewImpl() {
         editor = new Editor();
-        editor.getElement().setClassName("editor " + GwtNullSafe.string(getAdditionalClassNames()));
+        editor.getElement().setClassName("editor " + NullSafe.string(getAdditionalClassNames()));
     }
 
     protected void initOptions() {
@@ -118,7 +118,7 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
     }
 
     public void setText(final String text) {
-        editor.setText(GwtNullSafe.string(text));
+        editor.setText(NullSafe.string(text));
     }
 
     public boolean isClean() {

@@ -4,7 +4,6 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.store.FileStores;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -12,6 +11,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 

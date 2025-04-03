@@ -22,7 +22,7 @@ import stroom.item.client.SelectionBox;
 import stroom.preferences.client.EditorPreferencesPresenter.EditorPreferencesView;
 import stroom.ui.config.shared.UserPreferences.EditorKeyBindings;
 import stroom.ui.config.shared.UserPreferences.Toggle;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -90,7 +90,7 @@ public final class EditorPreferencesViewImpl
     public void setEditorThemes(final List<String> editorThemes) {
         this.editorTheme.clear();
 
-        final List<EditorThemeName> editorThemeNames = GwtNullSafe.stream(editorThemes)
+        final List<EditorThemeName> editorThemeNames = NullSafe.stream(editorThemes)
                 .map(this::createEditorThemeItem)
                 .collect(Collectors.toList());
 

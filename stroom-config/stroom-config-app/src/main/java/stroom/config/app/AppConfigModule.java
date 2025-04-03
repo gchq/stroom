@@ -34,12 +34,12 @@ import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
-import stroom.util.NullSafe;
 import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.AbstractModule;
 
@@ -82,145 +82,145 @@ public class AppConfigModule extends AbstractModule {
         // PathConfig is not settable via the DB so bind here
         bind(PathConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getPathConfig)
+                                bootStrapConfig,
+                                AppConfig::getPathConfig)
                         .orElseGet(StroomPathConfig::new));
 
         // StroomPathConfig is not settable via the DB so bind here
         bind(StroomPathConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getPathConfig)
+                                bootStrapConfig,
+                                AppConfig::getPathConfig)
                         .orElseGet(StroomPathConfig::new));
 
         bind(CommonDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getCommonDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getCommonDbConfig)
                         .orElseGet(CommonDbConfig::new));
 
         bind(ActivityDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getActivityConfig,
-                        ActivityConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getActivityConfig,
+                                ActivityConfig::getDbConfig)
                         .orElseGet(ActivityDbConfig::new));
 
         bind(AnnotationDBConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getAnnotationConfig,
-                        AnnotationConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getAnnotationConfig,
+                                AnnotationConfig::getDbConfig)
                         .orElseGet(AnnotationDBConfig::new));
 
         bind(AuthorisationDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getSecurityConfig,
-                        SecurityConfig::getAuthorisationConfig,
-                        AuthorisationConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getSecurityConfig,
+                                SecurityConfig::getAuthorisationConfig,
+                                AuthorisationConfig::getDbConfig)
                         .orElseGet(AuthorisationDbConfig::new));
 
         bind(ClusterLockDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getClusterLockConfig,
-                        ClusterLockConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getClusterLockConfig,
+                                ClusterLockConfig::getDbConfig)
                         .orElseGet(ClusterLockDbConfig::new));
 
         bind(DataStoreServiceDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getDataConfig,
-                        DataConfig::getDataStoreServiceConfig,
-                        DataStoreServiceConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getDataConfig,
+                                DataConfig::getDataStoreServiceConfig,
+                                DataStoreServiceConfig::getDbConfig)
                         .orElseGet(DataStoreServiceDbConfig::new));
 
         bind(DocStoreDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getDocStoreConfig,
-                        DocStoreConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getDocStoreConfig,
+                                DocStoreConfig::getDbConfig)
                         .orElseGet(DocStoreDbConfig::new));
 
         bind(ExplorerDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getExplorerConfig,
-                        ExplorerConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getExplorerConfig,
+                                ExplorerConfig::getDbConfig)
                         .orElseGet(ExplorerDbConfig::new));
 
         bind(IdentityDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getSecurityConfig,
-                        SecurityConfig::getIdentityConfig,
-                        IdentityConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getSecurityConfig,
+                                SecurityConfig::getIdentityConfig,
+                                IdentityConfig::getDbConfig)
                         .orElseGet(IdentityDbConfig::new));
 
         bind(IndexDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getIndexConfig,
-                        IndexConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getIndexConfig,
+                                IndexConfig::getDbConfig)
                         .orElseGet(IndexDbConfig::new));
 
         bind(JobSystemDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getJobSystemConfig,
-                        JobSystemConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getJobSystemConfig,
+                                JobSystemConfig::getDbConfig)
                         .orElseGet(JobSystemDbConfig::new));
 
         bind(LegacyDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getLegacyConfig,
-                        LegacyConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getLegacyConfig,
+                                LegacyConfig::getDbConfig)
                         .orElseGet(LegacyDbConfig::new));
 
         bind(MetaServiceDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getDataConfig,
-                        DataConfig::getMetaServiceConfig,
-                        MetaServiceConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getDataConfig,
+                                DataConfig::getMetaServiceConfig,
+                                MetaServiceConfig::getDbConfig)
                         .orElseGet(MetaServiceDbConfig::new));
 
         bind(NodeDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getNodeConfig,
-                        NodeConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getNodeConfig,
+                                NodeConfig::getDbConfig)
                         .orElseGet(NodeDbConfig::new));
 
         bind(ProcessorDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getProcessorConfig,
-                        ProcessorConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getProcessorConfig,
+                                ProcessorConfig::getDbConfig)
                         .orElseGet(ProcessorDbConfig::new));
 
         bind(PropertyServiceDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getPropertyServiceConfig,
-                        PropertyServiceConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getPropertyServiceConfig,
+                                PropertyServiceConfig::getDbConfig)
                         .orElseGet(PropertyServiceDbConfig::new));
 
         bind(SQLStatisticsDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getStatisticsConfig,
-                        StatisticsConfig::getSqlStatisticsConfig,
-                        SQLStatisticsConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getStatisticsConfig,
+                                StatisticsConfig::getSqlStatisticsConfig,
+                                SQLStatisticsConfig::getDbConfig)
                         .orElseGet(SQLStatisticsDbConfig::new));
 
         bind(StoredQueryDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(
-                        bootStrapConfig,
-                        AppConfig::getStoredQueryConfig,
-                        StoredQueryConfig::getDbConfig)
+                                bootStrapConfig,
+                                AppConfig::getStoredQueryConfig,
+                                StoredQueryConfig::getDbConfig)
                         .orElseGet(StoredQueryDbConfig::new));
     }
 

@@ -25,7 +25,7 @@ import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Null;
 import stroom.query.language.functions.ParamFactory;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
 import java.util.Collections;

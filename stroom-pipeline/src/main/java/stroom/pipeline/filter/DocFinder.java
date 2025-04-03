@@ -6,9 +6,9 @@ import stroom.docref.HasFindDocsByName;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

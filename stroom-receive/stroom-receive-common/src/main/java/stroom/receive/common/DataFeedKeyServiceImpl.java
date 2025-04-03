@@ -5,11 +5,11 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
-import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -132,7 +132,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     public synchronized int addDataFeedKeys(final HashedDataFeedKeys hashedDataFeedKeys,
                                             final Path sourceFile) {
         int addedCount = 0;
-        if (NullSafe.hasItems(hashedDataFeedKeys)) {
+        if (NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
             LOGGER.debug(() -> LogUtil.message("Adding {} dataFeedKeys",
                     hashedDataFeedKeys.getDataFeedKeys().size()));
 

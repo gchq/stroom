@@ -1,8 +1,8 @@
 package stroom.test.common;
 
-import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathWithAttributes;
+import stroom.util.shared.NullSafe;
 
 import org.apache.commons.codec.binary.Hex;
 

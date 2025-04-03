@@ -16,9 +16,9 @@
 
 package stroom.util.collections;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
 import java.util.Collection;
@@ -116,10 +116,10 @@ public class MultiCaseMap<V> {
                 if (subMap.size() > 1) {
                     throw new MultipleMatchException(
                             "Multiple keys " + subMap.keySet()
-                                    + " exist for case-insensitive key '"
-                                    + Objects.requireNonNullElseGet(key, ciKey::get)
-                                    + "' and there is no " +
-                                    "exact match.");
+                            + " exist for case-insensitive key '"
+                            + Objects.requireNonNullElseGet(key, ciKey::get)
+                            + "' and there is no " +
+                            "exact match.");
                 } else {
                     return subMap.values().iterator().next();
                 }

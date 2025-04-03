@@ -2,7 +2,7 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.query.api.v2.ColumnRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -43,7 +43,7 @@ public class TableComponentSelection implements ComponentSelection {
 
     public static List<ComponentSelection> create(final List<ColumnRef> columns,
                                                   final List<TableRow> tableRows) {
-        return GwtNullSafe.list(tableRows)
+        return NullSafe.list(tableRows)
                 .stream()
                 .map(tableRow -> new TableComponentSelection(columns, tableRow))
                 .collect(Collectors.toList());

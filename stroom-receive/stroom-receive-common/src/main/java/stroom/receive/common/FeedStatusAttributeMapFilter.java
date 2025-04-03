@@ -6,8 +6,8 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.util.NullSafe;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 
 import com.codahale.metrics.Meter;

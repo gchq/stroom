@@ -5,9 +5,9 @@ import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.SimpleMetaImpl;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -51,14 +51,30 @@ class TestFsPathHelper {
                 .withTestFunction(testCase ->
                         FsPathHelper.getId(NullSafe.get(testCase.getInput(), Path::of)))
                 .withSimpleEqualityAssertion()
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz", 414L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=000.revt.meta.bgz", 0L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=0.revt.meta.bgz", 0L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=1.revt.meta.bgz", 1L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=001.revt.meta.bgz", 1L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=BAD_NUMBER.revt.meta.bgz", -1L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=.revt.meta.bgz", -1L)
-                .addCase("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS.revt.meta.bgz", -1L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz",
+                        414L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=000.revt.meta.bgz",
+                        0L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=0.revt.meta.bgz",
+                        0L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=1.revt.meta.bgz",
+                        1L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=001.revt.meta.bgz",
+                        1L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=BAD_NUMBER.revt.meta.bgz",
+                        -1L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=.revt.meta.bgz",
+                        -1L)
+                .addCase(
+                        "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS.revt.meta.bgz",
+                        -1L)
                 .addCase("/some/path/default_stream_volume/store/EVENTS/2022/12/14/001", -1L)
                 .addThrowsCase(null, NullPointerException.class)
                 .build();
@@ -67,7 +83,8 @@ class TestFsPathHelper {
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void decodedPath1() {
-        Path path = Path.of("/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz");
+        Path path = Path.of(
+                "/some/path/default_stream_volume/store/RAW_EVENTS/2022/12/14/TEST_REFERENCE_DATA-EVENTS=414.revt.meta.bgz");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
         assertThat(decodedPath.getTypeName())
@@ -85,7 +102,8 @@ class TestFsPathHelper {
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void decodedPath2() {
-        Path path = Path.of("/some/path/default_stream_volume/store/RAW_EVENTS/2023/03/15/005/TEST_FEED=999999.revt.meta.bgz.yml");
+        Path path = Path.of(
+                "/some/path/default_stream_volume/store/RAW_EVENTS/2023/03/15/005/TEST_FEED=999999.revt.meta.bgz.yml");
         final DecodedPath decodedPath = FsPathHelper.decodedPath(path);
 
         assertThat(decodedPath.getTypeName())

@@ -28,14 +28,13 @@ import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.SimpleScheduleExec;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 
@@ -101,7 +100,7 @@ class JobNodeService {
                 () -> {
                     final JobNodeListResponse jobNodeListResponse = jobNodeDao.find(findJobNodeCriteria);
 
-                    final boolean sortOnAdvanced = GwtNullSafe.stream(findJobNodeCriteria.getSortList())
+                    final boolean sortOnAdvanced = NullSafe.stream(findJobNodeCriteria.getSortList())
                             .map(CriteriaFieldSort::getId)
                             .anyMatch(id -> Objects.equals(id, FindJobNodeCriteria.FIELD_ADVANCED));
 

@@ -1,6 +1,6 @@
 package stroom.docstore.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ public class Documentation {
     }
 
     public static Documentation of(final String markdown) {
-        if (GwtNullSafe.isBlankString(markdown)) {
+        if (NullSafe.isBlankString(markdown)) {
             return EMPTY;
         } else {
             return new Documentation(markdown);

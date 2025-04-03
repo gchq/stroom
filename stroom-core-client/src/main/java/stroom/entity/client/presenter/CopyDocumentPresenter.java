@@ -28,7 +28,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -117,7 +117,7 @@ public class CopyDocumentPresenter
                 .onShow(e -> entityTreePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        if (singleItemMode && GwtNullSafe.isBlankString(getView().getName())) {
+                        if (singleItemMode && NullSafe.isBlankString(getView().getName())) {
                             AlertEvent.fireError(CopyDocumentPresenter.this, "No name specified", e::reset);
                         } else {
                             final ExplorerNode folder = entityTreePresenter.getSelectedItem();

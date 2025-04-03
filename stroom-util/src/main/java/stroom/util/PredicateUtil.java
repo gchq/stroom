@@ -1,5 +1,6 @@
 package stroom.util;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import java.util.Arrays;

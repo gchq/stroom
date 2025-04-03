@@ -26,7 +26,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.concurrent.WorkQueue;
 import stroom.util.io.FileUtil;
@@ -35,6 +34,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
@@ -149,7 +149,7 @@ public class PhysicalDeleteExecutor {
                     }
                     if (progress.hasBreachedThreshold()) {
                         LOGGER.error("{} - Aborting as failure threshold {} exceeded. " +
-                                        "See property {}",
+                                     "See property {}",
                                 TASK_NAME,
                                 dataStoreServiceConfig.getDeleteFailureThreshold(),
                                 dataStoreServiceConfig.getFullPath(
@@ -210,7 +210,7 @@ public class PhysicalDeleteExecutor {
 
                         if (NullSafe.hasItems(failedMetaIds)) {
                             LOGGER.error("{} - Failed to delete files for {} meta records. " +
-                                            "Check logs for error messages.",
+                                         "Check logs for error messages.",
                                     TASK_NAME, failedMetaIds.size());
                             if (slidingDeleteThreshold != null) {
 
@@ -384,7 +384,7 @@ public class PhysicalDeleteExecutor {
         progress.addFileDeletionDuration(durationTimer);
         // Can't use logDurationIfDebugEnabled due to InterruptedException
         LOGGER.debug(() -> LogUtil.message("{} - Deleted {} files for {} meta records in {}. " +
-                        "Number of failed streams: {}",
+                                           "Number of failed streams: {}",
                 TASK_NAME,
                 progress.getSuccessCount(),
                 simpleMetas.size(),
@@ -416,7 +416,7 @@ public class PhysicalDeleteExecutor {
                         // state it will cope
                         if (progress.hasBreachedThreshold()) {
                             LOGGER.warn("{} - Skipping file deletion for stream {} as failure threshold exceeded {}. " +
-                                            "See property {}",
+                                        "See property {}",
                                     TASK_NAME,
                                     simpleMeta.getId(),
                                     dataStoreServiceConfig.getDeleteFailureThreshold(),
@@ -425,7 +425,7 @@ public class PhysicalDeleteExecutor {
                         } else {
                             info(() -> LogUtil.message(
                                     "Physically deleting everything associated with stream: {}, " +
-                                            "feed: {}, type: {}, statusTime: {}",
+                                    "feed: {}, type: {}, statusTime: {}",
                                     simpleMeta.getId(), simpleMeta.getFeedName(),
                                     simpleMeta.getTypeName(),
                                     LogUtil.instant(simpleMeta.getStatusMs())));
@@ -455,8 +455,8 @@ public class PhysicalDeleteExecutor {
                                         } else {
                                             isSuccessful = true;
                                             LOGGER.warn(TASK_NAME + " - Directory does not exist '" +
-                                                    FileUtil.getCanonicalPath(dir) +
-                                                    "'");
+                                                        FileUtil.getCanonicalPath(dir) +
+                                                        "'");
                                         }
                                     }
                                     case S3 -> {

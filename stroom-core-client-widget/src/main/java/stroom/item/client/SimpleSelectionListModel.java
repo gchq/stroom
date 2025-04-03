@@ -17,7 +17,7 @@
 package stroom.item.client;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -44,7 +44,7 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
                               final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<SimpleSelectionItemWrapper<T>>> consumer) {
-        if (!GwtNullSafe.isBlankString(filter)) {
+        if (!NullSafe.isBlankString(filter)) {
             final List<SimpleSelectionItemWrapper<T>> filteredItems = items.stream()
                     .filter(item -> item.getLabel().toLowerCase().contains(filter))
                     .collect(Collectors.toList());
@@ -150,7 +150,7 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
 
     @Override
     public T unwrap(final SimpleSelectionItemWrapper<T> selectionItem) {
-        return GwtNullSafe.get(selectionItem, SimpleSelectionItemWrapper::getItem);
+        return NullSafe.get(selectionItem, SimpleSelectionItemWrapper::getItem);
     }
 
     @Override

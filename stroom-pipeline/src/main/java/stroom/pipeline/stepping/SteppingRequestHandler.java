@@ -54,9 +54,9 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -326,9 +326,9 @@ class SteppingRequestHandler {
                     // [Optimisation] If we are moving backward and are at the
                     // beginning of a stream then move to the previous stream.
                     if (StepType.BACKWARD.equals(stepType)
-                            && currentStreamIndex != -1
-                            && currentLocation.getPartIndex() <= 0
-                            && currentLocation.getRecordIndex() <= 0) {
+                        && currentStreamIndex != -1
+                        && currentLocation.getPartIndex() <= 0
+                        && currentLocation.getRecordIndex() <= 0) {
                         currentStreamIndex--;
 
                         // If there are no more streams then we are at the
@@ -611,9 +611,9 @@ class SteppingRequestHandler {
             // each sequentially until we find a record.
             boolean done = controller.isFound();
             while (!done
-                    && partIndex >= 0
-                    && partIndex <= maxPartIndex
-                    && !taskContext.isTerminated()) {
+                   && partIndex >= 0
+                   && partIndex <= maxPartIndex
+                   && !taskContext.isTerminated()) {
                 // Set the stream number.
                 metaHolder.setPartIndex(partIndex);
                 streamLocationFactory.setPartIndex(partIndex);
@@ -700,9 +700,9 @@ class SteppingRequestHandler {
 
             // Don't return a pipeline if we cannot step with it.
             if (pipeline == null
-                    || controller.getRecordDetector() == null
-                    || controller.getMonitors() == null
-                    || controller.getMonitors().size() == 0) {
+                || controller.getRecordDetector() == null
+                || controller.getMonitors() == null
+                || controller.getMonitors().size() == 0) {
                 throw ProcessException.create(
                         "You cannot step with this pipeline as it does not contain required elements.");
             }
@@ -712,12 +712,12 @@ class SteppingRequestHandler {
 
     private String createStreamInfo(final String feedName, final Meta meta) {
         return "" +
-                "id=" +
-                meta.getId() +
-                ", feed=" +
-                feedName +
-                ", received=" +
-                DateUtil.createNormalDateTimeString(meta.getCreateMs());
+               "id=" +
+               meta.getId() +
+               ", feed=" +
+               feedName +
+               ", received=" +
+               DateUtil.createNormalDateTimeString(meta.getCreateMs());
     }
 
     private void error(final Exception e) {

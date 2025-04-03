@@ -6,7 +6,6 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.DataFormatNames;
-import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
@@ -15,6 +14,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
 import stroom.util.shared.validation.IsSupersetOf;
 import stroom.util.time.StroomDuration;
@@ -128,10 +128,10 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
             StreamTypeNames.CONTEXT,
     }) // List should contain as a minimum all those types that the java code reference
     @JsonPropertyDescription("Set of supported meta type names. This set must contain all of the names " +
-            "in the default value for this property but can contain additional names. " +
-            "Any custom types added here that are used for raw data must also be " +
-            "added to the property 'rawMetaTypes'." +
-            "")
+                             "in the default value for this property but can contain additional names. " +
+                             "Any custom types added here that are used for raw data must also be " +
+                             "added to the property 'rawMetaTypes'." +
+                             "")
     public Set<String> getMetaTypes() {
         return metaTypes;
     }
@@ -142,7 +142,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
             StreamTypeNames.RAW_EVENTS,
             StreamTypeNames.RAW_REFERENCE,
     }) // List must match stroom.data.shared.StreamTypeNames#ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES
-    @JsonPropertyDescription("Set of meta type names that are used for received raw data. " +
+    @JsonPropertyDescription(
+            "Set of meta type names that are used for received raw data. " +
             "Types defined here will be read using the Data Encoding set on the Feed's settings." +
             "Any custom types added to the 'metaTypes' property that are used for raw data must also be " +
             "added here." +
@@ -173,7 +174,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
             DataFormatNames.TEXT,
             DataFormatNames.SYSLOG,
     }) // List must match stroom.meta.shared.DataFormatNames#ALL_HARD_CODED_FORMAT_NAMES
-    @JsonPropertyDescription("Set of data format names. " +
+    @JsonPropertyDescription(
+            "Set of data format names. " +
             "This set must contain all of the names in the default value for this property but can " +
             "contain additional names.")
     public Set<String> getDataFormats() {
@@ -181,7 +183,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     }
 
     @Min(0)
-    @JsonPropertyDescription("The number of streams to delete/restore using a filter in a single " +
+    @JsonPropertyDescription(
+            "The number of streams to delete/restore using a filter in a single " +
             "batch. Each batch will run in a separate transaction. A value of zero means a single " +
             "batch will be used.")
     public int getMetaStatusUpdateBatchSize() {
@@ -219,16 +222,16 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     @Override
     public String toString() {
         return "MetaServiceConfig{" +
-                "dbConfig=" + dbConfig +
-                ", metaValueConfig=" + metaValueConfig +
-                ", metaFeedCache=" + metaFeedCache +
-                ", metaProcessorCache=" + metaProcessorCache +
-                ", metaTypeCache=" + metaTypeCache +
-                ", metaTypes=" + metaTypes +
-                ", rawMetaTypes=" + rawMetaTypes +
-                ", dataFormats=" + dataFormats +
-                ", metaStatusUpdateBatchSize=" + metaStatusUpdateBatchSize +
-                '}';
+               "dbConfig=" + dbConfig +
+               ", metaValueConfig=" + metaValueConfig +
+               ", metaFeedCache=" + metaFeedCache +
+               ", metaProcessorCache=" + metaProcessorCache +
+               ", metaTypeCache=" + metaTypeCache +
+               ", metaTypes=" + metaTypes +
+               ", rawMetaTypes=" + rawMetaTypes +
+               ", dataFormats=" + dataFormats +
+               ", metaStatusUpdateBatchSize=" + metaStatusUpdateBatchSize +
+               '}';
     }
 
     @SuppressWarnings("unused") // Used by jakarta.validation
@@ -239,7 +242,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     public boolean isValidRawTypesSet() {
         LOGGER.debug("metaTypes: {}, rawMetaTypes: {}", metaTypes, rawMetaTypes);
         return metaTypes != null
-                && metaTypes.containsAll(NullSafe.set(rawMetaTypes));
+               && metaTypes.containsAll(NullSafe.set(rawMetaTypes));
     }
 
 

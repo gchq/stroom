@@ -21,7 +21,7 @@ import stroom.dashboard.client.input.ListInputPresenter.WordItem;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
@@ -61,7 +61,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
             return wordItem.getSourceDocRef()
                     .map(docRef ->
-                            GwtNullSafe.getOrElseGet(docRef,
+                            NullSafe.getOrElseGet(docRef,
                                     DocRef::getName,
                                     docRef::getUuid))
                     .map(sourceVal -> {

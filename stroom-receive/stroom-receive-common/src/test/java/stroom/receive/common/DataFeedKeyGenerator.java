@@ -1,7 +1,7 @@
 package stroom.receive.common;
 
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.StringUtil;
 
 import java.security.SecureRandom;

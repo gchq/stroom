@@ -1,7 +1,7 @@
 package stroom.job.shared;
 
 import stroom.job.shared.JobNode.JobType;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -71,42 +71,42 @@ public class JobNodeAndInfo {
      */
     @JsonIgnore
     public Integer getId() {
-        return GwtNullSafe.get(jobNode, JobNode::getId);
+        return NullSafe.get(jobNode, JobNode::getId);
     }
 
     @JsonIgnore
     public Job getJob() {
-        return GwtNullSafe.get(jobNode, JobNode::getJob);
+        return NullSafe.get(jobNode, JobNode::getJob);
     }
 
     @JsonIgnore
     public String getJobName() {
-        return GwtNullSafe.get(jobNode, JobNode::getJobName);
+        return NullSafe.get(jobNode, JobNode::getJobName);
     }
 
     @JsonIgnore
     public JobType getJobType() {
-        return GwtNullSafe.get(jobNode, JobNode::getJobType);
+        return NullSafe.get(jobNode, JobNode::getJobType);
     }
 
     @JsonIgnore
     public String getNodeName() {
-        return GwtNullSafe.get(jobNode, JobNode::getNodeName);
+        return NullSafe.get(jobNode, JobNode::getNodeName);
     }
 
     @JsonIgnore
     public int getTaskLimit() {
-        return GwtNullSafe.get(jobNode, JobNode::getTaskLimit);
+        return NullSafe.get(jobNode, JobNode::getTaskLimit);
     }
 
     @JsonIgnore
     public String getSchedule() {
-        return GwtNullSafe.get(jobNode, JobNode::getSchedule);
+        return NullSafe.get(jobNode, JobNode::getSchedule);
     }
 
     @JsonIgnore
     public boolean isEnabled() {
-        return GwtNullSafe.get(jobNode, JobNode::isEnabled);
+        return NullSafe.get(jobNode, JobNode::isEnabled);
     }
 
     // ---------------------------------
@@ -115,22 +115,22 @@ public class JobNodeAndInfo {
 
     @JsonIgnore
     public Integer getCurrentTaskCount() {
-        return GwtNullSafe.get(jobNodeInfo, JobNodeInfo::getCurrentTaskCount);
+        return NullSafe.get(jobNodeInfo, JobNodeInfo::getCurrentTaskCount);
     }
 
     @JsonIgnore
     public Long getScheduleReferenceTime() {
-        return GwtNullSafe.get(jobNodeInfo, JobNodeInfo::getScheduleReferenceTime);
+        return NullSafe.get(jobNodeInfo, JobNodeInfo::getScheduleReferenceTime);
     }
 
     @JsonIgnore
     public Long getLastExecutedTime() {
-        return GwtNullSafe.get(jobNodeInfo, JobNodeInfo::getLastExecutedTime);
+        return NullSafe.get(jobNodeInfo, JobNodeInfo::getLastExecutedTime);
     }
 
     @JsonIgnore
     public Long getNextScheduledTime() {
-        return GwtNullSafe.get(jobNodeInfo, JobNodeInfo::getNextScheduledTime);
+        return NullSafe.get(jobNodeInfo, JobNodeInfo::getNextScheduledTime);
     }
 
     @Override

@@ -31,7 +31,7 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -333,7 +333,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     @Override
     public void setValueFilter(final Column column, final String valueFilter) {
         ColumnFilter columnFilter = null;
-        if (GwtNullSafe.isNonBlankString(valueFilter)) {
+        if (NullSafe.isNonBlankString(valueFilter)) {
             // TODO : Add case sensitive option.
             columnFilter = new ColumnFilter(valueFilter);
         }
@@ -344,7 +344,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             column.setColumnFilter(columnFilter);
 
             if (columnFilter != null &&
-                GwtNullSafe.isNonBlankString(columnFilter.getFilter())) {
+                NullSafe.isNonBlankString(columnFilter.getFilter())) {
                 if (tablePresenter.getQueryTablePreferences() != null &&
                     !tablePresenter.getQueryTablePreferences().applyValueFilters()) {
                     tablePresenter.toggleApplyValueFilters();

@@ -28,7 +28,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.StringWrapper;
 import stroom.widget.button.client.Button;
 
@@ -152,13 +152,13 @@ public class AnalyticEmailDestinationPresenter
         final List<String> msgs = new ArrayList<>();
         final String subject = emailDestination.getSubjectTemplate();
         final String body = emailDestination.getBodyTemplate();
-        Set<ValidationMode> modeSet = GwtNullSafe.asSet(validationModes);
+        Set<ValidationMode> modeSet = NullSafe.asSet(validationModes);
         if (modeSet.isEmpty()) {
-            modeSet = GwtNullSafe.asSet(ValidationMode.values());
+            modeSet = NullSafe.asSet(ValidationMode.values());
         }
 
         if (modeSet.contains(ValidationMode.SUBJECT)) {
-            if (GwtNullSafe.isBlankString(subject)) {
+            if (NullSafe.isBlankString(subject)) {
                 msgs.add("Subject cannot be blank.");
             }
             if (subject.contains("\n") || subject.contains("\r")) {
@@ -166,7 +166,7 @@ public class AnalyticEmailDestinationPresenter
             }
         }
         if (modeSet.contains(ValidationMode.BODY)) {
-            if (GwtNullSafe.isBlankString(body)) {
+            if (NullSafe.isBlankString(body)) {
                 msgs.add("Body cannot be blank.");
             }
         }
@@ -175,7 +175,7 @@ public class AnalyticEmailDestinationPresenter
                             emailDestination.getTo(),
                             emailDestination.getCc(),
                             emailDestination.getBcc())
-                    .anyMatch(str -> !GwtNullSafe.isBlankString(str));
+                    .anyMatch(str -> !NullSafe.isBlankString(str));
 
             if (!hasRecipients) {
                 msgs.add("You must enter at least one recipient (To, Cc, Bcc).");

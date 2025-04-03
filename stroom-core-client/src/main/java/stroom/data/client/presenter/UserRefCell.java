@@ -9,7 +9,7 @@ import stroom.svg.client.IconColour;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.util.shared.string.CaseType;
@@ -133,11 +133,11 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         if (userRef == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final String cellPlainText = GwtNullSafe.getOrElse(
+            final String cellPlainText = NullSafe.getOrElse(
                     userRef,
                     ref -> ref.toDisplayString(displayType),
                     "");
-            if (GwtNullSafe.isBlankString(cellPlainText)) {
+            if (NullSafe.isBlankString(cellPlainText)) {
                 sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
             } else {
                 final SafeHtml cellHtmlText = SafeHtmlUtils.fromString(cellPlainText);

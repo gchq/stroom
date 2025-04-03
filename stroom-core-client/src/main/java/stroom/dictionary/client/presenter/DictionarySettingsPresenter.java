@@ -20,7 +20,7 @@ import stroom.dictionary.client.presenter.DictionarySettingsPresenter.Dictionary
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -57,7 +57,7 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
     protected void onRead(final DocRef docRef, final DictionaryDoc doc, final boolean readOnly) {
         dictionaryListPresenter.read(docRef, doc, readOnly);
         final List<DocRef> imports = doc.getImports();
-        if (GwtNullSafe.hasItems(imports)) {
+        if (NullSafe.hasItems(imports)) {
             wordListPresenter.setDocRef(imports.get(0));
         }
     }

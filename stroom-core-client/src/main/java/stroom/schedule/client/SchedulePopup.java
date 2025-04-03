@@ -22,7 +22,7 @@ import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimes;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.FrequencyExpressions;
@@ -127,11 +127,11 @@ public class SchedulePopup
     private void calcTimes() {
         final ScheduleType scheduleType = getView().getScheduleType();
         final String currentString = getView().getExpression().getText();
-        final Long scheduleReferenceTime = GwtNullSafe
+        final Long scheduleReferenceTime = NullSafe
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getScheduleReferenceTime);
-        final Long lastExecutedTime = GwtNullSafe
+        final Long lastExecutedTime = NullSafe
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getLastExecutedTime);
-        if (!GwtNullSafe.isBlankString(currentString) && scheduleType != null) {
+        if (!NullSafe.isBlankString(currentString) && scheduleType != null) {
             final Schedule schedule = createSchedule();
             final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
                     schedule,

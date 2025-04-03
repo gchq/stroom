@@ -1,7 +1,7 @@
 package stroom.proxy.repo.queue;
 
-import stroom.util.NullSafe;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

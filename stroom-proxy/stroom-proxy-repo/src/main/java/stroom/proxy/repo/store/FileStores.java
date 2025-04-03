@@ -1,6 +1,5 @@
 package stroom.proxy.repo.store;
 
-import stroom.util.NullSafe;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathWithAttributes;
@@ -8,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

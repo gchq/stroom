@@ -17,7 +17,7 @@
 package stroom.widget.popup.client.event;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -213,7 +213,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         }
 
         public Builder addAutoHidePartner(final Element... autoHidePartner) {
-            this.autoHidePartners.addAll(GwtNullSafe.asList(autoHidePartner));
+            this.autoHidePartners.addAll(NullSafe.asList(autoHidePartner));
             return this;
         }
 
@@ -245,7 +245,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
             }
 
             Element[] elements = null;
-            if (GwtNullSafe.hasItems(autoHidePartners)) {
+            if (NullSafe.hasItems(autoHidePartners)) {
                 elements = autoHidePartners.toArray(new Element[0]);
             }
 

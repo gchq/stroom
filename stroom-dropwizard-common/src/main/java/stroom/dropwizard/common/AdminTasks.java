@@ -1,9 +1,9 @@
 package stroom.dropwizard.common;
 
 import stroom.util.HasAdminTasks;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.Task;

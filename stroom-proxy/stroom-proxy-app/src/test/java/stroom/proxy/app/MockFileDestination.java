@@ -9,12 +9,12 @@ import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardQueueConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;

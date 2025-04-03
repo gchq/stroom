@@ -19,7 +19,7 @@ package stroom.contentindex;
 import stroom.explorer.shared.StringMatch;
 import stroom.explorer.shared.StringMatch.MatchType;
 import stroom.explorer.shared.StringMatchLocation;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;

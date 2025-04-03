@@ -34,7 +34,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.inject.Inject;
@@ -73,7 +73,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                GwtNullSafe.consume(
+                NullSafe.consume(
                         extendedUiConfig.getQuery(),
                         QueryConfig::getIndexPipelineSelectorIncludedTags,
                         ExplorerTreeFilter::createTagQuickFilterInput,
@@ -114,7 +114,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         index.setRetentionDayAge(getView().getRetentionAge().getValue().getDays());
 
         String volumeGroupName = getView().getVolumeGroups().getValue();
-        if (GwtNullSafe.isEmptyString(volumeGroupName)) {
+        if (NullSafe.isEmptyString(volumeGroupName)) {
             volumeGroupName = null;
         }
         index.setVolumeGroupName(volumeGroupName);

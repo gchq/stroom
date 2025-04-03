@@ -16,7 +16,7 @@
 
 package stroom.pipeline.filter;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -98,7 +98,7 @@ public class NamespaceContextImpl implements NamespaceContext {
     @Override
     public String toString() {
         return "NamespaceContextImpl{" +
-                "prefixToUriMap=" + prefixToUriMap +
-                '}';
+               "prefixToUriMap=" + prefixToUriMap +
+               '}';
     }
 }

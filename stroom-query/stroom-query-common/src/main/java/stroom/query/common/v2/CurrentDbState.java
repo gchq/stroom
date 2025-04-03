@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -59,9 +59,9 @@ public class CurrentDbState {
      * Merges existingCurrentDbState with this to create a new state.
      */
     public CurrentDbState mergeExisting(final CurrentDbState existingCurrentDbState) {
-        final Long lastEventTime = GwtNullSafe.requireNonNullElseGet(
+        final Long lastEventTime = NullSafe.requireNonNullElseGet(
                 this.lastEventTime,
-                () -> GwtNullSafe.get(existingCurrentDbState, CurrentDbState::getLastEventTime));
+                () -> NullSafe.get(existingCurrentDbState, CurrentDbState::getLastEventTime));
 
         return new CurrentDbState(
                 streamId,

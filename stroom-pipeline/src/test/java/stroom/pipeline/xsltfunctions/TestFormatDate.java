@@ -20,11 +20,11 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.test.common.TestOutcome;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -662,7 +662,7 @@ class TestFormatDate extends AbstractXsltFunctionTest<FormatDate> {
                                     ? "null"
                                     : "'" + arg + "'")
                     .collect(Collectors.joining(", "))
-                    + ")";
+                   + ")";
         } else {
             return null;
         }

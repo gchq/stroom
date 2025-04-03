@@ -42,7 +42,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
@@ -141,7 +141,7 @@ public class DocumentUserPermissionsListPresenter
 
     @Override
     public void onFilterChange(String text) {
-        text = GwtNullSafe.trim(text);
+        text = NullSafe.trim(text);
         if (text.isEmpty()) {
             text = null;
         }
@@ -238,7 +238,7 @@ public class DocumentUserPermissionsListPresenter
         // Explicit Permission
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder((DocumentUserPermissions row) ->
-                                GwtNullSafe.get(
+                                NullSafe.get(
                                         row,
                                         DocumentUserPermissions::getPermission,
                                         DocumentPermission::getDisplayValue))
@@ -256,7 +256,7 @@ public class DocumentUserPermissionsListPresenter
                                 (DocumentUserPermissions row) -> {
                                     final DocumentPermission explicit = row.getPermission();
                                     final DocumentPermission inherited = row.getInheritedPermission();
-                                    return GwtNullSafe.get(DocumentPermission.highest(explicit, inherited),
+                                    return NullSafe.get(DocumentPermission.highest(explicit, inherited),
                                             DocumentPermission::getDisplayValue);
                                 })
                         .withSorting(DocumentPermissionFields.FIELD_EFFECTIVE_DOC_PERMISSION)
@@ -297,7 +297,7 @@ public class DocumentUserPermissionsListPresenter
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {
-        return GwtNullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
@@ -309,17 +309,17 @@ public class DocumentUserPermissionsListPresenter
 
     public SafeHtml permissionsToEffectiveTypeIcons(final DocumentUserPermissions row,
                                                     final int docTypeCount) {
-        final Set<String> effective = new HashSet<>(GwtNullSafe.set(row
+        final Set<String> effective = new HashSet<>(NullSafe.set(row
                 .getDocumentCreatePermissions()));
-        effective.addAll(GwtNullSafe.set(row.getInheritedDocumentCreatePermissions()));
+        effective.addAll(NullSafe.set(row.getInheritedDocumentCreatePermissions()));
 
         return permissionsToTypeIcons(effective, docTypeCount);
     }
 
     public SafeHtml permissionsToTypeIcons(final Set<String> createTypes,
                                            final int docTypeCount) {
-        if ((GwtNullSafe.hasItems(createTypes))) {
-            if (GwtNullSafe.size(createTypes) == docTypeCount) {
+        if ((NullSafe.hasItems(createTypes))) {
+            if (NullSafe.size(createTypes) == docTypeCount) {
                 return SafeHtmlUtils.fromTrustedString("ALL");
             } else {
                 //noinspection SimplifyStreamApiCallChains // Cos GWT

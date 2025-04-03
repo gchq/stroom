@@ -5,12 +5,12 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.JooqUtil;
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -173,10 +173,10 @@ public abstract class AbstractSingleFlywayMigrationTest<
             final MigrationVersion testDataVersion = getTestDataVersion();
             final MigrationVersion targetVersion = getTargetVersion();
             final String filename = "V"
-                    + testDataVersion.getVersion()
-                    + "__test_data_for_"
-                    + targetVersion.getVersion()
-                    + ".sql";
+                                    + testDataVersion.getVersion()
+                                    + "__test_data_for_"
+                                    + targetVersion.getVersion()
+                                    + ".sql";
             final Path testDataFile = tempDir.resolve(filename);
 
             LOGGER.debug("Writing test data script to temporary file {}",
@@ -217,7 +217,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
         if (lastPart == 1) {
             throw new RuntimeException(LogUtil.message(
                     "Can't work with a part number of 1. targetVersionStr: '{}'. " +
-                            "Make the last three digits of the script name a multiple of 5",
+                    "Make the last three digits of the script name a multiple of 5",
                     targetVersionStr));
         }
         final StringBuilder sb = new StringBuilder();
