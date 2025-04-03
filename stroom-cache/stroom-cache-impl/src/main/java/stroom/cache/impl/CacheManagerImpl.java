@@ -20,14 +20,17 @@ import stroom.cache.api.CacheExistsException;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.StroomCache;
-import stroom.cache.shared.CacheIdentity;
 import stroom.util.NullSafe;
 import stroom.util.cache.CacheConfig;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
+import stroom.util.shared.cache.CacheIdentity;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collections;
@@ -49,6 +52,19 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     private static final String PARAM_NAME_CACHE_NAME = "name";
 
     private final Map<String, StroomCache<?, ?>> caches = new ConcurrentHashMap<>();
+    private final Provider<Metrics> metricsProvider;
+
+    @Inject
+    public CacheManagerImpl(final Provider<Metrics> metricsProvider) {
+        this.metricsProvider = metricsProvider;
+    }
+
+    /**
+     * This is only for tests to save providing a {@link Metrics} instance
+     */
+    public CacheManagerImpl() {
+        this.metricsProvider = null;
+    }
 
     @Override
     public synchronized void close() {
@@ -62,7 +78,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         final StroomCache<K, V> cache = new StroomCacheImpl<>(
                 name,
                 cacheConfigSupplier,
-                removalNotificationConsumer);
+                removalNotificationConsumer,
+                metricsProvider);
         registerCache(name, cache);
         return cache;
     }
@@ -80,7 +97,8 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 name,
                 cacheConfigSupplier,
                 loadFunction,
-                removalNotificationConsumer);
+                removalNotificationConsumer,
+                metricsProvider);
         registerCache(name, cache);
         return cache;
     }
@@ -120,10 +138,11 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         }
     }
 
-    Map<String, StroomCache<?, ?>> getCaches() {
+    public Map<String, StroomCache<?, ?>> getCaches() {
         return caches;
     }
 
+    @Override
     public Set<String> getCacheNames() {
         return caches.keySet();
     }
@@ -171,7 +190,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                                     JsonUtil.writeValueAsString(key);
                                 } catch (Exception e) {
                                     return "Unable to serialise Key as JSON, dumping as string: "
-                                            + key.toString().substring(0, 1_000);
+                                           + key.toString().substring(0, 1_000);
                                 }
                                 return key;
                             })
@@ -219,6 +238,6 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                         "A limit on the number of keys to return, default is unlimited."),
                 ParamInfo.optionalParam(PARAM_NAME_CACHE_NAME,
                         "The name of the cache to see the list of keys for. " +
-                                "If not supplied a list of cache names will be returned"));
+                        "If not supplied a list of cache names will be returned"));
     }
 }

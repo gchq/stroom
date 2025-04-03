@@ -26,6 +26,7 @@ import stroom.security.api.DocumentPermissionService;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
 import stroom.util.AuditUtil;
@@ -89,6 +90,7 @@ class AbstractProcessorTest {
         injector = Guice.createInjector(
                 new ProcessorDaoModule(),
                 new ProcessorDbModule(),
+                new MockMetricsModule(),
                 new CacheModule(),
                 new MockTaskModule(),
                 new MockClusterLockModule(),

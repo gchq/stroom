@@ -68,6 +68,7 @@ public abstract class MenuItem extends Item {
         protected Action action;
         protected Command command;
         protected boolean enabled = true;
+        protected String tooltip;
 
         public B text(final SafeHtml text) {
             this.text = text;
@@ -91,6 +92,11 @@ public abstract class MenuItem extends Item {
 
         public B enabled(final boolean enabled) {
             this.enabled = enabled;
+            return self();
+        }
+
+        public B tooltip(final String tooltip) {
+            this.tooltip = tooltip;
             return self();
         }
 

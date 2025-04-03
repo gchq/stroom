@@ -16,6 +16,9 @@
 
 package stroom.test.common.util.test;
 
+import stroom.test.common.MockMetrics;
+import stroom.util.metrics.Metrics;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -33,5 +36,9 @@ public abstract class StroomUnitTest implements StroomTest {
     @Override
     public Path getCurrentTestDir() {
         return testDir;
+    }
+
+    public Metrics getMetrics() {
+        return new MockMetrics();
     }
 }

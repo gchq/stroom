@@ -17,7 +17,6 @@
 
 package stroom.importexport.impl;
 
-import stroom.importexport.impl.ContentPackImportConfig.UserType;
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
@@ -25,6 +24,7 @@ import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
+import stroom.util.shared.UserType;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

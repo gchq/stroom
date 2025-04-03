@@ -256,6 +256,20 @@ public final class CompareUtil {
     }
 
     /**
+     * Normalises an {@link Comparable#compareTo(Object)} result into -1, 0, or 1.
+     * Useful for doing equality assertions on comparators.
+     */
+    public static int normalise(final int compareResult) {
+        if (compareResult < 0) {
+            return -1;
+        } else if (compareResult > 0) {
+            return 1;
+        } else {
+            return compareResult;
+        }
+    }
+
+    /**
      * Combine two comparators in a null safe way.
      * If one arg is null, the other arg is returned.
      * If both are null, null is returned.

@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
+import stroom.test.common.MockMetrics;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
@@ -31,8 +32,9 @@ class TestDirQueueTransfer {
     private Path intputDir;
     private Path sourceQueueDir;
     private Path destQueueDir;
-    private final QueueMonitors queueMonitors = new QueueMonitors();
-    private final FileStores fileStores = new FileStores();
+    private MockMetrics metrics = new MockMetrics();
+    private final QueueMonitors queueMonitors = new QueueMonitors(metrics);
+    private final FileStores fileStores = new FileStores(metrics);
     private DirQueue sourceQueue;
     private DirQueue destQueue;
 

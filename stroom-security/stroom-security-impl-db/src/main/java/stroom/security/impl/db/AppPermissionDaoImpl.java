@@ -89,6 +89,8 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 .insertInto(PERMISSION_APP)
                 .columns(PERMISSION_APP.USER_UUID, PERMISSION_APP.PERMISSION_ID)
                 .values(userUuid, permissionId)
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_APP.ID, PERMISSION_APP.ID)
                 .execute());
     }
 

@@ -27,6 +27,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
+import stroom.core.receive.AutoContentCreationConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -79,6 +80,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
+    public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
@@ -131,6 +133,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
+    private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
@@ -183,6 +186,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ActivityConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
+                new AutoContentCreationConfig(),
                 new ByteBufferPoolConfig(),
                 new ClusterConfig(),
                 new ClusterLockConfig(),
@@ -234,6 +238,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                     @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
@@ -281,6 +286,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.activityConfig = activityConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
+        this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
@@ -355,6 +361,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_ANNOTATION)
     public AnnotationConfig getAnnotationConfig() {
         return annotationConfig;
+    }
+
+    @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION)
+    public AutoContentCreationConfig getAutoContentCreationConfig() {
+        return autoContentCreationConfig;
     }
 
     @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)

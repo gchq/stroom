@@ -1820,7 +1820,7 @@ button.main-menu svg {
     font-weight: 400;
     /* Make it a wee bit smaller than normal text in stroom which is size-13 */
     font-size: var(--font-size-12);
-    line-height: 0.9em;
+    line-height: 1.3em;
 }
 
 .markdown.help-button-tooltip .popupContent h4 {
@@ -2472,4 +2472,8 @@ button.main-menu svg {
 
 .durationSetting {
     display: flex;
+}
+
+.ExpressionTreeViewImpl-layoutPanel {
+    position: absolute;
 }

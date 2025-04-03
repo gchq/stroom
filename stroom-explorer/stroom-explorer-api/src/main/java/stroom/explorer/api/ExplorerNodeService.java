@@ -81,6 +81,8 @@ public interface ExplorerNodeService {
 
     List<ExplorerNode> getNodesByName(ExplorerNode parent, String name);
 
+    List<ExplorerNode> getNodesByNameAndType(ExplorerNode parent, String name, String type);
+
     // Used during testing.
     void deleteAllNodes();
 }

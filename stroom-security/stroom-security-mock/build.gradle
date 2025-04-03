@@ -6,11 +6,13 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-user-api')
+    implementation project(':stroom-test-common')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
     implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.guice
+    implementation libs.mockito.core
     implementation libs.ws.rs.api
 }

@@ -332,7 +332,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
                                     stream.getEffectiveMs(),
                                     effMs ->
                                             effMs >= criteria.getEffectivePeriod().getFromMs()
-                                                    && effMs <= criteria.getEffectivePeriod().getToMs()))
+                                            && effMs <= criteria.getEffectivePeriod().getToMs()))
                     .map(EffectiveMeta::new)
                     .collect(EffectiveMetaSet.collector(criteria.getFeed(), criteria.getType()));
         }

@@ -2,9 +2,9 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.cache.impl.CacheManagerService;
-import stroom.cache.impl.CacheManagerServiceImpl;
-import stroom.cache.impl.FindCacheInfoCriteria;
+import stroom.cache.service.impl.CacheManagerService;
+import stroom.cache.service.impl.CacheManagerServiceImpl;
+import stroom.cache.service.impl.FindCacheInfoCriteria;
 import stroom.docstore.shared.Doc;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;

@@ -520,6 +520,7 @@ public class KeyBinding {
         GOTO_API_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
+        GOTO_CONTENT_TEMPALTES,
         GOTO_DEPENDENCIES,
         GOTO_JOBS,
         GOTO_NODES,

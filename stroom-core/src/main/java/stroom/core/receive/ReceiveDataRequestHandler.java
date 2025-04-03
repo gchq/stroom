@@ -23,7 +23,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.AttributeMapValidator;
+import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
@@ -32,6 +32,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.receive.common.StroomStreamStatus;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.NullSafe;
@@ -94,12 +95,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
 
-            // Authenticate the request using token or cert depending on configuration
+            // Authenticate the request depending on the configured auth methods.
             // Adds sender details to the attributeMap
-            requestAuthenticator.authenticate(request, attributeMap);
-
-            // Validate the supplied attributes.
-            AttributeMapValidator.validate(attributeMap, metaService::getTypes);
+            final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
             // Create a new receiptId for the request, so we can track progress and report back the
             // receiptId to the sender

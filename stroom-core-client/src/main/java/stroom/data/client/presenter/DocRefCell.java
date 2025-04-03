@@ -379,9 +379,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     if (docRef == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        return SafeHtmlUtils.fromString(docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(
+                        final String displayValue = docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(
                                 displayType,
-                                displayType)));
+                                DisplayType.AUTO));
+                        return GwtNullSafe.isNonBlankString(displayValue)
+                                ? SafeHtmlUtils.fromString(displayValue)
+                                : SafeHtmlUtils.EMPTY_SAFE_HTML;
                     }
                 };
             }

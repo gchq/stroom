@@ -39,7 +39,6 @@ public class Forwarder {
                         NullSafe.stream(proxyConfig.getForwardFileDestinations())
                                 .filter(ForwardFileConfig::isEnabled))
                 .count();
-
         LOGGER.debug("enabledForwardCount: {}", enabledForwardCount);
 
         if (enabledForwardCount == 0) {

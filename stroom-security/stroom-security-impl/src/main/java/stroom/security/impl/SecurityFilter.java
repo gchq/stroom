@@ -261,10 +261,18 @@ class SecurityFilter implements Filter {
 
         int index = fullPath.lastIndexOf(".");
         if (index > 0) {
-            final String extension = fullPath.substring(index).toLowerCase();
-            return STATIC_RESOURCE_EXTENSIONS.contains(extension);
+            String extension = fullPath.substring(index).toLowerCase();
+            if (STATIC_RESOURCE_EXTENSIONS.contains(extension)) {
+                return true;
+            } else {
+                // Handle stuff like .css.map
+                index = fullPath.lastIndexOf(".", index - 1);
+                if (index > 0) {
+                    extension = fullPath.substring(index).toLowerCase();
+                    return STATIC_RESOURCE_EXTENSIONS.contains(extension);
+                }
+            }
         }
-
         return false;
     }
 

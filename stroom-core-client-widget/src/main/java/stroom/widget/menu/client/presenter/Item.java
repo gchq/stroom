@@ -51,6 +51,10 @@ public abstract class Item {
         return Objects.hash(id);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     protected abstract static class AbstractBuilder<T extends Item, B extends Item.AbstractBuilder<T, ?>> {
 
         protected int priority;

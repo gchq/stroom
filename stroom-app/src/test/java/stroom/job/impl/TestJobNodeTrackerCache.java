@@ -13,7 +13,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -80,7 +80,7 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
             final JobNodeListResponse jobNodeListResponse = JobNodeListResponse
                     .createUnboundedJobNodeResponse(List.of(jobNode));
 
-            Metrics.setEnabled(true);
+            SimpleMetrics.setEnabled(true);
 
             final ExecutorProvider executorProvider = new ExecutorProvider() {
                 @Override
@@ -104,7 +104,7 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
 
             when(jobNodeDao.find(Mockito.any(FindJobNodeCriteria.class)))
                     .then((Answer<JobNodeListResponse>) invocation -> {
-                        Metrics.measure("find", () -> {
+                        SimpleMetrics.measure("find", () -> {
                             // Add delay.
                             ThreadUtil.sleep(delay);
                         });
@@ -114,7 +114,7 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
             final AtomicBoolean running = new AtomicBoolean(true);
             executors.execute(() -> {
                 while (running.get()) {
-                    Metrics.measure("getTrackers", () -> {
+                    SimpleMetrics.measure("getTrackers", () -> {
                         jobNodeTrackerCache.getTrackers();
                         calls.incrementAndGet();
                     });
@@ -130,7 +130,7 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
             countDownLatch.await();
         }
 
-        Metrics.report();
+        SimpleMetrics.report();
 
         LOGGER.info(String.valueOf(calls.get()));
     }

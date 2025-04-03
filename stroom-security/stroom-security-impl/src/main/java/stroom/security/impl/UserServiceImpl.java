@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.shared.AppPermission;

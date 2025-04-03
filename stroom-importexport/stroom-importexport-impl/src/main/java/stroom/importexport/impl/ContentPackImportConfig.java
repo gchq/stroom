@@ -5,6 +5,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.UserType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,7 +39,8 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
-    @JsonPropertyDescription("If true any content packs found in 'importDirectory' will be imported " +
+    @JsonPropertyDescription(
+            "If true any content packs found in 'importDirectory' will be imported " +
             "into Stroom. Only intended for use on new Stroom instances to reduce the risk of " +
             "overwriting existing entities.")
     public boolean isEnabled() {
@@ -46,7 +48,8 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
-    @JsonPropertyDescription("When stroom starts, if 'enabled' is set to true, it will attempt to import content " +
+    @JsonPropertyDescription(
+            "When stroom starts, if 'enabled' is set to true, it will attempt to import content " +
             "packs from this directory. If the value is null or the directory does not exist it will be ignored." +
             "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
     public String getImportDirectory() {
@@ -54,7 +57,8 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
-    @JsonPropertyDescription("The unique identifier for the user/group that the content import will run as. " +
+    @JsonPropertyDescription(
+            "The unique identifier for the user/group that the content import will run as. " +
             "In the case of an Open ID Connect user" +
             "this would be the claim value that uniquely identifies the user on the IDP (often 'sub' or 'oid'). " +
             "These values are often UUIDs and thus not pretty to look at for an admin. " +
@@ -73,19 +77,10 @@ public class ContentPackImportConfig extends AbstractConfig implements IsStroomC
     @Override
     public String toString() {
         return "ContentPackImportConfig{" +
-                "enabled=" + enabled +
-                ", importDirectory='" + importDirectory + '\'' +
-                ", importAsSubjectId='" + importAsSubjectId + '\'' +
+               "enabled=" + enabled +
+               ", importDirectory='" + importDirectory + '\'' +
+               ", importAsSubjectId='" + importAsSubjectId + '\'' +
 //                ", importAsType=" + importAsType +
-                '}';
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum UserType {
-        USER,
-        GROUP;
+               '}';
     }
 }

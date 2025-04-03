@@ -133,7 +133,7 @@ public class ExpressionMatcher {
         }
 
         // Try and find the referenced field.
-        if (termField == null || termField.length() == 0) {
+        if (termField == null || termField.isEmpty()) {
             throw new MatchException("Field not set");
         }
         final QueryField field = fieldMap.get(termField);
@@ -151,15 +151,15 @@ public class ExpressionMatcher {
                 throw new MatchException("DocRef not set for field: " + termField);
             }
         } else {
-            if (termValue == null || termValue.length() == 0) {
+            if (termValue == null || termValue.isEmpty()) {
                 throw new MatchException("Value not set");
             }
         }
 
         final Object attribute = attributeMap.get(term.getField());
 
-        // Perform null/not null equality if required.
         if (Condition.IS_NULL.equals(condition)) {
+            // Perform null/not null equality if required.
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
             return attribute != null;
