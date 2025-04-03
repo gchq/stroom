@@ -1,8 +1,9 @@
 package stroom.util.logging;
 
-import stroom.util.NullSafe;
+import stroom.util.NullSafeExtra;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
@@ -181,7 +182,7 @@ public final class LogUtil {
     public static String getDurationMessage(final String work,
                                             final Duration duration,
                                             final long iterations) {
-        final double secs = NullSafe.duration(duration).isZero()
+        final double secs = NullSafeExtra.duration(duration).isZero()
                 ? 0
                 : duration.toMillis() / (double) 1_000;
         final String rate = secs == 0

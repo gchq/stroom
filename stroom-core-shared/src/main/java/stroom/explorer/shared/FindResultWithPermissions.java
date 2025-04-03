@@ -17,7 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.security.shared.DocumentUserPermissions;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -68,6 +68,6 @@ public class FindResultWithPermissions {
 
     @Override
     public String toString() {
-        return GwtNullSafe.toString(findResult);
+        return NullSafe.toString(findResult);
     }
 }

@@ -19,6 +19,7 @@ package stroom.security.impl;
 
 
 import stroom.docref.DocRef;
+import stroom.security.api.UserService;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.DocumentPermission;

@@ -32,12 +32,12 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.StringUtil;
@@ -116,10 +116,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
             // Find out if we are going to ignore warnings.
             boolean ignoreWarnings = arguments.length > 3
-                    && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 3));
+                                     && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 3));
             // Find out if we are going to trace the lookup.
             final boolean traceLookup = arguments.length > 4
-                    && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 4));
+                                        && NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, 4));
 
             // Make sure we can get the date ok.
             long ms = defaultMs;
@@ -213,8 +213,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         result.logLazyTemplate(
                 Severity.INFO,
                 "Lookup - " +
-                        "key: '{}', map: '{}', lookup time: {} (primary map: '{}', secondary map: '{}', " +
-                        "nested lookup: {})",
+                "key: '{}', map: '{}', lookup time: {} (primary map: '{}', secondary map: '{}', " +
+                "nested lookup: {})",
                 () -> Arrays.asList(lookupIdentifier.getKey(),
                         lookupIdentifier.getMap(),
                         Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
@@ -315,8 +315,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 .stream()
                 .map(entry ->
                         NullSafe.get(entry.getKey(), PipelineReference::getFeed, DocRef::getName)
-                                + ":"
-                                + NullSafe.get(entry.getValue(), RefStreamDefinition::getStreamId))
+                        + ":"
+                        + NullSafe.get(entry.getValue(), RefStreamDefinition::getStreamId))
                 .collect(Collectors.joining(", "));
     }
 
@@ -384,7 +384,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         maxSeverity.atLeast(Severity.WARNING),
                         () -> LogUtil.message(
                                 "No effective streams found in any of the reference loaders (feeds: [{}]). " +
-                                        "Do reference data streams exist for the lookup time? ",
+                                "Do reference data streams exist for the lookup time? ",
                                 feeds),
                         result.getCurrentLookupIdentifier(),
                         trace,
@@ -435,8 +435,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             return false;
         } else {
             return isTraceEnabled
-                    || maxSeverity.greaterThanOrEqual(Severity.ERROR)
-                    || (!isIgnoreWarnings && maxSeverity.greaterThanOrEqual(Severity.WARNING));
+                   || maxSeverity.greaterThanOrEqual(Severity.ERROR)
+                   || (!isIgnoreWarnings && maxSeverity.greaterThanOrEqual(Severity.WARNING));
         }
     }
 

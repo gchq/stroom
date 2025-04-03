@@ -44,12 +44,12 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -503,7 +503,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             elementCount++;
             if (elementCount > maxElementCount) {
-                final String message = "" +
+                final String message =
                         "Max element count of " +
                         maxElementCount +
                         " has been exceeded. Please ensure a split filter is present and is configured " +
@@ -663,7 +663,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @PipelineProperty(
             description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve " +
-                    "performance.",
+                          "performance.",
             defaultValue = "true",
             displayPriority = 4)
     public void setUsePool(final boolean usePool) {
@@ -684,8 +684,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
             if (xsltDoc == null) {
                 final String message = "XSLT \"" +
-                        docRef.getName() +
-                        "\" appears to have been deleted";
+                                       docRef.getName() +
+                                       "\" appears to have been deleted";
                 throw ProcessException.create(message);
             }
 

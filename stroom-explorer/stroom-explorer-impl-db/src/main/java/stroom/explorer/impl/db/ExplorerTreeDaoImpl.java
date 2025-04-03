@@ -266,6 +266,26 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
+    public List<ExplorerTreeNode> getChildrenByNameAndType(final ExplorerTreeNode parent,
+                                                           final String name,
+                                                           final String type) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(type);
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> context
+                        .selectFrom(n)
+                        .where(n.ID.in(context
+                                .select(p.DESCENDANT)
+                                .from(p)
+                                .where(p.ANCESTOR.eq(parent.getId()))
+                                .and(p.DEPTH.eq(1))
+                                .orderBy(p.ORDER_INDEX)))
+                        .and(n.TYPE.eq(type))
+                        .and(n.NAME.eq(name))
+                        .fetch())
+                .map(this::mapRecord);
+    }
+
+    @Override
     public ExplorerTreeNode getParent(final ExplorerTreeNode child) {
         final List<ExplorerTreeNode> parents = JooqUtil.contextResult(explorerDbConnProvider, context ->
                         context
@@ -638,7 +658,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .fetch())
                 .map(this::mapRecord);
 
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             return null;
         }
 

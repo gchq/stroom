@@ -3,7 +3,7 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.query.api.v2.ColumnRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -58,7 +58,7 @@ public class VisSelectionModel
 
     @Override
     public List<ComponentSelection> getSelection() {
-        return GwtNullSafe.list(currentSelection);
+        return NullSafe.list(currentSelection);
     }
 
     @Override

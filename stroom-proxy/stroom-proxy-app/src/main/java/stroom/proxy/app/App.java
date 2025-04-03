@@ -17,7 +17,9 @@
 package stroom.proxy.app;
 
 import stroom.dropwizard.common.AdminServlets;
+import stroom.dropwizard.common.AdminTasks;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.dropwizard.common.DropWizardMetrics;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -29,7 +31,6 @@ import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
-import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -45,6 +46,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 import stroom.util.yaml.YamlUtil;
@@ -70,6 +72,10 @@ public class App extends Application<Config> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
+    @Inject
+    private DropWizardMetrics dropWizardMetrics;
+    @Inject
+    private AdminTasks adminTasks;
     @Inject
     private HealthChecks healthChecks;
     @Inject
@@ -172,6 +178,12 @@ public class App extends Application<Config> {
         // Ensure we have our home/temp dirs set up
         FileUtil.ensureDirExists(homeDirProvider.get());
         FileUtil.ensureDirExists(tempDirProvider.get());
+
+        // Add DropWizard metrics
+        dropWizardMetrics.register();
+
+        // Add admin tasks
+        adminTasks.register();
 
         // Add health checks
         healthChecks.register();

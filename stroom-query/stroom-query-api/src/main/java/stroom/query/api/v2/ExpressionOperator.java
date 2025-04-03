@@ -20,7 +20,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -126,7 +126,7 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     public boolean hasChildren() {
-        return GwtNullSafe.hasItems(children);
+        return NullSafe.hasItems(children);
     }
 
     /**

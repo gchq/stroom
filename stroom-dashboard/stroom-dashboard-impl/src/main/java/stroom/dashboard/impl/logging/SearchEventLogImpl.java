@@ -31,7 +31,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import event.logging.Criteria;
 import event.logging.Data;
@@ -182,8 +182,8 @@ public class SearchEventLogImpl implements SearchEventLog {
 
                 final String dataSourceInfo = getDataSourceString(dataSourceRef);
                 final String description = "Downloading StroomQL search results - data source \"" +
-                        dataSourceInfo +
-                        "\"";
+                                           dataSourceInfo +
+                                           "\"";
                 final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
                 final Query query = getQuery(NullSafe.get(qry, stroom.query.api.v2.Query::getExpression),
                         NullSafe.get(qry, stroom.query.api.v2.Query::getParams));

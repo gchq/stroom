@@ -17,7 +17,7 @@
 package stroom.query.api.v2;
 
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -110,7 +110,7 @@ public class TimeRange {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(GwtNullSafe.getOrElse(condition, Condition::getDisplayValue, Condition.EQUALS.getDisplayValue()));
+        sb.append(NullSafe.getOrElse(condition, Condition::getDisplayValue, Condition.EQUALS.getDisplayValue()));
         sb.append(" ");
         if (from != null) {
             sb.append(from);

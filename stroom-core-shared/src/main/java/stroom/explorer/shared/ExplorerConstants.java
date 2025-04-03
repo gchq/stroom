@@ -1,8 +1,7 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 
@@ -80,7 +79,7 @@ public final class ExplorerConstants {
      * Tests whether a node is a folder
      */
     public static boolean isFolder(final ExplorerNode node) {
-        return GwtNullSafe.test(node,
+        return NullSafe.test(node,
                 ExplorerNode::getDocRef,
                 docRef -> FOLDER_TYPE.equals(docRef.getType()));
     }

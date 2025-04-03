@@ -26,13 +26,13 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 
 import jakarta.inject.Inject;
@@ -151,12 +151,12 @@ public class SteppingController {
         // Update the progress monitor.
         taskContext.info(() ->
                 "Stepping {" +
-                        streamInfo +
-                        "} [" +
-                        (currentStreamIndex + 1) +
-                        ":" +
-                        (currentRecordIndex + 1) +
-                        "]");
+                streamInfo +
+                "} [" +
+                (currentStreamIndex + 1) +
+                ":" +
+                (currentRecordIndex + 1) +
+                "]");
 
         LOGGER.debug("endRecord() stream index {} record index {}", currentStreamIndex, currentRecordIndex);
 
@@ -207,7 +207,7 @@ public class SteppingController {
                 // We want to exit early if we have found a record and are
                 // stepping first, forward or refreshing.
                 if (!StepType.BACKWARD.equals(request.getStepType())
-                        && !StepType.LAST.equals(request.getStepType())) {
+                    && !StepType.LAST.equals(request.getStepType())) {
                     return true;
                 }
             }
@@ -219,9 +219,9 @@ public class SteppingController {
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
         return StepType.BACKWARD.equals(request.getStepType())
-                && stepLocation != null
-                && currentStreamIndex == stepLocation.getPartIndex()
-                && currentRecordIndex >= stepLocation.getRecordIndex() - 1;
+               && stepLocation != null
+               && currentStreamIndex == stepLocation.getPartIndex()
+               && currentRecordIndex >= stepLocation.getRecordIndex() - 1;
     }
 
     StepData createStepData(final TextRange textRange) {
@@ -242,7 +242,7 @@ public class SteppingController {
                     .build();
 
             LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} " +
-                            "from foundLocation {}:{}:{} with textRange: {}",
+                                               "from foundLocation {}:{}:{} with textRange: {}",
                     sourceLocation.getMetaId(),
                     sourceLocation.getPartIndex(),
                     sourceLocation.getRecordIndex(),

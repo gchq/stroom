@@ -16,9 +16,9 @@
 
 package stroom.meta.api;
 
-import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -55,7 +55,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 // TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
@@ -88,10 +87,7 @@ public class AttributeMapUtil {
 
     // Delimiter between key and value
     private static final String HEADER_DELIMITER = ":";
-    // Delimiter within a value
-    static final String VALUE_DELIMITER = ",";
 
-    static final Pattern VALUE_DELIMITER_PATTERN = Pattern.compile(Pattern.quote(VALUE_DELIMITER));
     // Delimiter between attributes
     private static final String ATTRIBUTE_DELIMITER = "\n";
     static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
@@ -180,7 +176,7 @@ public class AttributeMapUtil {
     }
 
     /**
-     * Splits the attributeValue using {@link AttributeMapUtil#VALUE_DELIMITER}.
+     * Splits the attributeValue using {@link AttributeMap#VALUE_DELIMITER}.
      *
      * @return A non-null list
      */
@@ -188,7 +184,7 @@ public class AttributeMapUtil {
         if (NullSafe.isEmptyString(attributeValue)) {
             return Collections.emptyList();
         } else {
-            return VALUE_DELIMITER_PATTERN.splitAsStream(attributeValue)
+            return AttributeMap.VALUE_DELIMITER_PATTERN.splitAsStream(attributeValue)
                     .toList();
         }
     }
@@ -248,7 +244,7 @@ public class AttributeMapUtil {
                                            final AttributeMap attributeMap) {
         final Optional<X509Certificate> optional = certificateExtractor.extractCertificate(httpServletRequest);
         optional.ifPresent(cert -> {
-            // If we get here it means SSL has been terminated by DropWizard so we need to add meta items
+            // If we get here it means SSL has been terminated by DropWizard, so we need to add meta items
             // from the certificate
             if (cert.getSubjectDN() != null) {
                 final String remoteDN = cert.getSubjectDN().toString();

@@ -9,7 +9,7 @@ import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -102,7 +102,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                final NativeEvent event,
                                final ValueUpdater<T_ROW> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
+        final DocRef docRef = NullSafe.get(value, docRefFunction);
         if (docRef != null) {
             if (MOUSEDOWN.equals(event.getType())) {
                 if (MouseUtil.isPrimary(event)) {
@@ -110,7 +110,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 } else {
                     final String type;
                     final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
-                    type = GwtNullSafe.getOrElse(documentType, DocumentType::getDisplayType,
+                    type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType,
                             docRef.getType());
 
                     final List<Item> menuItems = new ArrayList<>();
@@ -140,7 +140,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                             ClipboardUtil.copy(text);
                         }
                     }
-                } else if (GwtNullSafe.isNonBlankString(text)) {
+                } else if (NullSafe.isNonBlankString(text)) {
                     final List<Item> menuItems = new ArrayList<>();
                     menuItems.add(new IconMenuItem.Builder()
                             .priority(1)
@@ -170,7 +170,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                                   final NativeEvent event,
                                   final ValueUpdater<T_ROW> valueUpdater) {
         final Element element = event.getEventTarget().cast();
-        final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
+        final DocRef docRef = NullSafe.get(value, docRefFunction);
         if (docRef != null) {
             if (ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5)) {
                 final String text = cellTextFunction.apply(value).asString();
@@ -195,7 +195,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
-            final DocRef docRef = GwtNullSafe.get(value, docRefFunction);
+            final DocRef docRef = NullSafe.get(value, docRefFunction);
             final SafeHtml cellHtmlText = cellTextFunction.apply(value);
             String cssClasses = "docRefLinkText";
             final String additionalClasses = cssClassFunction.apply(value);
@@ -272,7 +272,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         // Thus, totalCount may be bigger than readableCount
         final List<Item> childMenuItems = new ArrayList<>();
         int priority = 1;
-        if (GwtNullSafe.isNonBlankString(docRef.getName())) {
+        if (NullSafe.isNonBlankString(docRef.getName())) {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
@@ -281,7 +281,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .command(() -> ClipboardUtil.copy(docRef.getName()))
                     .build());
         }
-        if (GwtNullSafe.isNonBlankString(docRef.getUuid())) {
+        if (NullSafe.isNonBlankString(docRef.getUuid())) {
             childMenuItems.add(new IconMenuItem.Builder()
                     .priority(priority++)
                     .icon(SvgImage.COPY)
@@ -379,9 +379,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     if (docRef == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        return SafeHtmlUtils.fromString(docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(
+                        final String displayValue = docRef.getDisplayValue(NullSafe.requireNonNullElse(
                                 displayType,
-                                displayType)));
+                                DisplayType.AUTO));
+                        return NullSafe.isNonBlankString(displayValue)
+                                ? SafeHtmlUtils.fromString(displayValue)
+                                : SafeHtmlUtils.EMPTY_SAFE_HTML;
                     }
                 };
             }

@@ -19,7 +19,7 @@ package stroom.widget.tab.client.view;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitor;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -51,7 +51,7 @@ public class CurveTab extends AbstractTab {
         final Element background = DOM.createDiv();
         background.setClassName("curveTab-background");
         element.appendChild(background);
-        final String title = GwtNullSafe.requireNonNullElse(tooltip, text);
+        final String title = NullSafe.requireNonNullElse(tooltip, text);
 
         if (icon != null) {
             final Element iconElement = DOM.createDiv();

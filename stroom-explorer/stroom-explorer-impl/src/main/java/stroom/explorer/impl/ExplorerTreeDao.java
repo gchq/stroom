@@ -37,7 +37,11 @@ public interface ExplorerTreeDao {
 
     List<ExplorerTreeNode> getTree(ExplorerTreeNode node);
 
-    List<ExplorerTreeNode> getChildren(ExplorerTreeNode node);
+    List<ExplorerTreeNode> getChildren(ExplorerTreeNode parent);
+
+    List<ExplorerTreeNode> getChildrenByNameAndType(ExplorerTreeNode parent,
+                                                    String name,
+                                                    String type);
 
     ExplorerTreeNode getParent(ExplorerTreeNode node);
 

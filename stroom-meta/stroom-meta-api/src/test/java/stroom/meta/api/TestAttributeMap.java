@@ -1,8 +1,8 @@
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
@@ -477,7 +477,7 @@ class TestAttributeMap {
         assertThat(val2)
                 .isEqualTo(str1);
         assertThat(attributeMap.get(key))
-                .isEqualTo(str1 + AttributeMapUtil.VALUE_DELIMITER + str2);
+                .isEqualTo(str1 + AttributeMap.VALUE_DELIMITER + str2);
     }
 
     @Test
@@ -545,7 +545,7 @@ class TestAttributeMap {
         assertThat(val2)
                 .isEqualTo(item1);
         assertThat(attributeMap.get(key))
-                .isEqualTo(item1 + AttributeMapUtil.VALUE_DELIMITER + item2);
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
     }
 
     @Test
@@ -627,7 +627,7 @@ class TestAttributeMap {
         assertThat(val1)
                 .isEqualTo("1");
         assertThat(attributeMap.get(key))
-                .isEqualTo(item1 + AttributeMapUtil.VALUE_DELIMITER + item2);
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
     }
 
     @Test

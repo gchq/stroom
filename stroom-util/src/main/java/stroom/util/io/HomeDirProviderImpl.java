@@ -1,8 +1,8 @@
 package stroom.util.io;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -42,7 +42,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
                     Paths::get);
             if (path != null) {
                 LOGGER.warn("Using system property {} for stroom home: {}. " +
-                                "This overrides the value in the config file and is only intended for testing.",
+                            "This overrides the value in the config file and is only intended for testing.",
                         HomeDirProvider.PROP_STROOM_HOME, path);
             }
 

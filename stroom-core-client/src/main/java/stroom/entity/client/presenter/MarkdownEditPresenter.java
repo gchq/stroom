@@ -30,7 +30,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
@@ -187,7 +187,7 @@ public class MarkdownEditPresenter
     private void updateEditState() {
         final String rawMarkdown = markdownPreviewPresenter.getText();
         // No content do default to edit mode
-        if (GwtNullSafe.isBlankString(rawMarkdown) && !readOnly) {
+        if (NullSafe.isBlankString(rawMarkdown) && !readOnly) {
             GWT.log("setText, editMode: true");
             setEditMode(true);
 //            editModeButton.setState(true);
@@ -202,7 +202,7 @@ public class MarkdownEditPresenter
         uiConfigCache.get(result -> {
             if (result != null) {
                 final String helpUrl = result.getHelpUrlDocumentation();
-                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                if (!NullSafe.isBlankString(helpUrl)) {
                     Window.open(helpUrl, "_blank", "");
                 } else {
                     AlertEvent.fireError(

@@ -1,10 +1,10 @@
 package stroom.data.zip;
 
-import stroom.util.NullSafe;
 import stroom.util.io.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +74,7 @@ public class StroomZipEntries {
         final String baseName = stroomZipEntry.getBaseName();
 
         if (!stroomZipEntry.hasKnownExtension()
-                && stroomZipEntry.getFullName().contains(".")) {
+            && stroomZipEntry.getFullName().contains(".")) {
             // e.g. some random extension '001.mydata'
             // but they may have '001.mydata' and '001.meta' which would have different base names
             // ('001.mydata' and '001') so we need to link them up
@@ -160,9 +160,9 @@ public class StroomZipEntries {
     @Override
     public String toString() {
         return "StroomZipEntries{" +
-                "map=" + map +
-                ", baseNames=" + baseNames +
-                '}';
+               "map=" + map +
+               ", baseNames=" + baseNames +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -186,7 +186,7 @@ public class StroomZipEntries {
             if (!Objects.equals(baseName, entry.getBaseName())) {
                 // Shouldn't happen as we are building the groups
                 throw new RuntimeException("Base name mismatch, '" + baseName + "' and '"
-                        + entry.getBaseName() + '"');
+                                           + entry.getBaseName() + '"');
             }
             entries[index] = entry;
         }
@@ -228,9 +228,9 @@ public class StroomZipEntries {
         @Override
         public String toString() {
             return "StroomZipEntryGroup{" +
-                    "baseName='" + baseName + '\'' +
-                    ", entries=" + Arrays.toString(entries) +
-                    '}';
+                   "baseName='" + baseName + '\'' +
+                   ", entries=" + Arrays.toString(entries) +
+                   '}';
         }
     }
 }

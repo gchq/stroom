@@ -10,7 +10,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.HashSet;

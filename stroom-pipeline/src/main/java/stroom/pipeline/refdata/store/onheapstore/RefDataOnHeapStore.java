@@ -11,10 +11,10 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
 
@@ -258,19 +258,19 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     @Override
     public void purgeOldData() {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
-                "as the data is transient");
+                                                "as the data is transient");
     }
 
     @Override
     public void purgeOldData(final StroomDuration purgeAge) {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
-                "as the data is transient");
+                                                "as the data is transient");
     }
 
     @Override
     public void purge(final long refStreamId, final long partIndex) {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
-                "as the data is transient");
+                                                "as the data is transient");
     }
 
     @Override

@@ -1,6 +1,6 @@
 package stroom.security.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,7 +55,7 @@ public class AppUserPermissions implements HasUserRef {
 
     @JsonIgnore
     public boolean isUserEnabled() {
-        return GwtNullSafe.isTrue(userRef, UserRef::isEnabled);
+        return NullSafe.isTrue(userRef, UserRef::isEnabled);
     }
 
     @Override

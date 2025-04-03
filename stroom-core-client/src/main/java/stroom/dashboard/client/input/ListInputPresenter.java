@@ -32,7 +32,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.Param;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -83,8 +83,8 @@ public class ListInputPresenter
     @Override
     public List<Param> getParams() {
         final List<Param> list = new ArrayList<>();
-        final String key = GwtNullSafe.trim(getListInputSettings().getKey());
-        final String value = GwtNullSafe.trim(getView().getSelectedValue());
+        final String key = NullSafe.trim(getListInputSettings().getKey());
+        final String value = NullSafe.trim(getView().getSelectedValue());
         if (!key.isEmpty() && !value.isEmpty()) {
             final Param param = new Param(key, value);
             list.add(param);
@@ -132,7 +132,7 @@ public class ListInputPresenter
                     .taskMonitorFactory(this)
                     .exec();
         } else {
-            final List<WordItem> simpleValues = GwtNullSafe.stream(settings.getValues())
+            final List<WordItem> simpleValues = NullSafe.stream(settings.getValues())
                     .map(WordItem::simpleWord)
                     .collect(Collectors.toList());
             getView().setValues(simpleValues);
@@ -205,7 +205,7 @@ public class ListInputPresenter
          * @param word
          */
         public static WordItem simpleWord(final String word) {
-            if (GwtNullSafe.isNonBlankString(word)) {
+            if (NullSafe.isNonBlankString(word)) {
                 return new WordItem(word, null);
             } else {
                 return EMPTY;
@@ -213,7 +213,7 @@ public class ListInputPresenter
         }
 
         public static WordItem sourcedWord(final String word, final WordList wordList) {
-            if (GwtNullSafe.isNonBlankString(word)) {
+            if (NullSafe.isNonBlankString(word)) {
                 return wordList.getWord(word)
                         .map(wordObj -> {
                             final DocRef sourceDocRef = wordList.getSource(wordObj).orElse(null);

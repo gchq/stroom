@@ -1,8 +1,8 @@
 package stroom.data.zip;
 
-import stroom.util.NullSafe;
 import stroom.util.io.FileName;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 
@@ -101,8 +101,8 @@ public class StroomZipEntry {
     @Override
     public String toString() {
         return "'" + fullName + "' (baseName: '"
-                + baseName + "', type: "
-                + stroomZipFileType + ")";
+               + baseName + "', type: "
+               + stroomZipFileType + ")";
     }
 
     /**

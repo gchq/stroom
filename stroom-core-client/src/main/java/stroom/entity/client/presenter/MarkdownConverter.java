@@ -18,7 +18,7 @@ package stroom.entity.client.presenter;
 
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.shared.ThemeType;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -54,7 +54,7 @@ public class MarkdownConverter {
      * from scripting in the markdown.</p>
      */
     public SafeHtml convertMarkdownToHtml(final String rawMarkdown) {
-        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+        if (NullSafe.isBlankString(rawMarkdown)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
@@ -69,7 +69,7 @@ public class MarkdownConverter {
      * safety from scripts.
      */
     public SafeHtml convertMarkdownToHtmlInFrame(final String rawMarkdown) {
-        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+        if (NullSafe.isBlankString(rawMarkdown)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
 
@@ -105,7 +105,7 @@ public class MarkdownConverter {
      * from scripting in the markdown.</p>
      */
     public void appendMarkdownInDiv(final HtmlBuilder htmlBuilder, final String rawMarkdown) {
-        if (htmlBuilder != null && !GwtNullSafe.isBlankString(rawMarkdown)) {
+        if (htmlBuilder != null && !NullSafe.isBlankString(rawMarkdown)) {
             final String markdownHtml = nativeConvertMarkdownToHtml(rawMarkdown);
             final SafeHtml markdownSafeHtml = SafeHtmlUtils.fromTrustedString(markdownHtml);
             final String cssClasses = getMarkdownContainerClasses();

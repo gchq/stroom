@@ -21,7 +21,7 @@ import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.UserRef;
@@ -341,7 +341,7 @@ public class ApiKeysListPresenter
                         Function.identity(),
                         () -> new ActionMenuCell<>(
                                 (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildUserActionMenu(
-                                        GwtNullSafe.get(hashedApiKey, HashedApiKey::getOwner),
+                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner),
                                         isExternalIdp(),
                                         getActionScreensToInclude(),
                                         this),
@@ -504,7 +504,7 @@ public class ApiKeysListPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        filter = GwtNullSafe.trim(text);
+        filter = NullSafe.trim(text);
         if (filter.isEmpty()) {
             filter = null;
         }

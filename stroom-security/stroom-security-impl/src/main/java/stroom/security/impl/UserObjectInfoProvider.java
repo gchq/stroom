@@ -2,9 +2,9 @@ package stroom.security.impl;
 
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.security.shared.User;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import event.logging.BaseObject;
 import event.logging.Data;
@@ -28,8 +28,8 @@ public class UserObjectInfoProvider implements ObjectInfoProvider {
                             .build());
 
             if (user.getSubjectId() == null
-                    && user.getDisplayName() == null
-                    && user.getUuid() != null) {
+                && user.getDisplayName() == null
+                && user.getUuid() != null) {
                 builder.addData(Data.builder()
                         .withName("uuid")
                         .withValue(user.getUuid())

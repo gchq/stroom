@@ -42,7 +42,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.CountDownAndRun;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -231,7 +231,7 @@ public class ProcessorPresenter
         final BatchProcessorFilterEditPresenter presenter =
                 batchProcessorFilterEditPresenterProvider.get();
         presenter.show(processorListPresenter.getExpression(),
-                GwtNullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
+                NullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
                 processorListPresenter::refresh);
     }
 
@@ -470,7 +470,7 @@ public class ProcessorPresenter
     }
 
     public void refresh(final ProcessorFilter processorFilter) {
-        refresh(GwtNullSafe.get(processorFilter, ProcessorFilterRow::new));
+        refresh(NullSafe.get(processorFilter, ProcessorFilterRow::new));
     }
 
     public void refresh(final ProcessorListRow row) {

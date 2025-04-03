@@ -23,7 +23,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -200,7 +200,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
                 for (final JobNodeAndInfo jobNodeAndInfo : data.getValues()) {
                     rtnList.add(jobNodeAndInfo);
-                    if (!addedGap && GwtNullSafe.test(jobNodeAndInfo, JobNodeAndInfo::getJob, Job::isAdvanced)) {
+                    if (!addedGap && NullSafe.test(jobNodeAndInfo, JobNodeAndInfo::getJob, Job::isAdvanced)) {
                         // Add a gap between the non-advanced and advanced jobs
                         rtnList.add(null);
                         addedGap = true;

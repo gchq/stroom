@@ -17,7 +17,7 @@
 package stroom.query.impl;
 
 import stroom.query.shared.QueryHelpFunctionSignature.Arg;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,19 +39,19 @@ public class FunctionSignatureUtil {
         } else if (isNonBracketedForm(name, args)) {
             if (args.size() == 2) {
                 snippetStr = argToSnippetArg(args.get(0), 1)
-                        + " "
-                        + name
-                        + " "
-                        + argToSnippetArg(args.get(1), 2)
-                        + "$0";
+                             + " "
+                             + name
+                             + " "
+                             + argToSnippetArg(args.get(1), 2)
+                             + "$0";
             } else {
                 final String argName = args.get(0).getName();
                 snippetStr = argToSnippetArg(argName + "1", args.get(0), 1)
-                        + " "
-                        + name
-                        + " "
-                        + argToSnippetArg(argName + "2", args.get(0), 2)
-                        + "$0";
+                             + " "
+                             + name
+                             + " "
+                             + argToSnippetArg(argName + "2", args.get(0), 2)
+                             + "$0";
             }
         } else {
             final AtomicInteger argPosition = new AtomicInteger(1);
@@ -101,12 +101,12 @@ public class FunctionSignatureUtil {
         // is another func call or a field.
 
         return "${" +
-                position +
-                ":" +
-                snippetDefault
-                        .replace("$", "\\$")
-                        .replace("}", "\\}") +
-                "}";
+               position +
+               ":" +
+               snippetDefault
+                       .replace("$", "\\$")
+                       .replace("}", "\\}") +
+               "}";
     }
 
     private static boolean hasVarargs(final List<Arg> args) {
@@ -140,10 +140,10 @@ public class FunctionSignatureUtil {
             } else if (isNonBracketedForm(name, args)) {
                 if (args.size() == 2) {
                     sigStr = args.get(0).getName()
-                            + " "
-                            + name
-                            + " "
-                            + args.get(1).getName();
+                             + " "
+                             + name
+                             + " "
+                             + args.get(1).getName();
                 } else {
                     final String argName = args.get(0).getName();
                     sigStr = argName + "1 " + name + " " + argName + "2";
@@ -194,7 +194,7 @@ public class FunctionSignatureUtil {
     private static boolean isNonBracketedForm(final String name,
                                               final List<Arg> args) {
         return (name.length() == 1 || ">=".equals(name) || "<=".equals(name))
-                && (args.size() == 2 || (args.size() == 1 && args.get(0).isVarargs()));
+               && (args.size() == 2 || (args.size() == 1 && args.get(0).isVarargs()));
     }
 
     private static String buildVarargsName(final Arg arg,

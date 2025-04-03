@@ -1,6 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.cache.impl.CacheModule;
+import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.db.FsDataStoreDaoModule;
@@ -10,6 +11,7 @@ import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.SimpleMetaImpl;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
 import stroom.util.entityevent.EntityEventBus;
@@ -71,7 +73,9 @@ public class TestFsPathHelperIntegration {
                         new MockClusterLockModule(),
                         new MockTaskModule(),
                         new MockSecurityContextModule(),
+                        new MockMetricsModule(),
                         new CacheModule(),
+                        new CacheServiceModule(),
                         new DbTestModule())
                 .injectMembers(this);
     }

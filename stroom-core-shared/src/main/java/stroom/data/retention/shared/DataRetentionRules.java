@@ -21,6 +21,7 @@ import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -33,7 +34,6 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -107,13 +107,9 @@ public class DataRetentionRules extends Doc {
 
     @JsonIgnore
     public List<DataRetentionRule> getActiveRules() {
-        if (rules == null) {
-            return Collections.emptyList();
-        } else {
-            return rules.stream()
-                    .filter(DataRetentionRule::isEnabled)
-                    .collect(Collectors.toList());
-        }
+        return NullSafe.stream(rules)
+                .filter(DataRetentionRule::isEnabled)
+                .collect(Collectors.toList());
     }
 
     public void setRules(final List<DataRetentionRule> rules) {

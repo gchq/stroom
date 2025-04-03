@@ -121,7 +121,7 @@ public final class CompareUtil {
 
         Comparator<T> comparator = null;
 
-        if (GwtNullSafe.hasItems(criteria.getSortList())) {
+        if (NullSafe.hasItems(criteria.getSortList())) {
             for (final CriteriaFieldSort sort : criteria.getSortList()) {
                 final String field = sort.getId();
 
@@ -256,6 +256,20 @@ public final class CompareUtil {
     }
 
     /**
+     * Normalises an {@link Comparable#compareTo(Object)} result into -1, 0, or 1.
+     * Useful for doing equality assertions on comparators.
+     */
+    public static int normalise(final int compareResult) {
+        if (compareResult < 0) {
+            return -1;
+        } else if (compareResult > 0) {
+            return 1;
+        } else {
+            return compareResult;
+        }
+    }
+
+    /**
      * Combine two comparators in a null safe way.
      * If one arg is null, the other arg is returned.
      * If both are null, null is returned.
@@ -300,7 +314,7 @@ public final class CompareUtil {
      * comparator ({@link CompareUtil#noOpComparator()}) that does nothing.
      */
     public static <T> Comparator<T> nonNull(final Comparator<T> comparator) {
-        return GwtNullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
+        return NullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
     }
 
 
@@ -331,7 +345,7 @@ public final class CompareUtil {
          */
         public Comparator<T> get(final String fieldId, final boolean ignoreCase) {
             Objects.requireNonNull(fieldId);
-            return GwtNullSafe.get(comparatorMap.get(fieldId),
+            return NullSafe.get(comparatorMap.get(fieldId),
                     caseAwareComparator -> caseAwareComparator.get(ignoreCase));
         }
 

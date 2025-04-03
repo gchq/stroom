@@ -4,7 +4,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +92,7 @@ public class ExpressionUtil {
      */
     public static boolean hasTerms(final ExpressionOperator expressionOperator) {
         if (expressionOperator != null) {
-            for (final ExpressionItem child : GwtNullSafe.list(expressionOperator.getChildren())) {
+            for (final ExpressionItem child : NullSafe.list(expressionOperator.getChildren())) {
                 if (child != null && child.enabled()) {
                     if (child instanceof ExpressionOperator) {
                         final ExpressionOperator childOperator = (ExpressionOperator) child;

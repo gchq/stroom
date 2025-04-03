@@ -31,7 +31,7 @@ import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
@@ -202,7 +202,7 @@ public class UserPermissionReportPresenter
                 batchDocumentPermissionsEditPresenterProvider.get();
         presenter.getUserRefSelectionBoxPresenter().setSelected(userRef);
         presenter.show(combinedExpression,
-                GwtNullSafe.get(docs, ResultPage::getPageResponse),
+                NullSafe.get(docs, ResultPage::getPageResponse),
                 documentPermissionsListPresenter::refresh);
     }
 
@@ -233,7 +233,7 @@ public class UserPermissionReportPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        if (GwtNullSafe.isNonBlankString(text)) {
+        if (NullSafe.isNonBlankString(text)) {
             quickFilterExpression = QuickFilterExpressionParser.parse(text,
                     Set.of(DocumentPermissionFields.DOCUMENT_NAME),
                     DocumentPermissionFields.getAllFieldMap());

@@ -45,6 +45,14 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     SelectionBox<String> receivedType;
     @UiField
+    SelectionBox<String> dataFormat;
+    @UiField
+    SelectionBox<String> contextFormat;
+    @UiField
+    TextBox schema;
+    @UiField
+    TextBox schemaVersion;
+    @UiField
     CustomCheckBox reference;
     @UiField
     SelectionBox<String> volumeGroup;
@@ -90,6 +98,26 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
+    public SelectionBox<String> getDataFormat() {
+        return dataFormat;
+    }
+
+    @Override
+    public SelectionBox<String> getContextFormat() {
+        return contextFormat;
+    }
+
+    @Override
+    public TextBox getSchema() {
+        return schema;
+    }
+
+    @Override
+    public TextBox getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    @Override
     public SelectionBox<String> getVolumeGroup() {
         return volumeGroup;
     }
@@ -104,6 +132,10 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         reference.setEnabled(!readOnly);
         volumeGroup.setEnabled(!readOnly);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {
 

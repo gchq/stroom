@@ -6,7 +6,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -14,6 +13,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

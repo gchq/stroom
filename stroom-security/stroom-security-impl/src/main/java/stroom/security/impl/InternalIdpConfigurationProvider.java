@@ -81,7 +81,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     private boolean isNewResponseRequired(final String configurationEndpoint) {
         return openIdConfigurationResp == null
-                || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
+               || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
     }
 
     @Override
@@ -114,7 +114,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     public List<String> getRequestScopes() {
         return localOpenIdConfigProvider.get().getRequestScopes();
 //        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
-//        return NullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
+//        return GwtNullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
 //                ? OpenId.DEFAULT_REQUEST_SCOPES
 //                : abstractOpenIdConfig.getRequestScopes();
     }

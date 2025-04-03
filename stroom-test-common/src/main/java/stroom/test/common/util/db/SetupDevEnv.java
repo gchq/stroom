@@ -2,7 +2,6 @@ package stroom.test.common.util.db;
 
 import stroom.config.common.ConnectionConfig;
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileUtil;
@@ -10,6 +9,7 @@ import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -95,6 +95,7 @@ public class SetupDevEnv {
         LOGGER.debug("repo dir: {}", REPO_ROOT_PATH);
 
         log("Enter the name for this environment, e.g. '7.5', or 'master' (blank for un-named):");
+        log("The entered name will be prefixed with 'stroom_' and 'stroom-proxy_'");
         final String envName = inputScanner.nextLine();
         final String stroomEnvName = buildDbName(envName);
         final String proxyEnvName = stroomEnvName.replace("stroom", "stroom-proxy");

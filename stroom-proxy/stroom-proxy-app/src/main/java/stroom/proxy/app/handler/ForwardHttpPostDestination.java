@@ -3,9 +3,9 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -31,10 +31,6 @@ public class ForwardHttpPostDestination implements ForwardDestination {
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
-
-        // TODO Add a health URL to check the forward dest every minute or so
-        //  If it returns false we stop consuming from the forwardQueue/retryQueue until
-        //  it returns true.
     }
 
     @Override

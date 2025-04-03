@@ -14,9 +14,9 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.query.common.v2.IndexFieldCache;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import io.vavr.Tuple;

@@ -23,7 +23,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -88,7 +88,7 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
     public void setData(final List<DocRef> docRefs) {
         dataGrid.setRowData(0, docRefs);
         dataGrid.setRowCount(docRefs.size());
-        if (GwtNullSafe.hasItems(docRefs)) {
+        if (NullSafe.hasItems(docRefs)) {
             selectionModel.setSelected(docRefs.get(0));
         } else {
             selectionModel.clear();

@@ -46,7 +46,7 @@ import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -298,7 +298,7 @@ public class SelectionHandlersPresenter
                 final QueryResultTablePresenter queryResultTablePresenter =
                         embeddedQueryPresenter.getCurrentTablePresenter();
                 if (queryResultTablePresenter != null) {
-                    columns = GwtNullSafe.list(queryResultTablePresenter.getCurrentColumns());
+                    columns = NullSafe.list(queryResultTablePresenter.getCurrentColumns());
                 }
                 fieldSelectionListModel = createSelectionListModelFromColumns(columns);
             }

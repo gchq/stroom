@@ -13,10 +13,10 @@ import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMaker;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMakerFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.om.Sequence;
@@ -86,7 +86,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         // Should call this once with the combined messages for the lookup
         final LogArgs logArgs = verifySingleLogCall();
         Assertions.assertThat(logArgs.getSeverity())
-                                .isEqualTo(Severity.ERROR);
+                .isEqualTo(Severity.ERROR);
         Assertions.assertThat(logArgs.getMessage())
                 .containsIgnoringCase("no reference loaders");
 

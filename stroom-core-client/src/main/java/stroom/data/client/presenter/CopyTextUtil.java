@@ -2,7 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -68,7 +68,7 @@ public class CopyTextUtil {
             sb.appendHtmlConstant("<div class=\"" + containerClasses + "\">");
             sb.append(textSafeHtml);
 
-            GwtNullSafe.consumeNonBlankString(value, str -> {
+            NullSafe.consumeNonBlankString(value, str -> {
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
                         SvgImage.COPY,
                         ICON_NAME,
@@ -93,8 +93,8 @@ public class CopyTextUtil {
             final Element element = e.getEventTarget().cast();
             final Element container = ElementUtil.findParent(
                     element, "docRefLinkContainer", 5);
-            final String text = GwtNullSafe.get(container, Element::getInnerText);
-            if (GwtNullSafe.isNonBlankString(text)) {
+            final String text = NullSafe.get(container, Element::getInnerText);
+            if (NullSafe.isNonBlankString(text)) {
                 if (MouseUtil.isPrimary(e)) {
                     final Element copy = ElementUtil.findParent(element, CopyTextUtil.COPY_CLASS_NAME, 5);
                     if (copy != null) {

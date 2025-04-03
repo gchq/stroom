@@ -1,10 +1,10 @@
 package stroom.security.common.impl;
 
-import stroom.util.NullSafe;
 import stroom.util.authentication.Refreshable;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -68,11 +68,11 @@ class TestRefreshManager {
         refreshManager.stop();
 
         Assertions.assertThat(refreshedItems)
-                        .containsExactly(
-                                item1.getUuid(),
-                                item2.getUuid(),
-                                item1.getUuid(),
-                                item1.getUuid());
+                .containsExactly(
+                        item1.getUuid(),
+                        item2.getUuid(),
+                        item1.getUuid(),
+                        item1.getUuid());
         // there are 3x 500ms in 1700ms
         Assertions.assertThat(valuesMap.get(item1.getUuid()))
                 .containsExactly("1", "10", "100");

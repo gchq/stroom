@@ -30,14 +30,13 @@ import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpDocument;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
-import stroom.util.NullSafe;
 import stroom.util.collections.TrimmedSortedList;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.resultpage.ResultPageBuilder;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.string.AceStringMatcher;
 import stroom.util.string.AceStringMatcher.AceMatchResult;
@@ -224,12 +223,12 @@ public class Visualisations {
                 ? "\"" + doc.getName() + "\""
                 : doc.getName();
         final VisSettings visSettings = JsonUtil.readValue(doc.getSettings(), VisSettings.class);
-        final Tab dataTab = GwtNullSafe.stream(visSettings.getTabs())
+        final Tab dataTab = NullSafe.stream(visSettings.getTabs())
                 .filter(tab -> "data".equalsIgnoreCase(tab.getName()))
                 .findFirst()
                 .orElse(null);
-        final List<Control> dataControls = GwtNullSafe.asList(
-                GwtNullSafe.get(dataTab, Tab::getControls));
+        final List<Control> dataControls = NullSafe.asList(
+                NullSafe.get(dataTab, Tab::getControls));
 
         StringBuilder sb = new StringBuilder(visName)
                 .append("(");

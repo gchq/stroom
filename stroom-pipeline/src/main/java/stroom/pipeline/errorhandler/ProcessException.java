@@ -17,8 +17,8 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.shared.NullSafe;
 
 import net.sf.saxon.trans.UncheckedXPathException;
 import net.sf.saxon.trans.XPathException;
@@ -107,9 +107,9 @@ public class ProcessException extends UncheckedXPathException {
     private static boolean contains(final Throwable e,
                                     final Class<? extends Throwable> clazz) {
         return e != null
-                && clazz != null
-                && (
-                clazz.isAssignableFrom(e.getClass())
-                        || ExceptionUtils.indexOfThrowable(e, clazz) >= 0);
+               && clazz != null
+               && (
+                       clazz.isAssignableFrom(e.getClass())
+                       || ExceptionUtils.indexOfThrowable(e, clazz) >= 0);
     }
 }

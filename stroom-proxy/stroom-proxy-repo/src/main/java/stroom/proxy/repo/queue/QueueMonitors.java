@@ -1,16 +1,31 @@
 package stroom.proxy.repo.queue;
 
+import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Singleton
 public class QueueMonitors {
 
     private final Map<Key, QueueMonitorImpl> queueMonitorMap = new ConcurrentHashMap<>();
+    private final Metrics metrics;
+
+    @Inject
+    public QueueMonitors(final Metrics metrics) {
+        this.metrics = metrics;
+    }
+
+//    private final Queue<NamedMetric> unregisteredMetrics = new ConcurrentLinkedQueue<>();
+//    private volatile Consumer<NamedMetric> metricConsumer;
 
     public synchronized String log() {
         final StringBuilder sb = new StringBuilder();
@@ -67,10 +82,48 @@ public class QueueMonitors {
 
     public QueueMonitor create(final int order, final String name) {
         final QueueMonitorImpl queueMonitor = new QueueMonitorImpl();
-        queueMonitorMap.put(new Key(order, name), queueMonitor);
+        final Key key = new Key(order, name);
+        final QueueMonitorImpl prevVal = queueMonitorMap.put(key, queueMonitor);
+        if (prevVal == null) {
+            registerMetrics(key);
+        }
         return queueMonitor;
     }
 
+    private void registerMetrics(final Key key) {
+        NullSafe.consume(key, queueMonitorMap::get, queueMonitor -> {
+            registerMetric(
+                    List.of(key.name(), Metrics.WRITE, Metrics.POSITION),
+                    queueMonitor,
+                    QueueMonitorImpl::getWritePos);
+            registerMetric(
+                    List.of(key.name(), Metrics.READ, Metrics.POSITION),
+                    queueMonitor,
+                    QueueMonitorImpl::getReadPos);
+            registerMetric(
+                    List.of(key.name(), Metrics.DELTA),
+                    queueMonitor,
+                    QueueMonitorImpl::getReadWriteDelta);
+            registerMetric(
+                    List.of(key.name(), "buffer", Metrics.POSITION),
+                    queueMonitor,
+                    QueueMonitorImpl::getBufferPos);
+            registerMetric(
+                    List.of(key.name(), "buffer", Metrics.SIZE),
+                    queueMonitor,
+                    QueueMonitorImpl::getBufferSize);
+        });
+    }
+
+    private void registerMetric(final List<String> nameParts,
+                                final QueueMonitorImpl queueMonitor,
+                                final Function<QueueMonitorImpl, Long> valueFunc) {
+        metrics.registrationBuilder(getClass())
+                .withNameParts(nameParts)
+                .gauge(() ->
+                        valueFunc.apply(queueMonitor))
+                .register();
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -102,6 +155,28 @@ public class QueueMonitors {
         @Override
         public void setBufferPos(final long bufferPos) {
             this.bufferPos = bufferPos;
+        }
+
+        public long getWritePos() {
+            return writePos;
+        }
+
+        public long getReadPos() {
+            return readPos;
+        }
+
+        public long getReadWriteDelta() {
+            return writePos - readPos;
+        }
+
+        public long getBufferPos() {
+            return bufferPos;
+        }
+
+        public long getBufferSize() {
+            return bufferPos > 0
+                    ? bufferPos - readPos
+                    : 0;
         }
 
         @Override

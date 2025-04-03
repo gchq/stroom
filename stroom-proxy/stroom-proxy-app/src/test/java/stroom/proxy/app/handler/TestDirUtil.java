@@ -1,11 +1,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.TypeLiteral;
 import org.assertj.core.api.Assertions;

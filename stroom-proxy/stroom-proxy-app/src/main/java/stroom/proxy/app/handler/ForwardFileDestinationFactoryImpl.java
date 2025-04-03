@@ -2,6 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.repo.store.FileStores;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,16 +21,19 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
     private final DirQueueFactory dirQueueFactory;
     private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
+    private final FileStores fileStores;
 
     @Inject
     public ForwardFileDestinationFactoryImpl(final ProxyServices proxyServices,
                                              final DirQueueFactory dirQueueFactory,
                                              final DataDirProvider dataDirProvider,
-                                             final PathCreator pathCreator) {
+                                             final PathCreator pathCreator,
+                                             final FileStores fileStores) {
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
         this.pathCreator = pathCreator;
+        this.fileStores = fileStores;
     }
 
     @Override
@@ -67,7 +71,8 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                     dataDirProvider,
                     pathCreator,
                     dirQueueFactory,
-                    proxyServices);
+                    proxyServices,
+                    fileStores);
         } else {
             destination = forwardFileDestination;
         }

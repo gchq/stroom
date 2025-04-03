@@ -40,7 +40,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -54,6 +53,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -174,7 +174,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             validationResult = ValidationResult.error("You must select a node for the volume.");
         }
         if (validationResult.isOk()
-                && NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
+            && NullSafe.isBlankString(indexVolume, IndexVolume::getPath)) {
             validationResult = ValidationResult.error("You must provide a path for the volume.");
         }
 
@@ -207,8 +207,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         final boolean foundDupPathAndNode = volumeGroups.stream()
                 .anyMatch(dbVol ->
                         !Objects.equals(dbVol.getId(), indexVolume.getId())
-                                && Objects.equals(getAbsVolumePath(dbVol), getAbsVolumePath(indexVolume))
-                                && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()));
+                        && Objects.equals(getAbsVolumePath(dbVol), getAbsVolumePath(indexVolume))
+                        && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName()));
 
         if (foundDupPathAndNode) {
             return ValidationResult.error(
@@ -233,8 +233,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         final Set<String> dupGroupNames = volumes.stream()
                 .filter(dbVol ->
                         !Objects.equals(dbVol.getIndexVolumeGroupId(), indexVolume.getIndexVolumeGroupId())
-                                && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName())
-                                && Objects.equals(getAbsVolumePath(dbVol), path))
+                        && Objects.equals(dbVol.getNodeName(), indexVolume.getNodeName())
+                        && Objects.equals(getAbsVolumePath(dbVol), path))
                 .map(dbVol -> NullSafe.get(
                         indexVolumeGroupService.get(dbVol.getIndexVolumeGroupId()),
                         IndexVolumeGroup::getName))
@@ -299,8 +299,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         } catch (IOException e) {
             return ValidationResult.error(LogUtil.message(
                     "Error creating test file in directory {}. " +
-                            "Does Stroom have the right permissions on this directory? " +
-                            "Error message: {} {}",
+                    "Does Stroom have the right permissions on this directory? " +
+                    "Error message: {} {}",
                     path,
                     e.getClass().getSimpleName(),
                     e.getMessage()));
@@ -555,7 +555,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         } else {
             throw new IndexException(
                     "Unable to find any non-full index volumes for index volume group '"
-                            + groupName + "' for node " + nodeName);
+                    + groupName + "' for node " + nodeName);
         }
     }
 
@@ -701,9 +701,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         @Override
         public String toString() {
             return "VolumeMap{" +
-                    "createTime=" + Instant.ofEpochMilli(createTime) +
-                    "groupNameToVolumesMap(size)=" + groupNameToVolumesMap.size() +
-                    '}';
+                   "createTime=" + Instant.ofEpochMilli(createTime) +
+                   "groupNameToVolumesMap(size)=" + groupNameToVolumesMap.size() +
+                   '}';
         }
     }
 
@@ -749,9 +749,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         @Override
         public String toString() {
             return "VolGroupNode{" +
-                    "groupName='" + groupName + '\'' +
-                    ", nodeName='" + nodeName + '\'' +
-                    '}';
+                   "groupName='" + groupName + '\'' +
+                   ", nodeName='" + nodeName + '\'' +
+                   '}';
         }
     }
 }

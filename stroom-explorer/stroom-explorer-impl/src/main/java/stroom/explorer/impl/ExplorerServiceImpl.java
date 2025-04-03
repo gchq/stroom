@@ -65,7 +65,6 @@ import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.suggestions.api.SuggestionsQueryHandler;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -73,9 +72,11 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.Metrics;
-import stroom.util.logging.Metrics.LocalMetrics;
+import stroom.util.logging.SimpleMetrics;
+import stroom.util.logging.SimpleMetrics.LocalMetrics;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.DocPath;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -100,6 +101,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SequencedSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -164,7 +166,7 @@ class ExplorerServiceImpl
     @Override
     public FetchExplorerNodeResult getData(final FetchExplorerNodesRequest criteria) {
         final DurationTimer timer = DurationTimer.start();
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             // Get a copy of the master tree model, so we can add the favourites into it.
             final TreeModel masterTreeModelClone = explorerTreeModel.getModel().createMutableCopy();
@@ -323,13 +325,13 @@ class ExplorerServiceImpl
                                      final OpenItems openItems,
                                      final OpenItems tempOpenItems,
                                      final OpenItems ensureVisible) {
-        if (NullSafe.hasItems(openItems)) {
+        if (openItems != null) {
             LOGGER.trace(() -> LogUtil.message("openItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
-        if (NullSafe.hasItems(tempOpenItems)) {
+        if (tempOpenItems != null) {
             LOGGER.trace(() -> LogUtil.message("tempOpenItems:\n{}", openItemsToStr(treeModel, openItems)));
         }
-        if (NullSafe.hasItems(ensureVisible)) {
+        if (ensureVisible != null) {
             LOGGER.trace(() -> LogUtil.message("ensureVisible:\n{}", openItemsToStr(treeModel, openItems)));
         }
     }
@@ -952,6 +954,52 @@ class ExplorerServiceImpl
                 .build();
     }
 
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath,
+                                         final PermissionInheritance permissionInheritance) {
+        return ensureFolderPath(docPath, explorerNodeService.getRoot(), permissionInheritance);
+    }
+
+    @Override
+    public ExplorerNode ensureFolderPath(final DocPath docPath,
+                                         final ExplorerNode baseNode,
+                                         final PermissionInheritance permissionInheritance) {
+        Objects.requireNonNull(baseNode);
+
+        if (docPath.isAbsolute() && !Objects.equals(baseNode, explorerNodeService.getRoot())) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "docPath {} is absolute so baseNode must be the root node {}",
+                    docPath, explorerNodeService.getRoot()));
+        }
+        Objects.requireNonNull(docPath);
+        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
+        docPath.forEach((idx, pathPart) -> {
+            final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
+                    parentNode.get(),
+                    pathPart,
+                    ExplorerConstants.FOLDER_TYPE);
+            final ExplorerNode childNode;
+
+            if (childNodes.size() > 1) {
+                throw new RuntimeException(LogUtil.message(
+                        "Found {} folders with name '{}' that are a child of {}",
+                        childNodes.size(), pathPart, parentNode));
+            } else if (childNodes.isEmpty()) {
+                // node doesn't exist so create it
+                childNode = create(
+                        ExplorerConstants.FOLDER_TYPE,
+                        pathPart,
+                        parentNode.get(),
+                        PermissionInheritance.DESTINATION);
+            } else {
+                // One node found
+                childNode = childNodes.get(0);
+            }
+            parentNode.set(childNode);
+        });
+        return parentNode.get();
+    }
+
     /**
      * Returns the DocRef of a destination folder
      *
@@ -1550,7 +1598,7 @@ class ExplorerServiceImpl
 
     @Override
     public ResultPage<FindResult> find(final DocumentFindRequest request) {
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (request.getFilter() == null) {
                 return ResultPage.empty();
@@ -1669,7 +1717,7 @@ class ExplorerServiceImpl
 
     private void applyExpressionFilter(final AdvancedDocumentFindRequest request,
                                        final TreeConsumer consumer) {
-        final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
+        final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (!ExpressionUtil.hasTerms(request.getExpression())) {
                 return;

@@ -3,7 +3,6 @@ package stroom.pipeline.refdata;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaSet;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -53,10 +52,10 @@ public class EffectiveStreamService {
 
         final Optional<EffectiveMeta> optEffectiveStream;
 
-        if (NullSafe.hasItems(effectiveStreams)) {
+        if (effectiveStreams != null && !effectiveStreams.isEmpty()) {
             result.logLazyTemplate(Severity.INFO,
                     "Found {} potential effective stream{} (spanning {} => {}) " +
-                            "for feed: '{}', type: '{}', window: {} => {}",
+                    "for feed: '{}', type: '{}', window: {} => {}",
                     () -> Arrays.asList(
                             effectiveStreams.size(),
                             StringUtil.pluralSuffix(effectiveStreams.size()),
@@ -87,9 +86,9 @@ public class EffectiveStreamService {
             result.logLazyTemplate(
                     Severity.WARNING,
                     "No effective stream can be found for feed '{}', stream type '{}' " +
-                            "and lookup time '{}'. " +
-                            "Check a reference data stream exists with an effective time that is before the " +
-                            "lookup time.",
+                    "and lookup time '{}'. " +
+                    "Check a reference data stream exists with an effective time that is before the " +
+                    "lookup time.",
                     () -> Arrays.asList(
                             feedName,
                             streamType,

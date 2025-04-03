@@ -14,7 +14,7 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.TableBuilder;
@@ -187,7 +187,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     private String appendPrefix(final String prefix, final String key) {
-        if (GwtNullSafe.isBlankString(prefix)) {
+        if (NullSafe.isBlankString(prefix)) {
             return key;
         }
         return prefix + "." + key;
@@ -196,7 +196,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     @Override
     public Optional<ExpressionOperator> createSelectionHandlerExpression(
             final List<ComponentSelectionHandler> selectionHandlers) {
-        if (GwtNullSafe.isEmptyCollection(selectionHandlers)) {
+        if (NullSafe.isEmptyCollection(selectionHandlers)) {
             return Optional.empty();
         }
 
@@ -206,7 +206,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 for (final Component component : components.getComponents()) {
                     if (component instanceof final HasComponentSelection hasComponentSelection) {
                         final List<ComponentSelection> selections = hasComponentSelection.getSelection();
-                        if (GwtNullSafe.hasItems(selections)) {
+                        if (NullSafe.hasItems(selections)) {
                             for (final ComponentSelection selection : selections) {
                                 replaceComponentSelection(
                                         component.getId(),
@@ -270,7 +270,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         }
 
                         final String replaced = ParamUtil.replaceParameters(value, replacements::get);
-                        if (GwtNullSafe.isNonBlankString(replaced)) {
+                        if (NullSafe.isNonBlankString(replaced)) {
                             children.add(ExpressionTerm.builder()
                                     .enabled(term.enabled())
                                     .field(term.getField())

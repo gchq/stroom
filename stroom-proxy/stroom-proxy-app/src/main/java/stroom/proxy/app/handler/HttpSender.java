@@ -9,12 +9,14 @@ import stroom.proxy.repo.LogStream.EventType;
 import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 
+import com.codahale.metrics.Timer;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -67,12 +69,14 @@ public class HttpSender implements StreamDestination {
     private final String forwardUrl;
     private final String forwarderName;
     private final ProxyServices proxyServices;
+    private final Timer sendTimer;
 
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
                       final String userAgent,
                       final UserIdentityFactory userIdentityFactory,
                       final HttpClient httpClient,
+                      final Metrics metrics,
                       final ProxyServices proxyServices) {
         this.logStream = logStream;
         this.config = config;
@@ -82,6 +86,11 @@ public class HttpSender implements StreamDestination {
         this.forwardUrl = config.getForwardUrl();
         this.forwarderName = config.getName();
         this.proxyServices = proxyServices;
+        this.sendTimer = metrics.registrationBuilder(getClass())
+                .addNamePart(forwarderName)
+                .addNamePart("send")
+                .timer()
+                .createAndRegister();
     }
 
     @Override
@@ -113,8 +122,8 @@ public class HttpSender implements StreamDestination {
                 true));
 
         // Execute and get the response.
-        final ResponseStatus responseStatus = post(
-                httpPost, startTime, attributeMap, byteCountInputStream::getCount);
+        final ResponseStatus responseStatus = sendTimer.timeSupplier(() ->
+                post(httpPost, startTime, attributeMap, byteCountInputStream::getCount));
         LOGGER.debug("responseStatus: {}", responseStatus);
     }
 

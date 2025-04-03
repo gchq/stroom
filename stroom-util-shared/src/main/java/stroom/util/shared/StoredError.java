@@ -63,7 +63,7 @@ public class StoredError implements Marker, Comparable<StoredError> {
         this.location = location;
         this.elementId = elementId;
         this.message = message;
-        this.errorType = GwtNullSafe.requireNonNullElse(errorType, ErrorType.UNKNOWN);
+        this.errorType = NullSafe.requireNonNullElse(errorType, ErrorType.UNKNOWN);
     }
 
     @Override

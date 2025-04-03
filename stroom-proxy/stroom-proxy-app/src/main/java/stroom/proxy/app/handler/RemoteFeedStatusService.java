@@ -1,23 +1,24 @@
 package stroom.proxy.app.handler;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.LoadingStroomCache;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
+import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
-import stroom.util.NullSafe;
-import stroom.util.cache.CacheConfig;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -35,7 +36,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -48,9 +48,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusService.class);
 
+    private static final String CACHE_NAME = "Remote Feed Status Response Cache";
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final LoadingCache<GetFeedStatusRequest, FeedStatusUpdater> updaters;
+    private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
@@ -59,33 +60,16 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     @Inject
     RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final JerseyClientFactory jerseyClientFactory,
-                            final UserIdentityFactory userIdentityFactory) {
+                            final UserIdentityFactory userIdentityFactory,
+                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter,
+                            final CacheManager cacheManager) {
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
-
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        Objects.requireNonNull(feedStatusConfig, "Feed status config is null");
-
-        final CacheConfig cacheConfig = feedStatusConfig.getFeedStatusCache();
-        Objects.requireNonNull(cacheConfig, "Feed status cache config is null");
-        this.updaters = createFromConfig(cacheConfig).build(k -> new FeedStatusUpdater(executorService));
-    }
-
-    private Caffeine<Object, Object> createFromConfig(final CacheConfig cacheConfig) {
-        final Caffeine<Object, Object> cacheBuilder = Caffeine.newBuilder();
-        cacheBuilder.recordStats();
-
-        if (cacheConfig.getMaximumSize() != null) {
-            cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
-        }
-        if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
-        }
-        if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
-        }
-        return cacheBuilder;
+        this.updaters = cacheManager.createLoadingCache(
+                CACHE_NAME,
+                () -> feedStatusConfigProvider.get().getFeedStatusCache(),
+                k -> new FeedStatusUpdater(executorService));
     }
 
     @Override
@@ -97,52 +81,63 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         executorService.shutdownNow();
     }
 
-    @Override
-    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        final FeedStatus defaultFeedStatus = Optional
-                .ofNullable(feedStatusConfig.getDefaultStatus()).orElse(FeedStatus.Receive);
-
-        // If remote feed status checking is disabled then return the default status.
-        if (feedStatusConfig.getEnabled() != null && !feedStatusConfig.getEnabled()) {
-            return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
-        }
-
-        final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
-        final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
-            CachedResponse result;
-            try {
-                final GetFeedStatusResponse response = callFeedStatus(request);
-                result = new CachedResponse(Instant.now(), response);
-
-            } catch (final Exception e) {
-                LOGGER.debug("Unable to check remote feed service", e);
-                // Get the last response we received.
-                if (lastResponse != null) {
-                    result = new CachedResponse(Instant.now(), lastResponse.getResponse());
-                    LOGGER.error(
-                            "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                            request, result, e.getMessage());
-
-                } else {
-                    // Revert to default behaviour.
-                    result = new CachedResponse(Instant.now(),
-                            GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
-                    LOGGER.error(
-                            "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                            request, result, e.getMessage());
-                }
-            }
-            return result;
-        });
-
-        return cachedResponse.getResponse();
+    /**
+     * @deprecated Use {@link FeedStatusService#getFeedStatus(GetFeedStatusRequestV2)}
+     */
+    @Deprecated
+    public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
+        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+        return getFeedStatus(request);
     }
 
-    private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequest request) {
+    @Override
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final FeedStatus defaultFeedStatus = Objects.requireNonNullElse(
+                feedStatusConfig.getDefaultStatus(),
+                FeedStatus.Receive);
+
+        // If remote feed status checking is disabled then return the default status.
+        if (!feedStatusConfig.getEnabled()
+            || NullSafe.isBlankString(feedStatusConfig.getFeedStatusUrl())) {
+            return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
+        } else {
+            final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
+            final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
+                CachedResponse result;
+                try {
+                    final GetFeedStatusResponse response = callFeedStatus(request);
+                    result = new CachedResponse(Instant.now(), response);
+
+                } catch (final Exception e) {
+                    LOGGER.debug("Unable to check remote feed service", e);
+                    // Get the last response we received.
+                    if (lastResponse != null) {
+                        result = new CachedResponse(Instant.now(), lastResponse.getResponse());
+                        LOGGER.error(
+                                "Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                                request, result, e.getMessage());
+
+                    } else {
+                        // Revert to default behaviour.
+                        result = new CachedResponse(Instant.now(),
+                                GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
+                        LOGGER.error(
+                                "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                                request, result, e.getMessage());
+                    }
+                }
+                return result;
+            });
+
+            return cachedResponse.getResponse();
+        }
+    }
+
+    private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final String url = feedStatusConfig.getFeedStatusUrl();
-        if (url == null || url.trim().isEmpty()) {
+        if (NullSafe.isBlankString(url)) {
             throw new RuntimeException("Missing remote status URL in feed status configuration");
         }
 
@@ -166,7 +161,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private GetFeedStatusResponse sendRequest(
-            final GetFeedStatusRequest request,
+            final GetFeedStatusRequestV2 request,
             final FeedStatusConfig feedStatusConfig,
             final Function<Response, GetFeedStatusResponse> responseConsumer) {
 
@@ -192,7 +187,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private Response getFeedStatusResponse(final FeedStatusConfig feedStatusConfig,
                                            final WebTarget webTarget,
-                                           final GetFeedStatusRequest feedStatusRequest) {
+                                           final GetFeedStatusRequestV2 feedStatusRequest) {
         return webTarget
                 .request(MediaType.APPLICATION_JSON)
                 .headers(getHeaders(feedStatusConfig))
@@ -223,13 +218,12 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final String url = feedStatusConfig.getFeedStatusUrl();
         resultBuilder.withDetail("url", getFeedStatusWebTarget(feedStatusConfig).getUri().toString());
 
-        if (url == null || url.trim().isEmpty()) {
+        if (NullSafe.isBlankString(url)) {
             // If no url is configured then no feed status checking is required so we consider this healthy
             resultBuilder.healthy();
         } else {
-            final GetFeedStatusRequest request = new GetFeedStatusRequest(
-                    "DUMMY_FEED",
-                    "dummy DN");
+            final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
+                    "DUMMY_FEED", null, null);
             try {
                 sendRequest(request, feedStatusConfig, response -> {
                     int responseCode = response.getStatusInfo().getStatusCode();
@@ -283,17 +277,23 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             }
 
             if (cachedResponse.isOld()) {
+                LOGGER.debug("Response is old {}", cachedResponse);
                 if (updating.compareAndSet(false, true)) {
                     CompletableFuture
-                            .runAsync(() -> setCachedResponse(function.apply(cachedResponse)), executor)
-                            .whenComplete((v, t) -> updating.set(false));
+                            .runAsync(() ->
+                                    setCachedResponse(function.apply(cachedResponse)), executor)
+                            .whenComplete((v, t) ->
+                                    updating.set(false));
                 }
+            } else {
+                LOGGER.debug("Response is fresh {}", cachedResponse);
             }
 
             return cachedResponse;
         }
 
         private synchronized void setCachedResponse(final CachedResponse cachedResponse) {
+            LOGGER.debug("Setting cachedResponse to {}", cachedResponse);
             this.cachedResponse = cachedResponse;
         }
     }
@@ -318,6 +318,14 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
         public GetFeedStatusResponse getResponse() {
             return response;
+        }
+
+        @Override
+        public String toString() {
+            return "CachedResponse{" +
+                   "creationTime=" + creationTime +
+                   ", response=" + response +
+                   '}';
         }
     }
 }

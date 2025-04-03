@@ -29,9 +29,9 @@ import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.stepping.Recorder;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.NullSafe;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ErrorType;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.TextRange;
@@ -70,11 +70,11 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
     public void addTarget(final Target target) {
         if (target != null) {
             if (!(target instanceof DestinationProvider)
-                    && !(target instanceof TakesInput)
-                    && !(target instanceof TakesReader)) {
+                && !(target instanceof TakesInput)
+                && !(target instanceof TakesReader)) {
                 throw new PipelineFactoryException(
                         "Attempt to link to an element that does not accept input or reader: "
-                                + getElementId() + " > " + target.getElementId());
+                        + getElementId() + " > " + target.getElementId());
             }
             super.addTarget(target);
 
@@ -227,7 +227,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 if (!inRecord) {
                     // Inclusive from
                     if (lineNo > lineFrom ||
-                            (lineNo == lineFrom && colNo >= colFrom)) {
+                        (lineNo == lineFrom && colNo >= colFrom)) {
 
                         // This is the start of the range but we don't want to show any leading line breaks
                         if (c != '\n') {
@@ -241,7 +241,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 if (inRecord) {
                     // Inclusive to
                     if (lineNo > lineTo ||
-                            (lineNo == lineTo && colNo > colTo)) {
+                        (lineNo == lineTo && colNo > colTo)) {
                         // Gone past the desired range
                         inRecord = false;
                         found = true;
@@ -432,7 +432,8 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 final int startOffset = byteStreamDecoder.getLastSuppliedByteOffset();
 
                 if (NullSafe.test(decodedChar, DecodedChar::isUnknown)) {
-                    final String msg = "Found un-decodable " +
+                    final String msg =
+                            "Found un-decodable " +
                             StringUtil.plural("byte", decodedChar.getByteCount()) +
                             " [" +
                             ByteArrayUtils.byteArrayToHex(decodedChar.getMalFormedBytes()) +
@@ -452,7 +453,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 // Inclusive
                 if (!inRecord) {
                     if (lineNo > lineFrom ||
-                            (lineNo == lineFrom && colNo >= colFrom)) {
+                        (lineNo == lineFrom && colNo >= colFrom)) {
 
                         // This is the start of the range but we don't want to show any leading line breaks
                         if (!decodedChar.isLineBreak()) {
@@ -466,8 +467,8 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 // Inclusive or Exclusive depending on rangeMode
                 if (inRecord) {
                     if (lineNo > lineTo ||
-                            (lineNo == lineTo && (
-                                    (!isEndInclusive && colNo >= colTo) || (isEndInclusive && colNo > colTo)))) {
+                        (lineNo == lineTo && (
+                                (!isEndInclusive && colNo >= colTo) || (isEndInclusive && colNo > colTo)))) {
                         // Gone past the desired range
                         inRecord = false;
                         found = true;

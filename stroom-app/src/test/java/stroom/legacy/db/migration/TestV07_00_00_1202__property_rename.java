@@ -4,9 +4,9 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mapping;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mappings;
 import stroom.legacy.model_6_1.GlobalProperty;
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
 import org.apache.commons.lang3.ClassUtils;

@@ -19,7 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -31,6 +31,7 @@ public class IconMenuItem extends MenuItem {
     private final SvgImage disabledIcon;
     private final IconColour iconColour;
     private final boolean highlight;
+    public final String tooltip;
 
     protected IconMenuItem(final int priority,
                            final SvgImage enabledIcon,
@@ -40,12 +41,14 @@ public class IconMenuItem extends MenuItem {
                            final Action action,
                            final boolean enabled,
                            final Command command,
-                           final boolean highlight) {
+                           final boolean highlight,
+                           final String tooltip) {
         super(priority, text, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
         this.highlight = highlight;
+        this.tooltip = tooltip;
     }
 
     public SvgImage getEnabledIcon() {
@@ -64,6 +67,13 @@ public class IconMenuItem extends MenuItem {
         return highlight;
     }
 
+    public String getTooltip() {
+        return NullSafe.string(tooltip);
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     protected abstract static class AbstractBuilder<T extends IconMenuItem, B extends AbstractBuilder<T, ?>>
             extends MenuItem.AbstractBuilder<T, B> {
 
@@ -73,7 +83,7 @@ public class IconMenuItem extends MenuItem {
         protected boolean highlight;
 
         public B icon(final Preset svgPreset) {
-            this.enabledIcon = GwtNullSafe.get(svgPreset, Preset::getSvgImage);
+            this.enabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 
@@ -83,7 +93,7 @@ public class IconMenuItem extends MenuItem {
         }
 
         public B disabledIcon(final Preset svgPreset) {
-            this.disabledIcon = GwtNullSafe.get(svgPreset, Preset::getSvgImage);
+            this.disabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 
@@ -107,6 +117,10 @@ public class IconMenuItem extends MenuItem {
         public abstract T build();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder
             extends AbstractBuilder<IconMenuItem, Builder> {
 
@@ -128,7 +142,8 @@ public class IconMenuItem extends MenuItem {
                     action,
                     enabled,
                     command,
-                    highlight);
+                    highlight,
+                    tooltip);
         }
     }
 }

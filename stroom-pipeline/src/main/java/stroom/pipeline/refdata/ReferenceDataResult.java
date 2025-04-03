@@ -21,10 +21,10 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -227,8 +227,8 @@ public class ReferenceDataResult implements ErrorReceiver {
                               final boolean isIgnoreWarnings) {
 
         return severity.greaterThan(Severity.WARNING)
-                || (!isIgnoreWarnings && severity.equals(Severity.WARNING))
-                || isTraceEnabled;
+               || (!isIgnoreWarnings && severity.equals(Severity.WARNING))
+               || isTraceEnabled;
     }
 
     @Override

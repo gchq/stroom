@@ -1,7 +1,7 @@
 package stroom.editor.client.presenter;
 
 import stroom.ui.config.shared.AceEditorTheme;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.GlobalKeyHandler;
 
 import com.google.gwt.core.client.Scheduler;
@@ -92,7 +92,7 @@ public abstract class AbstractEditorPresenter<V extends BaseEditorView>
      */
     @Override
     public void setText(final String text) {
-        getView().setText(GwtNullSafe.string(text));
+        getView().setText(NullSafe.string(text));
     }
 
     public boolean isClean() {

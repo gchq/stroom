@@ -17,7 +17,7 @@
 package stroom.task.api;
 
 import stroom.task.shared.TaskId;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 

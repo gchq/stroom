@@ -16,7 +16,7 @@
 
 package stroom.query.language.functions;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
 import java.time.DateTimeException;

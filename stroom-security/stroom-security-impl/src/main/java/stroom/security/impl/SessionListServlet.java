@@ -19,12 +19,12 @@ package stroom.security.impl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.SessionDetails;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserRef;
@@ -95,20 +95,20 @@ class SessionListServlet extends HttpServlet implements IsServlet {
         response.setContentType("text/html");
 
         response.getWriter().write("<html>" +
-                "<head><link type=\"text/css\" href=\"/ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
-                "<body>");
+                                   "<head><link type=\"text/css\" href=\"/ui/css/SessionList.css\" rel=\"stylesheet\" /></head>" +
+                                   "<body>");
         response.getWriter().write("<table>");
         response.getWriter().write("<thead>" +
-                "<tr>" +
-                "<th>Last Accessed</th>" +
-                "<th>Created</th>" +
-                "<th>User Display Name</th>" +
-                "<th>User Full Name</th>" +
-                "<th>User Unique Identity</th>" +
-                "<th>Node</th>" +
-                "<th>Agent</th>" +
-                "</tr>" +
-                "</thead>");
+                                   "<tr>" +
+                                   "<th>Last Accessed</th>" +
+                                   "<th>Created</th>" +
+                                   "<th>User Display Name</th>" +
+                                   "<th>User Full Name</th>" +
+                                   "<th>User Unique Identity</th>" +
+                                   "<th>Node</th>" +
+                                   "<th>Agent</th>" +
+                                   "</tr>" +
+                                   "</thead>");
 
         final Writer writer = response.getWriter();
         try {
@@ -135,7 +135,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                             writeCell(writer, subjectId);
                             writeCell(writer, sessionDetails.getNodeName());
                             writeCell(writer, "<span class=\"agent\">"
-                                    + sessionDetails.getLastAccessedAgent() + "</span>");
+                                              + sessionDetails.getLastAccessedAgent() + "</span>");
 
                             writer.write("</tr>");
                         } catch (final IOException e) {
@@ -144,7 +144,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                     });
         } catch (Exception e) {
             LOGGER.error("Error displaying session list servlet: "
-                    + LogUtil.exceptionMessage(e), e);
+                         + LogUtil.exceptionMessage(e), e);
             throw new RuntimeException(e);
         }
         response.getWriter().write("</table>");

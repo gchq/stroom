@@ -25,7 +25,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     @JsonProperty
     @JsonPropertyDescription("How should proxy treat incoming data if feed status checking is turned off or we are" +
-            " unable to fetch the status.")
+                             " unable to fetch the status.")
     private final FeedStatus defaultStatus;
 
     @JsonProperty("url")
@@ -71,6 +71,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
         return CacheConfig
                 .builder()
                 .maximumSize(1_000L)
+                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE)
                 .build();
     }
 
@@ -104,10 +105,10 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
         }
         final FeedStatusConfig that = (FeedStatusConfig) o;
         return Objects.equals(enabled, that.enabled) &&
-                defaultStatus == that.defaultStatus &&
-                Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
-                Objects.equals(apiKey, that.apiKey) &&
-                Objects.equals(feedStatusCache, that.feedStatusCache);
+               defaultStatus == that.defaultStatus &&
+               Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
+               Objects.equals(apiKey, that.apiKey) &&
+               Objects.equals(feedStatusCache, that.feedStatusCache);
     }
 
     @Override
@@ -118,11 +119,11 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     @Override
     public String toString() {
         return "FeedStatusConfig{" +
-                "enabled=" + enabled +
-                ", defaultStatus=" + defaultStatus +
-                ", feedStatusUrl='" + feedStatusUrl + '\'' +
-                ", apiKey='" + apiKey + '\'' +
-                ", feedStatusCache=" + feedStatusCache +
-                '}';
+               "enabled=" + enabled +
+               ", defaultStatus=" + defaultStatus +
+               ", feedStatusUrl='" + feedStatusUrl + '\'' +
+               ", apiKey='" + apiKey + '\'' +
+               ", feedStatusCache=" + feedStatusCache +
+               '}';
     }
 }

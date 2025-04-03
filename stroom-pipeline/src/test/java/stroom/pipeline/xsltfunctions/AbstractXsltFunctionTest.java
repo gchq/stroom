@@ -3,12 +3,12 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Location;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;
@@ -116,10 +116,10 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                     NullSafe.getOrElse(
                             throwable,
                             t -> " - ("
-                                    + t.getClass().getSimpleName()
-                                    + ": "
-                                    + t.getMessage()
-                                    + ")",
+                                 + t.getClass().getSimpleName()
+                                 + ": "
+                                 + t.getMessage()
+                                 + ")",
                             ""));
 
             LOGGER.debug("Call to mock ErrorReceiver.log():\n{}", box);
@@ -268,7 +268,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                             return xml;
                         } catch (XPathException e) {
                             throw new RuntimeException("Error serialising nodeInfo - "
-                                    + e.getMessage(), e);
+                                                       + e.getMessage(), e);
                         }
                     } else {
                         return sequence.toString();
@@ -401,12 +401,12 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
         @Override
         public String toString() {
             return "LogArgs{" +
-                    "severity=" + severity +
-                    ", msg='" + message + '\'' +
-                    ", location=" + location +
-                    ", elementId='" + elementId + '\'' +
-                    ", throwable=" + throwable +
-                    '}';
+                   "severity=" + severity +
+                   ", msg='" + message + '\'' +
+                   ", location=" + location +
+                   ", elementId='" + elementId + '\'' +
+                   ", throwable=" + throwable +
+                   '}';
         }
     }
 }

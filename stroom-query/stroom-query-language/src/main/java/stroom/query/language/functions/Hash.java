@@ -18,7 +18,7 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.token.Param;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "algorithm",
                                         description = "The name of the hash algorithm, e.g. 'SHA-256', 'SHA-512', " +
-                                                "'MD5' etc.",
+                                                      "'MD5' etc.",
                                         argType = ValString.class)
                         }),
                 @FunctionSignature(
@@ -65,7 +65,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "algorithm",
                                         description = "The name of the hash algorithm, e.g. 'SHA-256', 'SHA-512', " +
-                                                "'MD5' etc.",
+                                                      "'MD5' etc.",
                                         argType = ValString.class),
                                 @FunctionArg(
                                         name = "salt",
@@ -133,7 +133,7 @@ class Hash extends AbstractManyChildFunction {
                         .createGenerator();
             } catch (NoSuchAlgorithmException e) {
                 throw new ParseException("Second argument of '" + name + "' function '" + algorithm
-                        + "' is not a valid hash algorithm name.", 0);
+                                         + "' is not a valid hash algorithm name.", 0);
             }
         } else {
             // If we have a static algorithm param, then get the digest to hold on the

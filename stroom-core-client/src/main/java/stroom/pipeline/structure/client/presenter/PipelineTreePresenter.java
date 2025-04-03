@@ -26,7 +26,7 @@ import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElements;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -161,13 +161,13 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
      * @return All the element IDs currently in the pipeline
      */
     public Set<String> getIds() {
-        final List<PipelineElement> pipelineElements = GwtNullSafe.get(
+        final List<PipelineElement> pipelineElements = NullSafe.get(
                 pipelineModel,
                 PipelineModel::getPipelineData,
                 PipelineData::getElements,
                 PipelineElements::getAdd);
 
-        return GwtNullSafe.stream(pipelineElements)
+        return NullSafe.stream(pipelineElements)
                 .map(PipelineElement::getId)
                 .collect(Collectors.toSet());
     }

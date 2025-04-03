@@ -33,11 +33,11 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgress.FilterMatchState;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -234,7 +234,8 @@ class TaskManagerImpl implements TaskManager {
             fuzzyMatchPredicate = taskProgress -> true;
         }
 
-        final String criteriaSessionId = NullSafe.get(findTaskProgressCriteria, FindTaskProgressCriteria::getSessionId);
+        final String criteriaSessionId = NullSafe.get(findTaskProgressCriteria,
+                FindTaskProgressCriteria::getSessionId);
         // Only add this task progress if it matches the supplied criteria.
         final Predicate<TaskContextImpl> sessionIdPredicate;
         if (criteriaSessionId == null) {

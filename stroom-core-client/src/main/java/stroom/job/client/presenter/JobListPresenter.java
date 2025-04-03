@@ -30,7 +30,7 @@ import stroom.job.shared.JobResource;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -148,8 +148,8 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Job name, allow for null rows
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((Job job) -> GwtNullSafe.get(job, Job::getName))
-                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                DataGridUtil.textColumnBuilder((Job job) -> NullSafe.get(job, Job::getName))
+                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
                         .build(),
                 DataGridUtil.headingBuilder("Job")
                         .withToolTip("The name of the job")
@@ -159,7 +159,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         // Help
         dataGrid.addColumn(
                 DataGridUtil.svgPresetColumnBuilder(true, (Job job) -> SvgPresets.HELP)
-                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
                         .withBrowserEventHandler((context, elem, row, event) -> {
                             showHelp(uiConfigCache, row);
                         })
@@ -168,8 +168,8 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Description col, allow for null rows
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.textColumnBuilder((Job job) -> GwtNullSafe.get(job, Job::getDescription))
-                        .enabledWhen(job -> GwtNullSafe.isTrue(job, Job::isEnabled))
+                DataGridUtil.textColumnBuilder((Job job) -> NullSafe.get(job, Job::getDescription))
+                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
                         .build(),
                 DataGridUtil.headingBuilder("Description")
                         .withToolTip("The description of the job")
@@ -201,7 +201,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         uiConfigCache.get(result -> {
             if (result != null) {
                 final String helpUrl = result.getHelpUrlJobs();
-                if (!GwtNullSafe.isBlankString(helpUrl)) {
+                if (!NullSafe.isBlankString(helpUrl)) {
                     // This is a bit fragile as if the headings change in the docs then the anchors
                     // wont work
                     final String url = helpUrl + formatAnchor(row.getName());

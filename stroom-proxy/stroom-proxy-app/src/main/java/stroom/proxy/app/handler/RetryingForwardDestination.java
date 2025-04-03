@@ -3,7 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyServices;
-import stroom.util.NullSafe;
+import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -11,6 +11,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
@@ -37,6 +38,8 @@ import java.util.function.Supplier;
 public class RetryingForwardDestination implements ForwardDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RetryingForwardDestination.class);
+    private static final int FORWARD_ORDER = 50;
+    private static final int RETRY_ORDER = 51;
 
     /**
      * File to hold the log of all forwarding errors from all forward attempts for this {@link FileGroup}
@@ -61,17 +64,20 @@ public class RetryingForwardDestination implements ForwardDestination {
     // Assumed to be live on boot
     private final AtomicBoolean lastLiveCheckResult = new AtomicBoolean(true);
     private final Runnable delayForwardingFunc;
+    private final FileStores fileStores;
 
     public RetryingForwardDestination(final ForwardQueueConfig forwardQueueConfig,
                                       final ForwardDestination delegateDestination,
                                       final DataDirProvider dataDirProvider,
                                       final PathCreator pathCreator,
                                       final DirQueueFactory dirQueueFactory,
-                                      final ProxyServices proxyServices) {
+                                      final ProxyServices proxyServices,
+                                      final FileStores fileStores) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
         this.proxyServices = Objects.requireNonNull(proxyServices);
+        this.fileStores = Objects.requireNonNull(fileStores);
 
         this.destinationName = Objects.requireNonNull(delegateDestination.getName());
         final String safeDirName = DirUtil.makeSafeName(destinationName);
@@ -81,11 +87,11 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         forwardQueue = dirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
-                50,
+                FORWARD_ORDER,
                 "forward - " + destinationName);
         retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
-                51,
+                RETRY_ORDER,
                 "retry - " + destinationName);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
@@ -239,6 +245,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                 null,
                 null,
                 simplePathCreator);
+        fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }
 

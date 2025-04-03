@@ -9,7 +9,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -75,7 +75,7 @@ public class ProcessorInfoBuilder {
 
             tb.row(SafeHtmlUtil.from("Id"), SafeHtmlUtil.from(filter.getId()));
             tb.row(SafeHtmlUtil.from("Run As User"), SafeHtmlUtil.from(
-                    GwtNullSafe.get(filter.getRunAsUser(), (UserRef ref) -> ref.toDisplayString())));
+                    NullSafe.get(filter.getRunAsUser(), (UserRef ref) -> ref.toDisplayString())));
             tb.row("Created By", filter.getCreateUser());
             addRowDateString(tb, "Created On", filter.getCreateTimeMs());
             tb.row("Updated By", filter.getUpdateUser());

@@ -2,10 +2,10 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
-import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -39,7 +39,6 @@ public class Forwarder {
                         NullSafe.stream(proxyConfig.getForwardFileDestinations())
                                 .filter(ForwardFileConfig::isEnabled))
                 .count();
-
         LOGGER.debug("enabledForwardCount: {}", enabledForwardCount);
 
         if (enabledForwardCount == 0) {

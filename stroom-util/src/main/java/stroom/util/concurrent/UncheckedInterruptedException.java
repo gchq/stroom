@@ -1,8 +1,8 @@
 package stroom.util.concurrent;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 
@@ -34,10 +34,10 @@ public class UncheckedInterruptedException extends RuntimeException {
     public static UncheckedInterruptedException create(final String message,
                                                        final InterruptedException e) {
         LOGGER.debug(() ->
-                        Objects.requireNonNullElseGet(
-                                message,
-                                () -> NullSafe.getOrElse(e, Throwable::getMessage, "Interrupted")
-                        ));
+                Objects.requireNonNullElseGet(
+                        message,
+                        () -> NullSafe.getOrElse(e, Throwable::getMessage, "Interrupted")
+                ));
         // Continue to interrupt the thread.
         Thread.currentThread().interrupt();
         return new UncheckedInterruptedException(message, e);

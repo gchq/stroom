@@ -1,6 +1,6 @@
 package stroom.cell.info.client;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -16,7 +16,7 @@ public class ColourSwatchCell extends AbstractCell<String> {
                        final String cssColour,
                        final SafeHtmlBuilder sb) {
 
-        if (GwtNullSafe.isBlankString(cssColour)) {
+        if (NullSafe.isBlankString(cssColour)) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             sb.appendHtmlConstant("<div class=\"colourSwatchCell colourSwatchCell-container\">");

@@ -27,7 +27,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -89,7 +89,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         // Rule
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((DataRetentionRule row) ->
-                                GwtNullSafe.toString(row.getRuleNumber()))
+                                NullSafe.toString(row.getRuleNumber()))
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Rule")

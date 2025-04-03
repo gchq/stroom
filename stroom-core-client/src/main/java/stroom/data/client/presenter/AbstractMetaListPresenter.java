@@ -58,7 +58,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
@@ -522,7 +522,7 @@ public abstract class AbstractMetaListPresenter
     public void setExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
         validateExpression(expression, expression2 -> {
             this.criteria.setExpression(expression2);
-            GwtNullSafe.run(onSetExpression);
+            NullSafe.run(onSetExpression);
         });
     }
 

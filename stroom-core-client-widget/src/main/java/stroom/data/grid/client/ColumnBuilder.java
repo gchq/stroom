@@ -1,7 +1,7 @@
 package stroom.data.grid.client;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.Cell.Context;
@@ -197,15 +197,15 @@ public class ColumnBuilder<
     private String buildCellStyles(final String baseStyleNames,
                                    final T_ROW object) {
 
-        final String styleNames = String.join(" ", GwtNullSafe.list(this.styleNames));
-        final String functionStyleNames = GwtNullSafe.stream(styleFunctions)
+        final String styleNames = String.join(" ", NullSafe.list(this.styleNames));
+        final String functionStyleNames = NullSafe.stream(styleFunctions)
                 .filter(Objects::nonNull)
                 .map(func -> func.apply(object))
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining(" "));
 
         return String.join(" ",
-                GwtNullSafe.string(baseStyleNames),
+                NullSafe.string(baseStyleNames),
                 styleNames,
                 functionStyleNames);
     }

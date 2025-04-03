@@ -16,12 +16,12 @@
 
 package stroom.query.language.functions;
 
-import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyBoolean;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.math.DoubleMath;
 

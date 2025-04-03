@@ -27,6 +27,10 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+/**
+ * @deprecated Use {@link FeedStatusResourceV2Impl}
+ */
+@Deprecated
 @AutoLogged(OperationType.UNLOGGED)
 public class FeedStatusResourceImpl implements FeedStatusResource, HasHealthCheck {
 
@@ -40,8 +44,8 @@ public class FeedStatusResourceImpl implements FeedStatusResource, HasHealthChec
     @Timed
     @Override
     // TODO This should really be a GET with the feedName and senderDn as params
-    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
-        return feedStatusServiceProvider.get().getFeedStatus(request);
+    public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest legacyRequest) {
+        return feedStatusServiceProvider.get().getFeedStatus(legacyRequest);
     }
 
     @Override

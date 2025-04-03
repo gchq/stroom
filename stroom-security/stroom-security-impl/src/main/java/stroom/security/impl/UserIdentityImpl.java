@@ -6,11 +6,11 @@ import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.HasUserRef;
-import stroom.util.NullSafe;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpSession;

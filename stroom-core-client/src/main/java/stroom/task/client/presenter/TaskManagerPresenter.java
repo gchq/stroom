@@ -23,7 +23,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.TableCell;
@@ -112,7 +112,7 @@ public class TaskManagerPresenter
 
     private boolean addField(final StringBuilder sb, final String fieldName, final String value) {
         boolean wasAdded = false;
-        if (GwtNullSafe.isNonBlankString(value)) {
+        if (NullSafe.isNonBlankString(value)) {
             //noinspection SizeReplaceableByIsEmpty
             if (sb.length() > 0) {
                 sb.append(" ");

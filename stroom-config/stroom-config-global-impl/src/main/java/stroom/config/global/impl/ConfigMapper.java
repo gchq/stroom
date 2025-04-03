@@ -27,7 +27,6 @@ import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.ObjectInfo;
@@ -43,6 +42,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
@@ -137,7 +137,8 @@ public class ConfigMapper {
     private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
-    public static final String DOCREF_EXAMPLE = ","
+    public static final String DOCREF_EXAMPLE =
+            ","
             + DOCREF_PREFIX
             + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
@@ -377,7 +378,7 @@ public class ConfigMapper {
         // DB config objects are bound separately in AppConfigModule
         final Class<?> configClass = instance.getClass();
         if (!configClass.isAnnotationPresent(NotInjectableConfig.class)
-                && !AbstractDbConfig.class.isAssignableFrom(configClass)) {
+            && !AbstractDbConfig.class.isAssignableFrom(configClass)) {
             newInstanceMap.put(configClass, instance);
         }
 
@@ -735,7 +736,7 @@ public class ConfigMapper {
         Preconditions.checkNotNull(
                 configProperty,
                 "Property %s with path %s exists in the " +
-                        "YAML but not in the object model, this should not happen",
+                "YAML but not in the object model, this should not happen",
                 yamlProp,
                 fullPath);
 
@@ -771,30 +772,30 @@ public class ConfigMapper {
 
     private static boolean isSupportedPropertyType(final Class<?> type) {
         boolean isSupported = type.equals(String.class) ||
-                type.equals(Byte.class) ||
-                type.equals(byte.class) ||
-                type.equals(Integer.class) ||
-                type.equals(int.class) ||
-                type.equals(Long.class) ||
-                type.equals(long.class) ||
-                type.equals(Short.class) ||
-                type.equals(short.class) ||
-                type.equals(Float.class) ||
-                type.equals(float.class) ||
-                type.equals(Double.class) ||
-                type.equals(double.class) ||
-                type.equals(Boolean.class) ||
-                type.equals(boolean.class) ||
-                type.equals(Character.class) ||
-                type.equals(char.class) ||
-                Set.class.isAssignableFrom(type) ||
-                List.class.isAssignableFrom(type) ||
-                Map.class.isAssignableFrom(type) ||
-                DocRef.class.isAssignableFrom(type) ||
-                Enum.class.isAssignableFrom(type) ||
-                Path.class.isAssignableFrom(type) ||
-                StroomDuration.class.isAssignableFrom(type) ||
-                ByteSize.class.isAssignableFrom(type);
+                              type.equals(Byte.class) ||
+                              type.equals(byte.class) ||
+                              type.equals(Integer.class) ||
+                              type.equals(int.class) ||
+                              type.equals(Long.class) ||
+                              type.equals(long.class) ||
+                              type.equals(Short.class) ||
+                              type.equals(short.class) ||
+                              type.equals(Float.class) ||
+                              type.equals(float.class) ||
+                              type.equals(Double.class) ||
+                              type.equals(double.class) ||
+                              type.equals(Boolean.class) ||
+                              type.equals(boolean.class) ||
+                              type.equals(Character.class) ||
+                              type.equals(char.class) ||
+                              Set.class.isAssignableFrom(type) ||
+                              List.class.isAssignableFrom(type) ||
+                              Map.class.isAssignableFrom(type) ||
+                              DocRef.class.isAssignableFrom(type) ||
+                              Enum.class.isAssignableFrom(type) ||
+                              Path.class.isAssignableFrom(type) ||
+                              StroomDuration.class.isAssignableFrom(type) ||
+                              ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -906,8 +907,8 @@ public class ConfigMapper {
         if (!VALID_DELIMITERS_SET.contains(delimiter)) {
             throw new RuntimeException(LogUtil.message(
                     "[{}] does not contain a valid delimiter as its {} character. " +
-                            "Valid delimiters are [{}]. " +
-                            "For example [{}]",
+                    "Valid delimiters are [{}]. " +
+                    "For example [{}]",
                     serialisedForm, positionName, String.join("", VALID_DELIMITERS_LIST), exampleText));
         }
     }
@@ -980,7 +981,7 @@ public class ConfigMapper {
                     } else {
                         throw new RuntimeException(LogUtil.message(
                                 "A null or empty value is not a valid value for this property which has " +
-                                        "a primitive type of {}", type.getName()));
+                                "a primitive type of {}", type.getName()));
                     }
                 } else {
                     return null;
@@ -1036,8 +1037,8 @@ public class ConfigMapper {
             final String propName = (prop.getParentObject() == null
                     ? "null"
                     : prop.getParentObject().getClass().getSimpleName())
-                    + "."
-                    + prop.getName();
+                                    + "."
+                                    + prop.getName();
 
             LOGGER.debug(() -> LogUtil.message(
                     "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
@@ -1180,13 +1181,13 @@ public class ConfigMapper {
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
         return delimiter
-                + "docRef("
-                + String.join(
+               + "docRef("
+               + String.join(
                 delimiter,
                 docRef.getType(),
                 docRef.getUuid(),
                 docRef.getName())
-                + ")";
+               + ")";
     }
 
     private static String enumToString(final Enum<?> enumInstance) {

@@ -4,7 +4,7 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.customdatebox.client.MomentJs;
 
 class ProcessorStatusUtil {
@@ -17,8 +17,8 @@ class ProcessorStatusUtil {
                     .getProcessorFilter()
                     .getProcessorFilterTracker();
             if (tracker != null) {
-                if (!GwtNullSafe.isBlankString(tracker.getMessage())) {
-                    status = GwtNullSafe.getOrElseGet(
+                if (!NullSafe.isBlankString(tracker.getMessage())) {
+                    status = NullSafe.getOrElseGet(
                             tracker.getStatus(),
                             status2 -> status2.getDisplayValue() + ": " + tracker.getMessage(),
                             tracker::getMessage);

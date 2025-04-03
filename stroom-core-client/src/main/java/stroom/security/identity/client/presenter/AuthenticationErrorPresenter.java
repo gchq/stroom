@@ -20,7 +20,7 @@ import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.Au
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter.AuthenticationErrorView;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -62,8 +62,8 @@ public class AuthenticationErrorPresenter
             final String error = Window.Location.getParameter("error");
             getView().setErrorText(error);
             getView().focus();
-            final String authErrorMessage = GwtNullSafe.get(extendedUiConfig, ExtendedUiConfig::getAuthErrorMessage);
-            if (GwtNullSafe.isNonBlankString(authErrorMessage)) {
+            final String authErrorMessage = NullSafe.get(extendedUiConfig, ExtendedUiConfig::getAuthErrorMessage);
+            if (NullSafe.isNonBlankString(authErrorMessage)) {
                 getView().setGenericMessage(SafeHtmlUtils.fromTrustedString(authErrorMessage));
             }
             loading.getStyle().setOpacity(0);

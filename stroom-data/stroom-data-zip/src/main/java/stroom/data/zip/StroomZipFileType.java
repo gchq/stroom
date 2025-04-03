@@ -1,6 +1,6 @@
 package stroom.data.zip;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.Locale;

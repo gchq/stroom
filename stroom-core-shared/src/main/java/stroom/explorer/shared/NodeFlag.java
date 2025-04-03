@@ -1,6 +1,6 @@
 package stroom.explorer.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -166,10 +166,10 @@ public enum NodeFlag {
      * Validate a set of flags to make sure it does not contain any that are incompatible
      */
     public static void validateFlags(final Set<NodeFlag> flags) {
-        if (GwtNullSafe.hasItems(flags)) {
+        if (NullSafe.hasItems(flags)) {
             for (final NodeFlag flag : flags) {
                 final Set<NodeFlag> incompatibleFlags = INCOMPATIBLE_FLAGS.get(flag);
-                if (GwtNullSafe.hasItems(incompatibleFlags)) {
+                if (NullSafe.hasItems(incompatibleFlags)) {
                     for (final NodeFlag incompatibleFlag : incompatibleFlags) {
                         if (flags.contains(incompatibleFlag)) {
                             throw new RuntimeException(flag + " is incompatible with "
@@ -185,9 +185,9 @@ public enum NodeFlag {
      * Check whether flag is incompatible with any flags in flags.
      */
     public static void validateFlag(final NodeFlag flag, final Set<NodeFlag> flags) {
-        if (flag != null && GwtNullSafe.hasItems(flags)) {
+        if (flag != null && NullSafe.hasItems(flags)) {
             final Set<NodeFlag> incompatibleFlags = INCOMPATIBLE_FLAGS.get(flag);
-            if (GwtNullSafe.hasItems(incompatibleFlags)) {
+            if (NullSafe.hasItems(incompatibleFlags)) {
                 for (final NodeFlag incompatibleFlag : incompatibleFlags) {
                     if (flags.contains(incompatibleFlag)) {
                         throw new RuntimeException(flag + " is incompatible with "

@@ -24,7 +24,7 @@ import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -118,7 +118,7 @@ public class InfoDocumentPresenter
         if (info.getUpdateTime() != null) {
             appendLine("Updated On", dateTimeFormatter.format(info.getUpdateTime()), sb);
         }
-        if (GwtNullSafe.hasItems(explorerNode.getTags())) {
+        if (NullSafe.hasItems(explorerNode.getTags())) {
 //            final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
             appendLine("Tags", "", sb);
 //            appendKey("Tags", sbInner);
@@ -147,7 +147,7 @@ public class InfoDocumentPresenter
         sb.appendHtmlConstant("<b>");
         sb.appendEscaped(key);
         sb.appendHtmlConstant("</b>");
-        if (!GwtNullSafe.isBlankString(key)) {
+        if (!NullSafe.isBlankString(key)) {
             sb.appendEscaped(": ");
         }
     }

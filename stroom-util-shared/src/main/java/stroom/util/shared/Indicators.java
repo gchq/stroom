@@ -127,7 +127,7 @@ public class Indicators {
     }
 
     public synchronized void addAll(final Collection<StoredError> storedErrors) {
-        if (!GwtNullSafe.isEmptyCollection(storedErrors)) {
+        if (!NullSafe.isEmptyCollection(storedErrors)) {
             storedErrors.forEach(this::add);
         }
     }
@@ -158,7 +158,7 @@ public class Indicators {
                             && err.getLocation().getLineNo() > 0
                             && err.getLocation().getColNo() > 0;
 
-            final List<StoredError> filteredErrors = GwtNullSafe.list(errorList)
+            final List<StoredError> filteredErrors = NullSafe.list(errorList)
                     .stream()
                     .filter(storedError ->
                             includedErrorTypesSet.contains(storedError.getErrorType()))
@@ -199,7 +199,7 @@ public class Indicators {
         if (severity == null) {
             return 0;
         } else {
-            return GwtNullSafe.requireNonNullElse(errorCount.get(severity), 0);
+            return NullSafe.requireNonNullElse(errorCount.get(severity), 0);
         }
     }
 

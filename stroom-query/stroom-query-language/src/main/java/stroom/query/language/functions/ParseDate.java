@@ -19,7 +19,7 @@ package stroom.query.language.functions;
 import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.token.Param;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
 import java.time.ZoneId;
@@ -40,7 +40,7 @@ import java.util.function.Supplier;
                                 argType = ValString.class,
                                 description = "The date string, e.g. '2014 02 22'"),
                         description = "Parse dateString using the default date format pattern (" +
-                                DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
+                                      DateUtil.DEFAULT_PATTERN + ") and default timezone (UTC)."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
                                         argType = ValString.class,
                                         description = "The format pattern, e.g. 'yyyy MM dd'")},
                         description = "Parse dateString using the supplied date format pattern and " +
-                                "the default timezone (UTC)."),
+                                      "the default timezone (UTC)."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(

@@ -7,13 +7,13 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.HasHealthCheck;
-import stroom.util.NullSafe;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.core.JsonProcessingException;

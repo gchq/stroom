@@ -1,11 +1,14 @@
 package stroom.util;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -74,6 +77,7 @@ public class PredicateUtil {
     /**
      * Create a predicate ORing all the filter terms in inListStr together. Supports standard stroom
      * wild carding with '*'.  Matches are complete matches.
+     *
      * @param inListStr List of filter terms delimited by LIST_DELIMITER
      */
     public static Predicate<String> createWildCardedInPredicate(final String inListStr,
@@ -196,5 +200,66 @@ public class PredicateUtil {
 
     public static <T> Predicate<T> get(final Optional<Predicate<T>> optionalPredicate) {
         return optionalPredicate.orElse(x -> true);
+    }
+
+    /**
+     * Creates a predicate that increments counter for each match encountered.
+     *
+     * @param counter   The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param predicate The predicate to wrap
+     * @return The wrapped predicate
+     */
+    public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
+                                                     final Predicate<T> predicate) {
+        return countingPredicate(counter, true, predicate);
+    }
+
+    /**
+     * Creates a predicate that increments counter for each match encountered.
+     *
+     * @param counter     The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param countIfTrue If true counter is incremented for a match. If false, counter is incremented for
+     *                    a non-match.
+     * @param predicate   The predicate to wrap
+     * @return The wrapped predicate
+     */
+    public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
+                                                     final boolean countIfTrue,
+                                                     final Predicate<T> predicate) {
+        Objects.requireNonNull(predicate);
+        Objects.requireNonNull(counter);
+        return val -> {
+            final boolean result = predicate.test(val);
+            if (countIfTrue) {
+                if (result) {
+                    counter.incrementAndGet();
+                }
+            } else {
+                if (!result) {
+                    counter.incrementAndGet();
+                }
+            }
+            return result;
+        };
+    }
+
+    /**
+     * Creates a {@link BiPredicate} that increments counter for each match encountered.
+     *
+     * @param counter   The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param predicate The {@link BiPredicate} to wrap
+     * @return The wrapped predicate
+     */
+    public static <T1, T2> BiPredicate<T1, T2> countingBiPredicate(final AtomicInteger counter,
+                                                                   final BiPredicate<T1, T2> predicate) {
+        Objects.requireNonNull(predicate);
+        Objects.requireNonNull(counter);
+        return (t1, t2) -> {
+            final boolean result = predicate.test(t1, t2);
+            if (result) {
+                counter.incrementAndGet();
+            }
+            return result;
+        };
     }
 }

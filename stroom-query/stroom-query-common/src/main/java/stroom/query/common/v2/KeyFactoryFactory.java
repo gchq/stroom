@@ -8,7 +8,7 @@ import stroom.query.language.functions.ref.KryoDataReader;
 import stroom.query.language.functions.ref.KryoDataWriter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Output;
@@ -33,7 +33,7 @@ public class KeyFactoryFactory {
     public static KeyFactory create(final KeyFactoryConfig keyFactoryConfig,
                                     final CompiledDepths compiledDepths) {
         final boolean flat = compiledDepths.getMaxDepth() == 0 &&
-                compiledDepths.getMaxGroupDepth() <= compiledDepths.getMaxDepth();
+                             compiledDepths.getMaxGroupDepth() <= compiledDepths.getMaxDepth();
         if (flat) {
             if (keyFactoryConfig.addTimeToKey()) {
                 if (compiledDepths.hasGroup()) {
@@ -65,7 +65,7 @@ public class KeyFactoryFactory {
 
         @Override
         public Set<Key> decodeSet(final Set<String> openGroups) {
-            return Metrics.measure("Converting open groups", () -> {
+            return SimpleMetrics.measure("Converting open groups", () -> {
                 Set<Key> keys = Collections.emptySet();
                 if (openGroups != null) {
                     keys = new HashSet<>();
@@ -86,7 +86,7 @@ public class KeyFactoryFactory {
 
         @Override
         public String encode(final Key key, final ErrorConsumer errorConsumer) {
-            return Metrics.measure("Encoding groups", () -> {
+            return SimpleMetrics.measure("Encoding groups", () -> {
                 try (final Output output = new Output(bufferSize, -1)) {
                     try (final DataWriter writer = new KryoDataWriter(output)) {
                         write(key, writer);

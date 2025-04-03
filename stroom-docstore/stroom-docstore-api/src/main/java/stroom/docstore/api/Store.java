@@ -72,6 +72,9 @@ public interface Store<D extends Doc>
                                        List<Message> messageList,
                                        Function<D, D> filter);
 
+    /**
+     * List all documents of this stores type
+     */
     List<DocRef> list();
 
     /**

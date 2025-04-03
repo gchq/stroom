@@ -29,6 +29,7 @@ import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.EffectiveMetaSet.Builder;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.DataFormatNames;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -37,8 +38,8 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -70,6 +71,7 @@ public class MockMetaService implements MetaService, Clearable {
     private final Set<String> feeds = new HashSet<>();
     private final Set<String> types = new HashSet<>(STANDARD_TYPES);
     private final Set<String> rawTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
+    private final Set<String> dataFormats = new HashSet<>(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
     private final Map<Long, Meta> metaMap = new HashMap<>();
 
     /**
@@ -127,10 +129,10 @@ public class MockMetaService implements MetaService, Clearable {
         if (result != null) {
             if (currentStatus != result.getStatus()) {
                 throw new RuntimeException("Unexpected status " +
-                        result.getStatus() +
-                        " (expected " +
-                        currentStatus +
-                        ")");
+                                           result.getStatus() +
+                                           " (expected " +
+                                           currentStatus +
+                                           ")");
             }
 
             result = meta
@@ -195,6 +197,11 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public Set<String> getRawTypes() {
         return rawTypes;
+    }
+
+    @Override
+    public Set<String> getDataFormats() {
+        return dataFormats;
     }
 
     @Override

@@ -23,11 +23,11 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;

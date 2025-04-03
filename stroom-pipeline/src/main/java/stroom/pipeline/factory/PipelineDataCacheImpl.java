@@ -27,11 +27,11 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -128,9 +128,9 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
             // entry to see if any of them relate to the changed docRef(s)
             cache.invalidateEntries((pipelineDoc, pipelineDataHolder) ->
                     DocRefUtil.isSameDocument(pipelineDoc, docRef)
-                            || DocRefUtil.isSameDocument(pipelineDoc, oldDocRef)
-                            || pipelineDataHolder.containsDocRef(docRef)
-                            || pipelineDataHolder.containsDocRef(oldDocRef));
+                    || DocRefUtil.isSameDocument(pipelineDoc, oldDocRef)
+                    || pipelineDataHolder.containsDocRef(docRef)
+                    || pipelineDataHolder.containsDocRef(oldDocRef));
         }
     }
 
@@ -158,9 +158,9 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
         @Override
         public String toString() {
             return "PipelineDataHolder{" +
-                    "mergedPipelineData=" + mergedPipelineData +
-                    ", docRefs=" + docRefs +
-                    '}';
+                   "mergedPipelineData=" + mergedPipelineData +
+                   ", docRefs=" + docRefs +
+                   '}';
         }
     }
 }

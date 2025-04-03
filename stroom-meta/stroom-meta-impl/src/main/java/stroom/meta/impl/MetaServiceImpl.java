@@ -54,10 +54,9 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -479,12 +478,17 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Set<String> getTypes() {
-        return metaServiceConfigProvider.get().getMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getMetaTypes());
     }
 
     @Override
     public Set<String> getRawTypes() {
-        return metaServiceConfigProvider.get().getRawMetaTypes();
+        return NullSafe.set(metaServiceConfigProvider.get().getRawMetaTypes());
+    }
+
+    @Override
+    public Set<String> getDataFormats() {
+        return NullSafe.set(metaServiceConfigProvider.get().getDataFormats());
     }
 
     @Override
@@ -631,7 +635,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         if (child.getParentMetaId() != null) {
             final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(),
                     anyStatus))).getValues();
-            if (GwtNullSafe.hasItems(parents)) {
+            if (NullSafe.hasItems(parents)) {
                 parents.forEach(parent -> {
                     result.add(parent);
                     addParents(parent, anyStatus, result);

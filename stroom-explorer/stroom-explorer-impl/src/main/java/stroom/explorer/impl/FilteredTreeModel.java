@@ -2,7 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 public class FilteredTreeModel extends AbstractTreeModel<ExplorerNodeKey> {
 
