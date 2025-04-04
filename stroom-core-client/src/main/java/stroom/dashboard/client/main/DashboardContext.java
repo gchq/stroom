@@ -12,11 +12,11 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.List;
 import java.util.Optional;
 
-public interface DashboardContext extends HasParams {
+public interface DashboardContext {
 
-    DashboardContext getParent();
+    List<Param> getParams();
 
-    List<Param> getExternalParams();
+    List<Param> getLinkParams();
 
     TimeRange getRawTimeRange();
 

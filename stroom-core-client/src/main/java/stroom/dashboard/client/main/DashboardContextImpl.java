@@ -43,8 +43,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
     private final EventBus eventBus;
     private final Components components;
     private final QueryToolbarPresenter queryToolbarPresenter;
-    private DashboardContext parent;
-    private List<Param> externalParams = Collections.emptyList();
+    private Map<String, String> parentParams = Collections.emptyMap();
+    private List<Param> linkParams = Collections.emptyList();
     private DocRef dashboardDocRef;
 
     public DashboardContextImpl(final EventBus eventBus,
@@ -56,21 +56,16 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
     }
 
     public void setParent(final DashboardContext parent) {
-        this.parent = parent;
+        this.parentParams = createParamMap("parent", parent);
     }
 
     @Override
-    public DashboardContext getParent() {
-        return parent;
+    public List<Param> getLinkParams() {
+        return linkParams;
     }
 
-    @Override
-    public List<Param> getExternalParams() {
-        return externalParams;
-    }
-
-    public void setGetExternalParams(final List<Param> externalParams) {
-        this.externalParams = externalParams;
+    public void setLinkParams(final List<Param> linkParams) {
+        this.linkParams = linkParams;
     }
 
     @Override
@@ -98,6 +93,11 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
         this.dashboardDocRef = dashboardDocRef;
     }
 
+    /**
+     * These params are a subset that are supplied when querying. It would be better if we resolved all params client
+     * side.
+     * @return
+     */
     @Override
     public List<Param> getParams() {
         final List<Param> combinedParams = new ArrayList<>();
@@ -113,8 +113,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                 }
             }
         }
-        combinedParams.addAll(externalParams);
-        for (final Param param : externalParams) {
+        combinedParams.addAll(linkParams);
+        for (final Param param : linkParams) {
             combinedParams.add(new Param("link" +
                                          ".param." +
                                          param.getKey(), param.getValue()));
@@ -126,10 +126,15 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
         final TableBuilder tb = new TableBuilder();
         printContext(tb, "", this);
 
-        if (parent != null) {
-            tb.row("");
-            tb.row(TableCell.header("Parent Context"));
-            printContext(tb, "parent", parent);
+        if (NullSafe.hasEntries(parentParams)) {
+            tb.row(TableCell.header("Parent Params"));
+            final List<Param> params = parentParams
+                    .entrySet()
+                    .stream()
+                    .map(e -> new Param(e.getKey(), e.getValue()))
+                    .sorted(Comparator.comparing(Param::getKey))
+                    .collect(Collectors.toList());
+            printParams(tb, "", params);
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -148,10 +153,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                     new Param("to", timeRange.getTo()));
             printParams(tb, appendPrefix(prefix, "timeRange"), timeRangeParams);
 
-            final List<Param> externalParameters = dashboardContext.getExternalParams();
-            if (externalParameters != null) {
+            final List<Param> linkParams = dashboardContext.getLinkParams();
+            if (linkParams != null) {
                 tb.row(TableCell.header("Link Parameters"));
-                printParams(tb, appendPrefix(prefix, "link.param"), externalParameters);
+                printParams(tb, appendPrefix(prefix, "link.param"), linkParams);
             }
 
             final Components components = dashboardContext.getComponents();
@@ -199,6 +204,52 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
             return key;
         }
         return prefix + "." + key;
+    }
+
+    private Map<String, String> createParamMap(final String prefix,
+                                               final DashboardContext dashboardContext) {
+        final Map<String, String> paramMap = new HashMap<>();
+        if (dashboardContext != null) {
+            final TimeRange timeRange = dashboardContext.getRawTimeRange();
+            final List<Param> timeRangeParams = List.of(
+                    new Param("from", timeRange.getFrom()),
+                    new Param("to", timeRange.getTo()));
+            appendParams(appendPrefix(prefix, "timeRange"), timeRangeParams, paramMap);
+
+            final List<Param> externalParameters = dashboardContext.getLinkParams();
+            if (externalParameters != null) {
+                appendParams(appendPrefix(prefix, "link.param"), externalParameters, paramMap);
+            }
+
+            final Components components = dashboardContext.getComponents();
+            for (final Component component : components.getComponents()) {
+                if (component instanceof final HasParams hasParams) {
+                    final List<Param> componentParams = hasParams.getParams();
+                    appendParams(appendPrefix(prefix, "component." + component.getId() + ".param"),
+                            componentParams,
+                            paramMap);
+                }
+
+                if (component instanceof final HasComponentSelection hasComponentSelection) {
+                    final List<ComponentSelection> selections = hasComponentSelection.getSelection();
+                    for (final ComponentSelection selection : selections) {
+                        final List<Param> selectionParams = selection.getParams();
+                        final String start = appendPrefix(prefix, "component." + component.getId() + ".selection");
+                        appendParams(start, selectionParams, paramMap);
+                    }
+                }
+            }
+        }
+        return paramMap;
+    }
+
+    private void appendParams(final String prefix,
+                              final List<Param> params,
+                              final Map<String, String> paramMap) {
+        for (final Param param : params) {
+            final String key = appendPrefix(prefix, param.getKey());
+            paramMap.put(key, param.getValue());
+        }
     }
 
     @Override
@@ -263,7 +314,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
 
                 } else if (child instanceof final ExpressionTerm term) {
                     final String value = term.getValue();
-                    final String resolved = resolve(value);
+                    final String resolved = resolve(value, componentId, componentSelection);
 
                     if (NullSafe.isNonBlankString(resolved)) {
                         if (Objects.equals(value, resolved)) {
@@ -296,6 +347,12 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
 
     @Override
     public String resolve(final String value) {
+        return resolve(value, null, null);
+    }
+
+    private String resolve(final String value,
+                           final String componentId,
+                           final ComponentSelection componentSelection) {
         if (value == null) {
             return null;
         }
@@ -303,7 +360,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
         List<String> keys = ParamUtil.getKeys(value);
         // Loop to allow for some recursive param usage.
         while (!keys.isEmpty()) {
-            final Map<String, String> replacements = getReplacements(keys, null, null);
+            final Map<String, String> replacements = getReplacements(keys, componentId, componentSelection);
             result = ParamUtil.replaceParameters(result, replacements::get);
             keys = ParamUtil.getKeys(result);
         }
@@ -316,21 +373,16 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
         final Map<String, String> replacements = new HashMap<>();
         for (final String key : keys) {
             String v;
-            if (key.startsWith("parent.")) {
-                final String k = key.substring("parent.".length());
-                v = getReplacement(k, componentId, componentSelection, parent);
-            } else {
-                v = getReplacement(key, componentId, componentSelection, this);
-            }
+            v = getReplacement(key, componentId, componentSelection, this);
             replacements.put(key, v);
         }
         return replacements;
     }
 
-    private static String getReplacement(final String key,
-                                         final String componentId,
-                                         final ComponentSelection componentSelection,
-                                         final DashboardContext dashboardContext) {
+    private String getReplacement(final String key,
+                                  final String componentId,
+                                  final ComponentSelection componentSelection,
+                                  final DashboardContext dashboardContext) {
         String v = null;
         if (dashboardContext != null) {
             String k = key;
@@ -338,8 +390,9 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
             if (index != -1) {
                 k = key.substring(index + 1);
             }
-            if (key.startsWith("component." + componentId + ".selection") ||
-                key.startsWith("component.?.selection")) {
+            if (componentId != null &&
+                (key.startsWith("component." + componentId + ".selection") ||
+                 key.startsWith("component.?.selection"))) {
                 if (componentSelection != null) {
                     v = componentSelection.get(k);
                 }
@@ -360,7 +413,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                 final TimeRange timeRange = dashboardContext.getRawTimeRange();
                 v = timeRange.getTo();
             } else if (key.startsWith("link.param")) {
-                final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getExternalParams());
+                final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getLinkParams());
+                v = map.get(k);
+            } else if (key.startsWith("parent.")) {
+                final Map<String, String> map = parentParams;
                 v = map.get(k);
             } else if (key.startsWith("param")) {
                 final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getParams());

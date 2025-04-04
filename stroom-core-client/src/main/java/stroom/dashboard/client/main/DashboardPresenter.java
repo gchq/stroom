@@ -330,7 +330,7 @@ public class DashboardPresenter
     public void setParamsFromLink(final String params) {
         logger.log(Level.INFO, "Dashboard Presenter setParamsFromLink " + params);
         this.externalLinkParameters = params;
-        dashboardContext.setGetExternalParams(ParamUtil.parse(externalLinkParameters));
+        dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
     }
 
     void setEmbedded(final boolean embedded) {
