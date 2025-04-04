@@ -1,6 +1,6 @@
 package stroom.explorer.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 public class ExplorerFields {
 

@@ -18,8 +18,8 @@ package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;

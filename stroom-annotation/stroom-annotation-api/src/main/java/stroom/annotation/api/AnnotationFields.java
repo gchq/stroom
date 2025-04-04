@@ -1,6 +1,6 @@
 package stroom.annotation.api;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.Arrays;
 import java.util.List;

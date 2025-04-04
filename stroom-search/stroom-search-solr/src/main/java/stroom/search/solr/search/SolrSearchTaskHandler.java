@@ -16,8 +16,8 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;

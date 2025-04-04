@@ -18,7 +18,7 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.ParamResolver;
 import stroom.query.client.view.QueryButtons;

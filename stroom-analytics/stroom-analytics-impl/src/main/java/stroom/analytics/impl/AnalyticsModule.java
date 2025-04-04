@@ -17,11 +17,11 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
 import stroom.processor.shared.ProcessorType;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;

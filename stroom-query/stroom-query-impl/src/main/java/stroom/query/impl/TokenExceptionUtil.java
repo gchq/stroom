@@ -1,7 +1,7 @@
 package stroom.query.impl;
 
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.TokenException;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.TokenException;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TokenError;
 

@@ -1,6 +1,6 @@
 package stroom.query.client.view;
 
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.TimeRange;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -16,8 +16,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
-
-import javax.validation.constraints.Null;
 
 public class TimeRangeSelector extends Composite implements HasValue<TimeRange>, Focus {
 

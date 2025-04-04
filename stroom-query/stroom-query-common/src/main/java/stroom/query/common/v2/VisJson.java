@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.VisResult.Store;
+import stroom.query.api.Column;
+import stroom.query.api.FlatResult;
+import stroom.query.api.Format.Type;
+import stroom.query.api.VisResult.Store;
 import stroom.util.json.JsonUtil;
 
 import java.util.ArrayList;

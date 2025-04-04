@@ -6,13 +6,13 @@ import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.view.ParamResolver;
 import stroom.util.shared.NullSafe;
@@ -153,7 +153,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                     new Param("to", timeRange.getTo()));
             printParams(tb, appendPrefix(prefix, "timeRange"), timeRangeParams);
 
-            final List<Param> linkParams = dashboardContext.getLinkParams();
+            final List<Param> linkParams = this.linkParams;
             if (linkParams != null) {
                 tb.row(TableCell.header("Link Parameters"));
                 printParams(tb, appendPrefix(prefix, "link.param"), linkParams);
@@ -216,7 +216,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                     new Param("to", timeRange.getTo()));
             appendParams(appendPrefix(prefix, "timeRange"), timeRangeParams, paramMap);
 
-            final List<Param> externalParameters = dashboardContext.getLinkParams();
+            final List<Param> externalParameters = linkParams;
             if (externalParameters != null) {
                 appendParams(appendPrefix(prefix, "link.param"), externalParameters, paramMap);
             }
@@ -372,8 +372,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                                                 final ComponentSelection componentSelection) {
         final Map<String, String> replacements = new HashMap<>();
         for (final String key : keys) {
-            String v;
-            v = getReplacement(key, componentId, componentSelection, this);
+            final String v = getReplacement(key, componentId, componentSelection, this);
             replacements.put(key, v);
         }
         return replacements;
@@ -391,8 +390,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
                 k = key.substring(index + 1);
             }
             if (componentId != null &&
-                (key.startsWith("component." + componentId + ".selection") ||
-                 key.startsWith("component.?.selection"))) {
+                (key.startsWith("component." + componentId + ".selection.") ||
+                 key.startsWith("component.?.selection."))) {
                 if (componentSelection != null) {
                     v = componentSelection.get(k);
                 }
@@ -412,13 +411,13 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext, Para
             } else if (key.equals("timeRange.to")) {
                 final TimeRange timeRange = dashboardContext.getRawTimeRange();
                 v = timeRange.getTo();
-            } else if (key.startsWith("link.param")) {
-                final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getLinkParams());
+            } else if (key.startsWith("link.param.")) {
+                final Map<String, String> map = ParamUtil.createParamMap(linkParams);
                 v = map.get(k);
             } else if (key.startsWith("parent.")) {
                 final Map<String, String> map = parentParams;
-                v = map.get(k);
-            } else if (key.startsWith("param")) {
+                v = map.get(key);
+            } else if (key.startsWith("param.")) {
                 final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getParams());
                 v = map.get(k);
             }

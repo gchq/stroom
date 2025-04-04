@@ -16,13 +16,13 @@
 
 package stroom.search.extraction;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.language.functions.Val;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;

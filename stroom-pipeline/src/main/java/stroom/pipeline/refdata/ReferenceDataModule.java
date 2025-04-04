@@ -16,9 +16,9 @@
 
 package stroom.pipeline.refdata;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;

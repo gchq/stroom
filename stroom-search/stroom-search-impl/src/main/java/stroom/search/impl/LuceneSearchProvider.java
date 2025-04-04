@@ -16,10 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
@@ -27,9 +23,13 @@ import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;

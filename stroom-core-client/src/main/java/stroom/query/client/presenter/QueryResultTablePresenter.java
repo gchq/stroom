@@ -42,14 +42,14 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.Row;
+import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
@@ -862,7 +862,7 @@ public class QueryResultTablePresenter
         public QueryTableColumnValuesDataSupplier(
                 final RestFactory restFactory,
                 final QueryModel searchModel,
-                final stroom.query.api.v2.Column column) {
+                final stroom.query.api.Column column) {
             super(column.copy().build());
             this.restFactory = restFactory;
             this.searchModel = searchModel;

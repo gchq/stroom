@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.language.token.Param;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;

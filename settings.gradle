@@ -224,7 +224,6 @@ include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
-include 'stroom-query:stroom-query-language-api'
 
 // State store
 include 'stroom-state:stroom-state-impl'

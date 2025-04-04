@@ -16,8 +16,8 @@
 
 package stroom.processor.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
 import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.TreeAction;
 

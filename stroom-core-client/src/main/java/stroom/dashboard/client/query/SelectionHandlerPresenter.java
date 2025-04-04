@@ -23,7 +23,7 @@ import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.client.presenter.CopyTextUtil;
 import stroom.editor.client.presenter.HtmlPresenter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;

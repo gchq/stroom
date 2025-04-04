@@ -1,5 +1,6 @@
 package stroom.query.language.token;
 
+import stroom.query.api.token.QuotedStringUtil;
 import stroom.test.common.TestUtil;
 
 import org.junit.jupiter.api.DynamicTest;

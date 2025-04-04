@@ -1,6 +1,6 @@
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.ArrayList;
 import java.util.List;

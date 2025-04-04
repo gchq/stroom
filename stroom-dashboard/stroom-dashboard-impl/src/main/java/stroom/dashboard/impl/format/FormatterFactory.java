@@ -16,8 +16,8 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.Column;
+import stroom.query.api.Format.Type;
 
 public class FormatterFactory {
 

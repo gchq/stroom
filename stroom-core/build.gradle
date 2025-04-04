@@ -25,7 +25,6 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-resource:stroom-resource-api')

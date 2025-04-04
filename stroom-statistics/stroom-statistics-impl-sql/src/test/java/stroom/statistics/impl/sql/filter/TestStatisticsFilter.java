@@ -17,7 +17,6 @@
 
 package stroom.statistics.impl.sql.filter;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
@@ -29,6 +28,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.util.ProcessorUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.statistics.impl.sql.StatisticEvent;

@@ -16,7 +16,6 @@
 
 package stroom.contentindex;
 
-import stroom.datasource.api.v2.AnalyzerType;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
 import stroom.docstore.api.ContentIndexable;
@@ -30,6 +29,7 @@ import stroom.explorer.shared.StringMatch.MatchType;
 import stroom.explorer.shared.StringMatchLocation;
 import stroom.index.lucene980.Lucene980LockFactory;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
+import stroom.query.api.datasource.AnalyzerType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContext;

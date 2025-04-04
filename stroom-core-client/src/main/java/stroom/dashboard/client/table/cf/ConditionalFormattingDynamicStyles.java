@@ -1,7 +1,7 @@
 package stroom.dashboard.client.table.cf;
 
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
-import stroom.query.api.v2.CustomRowStyle;
+import stroom.query.api.CustomConditionalFormattingStyle;
+import stroom.query.api.CustomRowStyle;
 
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safecss.shared.SafeStylesHostedModeUtils;

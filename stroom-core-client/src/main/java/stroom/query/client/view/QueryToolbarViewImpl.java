@@ -17,7 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;

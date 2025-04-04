@@ -16,9 +16,9 @@
 
 package stroom.search.solr.client.view;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 

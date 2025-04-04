@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.PredicateUtil;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.ResultPage;

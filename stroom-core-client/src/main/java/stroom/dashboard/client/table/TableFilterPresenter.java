@@ -1,8 +1,8 @@
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
-import stroom.query.api.v2.IncludeExcludeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
+import stroom.query.api.IncludeExcludeFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;

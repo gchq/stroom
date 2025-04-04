@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 import stroom.util.shared.NullSafe;
 
 import java.security.MessageDigest;

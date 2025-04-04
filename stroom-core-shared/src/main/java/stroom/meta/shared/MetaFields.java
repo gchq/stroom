@@ -1,8 +1,8 @@
 package stroom.meta.shared;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.ArrayList;
 import java.util.List;

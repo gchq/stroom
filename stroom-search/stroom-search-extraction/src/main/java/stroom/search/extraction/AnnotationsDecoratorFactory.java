@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 

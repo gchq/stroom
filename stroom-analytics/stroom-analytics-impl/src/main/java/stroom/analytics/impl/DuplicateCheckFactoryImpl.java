@@ -7,7 +7,7 @@ import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.query.api.v2.Row;
+import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 

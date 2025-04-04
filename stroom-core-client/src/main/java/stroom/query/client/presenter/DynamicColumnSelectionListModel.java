@@ -1,16 +1,16 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.main.UniqueUtil;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Column.Builder;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.Column;
+import stroom.query.api.Column.Builder;
+import stroom.query.api.Format;
+import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;

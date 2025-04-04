@@ -1,10 +1,10 @@
 package stroom.security.shared;
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;

@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
-import stroom.query.api.v2.Param;
+import stroom.query.api.Param;
 
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;

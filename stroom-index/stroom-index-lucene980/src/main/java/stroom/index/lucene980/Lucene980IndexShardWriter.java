@@ -16,8 +16,6 @@
 
 package stroom.index.lucene980;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardDao;
@@ -28,6 +26,8 @@ import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;

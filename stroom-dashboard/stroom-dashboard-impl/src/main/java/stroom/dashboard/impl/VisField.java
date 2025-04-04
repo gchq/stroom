@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl;
 
-import stroom.query.api.v2.Sort;
+import stroom.query.api.Sort;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;

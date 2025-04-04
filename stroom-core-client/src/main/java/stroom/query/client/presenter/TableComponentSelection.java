@@ -1,8 +1,8 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.Param;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.Param;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;

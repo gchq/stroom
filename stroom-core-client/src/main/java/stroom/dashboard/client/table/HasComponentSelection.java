@@ -1,6 +1,6 @@
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 
 import java.util.List;
 import java.util.Set;

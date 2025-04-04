@@ -69,7 +69,6 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
     implementation project(':stroom-gwt')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
@@ -110,7 +109,6 @@ def clientProjects = [
         project(':stroom-core-shared'),
         project(':stroom-docref'),
         project(':stroom-query:stroom-query-api'),
-        project(':stroom-query:stroom-query-language-api'),
         project(':stroom-util-shared'),
 ]
 

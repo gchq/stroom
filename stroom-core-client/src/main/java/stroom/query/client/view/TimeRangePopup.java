@@ -16,8 +16,8 @@
 
 package stroom.query.client.view;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.TimeRange;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;

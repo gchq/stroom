@@ -16,7 +16,7 @@
 
 package stroom.query.impl;
 
-import stroom.query.language.token.TokenType;
+import stroom.query.api.token.TokenType;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;

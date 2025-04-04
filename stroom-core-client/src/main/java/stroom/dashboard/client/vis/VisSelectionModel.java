@@ -2,7 +2,7 @@ package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;

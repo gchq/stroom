@@ -27,7 +27,7 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.user.client.ui.Focus;

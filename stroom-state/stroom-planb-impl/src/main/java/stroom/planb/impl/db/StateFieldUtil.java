@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.planb.shared.StateType;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.List;
 import java.util.Map;

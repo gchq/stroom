@@ -1,10 +1,10 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ParamUtil;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;

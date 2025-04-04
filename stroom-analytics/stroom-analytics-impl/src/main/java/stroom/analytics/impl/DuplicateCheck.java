@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.query.api.v2.Row;
+import stroom.query.api.Row;
 
 public interface DuplicateCheck extends AutoCloseable {
 

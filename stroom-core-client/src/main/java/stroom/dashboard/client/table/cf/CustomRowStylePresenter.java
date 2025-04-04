@@ -17,9 +17,9 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
-import stroom.query.api.v2.CustomRowStyle;
-import stroom.query.api.v2.TextAttributes;
+import stroom.query.api.CustomConditionalFormattingStyle;
+import stroom.query.api.CustomRowStyle;
+import stroom.query.api.TextAttributes;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;

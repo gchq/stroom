@@ -16,12 +16,12 @@
 
 package stroom.pipeline.task;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.state.RecordCount;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.Severity;
 
 import java.util.HashMap;

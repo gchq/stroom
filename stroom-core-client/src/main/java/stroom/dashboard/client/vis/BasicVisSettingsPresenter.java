@@ -27,7 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisualisationDoc;

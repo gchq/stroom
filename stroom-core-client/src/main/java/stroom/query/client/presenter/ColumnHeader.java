@@ -17,7 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 
 import com.google.gwt.user.cellview.client.Header;
 

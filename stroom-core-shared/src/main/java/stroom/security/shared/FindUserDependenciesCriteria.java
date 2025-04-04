@@ -1,8 +1,8 @@
 package stroom.security.shared;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserRef;

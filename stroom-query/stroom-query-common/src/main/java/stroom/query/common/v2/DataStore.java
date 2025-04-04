@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.ValuesConsumer;
 
 import com.esotericsoftware.kryo.io.Input;

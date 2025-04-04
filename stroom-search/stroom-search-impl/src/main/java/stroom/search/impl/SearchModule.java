@@ -16,9 +16,9 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.index.impl.IndexFieldServiceImpl;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.HasResultStoreInfo;

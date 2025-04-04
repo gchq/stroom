@@ -3,7 +3,7 @@ package stroom.analytics.impl;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.search.impl.FederatedSearchTask;
 import stroom.search.impl.NodeSearchTask;
 import stroom.search.impl.NodeSearchTaskType;

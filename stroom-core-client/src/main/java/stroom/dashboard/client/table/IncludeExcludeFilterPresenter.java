@@ -17,7 +17,7 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.IncludeExcludeFilterPresenter.IncludeExcludeFilterView;
-import stroom.query.api.v2.IncludeExcludeFilter;
+import stroom.query.api.IncludeExcludeFilter;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;

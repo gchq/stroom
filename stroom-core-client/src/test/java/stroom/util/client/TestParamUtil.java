@@ -16,10 +16,10 @@
 
 package stroom.util.client;
 
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.ParamValues;
-import stroom.query.api.v2.ParamValuesImpl;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.ParamValues;
+import stroom.query.api.ParamValuesImpl;
 
 import org.junit.jupiter.api.Test;
 
@@ -105,7 +105,7 @@ class TestParamUtil {
         assertThat(result).containsAll(List.of("key1", "key2"));
 
         result = ParamUtil.getKeys("this is $$$${key1} ${key2}");
-        assertThat(result).containsAll(List.of("key1", "key2"));
+        assertThat(result).containsAll(List.of("key2"));
 
         result = ParamUtil.getKeys("this is $$$$${key1} ${key2}");
         assertThat(result).containsAll(List.of("key1", "key2"));

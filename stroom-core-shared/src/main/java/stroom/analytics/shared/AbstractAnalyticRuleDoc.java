@@ -18,8 +18,8 @@ package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.Param;
+import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

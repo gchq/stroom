@@ -1,7 +1,6 @@
 package stroom.index.lucene980;
 
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
@@ -9,8 +8,9 @@ import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneVersion;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.IndexFieldCache;
 
 import jakarta.inject.Inject;

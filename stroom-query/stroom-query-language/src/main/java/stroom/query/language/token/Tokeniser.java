@@ -16,7 +16,12 @@
 
 package stroom.query.language.token;
 
-import stroom.query.language.token.QuotedStringToken.Builder;
+import stroom.query.api.token.ParamToken;
+import stroom.query.api.token.QuotedStringToken;
+import stroom.query.api.token.QuotedStringToken.Builder;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
 import java.util.Collections;

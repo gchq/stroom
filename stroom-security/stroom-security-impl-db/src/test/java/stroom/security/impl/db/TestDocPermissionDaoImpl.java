@@ -1,7 +1,7 @@
 package stroom.security.impl.db;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;

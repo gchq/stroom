@@ -1,7 +1,7 @@
 package stroom.core.receive;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.ContentTemplates;
 
