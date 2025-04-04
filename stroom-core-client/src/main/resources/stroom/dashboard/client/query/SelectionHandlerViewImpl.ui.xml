@@ -17,7 +17,7 @@
             <g:center>
                 <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
                                 label="Current Selection">
-                    <g:MaxScrollPanel addStyleNames="max stroom-control">
+                    <g:MaxScrollPanel addStyleNames="max form-control-border form-control-background">
                         <g:SimplePanel ui:field="currentSelection"/>
                     </g:MaxScrollPanel>
                 </form:FormGroup>
