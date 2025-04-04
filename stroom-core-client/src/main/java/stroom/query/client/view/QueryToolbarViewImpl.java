@@ -95,6 +95,11 @@ public class QueryToolbarViewImpl
         }
     }
 
+    @Override
+    public void setParamResolver(final ParamResolver paramResolver) {
+        timeRangeSelector.setParamResolver(paramResolver);
+    }
+
 
     // --------------------------------------------------------------------------------
 

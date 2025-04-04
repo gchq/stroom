@@ -17,7 +17,6 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
@@ -30,20 +29,15 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
-import java.util.Optional;
-
 public class SelectionHandlerPresenter
         extends MyPresenterWidget<SelectionHandlerView>
-        implements SelectionHandlerUiHandlers, Focus {
+        implements Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
     private final HtmlPresenter htmlPresenter;
@@ -60,7 +54,6 @@ public class SelectionHandlerPresenter
         this.editExpressionPresenter = editExpressionPresenter;
         this.htmlPresenter = htmlPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
-        view.setUiHandlers(this);
         view.setCurrentSelection(htmlPresenter.getView());
     }
 
@@ -77,15 +70,8 @@ public class SelectionHandlerPresenter
     }
 
     void read(final ComponentSelectionHandler componentSelectionHandler,
-              final List<Component> componentList,
               final FieldSelectionListModel fieldSelectionListModel) {
         this.fieldSelectionListModel = fieldSelectionListModel;
-        getView().setComponentList(componentList);
-        final Optional<Component> optionalComponent = componentList
-                .stream()
-                .filter(c -> c.getId().equals(componentSelectionHandler.getComponentId()))
-                .findAny();
-        getView().setComponent(optionalComponent.orElse(null));
 
         this.originalHandler = componentSelectionHandler;
         fieldSelectionListModel.setTaskMonitorFactory(this);
@@ -108,41 +94,13 @@ public class SelectionHandlerPresenter
             id = RandomId.createId(5);
         }
 
-        final Component component = getView().getComponent();
-        final String componentId;
-        if (component != null) {
-            componentId = component.getId();
-        } else {
-            componentId = null;
-        }
-
         final ExpressionOperator expression = editExpressionPresenter.write();
         return ComponentSelectionHandler
                 .builder()
                 .id(id)
-                .componentId(componentId)
                 .expression(expression)
                 .enabled(getView().isEnabled())
                 .build();
-    }
-
-    @Override
-    public void onComponentChange() {
-        updateFieldNames(getView().getComponent());
-    }
-
-    private void updateFieldNames(final Component component) {
-//        if (!ignoreTableChange) {
-//            allFields.clear();
-//            if (component == null) {
-//                if (componentList != null) {
-//                    componentList.forEach(c -> addFieldNames(c, allFields));
-//                }
-//            } else {
-//                addFieldNames(component, allFields);
-//            }
-//            editExpressionPresenter.init(null, null, allFields);
-//        }
     }
 
     @Override
@@ -155,13 +113,7 @@ public class SelectionHandlerPresenter
         this.dashboardContext = dashboardContext;
     }
 
-    public interface SelectionHandlerView extends View, Focus, HasUiHandlers<SelectionHandlerUiHandlers> {
-
-        void setComponentList(List<Component> componentList);
-
-        Component getComponent();
-
-        void setComponent(Component component);
+    public interface SelectionHandlerView extends View, Focus {
 
         void setExpressionView(View view);
 

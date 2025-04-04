@@ -25,7 +25,6 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
@@ -174,6 +173,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
+    private boolean initialised;
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -340,9 +340,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(getDashboardContext().addComponentChangeHandler(event -> {
-            if (updateSelectionFilter()) {
-                onColumnFilterChange();
+        registerHandler(getDashboardContext().addContextChangeHandler(event -> {
+            if (initialised && updateSelectionFilter()) {
+                reset();
+                refresh();
             }
         }));
     }
@@ -973,6 +974,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Change value filter state.
         setApplyValueFilters(getTableComponentSettings().applyValueFilters());
+        initialised = true;
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        initialised = false;
+    }
+
+    @Override
+    public void onRemove() {
+        super.onRemove();
+        initialised = false;
     }
 
     /**

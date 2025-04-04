@@ -14,6 +14,7 @@ import java.util.Map;
 
 public class SelectionHandlerExpressionBuilder {
 
+    @Deprecated
     public static List<ComponentSelectionHandler> fixLegacySelectionHandlers(
             final List<ComponentSelectionHandler> selectionHandlers) {
         if (NullSafe.isEmptyCollection(selectionHandlers)) {

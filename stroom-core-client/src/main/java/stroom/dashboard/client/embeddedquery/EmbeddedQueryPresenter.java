@@ -355,7 +355,7 @@ public class EmbeddedQueryPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
+        registerHandler(dashboardContext.addContextChangeHandler(event -> {
             if (initialised) {
                 final ExpressionOperator selectionQuery = dashboardContext
                         .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
@@ -535,7 +535,7 @@ public class EmbeddedQueryPresenter
             queryModel.startNewSearch(
                     query,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     incremental,
                     storeHistory,
                     queryInfo.getMessage(),

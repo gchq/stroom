@@ -23,7 +23,6 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
@@ -85,7 +84,6 @@ public class SelectionHandlersPresenter
     private final ButtonView moveDownButton;
 
     private boolean dirty;
-    private List<Component> componentList;
     private FieldSelectionListModel fieldSelectionListModel;
     // Determine if we are using this to set a filter or query selection handler.
     private boolean useForFilter;
@@ -232,7 +230,7 @@ public class SelectionHandlersPresenter
                 .build();
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
         editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
-        editSelectionHandlerPresenter.read(newRule, componentList, fieldSelectionListModel);
+        editSelectionHandlerPresenter.read(newRule, fieldSelectionListModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -256,7 +254,7 @@ public class SelectionHandlersPresenter
     private void edit(final ComponentSelectionHandler existingRule) {
         final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
         editSelectionHandlerPresenter.setDashboardContext(getDashboardContext());
-        editSelectionHandlerPresenter.read(existingRule, componentList, fieldSelectionListModel);
+        editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
@@ -320,12 +318,6 @@ public class SelectionHandlersPresenter
                 this.selectionHandlers.clear();
             }
         }
-
-        componentList = getDashboardContext().getComponents()
-                .getComponents()
-                .stream()
-                .filter(c -> c instanceof HasComponentSelection)
-                .collect(Collectors.toList());
 
         listPresenter.getSelectionModel().clear();
         setDirty(false);

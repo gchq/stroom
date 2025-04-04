@@ -17,7 +17,6 @@
 package stroom.query.api.v2;
 
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -72,7 +71,6 @@ public class TimeRange {
         this.to = to;
     }
 
-
     public String getName() {
         return name;
     }
@@ -109,18 +107,15 @@ public class TimeRange {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(NullSafe.getOrElse(condition, Condition::getDisplayValue, Condition.EQUALS.getDisplayValue()));
-        sb.append(" ");
-        if (from != null) {
-            sb.append(from);
-            if (to != null) {
-                sb.append(",");
-                sb.append(to);
-            }
+        if (name != null) {
+            return name;
+        } else if (from != null && to != null) {
+            return "Between " + from + " and " + to;
+        } else if (from != null) {
+            return "After " + from;
         } else if (to != null) {
-            sb.append(to);
+            return "Before " + to;
         }
-        return sb.toString();
+        return "";
     }
 }

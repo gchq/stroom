@@ -150,6 +150,7 @@ public class DashboardPresenter
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
+        queryToolbarPresenter.setParamResolver(dashboardContext);
 
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
         flexLayout.setTabManager(tabManager);
@@ -520,7 +521,6 @@ public class DashboardPresenter
         final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
             component.setDashboardContext(dashboardContext);
-            dashboardContext.fireContextChangeEvent();
 //            component.setDesignMode(designMode);
 
             if (component instanceof HasDirtyHandlers) {
@@ -539,6 +539,7 @@ public class DashboardPresenter
             }
 
             component.read(componentConfig);
+            dashboardContext.fireContextChangeEvent();
         }
 
         enableQueryButtons();

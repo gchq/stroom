@@ -2,12 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerComponent" label="Component">
-            <i:SelectionBox ui:field="component" addStyleNames="w-100"/>
-        </form:FormGroup>
         <form:FormGroup addStyleNames="dock-min">
             <tickbox:CustomCheckBox ui:field="enabled" identity="selectionHandlerEnabled" label="Enabled"/>
         </form:FormGroup>

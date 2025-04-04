@@ -22,7 +22,6 @@ import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
@@ -289,7 +288,7 @@ public class QueryPresenter
     @Override
     public void setDashboardContext(final DashboardContext dashboardContext) {
         super.setDashboardContext(dashboardContext);
-        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
+        registerHandler(dashboardContext.addContextChangeHandler(event -> {
             if (initialised) {
                 final ExpressionOperator selectionQuery = dashboardContext
                         .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
@@ -466,7 +465,7 @@ public class QueryPresenter
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
         queryData.setParams(dashboardContext.getParams());
-        queryData.setTimeRange(dashboardContext.getTimeRange());
+        queryData.setTimeRange(dashboardContext.getResolvedTimeRange());
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -603,7 +602,7 @@ public class QueryPresenter
             searchModel.startNewSearch(
                     decorated,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     incremental,
                     storeHistory,
                     queryInfo.getMessage(),
@@ -632,7 +631,7 @@ public class QueryPresenter
             searchModel.startNewSearch(
                     root,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     true,
                     false,
                     queryInfo.getMessage(),
@@ -880,7 +879,7 @@ public class QueryPresenter
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange());
+                    dashboardContext.getResolvedTimeRange());
 
             restFactory
                     .create(DASHBOARD_RESOURCE)

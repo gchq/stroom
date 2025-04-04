@@ -14,6 +14,7 @@ import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.query.client.view.ParamResolver;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -33,10 +34,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class DashboardContextImpl implements HasHandlers, DashboardContext {
+public class DashboardContextImpl implements HasHandlers, DashboardContext, ParamResolver {
 
     private final EventBus eventBus;
     private final Components components;
@@ -72,8 +74,14 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public TimeRange getTimeRange() {
+    public TimeRange getRawTimeRange() {
         return queryToolbarPresenter.getTimeRange();
+    }
+
+    @Override
+    public TimeRange getResolvedTimeRange() {
+        final TimeRange rawTimeRange = getRawTimeRange();
+        return new TimeRange(rawTimeRange.getName(), resolve(rawTimeRange.getFrom()), resolve(rawTimeRange.getTo()));
     }
 
     @Override
@@ -133,7 +141,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                               final String prefix,
                               final DashboardContext dashboardContext) {
         if (dashboardContext != null) {
-            final TimeRange timeRange = dashboardContext.getTimeRange();
+            final TimeRange timeRange = dashboardContext.getRawTimeRange();
             tb.row(TableCell.header("Time Range"));
             final List<Param> timeRangeParams = List.of(
                     new Param("from", timeRange.getFrom()),
@@ -255,32 +263,20 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
                 } else if (child instanceof final ExpressionTerm term) {
                     final String value = term.getValue();
-                    final List<String> keys = ParamUtil.getKeys(value);
-                    if (!keys.isEmpty()) {
-                        final Map<String, String> replacements = new HashMap<>();
-                        for (final String key : keys) {
-                            String v;
-                            if (key.startsWith("parent.")) {
-                                final String k = key.substring("parent.".length());
-                                v = getReplacement(k, componentId, componentSelection, parent);
-                            } else {
-                                v = getReplacement(key, componentId, componentSelection, this);
-                            }
-                            replacements.put(key, v);
-                        }
+                    final String resolved = resolve(value);
 
-                        final String replaced = ParamUtil.replaceParameters(value, replacements::get);
-                        if (NullSafe.isNonBlankString(replaced)) {
+                    if (NullSafe.isNonBlankString(resolved)) {
+                        if (Objects.equals(value, resolved)) {
+                            children.add(term);
+                        } else {
                             children.add(ExpressionTerm.builder()
                                     .enabled(term.enabled())
                                     .field(term.getField())
                                     .condition(term.getCondition())
-                                    .value(replaced)
+                                    .value(resolved)
                                     .docRef(term.getDocRef())
                                     .build());
                         }
-                    } else {
-                        children.add(term);
                     }
                 }
             }
@@ -296,6 +292,39 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 .op(operator.getOp())
                 .add(children)
                 .build());
+    }
+
+    @Override
+    public String resolve(final String value) {
+        if (value == null) {
+            return null;
+        }
+        String result = value;
+        List<String> keys = ParamUtil.getKeys(value);
+        // Loop to allow for some recursive param usage.
+        while (!keys.isEmpty()) {
+            final Map<String, String> replacements = getReplacements(keys, null, null);
+            result = ParamUtil.replaceParameters(result, replacements::get);
+            keys = ParamUtil.getKeys(result);
+        }
+        return result;
+    }
+
+    private Map<String, String> getReplacements(final List<String> keys,
+                                                final String componentId,
+                                                final ComponentSelection componentSelection) {
+        final Map<String, String> replacements = new HashMap<>();
+        for (final String key : keys) {
+            String v;
+            if (key.startsWith("parent.")) {
+                final String k = key.substring("parent.".length());
+                v = getReplacement(k, componentId, componentSelection, parent);
+            } else {
+                v = getReplacement(key, componentId, componentSelection, this);
+            }
+            replacements.put(key, v);
+        }
+        return replacements;
     }
 
     private static String getReplacement(final String key,
@@ -325,10 +354,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                     v = map.get(k);
                 }
             } else if (key.equals("timeRange.from")) {
-                final TimeRange timeRange = dashboardContext.getTimeRange();
+                final TimeRange timeRange = dashboardContext.getRawTimeRange();
                 v = timeRange.getFrom();
             } else if (key.equals("timeRange.to")) {
-                final TimeRange timeRange = dashboardContext.getTimeRange();
+                final TimeRange timeRange = dashboardContext.getRawTimeRange();
                 v = timeRange.getTo();
             } else if (key.startsWith("link.param")) {
                 final Map<String, String> map = ParamUtil.createParamMap(dashboardContext.getExternalParams());

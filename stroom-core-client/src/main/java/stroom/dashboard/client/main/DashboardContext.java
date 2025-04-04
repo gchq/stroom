@@ -18,7 +18,9 @@ public interface DashboardContext extends HasParams {
 
     List<Param> getExternalParams();
 
-    TimeRange getTimeRange();
+    TimeRange getRawTimeRange();
+
+    TimeRange getResolvedTimeRange();
 
     Components getComponents();
 
