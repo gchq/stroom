@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 @Singleton
 public class RefDataStoreFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreFactory.class);
 
     private final DelegatingRefDataOffHeapStore offHeapRefDataStore;
@@ -42,7 +43,7 @@ public class RefDataStoreFactory {
      * @return A store that will delegate to feed specific stores. Use this if when you are
      * querying multiple ref streams.
      */
-    public RefDataStore getOffHeapStore() {
+    public DelegatingRefDataOffHeapStore getOffHeapStore() {
         return offHeapRefDataStore;
     }
 

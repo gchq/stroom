@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefStoreEntry;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfo;
 import stroom.searchable.api.Searchable;
 import stroom.util.time.StroomDuration;
 
@@ -20,6 +21,8 @@ public interface ReferenceDataService extends Searchable {
     List<ProcessingInfoResponse> refStreamInfo(final int limit,
                                                final Long refStreamId,
                                                final String mapName);
+
+    List<OffHeapStoreInfo> storeInfo(final String nodeName);
 
     String lookup(final RefDataLookupRequest refDataLookupRequest);
 

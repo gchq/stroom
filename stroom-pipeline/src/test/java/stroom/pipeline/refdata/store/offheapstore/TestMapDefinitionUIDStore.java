@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.lmdb.DbiProxy;
 import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -32,7 +33,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -81,40 +81,42 @@ class TestMapDefinitionUIDStore extends AbstractStoreDbTest {
      */
     @Test
     void testSmallDbKey() {
-        final Dbi<ByteBuffer> dbi = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
-        String keyStr = "greeting";
-        final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
-        final ByteBuffer value = ByteBuffer.allocateDirect(20);
-        key.put(keyStr.getBytes(StandardCharsets.UTF_8)).flip();
-        value.put("Hello world".getBytes(StandardCharsets.UTF_8)).flip();
+        final DbiProxy dbiProxy = lmdbEnv.openDbi("testDb", DbiFlags.MDB_CREATE);
+        dbiProxy.withDbi(dbi -> {
+            String keyStr = "greeting";
+            final ByteBuffer key = ByteBuffer.allocateDirect(keyStr.length());
+            final ByteBuffer value = ByteBuffer.allocateDirect(20);
+            key.put(keyStr.getBytes(StandardCharsets.UTF_8)).flip();
+            value.put("Hello world".getBytes(StandardCharsets.UTF_8)).flip();
 
-        LOGGER.debug("key {}", ByteBufferUtils.byteBufferInfo(key));
-        LOGGER.debug("value {}", ByteBufferUtils.byteBufferInfo(value));
+            LOGGER.debug("key {}", ByteBufferUtils.byteBufferInfo(key));
+            LOGGER.debug("value {}", ByteBufferUtils.byteBufferInfo(value));
 
-        lmdbEnv.doWithWriteTxn(writeTxn -> {
-            long entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
-            assertThat(entryCount).isEqualTo(0);
-            dbi.put(writeTxn, key, value);
-            entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                long entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
+                assertThat(entryCount).isEqualTo(0);
+                dbi.put(writeTxn, key, value);
+                entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
+                assertThat(entryCount).isEqualTo(1);
+            });
+
+            final long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
             assertThat(entryCount).isEqualTo(1);
+            LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi, LOGGER::info);
+
+            final Long entries = lmdbEnv.getWithReadTxn(txn ->
+                    dbi.stat(txn).entries);
+
+            assertThat(entries).isEqualTo(1);
+
+            final ByteBuffer searchKey = ByteBuffer.allocateDirect(30);
+            searchKey.put("greeting".getBytes(StandardCharsets.UTF_8)).flip();
+            LOGGER.debug("searchKey {}", ByteBufferUtils.byteBufferInfo(searchKey));
+
+            final ByteBuffer foundValue = lmdbEnv.getWithReadTxn(txn ->
+                    dbi.get(txn, searchKey));
+            LOGGER.debug("foundValue {}", ByteBufferUtils.byteBufferInfo(foundValue));
         });
-
-        final long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
-        assertThat(entryCount).isEqualTo(1);
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi, LOGGER::info);
-
-        final Long entries = lmdbEnv.getWithReadTxn(txn ->
-                dbi.stat(txn).entries);
-
-        assertThat(entries).isEqualTo(1);
-
-        final ByteBuffer searchKey = ByteBuffer.allocateDirect(30);
-        searchKey.put("greeting".getBytes(StandardCharsets.UTF_8)).flip();
-        LOGGER.debug("searchKey {}", ByteBufferUtils.byteBufferInfo(searchKey));
-
-        final ByteBuffer foundValue = lmdbEnv.getWithReadTxn(txn ->
-                dbi.get(txn, searchKey));
-        LOGGER.debug("foundValue {}", ByteBufferUtils.byteBufferInfo(foundValue));
     }
 
     @Test

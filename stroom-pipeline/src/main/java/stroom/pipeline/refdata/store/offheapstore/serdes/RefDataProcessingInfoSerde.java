@@ -97,8 +97,13 @@ public class RefDataProcessingInfoSerde implements
     }
 
     public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {
-        byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
-        return ProcessingState.fromByte(bState);
+        try {
+            byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+            return ProcessingState.fromByte(bState);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error getting byte at offset {}, byteBuffer: {}",
+                    PROCESSING_STATE_OFFSET, ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
+        }
     }
 
     /**
@@ -114,7 +119,7 @@ public class RefDataProcessingInfoSerde implements
                 processingStateIds[i++] = processingState.getId();
             }
             return byteBuffer -> {
-                byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+                byte bState = extractProcessingStateAsByte(byteBuffer);
                 for (final byte processingStateId : processingStateIds) {
                     if (processingStateId == bState) {
                         return true;
@@ -122,6 +127,15 @@ public class RefDataProcessingInfoSerde implements
                 }
                 return false;
             };
+        }
+    }
+
+    private static byte extractProcessingStateAsByte(final ByteBuffer byteBuffer) {
+        try {
+            return byteBuffer.get(PROCESSING_STATE_OFFSET);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error getting byte at offset {}, byteBuffer: {}",
+                    PROCESSING_STATE_OFFSET, ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
         }
     }
 
