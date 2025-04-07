@@ -607,21 +607,23 @@ public class LmdbEnv implements AutoCloseable {
             tempEnvDir = Files.createTempDirectory(localDir, "lmdb-env-clone-");
             LOGGER.info("Starting compacting copy of LMDB env '{}' from {} to {}, current size on disk: {}",
                     name, localDir, tempEnvDir, ByteSize.ofBytes(currSizeOnDisk));
-            DurationTimer timer = DurationTimer.start();
-            // Copy the whole env, compacting as it goes
-            env.copy(tempEnvDir.toFile(), CopyFlags.MDB_CP_COMPACT);
-            // Close the source env and its dbis
-            close();
-            // Delete the source
-            deleteEnvFiles(localDir);
-            // Move temp env back to source
-            moveEnvFiles(tempEnvDir, localDir);
-            // Open it back up
-            reOpenEnv();
+            final Path finalTempEnvDir = tempEnvDir;
+            final Duration compactDuration = DurationTimer.measure(() -> {
+                // Copy the whole env, compacting as it goes
+                env.copy(finalTempEnvDir.toFile(), CopyFlags.MDB_CP_COMPACT);
+                // Close the source env and its dbis
+                close();
+                // Delete the source
+                deleteEnvFiles(localDir);
+                // Move temp env back to source
+                moveEnvFiles(finalTempEnvDir, localDir);
+                // Open it back up
+                reOpenEnv();
+            });
 
             long newSizeOnDisk = getSizeOnDisk();
             double pct = ((1 - (((double) newSizeOnDisk) / currSizeOnDisk))) * 100;
-            DecimalFormat decimalFormat = new DecimalFormat("0.0");
+            final DecimalFormat decimalFormat = new DecimalFormat("0.0");
             // 0% bad, 100% good
             LOGGER.info(
                     "Completed compacting copy of LMDB env '{}' from {} to {} in {}, " +
@@ -629,7 +631,7 @@ public class LmdbEnv implements AutoCloseable {
                     name,
                     localDir,
                     tempEnvDir,
-                    timer,
+                    compactDuration,
                     ByteSize.ofBytes(currSizeOnDisk),
                     ByteSize.ofBytes(newSizeOnDisk),
                     decimalFormat.format(pct));

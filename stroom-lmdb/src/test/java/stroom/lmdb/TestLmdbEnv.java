@@ -116,20 +116,21 @@ public class TestLmdbEnv {
 
             // We have no semaphore protection for max readers so make sure LMDB throws and
             // doesn't seg fault.
-            Assertions.assertThatThrownBy(() -> {
-                        lmdbEnv.doWithReadTxn(readTxn1 -> {
-                            lmdbEnv.doWithReadTxn(readTxn2 -> {
-                                lmdbEnv.doWithReadTxn(readTxn3 -> {
-                                    lmdbEnv.doWithReadTxn(readTxn4 -> {
-                                        lmdbEnv.doWithReadTxn(readTxn5 -> {
-                                            assertThat(db.get("bar"))
-                                                    .hasValue("BAR");
+            Assertions.assertThatThrownBy(
+                            () -> {
+                                lmdbEnv.doWithReadTxn(readTxn1 -> {
+                                    lmdbEnv.doWithReadTxn(readTxn2 -> {
+                                        lmdbEnv.doWithReadTxn(readTxn3 -> {
+                                            lmdbEnv.doWithReadTxn(readTxn4 -> {
+                                                lmdbEnv.doWithReadTxn(readTxn5 -> {
+                                                    assertThat(db.get("bar"))
+                                                            .hasValue("BAR");
+                                                });
+                                            });
                                         });
                                     });
                                 });
-                            });
-                        });
-                    })
+                            })
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("maxreaders reached");
         }

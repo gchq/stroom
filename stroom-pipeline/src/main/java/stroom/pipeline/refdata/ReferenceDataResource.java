@@ -46,8 +46,9 @@ public interface ReferenceDataResource extends RestResource {
     @Path(ENTRIES_SUB_PATH)
     @Operation(
             summary = "List entries from the reference data store on the node called.",
-            description = "This is primarily intended  for small scale debugging in non-production environments. If " +
-                          "no limit is set a default limit is applied else the results will be limited to limit entries.",
+            description = "This is primarily intended  for small scale debugging in non-production " +
+                          "environments. If no limit is set a default limit is applied else the results " +
+                          "will be limited to limit entries.",
             operationId = "getReferenceStoreEntries")
     List<RefStoreEntry> entries(@QueryParam("limit") final Integer limit,
                                 @QueryParam("refStreamId") final Long refStreamId,
@@ -57,9 +58,9 @@ public interface ReferenceDataResource extends RestResource {
     @Path(REF_STREAM_INFO_SUB_PATH)
     @Operation(
             summary = "List processing info entries for all ref streams",
-            description = "This is primarily intended  for small scale debugging in non-production environments. If " +
-                          "no limit is set a default limit is applied else the results will be limited to limit entries. " +
-                          "Performed on this node only.",
+            description = "This is primarily intended  for small scale debugging in non-production " +
+                          "environments. If no limit is set a default limit is applied else the results " +
+                          "will be limited to limit entries. Performed on this node only.",
             operationId = "getReferenceStreamProcessingInfoEntries")
     List<ProcessingInfoResponse> refStreamInfo(@QueryParam("limit") final Integer limit,
                                                @QueryParam("refStreamId") final Long refStreamId,

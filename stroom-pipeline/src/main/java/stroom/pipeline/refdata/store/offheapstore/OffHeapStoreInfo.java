@@ -137,10 +137,19 @@ public class OffHeapStoreInfo {
             return false;
         }
         final OffHeapStoreInfo that = (OffHeapStoreInfo) o;
-        return sizeOnDisk == that.sizeOnDisk && sizeInUse == that.sizeInUse && osBytesFree == that.osBytesFree && osBytesTotal == that.osBytesTotal && keyValueEntries == that.keyValueEntries && rangeValueEntries == that.rangeValueEntries && streamCount == that.streamCount && distinctValuesCount == that.distinctValuesCount && infoSnapshotEpochMs == that.infoSnapshotEpochMs && Objects.equals(
-                storeName,
-                that.storeName) && Objects.equals(nodeName, that.nodeName) && Objects.equals(feedName,
-                that.feedName) && Objects.equals(localDir, that.localDir);
+        return sizeOnDisk == that.sizeOnDisk
+               && sizeInUse == that.sizeInUse
+               && osBytesFree == that.osBytesFree
+               && osBytesTotal == that.osBytesTotal
+               && keyValueEntries == that.keyValueEntries
+               && rangeValueEntries == that.rangeValueEntries
+               && streamCount == that.streamCount
+               && distinctValuesCount == that.distinctValuesCount
+               && infoSnapshotEpochMs == that.infoSnapshotEpochMs
+               && Objects.equals(storeName, that.storeName)
+               && Objects.equals(nodeName, that.nodeName)
+               && Objects.equals(feedName, that.feedName)
+               && Objects.equals(localDir, that.localDir);
     }
 
     @Override

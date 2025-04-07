@@ -81,27 +81,30 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @Min(0)
-    @JsonPropertyDescription("The maximum number of puts into the store (in a single load) before the " +
-                             "transaction is committed. There is only one write transaction available at a time so reducing " +
-                             "this value allows multiple loads to potentially each load a chunk at a time. However, load times " +
-                             "increase rapidly with values below around 2,000. For maximum performance of a single load set this " +
-                             "value to 0 to only commit at the very end of the load.")
+    @JsonPropertyDescription(
+            "The maximum number of puts into the store (in a single load) before the " +
+            "transaction is committed. There is only one write transaction available at a time so reducing " +
+            "this value allows multiple loads to potentially each load a chunk at a time. However, load times " +
+            "increase rapidly with values below around 2,000. For maximum performance of a single load set this " +
+            "value to 0 to only commit at the very end of the load.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
 
     @Min(0)
-    @JsonPropertyDescription("The maximum number of entries in one reference stream to purge before the " +
-                             "transaction is committed. A value high enough to purge all entries in one transaction is " +
-                             "preferable but for large reference streams this may result in errors due to the transaction " +
-                             "being too large.")
+    @JsonPropertyDescription(
+            "The maximum number of entries in one reference stream to purge before the " +
+            "transaction is committed. A value high enough to purge all entries in one transaction is " +
+            "preferable but for large reference streams this may result in errors due to the transaction " +
+            "being too large.")
     public int getMaxPurgeDeletesBeforeCommit() {
         return maxPurgeDeletesBeforeCommit;
     }
 
-    @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
-                             "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
-                             "In ISO-8601 duration format, e.g. 'P1DT12H'. Used by job '" + RefDataPurge.JOB_NAME + "'.")
+    @JsonPropertyDescription(
+            "The time to retain reference data for in the off heap store. The time is taken " +
+            "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
+            "In ISO-8601 duration format, e.g. 'P1DT12H'. Used by job '" + RefDataPurge.JOB_NAME + "'.")
     public StroomDuration getPurgeAge() {
         return purgeAge;
     }
@@ -111,19 +114,21 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return autoPurgeEnabled;
     }
 
-    @JsonPropertyDescription("If true a compaction process will be run after a successful purge to free " +
-                             "up disk space. If compaction is not run, space will be freed up inside the store for " +
-                             "future loads of that feed, but disk space will not be freed up. For compaction to " +
-                             "work, property lmdb.readerBlockedByWriter must also be set to true.")
+    @JsonPropertyDescription(
+            "If true a compaction process will be run after a successful purge to free " +
+            "up disk space. If compaction is not run, space will be freed up inside the store for " +
+            "future loads of that feed, but disk space will not be freed up. For compaction to " +
+            "work, property lmdb.readerBlockedByWriter must also be set to true.")
     public boolean isCompactAfterPurgeEnabled() {
         return compactAfterPurgeEnabled;
     }
 
     @Min(2)
     @RequiresRestart(RestartScope.SYSTEM)
-    @JsonPropertyDescription("The number of lock stripes used for preventing multiple pipeline processes " +
-                             "from loading the same reference stream at the same time. Values should be a power of 2. " +
-                             "Lower values will mean it is more likely for two different streams from blocking one another.")
+    @JsonPropertyDescription(
+            "The number of lock stripes used for preventing multiple pipeline processes " +
+            "from loading the same reference stream at the same time. Values should be a power of 2. " +
+            "Lower values will mean it is more likely for two different streams from blocking one another.")
     public int getLoadingLockStripes() {
         return loadingLockStripes;
     }
