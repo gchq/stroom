@@ -206,7 +206,7 @@ class TestLogUtil {
                 .addCase(new IOException((String) null), IOException.class.getSimpleName())
                 .addCase(
                         new IOException("Bad happened"),
-                        IOException.class.getSimpleName() + " Bad happened")
+                        IOException.class.getSimpleName() + " 'Bad happened'")
                 .build();
     }
 
