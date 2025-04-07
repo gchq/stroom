@@ -6,9 +6,12 @@ import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Objects;
 
 public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDestinationFactory {
 
@@ -66,19 +69,15 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
             final ForwardHttpPostDestination forwardHttpPostDestination) {
 
         final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
-        final ForwardDestination destination;
-        if (forwardQueueConfig != null) {
-            // We have queue config so wrap out ultimate destination with some queue/retry logic
-            destination = new RetryingForwardDestination(
-                    forwardQueueConfig,
-                    forwardHttpPostDestination,
-                    dataDirProvider,
-                    simplePathCreator,
-                    dirQueueFactory,
-                    proxyServices);
-        } else {
-            destination = forwardHttpPostDestination;
-        }
-        return destination;
+        Objects.requireNonNull(forwardQueueConfig, () -> LogUtil.message(
+                "No forwardQueueConfig set for destination '{}'", config.getName()));
+        // We have queue config so wrap out ultimate destination with some queue/retry logic
+        return new RetryingForwardDestination(
+                forwardQueueConfig,
+                forwardHttpPostDestination,
+                dataDirProvider,
+                simplePathCreator,
+                dirQueueFactory,
+                proxyServices);
     }
 }
