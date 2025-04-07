@@ -36,13 +36,27 @@ proxyConfig:
       statisticsMode: "DROPWIZARD_METRICS"
     url: null
   forwardFileDestinations:
-  - enabled: true
+  - atomicMoveEnabled: true
+    enabled: true
     instant: false
     livenessCheckMode: "READ"
     livenessCheckPath: null
     name: null
     path: null
-    queue: null
+    queue:
+      errorSubPathTemplate:
+        enabled: true
+        pathTemplate: "${year}${month}${day}/${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
+      forwardDelay: "PT0S"
+      forwardRetryThreadCount: 1
+      forwardThreadCount: 5
+      livenessCheckInterval: "PT1M"
+      maxRetryAge: "P7D"
+      maxRetryDelay: "P1D"
+      queueAndRetryEnabled: false
+      retryDelay: "PT10M"
+      retryDelayGrowthFactor: 1.0
     subPathTemplate: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
@@ -76,7 +90,8 @@ proxyConfig:
       forwardThreadCount: 5
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "PT10M"
+      maxRetryDelay: "P1D"
+      queueAndRetryEnabled: true
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
   haltBootOnConfigValidationFailure: true
@@ -142,7 +157,6 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
-        httpClient: null
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null

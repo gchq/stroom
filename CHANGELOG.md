@@ -12,6 +12,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
+
+* Issue **#4829** : Fix stuck searches.
+
+* Issue **#4830** : Use a cache rather than sessions to maintain auth flow state to avoid creating unnecessary sessions.
+
+* Issue **#4842** : Fix null session when doing OIDC code flow with KeyCloak.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+* Issue **#4837** : Change the fetching of OIDC config to use jersey client instead of Apache http client. The yaml properties `appConfig.security.authentication.openId.httpClient` and `proxyConfig.security.authentication.openId.httpClient` have been removed. Configuration of the jersey client is now done using `jerseyClients.OPEN_ID.` (see https://gchq.github.io/stroom-docs/docs/install-guide/configuration/stroom-and-proxy/common-configuration/#jersey-http-client-configuration).
+
+* Issue **#4849** : Fix the default forwarding queue config so that it retries for HTTP and not for FILE. Add the config prop `queue.queueAndRetryEnabled` to control whether forwarding is queued with retry handling or not. Add the config prop `atomicMoveEnabled` to `forwardFileDestinations` items to allow disabling of atomic file moves when using a remote file system that doesn't support atomic moves.
+
 
 ## [v7.9-beta.6] - 2025-04-07
 

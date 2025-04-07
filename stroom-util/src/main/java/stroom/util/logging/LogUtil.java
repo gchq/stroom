@@ -255,7 +255,7 @@ public final class LogUtil {
         } else if (t.getMessage() == null) {
             return t.getClass().getSimpleName();
         } else {
-            return t.getClass().getSimpleName() + " " + t.getMessage();
+            return t.getClass().getSimpleName() + " '" + t.getMessage() + "'";
         }
     }
 

@@ -1,6 +1,5 @@
 package stroom.security.openid.api;
 
-import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.AllMatchPattern;
 
@@ -130,8 +129,6 @@ public abstract class AbstractOpenIdConfig
 
     private final Set<String> expectedSignerPrefixes;
 
-    private final HttpClientConfiguration httpClient;
-
     public AbstractOpenIdConfig() {
         identityProviderType = getDefaultIdpType();
         openIdConfigurationEndpoint = null;
@@ -151,7 +148,6 @@ public abstract class AbstractOpenIdConfig
         uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
         userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
         expectedSignerPrefixes = Collections.emptySet();
-        httpClient = null;
     }
 
     @JsonIgnore
@@ -176,8 +172,7 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
-            @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
 
         this.identityProviderType = identityProviderType;
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
@@ -197,7 +192,6 @@ public abstract class AbstractOpenIdConfig
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
         this.expectedSignerPrefixes = expectedSignerPrefixes;
-        this.httpClient = httpClient;
     }
 
     /**
@@ -384,12 +378,6 @@ public abstract class AbstractOpenIdConfig
                || (openIdConfigurationEndpoint != null && !openIdConfigurationEndpoint.isBlank());
     }
 
-    @JsonProperty
-    @JsonPropertyDescription("Configuration for the HTTP client to communicate with the external IDP")
-    public HttpClientConfiguration getHttpClient() {
-        return httpClient;
-    }
-
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -408,7 +396,6 @@ public abstract class AbstractOpenIdConfig
                ", validateAudience=" + validateAudience +
                ", uniqueIdentityClaim=" + uniqueIdentityClaim +
                ", expectedSignerPrefixes=" + expectedSignerPrefixes +
-               ", httpClientConfiguration=" + httpClient +
                '}';
     }
 
@@ -435,8 +422,7 @@ public abstract class AbstractOpenIdConfig
                Objects.equals(clientSecret, that.clientSecret) &&
                Objects.equals(requestScopes, that.requestScopes) &&
                Objects.equals(uniqueIdentityClaim, that.uniqueIdentityClaim) &&
-               Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes) &&
-               Objects.equals(httpClient, that.httpClient);
+               Objects.equals(expectedSignerPrefixes, that.expectedSignerPrefixes);
     }
 
     @Override
@@ -455,7 +441,6 @@ public abstract class AbstractOpenIdConfig
                 requestScopes,
                 validateAudience,
                 uniqueIdentityClaim,
-                expectedSignerPrefixes,
-                httpClient);
+                expectedSignerPrefixes);
     }
 }
