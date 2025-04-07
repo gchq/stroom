@@ -130,7 +130,7 @@ class TestJsonSerialisation {
         return buildRelatedResourceTests(clazz -> {
             // Try and find the no args constructor if there is any.
             if (!Modifier.isInterface(clazz.getModifiers())
-                    && !Modifier.isAbstract(clazz.getModifiers())) {
+                && !Modifier.isAbstract(clazz.getModifiers())) {
 
                 final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
                 Constructor<?> noArgsConstructor = null;
@@ -164,7 +164,6 @@ class TestJsonSerialisation {
                 }
             }
         });
-
     }
 
     /**
@@ -181,7 +180,7 @@ class TestJsonSerialisation {
                 for (final Field field : fields) {
                     // Don't care about static as they are not serialised.
                     if (Map.class.isAssignableFrom(field.getType())
-                            && !Modifier.isStatic(field.getModifiers())) {
+                        && !Modifier.isStatic(field.getModifiers())) {
                         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {
@@ -286,8 +285,8 @@ class TestJsonSerialisation {
         return buildRelatedResourceTests(clazz -> {
 
             if (!Modifier.isInterface(clazz.getModifiers())
-                    && !Modifier.isAbstract(clazz.getModifiers())
-                    && !clazz.isEnum()) {
+                && !Modifier.isAbstract(clazz.getModifiers())
+                && !clazz.isEnum()) {
                 final boolean hasJsonInclude = clazz.getAnnotation(JsonInclude.class) != null;
                 final boolean hasJsonPropertyOrder = clazz.getAnnotation(JsonPropertyOrder.class) != null;
                 final AtomicInteger jsonCreatorCount = new AtomicInteger(0);
@@ -313,7 +312,7 @@ class TestJsonSerialisation {
 
                 fieldPropNames = getAllFields(clazz).stream()
                         .filter(field -> field.getDeclaredAnnotation(JsonIgnore.class) == null
-                                && field.getDeclaredAnnotation(JsonProperty.class) != null)
+                                         && field.getDeclaredAnnotation(JsonProperty.class) != null)
                         .map(field -> {
                             final JsonProperty jsonProperty = field.getDeclaredAnnotation(JsonProperty.class);
                             if (!jsonProperty.value().isEmpty()) {
@@ -331,8 +330,8 @@ class TestJsonSerialisation {
                     final JsonIgnore jsonIgnore = field.getDeclaredAnnotation(JsonIgnore.class);
                     final JsonProperty jsonProperty = field.getDeclaredAnnotation(JsonProperty.class);
                     if (jsonIgnore == null
-                            && jsonProperty == null
-                            && !Modifier.isStatic(field.getModifiers())) {
+                        && jsonProperty == null
+                        && !Modifier.isStatic(field.getModifiers())) {
                         String fieldName = field.getName();
                         fieldsWithoutAnnotations.add(fieldName);
                     }
@@ -349,7 +348,7 @@ class TestJsonSerialisation {
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(constructorPropNames)
                             .describedAs("%s - JsonProperties defined in the constructor must have a " +
-                                    "corresponding JsonProperty on the field.", clazz.getName())
+                                         "corresponding JsonProperty on the field.", clazz.getName())
                             .containsExactlyInAnyOrderElementsOf(fieldPropNames);
 
                     softly.assertThat(hasJsonInclude)
@@ -506,16 +505,16 @@ class TestJsonSerialisation {
 
     private boolean isGetter(final Method method) {
         return !Modifier.isAbstract(method.getModifiers()) &&
-                Modifier.isPublic(method.getModifiers()) &&
-                method.getParameterCount() == 0 &&
-                (method.getName().startsWith("is") || method.getName().startsWith("get"));
+               Modifier.isPublic(method.getModifiers()) &&
+               method.getParameterCount() == 0 &&
+               (method.getName().startsWith("is") || method.getName().startsWith("get"));
     }
 
     private boolean isSetter(final Method method) {
         return !Modifier.isAbstract(method.getModifiers()) &&
-                Modifier.isPublic(method.getModifiers()) &&
-                method.getParameterCount() == 1 &&
-                method.getName().startsWith("set");
+               Modifier.isPublic(method.getModifiers()) &&
+               method.getParameterCount() == 1 &&
+               method.getName().startsWith("set");
     }
 
     private String convertMethodToFieldName(final String methodName) {
@@ -589,7 +588,7 @@ class TestJsonSerialisation {
             }
 
         } else if (clazz.getName().startsWith(PACKAGE_START)
-                && !clazz.getName().contains("StroomDuration")) { // Non POJO
+                   && !clazz.getName().contains("StroomDuration")) { // Non POJO
             // IF the class references sub classes then include those too.
             final JsonSubTypes jsonSubTypes = clazz.getAnnotation(JsonSubTypes.class);
             if (jsonSubTypes != null) {
@@ -667,16 +666,16 @@ class TestJsonSerialisation {
 //                LOGGER.info("{}", routeClassInfo.getName());
                 final String name = routeClassInfo.getName();
                 if (name.contains(".shared.") &&
-                        !name.contains("hadoopcommonshaded") &&
-                        !name.contains("Util") &&
-                        !name.contains("$") &&
-                        !name.contains("_")) {
+                    !name.contains("hadoopcommonshaded") &&
+                    !name.contains("Util") &&
+                    !name.contains("$") &&
+                    !name.contains("_")) {
                     try {
                         final Class<?> clazz = routeClassInfo.loadClass();
                         if (!Modifier.isInterface(clazz.getModifiers()) &&
-                                !Modifier.isAbstract(clazz.getModifiers()) &&
-                                !RestResource.class.isAssignableFrom(clazz) &&
-                                !DirectRestService.class.isAssignableFrom(clazz)) {
+                            !Modifier.isAbstract(clazz.getModifiers()) &&
+                            !RestResource.class.isAssignableFrom(clazz) &&
+                            !DirectRestService.class.isAssignableFrom(clazz)) {
                             stroomClasses.add(clazz);
                         }
                     } catch (final IllegalArgumentException e) {

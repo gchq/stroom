@@ -109,7 +109,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
         return purgeAge;
     }
 
-    @JsonPropertyDescription("")
+    @JsonPropertyDescription("TODO")
     public boolean isAutoPurgeEnabled() {
         return autoPurgeEnabled;
     }

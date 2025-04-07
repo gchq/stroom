@@ -604,27 +604,17 @@ public class LmdbEnv implements AutoCloseable {
     private void compact(final long currSizeOnDisk) {
         Path tempEnvDir = null;
         try {
+            // Create the temp dir inside localDir as the ref data could be quite large so may blow up
+            // /tmp
             tempEnvDir = Files.createTempDirectory(localDir, "lmdb-env-clone-");
             LOGGER.info("Starting compacting copy of LMDB env '{}' from {} to {}, current size on disk: {}",
                     name, localDir, tempEnvDir, ByteSize.ofBytes(currSizeOnDisk));
-            final Path finalTempEnvDir = tempEnvDir;
-            final Duration compactDuration = DurationTimer.measure(() -> {
-                // Copy the whole env, compacting as it goes
-                env.copy(finalTempEnvDir.toFile(), CopyFlags.MDB_CP_COMPACT);
-                // Close the source env and its dbis
-                close();
-                // Delete the source
-                deleteEnvFiles(localDir);
-                // Move temp env back to source
-                moveEnvFiles(finalTempEnvDir, localDir);
-                // Open it back up
-                reOpenEnv();
-            });
+            final Duration compactDuration = doCompact(tempEnvDir);
 
             long newSizeOnDisk = getSizeOnDisk();
             double pct = ((1 - (((double) newSizeOnDisk) / currSizeOnDisk))) * 100;
             final DecimalFormat decimalFormat = new DecimalFormat("0.0");
-            // 0% bad, 100% good
+            // 0% == no compaction, 100% == Full compaction
             LOGGER.info(
                     "Completed compacting copy of LMDB env '{}' from {} to {} in {}, " +
                     "size on disk: {} => {} (compaction {}%)",
@@ -643,6 +633,21 @@ public class LmdbEnv implements AutoCloseable {
                 FileUtil.deleteDir(tempEnvDir);
             }
         }
+    }
+
+    private Duration doCompact(final Path finalTempEnvDir) {
+        final DurationTimer timer = DurationTimer.start();
+        // Copy the whole env to a temporary dir, compacting as it goes
+        env.copy(finalTempEnvDir.toFile(), CopyFlags.MDB_CP_COMPACT);
+        // Close the source env and its dbis
+        close();
+        // Delete the source
+        deleteEnvFiles(localDir);
+        // Move temp env back to source
+        moveEnvFiles(finalTempEnvDir, localDir);
+        // Open it back up
+        reOpenEnv();
+        return timer.get();
     }
 
     private Runnable createWaitLoggingAction(final String lockName) {
