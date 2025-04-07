@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.18] - 2025-04-07
+
+* Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
+
+* Issue **#4829** : Fix stuck searches.
+
+* Issue **#4830** : Use a cache rather than sessions to maintain auth flow state to avoid creating unnecessary sessions.
+
+* Issue **#4842** : Fix null session when doing OIDC code flow with KeyCloak.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+* Issue **#4837** : Change the fetching of OIDC config to use jersey client instead of Apache http client. The yaml properties `appConfig.security.authentication.openId.httpClient` and `proxyConfig.security.authentication.openId.httpClient` have been removed. Configuration of the jersey client is now done using `jerseyClients.OPEN_ID.` (see https://gchq.github.io/stroom-docs/docs/install-guide/configuration/stroom-and-proxy/common-configuration/#jersey-http-client-configuration).
+
+* Issue **#4849** : Fix the default forwarding queue config so that it retries for HTTP and not for FILE. Add the config prop `queue.queueAndRetryEnabled` to control whether forwarding is queued with retry handling or not. Add the config prop `atomicMoveEnabled` to `forwardFileDestinations` items to allow disabling of atomic file moves when using a remote file system that doesn't support atomic moves.
+
+
 ## [v7.8-beta.17] - 2025-03-21
 
 * Issue **#4700** : Add props `forwardFileDestinations.subPathTemplate`,  `forwardFileDestinations.templatingMode` and `forwardHttpDestinations.errorSubPathTemplate` to allow templating of the file destination paths. Change the default retries to infinite. Make the following Stroom status codes go straight to the HTTP forwarder error destination: FEED_IS_NOT_DEFINED(101), FEED_IS_NOT_SET_TO_RECEIVE_DATA(110), UNEXPECTED_DATA_TYPE(120). Make the `data` directory more permissive to invalid files/directories that it finds. Remove the retry config prop `maxRetries` and replace it with `maxRetryAge` and `retryDelayGrowthFactor` to allow for a retry delay that grows with each retry. Change the file forwarder to support queueing/retry for remote file systems. Move the queue/retry config into the `queue` branch of the destination config. Fix issue of missing `.entries` files when rebooting proxy. Change the `thread` branch of the config, previous properties moved into `queue`, new properties added to control aggregation.
@@ -1279,7 +1296,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.18...HEAD
+[v7.8-beta.18]: https://github.com/gchq/stroom/compare/v7.8-beta.17...v7.8-beta.18
 [v7.8-beta.17]: https://github.com/gchq/stroom/compare/v7.8-beta.16...v7.8-beta.17
 [v7.8-beta.16]: https://github.com/gchq/stroom/compare/v7.8-beta.15...v7.8-beta.16
 [v7.8-beta.15]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.8-beta.15
