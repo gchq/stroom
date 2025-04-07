@@ -66,8 +66,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_success() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
-                .build();
+        final ForwardHttpQueueConfig forwardQueueConfig = new ForwardHttpQueueConfig();
 
         final RetryingForwardDestination retryingForwardDestination = new RetryingForwardDestination(
                 forwardQueueConfig,
@@ -102,7 +101,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_retryAllFail() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
+        final ForwardHttpQueueConfig forwardQueueConfig = ForwardHttpQueueConfig.builder()
                 .retryDelay(StroomDuration.ofMillis(200))
                 .retryDelayGrowthFactor(2)
                 .maxRetryDelay(StroomDuration.ofSeconds(10))
@@ -151,7 +150,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_retryThenSuccess() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
+        final ForwardHttpQueueConfig forwardQueueConfig = ForwardHttpQueueConfig.builder()
                 .maxRetryAge(StroomDuration.ofSeconds(10))
                 .retryDelay(StroomDuration.ofMillis(500))
                 .build();

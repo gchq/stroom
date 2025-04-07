@@ -34,7 +34,7 @@ public final class ForwardHttpPostConfig
     private final String apiKey;
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
-    private final ForwardQueueConfig forwardQueueConfig;
+    private final ForwardHttpQueueConfig forwardQueueConfig;
 
     public ForwardHttpPostConfig() {
         enabled = true;
@@ -45,7 +45,7 @@ public final class ForwardHttpPostConfig
         apiKey = null;
         addOpenIdAccessToken = false;
         httpClient = createDefaultHttpClientConfiguration();
-        forwardQueueConfig = new ForwardQueueConfig();
+        forwardQueueConfig = new ForwardHttpQueueConfig();
     }
 
     @SuppressWarnings("unused")
@@ -58,7 +58,7 @@ public final class ForwardHttpPostConfig
                                  @JsonProperty("apiKey") final String apiKey,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
                                  @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
-                                 @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig) {
+                                 @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
@@ -67,7 +67,7 @@ public final class ForwardHttpPostConfig
         this.apiKey = apiKey;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
         this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
-        this.forwardQueueConfig = forwardQueueConfig;
+        this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
     }
 
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
@@ -156,7 +156,7 @@ public final class ForwardHttpPostConfig
     @JsonProperty("queue")
     @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. " +
                              "This is required for a HTTP forwarder as requests may fail.")
-    public ForwardQueueConfig getForwardQueueConfig() {
+    public ForwardHttpQueueConfig getForwardQueueConfig() {
         return forwardQueueConfig;
     }
 
@@ -235,7 +235,7 @@ public final class ForwardHttpPostConfig
         private String apiKey;
         private boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
-        private ForwardQueueConfig forwardQueueConfig;
+        private ForwardHttpQueueConfig forwardQueueConfig;
 
         private Builder() {
             this(new ForwardHttpPostConfig());
@@ -294,7 +294,7 @@ public final class ForwardHttpPostConfig
             return this;
         }
 
-        public Builder forwardQueueConfig(final ForwardQueueConfig forwardQueueConfig) {
+        public Builder forwardQueueConfig(final ForwardHttpQueueConfig forwardQueueConfig) {
             this.forwardQueueConfig = forwardQueueConfig;
             return this;
         }
