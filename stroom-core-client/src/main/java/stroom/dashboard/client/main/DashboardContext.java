@@ -15,9 +15,8 @@ import java.util.Optional;
 
 public interface DashboardContext extends ParamValues {
 
+    @Deprecated
     List<Param> getParams();
-
-    List<Param> getLinkParams();
 
     TimeRange getRawTimeRange();
 
@@ -28,6 +27,8 @@ public interface DashboardContext extends ParamValues {
     DocRef getDashboardDocRef();
 
     SafeHtml toSafeHtml();
+
+    ExpressionOperator replaceExpression(ExpressionOperator operator, boolean keepUnmatched);
 
     Optional<ExpressionOperator> createSelectionHandlerExpression(List<ComponentSelectionHandler> selectionHandlers);
 

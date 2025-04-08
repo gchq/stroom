@@ -59,7 +59,7 @@ public class VisComponentSelection implements ComponentSelection {
     }
 
     @Override
-    public String get(final String key) {
+    public String getParamValue(final String key) {
         return values.get(key);
     }
 }

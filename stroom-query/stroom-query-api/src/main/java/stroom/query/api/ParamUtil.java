@@ -141,7 +141,7 @@ public final class ParamUtil {
                     key = key.substring(0, defaultValueIndex);
                 }
 
-                final String paramValue = paramValues.get(key);
+                final String paramValue = paramValues.getParamValue(key);
                 if (paramValue != null) {
                     if (containsWhitespace(paramValue)) {
                         sb.append("'");

@@ -1108,8 +1108,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         if (rulesIn != null) {
             List<ConditionalFormattingRule> rulesOut = new ArrayList<>(rulesIn.size());
             rulesIn.forEach(rule -> {
-                rulesOut.add(rule.copy().expression(ExpressionUtil.replaceExpressionParameters(rule.getExpression(),
-                        dashboardContext,
+                rulesOut.add(rule.copy().expression(dashboardContext.replaceExpression(rule.getExpression(),
                         true)).build());
             });
             builder.conditionalFormattingRules(rulesOut);
@@ -1117,8 +1116,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         ExpressionOperator aggregateFilter = currentSelectionFilter;
         if (currentSelectionFilter != null) {
-            aggregateFilter = ExpressionUtil
-                    .replaceExpressionParameters(aggregateFilter, dashboardContext, true);
+            aggregateFilter = dashboardContext.replaceExpression(aggregateFilter, true);
         }
 
         return builder.buildTableSettings().copy().aggregateFilter(aggregateFilter).build();

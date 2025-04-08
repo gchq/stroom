@@ -11,7 +11,7 @@ public class ParamValuesImpl implements ParamValues {
     }
 
     @Override
-    public String get(final String key) {
+    public String getParamValue(final String key) {
         return map.get(key);
     }
 }

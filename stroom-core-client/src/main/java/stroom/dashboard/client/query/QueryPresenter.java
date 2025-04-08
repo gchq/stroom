@@ -598,8 +598,7 @@ public class QueryPresenter
             ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
 
             final DashboardContext dashboardContext = getDashboardContext();
-            decorated = ExpressionUtil
-                    .replaceExpressionParameters(decorated, dashboardContext, true);
+            decorated = dashboardContext.replaceExpression(decorated, true);
 
             // Start search.
             searchModel.startNewSearch(
@@ -629,7 +628,7 @@ public class QueryPresenter
             // Write expression.
             ExpressionOperator root = expressionPresenter.write();
             final DashboardContext dashboardContext = getDashboardContext();
-            root = ExpressionUtil.replaceExpressionParameters(root, dashboardContext, true);
+            root = dashboardContext.replaceExpression(root, true);
 
             // Start search.
             searchModel.startNewSearch(

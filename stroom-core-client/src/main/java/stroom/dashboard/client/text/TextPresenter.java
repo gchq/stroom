@@ -347,17 +347,17 @@ public class TextPresenter
                     final ComponentSelection selected = selection.get(0);
                     currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
                     if (currentStreamId == null) {
-                        currentStreamId = getLong(selected.get(SpecialColumns.RESERVED_STREAM_ID));
+                        currentStreamId = getLong(selected.getParamValue(SpecialColumns.RESERVED_STREAM_ID));
                         if (currentStreamId == null) {
-                            currentStreamId = getLong(selected.get(OLD_STREAM_ID));
+                            currentStreamId = getLong(selected.getParamValue(OLD_STREAM_ID));
                         }
                     }
                     currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
                     currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
                     if (currentRecordIndex == null) {
-                        currentRecordIndex = getLong(selected.get(SpecialColumns.RESERVED_EVENT_ID));
+                        currentRecordIndex = getLong(selected.getParamValue(SpecialColumns.RESERVED_EVENT_ID));
                         if (currentRecordIndex == null) {
-                            currentRecordIndex = getLong(selected.get(OLD_EVENT_ID));
+                            currentRecordIndex = getLong(selected.getParamValue(OLD_EVENT_ID));
                         }
                     }
                     final Long currentLineFrom = getLong(getTextSettings().getLineFromColumn(), selected);
@@ -546,9 +546,9 @@ public class TextPresenter
 
     private Long getLong(final ColumnRef column, final ComponentSelection row) {
         if (column != null && row != null) {
-            String val = row.get(column.getId());
+            String val = row.getParamValue(column.getId());
             if (val == null) {
-                val = row.get(column.getName());
+                val = row.getParamValue(column.getName());
             }
             return getLong(val);
         }
