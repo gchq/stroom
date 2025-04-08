@@ -19,7 +19,7 @@ package stroom.query.common.v2;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.Row;
@@ -60,7 +60,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -102,7 +102,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Col1")
                         .name("Col1")
-                        .expression(ParamSubstituteUtil.makeParam("Col1"))
+                        .expression(ParamUtil.create("Col1"))
                         .format(Format.NUMBER)
                         .group(0)
                         .sort(Sort.builder().order(0).build())
@@ -110,7 +110,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Col2")
                         .name("Col2")
-                        .expression(ParamSubstituteUtil.makeParam("Col2"))
+                        .expression(ParamUtil.create("Col2"))
                         .format(Format.NUMBER)
                         .group(1)
                         .sort(Sort.builder().order(1).build())
@@ -118,7 +118,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Col3")
                         .name("Col3")
-                        .expression(ParamSubstituteUtil.makeParam("Col3"))
+                        .expression(ParamUtil.create("Col3"))
                         .format(Format.NUMBER)
                         .group(2)
                         .sort(Sort.builder().order(2).build())
@@ -293,14 +293,14 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .showDetail(true)
@@ -370,7 +370,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .sort(sort)
                         .build())
                 .build();
@@ -405,7 +405,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Number")
                         .name("Number")
-                        .expression(ParamSubstituteUtil.makeParam("Number"))
+                        .expression(ParamUtil.create("Number"))
                         .sort(sort)
                         .build())
                 .build();
@@ -447,7 +447,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .group(0)
                         .build())
                 .build();
@@ -488,7 +488,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .sort(sort)
                         .group(0)
                         .build())
@@ -530,7 +530,7 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .sort(sort)
                         .group(0)
                         .build())
@@ -563,7 +563,7 @@ abstract class AbstractDataStoreTest {
     void firstLastSelectorTest() {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
-        final String param = ParamSubstituteUtil.makeParam("Number");
+        final String param = ParamUtil.create("Number");
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Group")

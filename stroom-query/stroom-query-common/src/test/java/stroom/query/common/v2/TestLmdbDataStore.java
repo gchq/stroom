@@ -25,7 +25,7 @@ import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.Row;
@@ -133,14 +133,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -205,21 +205,21 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .group(1)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression("first(" + ParamSubstituteUtil.makeParam("Text2") + ")")
+                        .expression("first(" + ParamUtil.create("Text2") + ")")
                         .format(Format.TEXT)
                         .build())
                 .addColumns(Column.builder()
@@ -361,19 +361,19 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("StreamId")
                         .name("StreamId")
-                        .expression(ParamSubstituteUtil.makeParam("StreamId"))
+                        .expression(ParamUtil.create("StreamId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventId")
                         .name("EventId")
-                        .expression(ParamSubstituteUtil.makeParam("EventId"))
+                        .expression(ParamUtil.create("EventId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                        .expression(ParamUtil.create("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())
                 .build();

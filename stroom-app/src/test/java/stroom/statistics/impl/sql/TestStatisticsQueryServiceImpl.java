@@ -24,7 +24,7 @@ import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultRequest;
@@ -433,7 +433,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
         final Column column = Column.builder()
                 .id(name)
                 .name(name)
-                .expression(ParamSubstituteUtil.makeParam(name))
+                .expression(ParamUtil.create(name))
                 .build();
         tableSettingsBuilder.addColumns(column);
     }

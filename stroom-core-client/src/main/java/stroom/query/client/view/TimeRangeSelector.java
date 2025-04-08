@@ -1,5 +1,7 @@
 package stroom.query.client.view;
 
+import stroom.query.api.ParamUtil;
+import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.view.HideRequest;
@@ -23,7 +25,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     private final PopupPanel popup;
     private final TimeRangePopup timeRangePopup;
     private TimeRange value = TimeRanges.ALL_TIME;
-    private ParamResolver paramResolver;
+    private ParamValues paramValues;
 
     public TimeRangeSelector() {
         timeRangePopup = GWT.create(TimeRangePopup.class);
@@ -96,13 +98,13 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     }
 
     private String getText() {
-        if (paramResolver == null) {
+        if (paramValues == null) {
             return value.toString();
         } else if (value.getName() != null) {
             return value.getName();
         } else {
-            final String from = paramResolver.resolve(value.getFrom());
-            final String to = paramResolver.resolve(value.getTo());
+            final String from = ParamUtil.replaceParameters(value.getFrom(), paramValues);
+            final String to = ParamUtil.replaceParameters(value.getTo(), paramValues);
             if (NullSafe.isBlankString(from) && NullSafe.isBlankString(to)) {
                 return TimeRanges.ALL_TIME.toString();
             } else if (NullSafe.isNonBlankString(from)) {
@@ -118,8 +120,8 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
-    public void setParamResolver(final ParamResolver paramResolver) {
-        this.paramResolver = paramResolver;
+    public void setParamValues(final ParamValues paramValues) {
+        this.paramValues = paramValues;
         label.setText(getText());
     }
 }

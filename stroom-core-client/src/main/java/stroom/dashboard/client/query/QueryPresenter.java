@@ -595,10 +595,13 @@ public class QueryPresenter
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+            ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+
+            final DashboardContext dashboardContext = getDashboardContext();
+            decorated = ExpressionUtil
+                    .replaceExpressionParameters(decorated, dashboardContext, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     decorated,
                     dashboardContext.getParams(),
@@ -624,10 +627,11 @@ public class QueryPresenter
             setWarningsVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = expressionPresenter.write();
+            ExpressionOperator root = expressionPresenter.write();
+            final DashboardContext dashboardContext = getDashboardContext();
+            root = ExpressionUtil.replaceExpressionParameters(root, dashboardContext, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     root,
                     dashboardContext.getParams(),

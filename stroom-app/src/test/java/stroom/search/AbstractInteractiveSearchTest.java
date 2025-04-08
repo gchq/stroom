@@ -27,7 +27,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Row;
@@ -509,26 +509,26 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         final Column streamIdColumn = Column.builder()
                 .id("1")
                 .name("Stream Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
+                .expression(ParamUtil.create(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
                 .id("2")
                 .name("Event Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
+                .expression(ParamUtil.create(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
                 .id("3")
                 .name("Event Time")
-                .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                .expression(ParamUtil.create("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
                 .id("4")
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
+                .expression(ParamUtil.create(AnnotationFields.STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

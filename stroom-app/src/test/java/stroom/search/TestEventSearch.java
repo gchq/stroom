@@ -27,7 +27,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
@@ -188,13 +188,13 @@ class TestEventSearch extends AbstractSearchTest {
         final Column idColumn = Column.builder()
                 .id("1")
                 .name("IdTreeNode")
-                .expression(ParamSubstituteUtil.makeParam("StreamId"))
+                .expression(ParamUtil.create("StreamId"))
                 .build();
 
         final Column timeColumn = Column.builder()
                 .id("2")
                 .name("Event Time")
-                .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                .expression(ParamUtil.create("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 

@@ -249,7 +249,7 @@ public class VisPresenter
             final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
-            final TableSettings tableSettings = tablePresenter.getTableSettings();
+            final TableSettings tableSettings = tablePresenter.resolveTableSettings();
 
             // Refresh if the linked table settings have changed.
             if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {

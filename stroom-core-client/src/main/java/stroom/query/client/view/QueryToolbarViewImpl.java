@@ -17,6 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
@@ -96,8 +97,8 @@ public class QueryToolbarViewImpl
     }
 
     @Override
-    public void setParamResolver(final ParamResolver paramResolver) {
-        timeRangeSelector.setParamResolver(paramResolver);
+    public void setParamValues(final ParamValues paramValues) {
+        timeRangeSelector.setParamValues(paramValues);
     }
 
 

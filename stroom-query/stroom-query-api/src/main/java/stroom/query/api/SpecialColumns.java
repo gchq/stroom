@@ -23,11 +23,11 @@ public interface SpecialColumns {
     String RESERVED_EVENT_ID = "__event_id__";
 
     Column RESERVED_ID_COLUMN = buildSpecialColumn(RESERVED_ID,
-            ParamSubstituteUtil.makeParam("Id"));
+            ParamUtil.create("Id"));
     Column RESERVED_STREAM_ID_COLUMN = buildSpecialColumn(RESERVED_STREAM_ID,
-            ParamSubstituteUtil.makeParam("StreamId"));
+            ParamUtil.create("StreamId"));
     Column RESERVED_EVENT_ID_COLUMN = buildSpecialColumn(RESERVED_EVENT_ID,
-            ParamSubstituteUtil.makeParam("EventId"));
+            ParamUtil.create("EventId"));
 
     static Column buildSpecialColumn(final String reservedColumnName,
                                      final String expression) {

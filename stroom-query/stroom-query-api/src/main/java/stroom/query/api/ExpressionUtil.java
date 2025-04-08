@@ -228,7 +228,7 @@ public class ExpressionUtil {
             ExpressionOperator expression = query.getExpression();
             if (query.getParams() != null && expression != null) {
                 final ParamValues paramValues = ParamUtil.createParamValueFunction(query.getParams());
-                expression = replaceExpressionParameters(expression, paramValues);
+                expression = replaceExpressionParameters(expression, paramValues, false);
             }
             result = query.copy().expression(expression).build();
         }
@@ -240,7 +240,7 @@ public class ExpressionUtil {
         final ExpressionOperator result;
         if (operator != null) {
             final ParamValues paramValues = ParamUtil.createParamValueFunction(params);
-            result = replaceExpressionParameters(operator, paramValues);
+            result = replaceExpressionParameters(operator, paramValues, false);
         } else {
             result = null;
         }
@@ -248,7 +248,8 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
-                                                                 final ParamValues paramValues) {
+                                                                 final ParamValues paramValues,
+                                                                 final boolean keepUnmatched) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()
                 .enabled(operator.getEnabled())
@@ -257,12 +258,12 @@ public class ExpressionUtil {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    builder.addOperator(replaceExpressionParameters(childOperator, paramValues));
+                    builder.addOperator(replaceExpressionParameters(childOperator, paramValues, keepUnmatched));
 
                 } else if (child instanceof ExpressionTerm) {
                     final ExpressionTerm term = (ExpressionTerm) child;
                     final String value = term.getValue();
-                    final String replaced = ParamUtil.replaceParameters(value, paramValues);
+                    final String replaced = ParamUtil.replaceParameters(value, paramValues, keepUnmatched);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())

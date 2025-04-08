@@ -263,6 +263,16 @@ public class BasicTokeniser {
 //    }
 //
 
+    private record TokenIndex(int tokenIndex, int charIndex) {
+
+
+    }
+
+    private record TokenSpan(TokenIndex start, TokenIndex end) {
+
+
+    }
+
     public static List<Token> splitParams(final List<Token> tokens) {
         final List<Token> out = new ArrayList<>();
         for (final Token token : tokens) {
@@ -287,7 +297,12 @@ public class BasicTokeniser {
                         if (lastPos < dollarStart) {
                             out.add(new Token(TokenType.UNKNOWN, token.getChars(), lastPos, dollarStart - 1));
                         }
-                        out.add(new Token(TokenType.PARAM, token.getChars(), dollarStart, i));
+                        out.add(new ParamToken.Builder()
+                                .tokenType(TokenType.PARAM)
+                                .chars(token.getChars())
+                                .start(dollarStart)
+                                .end(i)
+                                .build());
                         lastPos = i + 1;
                     }
                 }
@@ -301,6 +316,106 @@ public class BasicTokeniser {
             }
         }
         return out;
+    }
+
+    /**
+     * This code is left here in case we decide we want to allow quoted param names.
+     *
+     * @param tokens
+     * @return
+     */
+    public static List<Token> splitParamsSpan(final List<Token> tokens) {
+        final List<TokenSpan> tokenSpans = getSpans(tokens);
+
+        if (tokenSpans.isEmpty()) {
+            return tokens;
+        }
+
+        final List<Token> out = new ArrayList<>();
+        int lastTokenIndex = 0;
+        int lastTokenChar = 0;
+        for (final TokenSpan tokenSpan : tokenSpans) {
+            final TokenIndex start = tokenSpan.start;
+            final TokenIndex end = tokenSpan.end;
+
+            // Copy whole tokens before span.
+            if (start.tokenIndex > lastTokenIndex) {
+                for (int i = lastTokenIndex; i < start.tokenIndex; i++) {
+                    final Token token = tokens.get(i);
+                    if (lastTokenChar > token.start) {
+                        out.add(new Token(token.getTokenType(), token.getChars(), lastTokenChar, token.end));
+                    } else {
+                        out.add(token);
+                    }
+                }
+            }
+
+            // Break start spanned token if needed.
+            final Token token = tokens.get(start.tokenIndex);
+            if (token.start < start.charIndex) {
+                if (lastTokenChar > token.start) {
+                    out.add(new Token(token.getTokenType(), token.getChars(), lastTokenChar, start.charIndex - 1));
+                } else {
+                    out.add(new Token(token.getTokenType(), token.getChars(), token.start, start.charIndex - 1));
+                }
+            }
+
+            // Output span.
+            out.add(new ParamToken.Builder()
+                    .tokenType(TokenType.PARAM)
+                    .chars(token.getChars())
+                    .start(start.charIndex)
+                    .end(end.charIndex)
+                    .build());
+
+            lastTokenIndex = end.tokenIndex;
+            lastTokenChar = end.charIndex + 1;
+        }
+
+        // Output final tokens.
+        for (int i = lastTokenIndex; i < tokens.size(); i++) {
+            final Token token = tokens.get(i);
+            if (lastTokenChar > token.start) {
+                out.add(new Token(token.getTokenType(), token.getChars(), lastTokenChar, token.end));
+            } else {
+                out.add(token);
+            }
+        }
+
+        return out;
+    }
+
+    private static List<TokenSpan> getSpans(final List<Token> tokens) {
+        TokenIndex start = null;
+        int dollarStart = -1;
+        final List<TokenSpan> tokenSpans = new ArrayList<>();
+
+        for (int i = 0; i < tokens.size(); i++) {
+            final Token token = tokens.get(i);
+            if (TokenType.UNKNOWN.equals(token.getTokenType())) {
+                for (int j = token.getStart(); j <= token.getEnd(); j++) {
+                    final char c = token.getChars()[j];
+                    if (c == '$') {
+                        start = null;
+                        dollarStart = j;
+                    } else if (c == '{') {
+                        if (dollarStart >= 0 && dollarStart == j - 1) {
+                            start = new TokenIndex(i, dollarStart);
+                        } else {
+                            start = null;
+                            dollarStart = -1;
+                        }
+                    } else if (c == '}' && start != null) {
+                        final TokenIndex end = new TokenIndex(i, j);
+                        tokenSpans.add(new TokenSpan(start, end));
+                        start = null;
+                        dollarStart = -1;
+                    }
+                }
+            }
+        }
+
+        return tokenSpans;
     }
 
     public static List<Token> extractQuotedTokens(final List<Token> tokens) {
@@ -322,8 +437,8 @@ public class BasicTokeniser {
                         } else {
                             if (c == ESCAPE_CHAR) {
                                 escape = true;
-                            } else if ((c == DOUBLE_QUOTE_CHAR && outputType == TokenType.DOUBLE_QUOTED_STRING)
-                                    || (c == SINGLE_QUOTE_CHAR && outputType == TokenType.SINGLE_QUOTED_STRING)) {
+                            } else if ((c == DOUBLE_QUOTE_CHAR && outputType == TokenType.DOUBLE_QUOTED_STRING) ||
+                                       (c == SINGLE_QUOTE_CHAR && outputType == TokenType.SINGLE_QUOTED_STRING)) {
                                 inQuote = false;
                                 if (lastPos < i) {
                                     final QuotedStringToken quotedStringToken = new Builder()

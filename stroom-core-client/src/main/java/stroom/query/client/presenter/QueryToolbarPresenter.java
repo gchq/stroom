@@ -18,9 +18,9 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
-import stroom.query.client.view.ParamResolver;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.client.view.TimeRanges;
 
@@ -106,8 +106,8 @@ public class QueryToolbarPresenter
         return currentTimeRange;
     }
 
-    public void setParamResolver(final ParamResolver paramResolver) {
-        getView().setParamResolver(paramResolver);
+    public void setParamValues(final ParamValues paramValues) {
+        getView().setParamValues(paramValues);
     }
 
     public HandlerRegistration addStartQueryHandler(final StartQueryEvent.Handler handler) {
@@ -134,6 +134,6 @@ public class QueryToolbarPresenter
 
         void setTimeRange(TimeRange timeRange);
 
-        void setParamResolver(ParamResolver paramResolver);
+        void setParamValues(ParamValues paramValues);
     }
 }

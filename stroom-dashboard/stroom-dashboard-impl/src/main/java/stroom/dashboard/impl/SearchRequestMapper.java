@@ -32,7 +32,7 @@ import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
 import stroom.query.api.Param;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Builder;
@@ -410,7 +410,7 @@ public class SearchRequestMapper {
                 builder.format(format);
             }
 
-            builder.expression(ParamSubstituteUtil.makeParam(visField.getId()));
+            builder.expression(ParamUtil.create(visField.getId()));
         }
         builder.sort(visField.getSort());
 

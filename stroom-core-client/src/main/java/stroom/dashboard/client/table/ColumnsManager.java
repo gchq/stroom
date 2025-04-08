@@ -299,7 +299,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
-                if (!tablePresenter.getTableSettings().applyValueFilters()) {
+                if (!tablePresenter.getTableComponentSettings().applyValueFilters()) {
                     tablePresenter.toggleApplyValueFilters();
                 }
             }

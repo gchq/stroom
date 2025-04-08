@@ -39,6 +39,7 @@ import stroom.query.api.ColumnRef;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultStoreInfo;
@@ -530,10 +531,14 @@ public class EmbeddedQueryPresenter
             // Destroy any previous query.
             queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
 
+            // Perform parameter substitution on query.
+            final String replaced = ParamUtil
+                    .replaceParameters(query, getDashboardContext(), true);
+
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
             queryModel.startNewSearch(
-                    query,
+                    replaced,
                     dashboardContext.getParams(),
                     dashboardContext.getResolvedTimeRange(),
                     incremental,

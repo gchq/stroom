@@ -58,15 +58,19 @@ import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
+import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
@@ -456,7 +460,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 .componentId(tableSettings.getKey())
                                                 .requestedRange(OffsetRange.UNBOUNDED)
                                                 .tableName(getTableName(tableSettings.getKey()))
-                                                .tableSettings(getTableSettings())
+                                                .tableSettings(resolveTableSettings())
                                                 .fetch(Fetch.ALL)
                                                 .build()));
 
@@ -538,7 +542,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public void startSearch() {
         tableResultRequest = tableResultRequest
                 .copy()
-                .tableSettings(getTableSettings())
+                .tableSettings(resolveTableSettings())
                 .build();
 
         setPause(false, false);
@@ -573,7 +577,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getTableSettings()
+                    tableRowStyles.setConditionalFormattingRules(getTableComponentSettings()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -948,7 +952,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updatePageSize();
 
         // Fix historic conditional formatting rule ids.
-        fixRuleIds(getTableSettings().getConditionalFormattingRules());
+        fixRuleIds(getTableComponentSettings().getConditionalFormattingRules());
 
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
@@ -1034,7 +1038,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateSelectionFilter();
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(getTableSettings().getConditionalFormattingRules());
+        tableRowStyles.setConditionalFormattingRules(tableComponentSettings.getConditionalFormattingRules());
         dataGrid.redraw();
     }
 
@@ -1055,14 +1059,69 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
-        return tableResultRequest.copy().tableSettings(getTableSettings()).fetch(fetch).build();
+        return tableResultRequest.copy().tableSettings(resolveTableSettings()).fetch(fetch).build();
     }
 
-    public TableSettings getTableSettings() {
-        TableSettings tableSettings = getTableComponentSettings()
-                .copy()
-                .buildTableSettings();
-        return tableSettings.copy().aggregateFilter(currentSelectionFilter).build();
+    /**
+     * Get the table component settings and perform parameter replacement on columns etc.
+     *
+     * @return Resolved table settings.
+     */
+    public TableSettings resolveTableSettings() {
+        final TableComponentSettings tableComponentSettings = getTableComponentSettings();
+        final TableComponentSettings.Builder builder = tableComponentSettings.copy();
+
+        // Resolve parameters in columns.
+        final DashboardContext dashboardContext = getDashboardContext();
+        final List<Column> columnsIn = tableComponentSettings.getColumns();
+        if (columnsIn != null) {
+            List<Column> columnsOut = new ArrayList<>(columnsIn.size());
+            columnsIn.forEach(column -> {
+                final Column.Builder columnBuilder = column.copy();
+                if (column.getExpression() != null) {
+                    columnBuilder.expression(ParamUtil.replaceParameters(column.getExpression(),
+                            dashboardContext,
+                            true));
+                }
+                if (column.getFilter() != null) {
+                    columnBuilder.filter(new IncludeExcludeFilter(
+                            ParamUtil.replaceParameters(column.getFilter().getIncludes(),
+                                    dashboardContext,
+                                    true),
+                            ParamUtil.replaceParameters(column.getFilter().getExcludes(),
+                                    dashboardContext,
+                                    true)));
+                }
+                if (column.getColumnFilter() != null) {
+                    columnBuilder.columnFilter(new ColumnFilter(ParamUtil
+                            .replaceParameters(column.getColumnFilter().getFilter(),
+                                    dashboardContext,
+                                    true)));
+                }
+                columnsOut.add(columnBuilder.build());
+            });
+            builder.columns(columnsOut);
+        }
+
+        // Resolve parameters in conditional formatting.
+        final List<ConditionalFormattingRule> rulesIn = tableComponentSettings.getConditionalFormattingRules();
+        if (rulesIn != null) {
+            List<ConditionalFormattingRule> rulesOut = new ArrayList<>(rulesIn.size());
+            rulesIn.forEach(rule -> {
+                rulesOut.add(rule.copy().expression(ExpressionUtil.replaceExpressionParameters(rule.getExpression(),
+                        dashboardContext,
+                        true)).build());
+            });
+            builder.conditionalFormattingRules(rulesOut);
+        }
+
+        ExpressionOperator aggregateFilter = currentSelectionFilter;
+        if (currentSelectionFilter != null) {
+            aggregateFilter = ExpressionUtil
+                    .replaceExpressionParameters(aggregateFilter, dashboardContext, true);
+        }
+
+        return builder.buildTableSettings().copy().aggregateFilter(aggregateFilter).build();
     }
 
     @Override
@@ -1070,7 +1129,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return tableResultRequest
                 .copy()
                 .requestedRange(OffsetRange.UNBOUNDED)
-                .tableSettings(getTableSettings())
+                .tableSettings(resolveTableSettings())
                 .fetch(Fetch.ALL)
                 .build();
     }
@@ -1104,6 +1163,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public void setFocused(final boolean focused) {
+
         dataGrid.setFocused(focused);
     }
 
@@ -1192,7 +1252,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return new TableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
-                getTableSettings(),
+                resolveTableSettings(),
                 getDateTimeSettings(),
                 getTableName(getId()));
     }

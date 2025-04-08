@@ -150,7 +150,7 @@ public class DashboardPresenter
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
-        queryToolbarPresenter.setParamResolver(dashboardContext);
+        queryToolbarPresenter.setParamValues(dashboardContext);
 
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
         flexLayout.setTabManager(tabManager);

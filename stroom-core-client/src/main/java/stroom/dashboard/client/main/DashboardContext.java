@@ -4,6 +4,7 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Param;
+import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -12,7 +13,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.List;
 import java.util.Optional;
 
-public interface DashboardContext {
+public interface DashboardContext extends ParamValues {
 
     List<Param> getParams();
 

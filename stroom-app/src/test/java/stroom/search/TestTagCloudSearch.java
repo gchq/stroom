@@ -27,7 +27,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
 import stroom.query.api.OffsetRange;
-import stroom.query.api.ParamSubstituteUtil;
+import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
@@ -80,7 +80,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
         final Column columnText = Column.builder()
                 .id("Text")
                 .name("Text")
-                .expression(ParamSubstituteUtil.makeParam("Text"))
+                .expression(ParamUtil.create("Text"))
                 .group(0)
                 .format(Format.TEXT)
                 .build();
