@@ -13,6 +13,55 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.8] - 2025-04-09
+
+* Uplift BCrypt lib to 0.4.3.
+
+* Add BCrypt as a hashing algorithm to data feed keys. Change Data feed key auth to require the header as configured by `dataFeedKeyOwnerMetaKey`. Change `hashAlgorithmId` to `hashAlgorithm` in the data feed keys json file.
+
+
+## [v7.9-beta.7] - 2025-04-07
+
+* Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
+
+* Issue **#4829** : Fix stuck searches.
+
+* Issue **#4830** : Use a cache rather than sessions to maintain auth flow state to avoid creating unnecessary sessions.
+
+* Issue **#4842** : Fix null session when doing OIDC code flow with KeyCloak.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+* Issue **#4837** : Change the fetching of OIDC config to use jersey client instead of Apache http client. The yaml properties `appConfig.security.authentication.openId.httpClient` and `proxyConfig.security.authentication.openId.httpClient` have been removed. Configuration of the jersey client is now done using `jerseyClients.OPEN_ID.` (see https://gchq.github.io/stroom-docs/docs/install-guide/configuration/stroom-and-proxy/common-configuration/#jersey-http-client-configuration).
+
+* Issue **#4849** : Fix the default forwarding queue config so that it retries for HTTP and not for FILE. Add the config prop `queue.queueAndRetryEnabled` to control whether forwarding is queued with retry handling or not. Add the config prop `atomicMoveEnabled` to `forwardFileDestinations` items to allow disabling of atomic file moves when using a remote file system that doesn't support atomic moves.
+
+
+## [v7.9-beta.6] - 2025-04-07
+
+* Issue **#4109** : Add `receive` config properties `x509CertificateHeader`, `x509CertificateDnHeader` and `allowedCertificateProviders` to control the use of certificates and DNs placed in the request headers by load balancers or reverse proxies that are doing the TLS termination. Header keys were previously hard coded. `allowedCertificateProviders` is an allow list of FQDN/IPs that are allowed to use the cert/DN headers.
+
+* Add Dropwizard Metrics to proxy.
+
+* Change proxy to use the same caching as stroom.
+
+* Remove unused proxy config property `maxAggregateAge`. `aggregationFrequency` controls the aggregation age/frequency.
+
+* Stroom-Proxy instances that are making remote feed status requests using an API key or token, will now need to hold the application permission `Check Receipt Status` in Stroom. This prevents anybody with an API key from checking feed statuses.
+
+* Issue **#4312** : Add Data Feed Keys to proxy and stroom to allow their use in data receipt authentication. Replace `proxyConfig.receive.(certificateAuthenticationEnabled|tokenAuthenticationEnabled)` with `proxyConfig.receive.enabledAuthenticationTypes` that takes values: `DATA_FEED_KEY|TOKEN|CERTIFICATE` (where `TOKEN` means an oauth token or an API key). The feed status check endpoint `/api/feedStatus/v1` has been deprecated. Proxies with a version >=v7.9 should now use `/api/feedStatus/v2`.
+
+* Replace proxy config prop `proxyConfig.eventStore.maxOpenFiles` with `proxyConfig.eventStore.openFilesCache`.
+
+* Add optional auto-generation of the `Feed` attribute using property `proxyConfig.receive.feedNameGenerationEnabled`. This is used alongside properties `proxyConfig.receive.feedNameTemplate` (which defines a template for the auto-generated feed name using meta keys and their values) and `feedNameGenerationMandatoryHeaders` which defines the mandatory meta headers that must be present for a auto-generation of the feed name to be possible.
+
+* Add a new _Content Templates_ screen to stroom (requires `Manage Content Templates` application permission). This screen is used to define rules for matching incoming data where the feed does not exist and creating content to process data for that feed.
+
+* Feed status check calls made by a proxy into stroom now require the application permission `Check Receipt Status`. This is to stop anyone with an API key from discovering the feeds available in stroom. Any existing API keys used for feed status checks on proxy will need to have `Check Receipt Status` granted to the owner of the key.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+
 ## [v7.9-beta.5] - 2025-04-02
 
 * Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
@@ -1329,7 +1378,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.8...HEAD
+[v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
+[v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7
+[v7.9-beta.6]: https://github.com/gchq/stroom/compare/v7.9-beta.5...v7.9-beta.6
 [v7.9-beta.5]: https://github.com/gchq/stroom/compare/v7.9-beta.4...v7.9-beta.5
 [v7.9-beta.4]: https://github.com/gchq/stroom/compare/v7.9-beta.3...v7.9-beta.4
 [v7.9-beta.3]: https://github.com/gchq/stroom/compare/v7.9-beta.2...v7.9-beta.3

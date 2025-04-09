@@ -20,21 +20,24 @@ import java.util.Objects;
 
 @NotInjectableConfig // Used by multiple other config classes
 @JsonPropertyOrder(alphabetic = true)
-public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig {
+public abstract class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_ERROR_SUB_PATH_TEMPLATE = "errorSubPathTemplate";
-    private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
-    private static final StroomDuration DEFAULT_LIVENESS_CHECK_INTERVAL = StroomDuration.ofMinutes(1);
+    protected static final boolean DEFAULT_QUEUE_AND_RETRY_ENABLED = true;
+    protected static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
+    protected static final StroomDuration DEFAULT_LIVENESS_CHECK_INTERVAL = StroomDuration.ofMinutes(1);
     /**
      * Zero means no retries
      */
-    private static final StroomDuration DEFAULT_MAX_RETRY_AGE = StroomDuration.ofDays(7);
-    private static final double DEFAULT_RETRY_GROWTH_FACTOR = 1;
-    private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofMinutes(10);
-    private static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofDays(1);
-    public static final int DEFAULT_FORWARD_RETRY_THREAD_COUNT = 1;
-    public static final int DEFAULT_FORWARD_THREAD_COUNT = 5;
+    protected static final StroomDuration DEFAULT_MAX_RETRY_AGE = StroomDuration.ofDays(7);
+    protected static final double DEFAULT_RETRY_GROWTH_FACTOR = 1;
+    protected static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofMinutes(10);
+    protected static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofDays(1);
+    protected static final int DEFAULT_FORWARD_RETRY_THREAD_COUNT = 1;
+    protected static final int DEFAULT_FORWARD_THREAD_COUNT = 5;
 
+    @JsonProperty
+    private final boolean queueAndRetryEnabled;
     @JsonProperty
     private final StroomDuration forwardDelay;
     @JsonProperty
@@ -55,6 +58,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     private final StroomDuration livenessCheckInterval;
 
     public ForwardQueueConfig() {
+        queueAndRetryEnabled = DEFAULT_QUEUE_AND_RETRY_ENABLED;
         forwardDelay = DEFAULT_FORWARD_DELAY;
         retryDelay = DEFAULT_RETRY_DELAY;
         retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
@@ -69,6 +73,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     @SuppressWarnings("unused")
     @JsonCreator
     public ForwardQueueConfig(
+            @JsonProperty("queueAndRetryEnabled") final Boolean queueAndRetryEnabled,
             @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
             @JsonProperty("retryDelay") final StroomDuration retryDelay,
             @JsonProperty("retryDelayGrowthFactor") final Double retryDelayGrowthFactor,
@@ -79,6 +84,7 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty("forwardRetryThreadCount") final Integer forwardRetryThreadCount,
             @JsonProperty("livenessCheckInterval") final StroomDuration livenessCheckInterval) {
 
+        this.queueAndRetryEnabled = Objects.requireNonNullElse(queueAndRetryEnabled, DEFAULT_QUEUE_AND_RETRY_ENABLED);
         this.forwardDelay = Objects.requireNonNullElse(forwardDelay, DEFAULT_FORWARD_DELAY);
         this.retryDelay = Objects.requireNonNullElse(retryDelay, DEFAULT_RETRY_DELAY);
         this.retryDelayGrowthFactor = Objects.requireNonNullElse(retryDelayGrowthFactor, DEFAULT_RETRY_GROWTH_FACTOR);
@@ -90,6 +96,15 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
                 forwardRetryThreadCount, DEFAULT_FORWARD_RETRY_THREAD_COUNT);
         this.livenessCheckInterval = Objects.requireNonNullElse(
                 livenessCheckInterval, DEFAULT_LIVENESS_CHECK_INTERVAL);
+    }
+
+    @JsonPropertyDescription(
+            "Set to true to queue items to be forwarded and to retry when any recoverable errors are " +
+            "encountered. Non-recoverable errors or when the configured maxRetryAge is exceeded results " +
+            "in directories being moved to the failure destination. Set to false to immediately forward and " +
+            "if there is any error to move the directory to the failure destination.")
+    public boolean isQueueAndRetryEnabled() {
+        return queueAndRetryEnabled;
     }
 
     @JsonPropertyDescription("Debug/test setting to add a delay before forwarding. Default is zero. Do not set " +
@@ -170,9 +185,9 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
         }
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+//    public static Builder builder() {
+//        return new Builder();
+//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -226,92 +241,100 @@ public class ForwardQueueConfig extends AbstractConfig implements IsProxyConfig 
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder {
-
-        private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
-        private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
-        private StroomDuration maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
-        private double retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
-        private StroomDuration maxRetryAge = DEFAULT_MAX_RETRY_AGE;
-        private PathTemplateConfig errorSubPathTemplate;
-        private TemplatingMode templatingMode;
-        private int forwardThreadCount = DEFAULT_FORWARD_THREAD_COUNT;
-        private int forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
-        private StroomDuration livenessCheckInterval;
-
-        private Builder() {
-            this(new ForwardQueueConfig());
-        }
-
-        private Builder(final ForwardQueueConfig forwardQueueConfig) {
-            Objects.requireNonNull(forwardQueueConfig);
-            this.forwardDelay = forwardQueueConfig.forwardDelay;
-            this.retryDelay = forwardQueueConfig.retryDelay;
-            this.maxRetryDelay = forwardQueueConfig.maxRetryDelay;
-            this.retryDelayGrowthFactor = forwardQueueConfig.retryDelayGrowthFactor;
-            this.maxRetryAge = forwardQueueConfig.maxRetryAge;
-            this.errorSubPathTemplate = forwardQueueConfig.errorSubPathTemplate;
-            this.forwardThreadCount = forwardQueueConfig.forwardThreadCount;
-            this.forwardRetryThreadCount = forwardQueueConfig.forwardRetryThreadCount;
-            this.livenessCheckInterval = forwardQueueConfig.livenessCheckInterval;
-        }
-
-        public Builder forwardDelay(final StroomDuration forwardDelay) {
-            this.forwardDelay = forwardDelay;
-            return this;
-        }
-
-        public Builder retryDelay(final StroomDuration retryDelay) {
-            this.retryDelay = retryDelay;
-            return this;
-        }
-
-        public Builder maxRetryDelay(final StroomDuration maxRetryDelay) {
-            this.maxRetryDelay = maxRetryDelay;
-            return this;
-        }
-
-        public Builder retryDelayGrowthFactor(final double retryDelayGrowthFactor) {
-            this.retryDelayGrowthFactor = retryDelayGrowthFactor;
-            return this;
-        }
-
-        public Builder maxRetryAge(final StroomDuration maxRetryAge) {
-            this.maxRetryAge = maxRetryAge;
-            return this;
-        }
-
-        public Builder withTemplatingMode(final TemplatingMode templatingMode) {
-            this.templatingMode = templatingMode;
-            return this;
-        }
-
-        public Builder withForwardThreadCount(final int forwardThreadCount) {
-            this.forwardThreadCount = forwardThreadCount;
-            return this;
-        }
-
-        public Builder withForwardRetryThreadCount(final int forwardRetryThreadCount) {
-            this.forwardRetryThreadCount = forwardRetryThreadCount;
-            return this;
-        }
-
-        public Builder livenessCheckInterval(final StroomDuration livenessCheckInterval) {
-            this.livenessCheckInterval = livenessCheckInterval;
-            return this;
-        }
-
-        public ForwardQueueConfig build() {
-            return new ForwardQueueConfig(
-                    forwardDelay,
-                    retryDelay,
-                    retryDelayGrowthFactor,
-                    maxRetryDelay,
-                    maxRetryAge,
-                    errorSubPathTemplate,
-                    forwardThreadCount,
-                    forwardRetryThreadCount,
-                    livenessCheckInterval);
-        }
-    }
+//    public static class Builder {
+//
+//        private boolean queueAndRetryEnabled = DEFAULT_QUEUE_AND_RETRY_ENABLED;
+//        private StroomDuration forwardDelay = DEFAULT_FORWARD_DELAY;
+//        private StroomDuration retryDelay = DEFAULT_RETRY_DELAY;
+//        private StroomDuration maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
+//        private double retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
+//        private StroomDuration maxRetryAge = DEFAULT_MAX_RETRY_AGE;
+//        private PathTemplateConfig errorSubPathTemplate;
+//        private TemplatingMode templatingMode;
+//        private int forwardThreadCount = DEFAULT_FORWARD_THREAD_COUNT;
+//        private int forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
+//        private StroomDuration livenessCheckInterval;
+//
+//        private Builder() {
+//            this(new ForwardQueueConfig());
+//        }
+//
+//        private Builder(final ForwardQueueConfig forwardQueueConfig) {
+//            Objects.requireNonNull(forwardQueueConfig);
+//            this.queueAndRetryEnabled = forwardQueueConfig.queueAndRetryEnabled;
+//            this.forwardDelay = forwardQueueConfig.forwardDelay;
+//            this.retryDelay = forwardQueueConfig.retryDelay;
+//            this.maxRetryDelay = forwardQueueConfig.maxRetryDelay;
+//            this.retryDelayGrowthFactor = forwardQueueConfig.retryDelayGrowthFactor;
+//            this.maxRetryAge = forwardQueueConfig.maxRetryAge;
+//            this.errorSubPathTemplate = forwardQueueConfig.errorSubPathTemplate;
+//            this.forwardThreadCount = forwardQueueConfig.forwardThreadCount;
+//            this.forwardRetryThreadCount = forwardQueueConfig.forwardRetryThreadCount;
+//            this.livenessCheckInterval = forwardQueueConfig.livenessCheckInterval;
+//        }
+//
+//        public Builder forwardDelay(final boolean queueAndRetryEnabled) {
+//            this.queueAndRetryEnabled = queueAndRetryEnabled;
+//            return this;
+//        }
+//
+//        public Builder forwardDelay(final StroomDuration forwardDelay) {
+//            this.forwardDelay = forwardDelay;
+//            return this;
+//        }
+//
+//        public Builder retryDelay(final StroomDuration retryDelay) {
+//            this.retryDelay = retryDelay;
+//            return this;
+//        }
+//
+//        public Builder maxRetryDelay(final StroomDuration maxRetryDelay) {
+//            this.maxRetryDelay = maxRetryDelay;
+//            return this;
+//        }
+//
+//        public Builder retryDelayGrowthFactor(final double retryDelayGrowthFactor) {
+//            this.retryDelayGrowthFactor = retryDelayGrowthFactor;
+//            return this;
+//        }
+//
+//        public Builder maxRetryAge(final StroomDuration maxRetryAge) {
+//            this.maxRetryAge = maxRetryAge;
+//            return this;
+//        }
+//
+//        public Builder withTemplatingMode(final TemplatingMode templatingMode) {
+//            this.templatingMode = templatingMode;
+//            return this;
+//        }
+//
+//        public Builder withForwardThreadCount(final int forwardThreadCount) {
+//            this.forwardThreadCount = forwardThreadCount;
+//            return this;
+//        }
+//
+//        public Builder withForwardRetryThreadCount(final int forwardRetryThreadCount) {
+//            this.forwardRetryThreadCount = forwardRetryThreadCount;
+//            return this;
+//        }
+//
+//        public Builder livenessCheckInterval(final StroomDuration livenessCheckInterval) {
+//            this.livenessCheckInterval = livenessCheckInterval;
+//            return this;
+//        }
+//
+//        public ForwardQueueConfig build() {
+//            return new ForwardQueueConfig(
+//                    queueAndRetryEnabled,
+//                    forwardDelay,
+//                    retryDelay,
+//                    retryDelayGrowthFactor,
+//                    maxRetryDelay,
+//                    maxRetryAge,
+//                    errorSubPathTemplate,
+//                    forwardThreadCount,
+//                    forwardRetryThreadCount,
+//                    livenessCheckInterval);
+//        }
+//    }
 }

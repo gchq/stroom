@@ -37,16 +37,23 @@ public class CachedHashedDataFeedKey {
 
     /**
      * @return The hash of the data feed key. The hash algorithm used is defined by
-     * {@link CachedHashedDataFeedKey#getHashAlgorithmId()}
+     * {@link CachedHashedDataFeedKey#getHashAlgorithm()}
      */
     @NotBlank
     public String getHash() {
         return hashedDataFeedKey.getHash();
     }
 
+    /**
+     * @return May be null if the algorithm encodes the salt in the hash
+     */
+    public String getSalt() {
+        return hashedDataFeedKey.getSalt();
+    }
+
     @NotBlank
-    public String getHashAlgorithmId() {
-        return hashedDataFeedKey.getHashAlgorithmId();
+    public DataFeedKeyHashAlgorithm getHashAlgorithm() {
+        return hashedDataFeedKey.getHashAlgorithm();
     }
 
     /**

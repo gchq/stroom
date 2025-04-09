@@ -156,13 +156,7 @@ public class ParallelExecutor implements Managed {
                         break;
                     }
                     // Got our permit, so run the task
-                    final Runnable task = runnableSupplier.get();
-                    if (task != null) {
-                        LOGGER.debug("Running task");
-                        task.run();
-                    } else {
-                        LOGGER.warn("Null task on parallel executor '{}'", threadNamePrefix);
-                    }
+                    runTask();
                 } catch (InterruptedException e) {
                     // Don't reset the interrupted flag as the thread is going straight back to the pool
                     throw new UncheckedInterruptedException(e);
@@ -174,7 +168,7 @@ public class ParallelExecutor implements Managed {
                     // task to run with that permit.
 
                     // There is a risk here that isPaused is set to true AFTER we check it, and thus we release
-                    // when we shouldn't. All that means is the semaphore has more permits that threads. This is
+                    // when we shouldn't. All that means is the semaphore has more permits than threads. This is
                     // fine as a subsequent pause will drain all. The converse case of not releasing when we should
                     // have is more troublesome as we end up with fewer permits than threads. Hence, the sync block
                     // for that case, plus a lock while paused is not a performance hit.
@@ -193,6 +187,23 @@ public class ParallelExecutor implements Managed {
             LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private void runTask() {
+        // Got our permit, so run the task
+        final Runnable task = runnableSupplier.get();
+        if (task != null) {
+            LOGGER.debug("Running task");
+            try {
+                task.run();
+            } catch (Exception e) {
+                // Swallow the exception to keep this thread running
+                LOGGER.error("Error running parallel executor '{}' task: {}",
+                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
+            }
+        } else {
+            LOGGER.warn("Null task on parallel executor '{}'", threadNamePrefix);
         }
     }
 

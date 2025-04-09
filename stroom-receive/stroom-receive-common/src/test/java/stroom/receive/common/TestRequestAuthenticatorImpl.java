@@ -62,9 +62,11 @@ class TestRequestAuthenticatorImpl {
         final String certCn = "My CN";
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
+
         final HashedDataFeedKey hashedDataFeedKey = new HashedDataFeedKey(
                 "my hash",
-                DataFeedKeyHashAlgorithm.ARGON2.getDisplayValue(),
+                "my salt",
+                DataFeedKeyHashAlgorithm.ARGON2,
                 Map.of(StandardHeaderArguments.ACCOUNT_ID, "MyAccountId"),
                 Long.MAX_VALUE);
         final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity("MyAccountId");

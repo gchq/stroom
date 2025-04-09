@@ -236,9 +236,9 @@ public class HttpSender implements StreamDestination {
             if (stroomStatusCode == StroomStatusCode.OK) {
                 return responseStatus;
             } else if (NON_RECOVERABLE_STATUS_CODES.contains(stroomStatusCode)) {
-                throw ForwardException.nonRecoverable(stroomStatusCode, attributeMap);
+                throw ForwardException.nonRecoverable(responseStatus, attributeMap);
             } else {
-                throw ForwardException.recoverable(stroomStatusCode, attributeMap);
+                throw ForwardException.recoverable(responseStatus, attributeMap);
             }
         } catch (final ForwardException e) {
             // Created above so we will have already logged
@@ -441,8 +441,6 @@ public class HttpSender implements StreamDestination {
             // Response payload should be a plain text receipt ID
             // TODO Should we get receiptId from content or from a resp header?
             receiptId = readResponseContent(response);
-//            consumeAndCloseResponseContent(response);
-//            receiptId = getHeader(response, StandardHeaderArguments.RECEIPT_ID);
 
             LOGGER.debug("httpResponseCode: {}, stroomStatusCode: {}, receiptId: {}, responseMessage: {}",
                     httpResponseCode, stroomStatusCode, receiptId, responseMessage);
@@ -458,7 +456,7 @@ public class HttpSender implements StreamDestination {
                             stroomStatusCode.getMessage());
                 }
             }
-            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage);
+            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage, httpResponseCode);
         } catch (final Exception ioEx) {
             LOGGER.debug(() -> LogUtil.message("Error sending to forwardUrl '{}': {}",
                     forwardUrl, LogUtil.exceptionMessage(ioEx)));
@@ -501,7 +499,8 @@ public class HttpSender implements StreamDestination {
 
     public record ResponseStatus(StroomStatusCode stroomStatusCode,
                                  String receiptId,
-                                 String message) {
+                                 String message,
+                                 int httpResponseCode) {
 
     }
 }
