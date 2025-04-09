@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.8] - 2025-04-09
+
+* Uplift BCrypt lib to 0.4.3.
+
+* Add BCrypt as a hashing algorithm to data feed keys. Change Data feed key auth to require the header as configured by `dataFeedKeyOwnerMetaKey`. Change `hashAlgorithmId` to `hashAlgorithm` in the data feed keys json file.
+
+
 ## [v7.9-beta.7] - 2025-04-07
 
 * Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
@@ -1371,7 +1378,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.8...HEAD
+[v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
 [v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7
 [v7.9-beta.6]: https://github.com/gchq/stroom/compare/v7.9-beta.5...v7.9-beta.6
 [v7.9-beta.5]: https://github.com/gchq/stroom/compare/v7.9-beta.4...v7.9-beta.5
