@@ -1,12 +1,14 @@
 package stroom.receive.common;
 
-import stroom.util.string.Base58;
+import stroom.util.string.StringUtil;
 
+import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
 import org.bouncycastle.crypto.params.Argon2Parameters;
 import org.bouncycastle.crypto.params.Argon2Parameters.Builder;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Objects;
 
 class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
@@ -20,23 +22,33 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
     private static final int MEMORY_KB = 65_536;
     private static final int PARALLELISM = 1;
 
-    private final Argon2Parameters argon2Parameters;
+    private final SecureRandom secureRandom;
 
     public Argon2DataFeedKeyHasher() {
-        // No salt given the length of api keys being hashed
-        this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
+        this.secureRandom = new SecureRandom();
+    }
+
+    @Override
+    public HashOutput hash(final String dataFeedKey) {
+        final String randomSalt = StringUtil.createRandomCode(
+                secureRandom,
+                32,
+                StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
+        return hash(dataFeedKey, randomSalt);
+    }
+
+    public HashOutput hash(final String dataFeedKey, final String salt) {
+        final Argon2Parameters params = new Builder(Argon2Parameters.ARGON2_id)
                 .withVersion(Argon2Parameters.ARGON2_VERSION_13)
                 .withIterations(ITERATIONS)
                 .withMemoryAsKB(MEMORY_KB)
                 .withParallelism(PARALLELISM)
+                .withSalt(salt.getBytes(StandardCharsets.UTF_8))
                 .build();
-    }
 
-    @Override
-    public String hash(final String dataFeedKey) {
         Objects.requireNonNull(dataFeedKey);
-        Argon2BytesGenerator generator = new Argon2BytesGenerator();
-        generator.init(argon2Parameters);
+        final Argon2BytesGenerator generator = new Argon2BytesGenerator();
+        generator.init(params);
         byte[] result = new byte[HASH_LENGTH];
         generator.generateBytes(
                 dataFeedKey.trim().getBytes(StandardCharsets.UTF_8),
@@ -46,7 +58,16 @@ class Argon2DataFeedKeyHasher implements DataFeedKeyHasher {
 
         // Base58 is a bit less nasty than base64 and widely supported in other languages
         // due to use in bitcoin.
-        return Base58.encode(result);
+        final String hash = Hex.encodeHexString(result);
+        return new HashOutput(hash, salt);
+    }
+
+    @Override
+    public boolean verify(final String dataFeedKey, final String hash, final String salt) {
+        Objects.requireNonNull(dataFeedKey);
+        Objects.requireNonNull(hash);
+        final HashOutput hashOutput = hash(dataFeedKey, salt);
+        return Objects.equals(hash, hashOutput.hash());
     }
 
     @Override

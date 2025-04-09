@@ -36,7 +36,7 @@ aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.29.22" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
-bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.1" }
+bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 bouncy-castle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.78.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version controlled by dropwizard-dependencies
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version = "1.9.4" }

@@ -1,13 +1,40 @@
 package stroom.receive.common;
 
+import java.util.Objects;
+
 interface DataFeedKeyHasher {
 
-    String hash(String dataFeedKey);
+    /**
+     * Generate the hash of a datafeed key.
+     *
+     * @param dataFeedKey The datafeed key to generate a hash for
+     * @return The hash and the salt used.
+     */
+    HashOutput hash(String dataFeedKey);
 
-//        default boolean verify(String apiKeyStr, String hash) {
-//            final String computedHash = hash(Objects.requireNonNull(apiKeyStr));
-//            return Objects.equals(Objects.requireNonNull(hash), computedHash);
-//        }
+    /**
+     * Verify a dataFeedKey against its hash, and if provided include its salt.
+     *
+     * @param dataFeedKey The datafeed key
+     * @param hash        The hash to verify against.
+     * @param salt        An optional salt to include in the verification
+     * @return True if verification is successful
+     */
+    default boolean verify(String dataFeedKey, String hash, String salt) {
+        final HashOutput hashOutput = hash(Objects.requireNonNull(dataFeedKey));
+        return Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
+    }
 
+    /**
+     * @return The enum representing this hash algorithm.
+     */
     DataFeedKeyHashAlgorithm getAlgorithm();
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record HashOutput(String hash, String salt) {
+
+    }
 }
