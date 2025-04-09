@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public enum DataFeedKeyHashAlgorithm implements HasDisplayValue {
     // uniqueIds should be
     ARGON2("Argon2", 0),
-//        BCRYPT("BCrypt", 0),
+    BCRYPT_2A("BCrypt (2a)", 1),
     ;
 
     private static final DataFeedKeyHashAlgorithm[] SPARSE_ALGORITHM_ARRAY;

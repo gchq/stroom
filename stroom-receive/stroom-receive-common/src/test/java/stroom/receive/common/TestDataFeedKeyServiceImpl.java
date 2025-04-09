@@ -23,19 +23,26 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class TestDataFeedKeyServiceImpl {
 
+    private static final Set<DataFeedKeyHasher> DATA_FEED_KEY_HASHERS = Set.of(
+            new Argon2DataFeedKeyHasher(),
+            new BCryptDataFeedKeyHasher());
+
     @Mock
     private HttpServletRequest mockHttpServletRequest;
+
 
     @Test
     void authenticate_noKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
         ));
@@ -51,9 +58,11 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_invalidKey1() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         setAuthHeaderOnMock("foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
+                StandardHeaderArguments.ACCOUNT_ID, "1234"
         ));
 
         final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
@@ -67,9 +76,11 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_invalidKey2() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + "foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
+                StandardHeaderArguments.ACCOUNT_ID, "1234"
         ));
 
         final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
@@ -83,6 +94,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_validButUnknownKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
@@ -110,6 +122,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_validButExpiredKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final Duration expiryDuration = Duration.ofSeconds(3);
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
@@ -146,6 +159,7 @@ class TestDataFeedKeyServiceImpl {
         final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 () -> receiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
@@ -175,6 +189,7 @@ class TestDataFeedKeyServiceImpl {
     void authenticate_badAccountId() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
                 this::getReceiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();

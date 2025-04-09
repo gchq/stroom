@@ -44,5 +44,9 @@ public class RemoteFeedModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(DataFeedKeyServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataFeedKeyHasher.class)
+                .addBinding(Argon2DataFeedKeyHasher.class)
+                .addBinding(BCryptDataFeedKeyHasher.class);
     }
 }
