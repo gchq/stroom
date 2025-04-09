@@ -31,7 +31,7 @@ abstract class RoundDate extends AbstractFunction {
     private Function function;
 
     public RoundDate(final String name) {
-        super(name, 1, 1);
+        super(name, 1, 3);
     }
 
     @Override
@@ -83,5 +83,9 @@ abstract class RoundDate extends AbstractFunction {
         }
 
         protected abstract LocalDateTime adjust(LocalDateTime dateTime);
+    }
+
+    protected Param[] getParams() {
+        return params;
     }
 }
