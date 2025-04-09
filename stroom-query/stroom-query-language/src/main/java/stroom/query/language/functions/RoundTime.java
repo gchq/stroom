@@ -78,7 +78,22 @@ class RoundTime extends RoundDate {
                 long epochMillis = val;
                 long durationMillis = duration.toMillis();
                 long offsetMillis = offset.toMillis();
-                epochMillis = ((epochMillis + offsetMillis) / durationMillis) * durationMillis - offsetMillis;
+
+                // Adjust for offset
+                epochMillis -= offsetMillis;
+
+                // Calculate the remainder
+                long remainder = epochMillis % durationMillis;
+
+                // Round to the nearest duration
+                if (remainder >= durationMillis / 2) {
+                    epochMillis += (durationMillis - remainder);
+                } else {
+                    epochMillis -= remainder;
+                }
+
+                // Apply the offset adjustment
+                epochMillis += offsetMillis;
 
                 return ValLong.create(epochMillis);
             } catch (IllegalArgumentException e) {

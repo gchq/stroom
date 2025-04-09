@@ -13,11 +13,11 @@ public class TestRoundTime extends AbstractFunctionTest<RoundTime> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        final LocalDateTime input = LocalDateTime.of(2025, 4, 7, 10, 46, 30, 550_000_000);
+        final LocalDateTime input = LocalDateTime.of(2025, 4, 7, 10, 44, 30, 550_000_000);
         final long inputMillis = input.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         //expected rounded time millis
-        final LocalDateTime rounded = LocalDateTime.of(2025, 4, 7, 10, 45, 0);
+        final LocalDateTime rounded = LocalDateTime.of(2025, 4, 7, 10, 50, 0);
         final long expectedMillis = rounded.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
 
         return Stream.of(
