@@ -181,16 +181,16 @@ public class SessionDb extends AbstractDb<Session, Session> {
         final long nameHash = LongHashFunction.xx3().hashBytes(request.name());
         final long time = request.time();
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
-        final ByteBuffer end = byteBufferFactory.acquire(Long.BYTES);
+        final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(nameHash);
-            start.putLong(time);
+            start.putLong(time + 1);
             start.flip();
 
-            end.putLong(nameHash);
-            end.flip();
+            stop.putLong(nameHash);
+            stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, end);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
             return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -219,7 +219,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
             });
         } finally {
             byteBufferFactory.release(start);
-            byteBufferFactory.release(end);
+            byteBufferFactory.release(stop);
         }
     }
 

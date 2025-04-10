@@ -56,6 +56,15 @@ class TestTemporalStateDb {
                 TemporalStateSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(100);
+
+            final byte[] byteKey = "TEST_KEY".getBytes(StandardCharsets.UTF_8);
+            // Check exact time states.
+            checkState(db, byteKey, refTime.toEpochMilli(), true);
+            // Check before time states.
+            checkState(db, byteKey, refTime.toEpochMilli() - 1, false);
+            // Check after time states.
+            checkState(db, byteKey, refTime.toEpochMilli() + 1, true);
+
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalState.Key key = TemporalState.Key.builder().name("TEST_KEY").effectiveTime(refTime).build();
@@ -223,5 +232,16 @@ class TestTemporalStateDb {
                 db.insert(writer, k, v);
             }
         });
+    }
+
+    private void checkState(final TemporalStateDb db,
+                            final byte[] key,
+                            final long effectiveTime,
+                            final boolean expected) {
+        final TemporalStateRequest request =
+                new TemporalStateRequest(key, effectiveTime);
+        final Optional<TemporalState> optional = db.getState(request);
+        final boolean actual = optional.isPresent();
+        assertThat(actual).isEqualTo(expected);
     }
 }

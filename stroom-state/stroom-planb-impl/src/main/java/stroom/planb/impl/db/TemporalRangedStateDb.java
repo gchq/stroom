@@ -17,6 +17,8 @@ import java.util.Optional;
 
 public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
 
+    private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(0);
+
     TemporalRangedStateDb(final Path path,
                           final ByteBufferFactory byteBufferFactory) {
         this(
@@ -53,10 +55,30 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
     public Optional<TemporalRangedState> getState(final TemporalRangedStateRequest request) {
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
         try {
-            start.putLong(request.key());
+            start.putLong(request.key() + 1);
             start.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(start);
+//            read(readTxn -> {
+//                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+//                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+//                    while (iterator.hasNext()
+//                           && !Thread.currentThread().isInterrupted()) {
+//                        final BBKV kv = BBKV.create(iterator.next());
+//                        final long keyStart = kv.key().getLong(0);
+//                        final long keyEnd = kv.key().getLong(Long.BYTES);
+//                        final long effectiveTime = kv.key().getLong(Long.BYTES + Long.BYTES);
+//                        System.out.println("start=" +
+//                                           keyStart +
+//                                           ", keyEnd=" +
+//                                           keyEnd +
+//                                           ", effectiveTime=" +
+//                                           DateUtil.createNormalDateTimeString(effectiveTime));
+//                    }
+//                }
+//                return Optional.empty();
+//            });
+
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, ZERO);
             return read(readTxn -> {
                 Optional<TemporalRangedState> result = Optional.empty();
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
@@ -69,7 +91,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
                         final long effectiveTime = kv.key().getLong(Long.BYTES + Long.BYTES);
                         if (keyEnd < request.key()) {
                             return result;
-                        } else if (effectiveTime >= request.effectiveTime() &&
+                        } else if (effectiveTime <= request.effectiveTime() &&
                                    keyStart <= request.key()) {
                             final Key key = Key
                                     .builder()

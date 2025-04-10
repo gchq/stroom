@@ -58,13 +58,13 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
         final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(rowHash);
-            start.putLong(request.effectiveTime());
+            start.putLong(request.effectiveTime() + 1);
             start.flip();
 
             stop.putLong(rowHash);
             stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, stop);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
             return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
