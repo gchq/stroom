@@ -6,6 +6,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefStoreEntry;
+import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfo;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
@@ -63,6 +64,13 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                                 : 100,
                         refStreamId,
                         mapName);
+    }
+
+    @AutoLogged(OperationType.VIEW)
+    @Override
+    public List<OffHeapStoreInfo> storeInfo(final String nodeName) {
+        return referenceDataServiceProvider.get()
+                .storeInfo(nodeName);
     }
 
     @AutoLogged(OperationType.VIEW)

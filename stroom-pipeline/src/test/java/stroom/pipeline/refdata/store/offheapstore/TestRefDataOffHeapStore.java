@@ -107,7 +107,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         refDataStore.consumeEntries(
                 refStoreEntry ->
                         refStoreEntry.getKey().equals("key5")
-                                || refStoreEntry.getKey().equals("key2"),
+                        || refStoreEntry.getKey().equals("key2"),
                 null,
                 entries::add);
 
@@ -888,6 +888,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         bulkLoadAndAssert(refStreamDefinitions, false, 0);
 
         referenceDataConfig = referenceDataConfig.withPurgeAge(StroomDuration.ZERO);
+        enableCompaction();
 
         assertThat(refDataStore.getProcessingInfoEntryCount())
                 .isEqualTo(REF_STREAM_DEF_COUNT);
@@ -920,6 +921,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     void testPurgeOldData_partial() {
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
+        enableCompaction();
         int refStreamDefCount = 4;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -961,13 +963,15 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
-                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
     }
 
     @Test
     void testPurgeOldData_partial_2() {
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
+        enableCompaction();
+
         int refStreamDefCount = 8;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -1029,13 +1033,14 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 expectedRefStreamDefCount * keyValueMapCount * entryCount,
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
-                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
     }
 
     @Test
     void testPurgeOldData_nothingToPurge() {
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
+        enableCompaction();
         int refStreamDefCount = 4;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -1078,6 +1083,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     void testPurgeOldData_deReferenceValues() {
 
         setPurgeAgeProperty(StroomDuration.ofDays(1));
+        enableCompaction();
         int refStreamDefCount = 1;
         int keyValueMapCount = 1;
         int rangeValueMapCount = 1;
@@ -1159,6 +1165,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
         referenceDataConfig = referenceDataConfig.withPurgeAge(StroomDuration.ZERO);
+        enableCompaction();
 
         int entriesPerRefStream = MAPS_PER_REF_STREAM_DEF * ENTRIES_PER_MAP_DEF;
 
@@ -1651,5 +1658,14 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         LOGGER.info("Completed {} single thread lookups in {}",
                 ModelStringUtil.formatCsv(totalKeyValueEntryCount),
                 timer);
+    }
+
+    private void enableCompaction() {
+        this.referenceDataConfig = referenceDataConfig.copy()
+                .withCompactAfterPurgeEnabled(true)
+                .withAutoPurgeEnabled(true)
+                .withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                        .withReaderBlockedByWriter(true))
+                .build();
     }
 }

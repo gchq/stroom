@@ -69,7 +69,8 @@ public class OffHeapStagingStoreFactory {
 
     /**
      * Create a {@link OffHeapStagingStore} for use by one thread to load a reference stream into.
-     * @param refStreamDefinition The {@link RefStreamDefinition} of the stream being loaded.
+     *
+     * @param refStreamDefinition   The {@link RefStreamDefinition} of the stream being loaded.
      * @param mapDefinitionUIDStore The mapDefinitionUIDStore for the destination.
      */
     public OffHeapStagingStore create(final RefStreamDefinition refStreamDefinition,
@@ -97,18 +98,28 @@ public class OffHeapStagingStoreFactory {
         // Dir needs to be unique to avoid any clashes. Add in the datetime, stream, part to help
         // with any debugging of lingering files.
         final String subDirName = DATE_FORMATTER.format(Instant.now())
-                + FILE_NAME_DELIMTER + refStreamDefinition.getStreamId()
-                + FILE_NAME_DELIMTER + refStreamDefinition.getPartNumber()
-                + FILE_NAME_DELIMTER + UUID.randomUUID();
+                                  + FILE_NAME_DELIMTER + refStreamDefinition.getStreamId()
+                                  + FILE_NAME_DELIMTER + refStreamDefinition.getPartNumber()
+                                  + FILE_NAME_DELIMTER + UUID.randomUUID();
         final Path subDirPath = stagingEnvBaseDir.resolve(subDirName);
+        final String envName = String.join("-",
+                "ref",
+                "staging",
+                Long.toString(refStreamDefinition.getStreamId()),
+                Long.toString(refStreamDefinition.getPartNumber()));
 
         LOGGER.info("Creating temporary reference data staging LMDB environment in {}", subDirPath);
         try {
             // This will ensure the dir exists
+            // Use singleThreaded() as the staging load all happens in a single thread so this
+            // avoids the pointless locking overhead.
+
             return lmdbEnvFactory.builder(referenceDataStagingLmdbConfigProvider.get())
+                    .withName(envName)
                     .withMaxDbCount(2)
                     .withSubDirectory(subDirName)
                     .addEnvFlag(EnvFlags.MDB_NOTLS)
+                    .singleThreaded()
                     .build();
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error building staging LMDB in {}: {}",
