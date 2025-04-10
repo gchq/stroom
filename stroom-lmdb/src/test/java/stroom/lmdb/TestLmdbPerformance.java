@@ -14,6 +14,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.DbiFlags;
@@ -163,11 +165,15 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
         final BasicLmdbDb<String, String> db3 = createStringStringDb(lmdbEnv1, "db3");
         final Map<String, String> hashMap = new HashMap<>();
         final Map<String, String> concurrentHashMap = new ConcurrentHashMap<>();
+        final Cache<String, String> cache = Caffeine.newBuilder()
+                .build();
+
         lmdbEnv1.doWithWriteTxn(writeTxn -> {
             db3.put(writeTxn, "foo", "bar", true);
         });
         hashMap.put("foo", "bar");
         concurrentHashMap.put("foo", "bar");
+        cache.put("foo", "bar");
 
         lmdbEnv1.doWithReadTxn(txn -> {
             try (PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10)) {
@@ -212,6 +218,15 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
                     }
                 });
 
+                final TimedCase cacheGet = TimedCase.of("cache", (round, iterations2) -> {
+                    for (long i = 0; i < iterations2; i++) {
+                        final String val = cache.getIfPresent("foo");
+                        if (val == null) {
+                            throw new RuntimeException("Empty");
+                        }
+                    }
+                });
+
                 TestUtil.comparePerformance(
                         rounds,
                         iterations,
@@ -219,7 +234,8 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
                         lmdbGetCaseWithSer,
                         lmdbGetCaseWithoutSer,
                         hashMapGet,
-                        concurrentMapGet);
+                        concurrentMapGet,
+                        cacheGet);
             }
         });
     }
