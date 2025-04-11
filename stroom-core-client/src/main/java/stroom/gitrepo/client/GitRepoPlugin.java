@@ -42,7 +42,7 @@ import javax.inject.Singleton;
 @Singleton
 public class GitRepoPlugin extends DocumentPlugin<GitRepoDoc> {
 
-    private static final GitRepoResource GITREPO_RESOURCE = GWT.create(GitRepoResource.class);
+    private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
     private final Provider<GitRepoPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -70,7 +70,7 @@ public class GitRepoPlugin extends DocumentPlugin<GitRepoDoc> {
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(GITREPO_RESOURCE)
+                .create(GIT_REPO_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
@@ -85,7 +85,7 @@ public class GitRepoPlugin extends DocumentPlugin<GitRepoDoc> {
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(GITREPO_RESOURCE)
+                .create(GIT_REPO_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
