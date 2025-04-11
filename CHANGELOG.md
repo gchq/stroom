@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8-beta.19] - 2025-04-11
+
+* Issue **#4855** : Fix Plan B session state range.
+
+* Improve log message when proxy HTTP forwarding fails. Now includes the time taken and the bytes sent.
+
+* Issue **#4858** : Fix Plan B query field error.
+
+* Issue **#4859** : Fix query on open for embedded queries.
+
+* Issue **#4861** : Allow embedded queries to have a set page size.
+
+* Issue **#4748** : Add user group icon to API key page.
+
+* Issue **#4806** : Add filter/group/sort indicators to hidden field menu items.
+
+
 ## [v7.8-beta.18] - 2025-04-07
 
 * Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
@@ -1296,7 +1313,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.19...HEAD
+[v7.8-beta.19]: https://github.com/gchq/stroom/compare/v7.8-beta.18...v7.8-beta.19
 [v7.8-beta.18]: https://github.com/gchq/stroom/compare/v7.8-beta.17...v7.8-beta.18
 [v7.8-beta.17]: https://github.com/gchq/stroom/compare/v7.8-beta.16...v7.8-beta.17
 [v7.8-beta.16]: https://github.com/gchq/stroom/compare/v7.8-beta.15...v7.8-beta.16
