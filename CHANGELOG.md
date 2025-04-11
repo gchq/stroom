@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4855** : Fix Plan B session state range.
+
+* Improve log message when proxy HTTP forwarding fails. Now includes the time taken and the bytes sent.
+
+* Issue **#4858** : Fix Plan B query field error.
+
+* Issue **#4859** : Fix query on open for embedded queries.
+
+* Issue **#4861** : Allow embedded queries to have a set page size.
+
+* Issue **#4748** : Add user group icon to API key page.
+
+* Issue **#4806** : Add filter/group/sort indicators to hidden field menu items.
+
+
 ## [v7.9-beta.8] - 2025-04-09
 
 * Uplift BCrypt lib to 0.4.3.

@@ -37,21 +37,21 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                         final SvgImage disabledIcon,
                         final IconColour iconColour,
                         final SafeHtml text,
+                        final SafeHtml tooltip,
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
-                        final MenuKey menuKey,
-                        final String tooltip) {
+                        final MenuKey menuKey) {
         super(priority,
                 enabledIcon,
                 disabledIcon,
                 iconColour,
                 text,
+                tooltip,
                 action,
                 enabled,
                 null,
-                false,
-                tooltip);
+                false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -110,11 +110,11 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     menuItems,
-                    menuKey,
-                    tooltip);
+                    menuKey);
         }
     }
 }

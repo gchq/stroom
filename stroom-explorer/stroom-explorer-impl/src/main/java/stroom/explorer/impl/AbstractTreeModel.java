@@ -201,8 +201,8 @@ public abstract class AbstractTreeModel<K> {
 //
 //        keyToNodeMap.put(key, newNode);
 //        if (!Objects.equals(oldNode.getTags(), newNode.getTags())) {
-//            final Set<String> oldTags = GwtNullSafe.set(oldNode.getTags());
-//            final Set<String> newTags = GwtNullSafe.set(newNode.getTags());
+//            final Set<String> oldTags = NullSafe.set(oldNode.getTags());
+//            final Set<String> newTags = NullSafe.set(newNode.getTags());
 //
 //            final Set<String> removedTags = new HashSet<>(oldTags);
 //            removedTags.removeAll(newTags);

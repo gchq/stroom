@@ -296,6 +296,21 @@ public class QueryResultTablePresenter
         }
     }
 
+    public void changeSettings() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        updatePageSize(queryTablePreferences);
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+    }
+
+    private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                NullSafe.getOrElse(queryTablePreferences, QueryTablePreferences::getPageSize, 100)));
+    }
+
     private void setPause(final boolean pause,
                           final boolean refresh) {
         // If currently paused then refresh if we are allowed.
@@ -791,7 +806,9 @@ public class QueryResultTablePresenter
 
     public void updateQueryTablePreferences() {
         // Change value filter state.
-        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
+        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        updatePageSize(queryTablePreferences);
         refresh();
     }
 

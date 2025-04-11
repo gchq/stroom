@@ -313,7 +313,11 @@ public class DashboardPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new SimpleParentMenuItem(1, SafeHtmlUtil.from("Input"), inputs));
+        menuItems.add(new SimpleParentMenuItem(
+                1,
+                SafeHtmlUtil.from("Input"),
+                null,
+                inputs));
         menuItems.addAll(panels);
 
         ShowMenuEvent

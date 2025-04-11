@@ -155,7 +155,7 @@ public class FormGroup extends Composite implements HasWidgets {
 //        // This allows us to have hard coded help in the ui.xml but override it
 //        // using helpText, or set helpText back to null to use the hardcoded
 //        // ui.xml content
-//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
 //            this.helpText = helpHTML.getHTML();
 //        }
         updateHelpButton();
@@ -212,19 +212,19 @@ public class FormGroup extends Composite implements HasWidgets {
 //        }
         updateLabelPanel();
 
-//        if (GwtNullSafe.isNonBlankString(plainHelpText)) {
+//        if (NullSafe.isNonBlankString(plainHelpText)) {
 //            haveHelpText = true;
 //            // Escape any html in there
 //            effectiveHelpText = SafeHtmlUtils.fromString(plainHelpText);
 //        }
 //
-//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
 //            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
 //            haveHelpText = true;
 //        } else {
 //
 //        }
-//        if (!GwtNullSafe.isBlankString(getHelpText())) {
+//        if (!NullSafe.isBlankString(getHelpText())) {
 //            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
 //        } else {
 //            helpButton.setHelpContent(null);
@@ -282,7 +282,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
         updateHelpButton();
 //        // helpText trumps helpHTML
-//        if (GwtNullSafe.isBlankString(helpText)) {
+//        if (NullSafe.isBlankString(helpText)) {
 //            this.helpText = this.helpHTML.getHTML();
 //        }
     }

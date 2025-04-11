@@ -171,7 +171,7 @@ public class MarkdownEditPresenter
         updateEditState();
 
 //        // No content do default to edit mode
-//        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+//        if (NullSafe.isBlankString(rawMarkdown)) {
 //            GWT.log("setText, editMode: true");
 //            setEditMode(true);
 ////            editModeButton.setState(true);

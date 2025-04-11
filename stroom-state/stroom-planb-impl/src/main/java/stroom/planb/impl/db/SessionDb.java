@@ -7,6 +7,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb2.BBKV;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SessionSettings;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.language.functions.FieldIndex;
@@ -25,6 +26,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -58,11 +60,14 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                    final ByteBufferFactory byteBufferFactory,
                                    final PlanBDoc doc,
                                    final boolean readOnly) {
-        if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-            return new SessionDb(path, byteBufferFactory, sessionSettings, readOnly);
-        } else {
-            throw new RuntimeException("No session settings provided");
+        return new SessionDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static SessionSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final SessionSettings settings) {
+            return settings;
         }
+        return SessionSettings.builder().build();
     }
 
     public void search(final ExpressionCriteria criteria,
@@ -70,6 +75,10 @@ public class SessionDb extends AbstractDb<Session, Session> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        // Ensure we have fields for all expression criteria.
+        final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
+        fields.forEach(fieldIndex::create);
+
         final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
@@ -181,16 +190,16 @@ public class SessionDb extends AbstractDb<Session, Session> {
         final long nameHash = LongHashFunction.xx3().hashBytes(request.name());
         final long time = request.time();
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
-        final ByteBuffer end = byteBufferFactory.acquire(Long.BYTES);
+        final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(nameHash);
-            start.putLong(time);
+            start.putLong(time + 1);
             start.flip();
 
-            end.putLong(nameHash);
-            end.flip();
+            stop.putLong(nameHash);
+            stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, end);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
             return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -219,7 +228,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
             });
         } finally {
             byteBufferFactory.release(start);
-            byteBufferFactory.release(end);
+            byteBufferFactory.release(stop);
         }
     }
 

@@ -281,7 +281,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 //                    if (docRef == null) {
 //                        return null;
 //                    } else {
-//                        return docRef.getDisplayValue(GwtNullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+//                        return docRef.getDisplayValue(NullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
 //                    }
 //                }
 //

@@ -643,7 +643,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 })
                 .filter(Objects::nonNull)
 //                    .filter(userDependency ->
-//                            GwtNullSafe.getOrElse(
+//                            NullSafe.getOrElse(
 //                                    userDependency.getDocRef(),
 //                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
 //                                    true))

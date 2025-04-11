@@ -233,7 +233,7 @@ public class KeyBinding {
                 isInput = isTextBox(element, tagName)
                           || "TEXTAREA".equalsIgnoreCase(tagName);
 
-//                final String className = GwtNullSafe.string(element.getClassName());
+//                final String className = NullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
 //                GWT.log("className: " + className + " tagName: " + element.getTagName()
 //                        + " type: " + type + " shouldCheck: " + shouldCheck);

@@ -139,7 +139,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));
@@ -152,7 +152,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getInheritedDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));

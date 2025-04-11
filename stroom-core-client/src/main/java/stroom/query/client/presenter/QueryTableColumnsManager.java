@@ -339,7 +339,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
         }
 
         if (!Objects.equals(column.getColumnFilter(), columnFilter)) {
-            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // Required to replace column filter in place, so we don't need to re-render the table which would lose
             // focus from column filter textbox.
             column.setColumnFilter(columnFilter);
 
@@ -361,7 +361,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     @Override
     public void setValueSelection(final Column column, final ColumnValueSelection columnValueSelection) {
         if (!Objects.equals(column.getColumnValueSelection(), columnValueSelection)) {
-            // Required to replace column filter in place so we don't need to re-render the table which would lose
+            // Required to replace column filter in place, so we don't need to re-render the table which would lose
             // focus from column filter textbox.
             column.setColumnValueSelection(columnValueSelection);
 
@@ -648,7 +648,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .command(() -> filterColumn(column))
                 .highlight(column.getColumnFilter() != null
                            && ((column.getColumnFilter().getFilter() != null
-                                && column.getColumnFilter().getFilter().trim().length() > 0)))
+                                && !column.getColumnFilter().getFilter().trim().isEmpty())))
                 .build();
     }
 
@@ -708,14 +708,14 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
                         .icon(SvgImage.SHOW)
-                        .text(column.getName())
+                        .text(ColumnHeaderHtmlUtil.getSafeHtml(column))
                         .command(() -> showColumn(column))
                         .build();
                 menuItems.add(item2);
             }
         }
 
-        if (menuItems.size() == 0) {
+        if (menuItems.isEmpty()) {
             return null;
         }
 

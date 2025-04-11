@@ -43,7 +43,7 @@ public class DropWizardMetrics {
     }
 
 //    private void registerMetricConsumers(final Set<HasMetrics> hasMetricsSet) {
-//        for (final HasMetrics hasMetrics : GwtNullSafe.set(hasMetricsSet)) {
+//        for (final HasMetrics hasMetrics : NullSafe.set(hasMetricsSet)) {
 //            // Allow HasMetrics to tell us about metrics
 //            hasMetrics.registerAdditionalMetricConsumer(additionalMetric -> {
 //

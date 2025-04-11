@@ -10,6 +10,7 @@ import stroom.lmdb2.KV;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Format;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
@@ -37,6 +38,7 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
@@ -492,6 +494,10 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        // Ensure we have fields for all expression criteria.
+        final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
+        fields.forEach(fieldIndex::create);
+
         final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);

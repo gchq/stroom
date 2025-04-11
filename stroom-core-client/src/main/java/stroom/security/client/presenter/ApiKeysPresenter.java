@@ -142,7 +142,7 @@ public class ApiKeysPresenter
 //        final HashedApiKey selectedApiKey = getSelectionModel().getSelected();
 
         // The ones selected with the checkboxes
-//        final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
+//        final Set<Integer> selectedSet = NullSafe.set(selection.getSet());
 //        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
 //        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
         final List<HashedApiKey> selectedItems = getSelectedItems();

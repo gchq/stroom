@@ -206,6 +206,10 @@ public class DynamicColumnSelectionListModel
         this.dataSourceRef = dataSourceRef;
     }
 
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
+    }
+
     @Override
     public void reset() {
         lastCriteria = null;

@@ -165,7 +165,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 //     * Ensure all the imports have the correct names. Modifies the import list.
 //     */
 //    private void decorateImports(final DictionaryDoc dictionaryDoc) {
-//        if (dictionaryDoc != null && GwtNullSafe.hasItems(dictionaryDoc.getImports())) {
+//        if (dictionaryDoc != null && NullSafe.hasItems(dictionaryDoc.getImports())) {
 //            final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
 //            final List<DocRef> decoratedImports = dictionaryDoc.getImports()
 //                    .stream()

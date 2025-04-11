@@ -1674,7 +1674,7 @@ class TestNullSafe {
 //        return TestUtil.buildDynamicTestStream()
 //                .withInputAndOutputType(StroomDuration.class)
 //                .withTestFunction(testCase ->
-//                        GwtNullSafe.duration(testCase.getInput()))
+//                        NullSafe.duration(testCase.getInput()))
 //                .withSimpleEqualityAssertion()
 //                .addCase(null, StroomDuration.ZERO)
 //                .addCase(StroomDuration.ZERO, StroomDuration.ZERO)
@@ -1701,7 +1701,7 @@ class TestNullSafe {
 //        return TestUtil.buildDynamicTestStream()
 //                .withInputAndOutputType(ByteSize.class)
 //                .withTestFunction(testCase ->
-//                        GwtNullSafe.byteSize(testCase.getInput()))
+//                        NullSafe.byteSize(testCase.getInput()))
 //                .withSimpleEqualityAssertion()
 //                .addCase(null, ByteSize.ZERO)
 //                .addCase(ByteSize.ZERO, ByteSize.ZERO)
@@ -1780,7 +1780,7 @@ class TestNullSafe {
 //        return TestUtil.buildDynamicTestStream()
 //                .withInputAndOutputType(Duration.class)
 //                .withTestFunction(testCase ->
-//                        GwtNullSafe.duration(testCase.getInput()))
+//                        NullSafe.duration(testCase.getInput()))
 //                .withSimpleEqualityAssertion()
 //                .addCase(null, Duration.ZERO)
 //                .addCase(Duration.ZERO, Duration.ZERO)

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicTableSettingsId" label="Id">
@@ -27,7 +27,7 @@
             <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size">
-            <v:ValueSpinner ui:field="pageSize" width="200px"/>
+            <valuespinner:ValueSpinner ui:field="pageSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
