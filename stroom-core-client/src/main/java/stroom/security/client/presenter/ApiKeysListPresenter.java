@@ -17,6 +17,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.QuickFilterExpressionParser;
+import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
@@ -275,6 +276,19 @@ public class ApiKeysListPresenter
         // Also don't show it if this screen has been set with a single owner
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
             && owner == null) {
+            dataGrid.addColumn(
+                    DataGridUtil.svgPresetColumnBuilder(false, (HashedApiKey row) ->
+                                    UserAndGroupHelper.mapUserRefTypeToIcon(row.getOwner()))
+                            .withSorting(UserFields.FIELD_IS_GROUP)
+                            .centerAligned()
+                            .build(),
+                    DataGridUtil.headingBuilder("")
+                            .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                            .centerAligned()
+                            .withToolTip("Whether this key is for a single user or a named user group.")
+                            .build(),
+                    (ColumnSizeConstants.ICON_COL * 2) + 20);
+
             final Column<HashedApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
                             (HashedApiKey row) ->
                                     row.getOwner().toDisplayString())
