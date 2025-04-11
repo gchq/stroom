@@ -45,11 +45,14 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
                                        final ByteBufferFactory byteBufferFactory,
                                        final PlanBDoc doc,
                                        final boolean readOnly) {
-        if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
-            return new RangedStateDb(path, byteBufferFactory, rangedStateSettings, readOnly);
-        } else {
-            throw new RuntimeException("No ranged state settings provided");
+        return new RangedStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static RangedStateSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final RangedStateSettings settings) {
+            return settings;
         }
+        return RangedStateSettings.builder().build();
     }
 
     public Optional<RangedState> getState(final RangedStateRequest request) {

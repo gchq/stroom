@@ -20,9 +20,9 @@ public class StateDb extends AbstractDb<Key, StateValue> {
     }
 
     public StateDb(final Path path,
-            final ByteBufferFactory byteBufferFactory,
-            final StateSettings settings,
-            final boolean readOnly) {
+                   final ByteBufferFactory byteBufferFactory,
+                   final StateSettings settings,
+                   final boolean readOnly) {
         super(
                 path,
                 byteBufferFactory,
@@ -36,11 +36,14 @@ public class StateDb extends AbstractDb<Key, StateValue> {
                                  final ByteBufferFactory byteBufferFactory,
                                  final PlanBDoc doc,
                                  final boolean readOnly) {
-        if (doc.getSettings() instanceof final StateSettings stateSettings) {
-            return new StateDb(path, byteBufferFactory, stateSettings, readOnly);
-        } else {
-            throw new RuntimeException("No state settings provided");
+        return new StateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static StateSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final StateSettings settings) {
+            return settings;
         }
+        return StateSettings.builder().build();
     }
 
     public Optional<State> getState(final StateRequest request) {

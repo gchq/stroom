@@ -45,11 +45,14 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
                                                final ByteBufferFactory byteBufferFactory,
                                                final PlanBDoc doc,
                                                final boolean readOnly) {
-        if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-            return new TemporalRangedStateDb(path, byteBufferFactory, temporalRangedStateSettings, readOnly);
-        } else {
-            throw new RuntimeException("No temporal ranged state settings provided");
+        return new TemporalRangedStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static TemporalRangedStateSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final TemporalRangedStateSettings settings) {
+            return settings;
         }
+        return TemporalRangedStateSettings.builder().build();
     }
 
     public Optional<TemporalRangedState> getState(final TemporalRangedStateRequest request) {

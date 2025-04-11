@@ -51,6 +51,10 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         selectionList.init(model);
     }
 
+    public void refresh() {
+        selectionList.refresh();
+    }
+
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionList.getSelectionModel();
     }
