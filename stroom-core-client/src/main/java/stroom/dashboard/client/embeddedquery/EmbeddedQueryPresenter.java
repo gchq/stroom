@@ -745,6 +745,7 @@ public class EmbeddedQueryPresenter
     protected void changeSettings() {
         super.changeSettings();
         if (currentTablePresenter != null) {
+            currentTablePresenter.changeSettings();
             currentTablePresenter.refresh();
         }
         loadEmbeddedQuery();

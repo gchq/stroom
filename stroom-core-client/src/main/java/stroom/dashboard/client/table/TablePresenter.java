@@ -1020,9 +1020,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
-                tableComponentSettings.getPageSize() == null
-                        ? 100
-                        : tableComponentSettings.getPageSize()));
+                GwtNullSafe.getOrElse(tableComponentSettings, TableComponentSettings::getPageSize, 100)));
     }
 
     @Override

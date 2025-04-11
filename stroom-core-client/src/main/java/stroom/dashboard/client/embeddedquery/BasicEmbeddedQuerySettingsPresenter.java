@@ -25,7 +25,9 @@ import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -83,6 +85,11 @@ public class BasicEmbeddedQuerySettingsPresenter
         getView().setQueryOnOpen(automate.isOpen());
         getView().setAutoRefresh(automate.isRefresh());
         getView().setRefreshInterval(automate.getRefreshInterval());
+        getView().setPageSize(GwtNullSafe.getOrElse(
+                settings,
+                EmbeddedQueryComponentSettings::getQueryTablePreferences,
+                QueryTablePreferences::getPageSize,
+                100));
     }
 
     @Override
@@ -94,6 +101,10 @@ public class BasicEmbeddedQuerySettingsPresenter
     }
 
     private EmbeddedQueryComponentSettings writeSettings(final EmbeddedQueryComponentSettings settings) {
+        QueryTablePreferences queryTablePreferences = settings.getQueryTablePreferences();
+        QueryTablePreferences.Builder builder = QueryTablePreferences.copy(queryTablePreferences);
+        builder.pageSize(getView().getPageSize());
+
         return settings
                 .copy()
                 .queryRef(getQuery())
@@ -102,6 +113,7 @@ public class BasicEmbeddedQuerySettingsPresenter
                         .refresh(getView().isAutoRefresh())
                         .refreshInterval(getView().getRefreshInterval())
                         .build())
+                .queryTablePreferences(builder.build())
                 .build();
     }
 
@@ -136,7 +148,9 @@ public class BasicEmbeddedQuerySettingsPresenter
         final EmbeddedQueryComponentSettings newSettings = writeSettings(oldSettings);
 
         final boolean equal = Objects.equals(oldSettings.getQueryRef(), newSettings.getQueryRef()) &&
-                Objects.equals(oldSettings.getAutomate(), newSettings.getAutomate());
+                              Objects.equals(oldSettings.getAutomate(), newSettings.getAutomate()) &&
+                              Objects.equals(oldSettings.getQueryTablePreferences(),
+                                      newSettings.getQueryTablePreferences());
 
         return !equal;
     }
@@ -157,5 +171,9 @@ public class BasicEmbeddedQuerySettingsPresenter
         String getRefreshInterval();
 
         void setRefreshInterval(String refreshInterval);
+
+        int getPageSize();
+
+        void setPageSize(int pageSize);
     }
 }
