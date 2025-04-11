@@ -22,6 +22,8 @@ import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -34,12 +36,22 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                         final SvgImage enabledIcon,
                         final SvgImage disabledIcon,
                         final IconColour iconColour,
-                        final String text,
+                        final SafeHtml text,
+                        final SafeHtml tooltip,
                         final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
                         final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, false);
+        super(priority,
+                enabledIcon,
+                disabledIcon,
+                iconColour,
+                text,
+                tooltip,
+                action,
+                enabled,
+                null,
+                false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -98,6 +110,7 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     menuItems,

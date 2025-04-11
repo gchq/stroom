@@ -72,6 +72,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -312,7 +313,11 @@ public class DashboardPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new SimpleParentMenuItem(1, "Input", inputs));
+        menuItems.add(new SimpleParentMenuItem(
+                1,
+                SafeHtmlUtil.from("Input"),
+                SafeHtmlUtil.from("Input"),
+                inputs));
         menuItems.addAll(panels);
 
         ShowMenuEvent

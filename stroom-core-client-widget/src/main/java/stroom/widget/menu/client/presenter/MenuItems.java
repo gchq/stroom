@@ -136,7 +136,7 @@ public class MenuItems {
         public int compare(final Item o1, final Item o2) {
             if (o1.getPriority() == o2.getPriority()) {
                 if (o1 instanceof MenuItem && o2 instanceof MenuItem) {
-                    return ((MenuItem) o1).getText().compareTo(((MenuItem) o2).getText());
+                    return ((MenuItem) o1).getText().asString().compareTo(((MenuItem) o2).getText().asString());
                 } else if (o1 instanceof Separator && o2 instanceof Separator) {
                     return 0;
                 } else if (o1 instanceof Separator) {

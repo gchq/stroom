@@ -18,16 +18,18 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
 public class SimpleMenuItem extends MenuItem {
 
     protected SimpleMenuItem(final int priority,
-                             final String text,
+                             final SafeHtml text,
+                             final SafeHtml tooltip,
                              final Action action,
                              final boolean enabled,
                              final Command command) {
-        super(priority, text, action, enabled, command);
+        super(priority, text, tooltip, action, enabled, command);
     }
 
     public static class Builder extends AbstractBuilder<SimpleMenuItem, Builder> {
@@ -41,6 +43,7 @@ public class SimpleMenuItem extends MenuItem {
             return new SimpleMenuItem(
                     priority,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     command);

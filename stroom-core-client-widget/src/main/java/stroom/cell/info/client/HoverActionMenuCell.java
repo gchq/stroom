@@ -162,12 +162,14 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                 if (menuItems.size() == 1
                     && menuItems.get(0) instanceof MenuItem
                     && ((MenuItem) menuItems.get(0)).getCommand() != null) {
+                    final MenuItem menuItem = ((MenuItem) menuItems.get(0));
+
                     // Single item with a command so no menu popup needed
-                    final String menuItemText = ((MenuItem) menuItems.get(0)).getText();
-                    sb.append(template.divWithToolTip(menuItemText, icon));
+                    final SafeHtml tooltip = GwtNullSafe.getOrElse(menuItem, MenuItem::getTooltip, menuItem.getText());
+                    sb.append(template.divWithTitle(tooltip.asString(), icon));
                 } else {
                     // Build the menu popup
-                    sb.append(template.divWithToolTip("Actions...", icon));
+                    sb.append(template.divWithTitle("Actions...", icon));
                 }
 
                 sb.appendHtmlConstant("</div>");
@@ -192,6 +194,6 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
         SafeHtml div(String className, SafeHtml content);
 
         @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
+        SafeHtml divWithTitle(String title, SafeHtml content);
     }
 }
