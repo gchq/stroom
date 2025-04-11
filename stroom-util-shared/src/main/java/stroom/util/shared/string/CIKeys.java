@@ -184,7 +184,7 @@ public class CIKeys {
 
     public static CIKey getCommonKey(final String key) {
         if (key == null) {
-            return CIKey.NULL_STRING;
+            return null;
         } else {
             return KEY_TO_COMMON_CIKEY_MAP.get(key);
         }
@@ -192,7 +192,7 @@ public class CIKeys {
 
     public static CIKey getCommonKeyByLowerCase(final String lowerCaseKey) {
         if (lowerCaseKey == null) {
-            return CIKey.NULL_STRING;
+            return null;
         } else {
             return LOWER_KEY_TO_COMMON_CIKEY_MAP.get(lowerCaseKey);
         }
@@ -209,8 +209,8 @@ public class CIKeys {
         final CIKey ciKey;
 
         if (key == null) {
-            // ConcurrentHashMap so can't hold null key/val
-            ciKey = CIKey.NULL_STRING;
+            // Not interning null, so just return null
+            return null;
         } else {
             // Someone else may have already interned this key so check first
             final CIKey existingCIKey = KEY_TO_COMMON_CIKEY_MAP.get(key);
