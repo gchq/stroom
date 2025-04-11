@@ -212,6 +212,8 @@ class TestDirUtil {
                 .addCase(1_999L, Path.of("1/001/001999"))
                 .addCase(999_999L, Path.of("1/999/999999"))
                 .addCase(1_000_000L, Path.of("2/001/000/001000000"))
+                .addCase(12_345_000L, Path.of("2/012/345/012345000"))
+                .addCase(12_345_678L, Path.of("2/012/345/012345678"))
                 .addCase(333_555_777L, Path.of("2/333/555/333555777"))
                 .addCase(Long.MAX_VALUE, Path.of("6/009/223/372/036/854/775/009223372036854775807"))
                 .withActualOutputConsumer(LOGGER::info)
