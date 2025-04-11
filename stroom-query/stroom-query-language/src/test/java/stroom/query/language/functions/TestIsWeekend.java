@@ -15,20 +15,34 @@ class TestIsWeekend extends AbstractFunctionTest<IsWeekend> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        final Instant weekday = LocalDateTime.of(2025, 5, 8, 15, 30, 55)
+        final Instant weekdayUTC = LocalDateTime.of(2025, 5, 8, 15, 30, 55)
                 .toInstant(ZoneOffset.UTC);
-        final Instant weekend = LocalDateTime.of(2025, 5, 11, 15, 30, 55)
+        final Instant weekendUTC = LocalDateTime.of(2025, 5, 11, 15, 30, 55)
                 .toInstant(ZoneOffset.UTC);
+
+        //test for UTC+5
+        final Instant weekdayUTCPlus5 = LocalDateTime.of(2025, 5, 8, 15, 30, 55)
+                .toInstant(ZoneOffset.ofHours(5));
+        final Instant weekendUTCPlus5 = LocalDateTime.of(2025, 5, 11, 15, 30, 55)
+                .toInstant(ZoneOffset.ofHours(5));
 
         return Stream.of(
                 TestCase.of(
-                        "long date",
+                        "long date UTC",
                         ValBoolean.create(false),
-                        ValDate.create(weekday.toEpochMilli())),
+                        ValDate.create(weekdayUTC.toEpochMilli())),
                 TestCase.of(
-                        "string date",
+                        "string date UTC",
                         ValBoolean.create(true),
-                        ValDate.create(weekend.toEpochMilli()
-        )));
+                        ValDate.create(weekendUTC.toEpochMilli())),
+                TestCase.of(
+                        "long date UTC+5",
+                        ValBoolean.create(false),
+                        ValDate.create(weekdayUTCPlus5.toEpochMilli())),
+                TestCase.of(
+                        "string date UTC+5",
+                        ValBoolean.create(true),
+                        ValDate.create(weekendUTCPlus5.toEpochMilli()))
+        );
     }
 }
