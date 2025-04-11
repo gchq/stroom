@@ -17,8 +17,6 @@
 
 package stroom.gitrepo.client.presenter;
 
-import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
-import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
@@ -44,8 +42,6 @@ public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
     private static final TabData SCRIPT = new TabDataImpl("Script");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
-
-    private int loadCount;
 
     @Inject
     public GitRepoPresenter(final EventBus eventBus,
@@ -74,17 +70,6 @@ public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
                 presenter.setText(document.getData());
                 presenter.setReadOnly(readOnly);
                 presenter.getFormatAction().setAvailable(!readOnly);
-
-                loadCount++;
-                if (loadCount > 1) {
-                    // Remove the script function from the cache so dashboards reload
-                    // it.
-                    ClearScriptCacheEvent.fire(this, docRef);
-
-                    // This script might be used by any visualisation so clear the vis
-                    // function cache so that scripts are requested again if needed.
-                    ClearFunctionCacheEvent.fire(this);
-                }
             }
 
             @Override

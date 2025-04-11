@@ -50,7 +50,7 @@ import java.util.Objects;
 public class GitRepoDoc extends Doc implements HasData {
 
     public static final String TYPE = "GitRepo";
-    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GITREPO_DOCUMENT_TYPE;
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;

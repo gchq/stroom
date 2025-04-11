@@ -147,7 +147,7 @@ public class DocumentTypeRegistry {
             "S3Config",
             "S3 Configuration",
             SvgImage.DOCUMENT_S3);
-    public static final DocumentType GITREPO_DOCUMENT_TYPE = new DocumentType(
+    public static final DocumentType GIT_REPO_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "GitRepo",
             "GIT Repo",
@@ -237,7 +237,7 @@ public class DocumentTypeRegistry {
         put(REPORT_DOCUMENT_TYPE);
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
-        put(GITREPO_DOCUMENT_TYPE);
+        put(GIT_REPO_DOCUMENT_TYPE);
         put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
         put(STATE_STORE_DOCUMENT_TYPE);

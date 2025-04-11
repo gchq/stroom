@@ -17,21 +17,16 @@
 package stroom.gitrepo.client.gin;
 
 import stroom.core.client.gin.PluginModule;
-import stroom.gitrepo.client.GitRepoCache;
 import stroom.gitrepo.client.GitRepoPlugin;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.view.GitRepoSettingsViewImpl;
 
-import com.google.inject.Singleton;
-
 public class GitRepoModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bind(GitRepoCache.class).in(Singleton.class);
-
         bindPlugin(GitRepoPlugin.class);
         bind(GitRepoPresenter.class);
         bindPresenterWidget(GitRepoSettingsPresenter.class, GitRepoSettingsView.class, GitRepoSettingsViewImpl.class);
