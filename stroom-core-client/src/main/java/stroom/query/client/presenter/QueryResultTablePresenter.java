@@ -69,6 +69,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -284,6 +285,21 @@ public class QueryResultTablePresenter
         } else {
             dataGrid.removeStyleName("applyValueFilters");
         }
+    }
+
+    public void changeSettings() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        updatePageSize(queryTablePreferences);
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+    }
+
+    private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                GwtNullSafe.getOrElse(queryTablePreferences, QueryTablePreferences::getPageSize, 100)));
     }
 
     private void setPause(final boolean pause,
@@ -781,7 +797,9 @@ public class QueryResultTablePresenter
 
     public void updateQueryTablePreferences() {
         // Change value filter state.
-        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
+        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        updatePageSize(queryTablePreferences);
         refresh();
     }
 

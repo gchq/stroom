@@ -45,11 +45,14 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
                                          final ByteBufferFactory byteBufferFactory,
                                          final PlanBDoc doc,
                                          final boolean readOnly) {
-        if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-            return new TemporalStateDb(path, byteBufferFactory, temporalStateSettings, readOnly);
-        } else {
-            throw new RuntimeException("No temporal state settings provided");
+        return new TemporalStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static TemporalStateSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final TemporalStateSettings settings) {
+            return settings;
         }
+        return TemporalStateSettings.builder().build();
     }
 
     public Optional<TemporalState> getState(final TemporalStateRequest request) {
@@ -58,13 +61,13 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
         final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(rowHash);
-            start.putLong(request.effectiveTime());
+            start.putLong(request.effectiveTime() + 1);
             start.flip();
 
             stop.putLong(rowHash);
             stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.closedBackward(start, stop);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
             return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();

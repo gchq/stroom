@@ -390,11 +390,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
+            final DocRef dataSource = currentSearchModel.getIndexLoader().getLoadedDataSourceRef();
+            final boolean changedDataSource = !Objects.equals(columnSelectionListModel.getDataSourceRef(), dataSource);
+            columnSelectionListModel.setDataSourceRef(dataSource);
 
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
                 addColumnPopup.init(columnSelectionListModel);
+            } else if (changedDataSource) {
+                addColumnPopup.refresh();
             }
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
@@ -1016,9 +1020,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
-                tableComponentSettings.getPageSize() == null
-                        ? 100
-                        : tableComponentSettings.getPageSize()));
+                GwtNullSafe.getOrElse(tableComponentSettings, TableComponentSettings::getPageSize, 100)));
     }
 
     @Override

@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
 public class IconMenuItem extends MenuItem {
@@ -35,12 +36,13 @@ public class IconMenuItem extends MenuItem {
                            final SvgImage enabledIcon,
                            final SvgImage disabledIcon,
                            final IconColour iconColour,
-                           final String text,
+                           final SafeHtml text,
+                           final SafeHtml tooltip,
                            final Action action,
                            final boolean enabled,
                            final Command command,
                            final boolean highlight) {
-        super(priority, text, action, enabled, command);
+        super(priority, text, tooltip, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
@@ -124,6 +126,7 @@ public class IconMenuItem extends MenuItem {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     command,

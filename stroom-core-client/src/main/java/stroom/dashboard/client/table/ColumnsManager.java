@@ -24,6 +24,7 @@ import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ColumnFilter;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.client.presenter.ColumnHeaderHtmlUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -712,7 +713,7 @@ public class ColumnsManager implements HeadingListener, HasValueFilter {
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
                         .icon(SvgImage.SHOW)
-                        .text(column.getName())
+                        .text(ColumnHeaderHtmlUtil.getSafeHtml(column))
                         .command(() -> showColumn(column))
                         .build();
                 menuItems.add(item2);

@@ -3,6 +3,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 
 public class InfoMenuItem extends MenuItem {
@@ -13,7 +14,7 @@ public class InfoMenuItem extends MenuItem {
                         final Action action,
                         final Boolean enabled,
                         final Command command) {
-        super(0, "", action, enabled, command);
+        super(0, SafeHtmlUtils.EMPTY_SAFE_HTML, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
         this.safeHtml = safeHtml;
     }
 
