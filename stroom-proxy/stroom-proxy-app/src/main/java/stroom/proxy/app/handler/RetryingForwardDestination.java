@@ -330,7 +330,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                         + "' to " + getDestinationType() + " forward destination '"
                         + destinationName + "' "
                         + "(attempts: " + attempts + ", retryAge: " + retryAge + "): "
-                        + LogUtil.exceptionMessage(getCause(e)) + ". "
+                        + e.getMessage() + ". "
                         + (e instanceof ForwardException fe
                                 ? "Feed: '" + fe.getFeedName() + "'. HTTP code: " + fe.getHttpResponseCode() + ". "
                                 : "")
