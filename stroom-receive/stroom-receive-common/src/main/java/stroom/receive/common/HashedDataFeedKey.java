@@ -1,6 +1,8 @@
 package stroom.receive.common;
 
+import stroom.meta.api.AttributeMap;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,7 +14,9 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Represents the hashed form of a Data Feed Key, i.e. where we only have the
@@ -38,11 +42,14 @@ public class HashedDataFeedKey {
     @JsonProperty
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
                              "in the stream headers.")
-    private final Map<String, String> streamMetaData;
+    private final Map<CIKey, String> streamMetaData;
 
     @JsonProperty
     @JsonPropertyDescription("The date/time the key expires, expressed as milliseconds since the unix epoch.")
     private final long expiryDateEpochMs;
+
+    @JsonIgnore
+    private final int hashCode;
 
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
@@ -53,8 +60,23 @@ public class HashedDataFeedKey {
         this.hash = hash;
         this.salt = salt;
         this.hashAlgorithm = hashAlgorithm;
-        this.streamMetaData = NullSafe.map(streamMetaData);
+        // No point holding blank keys or null values
+        this.streamMetaData = NullSafe.map(streamMetaData)
+                .entrySet()
+                .stream()
+                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(
+                        entry -> CIKey.of(entry.getKey()),
+                        Entry::getValue));
         this.expiryDateEpochMs = expiryDateEpochMs;
+        // Cache the hashCode as we know we will use it
+        this.hashCode = Objects.hash(
+                hash,
+                salt,
+                hashAlgorithm,
+                streamMetaData,
+                expiryDateEpochMs);
     }
 
     @NotBlank
@@ -72,14 +94,29 @@ public class HashedDataFeedKey {
     }
 
     public Map<String, String> getStreamMetaData() {
+        return CIKey.convertToStringMap(streamMetaData);
+    }
+
+    @JsonIgnore
+    public Map<CIKey, String> getCIStreamMetaData() {
         return streamMetaData;
+    }
+
+    @JsonIgnore
+    public AttributeMap getAttributeMap() {
+        return new AttributeMap(getStreamMetaData());
     }
 
     @JsonIgnore
     public String getStreamMetaValue(final String metaKey) {
         return NullSafe.isNonBlankString(metaKey)
-                ? streamMetaData.get(metaKey)
+                ? streamMetaData.get(CIKey.of(metaKey))
                 : null;
+    }
+
+    @JsonIgnore
+    public String getStreamMetaValue(final CIKey metaKey) {
+        return NullSafe.get(metaKey, streamMetaData::get);
     }
 
     @Min(0)
@@ -115,12 +152,7 @@ public class HashedDataFeedKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                hash,
-                salt,
-                hashAlgorithm,
-                streamMetaData,
-                expiryDateEpochMs);
+        return hashCode;
     }
 
     @Override
