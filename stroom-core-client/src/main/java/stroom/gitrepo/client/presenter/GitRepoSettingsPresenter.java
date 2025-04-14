@@ -28,36 +28,41 @@ import com.gwtplatform.mvp.client.View;
 
 public class GitRepoSettingsPresenter extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc> {
 
-    private final GitRepoDependencyListPresenter gitRepoDependencyListPresenter;
-
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
-                                   final GitRepoSettingsView view,
-                                   final GitRepoDependencyListPresenter scriptDependencyListPresenter) {
+                                   final GitRepoSettingsView view) {
         super(eventBus, view);
-        this.gitRepoDependencyListPresenter = scriptDependencyListPresenter;
-        view.setDependencyList(scriptDependencyListPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         final DirtyHandler dirtyHandler = event -> setDirty(true);
-        registerHandler(gitRepoDependencyListPresenter.addDirtyHandler(dirtyHandler));
+        //registerHandler(gitRepoDependencyListPresenter.addDirtyHandler(dirtyHandler));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
-        gitRepoDependencyListPresenter.read(docRef, doc, readOnly);
+        //gitRepoDependencyListPresenter.read(docRef, doc, readOnly);
     }
 
     @Override
     protected GitRepoDoc onWrite(GitRepoDoc gitRepo) {
-        gitRepo = gitRepoDependencyListPresenter.write(gitRepo);
+        //gitRepo = gitRepoDependencyListPresenter.write(gitRepo);
         return gitRepo;
     }
 
     public interface GitRepoSettingsView extends View {
 
-        void setDependencyList(View view);
+        /**
+         * Puts the GIT repository URL into the UI.
+         * @param url The GIT repository URL.
+         */
+        public void setUrl(String url);
+
+        /**
+         * Returns the GIT repository URL from the UI.
+         * @return The GIT repository URL.
+         */
+        public String getUrl();
     }
 }
