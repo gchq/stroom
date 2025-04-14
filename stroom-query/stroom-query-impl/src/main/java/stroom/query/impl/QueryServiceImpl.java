@@ -28,6 +28,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.FindFieldCriteria;
 import stroom.datasource.api.v2.QueryField;
+import stroom.datasource.api.v2.QueryFieldProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -123,7 +124,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @AutoLogged
-class QueryServiceImpl implements QueryService {
+class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryServiceImpl.class);
 
