@@ -1552,6 +1552,54 @@ paths:
       summary: Import content
       tags:
       - Content
+  /contentTemplates/v1:
+    get:
+      operationId: fetchContentTemplates
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentTemplates"
+          description: default response
+      summary: Get content templates
+      tags:
+      - Content Templates
+    put:
+      operationId: updateContentTemplates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentTemplates"
+        description: contentTemplates
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentTemplates"
+          description: default response
+      summary: Update content templates
+      tags:
+      - Content Templates
+  /contentTemplates/v1/fields:
+    get:
+      operationId: fetchFields
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QueryField"
+                uniqueItems: true
+          description: default response
+      summary: Get the list of fields for use in the match expression.
+      tags:
+      - Content Templates
   /dashboard/v1/columnValues:
     post:
       operationId: getColumnValues
@@ -7979,6 +8027,7 @@ components:
           - ADMINISTRATOR
           - ANNOTATIONS
           - MANAGE_CACHE_PERMISSION
+          - MANAGE_CONTENT_TEMPLATES_PERMISSION
           - VIEW_DATA_PERMISSION
           - VIEW_DATA_WITH_PIPELINE_PERMISSION
           - DELETE_DATA_PERMISSION
@@ -8575,6 +8624,7 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8607,6 +8657,7 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -8644,6 +8695,7 @@ components:
             - ADMINISTRATOR
             - ANNOTATIONS
             - MANAGE_CACHE_PERMISSION
+            - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - VIEW_DATA_PERMISSION
             - VIEW_DATA_WITH_PIPELINE_PERMISSION
             - DELETE_DATA_PERMISSION
@@ -9416,6 +9468,58 @@ components:
           type: string
         valid:
           type: boolean
+    ContentTemplate:
+      type: object
+      properties:
+        description:
+          type: string
+        enabled:
+          type: boolean
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
+        name:
+          type: string
+        pipeline:
+          $ref: "#/components/schemas/DocRef"
+        processorMaxConcurrent:
+          type: integer
+          format: int32
+        processorPriority:
+          type: integer
+          format: int32
+        templateNumber:
+          type: integer
+          format: int32
+        templateType:
+          type: string
+          enum:
+          - PROCESSOR_FILTER
+          - INHERIT_PIPELINE
+    ContentTemplates:
+      type: object
+      properties:
+        contentTemplates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContentTemplate"
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     CoprocessorSettings:
       type: object
       discriminator:
@@ -10279,6 +10383,7 @@ components:
           - SPINNER_CIRCLE
           - SPINNER_PAUSE
           - SPINNER_SPINNING
+          - STAMP
           - STEP
           - STEPPING
           - STEPPING_CIRCLE
@@ -11956,12 +12061,11 @@ components:
           - 406 - 100 - Feed must be specified
           - 406 - 101 - Feed is not defined
           - 406 - 102 - Data type is invalid
-          - 406 - 103 - AccountId must be specified
-          - 406 - 104 - Component must be specified
-          - 406 - 105 - Data format is invalid
+          - 406 - 103 - A mandatory header is missing
+          - 406 - 104 - Data format is invalid
           - 406 - 110 - Feed is not set to receive data
           - 406 - 111 - Feed is not valid
-          - 406 - 112 - AccountId is not valid
+          - 406 - 112 - Data Feed key and/or accountId is not valid
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
@@ -11973,6 +12077,7 @@ components:
           - 401 - 311 - Client Token failed authentication
           - 401 - 312 - Client Token or Certificate failed authentication
           - 401 - 313 - Data feed key failed authentication
+          - 401 - 314 - Data feed key has expired
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -13300,6 +13405,7 @@ components:
           - SPINNER_CIRCLE
           - SPINNER_PAUSE
           - SPINNER_SPINNING
+          - STAMP
           - STEP
           - STEPPING
           - STEPPING_CIRCLE

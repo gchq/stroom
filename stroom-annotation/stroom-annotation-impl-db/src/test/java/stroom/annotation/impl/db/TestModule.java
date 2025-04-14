@@ -8,8 +8,10 @@ import stroom.meta.api.StreamFeedProvider;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.mock.MockTaskModule;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.db.ForceLegacyMigration;
+import stroom.util.metrics.Metrics;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.AbstractModule;
@@ -51,6 +53,7 @@ public class TestModule extends AbstractModule {
                 return "TEST_FEED_NAME";
             }
         });
+        bind(Metrics.class).toInstance(new MockMetrics());
     }
 //
 //
