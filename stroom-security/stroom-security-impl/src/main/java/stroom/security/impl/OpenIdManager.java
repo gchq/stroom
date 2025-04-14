@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.OpenId;
 import stroom.util.jersey.UriBuilderUtil;
@@ -23,18 +24,20 @@ class OpenIdManager {
 
     private final ResolvedOpenIdConfig openIdConfig;
     private final UserIdentityFactory userIdentityFactory;
+    private final UriFactory uriFactory;
 
     @Inject
     public OpenIdManager(final ResolvedOpenIdConfig openIdConfig,
-                         final UserIdentityFactory userIdentityFactory) {
+                         final UserIdentityFactory userIdentityFactory,
+                         final UriFactory uriFactory) {
         this.openIdConfig = openIdConfig;
         this.userIdentityFactory = userIdentityFactory;
+        this.uriFactory = uriFactory;
     }
 
     public String redirect(final HttpServletRequest request,
                            final String code,
-                           final String stateId,
-                           final String postAuthRedirectUri) {
+                           final String stateId) {
         String redirectUri = null;
 
         // If we have completed the front channel flow then we will have a state id.
@@ -43,14 +46,13 @@ class OpenIdManager {
         }
 
         if (redirectUri == null) {
-            final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
-            redirectUri = frontChannelOIDC(request, uri);
+            redirectUri = frontChannelOIDC(request);
         }
 
         return redirectUri;
     }
 
-    private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
+    private String frontChannelOIDC(final HttpServletRequest request) {
         final String endpoint = openIdConfig.getAuthEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
@@ -58,7 +60,7 @@ class OpenIdManager {
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, buildRedirectUrl(request));
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
         return createAuthUri(request, endpoint, clientId, state, false);
     }
@@ -69,9 +71,6 @@ class OpenIdManager {
         Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
-        boolean loggedIn = false;
-        String redirectUri = null;
-
         // If we have a state id then this should be a return from the auth service.
         LOGGER.debug(() -> "We have the following state: " + stateId);
 
@@ -79,7 +78,6 @@ class OpenIdManager {
         final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
         if (state == null) {
             LOGGER.warn(() -> "Unexpected state: " + stateId);
-
         } else {
             LOGGER.debug(() -> "backChannelOIDC state=" + state);
             final HttpSession session = request.getSession(false);
@@ -91,17 +89,40 @@ class OpenIdManager {
             if (optionalUserIdentity.isPresent()) {
                 // Set the token in the session.
                 UserIdentitySessionUtil.set(session, optionalUserIdentity.get());
-                loggedIn = true;
-            }
 
-            // If we manage to login then redirect to the original URL held in the state.
-            if (loggedIn) {
-                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getUri());
-                redirectUri = state.getUri();
+                // Login successful. Use the redirect URI if configured, else use the original request URI.
+                final String redirectUri = state.getUri();
+                LOGGER.info(() -> "Redirecting to initiating URI: " + redirectUri);
+                return redirectUri;
             }
         }
 
-        return redirectUri;
+        return null;
+    }
+
+    /**
+     * Build a complete redirect URL using the configured public URL.
+     * This is the URL used to redirect after the authorisation flow has completed.
+     */
+    private String buildRedirectUrl(final HttpServletRequest request) {
+        return uriFactory.publicUri(UrlUtils.getFullUri(request)).toString();
+    }
+
+    /**
+     * Prefer the configured redirect URI. Otherwise, use the original request URI when redirecting after successful
+     * authorisation.
+     */
+    public String getRedirectUri(final HttpServletRequest request) {
+        return getRedirectUri(buildRedirectUrl(request));
+    }
+
+    public String getRedirectUri(final String originalUrl) {
+        final String redirectUri = openIdConfig.getRedirectUri();
+        if (redirectUri == null || redirectUri.isEmpty()) {
+            return originalUrl;
+        } else {
+            return redirectUri;
+        }
     }
 
     /**
@@ -131,15 +152,14 @@ class OpenIdManager {
         return result;
     }
 
-    public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
-        final String redirectUri = OpenId.removeReservedParams(postAuthRedirectUri);
+    public String logout(final HttpServletRequest request) {
         final String endpoint = openIdConfig.getLogoutEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, buildRedirectUrl(request));
         LOGGER.debug(() -> "logout state=" + state);
         return createAuthUri(request, endpoint, clientId, state, true);
     }
@@ -154,7 +174,7 @@ class OpenIdManager {
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.RESPONSE_TYPE, OpenId.CODE);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, state.getUri());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.REDIRECT_URI, getRedirectUri(state.getUri()));
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.SCOPE, OpenId.SCOPE__OPENID +
                 " " +
                 OpenId.SCOPE__EMAIL);
