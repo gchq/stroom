@@ -18,7 +18,7 @@ package stroom.widget.help.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 import stroom.widget.util.client.KeyBinding;
@@ -40,7 +40,7 @@ public class HelpButton extends InlineSvgButton {
         super();
         this.helpContent = helpContent;
         setSvg(PRESET.getSvgImage());
-        setTitle(GwtNullSafe.nonBlankStringElseGet(title, PRESET::getTitle));
+        setTitle(NullSafe.nonBlankStringElseGet(title, PRESET::getTitle));
         setEnabled(true);
         setStyleName(String.join(" ", getStyleName(), "help-button info"));
         addClickHandler(event -> showHelpPopup());
@@ -100,7 +100,7 @@ public class HelpButton extends InlineSvgButton {
     public boolean hasHelpContent() {
         return helpContent != null
                 && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
-                && !GwtNullSafe.isBlankString(helpContent.asString());
+                && !NullSafe.isBlankString(helpContent.asString());
     }
 
     /**
@@ -113,7 +113,7 @@ public class HelpButton extends InlineSvgButton {
 
     private void showHelpPopup(final Element element) {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        if (!GwtNullSafe.isBlankString(helpContentHeading)) {
+        if (!NullSafe.isBlankString(helpContentHeading)) {
             builder.appendHtmlConstant("<h4>")
                     .appendEscaped(helpContentHeading)
                     .appendHtmlConstant("</h4>");
@@ -130,6 +130,6 @@ public class HelpButton extends InlineSvgButton {
     private void updateVisibleState() {
         setVisible(helpContent != null
                 && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
-                && !GwtNullSafe.isBlankString(helpContent.asString()));
+                && !NullSafe.isBlankString(helpContent.asString()));
     }
 }

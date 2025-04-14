@@ -2,7 +2,7 @@ package stroom.widget.util.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -34,11 +34,11 @@ public class SvgImageUtil {
                                       final String... classNames) {
         Objects.requireNonNull(svgImage);
         final String allClassNames = SvgImage.BASE_CLASS_NAME + " "
-                + svgImage.getClassName() + " "
-                + GwtNullSafe.join(" ", classNames);
+                                     + svgImage.getClassName() + " "
+                                     + NullSafe.join(" ", classNames);
         final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgImage.getSvg());
 
-        final SafeHtml safeHtml = GwtNullSafe.isBlankString(title)
+        final SafeHtml safeHtml = NullSafe.isBlankString(title)
                 ? TEMPLATE.icon(allClassNames, svgHtml)
                 : TEMPLATE.icon(allClassNames, title, svgHtml);
 //        GWT.log("safeHtml: " + safeHtml.asString());
@@ -46,7 +46,7 @@ public class SvgImageUtil {
     }
 
     public static SafeHtml emptySvg(final String... classNames) {
-        return TEMPLATE.emptySvg(GwtNullSafe.join(" ", classNames));
+        return TEMPLATE.emptySvg(NullSafe.join(" ", classNames));
     }
 
     public static void setSvgAsInnerHtml(final Element element,

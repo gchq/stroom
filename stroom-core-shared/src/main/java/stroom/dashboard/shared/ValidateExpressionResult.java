@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -53,14 +53,14 @@ public class ValidateExpressionResult {
     public static ValidateExpressionResult failed(final Throwable throwable) {
         return new ValidateExpressionResult(
                 false,
-                GwtNullSafe.get(throwable, Throwable::getMessage),
+                NullSafe.get(throwable, Throwable::getMessage),
                 false);
     }
 
     public static ValidateExpressionResult failed(final Throwable throwable, final boolean isGroup) {
         return new ValidateExpressionResult(
                 false,
-                GwtNullSafe.get(throwable, Throwable::getMessage),
+                NullSafe.get(throwable, Throwable::getMessage),
                 isGroup);
     }
 

@@ -21,11 +21,11 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;

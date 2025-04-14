@@ -7,10 +7,10 @@ import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.StroomStreamException;
-import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;

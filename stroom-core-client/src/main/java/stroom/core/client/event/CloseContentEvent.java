@@ -16,7 +16,7 @@
 
 package stroom.core.client.event;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 public class CloseContentEvent {
 
@@ -25,7 +25,7 @@ public class CloseContentEvent {
 
     public CloseContentEvent(final DirtyMode dirtyMode,
                              final Callback callback) {
-        this.dirtyMode = GwtNullSafe.requireNonNullElse(dirtyMode, DirtyMode.CONFIRM_DIRTY);
+        this.dirtyMode = NullSafe.requireNonNullElse(dirtyMode, DirtyMode.CONFIRM_DIRTY);
         this.callback = callback;
     }
 

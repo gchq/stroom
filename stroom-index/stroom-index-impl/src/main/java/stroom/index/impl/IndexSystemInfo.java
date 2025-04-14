@@ -4,7 +4,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 

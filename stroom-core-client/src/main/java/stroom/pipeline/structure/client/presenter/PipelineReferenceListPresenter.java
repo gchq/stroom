@@ -41,7 +41,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -166,12 +166,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getPipeline()
-                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                .getDisplayValue(NullSafe.requireNonNullElse(
                                         DisplayType.AUTO,
                                         DisplayType.AUTO)));
                     }
                 })
-                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                .docRefFunction(pipelineProperty -> NullSafe.get(
                         pipelineProperty,
                         PipelineReference::getPipeline));
 
@@ -192,12 +192,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getFeed()
-                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                .getDisplayValue(NullSafe.requireNonNullElse(
                                         DisplayType.AUTO,
                                         DisplayType.AUTO)));
                     }
                 })
-                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                .docRefFunction(pipelineProperty -> NullSafe.get(
                         pipelineProperty,
                         PipelineReference::getFeed));
 
@@ -234,12 +234,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getSourcePipeline()
-                                .getDisplayValue(GwtNullSafe.requireNonNullElse(
+                                .getDisplayValue(NullSafe.requireNonNullElse(
                                         DisplayType.AUTO,
                                         DisplayType.AUTO)));
                     }
                 })
-                .docRefFunction(pipelineProperty -> GwtNullSafe.get(
+                .docRefFunction(pipelineProperty -> NullSafe.get(
                         pipelineProperty,
                         PipelineReference::getSourcePipeline));
 

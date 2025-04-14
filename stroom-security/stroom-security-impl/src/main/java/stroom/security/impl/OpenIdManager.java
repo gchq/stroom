@@ -5,16 +5,15 @@ import stroom.security.common.impl.AuthenticationState;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.NullSafe;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.util.List;
@@ -104,7 +103,6 @@ class OpenIdManager {
         // If we have a state id then this should be a return from the auth service.
         LOGGER.debug(() -> LogUtil.message("We have the following backChannelOIDC state: {}", state));
 
-        final HttpSession session = request.getSession(false);
         UserAgentSessionUtil.set(request);
 
         final Optional<UserIdentity> optionalUserIdentity =
@@ -112,7 +110,7 @@ class OpenIdManager {
 
         if (optionalUserIdentity.isPresent()) {
             // Set the token in the session.
-            UserIdentitySessionUtil.set(session, optionalUserIdentity.get());
+            UserIdentitySessionUtil.set(request, optionalUserIdentity.get());
             loggedIn = true;
         }
 

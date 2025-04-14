@@ -17,13 +17,13 @@ public class GwtUtil {
 
     public static <T> Set<T> toSet(final T... items) {
         // No Set.of() in GWT land :-(
-        return GwtNullSafe.stream(items)
+        return NullSafe.stream(items)
                 .collect(Collectors.toSet());
     }
 
     public static <T> List<T> toList(final T... items) {
         // No List.of() in GWT land :-(
-        return GwtNullSafe.stream(items)
+        return NullSafe.stream(items)
                 .collect(Collectors.toList());
     }
 
@@ -45,12 +45,12 @@ public class GwtUtil {
     }
 
     public static String appendStyles(final String existing, final String... styles) {
-        String str = GwtNullSafe.string(existing).trim();
+        String str = NullSafe.string(existing).trim();
         if (styles != null && styles.length > 0) {
             if (!str.isEmpty()) {
                 str += " ";
             }
-            str = str + GwtNullSafe.stream(styles)
+            str = str + NullSafe.stream(styles)
                     .map(String::trim)
                     .collect(Collectors.joining(" "));
         }

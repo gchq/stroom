@@ -67,6 +67,12 @@ class TestSessionDb {
             assertThat(db.count()).isEqualTo(109);
             testGet(db, key, refTime, 10);
 
+            checkState(db, key, highRange.max(), true);
+            checkState(db, key, highRange.min(), true);
+            checkState(db, key, lowRange.max(), true);
+            checkState(db, key, lowRange.min(), true);
+            checkState(db, key, highRange.max().plusMillis(1), false);
+            checkState(db, key, lowRange.min().minusMillis(1), false);
 
 //            final SessionRequest sessionRequest = SessionRequest.builder().name("TEST").time(refTime).build();
 //            final Optional<Session> optional = reader.getState(sessionRequest);
@@ -249,6 +255,16 @@ class TestSessionDb {
         assertThat(optional).isNotEmpty();
         final Session res = optional.get();
         assertThat(res.key()).isEqualTo(key);
+    }
+
+    private void checkState(final SessionDb db,
+                            final byte[] key,
+                            final Instant time,
+                            final boolean expected) {
+        final SessionRequest request = new SessionRequest(key, time.toEpochMilli());
+        final Optional<Session> optional = db.getState(request);
+        final boolean actual = optional.isPresent();
+        assertThat(actual).isEqualTo(expected);
     }
 
 //    @Test

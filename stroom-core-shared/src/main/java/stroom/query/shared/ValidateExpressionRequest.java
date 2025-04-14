@@ -3,7 +3,7 @@ package stroom.query.shared;
 import stroom.datasource.api.v2.QueryField;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,7 +28,7 @@ public class ValidateExpressionRequest {
                                      @JsonProperty("fields") final List<QueryField> fields,
                                      @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings) {
         this.expressionItem = Objects.requireNonNull(expressionItem);
-        this.fields = GwtNullSafe.list(fields);
+        this.fields = NullSafe.list(fields);
         this.dateTimeSettings = Objects.requireNonNull(dateTimeSettings);
     }
 

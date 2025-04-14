@@ -28,7 +28,7 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupUiHandlers;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -112,7 +112,7 @@ public class ExplorerPopupPresenter
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> {
-                    GwtNullSafe.run(onShow);
+                    NullSafe.run(onShow);
                     getView().focus();
                 })
                 .onHideRequest(e -> {
@@ -122,7 +122,7 @@ public class ExplorerPopupPresenter
 //                            selection = selected;
                             selectionChangeConsumer.accept(selected);
                             explorerTree.getSelectionModel().setSelected(selected);
-                            onHideOk.accept(GwtNullSafe.get(selected, ExplorerNode::getDocRef));
+                            onHideOk.accept(NullSafe.get(selected, ExplorerNode::getDocRef));
                             e.hide();
                         } else {
                             AlertEvent.fireError(ExplorerPopupPresenter.this,
@@ -204,7 +204,7 @@ public class ExplorerPopupPresenter
     }
 
     public DocRef getSelectedEntityReference() {
-        return GwtNullSafe.get(getSelectedEntityData(), ExplorerNode::getDocRef);
+        return NullSafe.get(getSelectedEntityData(), ExplorerNode::getDocRef);
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
@@ -218,13 +218,13 @@ public class ExplorerPopupPresenter
                     .method(res -> res.getFromDocRef(docRef))
                     .onSuccess(explorerNode -> {
                         setSelectedEntityData(explorerNode);
-                        GwtNullSafe.run(onSetSelected);
+                        NullSafe.run(onSetSelected);
                     })
                     .taskMonitorFactory(this)
                     .exec();
         } else {
             clearSelected();
-            GwtNullSafe.run(onSetSelected);
+            NullSafe.run(onSetSelected);
         }
     }
 

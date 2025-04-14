@@ -20,7 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -108,7 +108,7 @@ public class DynamicColumnSelectionListModel
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
-        if (GwtNullSafe.isBlankString(parentPath)) {
+        if (NullSafe.isBlankString(parentPath)) {
             final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
             add(filter, new ColumnSelectionItem(
                     null,
@@ -194,7 +194,7 @@ public class DynamicColumnSelectionListModel
                      final ExactResultPageBuilder<ColumnSelectionItem> resultPageBuilder) {
         if (item.isHasChildren()) {
             resultPageBuilder.add(item);
-        } else if (GwtNullSafe.isNonBlankString(filter)) {
+        } else if (NullSafe.isNonBlankString(filter)) {
             if (item.getLabel().toLowerCase().contains(filter.toLowerCase(Locale.ROOT))) {
                 resultPageBuilder.add(item);
             }
@@ -205,6 +205,10 @@ public class DynamicColumnSelectionListModel
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
+    }
+
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
     }
 
     @Override

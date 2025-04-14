@@ -50,8 +50,8 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.util.shared.DataRange;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
@@ -231,7 +231,7 @@ public class SteppingPresenter
             final PipelineElement selectedPipeElement = getSelectedPipeElement();
             if (!PipelineModel.SOURCE_ELEMENT.getId().equals(selectedPipeElement.getId())) {
                 final List<Item> menuItems = buildContextMenu();
-                if (GwtNullSafe.hasItems(menuItems)) {
+                if (NullSafe.hasItems(menuItems)) {
                     showMenu(menuItems, event.getPopupPosition());
                 }
             }
@@ -245,7 +245,7 @@ public class SteppingPresenter
     private void showChangeFiltersDialog() {
         final List<PipelineElement> elements = new ArrayList<>();
         getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
-//            GWT.log("elements: \n" + GwtNullSafe.stream(elements)
+//            GWT.log("elements: \n" + NullSafe.stream(elements)
 //                    .map(PipelineElement::toString)
 //                    .map(str -> "  " + str)
 //                    .collect(Collectors.joining("\n")));
@@ -269,7 +269,7 @@ public class SteppingPresenter
     private List<Item> buildContextMenu() {
         final List<Item> menuItems = new ArrayList<>();
 
-        final boolean isClearFiltersOnSelectedEnabled = GwtNullSafe.test(
+        final boolean isClearFiltersOnSelectedEnabled = NullSafe.test(
                 getSelectedPipeElement(),
                 PipelineElement::hasActiveFilters);
 
@@ -344,7 +344,7 @@ public class SteppingPresenter
                                       final Map<PipelineElement, List<PipelineElement>> childMap,
                                       final List<PipelineElement> descendants) {
         final List<PipelineElement> children = childMap.get(parent);
-        if (GwtNullSafe.hasItems(children)) {
+        if (NullSafe.hasItems(children)) {
             for (final PipelineElement child : children) {
                 final PipelineElementType type = child.getElementType();
                 if (type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
@@ -450,18 +450,18 @@ public class SteppingPresenter
     }
 
     private void updateToggleConsoleBtnVisibility(final Indicators indicators, final String elementId) {
-        final Severity maxSeverity = GwtNullSafe.get(indicators, Indicators::getMaxSeverity);
+        final Severity maxSeverity = NullSafe.get(indicators, Indicators::getMaxSeverity);
         boolean isButtonVisible = maxSeverity != null;
 
-        final ElementPresenter elementPresenter = GwtNullSafe.get(elementId, elementPresenterMap::get);
+        final ElementPresenter elementPresenter = NullSafe.get(elementId, elementPresenterMap::get);
         boolean isLogPaneVisible = isButtonVisible
-                && elementPresenter != null
-                && elementPresenter.getDesiredLogPanVisibility();
+                                   && elementPresenter != null
+                                   && elementPresenter.getDesiredLogPanVisibility();
 
         setLogPaneVisibility(isLogPaneVisible);
 
         if (maxSeverity != null) {
-            final int count = GwtNullSafe.getOrElse(
+            final int count = NullSafe.getOrElse(
                     indicators,
                     indicators2 -> indicators2.getCount(maxSeverity),
                     0);
@@ -481,7 +481,7 @@ public class SteppingPresenter
                 type = "Message";
             }
             final String msg = "Toggle Log Pane ("
-                    + count + " " + type + plural + ")";
+                               + count + " " + type + plural + ")";
             toggleLogPaneButton.setTitle(msg);
         }
 
@@ -499,8 +499,8 @@ public class SteppingPresenter
 
     private void refreshEditorIO(final ElementPresenter elementPresenter, final SharedElementData elementData) {
 
-        final String input = GwtNullSafe.string(elementData.getInput());
-        final String output = GwtNullSafe.string(elementData.getOutput());
+        final String input = NullSafe.string(elementData.getInput());
+        final String output = NullSafe.string(elementData.getOutput());
 
         elementPresenter.setInput(
                 input,
@@ -641,7 +641,7 @@ public class SteppingPresenter
                         if (busyTranslating) {
                             final StepLocation progressLocation = response.getProgressLocation();
                             stepMessage.getElement().setInnerHTML("Stepping... " +
-                                    getStepLocationText(progressLocation));
+                                                                  getStepLocationText(progressLocation));
                             requestBuilder.sessionUuid(response.getSessionUuid());
                             poll();
                         } else {
@@ -666,10 +666,10 @@ public class SteppingPresenter
         }
 
         return "[" +
-                stepLocation.getMetaId() + ":" +
-                (stepLocation.getPartIndex() + 1) + ":" +
-                (stepLocation.getRecordIndex() + 1) +
-                "]";
+               stepLocation.getMetaId() + ":" +
+               (stepLocation.getPartIndex() + 1) + ":" +
+               (stepLocation.getRecordIndex() + 1) +
+               "]";
     }
 
     public void terminate() {
@@ -702,9 +702,9 @@ public class SteppingPresenter
                 steppingResult = currentResult;
             } else {
                 if (lastFoundResult != null
-                        && Objects.equals(currentResult.getFoundLocation(), lastFoundResult.getFoundLocation())
-                        && GwtNullSafe.isEmptyCollection(currentResult.getGeneralErrors())
-                        && !GwtNullSafe.test(currentResult.getStepData(), SharedStepData::hasIndicators)) {
+                    && Objects.equals(currentResult.getFoundLocation(), lastFoundResult.getFoundLocation())
+                    && NullSafe.isEmptyCollection(currentResult.getGeneralErrors())
+                    && !NullSafe.test(currentResult.getStepData(), SharedStepData::hasIndicators)) {
                     // Same location as last time and no errors/indicators in the curr result, so just display
                     // the last one.
                     steppingResult = lastFoundResult;
@@ -713,7 +713,7 @@ public class SteppingPresenter
                 }
             }
         }
-        return GwtNullSafe.get(steppingResult, SteppingResult::getStepData);
+        return NullSafe.get(steppingResult, SteppingResult::getStepData);
     }
 
     private void updateElementSeverities() {
@@ -826,12 +826,12 @@ public class SteppingPresenter
 
     private Optional<String> getFatalErrors(final SteppingResult steppingResult) {
         if (steppingResult.getStepData() != null
-                && steppingResult.getStepData().getElementMap() != null) {
+            && steppingResult.getStepData().getElementMap() != null) {
             final String txt = steppingResult.getStepData().getElementMap()
                     .values()
                     .stream()
                     .flatMap(sharedElementData -> {
-                        final Set<StoredError> errors = GwtNullSafe.getOrElseGet(
+                        final Set<StoredError> errors = NullSafe.getOrElseGet(
                                 sharedElementData.getIndicators(),
                                 Indicators::getUniqueErrorSet,
                                 HashSet::new);

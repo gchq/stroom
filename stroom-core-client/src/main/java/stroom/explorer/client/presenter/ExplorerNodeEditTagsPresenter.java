@@ -30,7 +30,7 @@ import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNo
 import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -83,9 +83,9 @@ public class ExplorerNodeEditTagsPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowEditNodeTagsDialogEvent event) {
-//        GWT.log("onCreate: " + GwtNullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
-        explorerNodes = GwtNullSafe.list(event.getExplorerNodes());
-        if (GwtNullSafe.isEmptyCollection(explorerNodes)) {
+//        GWT.log("onCreate: " + NullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
+        explorerNodes = NullSafe.list(event.getExplorerNodes());
+        if (NullSafe.isEmptyCollection(explorerNodes)) {
             AlertEvent.fireError(this, "No explorer nodes supplied", null);
         } else {
             final List<DocRef> docRefs = explorerNodes.stream()
@@ -122,7 +122,7 @@ public class ExplorerNodeEditTagsPresenter
     }
 
     private String getNodeName() {
-        if (GwtNullSafe.hasItems(explorerNodes)) {
+        if (NullSafe.hasItems(explorerNodes)) {
             return explorerNodes.size() > 1
                     ? explorerNodes.size() + " Documents"
                     : explorerNodes.get(0).getName();
@@ -160,7 +160,7 @@ public class ExplorerNodeEditTagsPresenter
                     e.hide();
                 }
             } else {
-                if (GwtNullSafe.hasItems(editedTags)) {
+                if (NullSafe.hasItems(editedTags)) {
                     addTagsToNodes(e, editedTags);
                 } else {
                     e.hide();
@@ -215,19 +215,19 @@ public class ExplorerNodeEditTagsPresenter
     }
 
     private boolean isSingleDocRef() {
-        return GwtNullSafe.size(explorerNodes) == 1;
+        return NullSafe.size(explorerNodes) == 1;
     }
 
     private ExplorerNode getSingleNode() {
         if (isSingleDocRef()) {
             return explorerNodes.get(0);
         } else {
-            throw new RuntimeException("Expecting one node, found " + GwtNullSafe.size(explorerNodes));
+            throw new RuntimeException("Expecting one node, found " + NullSafe.size(explorerNodes));
         }
     }
 
     private List<DocRef> getNodeDocRefs() {
-        return GwtNullSafe.stream(explorerNodes)
+        return NullSafe.stream(explorerNodes)
                 .filter(Objects::nonNull)
                 .map(ExplorerNode::getDocRef)
                 .filter(Objects::nonNull)

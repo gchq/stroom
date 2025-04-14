@@ -27,10 +27,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

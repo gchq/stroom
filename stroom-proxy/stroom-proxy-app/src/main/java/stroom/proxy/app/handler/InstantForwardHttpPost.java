@@ -2,6 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapFilterFactory;
 
 import jakarta.inject.Inject;
 

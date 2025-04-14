@@ -24,13 +24,13 @@ import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -216,7 +216,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
             if (!invalidFeedNames.isEmpty()) {
                 LOGGER.error("Found {} incorrect feed names {} " +
-                                "in effectiveStreamSet for key {}",
+                             "in effectiveStreamSet for key {}",
                         invalidFeedNames.size(), invalidFeedNames, key);
             }
 
@@ -227,7 +227,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
             if (!invalidTypes.isEmpty()) {
                 LOGGER.error("Found {} incorrect stream type names {} " +
-                                "in effectiveStreamSet for key {}",
+                             "in effectiveStreamSet for key {}",
                         invalidTypes.size(), invalidTypes, key);
             }
 
@@ -237,7 +237,7 @@ public class EffectiveStreamCache implements Clearable, HasSystemInfo {
 
             if (!metasOutsideKeyWindow.isEmpty()) {
                 LOGGER.error("Found {} effective streams with an effective time " +
-                                "outside the key window. key: {}, invalid effective streams:\n{}",
+                             "outside the key window. key: {}, invalid effective streams:\n{}",
                         metasOutsideKeyWindow.size(), key, effectiveStreamsToString(metasOutsideKeyWindow));
             }
         } catch (RuntimeException e) {

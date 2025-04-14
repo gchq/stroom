@@ -2,9 +2,9 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.EmailContent;
 import stroom.analytics.shared.NotificationEmailDestination;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.JinjavaConfig;
@@ -107,10 +107,10 @@ public class RuleEmailTemplatingService {
             final String detail = errors.stream()
                     .map(error ->
                             error.getSeverity() + ": "
-                                    + error.getMessage()
-                                    + ", at " + error.getLineno() + ":" + error.getStartPosition()
-                                    + ", reason: " + error.getReason()
-                                    + ", fieldName: " + error.getFieldName())
+                            + error.getMessage()
+                            + ", at " + error.getLineno() + ":" + error.getStartPosition()
+                            + ", reason: " + error.getReason()
+                            + ", fieldName: " + error.getFieldName())
                     .collect(Collectors.joining("\n"));
             return prefix + "\n" + detail;
         }
@@ -153,7 +153,7 @@ public class RuleEmailTemplatingService {
                 }
                 if (!dupKeys.isEmpty()) {
                     LOGGER.warn("Duplicate names {} found in detection values for detector '{}' ({}). " +
-                                    "The first value will be used in each case.",
+                                "The first value will be used in each case.",
                             dupKeys, detection.getDetectorName(), detection.getDetectorUuid());
                 }
             }

@@ -26,7 +26,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -355,6 +355,27 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         final List<ExplorerTreeNode> children = explorerTreeDao.getChildren(parentNode);
         return children.stream()
                 .filter(n -> name.equals(n.getName()))
+                .map(this::createExplorerNode)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ExplorerNode> getNodesByNameAndType(final ExplorerNode parent,
+                                                    final String name,
+                                                    final String type) {
+
+        ExplorerTreeNode parentNode = null;
+        if (parent != null) {
+            parentNode = explorerTreeDao.findByUUID(parent.getUuid());
+            if (parentNode == null) {
+                throw new RuntimeException("Unable to find parent node");
+            }
+        }
+
+        final List<ExplorerTreeNode> children = explorerTreeDao.getChildrenByNameAndType(
+                parentNode, name, type);
+
+        return children.stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
     }

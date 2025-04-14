@@ -3,12 +3,16 @@ package stroom.proxy.app.handler;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.repo.store.FileStores;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Objects;
 
 public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDestinationFactory {
 
@@ -22,6 +26,7 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
     private final DataDirProvider dataDirProvider;
     private final SimplePathCreator simplePathCreator;
     private final HttpSenderFactory httpSenderFactory;
+    private final FileStores fileStores;
 
     @Inject
     public ForwardHttpPostDestinationFactoryImpl(final CleanupDirQueue cleanupDirQueue,
@@ -30,7 +35,8 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
                                                  final Provider<ProxyConfig> proxyConfigProvider,
                                                  final DataDirProvider dataDirProvider,
                                                  final SimplePathCreator simplePathCreator,
-                                                 final HttpSenderFactory httpSenderFactory) {
+                                                 final HttpSenderFactory httpSenderFactory,
+                                                 final FileStores fileStores) {
         this.cleanupDirQueue = cleanupDirQueue;
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
@@ -38,6 +44,7 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
         this.dataDirProvider = dataDirProvider;
         this.simplePathCreator = simplePathCreator;
         this.httpSenderFactory = httpSenderFactory;
+        this.fileStores = fileStores;
     }
 
     @Override
@@ -66,19 +73,16 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
             final ForwardHttpPostDestination forwardHttpPostDestination) {
 
         final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
-        final ForwardDestination destination;
-        if (forwardQueueConfig != null) {
-            // We have queue config so wrap out ultimate destination with some queue/retry logic
-            destination = new RetryingForwardDestination(
-                    forwardQueueConfig,
-                    forwardHttpPostDestination,
-                    dataDirProvider,
-                    simplePathCreator,
-                    dirQueueFactory,
-                    proxyServices);
-        } else {
-            destination = forwardHttpPostDestination;
-        }
-        return destination;
+        Objects.requireNonNull(forwardQueueConfig, () -> LogUtil.message(
+                "No forwardQueueConfig set for destination '{}'", config.getName()));
+        // We have queue config so wrap out ultimate destination with some queue/retry logic
+        return new RetryingForwardDestination(
+                forwardQueueConfig,
+                forwardHttpPostDestination,
+                dataDirProvider,
+                simplePathCreator,
+                dirQueueFactory,
+                proxyServices,
+                fileStores);
     }
 }

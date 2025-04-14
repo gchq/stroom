@@ -29,7 +29,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -94,7 +94,7 @@ public class NewPipelineReferencePresenter
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                GwtNullSafe.consume(
+                NullSafe.consume(
                         extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
                         ExplorerTreeFilter::createTagQuickFilterInput,
                         pipelinePresenter::setQuickFilter);

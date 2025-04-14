@@ -17,7 +17,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -83,7 +83,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         final DocRefCell.Builder<FindResultWithPermissions> cellBuilder =
                 new DocRefCell.Builder<FindResultWithPermissions>()
                         .eventBus(getEventBus())
-                        .docRefFunction(row2 -> GwtNullSafe.get(
+                        .docRefFunction(row2 -> NullSafe.get(
                                 row2,
                                 FindResultWithPermissions::getFindResult,
                                 FindResult::getDocRef))
@@ -98,7 +98,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                 new Column<FindResultWithPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
-                        return GwtNullSafe.get(
+                        return NullSafe.get(
                                 row,
                                 FindResultWithPermissions::getPermissions,
                                 DocumentUserPermissions::getPermission,
@@ -112,7 +112,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                 new Column<FindResultWithPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
-                        return GwtNullSafe.get(
+                        return NullSafe.get(
                                 row,
                                 FindResultWithPermissions::getPermissions,
                                 DocumentUserPermissions::getInheritedPermission,
@@ -126,7 +126,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                 new Column<FindResultWithPermissions, String>(new TextCell()) {
                     @Override
                     public String getValue(final FindResultWithPermissions row) {
-                        return GwtNullSafe.get(
+                        return NullSafe.get(
                                 row,
                                 FindResultWithPermissions::getFindResult,
                                 FindResult::getPath);
@@ -139,7 +139,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));
@@ -152,7 +152,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getInheritedDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));

@@ -156,7 +156,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     }
 
     public void selectTab(final TabData tab) {
-//        GWT.log("docRef: " + docRef + ", selecting tab " + GwtNullSafe.get(tab, TabData::getLabel));
+//        GWT.log("docRef: " + docRef + ", selecting tab " + NullSafe.get(tab, TabData::getLabel));
         final TaskMonitor taskMonitor = createTaskMonitor();
         final Task task = new SimpleTask("Selecting tab");
         taskMonitor.onStart(task);

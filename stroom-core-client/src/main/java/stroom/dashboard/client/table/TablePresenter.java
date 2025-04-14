@@ -90,7 +90,7 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.RandomId;
@@ -402,11 +402,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
+            final DocRef dataSource = currentSearchModel.getIndexLoader().getLoadedDataSourceRef();
+            final boolean changedDataSource = !Objects.equals(columnSelectionListModel.getDataSourceRef(), dataSource);
+            columnSelectionListModel.setDataSourceRef(dataSource);
 
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
                 addColumnPopup.init(columnSelectionListModel);
+            } else if (changedDataSource) {
+                addColumnPopup.refresh();
             }
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
@@ -1015,9 +1019,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
-                tableComponentSettings.getPageSize() == null
-                        ? 100
-                        : tableComponentSettings.getPageSize()));
+                NullSafe.getOrElse(tableComponentSettings, TableComponentSettings::getPageSize, 100)));
     }
 
     @Override
@@ -1099,7 +1101,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ColumnRef> getColumns() {
-        return GwtNullSafe.list(getTableComponentSettings().getColumns())
+        return NullSafe.list(getTableComponentSettings().getColumns())
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
                 .collect(Collectors.toList());
@@ -1107,7 +1109,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumns());
         return TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 

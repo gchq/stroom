@@ -55,8 +55,8 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
@@ -131,12 +131,12 @@ public class EmbeddedQueryPresenter
 
             @Override
             public OffsetRange getRequestedRange() {
-                return GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getRequestedRange);
+                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getRequestedRange);
             }
 
             @Override
             public Set<String> getOpenGroups() {
-                return GwtNullSafe.get(currentTablePresenter, QueryResultTablePresenter::getOpenGroups);
+                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getOpenGroups);
             }
 
             @Override
@@ -216,12 +216,12 @@ public class EmbeddedQueryPresenter
 
             @Override
             public OffsetRange getRequestedRange() {
-                return GwtNullSafe.get(currentVisPresenter, QueryResultVisPresenter::getRequestedRange);
+                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getRequestedRange);
             }
 
             @Override
             public Set<String> getOpenGroups() {
-                return GwtNullSafe.get(currentVisPresenter, QueryResultVisPresenter::getOpenGroups);
+                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getOpenGroups);
             }
 
             @Override
@@ -263,7 +263,7 @@ public class EmbeddedQueryPresenter
                         start = false;
                     }
 
-                    if (!GwtNullSafe.isBlankString(visResult.getJsonData())) {
+                    if (!NullSafe.isBlankString(visResult.getJsonData())) {
                         hasData = true;
                     }
 
@@ -297,7 +297,7 @@ public class EmbeddedQueryPresenter
                 () -> getQuerySettings()
                         .getQueryTablePreferences()
                         .copy()
-                        .selectionFilter(GwtNullSafe.get(currentTablePresenter,
+                        .selectionFilter(NullSafe.get(currentTablePresenter,
                                 QueryResultTablePresenter::getCurrentSelectionFilter))
                         .build());
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
@@ -518,7 +518,7 @@ public class EmbeddedQueryPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory,
                      final ExpressionOperator additionalQueryExpression) {
-        if (GwtNullSafe.isNonBlankString(query)) {
+        if (NullSafe.isNonBlankString(query)) {
             currentErrors = null;
 
             // Clear the table selection and any markers.
@@ -593,7 +593,8 @@ public class EmbeddedQueryPresenter
                             queryModel.init(result.asDocRef());
                             query = result.getQuery();
                             initialised = true;
-                            if (queryOnOpen) {
+                            final Automate automate = settings.getAutomate();
+                            if (queryOnOpen || automate.isOpen()) {
                                 run(true, false);
                             }
                         }
@@ -744,6 +745,7 @@ public class EmbeddedQueryPresenter
     protected void changeSettings() {
         super.changeSettings();
         if (currentTablePresenter != null) {
+            currentTablePresenter.changeSettings();
             currentTablePresenter.refresh();
         }
         loadEmbeddedQuery();

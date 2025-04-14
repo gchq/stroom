@@ -19,7 +19,7 @@ package stroom.widget.menu.client.presenter;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -37,11 +37,12 @@ public class IconMenuItem extends MenuItem {
                            final SvgImage disabledIcon,
                            final IconColour iconColour,
                            final SafeHtml text,
+                           final SafeHtml tooltip,
                            final Action action,
                            final boolean enabled,
                            final Command command,
                            final boolean highlight) {
-        super(priority, text, action, enabled, command);
+        super(priority, text, tooltip, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
@@ -73,7 +74,7 @@ public class IconMenuItem extends MenuItem {
         protected boolean highlight;
 
         public B icon(final Preset svgPreset) {
-            this.enabledIcon = GwtNullSafe.get(svgPreset, Preset::getSvgImage);
+            this.enabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 
@@ -83,7 +84,7 @@ public class IconMenuItem extends MenuItem {
         }
 
         public B disabledIcon(final Preset svgPreset) {
-            this.disabledIcon = GwtNullSafe.get(svgPreset, Preset::getSvgImage);
+            this.disabledIcon = NullSafe.get(svgPreset, Preset::getSvgImage);
             return self();
         }
 
@@ -125,6 +126,7 @@ public class IconMenuItem extends MenuItem {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     command,

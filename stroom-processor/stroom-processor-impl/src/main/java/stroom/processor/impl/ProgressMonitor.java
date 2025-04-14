@@ -1,12 +1,12 @@
 package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorFilter;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -138,7 +138,7 @@ public class ProgressMonitor {
                     sb.append("\n");
                     sb.append("Final: ");
                     sb.append(filterProgressMonitor.initialCount +
-                            filterProgressMonitor.added.get());
+                              filterProgressMonitor.added.get());
 
                     // Only show phase detail in trace log.
                     if (showPhaseDetail) {

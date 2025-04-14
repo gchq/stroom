@@ -11,10 +11,10 @@ import stroom.aws.s3.shared.AwsTag;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -477,9 +477,9 @@ public class S3Manager {
 
                         final CompletedFileUpload uploadResult = fileUpload.completionFuture().join();
                         LOGGER.debug(() -> "Upload result: " +
-                                getDebugIdentity(bucketName, key) +
-                                ", result=" +
-                                uploadResult);
+                                           getDebugIdentity(bucketName, key) +
+                                           ", result=" +
+                                           uploadResult);
                         response = uploadResult.response();
                     }
 
@@ -552,9 +552,9 @@ public class S3Manager {
 
                         final CompletedFileDownload downloadResult = downloadFile.completionFuture().join();
                         LOGGER.debug(() -> "Download result: " +
-                                getDebugIdentity(bucketName, key) +
-                                ", result=" +
-                                downloadResult);
+                                           getDebugIdentity(bucketName, key) +
+                                           ", result=" +
+                                           downloadResult);
                         response = downloadResult.response();
                     }
 
@@ -710,9 +710,9 @@ public class S3Manager {
                        final String key,
                        final Exception e) {
         LOGGER.debug(() -> message +
-                getDebugIdentity(bucketName, key) +
-                ", message=" +
-                e.getMessage(), e);
+                           getDebugIdentity(bucketName, key) +
+                           ", message=" +
+                           e.getMessage(), e);
     }
 
     private void error(final String message,
@@ -720,15 +720,15 @@ public class S3Manager {
                        final String key,
                        final Exception e) {
         LOGGER.error(() -> message +
-                getDebugIdentity(bucketName, key) +
-                ", message=" +
-                e.getMessage(), e);
+                           getDebugIdentity(bucketName, key) +
+                           ", message=" +
+                           e.getMessage(), e);
     }
 
     private String getDebugIdentity(final String bucketName,
                                     final String key) {
         return "bucketName=" +
-                bucketName +
-                Optional.ofNullable(key).map(k -> ", key=" + k).orElse("");
+               bucketName +
+               Optional.ofNullable(key).map(k -> ", key=" + k).orElse("");
     }
 }

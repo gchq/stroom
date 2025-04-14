@@ -18,7 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -93,11 +93,11 @@ public class ExplorerNode implements HasDisplayValue {
         this.name = name;
         this.tags = tags;
         this.depth = depth;
-        this.children = GwtNullSafe.get(children, Collections::unmodifiableList);
+        this.children = NullSafe.get(children, Collections::unmodifiableList);
         this.rootNodeUuid = rootNodeUuid;
         this.uniqueKey = uniqueKey;
-        this.nodeInfoList = GwtNullSafe.get(nodeInfoList, Collections::unmodifiableList);
-        this.nodeFlags = GwtNullSafe.get(nodeFlags, EnumSet::copyOf);
+        this.nodeInfoList = NullSafe.get(nodeInfoList, Collections::unmodifiableList);
+        this.nodeFlags = NullSafe.get(nodeFlags, EnumSet::copyOf);
     }
 
     public static ExplorerNode fromExplorerNodeKey(final ExplorerNodeKey explorerNodeKey) {
@@ -125,7 +125,7 @@ public class ExplorerNode implements HasDisplayValue {
      * @return True if this node's set of tags contains ALL the passed tags.
      */
     public boolean hasTags(final Set<String> tags) {
-        return GwtNullSafe.set(this.tags)
+        return NullSafe.set(this.tags)
                 .containsAll(tags);
     }
 
@@ -172,7 +172,7 @@ public class ExplorerNode implements HasDisplayValue {
      * @return True if this node has {@link NodeInfo} items.
      */
     public boolean hasNodeInfo() {
-        return GwtNullSafe.hasItems(nodeInfoList);
+        return NullSafe.hasItems(nodeInfoList);
     }
 
     /**
@@ -194,7 +194,7 @@ public class ExplorerNode implements HasDisplayValue {
         if (nodeFlag == null) {
             return false;
         } else {
-            return GwtNullSafe.set(nodeFlags).contains(nodeFlag);
+            return NullSafe.set(nodeFlags).contains(nodeFlag);
         }
     }
 
@@ -214,7 +214,7 @@ public class ExplorerNode implements HasDisplayValue {
      * @return True if this node's set of {@link NodeFlag}s contains ALL the flags in nodeFlags.
      */
     public boolean hasNodeFlags(final NodeFlag... nodeFlags) {
-        return GwtNullSafe.set(this.nodeFlags)
+        return NullSafe.set(this.nodeFlags)
                 .containsAll(Arrays.asList(nodeFlags));
     }
 
@@ -222,7 +222,7 @@ public class ExplorerNode implements HasDisplayValue {
      * @return True if this node's set of {@link NodeFlag}s contains ALL the flags in nodeFlags.
      */
     public boolean hasNodeFlags(final Set<NodeFlag> nodeFlags) {
-        return GwtNullSafe.set(this.nodeFlags)
+        return NullSafe.set(this.nodeFlags)
                 .containsAll(nodeFlags);
     }
 
@@ -230,15 +230,15 @@ public class ExplorerNode implements HasDisplayValue {
      * @return True if this node's set of {@link NodeFlag}s is missing nodeFlag.
      */
     public boolean isMissingNodeFlag(final NodeFlag nodeFlag) {
-        return !GwtNullSafe.set(nodeFlags).contains(nodeFlag);
+        return !NullSafe.set(nodeFlags).contains(nodeFlag);
     }
 
     /**
      * @return True if this node's set of {@link NodeFlag}s is missing ALL the flags in nodeFlags.
      */
     public boolean isMissingNodeFlags(final NodeFlag... nodeFlags) {
-        if (GwtNullSafe.hasItems(this.nodeFlags)) {
-            return GwtNullSafe.stream(nodeFlags)
+        if (NullSafe.hasItems(this.nodeFlags)) {
+            return NullSafe.stream(nodeFlags)
                     .noneMatch(this.nodeFlags::contains);
         } else {
             return true;
@@ -295,7 +295,7 @@ public class ExplorerNode implements HasDisplayValue {
     }
 
     public static String buildDocRefPathString(final Collection<DocRef> path) {
-        if (GwtNullSafe.isEmptyCollection(path)) {
+        if (NullSafe.isEmptyCollection(path)) {
             return "";
         } else {
             return path.stream()
@@ -306,7 +306,7 @@ public class ExplorerNode implements HasDisplayValue {
     }
 
     public static String buildNodePathString(final Collection<ExplorerNode> path) {
-        if (GwtNullSafe.isEmptyCollection(path)) {
+        if (NullSafe.isEmptyCollection(path)) {
             return "";
         } else {
             return path.stream()
@@ -342,10 +342,10 @@ public class ExplorerNode implements HasDisplayValue {
             this.name = explorerNode.name;
             this.tags = explorerNode.tags;
             this.depth = explorerNode.depth;
-            this.children = GwtNullSafe.get(explorerNode.children, ArrayList::new);
+            this.children = NullSafe.get(explorerNode.children, ArrayList::new);
             this.rootNodeUuid = explorerNode.rootNodeUuid;
-            this.nodeInfoList = GwtNullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
-            this.nodeFlags = GwtNullSafe.get(explorerNode.nodeFlags, EnumSet::copyOf);
+            this.nodeInfoList = NullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
+            this.nodeFlags = NullSafe.get(explorerNode.nodeFlags, EnumSet::copyOf);
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -377,7 +377,7 @@ public class ExplorerNode implements HasDisplayValue {
          * Set the tags on this builder to tags
          */
         public Builder tags(final Set<String> tags) {
-            this.tags = GwtNullSafe.hasItems(tags)
+            this.tags = NullSafe.hasItems(tags)
                     ? new HashSet<>(tags)
                     : null;
             return this;
@@ -387,7 +387,7 @@ public class ExplorerNode implements HasDisplayValue {
          * Add a single tag to the builder
          */
         public Builder addTag(final String tag) {
-            if (!GwtNullSafe.isBlankString(tag)) {
+            if (!NullSafe.isBlankString(tag)) {
                 if (this.tags == null) {
                     this.tags = new HashSet<>();
                 }
@@ -400,7 +400,7 @@ public class ExplorerNode implements HasDisplayValue {
          * Add multiple tags to the builder
          */
         public Builder addTags(final Set<String> tags) {
-            if (GwtNullSafe.hasItems(tags)) {
+            if (NullSafe.hasItems(tags)) {
                 if (this.tags == null) {
                     this.tags = new HashSet<>();
                 }
@@ -410,8 +410,8 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder addTags(final String... tags) {
-            if (GwtNullSafe.hasItems(tags)) {
-                addTags(GwtNullSafe.asSet(tags));
+            if (NullSafe.hasItems(tags)) {
+                addTags(NullSafe.asSet(tags));
             }
             return this;
         }
@@ -435,7 +435,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public boolean hasChildren() {
-            return GwtNullSafe.hasItems(children);
+            return NullSafe.hasItems(children);
         }
 
         public Builder rootNodeUuid(final String rootNodeUuid) {
@@ -444,12 +444,12 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder rootNodeUuid(final ExplorerNode node) {
-            this.rootNodeUuid = GwtNullSafe.get(node, ExplorerNode::getUuid);
+            this.rootNodeUuid = NullSafe.get(node, ExplorerNode::getUuid);
             return this;
         }
 
         public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
-            if (GwtNullSafe.hasItems(nodeInfoList)) {
+            if (NullSafe.hasItems(nodeInfoList)) {
                 this.nodeInfoList = new ArrayList<>(nodeInfoList);
             } else {
                 this.nodeInfoList = null;
@@ -468,7 +468,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder addNodeInfo(final Collection<NodeInfo> nodeInfoList) {
-            if (GwtNullSafe.hasItems(nodeInfoList)) {
+            if (NullSafe.hasItems(nodeInfoList)) {
                 if (this.nodeInfoList == null) {
                     this.nodeInfoList = new ArrayList<>();
                 }
@@ -478,7 +478,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder nodeFlags(final Set<NodeFlag> nodeFlags) {
-            if (GwtNullSafe.hasItems(nodeFlags)) {
+            if (NullSafe.hasItems(nodeFlags)) {
                 NodeFlag.validateFlags(nodeFlags);
                 this.nodeFlags = EnumSet.copyOf(nodeFlags);
             } else {
@@ -502,7 +502,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder removeNodeFlag(final NodeFlag nodeFlag) {
-            if (nodeFlag != null && GwtNullSafe.hasItems(this.nodeFlags)) {
+            if (nodeFlag != null && NullSafe.hasItems(this.nodeFlags)) {
                 this.nodeFlags.remove(nodeFlag);
             }
             return this;
@@ -557,7 +557,7 @@ public class ExplorerNode implements HasDisplayValue {
         }
 
         public Builder addNodeFlags(final NodeFlag... nodeFlags) {
-            if (GwtNullSafe.hasItems(nodeFlags)) {
+            if (NullSafe.hasItems(nodeFlags)) {
                 if (this.nodeFlags == null) {
                     this.nodeFlags = EnumSet.noneOf(NodeFlag.class);
                 }

@@ -39,10 +39,10 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 

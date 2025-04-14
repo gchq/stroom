@@ -5,7 +5,7 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class QuickFilterExpressionParser {
         // (field1:bad OR field2:bad) AND (field1:stuff OR field2:stuff)
 
         ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        if (GwtNullSafe.isNonBlankString(userInput)) {
+        if (NullSafe.isNonBlankString(userInput)) {
             extractMatchTokens(userInput, defaultFields, fieldMap, builder);
         }
         return builder.build();

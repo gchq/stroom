@@ -28,7 +28,7 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -111,7 +111,7 @@ public class ExplorerTreeModel {
     }
 
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerTreeFilterBuilder.nodeFlags(GwtNullSafe.asSet(nodeFlags));
+        explorerTreeFilterBuilder.nodeFlags(NullSafe.asSet(nodeFlags));
     }
 
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
@@ -124,7 +124,7 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
-        if (GwtNullSafe.hasItems(ensureVisible)) {
+        if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -137,7 +137,7 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
-        if (GwtNullSafe.hasItems(ensureVisible)) {
+        if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -207,8 +207,8 @@ public class ExplorerTreeModel {
     private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
 //        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
-//                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
-//                + " tempOpenedItems: " + GwtNullSafe.size(result.getTemporaryOpenedItems()));
+//                + " openItems: " + NullSafe.size(result.getOpenedItems())
+//                + " tempOpenedItems: " + NullSafe.size(result.getTemporaryOpenedItems()));
 
         fetching = false;
         // Check if the filter settings have changed
@@ -242,9 +242,9 @@ public class ExplorerTreeModel {
             // that try and select one of the folders that has been forced open in an attempt to
             // make the requested item visible.
             ExplorerNode nextSelection = forceSelection;
-            if (nextSelection == null && GwtNullSafe.hasItems(criteria.getEnsureVisible())) {
+            if (nextSelection == null && NullSafe.hasItems(criteria.getEnsureVisible())) {
                 final ExplorerNodeKey ensureVisibleUniqueKey = criteria.getEnsureVisible().iterator().next();
-                nextSelection = GwtNullSafe.get(ensureVisibleUniqueKey, ExplorerNode::fromExplorerNodeKey);
+                nextSelection = NullSafe.get(ensureVisibleUniqueKey, ExplorerNode::fromExplorerNodeKey);
 
                 // If we are allowing null selection then select the NULL node if we have been
                 // asked to ensure NULL is selected after refresh.
@@ -312,7 +312,7 @@ public class ExplorerTreeModel {
         if (includeNullSelection) {
             if (rows.isEmpty() || rows.get(0) != NULL_SELECTION) {
                 // If there is any quick filter then NULL_SELECTION is a non-match
-                final boolean isFilterMatch = GwtNullSafe.isBlankString(GwtNullSafe.get(
+                final boolean isFilterMatch = NullSafe.isBlankString(NullSafe.get(
                         currentCriteria,
                         FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));

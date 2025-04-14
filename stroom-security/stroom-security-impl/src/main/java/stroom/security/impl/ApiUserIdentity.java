@@ -5,8 +5,8 @@ import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.HasJwtClaims;
 import stroom.security.shared.HasUserRef;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import org.jose4j.jwt.JwtClaims;

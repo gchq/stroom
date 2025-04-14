@@ -44,7 +44,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
+import stroom.util.logging.SimpleMetrics;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -147,8 +147,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         final DataStore dataStore = create(tableSettings);
 
-        Metrics.setEnabled(true);
-        Metrics.measure("Added data", () -> {
+        SimpleMetrics.setEnabled(true);
+        SimpleMetrics.measure("Added data", () -> {
             for (int i = 0; i < 300_000; i++) {
                 final Val val = ValString.create("Text " + i + "test".repeat(1000));
                 dataStore.accept(Val.of(val, val));
@@ -162,9 +162,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 throw new RuntimeException(e.getMessage(), e);
             }
         });
-        Metrics.report();
+        SimpleMetrics.report();
 
-        Metrics.measure("Retrieved data", () -> {
+        SimpleMetrics.measure("Retrieved data", () -> {
             // Make sure we only get 50 results.
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
@@ -180,7 +180,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
             assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
             assertThat(searchResult.getTotalResults().intValue()).isEqualTo(50);
         });
-        Metrics.report();
+        SimpleMetrics.report();
     }
 
     @Disabled
@@ -337,7 +337,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         reading.set(false);
         CompletableFuture.allOf(readers).join();
 
-        Metrics.measure("Retrieved data", () -> {
+        SimpleMetrics.measure("Retrieved data", () -> {
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId("componentX")
                     .addMappings(tableSettings)
@@ -350,7 +350,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     dataStore,
                     tableResultRequest);
         });
-        Metrics.report();
+        SimpleMetrics.report();
     }
 
     @Test

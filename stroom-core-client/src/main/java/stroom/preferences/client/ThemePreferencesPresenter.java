@@ -23,7 +23,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -79,9 +79,9 @@ public final class ThemePreferencesPresenter
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setEnableTransparency(
-                GwtNullSafe.requireNonNullElse(userPreferences.getEnableTransparency(), true));
+                NullSafe.requireNonNullElse(userPreferences.getEnableTransparency(), true));
         getView().setHideConditionalStyles(
-                GwtNullSafe.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
+                NullSafe.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
     }
 
     public void write(final UserPreferences.Builder builder) {

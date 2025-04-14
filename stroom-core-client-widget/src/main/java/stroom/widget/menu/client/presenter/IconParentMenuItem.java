@@ -35,11 +35,21 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                                  final SvgImage disabledIcon,
                                  final IconColour iconColour,
                                  final SafeHtml text,
+                                 final SafeHtml tooltip,
                                  final Action action,
                                  final boolean enabled,
                                  final boolean highlight,
                                  final Future<List<Item>> children) {
-        super(priority, enabledIcon, disabledIcon, iconColour, text, action, enabled, null, highlight);
+        super(priority,
+                enabledIcon,
+                disabledIcon,
+                iconColour,
+                text,
+                tooltip,
+                action,
+                enabled,
+                null,
+                highlight);
         this.children = children;
     }
 
@@ -79,6 +89,7 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     highlight,

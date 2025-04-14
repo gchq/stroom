@@ -28,7 +28,7 @@ import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -98,7 +98,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     public void onRemove(final ClickEvent event) {
         final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
-        if (GwtNullSafe.hasItems(selected)) {
+        if (NullSafe.hasItems(selected)) {
             String message = "Are you sure you want to remove this imported dictionary?";
             if (selected.size() > 1) {
                 message = "Are you sure you want to remove these imported dictionaries?";
@@ -161,7 +161,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     private void enableButtons() {
         final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
         addButton.setEnabled(!readOnly);
-        removeButton.setEnabled(!readOnly && GwtNullSafe.hasItems(selectionModel.getSelectedItems()));
+        removeButton.setEnabled(!readOnly && NullSafe.hasItems(selectionModel.getSelectedItems()));
 
         if (readOnly) {
             addButton.setTitle("Add import disabled as this dictionary is read only");

@@ -16,7 +16,7 @@
 
 package stroom.util.collections;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.collect.ForwardingQueue;
 

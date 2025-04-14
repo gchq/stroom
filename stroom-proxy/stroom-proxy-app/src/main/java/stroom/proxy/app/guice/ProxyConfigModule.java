@@ -10,8 +10,6 @@ import stroom.util.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ProxyConfigModule extends AbstractModule {
 
@@ -36,6 +34,9 @@ public class ProxyConfigModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ProxyConfigMonitor.class);
+
+        HasHealthCheckBinder.create(binder())
+                .bind(ProxyConfigMonitor.class);
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice

@@ -1,7 +1,6 @@
 package stroom.test.common;
 
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
@@ -11,6 +10,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

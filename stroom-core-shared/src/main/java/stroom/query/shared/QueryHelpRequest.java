@@ -19,7 +19,7 @@ package stroom.query.shared;
 import stroom.docref.DocRef;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -84,7 +84,7 @@ public class QueryHelpRequest extends BaseCriteria {
     }
 
     public boolean isTypeIncluded(final QueryHelpType queryHelpType) {
-        if (queryHelpType == null || GwtNullSafe.isEmptyCollection(includedTypes)) {
+        if (queryHelpType == null || NullSafe.isEmptyCollection(includedTypes)) {
             return false;
         } else {
             return includedTypes.contains(queryHelpType);

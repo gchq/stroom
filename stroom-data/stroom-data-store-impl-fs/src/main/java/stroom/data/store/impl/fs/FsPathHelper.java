@@ -19,12 +19,12 @@ package stroom.data.store.impl.fs;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 
@@ -178,8 +178,8 @@ class FsPathHelper {
     String getBaseName(Meta meta) {
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
         return feedPath +
-                FILE_SEPARATOR_CHAR +
-                FsPrefixUtil.padId(meta.getId());
+               FILE_SEPARATOR_CHAR +
+               FsPrefixUtil.padId(meta.getId());
     }
 
     /**
@@ -212,11 +212,11 @@ class FsPathHelper {
         final String paddedId = FsPrefixUtil.padId(meta.getId());
 
         final String fileName = "" +
-                feedPath +
-                FILE_SEPARATOR_CHAR +
-                paddedId +
-                "." +
-                buildRootExtension(streamTypeName);
+                                feedPath +
+                                FILE_SEPARATOR_CHAR +
+                                paddedId +
+                                "." +
+                                buildRootExtension(streamTypeName);
 
         Path result = volumePath;
         result = result
@@ -233,8 +233,8 @@ class FsPathHelper {
 
     private String buildRootExtension(final String streamTypeName) {
         return streamTypeExtensions.getExtension(streamTypeName) +
-                "." +
-                getFileStoreType(streamTypeName);
+               "." +
+               getFileStoreType(streamTypeName);
     }
 
     Set<Path> findRootStreamFiles(final String streamTypeName, final Path parentPath) {
@@ -276,7 +276,8 @@ class FsPathHelper {
     String decodeChildStreamType(final Path path) {
         Objects.requireNonNull(path);
 
-        final Pattern internalTypesPattern = Pattern.compile("\\.(" +
+        final Pattern internalTypesPattern = Pattern.compile(
+                "\\.(" +
                 streamTypeExtensions.getExtension(InternalStreamTypeNames.BOUNDARY_INDEX) + "|" +
                 streamTypeExtensions.getExtension(InternalStreamTypeNames.SEGMENT_INDEX) + "|" +
                 streamTypeExtensions.getExtension(InternalStreamTypeNames.MANIFEST) + ")");
@@ -337,7 +338,7 @@ class FsPathHelper {
 
     boolean isStreamTypeLazy(final String streamTypeName) {
         return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)
-                || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+               || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 
 

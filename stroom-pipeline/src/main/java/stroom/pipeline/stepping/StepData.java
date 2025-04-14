@@ -19,7 +19,7 @@ package stroom.pipeline.stepping;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.SharedStepData;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
 import java.util.Map;

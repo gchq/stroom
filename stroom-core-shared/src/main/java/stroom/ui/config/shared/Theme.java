@@ -1,6 +1,6 @@
 package stroom.ui.config.shared;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +64,7 @@ public enum Theme {
 
     public static Theme fromName(final String themeName) {
         final Theme theme = THEME_NAME_TO_THEME_MAP.get(themeName);
-        return GwtNullSafe.requireNonNullElse(theme, DEFAULT_THEME);
+        return NullSafe.requireNonNullElse(theme, DEFAULT_THEME);
     }
 
     public static List<String> getThemeNames() {
@@ -75,7 +75,7 @@ public enum Theme {
     }
 
     public static ThemeType getThemeType(final String themeName) {
-        final ThemeType themeType = GwtNullSafe.get(
+        final ThemeType themeType = NullSafe.get(
                 themeName,
                 THEME_NAME_TO_THEME_MAP::get,
                 Theme::getThemeType);
@@ -84,7 +84,7 @@ public enum Theme {
     }
 
     public static String getClassName(final String theme) {
-        return GwtNullSafe.getOrElse(
+        return NullSafe.getOrElse(
                 theme,
                 THEME_NAME_TO_THEME_MAP::get,
                 Theme::getCssClass,

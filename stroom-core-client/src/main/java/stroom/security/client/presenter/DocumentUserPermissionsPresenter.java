@@ -29,7 +29,7 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.HtmlBuilder;
@@ -176,7 +176,7 @@ public class DocumentUserPermissionsPresenter
             maxPermission = permissions.getExplicitPermission();
         }
 
-        if (GwtNullSafe.hasEntries(permissions.getInheritedPermissionPaths())) {
+        if (NullSafe.hasEntries(permissions.getInheritedPermissionPaths())) {
             sb.addNewLine();
             sb.addNewLine();
             sb.addTitle("Inherited Permissions:");
@@ -205,7 +205,7 @@ public class DocumentUserPermissionsPresenter
 
             final DescriptionBuilder sb2 = new DescriptionBuilder();
             sb2.addTitle("Effective Permission: "
-                         + GwtNullSafe.get(maxPermission, this::toDisplayValue));
+                         + NullSafe.get(maxPermission, this::toDisplayValue));
             sb2.addNewLine();
             sb2.addNewLine();
             sb2.append(sb.toSafeHtml());
@@ -223,7 +223,7 @@ public class DocumentUserPermissionsPresenter
         }
 
         final Map<String, List<String>> inheritedCreatePermPaths = permissions.getInheritedCreatePermissionPaths();
-        if (GwtNullSafe.hasEntries(inheritedCreatePermPaths)) {
+        if (NullSafe.hasEntries(inheritedCreatePermPaths)) {
             sb.addNewLine();
             sb.addNewLine();
             sb.addTitle("Inherited Create Document Permissions:");
@@ -236,7 +236,7 @@ public class DocumentUserPermissionsPresenter
                         final String type = entry.getKey();
                         final List<String> path = entry.getValue();
                         final DocumentType docType = DocumentTypeRegistry.get(type);
-                        if (docType != null && GwtNullSafe.hasItems(path)) {
+                        if (docType != null && NullSafe.hasItems(path)) {
                             final SvgImage icon = docType.getIcon();
                             final String pathStr = String.join(" & ", path);
                             Objects.requireNonNull(docType);
@@ -266,14 +266,14 @@ public class DocumentUserPermissionsPresenter
      * May return null
      */
     private SafeHtml docTypesToSortedDisplayList(final Set<String> types) {
-        if (GwtNullSafe.hasItems(types)) {
+        if (NullSafe.hasItems(types)) {
             //noinspection SimplifyStreamApiCallChains // Cos GWT
             final List<DocumentType> sortedDocTypes = DocumentTypeRegistry.getTypes()
                     .stream()
                     .filter(docType -> types.contains(docType.getType()))
                     .sorted(Comparator.comparing(DocumentType::getType))
                     .collect(Collectors.toList());
-            if (GwtNullSafe.hasItems(sortedDocTypes)) {
+            if (NullSafe.hasItems(sortedDocTypes)) {
                 final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
                 for (int i = 0; i < sortedDocTypes.size(); i++) {
                     final DocumentType docType = sortedDocTypes.get(i);
@@ -297,7 +297,7 @@ public class DocumentUserPermissionsPresenter
 
 
     private String toDisplayValue(final DocumentPermission documentPermission) {
-        return GwtNullSafe.get(documentPermission,
+        return NullSafe.get(documentPermission,
                 DocumentPermission::getDisplayValue,
                 String::toUpperCase);
     }

@@ -61,7 +61,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
-import stroom.util.NullSafe;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -73,6 +72,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.string.HexDump;
@@ -203,11 +203,11 @@ public class DataFetcher {
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         return taskContextFactory.contextResult("Data Fetcher", taskContext -> {
             taskContext.info(() -> "Fetching data for " +
-                    fetchDataRequest.getSourceLocation().getMetaId() +
-                    ":" +
-                    fetchDataRequest.getSourceLocation().getPartIndex() +
-                    ":" +
-                    fetchDataRequest.getSourceLocation().getRecordIndex());
+                                   fetchDataRequest.getSourceLocation().getMetaId() +
+                                   ":" +
+                                   fetchDataRequest.getSourceLocation().getPartIndex() +
+                                   ":" +
+                                   fetchDataRequest.getSourceLocation().getRecordIndex());
 
             LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
                     fetchDataRequest.getSourceLocation().getMetaId(),
@@ -296,7 +296,7 @@ public class DataFetcher {
                             // create a list of markers.
                             final AbstractFetchDataResult result;
                             if (StreamTypeNames.ERROR.equals(streamTypeName)
-                                    && (fetchDataRequest.getDisplayMode() == null
+                                && (fetchDataRequest.getDisplayMode() == null
                                     || DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode()))) {
 
                                 result = createErrorMarkerResult(
@@ -709,8 +709,9 @@ public class DataFetcher {
                 final double relativeStartPos = dataRange.getCharOffsetFrom() / ((double) estimatedCharCount);
                 final long estimatedStartByteOffset = (long) (relativeStartPos * streamSizeBytes);
 
-                LOGGER.debug(() -> LogUtil.message("streamSizeBytes: {}, charOffsetFrom: {}, " +
-                                "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
+                LOGGER.debug(() -> LogUtil.message(
+                        "streamSizeBytes: {}, charOffsetFrom: {}, " +
+                        "estimatedCharCount: {}, relativeStartPos: {}, estimatedStartByteOffset: {}",
                         streamSizeBytes,
                         dataRange.getCharOffsetFrom(),
                         estimatedCharCount,
@@ -749,7 +750,7 @@ public class DataFetcher {
             return null;
         } else {
             if (requestedHighlight.getOptByteOffsetFrom().isPresent()
-                    && requestedHighlight.getOptByteOffsetTo().isPresent()) {
+                && requestedHighlight.getOptByteOffsetTo().isPresent()) {
 
                 return HexDumpUtil.calculateHighlights(
                                 requestedHighlight.getOptByteOffsetFrom().get(),
@@ -790,7 +791,7 @@ public class DataFetcher {
             final long toCharOffset = fromCharOffset + hexDump.getDumpCharCount() - 1; //-1 for count => offset
 
             final DataRange requestedHighlight = sourceLocation.getHighlights() != null
-                    && !sourceLocation.getHighlights().isEmpty()
+                                                 && !sourceLocation.getHighlights().isEmpty()
                     ? sourceLocation.getHighlights().get(0)
                     : null;
             final List<DataRange> actualHighlights = calculateHexDumpHighlights(requestedHighlight);
@@ -854,8 +855,8 @@ public class DataFetcher {
         final DataRange highlight = sourceLocation.getFirstHighlight();
         // A previous call may have already decorated the highlight byte offsets.
         final boolean isHighlightDecorationRequired = highlight != null
-                && highlight.getOptByteOffsetFrom().isEmpty()
-                && highlight.getOptByteOffsetTo().isEmpty();
+                                                      && highlight.getOptByteOffsetFrom().isEmpty()
+                                                      && highlight.getOptByteOffsetTo().isEmpty();
 
         final NonSegmentedIncludeCharPredicate highlightInclusiveFromPredicate = buildInclusiveFromPredicate(
                 highlight, false);
@@ -906,10 +907,10 @@ public class DataFetcher {
                     tracker.extraCharCount++;
                 }
 
-                // For multi-line data continue past the desired range a bit (up to a limit) to try to complete the line
-                // to make it look better in the UI.
+                // For multi-line data continue past the desired range a bit (up to a limit) to try
+                // to complete the line to make it look better in the UI.
                 if (isCharAfterRequestedRange
-                        && tracker.hasReachedLimitOfLineContinuation(sourceConfig)) {
+                    && tracker.hasReachedLimitOfLineContinuation(sourceConfig)) {
                     // This is the char after our requested range
                     // or requested range continued to the end of the line
                     // or we have blown the max chars limit
@@ -950,7 +951,7 @@ public class DataFetcher {
             // Estimate the total char count based on the ratio of chars to bytes seen so far.
             // The estimate will improve as we fetch further into the stream.
             final double avgCharsPerByte = charReader.getLastCharOffsetRead().get()
-                    / (double) charReader.getLastByteOffsetRead().get();
+                                           / (double) charReader.getLastByteOffsetRead().get();
 
             tracker.totalCharCount = Count.approximately((long) (avgCharsPerByte * streamSizeBytes));
         }
@@ -1063,7 +1064,7 @@ public class DataFetcher {
             LOGGER.debug("Line/col (inc.) from predicate [{}, {}]", lineNoFrom, colNoFrom);
             inclusiveFromPredicate = tracker ->
                     tracker.currLineNo > lineNoFrom
-                            || (tracker.currLineNo == lineNoFrom && tracker.currColNo >= colNoFrom);
+                    || (tracker.currLineNo == lineNoFrom && tracker.currColNo >= colNoFrom);
         } else {
             throw new RuntimeException("No start point specified");
         }
@@ -1108,8 +1109,8 @@ public class DataFetcher {
             LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
             exclusiveToPredicate = tracker ->
                     tracker.currLineNo > lineNoTo
-                            || (tracker.currLineNo == lineNoTo && tracker.currColNo > colNoTo)
-                            || tracker.charsInRangeCount >= maxChars;
+                    || (tracker.currLineNo == lineNoTo && tracker.currColNo > colNoTo)
+                    || tracker.charsInRangeCount >= maxChars;
         } else {
             throw new RuntimeException("No start point specified");
         }
@@ -1352,9 +1353,9 @@ public class DataFetcher {
             //   we are on the first char of a line, i.e. our inc. range ended on a line break so this is first char
             //     after that
             return !isMultiLine
-                    || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
-                    || isCurrCharALineBreak()
-                    || currColNo == 1);
+                   || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
+                       || isCurrCharALineBreak()
+                       || currColNo == 1);
         }
 
         /**

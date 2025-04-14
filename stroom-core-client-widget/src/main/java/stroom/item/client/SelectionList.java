@@ -257,6 +257,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         refresh(false, false);
     }
 
+    public void refresh() {
+        quickFilter.clear();
+        refresh(true, true);
+    }
+
     public void destroy() {
         if (model != null) {
             lastFilter = null;

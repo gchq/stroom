@@ -17,11 +17,12 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.QuickFilterExpressionParser;
+import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.UserRef;
@@ -170,7 +171,7 @@ public class ApiKeysListPresenter
 //    }
 
 //    private void setButtonStates() {
-//        final boolean hasSelectedItems = GwtNullSafe.hasItems(selectionModel.getSelectedItems());
+//        final boolean hasSelectedItems = NullSafe.hasItems(selectionModel.getSelectedItems());
 //        editButton.setEnabled(hasSelectedItems);
 //        deleteButton.setEnabled(!selection.isMatchNothing());
 //    }
@@ -189,7 +190,7 @@ public class ApiKeysListPresenter
 //        final HashedApiKey selectedApiKey = selectionModel.getSelected();
 //
 //        // The ones selected with the checkboxes
-//        final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
+//        final Set<Integer> selectedSet = NullSafe.set(selection.getSet());
 //        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
 //        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
 //
@@ -279,6 +280,19 @@ public class ApiKeysListPresenter
         // Also don't show it if this screen has been set with a single owner
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
             && owner == null) {
+            dataGrid.addColumn(
+                    DataGridUtil.svgPresetColumnBuilder(false, (HashedApiKey row) ->
+                                    UserAndGroupHelper.mapUserRefTypeToIcon(row.getOwner()))
+                            .withSorting(UserFields.FIELD_IS_GROUP)
+                            .centerAligned()
+                            .build(),
+                    DataGridUtil.headingBuilder("")
+                            .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                            .centerAligned()
+                            .withToolTip("Whether this key is for a single user or a named user group.")
+                            .build(),
+                    (ColumnSizeConstants.ICON_COL * 2) + 20);
+
             final Column<HashedApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
                             (HashedApiKey row) ->
                                     row.getOwner().toDisplayString())
@@ -341,7 +355,7 @@ public class ApiKeysListPresenter
                         Function.identity(),
                         () -> new ActionMenuCell<>(
                                 (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildUserActionMenu(
-                                        GwtNullSafe.get(hashedApiKey, HashedApiKey::getOwner),
+                                        NullSafe.get(hashedApiKey, HashedApiKey::getOwner),
                                         isExternalIdp(),
                                         getActionScreensToInclude(),
                                         this),
@@ -504,7 +518,7 @@ public class ApiKeysListPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        filter = GwtNullSafe.trim(text);
+        filter = NullSafe.trim(text);
         if (filter.isEmpty()) {
             filter = null;
         }

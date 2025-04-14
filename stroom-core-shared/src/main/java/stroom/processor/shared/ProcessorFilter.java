@@ -37,6 +37,15 @@ import java.util.Objects;
 public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
     public static final String ENTITY_TYPE = "ProcessorFilter";
+    public static final int MIN_PRIORITY = 1;
+    public static final int MAX_PRIORITY = 100;
+    public static final int DEFAULT_PRIORITY = 10;
+    /**
+     * Zero means un-bounded
+     */
+    public static final int DEFAULT_MAX_PROCESSING_TASKS = 0;
+    public static final int MIN_MAX_PROCESSING_TASKS = 0;
+    public static final int MAX_MAX_PROCESSING_TASKS = Integer.MAX_VALUE;
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {
         if (o1.getPriority() == o2.getPriority()) {
@@ -111,7 +120,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     private Long maxMetaCreateTimeMs;
 
     public ProcessorFilter() {
-        priority = 10;
+        priority = DEFAULT_PRIORITY;
     }
 
     @JsonCreator
@@ -148,11 +157,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.processor = processor;
         this.processorFilterTracker = processorFilterTracker;
         this.pipelineUuid = pipelineUuid;
-        if (priority > 0) {
-            this.priority = priority;
-        } else {
-            this.priority = 10;
-        }
+        this.priority = priority > 0
+                ? priority
+                : DEFAULT_PRIORITY;
         this.maxProcessingTasks = maxProcessingTasks;
         this.reprocess = reprocess;
         this.enabled = enabled;
@@ -237,10 +244,16 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.priority = priority;
     }
 
+    /**
+     * Zero means processing tasks are unbounded.
+     */
     public int getMaxProcessingTasks() {
         return maxProcessingTasks;
     }
 
+    /**
+     * Zero means processing tasks are unbounded.
+     */
     public void setMaxProcessingTasks(final int maxProcessingTasks) {
         this.maxProcessingTasks = maxProcessingTasks;
     }
@@ -435,29 +448,29 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @Override
     public String toString() {
         return "ProcessorFilter{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", queryData=" + queryData +
-                ", processorType=" + processorType +
-                ", processorUuid='" + processorUuid + '\'' +
-                ", pipelineUuid='" + pipelineUuid + '\'' +
-                ", pipelineName='" + pipelineName + '\'' +
-                ", runAsUser='" + runAsUser + '\'' +
-                ", processor=" + processor +
-                ", processorFilterTracker=" + processorFilterTracker +
-                ", priority=" + priority +
-                ", maxProcessingTasks=" + maxProcessingTasks +
-                ", reprocess=" + reprocess +
-                ", enabled=" + enabled +
-                ", deleted=" + deleted +
-                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
-                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", queryData=" + queryData +
+               ", processorType=" + processorType +
+               ", processorUuid='" + processorUuid + '\'' +
+               ", pipelineUuid='" + pipelineUuid + '\'' +
+               ", pipelineName='" + pipelineName + '\'' +
+               ", runAsUser='" + runAsUser + '\'' +
+               ", processor=" + processor +
+               ", processorFilterTracker=" + processorFilterTracker +
+               ", priority=" + priority +
+               ", maxProcessingTasks=" + maxProcessingTasks +
+               ", reprocess=" + reprocess +
+               ", enabled=" + enabled +
+               ", deleted=" + deleted +
+               ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
+               ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               '}';
     }
 
     /**

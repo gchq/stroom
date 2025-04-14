@@ -9,10 +9,10 @@ import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.string.StringUtil;
@@ -89,6 +89,8 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
                 .insertInto(PERMISSION_APP)
                 .columns(PERMISSION_APP.USER_UUID, PERMISSION_APP.PERMISSION_ID)
                 .values(userUuid, permissionId)
+                .onDuplicateKeyUpdate()
+                .set(PERMISSION_APP.ID, PERMISSION_APP.ID)
                 .execute());
     }
 

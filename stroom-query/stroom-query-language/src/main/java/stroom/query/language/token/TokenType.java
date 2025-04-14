@@ -16,10 +16,10 @@
 
 package stroom.query.language.token;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -292,13 +292,14 @@ public enum TokenType {
 
     public static boolean isString(AbstractToken token) {
         return token != null
-                && ALL_STRINGS.contains(token.getTokenType());
+               && ALL_STRINGS.contains(token.getTokenType());
     }
 
     public static Set<TokenType> exclude(final Set<TokenType> fullSet,
                                          final TokenType... excludedTypes) {
         final Set<TokenType> filteredSet = new HashSet<>(fullSet);
-        NullSafe.asList(excludedTypes).forEach(filteredSet::remove);
+        NullSafe.asList(excludedTypes)
+                .forEach(filteredSet::remove);
         return set(filteredSet);
     }
 

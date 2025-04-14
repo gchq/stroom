@@ -3,10 +3,10 @@ package stroom.pipeline.writer;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.util.NullSafe;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;

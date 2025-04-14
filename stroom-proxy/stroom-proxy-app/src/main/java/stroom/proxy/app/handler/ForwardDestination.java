@@ -1,6 +1,6 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 

@@ -81,7 +81,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     private boolean isNewResponseRequired(final String configurationEndpoint) {
         return openIdConfigurationResp == null
-                || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
+               || !Objects.equals(lastConfigurationEndpoint, configurationEndpoint);
     }
 
     @Override

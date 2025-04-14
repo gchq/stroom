@@ -22,7 +22,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 

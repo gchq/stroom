@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.table.AnnotationManager;
@@ -63,7 +62,7 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
@@ -328,6 +327,21 @@ public class QueryResultTablePresenter
         } else {
             dataGrid.removeStyleName("applyValueFilters");
         }
+    }
+
+    public void changeSettings() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        updatePageSize(queryTablePreferences);
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+    }
+
+    private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                NullSafe.getOrElse(queryTablePreferences, QueryTablePreferences::getPageSize, 100)));
     }
 
     private void setPause(final boolean pause,
@@ -780,7 +794,7 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ColumnRef> getColumns() {
-        return GwtNullSafe.list(currentColumns)
+        return NullSafe.list(currentColumns)
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
                 .collect(Collectors.toList());
@@ -806,13 +820,13 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = GwtNullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumns());
         return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
     @Override
     public Set<String> getHighlights() {
-        return GwtNullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
+        return NullSafe.get(currentSearchModel, QueryModel::getCurrentHighlights);
     }
 
     public void setQueryTablePreferencesSupplier(final Supplier<QueryTablePreferences> queryTablePreferencesSupplier) {
@@ -825,7 +839,9 @@ public class QueryResultTablePresenter
 
     public void updateQueryTablePreferences() {
         // Change value filter state.
-        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
+        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        updatePageSize(queryTablePreferences);
         refresh();
     }
 

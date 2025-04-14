@@ -19,9 +19,9 @@ package stroom.importexport.impl;
 import stroom.importexport.shared.ImportSettings;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

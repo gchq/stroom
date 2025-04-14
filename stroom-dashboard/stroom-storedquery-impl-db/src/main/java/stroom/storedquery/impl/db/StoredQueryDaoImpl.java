@@ -5,11 +5,11 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.JooqUtil;
 import stroom.security.user.api.UserRefLookup;
 import stroom.storedquery.impl.StoredQueryDao;
-import stroom.util.NullSafe;
 import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 

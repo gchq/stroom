@@ -25,9 +25,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
@@ -59,7 +57,6 @@ public class DataRetentionPresenter
     private final DataRetentionPolicyPresenter retentionPolicyPresenter;
     private final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider;
 
-    private EditorPresenter codePresenter;
     private final boolean readOnly = true;
     private PresenterWidget<?> currentContent;
     private DataRetentionImpactPresenter dataRetentionImpactPresenter;
@@ -73,8 +70,7 @@ public class DataRetentionPresenter
     public DataRetentionPresenter(final EventBus eventBus,
                                   final DataRetentionView view,
                                   final DataRetentionPolicyPresenter retentionPolicyPresenter,
-                                  final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider,
-                                  final ClientSecurityContext securityContext) {
+                                  final Provider<DataRetentionImpactPresenter> dataRetentionImpactPresenterProvider) {
         super(eventBus, view);
         this.retentionPolicyPresenter = retentionPolicyPresenter;
         this.retentionPolicyPresenter.setParentPresenter(this);

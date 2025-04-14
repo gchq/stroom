@@ -12,7 +12,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
 
 import com.google.gwt.dom.client.BrowserEvents;
@@ -137,7 +137,7 @@ public class KeyBinding {
     }
 
     public static Optional<Action> getCreateActionByType(final String documentType) {
-        if (GwtNullSafe.isBlankString(documentType)) {
+        if (NullSafe.isBlankString(documentType)) {
             return Optional.empty();
         } else {
             return Optional.ofNullable(DOC_TYPE_TO_ACTION_MAP.get(documentType));
@@ -145,7 +145,7 @@ public class KeyBinding {
     }
 
     public static String getShortcut(final Action action) {
-        final List<Shortcut> shortcuts = GwtNullSafe.list(ACTION_TO_SHORTCUTS_MAP.get(action));
+        final List<Shortcut> shortcuts = NullSafe.list(ACTION_TO_SHORTCUTS_MAP.get(action));
 
         if (!shortcuts.isEmpty()) {
             // Get the primary shortcut
@@ -234,7 +234,7 @@ public class KeyBinding {
                 isInput = isTextBox(element, tagName)
                           || "TEXTAREA".equalsIgnoreCase(tagName);
 
-//                final String className = GwtNullSafe.string(element.getClassName());
+//                final String className = NullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
 //                GWT.log("className: " + className + " tagName: " + element.getTagName()
 //                        + " type: " + type + " shouldCheck: " + shouldCheck);
@@ -255,7 +255,7 @@ public class KeyBinding {
     private static boolean isTextualInputType(final Element element) {
         // These are the type of input element that we want to stop
         final String type = element.getAttribute("type");
-        return GwtNullSafe.isBlankString(type)
+        return NullSafe.isBlankString(type)
                || "text".equalsIgnoreCase(type)
                || "password".equalsIgnoreCase(type)
                || "search".equalsIgnoreCase(type)
@@ -316,7 +316,7 @@ public class KeyBinding {
     private static Binding getBinding(final Shortcut shortcut) {
         Binding binding = null;
         // Favour exact matches
-        binding = GwtNullSafe.get(SHORTCUT_TO_ACTION_MAP.get(shortcut),
+        binding = NullSafe.get(SHORTCUT_TO_ACTION_MAP.get(shortcut),
                 action -> new Binding.Builder().action(action).shortcut(shortcut).build());
 
         // TODO Commented this out as it seems a tad risky, better to be explicit with binds
@@ -521,6 +521,7 @@ public class KeyBinding {
         GOTO_API_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
+        GOTO_CONTENT_TEMPALTES,
         GOTO_DEPENDENCIES,
         GOTO_JOBS,
         GOTO_NODES,

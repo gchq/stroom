@@ -4,8 +4,8 @@ import stroom.bytebuffer.ByteArrayUtils;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.reader.ByteStreamDecoder.DecoderException;
 import stroom.pipeline.reader.ByteStreamDecoder.Mode;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.ByteArrayBuilder;
 
 import org.assertj.core.api.Assertions;

@@ -4,18 +4,19 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
-import stroom.util.NullSafe;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.metrics.Metrics;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
 
+import com.codahale.metrics.Histogram;
 import com.google.common.util.concurrent.Striped;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,6 +50,7 @@ import java.util.stream.Stream;
 public class PreAggregator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PreAggregator.class);
+    public static final String AGGREGATE_NAME_PART = "aggregate";
 
     // TODO How many stripes we have is open to question as we are ultimately IO bound
     //  when adding all the parts
@@ -57,20 +59,28 @@ public class PreAggregator {
     private final NumberedDirProvider tempSplittingDirProvider;
     private final Path stagedSplittingDir;
     private final CleanupDirQueue deleteDirQueue;
-    private final AggregatorConfig aggregatorConfig;
+    private final Provider<AggregatorConfig> aggregatorConfigProvider;
+    private final Metrics metrics;
+
     private final Path aggregatingDir;
     private final Map<FeedKey, AggregateState> aggregateStateMap = new ConcurrentHashMap<>();
     private final Striped<Lock> feedKeyLock = Striped.lock(FEED_KEY_LOCK_STRIPES);
+
+    private final Histogram aggregateItemCountHistogram;
+    private final Histogram aggregateByteSizeHistogram;
+    private final Histogram aggregateAgeHistogram;
 
     private Consumer<Path> destination;
 
     @Inject
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
-                         final Provider<ProxyConfig> proxyConfigProvider,
                          final DataDirProvider dataDirProvider,
-                         final ProxyServices proxyServices) {
+                         final ProxyServices proxyServices,
+                         final Provider<AggregatorConfig> aggregatorConfigProvider,
+                         final Metrics metrics) {
         this.deleteDirQueue = deleteDirQueue;
-        this.aggregatorConfig = proxyConfigProvider.get().getAggregatorConfig();
+        this.aggregatorConfigProvider = aggregatorConfigProvider;
+        this.metrics = metrics;
 
         // Get or create the aggregating dir.
         aggregatingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
@@ -125,6 +135,22 @@ public class PreAggregator {
         }
         LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
 
+        aggregateItemCountHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.COUNT)
+                .histogram()
+                .createAndRegister();
+        aggregateByteSizeHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.SIZE_IN_BYTES)
+                .histogram()
+                .createAndRegister();
+        aggregateAgeHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.AGE_MS)
+                .histogram()
+                .createAndRegister();
+
         // Periodically close old aggregates.
         // This need to be started at the end of the ctor, so we know that everything above can
         // run on the assumption that it is the only thread in play
@@ -138,10 +164,11 @@ public class PreAggregator {
     private void initialiseAggregateStateMap() {
         LOGGER.info("Initialising the state of existing pre-aggregates");
         // Read all the current aggregates and establish the aggregation state.
+        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
         try (final Stream<Path> stream = Files.list(aggregatingDir)) {
             // Look at each aggregate dir.
             stream.forEach(aggregateDir -> {
-                final AggregateState aggregateState = new AggregateState(aggregateDir);
+                final AggregateState aggregateState = new AggregateState(aggregatorConfig, aggregateDir);
                 final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
 
                 // Now examine each file group to read state.
@@ -238,11 +265,12 @@ public class PreAggregator {
             throws IOException {
 
         LOGGER.trace("addDir() - dir: '{}', feedKey: {}", dir, feedKey);
+        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
 
         // Calculate where we might want to split the incoming data.
         final List<Part> parts;
         if (aggregatorConfig.isSplitSources()) {
-            parts = calculateSplitParts(feedKey, fileGroup);
+            parts = calculateSplitParts(feedKey, fileGroup, aggregatorConfig);
         } else {
             parts = calculateOverflowingParts(fileGroup);
         }
@@ -251,7 +279,7 @@ public class PreAggregator {
         if (parts.size() == 1) {
             // Just add the single part to the current aggregate.
             LOGGER.trace("Single part, dir: {}", dir);
-            addPartToAggregate(feedKey, dir, parts.get(0));
+            addPartToAggregate(feedKey, dir, parts.get(0), aggregatorConfig);
         } else {
             LOGGER.trace(() -> LogUtil.message("Multiple parts, dir: {}, count: {}", dir, parts.size()));
             // Split the data.
@@ -282,7 +310,8 @@ public class PreAggregator {
             for (int i = 0; i < partDirs.size() - 1; i++) {
                 final PartDir partDir = partDirs.get(i);
                 final Path splitDir = splitStaging.resolve(partDir.dir.getFileName());
-                final AggregateState aggregateState = addPartToAggregate(feedKey, splitDir, partDir.part);
+                final AggregateState aggregateState = addPartToAggregate(
+                        feedKey, splitDir, partDir.part, aggregatorConfig);
                 LOGGER.trace("Split idx: {}, partDir: {}, splitDir: {}, aggregateState: {}",
                         i, partDir, splitDir, aggregateState);
 
@@ -293,7 +322,8 @@ public class PreAggregator {
             // Add final part as new aggregate.
             final PartDir partDir = partDirs.get(partDirs.size() - 1);
             final Path splitDir = splitStaging.resolve(partDir.dir.getFileName());
-            final AggregateState aggregateState = addPartToAggregate(feedKey, splitDir, partDir.part);
+            final AggregateState aggregateState = addPartToAggregate(
+                    feedKey, splitDir, partDir.part, aggregatorConfig);
             LOGGER.trace("Final split, partDir: {}, splitDir: {}, aggregateState: {}",
                     partDir, splitDir, aggregateState);
 
@@ -302,8 +332,9 @@ public class PreAggregator {
         }
 
         // If we have an aggregate we can close now then do so.
-        final AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
-        if (aggregateState.isReadyToClose(aggregatorConfig)) {
+        final AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, k ->
+                createAggregate(k, aggregatorConfig));
+        if (aggregateState.isReadyToClose()) {
             closeAggregate(feedKey, aggregateState);
         }
     }
@@ -334,9 +365,10 @@ public class PreAggregator {
      */
     private AggregateState addPartToAggregate(final FeedKey feedKey,
                                               final Path dir,
-                                              final Part part) throws IOException {
+                                              final Part part,
+                                              final AggregatorConfig aggregatorConfig) throws IOException {
         final AggregateState aggregateState = aggregateStateMap
-                .computeIfAbsent(feedKey, this::createAggregate);
+                .computeIfAbsent(feedKey, k -> createAggregate(k, aggregatorConfig));
         final long newPartCount = aggregateState.partCount + 1;
         final Path destDir = aggregateState.aggregateDir.resolve(StringIdUtil.idToString(newPartCount));
         Files.move(dir, destDir, StandardCopyOption.ATOMIC_MOVE);
@@ -356,16 +388,19 @@ public class PreAggregator {
      * MUST be called under feedKeyLock.
      * </p>
      *
-     * @param feedKey   The feed
-     * @param fileGroup the file group to examine.
+     * @param feedKey          The feed
+     * @param fileGroup        the file group to examine.
+     * @param aggregatorConfig
      * @return A list of parts to split the zip data by.
      * @throws IOException Could be throws when reading entries.
      */
     private List<Part> calculateSplitParts(final FeedKey feedKey,
-                                           final FileGroup fileGroup) throws IOException {
+                                           final FileGroup fileGroup,
+                                           final AggregatorConfig aggregatorConfig) throws IOException {
         // Determine if we need to split this data into parts.
         final List<Part> parts = new ArrayList<>();
-        AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
+        AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey,
+                k -> createAggregate(k, aggregatorConfig));
 
         // Calculate where we might want to split the incoming data.
         final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
@@ -396,7 +431,7 @@ public class PreAggregator {
 
                         // Create a new aggregate.
                         aggregateState = aggregateStateMap
-                                .computeIfAbsent(feedKey, this::createAggregate);
+                                .computeIfAbsent(feedKey, k -> createAggregate(k, aggregatorConfig));
                     } else {
                         // Split. Copy the list as the source is about to be cleared
                         final Part part = new Part(partItems, partBytes, List.copyOf(partEntries));
@@ -460,9 +495,20 @@ public class PreAggregator {
         try {
             destination.accept(aggregateState.aggregateDir);
             aggregateStateMap.remove(feedKey);
+            captureAggregateMetrics(aggregateState);
             LOGGER.debug("Closed aggregate: {}", aggregateState);
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void captureAggregateMetrics(final AggregateState aggregateState) {
+        try {
+            aggregateItemCountHistogram.update(aggregateState.itemCount);
+            aggregateByteSizeHistogram.update(aggregateState.totalBytes);
+            aggregateAgeHistogram.update(aggregateState.getAge().toMillis());
+        } catch (Exception e) {
+            LOGGER.error("Error capturing aggregate stats: {}", LogUtil.exceptionMessage(e), e);
         }
     }
 
@@ -534,7 +580,8 @@ public class PreAggregator {
         return new PartDirs(parentDir, partDirs);
     }
 
-    private AggregateState createAggregate(final FeedKey feedKey) {
+    private AggregateState createAggregate(final FeedKey feedKey,
+                                           final AggregatorConfig aggregatorConfig) {
         try {
             // Make a dir name.
             final StringBuilder sb = new StringBuilder();
@@ -554,7 +601,7 @@ public class PreAggregator {
             Files.createDirectories(aggregateDir);
 
             LOGGER.debug(() -> "Created aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
-            return new AggregateState(aggregateDir);
+            return new AggregateState(aggregatorConfig, aggregateDir);
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
@@ -571,7 +618,7 @@ public class PreAggregator {
     private synchronized void closeOldAggregates() {
         final AtomicInteger count = new AtomicInteger();
         aggregateStateMap.forEach((feedKey, aggregateState) -> {
-            if (aggregateState.isAggregateTooOld(aggregatorConfig)) {
+            if (aggregateState.isAggregateTooOld()) {
                 // Close the current aggregate.
                 count.incrementAndGet();
                 closeAggregate(feedKey, aggregateState);
@@ -597,20 +644,27 @@ public class PreAggregator {
      */
     private static class AggregateState {
 
-        final Instant createTime;
-        final Path aggregateDir;
-        long partCount;
-        long itemCount;
-        long totalBytes;
+        private final Instant createTime;
+        private final Instant aggregateAfter;
+        // Bake the config in when the aggregate is started
+        private final AggregatorConfig aggregatorConfig;
+        private final Path aggregateDir;
+        private long partCount;
+        private long itemCount;
+        private long totalBytes;
 
-        private AggregateState(final Path aggregateDir) {
-            this.createTime = Instant.now();
-            this.aggregateDir = aggregateDir;
+        private AggregateState(final AggregatorConfig aggregatorConfig,
+                               final Path aggregateDir) {
+            this(aggregatorConfig, Instant.now(), aggregateDir);
         }
 
-        private AggregateState(final Instant createTime, final Path aggregateDir) {
+        private AggregateState(final AggregatorConfig aggregatorConfig,
+                               final Instant createTime,
+                               final Path aggregateDir) {
             this.createTime = createTime;
             this.aggregateDir = aggregateDir;
+            this.aggregatorConfig = aggregatorConfig;
+            this.aggregateAfter = createTime.plus(aggregatorConfig.getAggregationFrequency());
         }
 
         private void addItem(final long uncompressedSize) {
@@ -624,14 +678,13 @@ public class PreAggregator {
             totalBytes += part.bytes;
         }
 
-        private boolean isAggregateTooOld(final AggregatorConfig aggregatorConfig) {
-            final Instant aggregateAfter = createTime.plus(aggregatorConfig.getAggregationFrequency().getDuration());
-            final boolean isTooOld = aggregateAfter.isBefore(Instant.now());
+        private boolean isAggregateTooOld() {
+            final boolean isTooOld = Instant.now().isAfter(aggregateAfter);
             LOGGER.trace("createTime {}, aggregateAfter: {}, isTooOld: {}", createTime, aggregateAfter, isTooOld);
             return isTooOld;
         }
 
-        private boolean isReadyToClose(final AggregatorConfig aggregatorConfig) {
+        private boolean isReadyToClose() {
             final boolean isReadyToClose;
             if (itemCount >= aggregatorConfig.getMaxItemsPerAggregate()) {
                 LOGGER.trace(() -> LogUtil.message("Item count {} reached/passed limit {}, aggregateDir: {}",
@@ -641,7 +694,7 @@ public class PreAggregator {
                 LOGGER.trace(() -> LogUtil.message("Aggregate size {} reached/passed limit {}, aggregateDir: {}",
                         itemCount, aggregatorConfig.getMaxItemsPerAggregate(), aggregateDir));
                 isReadyToClose = true;
-            } else if (isAggregateTooOld(aggregatorConfig)) {
+            } else if (isAggregateTooOld()) {
                 isReadyToClose = true;
             } else {
                 LOGGER.trace("Not ready to close, itemCount: {}, totalBytes: {}, createTime: {}, aggregateDir: {}",
@@ -649,6 +702,13 @@ public class PreAggregator {
                 isReadyToClose = false;
             }
             return isReadyToClose;
+        }
+
+        /**
+         * @return Current age of the aggregate, i.e. time between its creation time and now
+         */
+        private Duration getAge() {
+            return Duration.between(createTime, Instant.now());
         }
 
         @Override
@@ -673,7 +733,7 @@ public class PreAggregator {
      * @param items The number of items.
      * @param bytes The total byte size of the part.
      */
-    private record Part(long items, long bytes, List<ZipEntryGroup> zipEntryGroups) {
+    record Part(long items, long bytes, List<ZipEntryGroup> zipEntryGroups) {
 
         private static final Part EMPTY = new Part(0, 0, Collections.emptyList());
 

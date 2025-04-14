@@ -39,8 +39,8 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -206,7 +206,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
-                if (GwtNullSafe.hasItems(menuItems)) {
+                if (NullSafe.hasItems(menuItems)) {
                     showMenu(menuItems, event.getPopupPosition());
                 }
             }

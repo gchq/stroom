@@ -16,7 +16,7 @@
 
 package stroom.util.io;
 
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;

@@ -23,10 +23,10 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.HTTPAppender;
 import stroom.svg.shared.SvgImage;
-import stroom.util.NullSafe;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;

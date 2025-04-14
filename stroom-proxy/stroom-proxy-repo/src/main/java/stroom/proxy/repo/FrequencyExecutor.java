@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -44,8 +45,9 @@ public class FrequencyExecutor implements Managed {
             } catch (final UncheckedInterruptedException e) {
                 LOGGER.debug(e::getMessage, e);
             } catch (final RuntimeException e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
+                // Swallow the exception to keep the scheduled executor running
+                LOGGER.error("Error running frequency executor '{}' task: {}",
+                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
             }
         };
         LOGGER.debug("Starting frequency executor '{}', frequency: {}", threadNamePrefix, frequency);

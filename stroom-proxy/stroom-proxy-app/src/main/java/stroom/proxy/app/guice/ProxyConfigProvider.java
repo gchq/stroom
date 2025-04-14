@@ -2,7 +2,6 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyConfigHolder;
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.RequiresProxyRestart;
@@ -13,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -90,7 +90,7 @@ public class ProxyConfigProvider {
 
                 // Don't recurse into non-injectable values, treat them like a non config type
                 if (AbstractConfig.class.isAssignableFrom(valueType)
-                        && !valueType.isAnnotationPresent(NotInjectableConfig.class)) {
+                    && !valueType.isAnnotationPresent(NotInjectableConfig.class)) {
 
                     final AbstractConfig childValue = (AbstractConfig) prop.getValueFromConfigObject();
 
@@ -107,7 +107,9 @@ public class ProxyConfigProvider {
                     } else {
                         if (!prop.getValueClass().isAnnotationPresent(NotInjectableConfig.class)) {
                             // We should not have null config objects that are meant to be injectable
-                            throw new RuntimeException(LogUtil.message("Prop {} is null but is injectable config"));
+                            throw new RuntimeException(LogUtil.message(
+                                    "Prop {} is null but is injectable config",
+                                    childPropPath));
                         }
                     }
                 }
@@ -137,7 +139,7 @@ public class ProxyConfigProvider {
                 // That can't be injected.
                 // Recursion into config objects will happen above
                 if (!AbstractConfig.class.isAssignableFrom(valueType)
-                        || valueType.isAnnotationPresent(NotInjectableConfig.class)) {
+                    || valueType.isAnnotationPresent(NotInjectableConfig.class)) {
                     final Object newValue = prop.getValueFromConfigObject();
                     Object existingValue = null;
                     if (existingConfig != null) {
@@ -203,7 +205,7 @@ public class ProxyConfigProvider {
                 changeCounter.incrementAndGet();
                 if (logChanges) {
                     final String extraText = prop.hasAnnotation(RequiresProxyRestart.class)
-                            || NullSafe.test(parentProp, p -> p.hasAnnotation(RequiresProxyRestart.class))
+                                             || Prop.hasAnnotation(parentProp, RequiresProxyRestart.class)
                             ? ". NOTE: This property requires an application re-start to take effect."
                             : "";
 

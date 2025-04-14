@@ -6,15 +6,15 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ForwardQueueConfig;
+import stroom.proxy.app.handler.ForwardFileQueueConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -58,7 +58,8 @@ public class MockFileDestination {
                 "My forward file",
                 "forward_dest",
                 null,
-                new ForwardQueueConfig(),
+                new ForwardFileQueueConfig(),
+                null,
                 null,
                 null);
     }
@@ -232,7 +233,7 @@ public class MockFileDestination {
                     .isLessThanOrEqualTo(maxItemsPerAggregate);
         }
 
-        final StroomDuration maxAggregateAge = aggregatorConfig.getMaxAggregateAge();
+        final StroomDuration aggregationFrequency = aggregatorConfig.getAggregationFrequency();
         final List<Duration> aggAges = forwardFiles.stream()
                 .map(ForwardFileItem::zipItems)
                 .map(zipItems -> {
@@ -251,7 +252,7 @@ public class MockFileDestination {
         // Each agg should have a receipt time range no wider than the configured max agg age
         for (final Duration aggAge : aggAges) {
             Assertions.assertThat(aggAge)
-                    .isLessThanOrEqualTo(maxAggregateAge.getDuration());
+                    .isLessThanOrEqualTo(aggregationFrequency.getDuration());
         }
     }
 

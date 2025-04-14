@@ -4,7 +4,6 @@ import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
-import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,8 +41,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
-            @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -61,8 +59,7 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes,
-                httpClient);
+                expectedSignerPrefixes);
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -101,7 +98,6 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes(),
-                getHttpClient());
+                getExpectedSignerPrefixes());
     }
 }

@@ -14,5 +14,5 @@ ADMIN_PORT=${ADMIN_PORT_OVERRIDE:-$ADMIN_PORT}
 #echo "ADMIN_PORT: ${ADMIN_PORT}"
 
 # Override jar path for dev
-PATH_TO_JAR="./stroom-proxy/stroom-proxy-app//build/libs/stroom-proxy-app-all.jar" \
+PATH_TO_JAR="./stroom-proxy/stroom-proxy-app/build/libs/stroom-proxy-app-all.jar" \
   ./dist/set_log_levels.sh "$@"

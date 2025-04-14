@@ -13,7 +13,7 @@ import stroom.security.shared.HashedApiKey;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
@@ -75,7 +75,7 @@ public class ApiKeysPresenter
     }
 
     private void setButtonStates() {
-        final int selectedCount = GwtNullSafe.size(getSelectedItems());
+        final int selectedCount = NullSafe.size(getSelectedItems());
         editButton.setEnabled(selectedCount == 1);
         deleteButton.setEnabled(selectedCount > 0);
         if (selectedCount > 1) {
@@ -106,7 +106,7 @@ public class ApiKeysPresenter
         registerHandler(getSelectionModel().addSelectionHandler(e -> {
             onSelection();
             if (e.getSelectionType().isDoubleSelect()
-                && GwtNullSafe.hasOneItem(getSelectedItems())) {
+                && NullSafe.hasOneItem(getSelectedItems())) {
                 editSelectedKey();
             }
         }));
@@ -142,7 +142,7 @@ public class ApiKeysPresenter
 //        final HashedApiKey selectedApiKey = getSelectionModel().getSelected();
 
         // The ones selected with the checkboxes
-//        final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
+//        final Set<Integer> selectedSet = NullSafe.set(selection.getSet());
 //        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
 //        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
         final List<HashedApiKey> selectedItems = getSelectedItems();

@@ -1,6 +1,6 @@
 package stroom.widget.util.client;
 
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -71,7 +71,7 @@ public class TableCell {
         } else {
             htmlBuilder.appendTrustedString("td");
         }
-        if (!GwtNullSafe.isBlankString(classValue)) {
+        if (!NullSafe.isBlankString(classValue)) {
             htmlBuilder.appendTrustedString(" class=\"");
             htmlBuilder.append(classValue);
             htmlBuilder.appendTrustedString("\"");
@@ -134,7 +134,7 @@ public class TableCell {
          * Add single class or space separated classes to the cell
          */
         public TableCell.Builder addClass(final String cssClass) {
-            if (!GwtNullSafe.isBlankString(cssClass)) {
+            if (!NullSafe.isBlankString(cssClass)) {
                 if (cssClasses == null) {
                     cssClasses = new ArrayList<>();
                 }
@@ -144,7 +144,7 @@ public class TableCell {
         }
 
         public TableCell build() {
-            final String cssClass = GwtNullSafe.stream(cssClasses)
+            final String cssClass = NullSafe.stream(cssClasses)
                     .collect(Collectors.joining(" "));
             if (value == null) {
                 return new TableCell(SafeHtmlUtils.EMPTY_SAFE_HTML, header, colspan, cssClass);

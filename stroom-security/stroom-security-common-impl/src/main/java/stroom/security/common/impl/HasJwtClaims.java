@@ -1,7 +1,7 @@
 package stroom.security.common.impl;
 
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
+import stroom.util.shared.NullSafe;
 
 import org.jose4j.jwt.JwtClaims;
 

@@ -1,9 +1,8 @@
 ---
 proxyConfig:
   aggregator:
-    aggregationFrequency: "PT1M"
+    aggregationFrequency: "PT10M"
     enabled: true
-    maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
     splitSources: true
@@ -18,7 +17,12 @@ proxyConfig:
     maxAge: "PT1M"
     maxByteCount: 9223372036854775807
     maxEventCount: 9223372036854775807
-    maxOpenFiles: 100
+    openFilesCache:
+      expireAfterAccess: null
+      expireAfterWrite: null
+      maximumSize: 100
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
     apiKey: null
@@ -29,15 +33,30 @@ proxyConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     url: null
   forwardFileDestinations:
-  - enabled: true
+  - atomicMoveEnabled: true
+    enabled: true
     instant: false
     livenessCheckMode: "READ"
     livenessCheckPath: null
     name: null
     path: null
-    queue: null
+    queue:
+      errorSubPathTemplate:
+        enabled: true
+        pathTemplate: "${year}${month}${day}/${feed}"
+        templatingMode: "REPLACE_UNKNOWN_PARAMS"
+      forwardDelay: "PT0S"
+      forwardRetryThreadCount: 1
+      forwardThreadCount: 5
+      livenessCheckInterval: "PT1M"
+      maxRetryAge: "P7D"
+      maxRetryDelay: "P1D"
+      queueAndRetryEnabled: false
+      retryDelay: "PT10M"
+      retryDelayGrowthFactor: 1.0
     subPathTemplate: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
@@ -71,7 +90,8 @@ proxyConfig:
       forwardThreadCount: 5
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "PT10M"
+      maxRetryDelay: "P1D"
+      queueAndRetryEnabled: true
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
   haltBootOnConfigValidationFailure: true
@@ -92,22 +112,40 @@ proxyConfig:
     temp: null
   proxyId: null
   receive:
+    allowedCertificateProviders: []
+    authenticatedDataFeedKeyCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT5M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    certificateAuthenticationEnabled: true
+    dataFeedKeyOwnerMetaKey: "AccountId"
+    dataFeedKeysDir: "data_feed_keys"
+    enabledAuthenticationTypes:
+    - "CERTIFICATE"
+    feedNameGenerationEnabled: false
+    feedNameGenerationMandatoryHeaders:
+    - "AccountId"
+    - "Component"
+    - "Format"
+    - "Schema"
+    feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
     metaTypes:
     - "Context"
-    - "Raw Reference"
-    - "Events"
-    - "Raw Events"
-    - "Reference"
+    - "Detections"
     - "Error"
+    - "Events"
+    - "Meta Data"
+    - "Raw Events"
+    - "Raw Reference"
+    - "Records"
+    - "Reference"
     - "Test Events"
     - "Test Reference"
-    - "Detections"
-    - "Meta Data"
-    - "Records"
     receiptPolicyUuid: null
-    tokenAuthenticationEnabled: false
+    x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
+    x509CertificateHeader: "X-SSL-CERT"
   security:
     authentication:
       authenticationRequired: true
@@ -119,7 +157,6 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
-        httpClient: null
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null

@@ -5,7 +5,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ForwardQueueConfig;
+import stroom.proxy.app.handler.ForwardFileQueueConfig;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.MockForwardFileDestination;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
@@ -48,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestInnerProcessEndToEnd {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
+
 
     @Test
     void testSimple() {
@@ -127,15 +129,15 @@ class TestInnerProcessEndToEnd {
                         .aggregatorConfig(AggregatorConfig.builder()
                                 .maxItemsPerAggregate(1000)
                                 .maxUncompressedByteSizeString("1G")
-                                .maxAggregateAge(StroomDuration.ofSeconds(60))
-                                .aggregationFrequency(StroomDuration.ofSeconds(10))
+                                .aggregationFrequency(StroomDuration.ofSeconds(60))
                                 .build())
                         .addForwardFileDestination(new ForwardFileConfig(true,
                                 false,
                                 "test",
                                 "test",
                                 null,
-                                new ForwardQueueConfig(),
+                                new ForwardFileQueueConfig(),
+                                null,
                                 null,
                                 null))
                         .build();
@@ -300,10 +302,13 @@ class TestInnerProcessEndToEnd {
         final Environment environmentMock = Mockito.mock(Environment.class);
         Mockito.when(environmentMock.healthChecks())
                 .thenReturn(new HealthCheckRegistry());
+        Mockito.when(environmentMock.metrics())
+                .thenReturn(new MetricRegistry());
 
         return new ProxyTestModule(
                 config,
-                new Environment("TestEnvironment"),
+                environmentMock,
+//                new Environment("TestEnvironment"),
                 Path.of("dummy/path/to/config.yml"));
     }
 }

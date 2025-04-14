@@ -1,9 +1,9 @@
 package stroom.proxy.repo;
 
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.util.NullSafe;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

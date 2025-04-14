@@ -26,9 +26,9 @@ import stroom.index.shared.UpdateField;
 import stroom.query.api.v2.StringExpressionUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 

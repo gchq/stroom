@@ -25,10 +25,10 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
-import stroom.util.NullSafe;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -214,7 +214,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(
             description = "One or more destination paths for output files separated with commas. " +
-                    "Replacement variables can be used in path strings such as ${feed}.",
+                          "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
@@ -247,7 +247,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(
             description = "When the current output file exceeds this size it will be closed and a new one " +
-                    "created, e.g. 10M, 1G.",
+                          "created, e.g. 10M, 1G.",
             defaultValue = "100M",
             displayPriority = 6)
     public void setRollSize(final String rollSize) {
@@ -264,7 +264,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
     @PipelineProperty(
             description = "Compression method to apply, if compression is enabled. Supported values: " +
-                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+                          CompressionUtil.SUPPORTED_COMPRESSORS + ".",
             defaultValue = CompressorStreamFactory.GZIP,
             displayPriority = 8)
     public void setCompressionMethod(final String compressionMethod) {

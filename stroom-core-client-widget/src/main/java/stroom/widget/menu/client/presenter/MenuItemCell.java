@@ -18,6 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -195,7 +196,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
+                final SafeHtml tooltip = NullSafe.getOrElse(value, MenuItem::getTooltip, value.getText());
+                sb.append(TEMPLATE.outer(className, tooltip.asString(), inner.toSafeHtml()));
             }
         }
 
@@ -205,8 +207,8 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
-            SafeHtml outer(String className, SafeHtml inner);
+            @Template("<div class=\"{0}\" title=\"{1}\" tabindex=\"-1\">{2}</div>")
+            SafeHtml outer(String className, String tooltip, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);

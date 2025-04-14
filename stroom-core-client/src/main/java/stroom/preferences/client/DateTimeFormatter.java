@@ -3,7 +3,7 @@ package stroom.preferences.client;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.customdatebox.client.MomentJs;
 
 import javax.inject.Inject;
@@ -43,7 +43,7 @@ public class DateTimeFormatter {
 
         final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         if (userPreferences != null) {
-            if (GwtNullSafe.isNonBlankString(userPreferences.getDateTimePattern())) {
+            if (NullSafe.isNonBlankString(userPreferences.getDateTimePattern())) {
 
                 final UserTimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {

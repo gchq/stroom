@@ -2,7 +2,7 @@ package stroom.docstore.shared;
 
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -278,7 +278,7 @@ public class DocumentTypeRegistry {
     }
 
     public static SvgImage getIcon(final String type) {
-        return GwtNullSafe.get(MAP.get(type), DocumentType::getIcon);
+        return NullSafe.get(MAP.get(type), DocumentType::getIcon);
     }
 
     public static Collection<DocumentType> getTypes() {

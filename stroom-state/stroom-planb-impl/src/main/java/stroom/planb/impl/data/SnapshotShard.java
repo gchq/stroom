@@ -6,11 +6,11 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Provider;
 

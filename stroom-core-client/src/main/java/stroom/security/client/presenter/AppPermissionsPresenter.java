@@ -23,7 +23,7 @@ import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsVi
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
@@ -96,7 +96,7 @@ public class AppPermissionsPresenter
     private void editPermissions() {
         final AppUserPermissions appUserPermissions = appUserPermissionsListPresenter.getSelectionModel()
                 .getSelected();
-        final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+        final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
         appPermissionsEditPresenter.setUserRef(userRef);
     }
 

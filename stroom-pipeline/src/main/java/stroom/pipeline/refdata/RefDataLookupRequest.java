@@ -2,8 +2,8 @@ package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -99,12 +99,12 @@ public class RefDataLookupRequest {
     @Override
     public String toString() {
         return "RefDataLookupRequest{" +
-                "mapName='" + mapName + '\'' +
-                ", key='" + key + '\'' +
-                ", effectiveTimeEpochMs="
-                + NullSafe.toStringOrElse(effectiveTimeEpochMs, Instant::ofEpochMilli, "null") +
-                ", referenceLoaders=" + referenceLoaders +
-                '}';
+               "mapName='" + mapName + '\'' +
+               ", key='" + key + '\'' +
+               ", effectiveTimeEpochMs="
+               + NullSafe.toStringOrElse(effectiveTimeEpochMs, Instant::ofEpochMilli, "null") +
+               ", referenceLoaders=" + referenceLoaders +
+               '}';
     }
 
 
@@ -151,10 +151,10 @@ public class RefDataLookupRequest {
         @Override
         public String toString() {
             return "ReferenceLoader{" +
-                    "loaderPipeline=" + loaderPipeline +
-                    ", referenceFeed=" + referenceFeed +
-                    ", streamType='" + streamType + '\'' +
-                    '}';
+                   "loaderPipeline=" + loaderPipeline +
+                   ", referenceFeed=" + referenceFeed +
+                   ", streamType='" + streamType + '\'' +
+                   '}';
         }
 
         @ValidationMethod(message = "loaderPipeline docRef type must be '" + PipelineDoc.TYPE + "'")
@@ -170,12 +170,12 @@ public class RefDataLookupRequest {
         }
 
         @ValidationMethod(message = "referenceFeed docRef must have a UUID or a name. The lookup will " +
-                "be faster if both are supplied")
+                                    "be faster if both are supplied")
         @JsonIgnore
         public boolean isValidFeedDocRef() {
             return referenceFeed != null && (
                     (referenceFeed.getUuid() != null && !referenceFeed.getUuid().isEmpty()) ||
-                            (referenceFeed.getName() != null && !referenceFeed.getName().isEmpty()));
+                    (referenceFeed.getName() != null && !referenceFeed.getName().isEmpty()));
         }
     }
 }

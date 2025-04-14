@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.task.api.TaskContext;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -135,13 +135,13 @@ class FsOrphanMetaFinderProgress {
 
     void log() {
         taskContext.info(() -> "Checking meta id " +
-                id.get() +
-                ", batch (" +
-                minId.get() +
-                " => " +
-                maxId +
-                "), found " +
-                orphanCount.longValue() +
-                " orphans (batch size " + batchSize + ")");
+                               id.get() +
+                               ", batch (" +
+                               minId.get() +
+                               " => " +
+                               maxId +
+                               "), found " +
+                               orphanCount.longValue() +
+                               " orphans (batch size " + batchSize + ")");
     }
 }

@@ -22,7 +22,7 @@ import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -88,7 +88,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
     }
 
     public void setSelected(final JobNode jobNode) {
-        jobListPresenter.setSelected(GwtNullSafe.get(jobNode, JobNode::getJob));
+        jobListPresenter.setSelected(NullSafe.get(jobNode, JobNode::getJob));
         jobNodeListPresenter.setSelected(jobNode);
     }
 

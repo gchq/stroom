@@ -34,9 +34,9 @@ import stroom.pipeline.writer.Output;
 import stroom.pipeline.writer.OutputFactory;
 import stroom.pipeline.writer.OutputProxy;
 import stroom.svg.shared.SvgImage;
-import stroom.util.NullSafe;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;

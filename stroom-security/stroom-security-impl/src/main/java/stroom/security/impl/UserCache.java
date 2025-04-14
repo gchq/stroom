@@ -20,10 +20,10 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.User;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;

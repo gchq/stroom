@@ -5,7 +5,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.identity.db.jooq.tables.OauthClient;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.openid.api.OpenIdClient;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 

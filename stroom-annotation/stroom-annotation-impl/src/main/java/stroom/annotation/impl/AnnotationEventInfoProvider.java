@@ -20,7 +20,7 @@ package stroom.annotation.impl;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import event.logging.BaseObject;

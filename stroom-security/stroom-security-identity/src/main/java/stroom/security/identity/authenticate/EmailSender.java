@@ -22,7 +22,7 @@ import stroom.config.common.UriFactory;
 import stroom.security.identity.config.EmailConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.SmtpConfig;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
@@ -78,7 +78,7 @@ class EmailSender {
                 .withTransportStrategy(smtpConfig.getTransportStrategy());
 
         if (!NullSafe.isEmptyString(smtpConfig.getUsername())
-                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+            && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
             mailerBuilder.withSMTPServer(
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),

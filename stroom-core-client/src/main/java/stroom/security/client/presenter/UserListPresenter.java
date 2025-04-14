@@ -37,7 +37,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
@@ -283,9 +283,9 @@ public class UserListPresenter
                         Function.identity(),
                         () -> new ActionMenuCell<>(
                                 (User user) -> UserAndGroupHelper.buildUserActionMenu(
-                                        GwtNullSafe.get(user, User::asRef),
+                                        NullSafe.get(user, User::asRef),
                                         isExternalIdp(),
-                                        GwtNullSafe.requireNonNullElseGet(
+                                        NullSafe.requireNonNullElseGet(
                                                 validUserScreensForActionMenu, UserScreen::all),
                                         this),
                                 this))
@@ -337,7 +337,7 @@ public class UserListPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        filter = GwtNullSafe.trim(text);
+        filter = NullSafe.trim(text);
         if (filter.isEmpty()) {
             filter = null;
         }

@@ -3128,12 +3128,33 @@ paths:
       - Feeds
   /feedStatus/v1/getFeedStatus:
     post:
+      deprecated: true
       operationId: getFeedStatus
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/GetFeedStatusRequest"
+        description: GetFeedStatusRequest
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetFeedStatusResponse"
+          description: default response
+      summary: Submit a request to get the status of a feed
+      tags:
+      - Feed Status
+  /feedStatus/v2/getFeedStatus:
+    post:
+      operationId: getFeedStatus_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetFeedStatusRequestV2"
         description: GetFeedStatusRequest
         required: true
       responses:
@@ -7980,6 +8001,7 @@ components:
           - IMPORT_CONFIGURATION
           - EXPORT_CONFIGURATION
           - VIEW_SYSTEM_INFO_PERMISSION
+          - CHECK_RECEIPT_STATUS
         type:
           type: string
         userRef:
@@ -8575,6 +8597,7 @@ components:
             - IMPORT_CONFIGURATION
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
+            - CHECK_RECEIPT_STATUS
           uniqueItems: true
         permissions:
           type: array
@@ -8606,6 +8629,7 @@ components:
             - IMPORT_CONFIGURATION
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
+            - CHECK_RECEIPT_STATUS
           uniqueItems: true
         userRef:
           $ref: "#/components/schemas/UserRef"
@@ -8642,6 +8666,7 @@ components:
             - IMPORT_CONFIGURATION
             - EXPORT_CONFIGURATION
             - VIEW_SYSTEM_INFO_PERMISSION
+            - CHECK_RECEIPT_STATUS
           uniqueItems: true
         inheritedPermissions:
           type: object
@@ -11122,10 +11147,14 @@ components:
           type: string
         contextEncoding:
           type: string
+        contextFormat:
+          type: string
         createTimeMs:
           type: integer
           format: int64
         createUser:
+          type: string
+        dataFormat:
           type: string
         description:
           type: string
@@ -11138,6 +11167,10 @@ components:
         retentionDayAge:
           type: integer
           format: int32
+        schema:
+          type: string
+        schemaVersion:
+          type: string
         status:
           type: string
           enum:
@@ -11894,6 +11927,17 @@ components:
           type: string
         senderDn:
           type: string
+    GetFeedStatusRequestV2:
+      type: object
+      properties:
+        attributeMap:
+          type: object
+          additionalProperties:
+            type: string
+        feedName:
+          type: string
+        userDesc:
+          $ref: "#/components/schemas/UserDesc"
     GetFeedStatusResponse:
       type: object
       properties:
@@ -11912,15 +11956,23 @@ components:
           - 406 - 100 - Feed must be specified
           - 406 - 101 - Feed is not defined
           - 406 - 102 - Data type is invalid
+          - 406 - 103 - AccountId must be specified
+          - 406 - 104 - Component must be specified
+          - 406 - 105 - Data format is invalid
           - 406 - 110 - Feed is not set to receive data
+          - 406 - 111 - Feed is not valid
+          - 406 - 112 - AccountId is not valid
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
-          - 401 - 302 - Client Token or Certificate Required
+          - 401 - 302 - Client token or certificate required
+          - 401 - 303 - Client data feed key required
+          - 401 - 304 - Authentication of the client is required
           - 401 - 310 - Client Certificate failed authentication
           - 401 - 311 - Client Token failed authentication
           - 401 - 312 - Client Token or Certificate failed authentication
+          - 401 - 313 - Data feed key failed authentication
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:

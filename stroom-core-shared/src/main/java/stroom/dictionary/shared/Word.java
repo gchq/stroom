@@ -17,7 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,10 +56,10 @@ public class Word {
                 @JsonProperty("additionalSourceUuids") final List<String> additionalSourceUuids) {
         // Trim all words
         this.word = Objects.requireNonNull(word).trim();
-        this.additionalSourceUuids = GwtNullSafe.hasItems(additionalSourceUuids)
+        this.additionalSourceUuids = NullSafe.hasItems(additionalSourceUuids)
                 ? additionalSourceUuids
                 : null;
-        if (GwtNullSafe.isBlankString(word)) {
+        if (NullSafe.isBlankString(word)) {
             throw new IllegalArgumentException("Blank words not allowed");
         }
         this.sourceUuid = Objects.requireNonNull(sourceUuid);
@@ -100,7 +100,7 @@ public class Word {
      * contain items if the word list has been de-duplicated.
      */
     public List<String> getAdditionalSourceUuids() {
-        return GwtNullSafe.list(additionalSourceUuids);
+        return NullSafe.list(additionalSourceUuids);
     }
 
     @Override

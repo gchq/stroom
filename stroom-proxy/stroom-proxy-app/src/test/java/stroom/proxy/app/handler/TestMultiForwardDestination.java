@@ -4,9 +4,9 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.NullSafe;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

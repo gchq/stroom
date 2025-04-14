@@ -1,6 +1,5 @@
 package stroom.dropwizard.common;
 
-import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.PathCreator;
@@ -13,6 +12,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.NullSafe;
 
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
@@ -96,7 +96,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
         Arrays.stream(JerseyClientName.values())
                 .forEach(jerseyClientName -> {
                     if (!configMap.containsKey(jerseyClientName)
-                            && CONFIG_DEFAULTS_MAP.containsKey(jerseyClientName)) {
+                        && CONFIG_DEFAULTS_MAP.containsKey(jerseyClientName)) {
 
                         final JerseyClientConfiguration defaultConfig = CONFIG_DEFAULTS_MAP.get(
                                 jerseyClientName);
@@ -202,7 +202,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
         Objects.requireNonNull(jerseyClientName);
         Objects.requireNonNull(jerseyClientConfiguration);
         final String dropWizardName = getJerseyClientNamePrefix().toLowerCase()
-                + jerseyClientName.name().toLowerCase();
+                                      + jerseyClientName.name().toLowerCase();
 
         final String userAgent = jerseyClientConfiguration.getUserAgent()
                 .orElse(null);
@@ -265,10 +265,10 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                         prefix, propName, vanillaValue, stroomDefaultValue, actualValue);
 
                 if (propName.equals(TLS_PROP_NAME)
-                        && (stroomDefaultValue != null || actualValue != null)) {
+                    && (stroomDefaultValue != null || actualValue != null)) {
                     if (vanillaValue != null) {
                         throw new RuntimeException("Expecting vanilla config to be null. " +
-                                "Have DropWizard changed their default config");
+                                                   "Have DropWizard changed their default config");
                     }
                     final Object mergedValue;
                     if (stroomDefaultValue != null && actualValue == null) {
@@ -283,10 +283,10 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                     }
                     prop.setValueOnConfigObject(actualConfig, mergedValue);
                 } else if (propName.equals(PROXY_PROP_NAME)
-                        && (stroomDefaultValue != null || actualValue != null)) {
+                           && (stroomDefaultValue != null || actualValue != null)) {
                     if (vanillaValue != null) {
                         throw new RuntimeException("Expecting vanilla config to be null. " +
-                                "Have DropWizard changed their default config");
+                                                   "Have DropWizard changed their default config");
                     }
                     final Object mergedValue;
                     if (stroomDefaultValue != null && actualValue == null) {
@@ -301,7 +301,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                     prop.setValueOnConfigObject(actualConfig, mergedValue);
                 } else {
                     if (Objects.equals(vanillaValue, actualValue)
-                            && !Objects.equals(vanillaValue, stroomDefaultValue)) {
+                        && !Objects.equals(vanillaValue, stroomDefaultValue)) {
                         // yaml value is same as DW default but stroom has a different default
                         // so apply that
                         LOGGER.debug(() ->
@@ -326,7 +326,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 .filter(str -> !str.isBlank())
                 .orElseGet(() -> {
                     final String userAgent2 = getJerseyClientUserAgentPrefix().toLowerCase()
-                            + buildInfoProvider.get().getBuildVersion();
+                                              + buildInfoProvider.get().getBuildVersion();
                     LOGGER.debug("Setting jersey client user agent string to [{}]", userAgent2);
                     jerseyClientConfiguration.setUserAgent(Optional.of(userAgent2));
                     return userAgent2;

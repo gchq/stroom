@@ -19,7 +19,7 @@ package stroom.pipeline.structure.client.view;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.util.client.SvgImageUtil;
@@ -116,13 +116,13 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private String buildFilterIconTitle() {
-        return GwtNullSafe.get(
+        return NullSafe.get(
                 pipelineElement,
                 PipelineElement::getSteppingFilterSettings,
                 filterSettings -> {
                     final Severity skipToSeverity = filterSettings.getSkipToSeverity();
                     final OutputState skipToOutput = filterSettings.getSkipToOutput();
-                    final List<XPathFilter> xPathFilters = GwtNullSafe.list(filterSettings.getFilters());
+                    final List<XPathFilter> xPathFilters = NullSafe.list(filterSettings.getFilters());
                     if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
                         final StringBuilder sb = new StringBuilder();
                         sb.append("Has active stepping filters:");

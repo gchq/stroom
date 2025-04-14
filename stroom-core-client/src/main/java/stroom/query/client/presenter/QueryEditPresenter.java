@@ -38,8 +38,8 @@ import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.tab.client.presenter.TabData;
@@ -165,7 +165,7 @@ public class QueryEditPresenter
                     }
 
                     final QLVisResult visResult = (QLVisResult) componentResult;
-                    if (!GwtNullSafe.isBlankString(visResult.getJsonData())) {
+                    if (!NullSafe.isBlankString(visResult.getJsonData())) {
                         hasData = true;
                         setVisHidden(false);
                     }
@@ -378,7 +378,7 @@ public class QueryEditPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory) {
         // No point running the search if there is no query
-        if (!GwtNullSafe.isBlankString(editorPresenter.getText())) {
+        if (!NullSafe.isBlankString(editorPresenter.getText())) {
             queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()), this);
         }
     }
@@ -419,7 +419,7 @@ public class QueryEditPresenter
         queryModel.init(docRef);
         if (query != null) {
             reading = true;
-            if (GwtNullSafe.isBlankString(editorPresenter.getText())
+            if (NullSafe.isBlankString(editorPresenter.getText())
                 || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
                 updateQuery(query);

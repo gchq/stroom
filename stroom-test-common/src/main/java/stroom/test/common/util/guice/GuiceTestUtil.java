@@ -1,10 +1,10 @@
 package stroom.test.common.util.guice;
 
 import stroom.util.ConsoleColour;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Binder;
 import com.google.inject.Binding;
@@ -72,6 +72,13 @@ public class GuiceTestUtil {
         return mock;
     }
 
+    /**
+     * Create a {@link MockBinderBuilder} to bind multiple interfaces to a {@link Mockito} mock.
+     */
+    public static MockBinderBuilder buildMockBinder(final Binder binder) {
+        return new MockBinderBuilder(binder);
+    }
+
     public static String dumpGuiceModuleHierarchy(final com.google.inject.Module... modules) {
         final Map<String, ModuleInfo> allModuleInfoMap = buildModuleInfoMap(modules);
 
@@ -129,7 +136,7 @@ public class GuiceTestUtil {
         }
 
         if (!moduleClassNames.isEmpty()
-                && moduleClassNames.get(0).startsWith("stroom.")) {
+            && moduleClassNames.get(0).startsWith("stroom.")) {
 
             final String bindingInfo = determineBindInfo(key, binding, bindingClass);
             if (bindingInfo != null) {
@@ -161,18 +168,18 @@ public class GuiceTestUtil {
         final Annotation annotation = key.getAnnotation();
 
         if (annotation != null
-                && annotation.toString().contains("@com.google.inject.internal.Element")
-                && annotation.toString().contains("MAPBINDER")) {
+            && annotation.toString().contains("@com.google.inject.internal.Element")
+            && annotation.toString().contains("MAPBINDER")) {
             return BindType.MAP_BINDER;
         } else if (annotation != null
-                && annotation.toString().contains("@com.google.inject.internal.Element")
-                && annotation.toString().contains("MULTIBINDER")) {
+                   && annotation.toString().contains("@com.google.inject.internal.Element")
+                   && annotation.toString().contains("MULTIBINDER")) {
             return BindType.MULTI_BINDER;
         } else {
             if (InstanceBinding.class.isAssignableFrom(bindingClass)) {
                 return BindType.INSTANCE;
             } else if (ProviderInstanceBinding.class.isAssignableFrom(bindingClass)
-                    || ProviderKeyBinding.class.isAssignableFrom(bindingClass)) {
+                       || ProviderKeyBinding.class.isAssignableFrom(bindingClass)) {
                 return BindType.PROVIDER;
             } else {
                 return BindType.IMPL;
@@ -204,7 +211,7 @@ public class GuiceTestUtil {
                     providerInstanceBinding,
                     ProviderInstanceBinding::getSource,
                     Object::toString)
-                    + ")";
+                          + ")";
         } else if (ProviderKeyBinding.class.isAssignableFrom(bindingClass)) {
             final ProviderKeyBinding<?> providerInstanceBinding =
                     (ProviderKeyBinding<?>) binding;
@@ -214,7 +221,7 @@ public class GuiceTestUtil {
                     Key::getTypeLiteral,
                     TypeLiteral::getRawType,
                     Class::getName)
-                    + ")";
+                          + ")";
         } else if (LinkedKeyBinding.class.isAssignableFrom(bindingClass)) {
             // Standard binding of iface to impl
             final LinkedKeyBinding<?> linkedKeyBinding = (LinkedKeyBinding<?>) binding;
@@ -451,6 +458,25 @@ public class GuiceTestUtil {
                     info,
                     binding,
                     provider);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class MockBinderBuilder {
+
+        private final Binder binder;
+
+        private MockBinderBuilder(final Binder binder) {
+            this.binder = binder;
+        }
+
+        public <T> MockBinderBuilder addMockBindingFor(final Class<T> interfaceType) {
+            final T mock = Mockito.mock(interfaceType);
+            binder.bind(interfaceType).toInstance(mock);
+            return this;
         }
     }
 }

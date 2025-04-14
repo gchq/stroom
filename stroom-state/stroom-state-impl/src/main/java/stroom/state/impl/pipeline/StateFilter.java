@@ -44,11 +44,11 @@ import stroom.state.impl.dao.TemporalStateDao;
 import stroom.state.shared.StateDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.time.StroomDuration;
 
@@ -439,8 +439,8 @@ public class StateFilter extends AbstractXMLFilter {
             fastInfosetStartElement(localName, uri, qName, atts);
 
         } else if ("session".equals(localName) ||
-                "session-start".equals(localName) ||
-                "session-end".equals(localName)) {
+                   "session-start".equals(localName) ||
+                   "session-end".equals(localName)) {
             start = true;
             time = null;
             timeout = null;
@@ -568,8 +568,8 @@ public class StateFilter extends AbstractXMLFilter {
                 timeout = StroomDuration.parse(content.toString());
 
             } else if ("session".equals(localName) ||
-                    "session-start".equals(localName) ||
-                    "session-end".equals(localName)) {
+                       "session-start".equals(localName) ||
+                       "session-end".equals(localName)) {
                 addData();
             }
         }
@@ -883,7 +883,7 @@ public class StateFilter extends AbstractXMLFilter {
                 .stream()
                 .anyMatch(prefixToUriEntry ->
                         Objects.equals(prefixToUriEntry.getKey(), prefix)
-                                && Objects.equals(prefixToUriEntry.getValue(), uri));
+                        && Objects.equals(prefixToUriEntry.getValue(), uri));
     }
 
     private boolean hasUriBeenApplied(final String prefix) {

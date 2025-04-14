@@ -17,7 +17,7 @@
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -35,7 +35,7 @@ public interface SelectionItem {
      */
     default SafeHtml getRenderedLabel() {
         final String label = getLabel();
-        if (GwtNullSafe.isBlankString(label)) {
+        if (NullSafe.isBlankString(label)) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             return SafeHtmlUtils.fromString(getLabel());

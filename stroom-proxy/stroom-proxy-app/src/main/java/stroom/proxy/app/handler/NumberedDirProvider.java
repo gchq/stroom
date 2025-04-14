@@ -1,11 +1,9 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import com.google.common.base.Strings;
+import stroom.util.shared.NullSafe;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -56,8 +54,28 @@ public class NumberedDirProvider {
      * @param num The number to create the name from.
      * @return A `0` padded string representing the supplied number.
      */
-    private String create(final long num) {
-        return Strings.padStart(Long.toString(num), 10, '0');
+    static String create(final long num) {
+        // This method is ~2x as quick as
+        // return Strings.padStart(Long.toString(num), 10, '0');
+        if (num == 0) {
+            return "0000000000";
+        } else {
+            final String str = String.valueOf(num);
+            int len = str.length();
+            return switch (len) {
+                case 0 -> "0000000000";
+                case 1 -> "000000000" + str;
+                case 2 -> "00000000" + str;
+                case 3 -> "0000000" + str;
+                case 4 -> "000000" + str;
+                case 5 -> "00000" + str;
+                case 6 -> "0000" + str;
+                case 7 -> "000" + str;
+                case 8 -> "00" + str;
+                case 9 -> "0" + str;
+                default -> str;
+            };
+        }
     }
 
     /**

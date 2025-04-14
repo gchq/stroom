@@ -16,7 +16,6 @@
 
 package stroom.cache.client.presenter;
 
-import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
@@ -33,6 +32,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.cache.CacheInfo;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -146,8 +146,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             final String name = convertUpperCamelToHuman(cacheInfoKey);
 
             if (HIT_RATIO_KEY.equals(cacheInfoKey)
-                    && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
-                    && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+                && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
                 addStatColumn("Hit Ratio", -1, row ->
                         getCacheHitRatio(row.getMap()));
             } else {
@@ -258,24 +258,24 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         final long thinCharsCount = text.chars()
                 .filter(chr ->
                         chr == 'I'
-                                || chr == 'i'
-                                || chr == 'j'
-                                || chr == 'l'
-                                || chr == 'r'
-                                || chr == 't')
+                        || chr == 'i'
+                        || chr == 'j'
+                        || chr == 'l'
+                        || chr == 'r'
+                        || chr == 't')
                 .count();
         final long wideCharsCount = text.chars()
                 .filter(chr ->
                         chr == 'M'
-                                || chr == 'W'
-                                || chr == 'm'
-                                || chr == 'w')
+                        || chr == 'W'
+                        || chr == 'm'
+                        || chr == 'w')
                 .count();
         final long normalCharsCount = text.length() - thinCharsCount - wideCharsCount;
         // Adjust for the narrow chars present
         final double adjustedCharsCount = normalCharsCount
-                + ((double) thinCharsCount * 0.6)
-                + ((double) wideCharsCount * 1.3);
+                                          + ((double) thinCharsCount * 0.6)
+                                          + ((double) wideCharsCount * 1.3);
         // Now scale the to pixels
         final int colWidth = (int) (adjustedCharsCount * 8.5);
 //        GWT.log("text: " + text

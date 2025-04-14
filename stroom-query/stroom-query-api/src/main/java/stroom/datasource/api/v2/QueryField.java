@@ -18,7 +18,7 @@ package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -377,7 +377,7 @@ public class QueryField implements Field, HasDisplayValue {
     }
 
     public static Map<String, QueryField> buildFieldMap(final QueryField... queryFields) {
-        return GwtNullSafe.stream(queryFields)
+        return NullSafe.stream(queryFields)
                 .collect(Collectors.toMap(
                         QueryField::getFldName,
                         Function.identity()));

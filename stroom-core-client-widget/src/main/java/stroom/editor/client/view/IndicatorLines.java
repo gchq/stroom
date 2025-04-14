@@ -1,8 +1,8 @@
 package stroom.editor.client.view;
 
 import stroom.util.shared.ErrorType;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -56,7 +56,7 @@ public class IndicatorLines {
     public static IndicatorLines filter(final Indicators indicators,
                                         final boolean includeLocationAgnostic,
                                         final ErrorType... includedErrorTypes) {
-        final Indicators allIndicators = GwtNullSafe.getOrElseGet(
+        final Indicators allIndicators = NullSafe.getOrElseGet(
                 indicators,
                 indicators2 ->
                         indicators2.filter(includeLocationAgnostic, includedErrorTypes),
@@ -65,7 +65,7 @@ public class IndicatorLines {
         final Indicator locationAgnosticIndicator = new Indicator();
         final Set<ErrorType> includedErrorTypesSet = ErrorType.asSet(includedErrorTypes);
 
-        if (GwtNullSafe.test(indicators, indicators2 -> !indicators2.isEmpty())) {
+        if (NullSafe.test(indicators, indicators2 -> !indicators2.isEmpty())) {
             for (final StoredError storedError : indicators.getErrorList()) {
                 if (includedErrorTypesSet.contains(storedError.getErrorType())) {
                     if (storedError.getLocation() != null

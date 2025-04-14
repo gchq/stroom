@@ -22,8 +22,8 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
-import stroom.util.NullSafe;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;

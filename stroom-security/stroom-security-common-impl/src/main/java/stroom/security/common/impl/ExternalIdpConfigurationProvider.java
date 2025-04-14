@@ -7,13 +7,12 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
 import stroom.util.HasHealthCheck;
-import stroom.util.NullSafe;
-import stroom.util.http.HttpClientConfiguration;
-import stroom.util.http.HttpClientFactory;
-import stroom.util.io.StreamUtil;
+import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,20 +22,16 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.io.CloseMode;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -52,22 +47,20 @@ public class ExternalIdpConfigurationProvider
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExternalIdpConfigurationProvider.class);
     private static final long MAX_SLEEP_TIME_MS = 30_000;
 
-    private final HttpClientFactory httpClientFactory;
+    private final JerseyClientFactory jerseyClientFactory;
     // Important to use AbstractOpenIdConfig here and not OpenIdConfiguration as the former
     // is bound to the yaml config, the latter is what we are presenting this as.
     private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
 
     private volatile String lastConfigurationEndpoint;
     private volatile OpenIdConfigurationResponse openIdConfigurationResp;
-    private volatile CloseableHttpClient currentHttpClient;
-    private volatile HttpClientConfiguration currentHttpClientConfiguration;
 
     @Inject
     public ExternalIdpConfigurationProvider(
-            final HttpClientFactory httpClientFactory,
-            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider) {
-        this.httpClientFactory = httpClientFactory;
+            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider,
+            final JerseyClientFactory jerseyClientFactory) {
         this.localOpenIdConfigProvider = localOpenIdConfigProvider;
+        this.jerseyClientFactory = jerseyClientFactory;
     }
 
     @Override
@@ -76,25 +69,10 @@ public class ExternalIdpConfigurationProvider
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
 
         if (isFetchRequired(configurationEndpoint)) {
-            updateOpenIdConfigurationResponse(abstractOpenIdConfig, getHttpClient(abstractOpenIdConfig));
+            updateOpenIdConfigurationResponse(abstractOpenIdConfig);
         }
 
         return openIdConfigurationResp;
-    }
-
-    private synchronized HttpClient getHttpClient(final AbstractOpenIdConfig abstractOpenIdConfig) {
-        if (currentHttpClient == null ||
-            !Objects.equals(abstractOpenIdConfig.getHttpClient(), currentHttpClientConfiguration)) {
-            if (currentHttpClient != null) {
-                currentHttpClient.close(CloseMode.IMMEDIATE);
-            }
-
-            currentHttpClientConfiguration = abstractOpenIdConfig.getHttpClient();
-            currentHttpClient = httpClientFactory.get(
-                    "ExternalIdpConfigurationProvider-" + UUID.randomUUID(),
-                    currentHttpClientConfiguration);
-        }
-        return currentHttpClient;
     }
 
     @Override
@@ -124,7 +102,7 @@ public class ExternalIdpConfigurationProvider
             try {
                 resultBuilder.withDetail("configUri", configurationEndpoint);
                 OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                        configurationEndpoint, abstractOpenIdConfig, getHttpClient(abstractOpenIdConfig));
+                        configurationEndpoint, abstractOpenIdConfig);
                 if (response != null) {
                     resultBuilder.healthy();
                 } else {
@@ -147,8 +125,7 @@ public class ExternalIdpConfigurationProvider
     }
 
     private OpenIdConfigurationResponse updateOpenIdConfigurationResponse(
-            final AbstractOpenIdConfig abstractOpenIdConfig,
-            final HttpClient httpClient) {
+            final AbstractOpenIdConfig abstractOpenIdConfig) {
         final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
 
         LOGGER.debug("About to get lock to update open id configuration");
@@ -158,7 +135,7 @@ public class ExternalIdpConfigurationProvider
             if (isFetchRequired(configurationEndpoint)) {
                 try {
                     final OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                            configurationEndpoint, abstractOpenIdConfig, httpClient);
+                            configurationEndpoint, abstractOpenIdConfig);
                     openIdConfigurationResp = mergeResponse(response, abstractOpenIdConfig);
                 } catch (final RuntimeException | IOException e) {
                     LOGGER.error(e.getMessage(), e);
@@ -181,8 +158,7 @@ public class ExternalIdpConfigurationProvider
 
     private OpenIdConfigurationResponse fetchOpenIdConfigurationResponse(
             final String configurationEndpoint,
-            final AbstractOpenIdConfig abstractOpenIdConfig,
-            final HttpClient httpClient) throws IOException {
+            final AbstractOpenIdConfig abstractOpenIdConfig) throws IOException {
 
         Objects.requireNonNull(configurationEndpoint,
                 "Property "
@@ -190,30 +166,35 @@ public class ExternalIdpConfigurationProvider
                 + " has not been set");
         LOGGER.info("Fetching open id configuration from: " + configurationEndpoint);
 
-        final HttpGet httpGet = new HttpGet(configurationEndpoint);
+//        final HttpGet httpGet = new HttpGet(configurationEndpoint);
         long sleepMs = 500;
         Throwable lastThrowable = null;
 
         while (true) {
             try {
-                return httpClient.execute(httpGet, response -> {
-                    if (HttpServletResponse.SC_OK == response.getCode()) {
-                        final HttpEntity entity = response.getEntity();
-                        String msg;
-                        try (final InputStream is = entity.getContent()) {
-                            msg = StreamUtil.streamToString(is);
-                        }
+                final WebTarget webTarget = jerseyClientFactory.getNamedClient(JerseyClientName.OPEN_ID)
+                        .target(configurationEndpoint);
 
+                try (Response response = webTarget.request(MediaType.APPLICATION_JSON).get()) {
+                    if (response.getStatus() == HttpServletResponse.SC_OK) {
+                        // According to the spec, the response may contain unexpected props so as we don't easily
+                        // have access to configure the client to relax jackson, do it manually.
+                        // https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse
+                        final String responseJson = response.readEntity(String.class);
+                        LOGGER.debug("configurationEndpoint: '{}'\n{}",
+                                configurationEndpoint,
+                                responseJson);
                         final OpenIdConfigurationResponse openIdConfigurationResponse = parseConfigurationResponse(
                                 configurationEndpoint,
-                                msg);
+                                responseJson);
+
                         LOGGER.info("Successfully fetched open id configuration from: " + configurationEndpoint);
                         return openIdConfigurationResponse;
                     } else {
-                        throw new AuthenticationException("Received status " + response.getCode() +
+                        throw new AuthenticationException("Received status " + response.getStatus() +
                                                           " from " + configurationEndpoint);
                     }
-                });
+                }
             } catch (AuthenticationException e) {
                 // This is not a connection issue so just bubble it up and likely crash the app
                 // if this is happening as part of the guice injector init.

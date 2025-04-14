@@ -13,7 +13,7 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +49,7 @@ public class SimpleStringExpressionParser {
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
                                                       final String string) {
-        if (GwtNullSafe.isBlankString(string)) {
+        if (NullSafe.isBlankString(string)) {
             return Optional.empty();
         }
 

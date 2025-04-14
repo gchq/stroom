@@ -1,10 +1,9 @@
 package stroom.meta.api;
 
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,7 +93,7 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     }
 
     public static EffectiveMetaSet of(final EffectiveMeta... effectiveMetas) {
-        return of(GwtNullSafe.asList(effectiveMetas));
+        return of(NullSafe.asList(effectiveMetas));
     }
 
     public static EffectiveMetaSet of(final Collection<EffectiveMeta> effectiveMetaList) {
@@ -195,10 +194,10 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     @Override
     public String toString() {
         return "EffectiveMetaSet{" +
-                "feed='" + feed + '\'' +
-                ", type='" + type + '\'' +
-                ", set=\n" + effectiveStreamsToString(effectiveMetas) +
-                '}';
+               "feed='" + feed + '\'' +
+               ", type='" + type + '\'' +
+               ", set=\n" + effectiveStreamsToString(effectiveMetas) +
+               '}';
     }
 
     private static String effectiveStreamsToString(final Collection<EffectiveMeta> effectiveStreams) {
@@ -409,9 +408,9 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
                                 : effectiveMeta;
 
                         LOGGER.warn("Reference streams [{}] and [{}] from feed '{}' found with the same " +
-                                        "effective time {}. Stroom cannot know which is the preferred " +
-                                        "stream so the one with the highest stream ID ({}) will be " +
-                                        "used and the other ignored.",
+                                    "effective time {}. Stroom cannot know which is the preferred " +
+                                    "stream so the one with the highest stream ID ({}) will be " +
+                                    "used and the other ignored.",
                                 existingMeta.getId(),
                                 newMeta.getId(),
                                 feed,
@@ -439,11 +438,11 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
         @Override
         public String toString() {
             return "Builder{" +
-                    "effectiveMetas=" + effectiveMetas +
-                    ", effectiveTimeToMetaMap.size=" + effectiveTimeToMetaMap.size() +
-                    ", feed='" + feed + '\'' +
-                    ", type='" + type + '\'' +
-                    '}';
+                   "effectiveMetas=" + effectiveMetas +
+                   ", effectiveTimeToMetaMap.size=" + effectiveTimeToMetaMap.size() +
+                   ", feed='" + feed + '\'' +
+                   ", type='" + type + '\'' +
+                   '}';
         }
     }
 }

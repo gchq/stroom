@@ -40,7 +40,7 @@ import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
@@ -291,14 +291,14 @@ public class AppUserPermissionsListPresenter
                 .append(SafeHtmlUtil.ENSP)
                 .toSafeHtml();
         for (final AppPermission permission : AppPermission.LIST) {
-            if (GwtNullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
+            if (NullSafe.collectionContains(appUserPermissions.getPermissions(), permission)) {
                 if (notEmpty) {
                     sb.addLine(false, lastIsInherited, true, delimiter);
                 }
                 sb.addLine(permission.getDisplayValue());
                 notEmpty = true;
                 lastIsInherited = false;
-            } else if (GwtNullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
+            } else if (NullSafe.collectionContains(appUserPermissions.getInherited(), permission)) {
                 if (notEmpty) {
                     sb.addLine(false, lastIsInherited, true, delimiter);
                 }
@@ -311,12 +311,12 @@ public class AppUserPermissionsListPresenter
     }
 
     private boolean isUserEnabled(final AppUserPermissions appUserPermissions) {
-        return GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
         return (AppUserPermissions appUserPermissions) -> {
-            final UserRef userRef = GwtNullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
+            final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
             if (userRef != null) {
                 final String displayName = userRef.getDisplayName();
                 return new CommandLink(

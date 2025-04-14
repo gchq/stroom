@@ -17,7 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 
 import org.junit.jupiter.api.Test;
 

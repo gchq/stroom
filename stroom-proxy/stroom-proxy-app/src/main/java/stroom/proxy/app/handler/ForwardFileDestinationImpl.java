@@ -3,13 +3,13 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -17,6 +17,7 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -70,20 +71,20 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
     public ForwardFileDestinationImpl(final Path storeDir,
                                       final String name,
-                                      final PathTemplateConfig subPathTemplate,
+                                      final PathTemplateConfig pathTemplateConfig,
                                       final String livenessCheckPath,
                                       final LivenessCheckMode livenessCheckMode,
                                       final PathCreator pathCreator) {
 
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
-        this.subPathTemplate = subPathTemplate;
+        this.subPathTemplate = pathTemplateConfig;
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = livenessCheckMode;
         this.pathCreator = pathCreator;
 
-        if (subPathTemplate != null && subPathTemplate.hasPathTemplate()) {
-            final String pathTemplate = subPathTemplate.getPathTemplate();
+        if (pathTemplateConfig != null && pathTemplateConfig.hasPathTemplate()) {
+            final String pathTemplate = pathTemplateConfig.getPathTemplate();
             final String[] vars = pathCreator.findVars(pathTemplate);
             if (NullSafe.hasItems(vars)) {
                 staticBaseDir = null;
@@ -109,7 +110,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             LOGGER.debug("'{}' - Initialising maxId at {} in '{}'", name, maxId, staticBaseDir);
             targetDirCreationFunc = this::createStaticTargetDir;
         } else {
-            // Templated base dirs, so need a cache of commitIds, one per templated path.
+            // Templated base dirs, so need a cache of the commitId counters, one per templated path.
             // No need to age them off.
             writeIdsCache = Caffeine.newBuilder()
                     .maximumSize(1_000)
@@ -345,9 +346,7 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         // so use a loop to keep trying.
         while (tryCount++ < MAX_MOVE_ATTEMPTS) {
             try {
-                Files.move(source,
-                        target,
-                        StandardCopyOption.ATOMIC_MOVE);
+                doMove(source, target);
                 success = true;
                 break;
             } catch (final NoSuchFileException e) {
@@ -360,6 +359,25 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
         if (!success) {
             throw new RuntimeException(LogUtil.message("Unable to move {} to {} after {} attempts {}",
                     source, target, tryCount));
+        }
+    }
+
+    private void doMove(final Path source, final Path target) throws IOException {
+        try {
+            // If the target is on a remote FS then chances are ATOMIC_MOVE will not be supported
+            // so, we need a fallback, accepting that we lose the guarantee of exactly once.
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "'{}' - Atomic move not supported, falling back to non-atomic move. "
+                    + "To stop seeing this warning set the config property {} to false."
+                    + "Moving '{}' to '{}",
+                    getDestinationDescription(),
+                    ForwardFileConfig.PROP_NAME_ATOMIC_MOVE_ENABLED,
+                    LogUtil.path(source),
+                    LogUtil.path(target)));
+            // Non-atomic move
+            Files.move(source, target);
         }
     }
 

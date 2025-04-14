@@ -2,8 +2,8 @@ package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
-import stroom.util.NullSafe;
 import stroom.util.PredicateUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
 
 import java.io.IOException;

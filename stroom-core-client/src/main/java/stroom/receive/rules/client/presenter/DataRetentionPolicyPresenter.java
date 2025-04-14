@@ -40,7 +40,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -86,7 +85,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     private final ButtonView moveDownButton;
 
     private boolean dirty;
-    private PresenterWidget<?> currentContent;
     private DataRetentionPresenter dataRetentionPresenter;
 
     @Inject
@@ -362,8 +360,8 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             ConfirmEvent.fire(
                     this,
                     "Are you sure you want to delete rule "
-                            + rule.getRuleNumber()
-                            + nameStr + "?",
+                    + rule.getRuleNumber()
+                    + nameStr + "?",
                     ok -> {
                         if (ok) {
                             if (!isDefaultRule(rule)) {
@@ -573,20 +571,20 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         }
 
         saveButton.setEnabled(loadedPolicy
-                && dirty);
+                              && dirty);
         addButton.setEnabled(loadedPolicy);
         editButton.setEnabled(selected
-                && !isDefaultRule);
+                              && !isDefaultRule);
         copyButton.setEnabled(selected);
         deleteButton.setEnabled(selected
-                && !isDefaultRule);
+                                && !isDefaultRule);
         moveUpButton.setEnabled(selected
-                && !isDefaultRule
-                && index > 0);
+                                && !isDefaultRule
+                                && index > 0);
         moveDownButton.setEnabled(selected
-                && !isDefaultRule
-                && index >= 0
-                && index < visibleRules.size() - 2);
+                                  && !isDefaultRule
+                                  && index >= 0
+                                  && index < visibleRules.size() - 2);
     }
 
     boolean isDirty() {

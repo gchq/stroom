@@ -59,6 +59,7 @@ dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-cache:stroom-cache-service-impl')
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-api')

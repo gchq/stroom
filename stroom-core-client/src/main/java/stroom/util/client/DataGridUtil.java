@@ -25,9 +25,9 @@ import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.util.shared.Expander;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.UserRef;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -563,7 +563,7 @@ public class DataGridUtil {
 
     public static void addCommandLinkFieldUpdater(Column<?, CommandLink> column) {
         column.setFieldUpdater((index, object, value) -> {
-            if (GwtNullSafe.allNonNull(value, value.getCommand())) {
+            if (NullSafe.allNonNull(value, value.getCommand())) {
                 value.getCommand().execute();
             }
         });
@@ -586,5 +586,26 @@ public class DataGridUtil {
 
     public static HeadingBuilder headingBuilder() {
         return new HeadingBuilder("");
+    }
+
+    /**
+     * Returns a {@link Function} that will call the toString method on the value returned
+     * from passing the row into valueExtractor, but only if the value is non-null.
+     */
+    public static <T_ROW> Function<T_ROW, String> toStringFunc(final Function<T_ROW, Object> valueExtractor) {
+        return (T_ROW row) ->
+                NullSafe.toStringOrElse(row, valueExtractor, "");
+    }
+
+    /**
+     * Returns a {@link Function} that will call the toString method on the value returned
+     * from passing the row through valueExtractor1 then valueExtractor2. If any intermediate value
+     * is null, the returned function will return an empty string.
+     */
+    public static <T_ROW, T_VAL1> Function<T_ROW, String> toStringFunc(
+            final Function<T_ROW, T_VAL1> valueExtractor1,
+            final Function<T_VAL1, Object> valueExtractor2) {
+        return (T_ROW row) ->
+                NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
     }
 }

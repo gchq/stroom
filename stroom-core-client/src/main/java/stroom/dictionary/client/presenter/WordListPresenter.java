@@ -31,7 +31,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -183,7 +183,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
     }
 
     private String wordToAdditionalSourcesStr(final Word word) {
-        if (word == null || GwtNullSafe.isEmptyCollection(word.getAdditionalSourceUuids())) {
+        if (word == null || NullSafe.isEmptyCollection(word.getAdditionalSourceUuids())) {
             return null;
         } else {
             return word.getAdditionalSourceUuids()
@@ -198,7 +198,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
 
     private Function<Word, CommandLink> buildOpenDocCommandLink() {
         return (Word word) ->
-                GwtNullSafe.get(
+                NullSafe.get(
                                 word,
                                 w -> getWordList().getSource(word))
                         .map(sourceRef -> {
@@ -286,7 +286,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
             comparator = comparator.reversed();
         }
 
-        for (final Comparator<Word> subsequentComparator : GwtNullSafe.asList(subsequentComparators)) {
+        for (final Comparator<Word> subsequentComparator : NullSafe.asList(subsequentComparators)) {
             if (subsequentComparator != null) {
                 comparator = comparator.thenComparing(comparator);
             }

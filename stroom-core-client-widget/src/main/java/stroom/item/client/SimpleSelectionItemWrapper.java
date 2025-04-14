@@ -17,7 +17,7 @@
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -59,7 +59,7 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     public SafeHtml getRenderedLabel() {
         if (renderFunction != null) {
             final SafeHtml safeHtml = renderFunction.apply(label, item);
-            return GwtNullSafe.requireNonNullElse(safeHtml, SafeHtmlUtils.EMPTY_SAFE_HTML);
+            return NullSafe.requireNonNullElse(safeHtml, SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             // No render func so let the default method handle it as simple text with no markup
             return SelectionItem.super.getRenderedLabel();

@@ -3,7 +3,7 @@ package stroom.query.common.v2;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 
 import java.util.Objects;
 
@@ -43,7 +43,7 @@ public class CurrentDbStateFactory {
                     long time = 0;
                     if (timeFieldIndex >= 0 && timeFieldIndex < values.length) {
                         final Val eventTime = values[timeFieldIndex];
-                        time = GwtNullSafe.getOrElse(eventTime, Val::toLong, 0L);
+                        time = NullSafe.getOrElse(eventTime, Val::toLong, 0L);
                     }
 
                     final long streamIdLong = Objects.requireNonNull(

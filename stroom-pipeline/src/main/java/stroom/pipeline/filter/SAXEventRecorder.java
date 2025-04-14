@@ -26,8 +26,8 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingFilter;
-import stroom.util.NullSafe;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
@@ -256,7 +256,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                         // If it is then we can return this record
                         // again.
                         if (record.getMetaId() == metaId &&
-                                record.getRecordIndex() == recordIndex) {
+                            record.getRecordIndex() == recordIndex) {
                             return true;
                         }
 
@@ -413,8 +413,8 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     @Override
     public String toString() {
         return "SAXEventRecorder{" +
-                "elementId='" + elementId + '\'' +
-                '}';
+               "elementId='" + elementId + '\'' +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -450,9 +450,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         @Override
         public String toString() {
             return "CompiledXPathFilter{" +
-                    "xPathFilter=" + xPathFilter +
-                    ", xPathExpression=" + xPathExpression +
-                    '}';
+                   "xPathFilter=" + xPathFilter +
+                   ", xPathExpression=" + xPathExpression +
+                   '}';
         }
     }
 }

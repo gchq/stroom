@@ -5,14 +5,15 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
+import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
-import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,8 @@ class TestRetryingForwardDestination {
 
     @Mock
     private ForwardDestination mockDelegateDestination;
+    @Mock
+    private FileStores mockFileStores;
 
     private Path dataDir;
     private Path homeDir;
@@ -57,8 +60,8 @@ class TestRetryingForwardDestination {
         this.sourcesDir = baseDir.resolve("sources");
         this.proxyServices = new ProxyServices();
         this.dirQueueFactory = new DirQueueFactory(this::getDataDir,
-                new QueueMonitors(),
-                new FileStores());
+                new QueueMonitors(new MockMetrics()),
+                mockFileStores);
 
         Mockito.when(mockDelegateDestination.getName())
                 .thenReturn("TestDest");
@@ -66,8 +69,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_success() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
-                .build();
+        final ForwardHttpQueueConfig forwardQueueConfig = new ForwardHttpQueueConfig();
 
         final RetryingForwardDestination retryingForwardDestination = new RetryingForwardDestination(
                 forwardQueueConfig,
@@ -75,7 +77,8 @@ class TestRetryingForwardDestination {
                 this::getDataDir,
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
-                proxyServices);
+                proxyServices,
+                mockFileStores);
 
         proxyServices.start();
 
@@ -102,7 +105,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_retryAllFail() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
+        final ForwardHttpQueueConfig forwardQueueConfig = ForwardHttpQueueConfig.builder()
                 .retryDelay(StroomDuration.ofMillis(200))
                 .retryDelayGrowthFactor(2)
                 .maxRetryDelay(StroomDuration.ofSeconds(10))
@@ -115,7 +118,8 @@ class TestRetryingForwardDestination {
                 this::getDataDir,
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
-                proxyServices);
+                proxyServices,
+                mockFileStores);
 
         proxyServices.start();
 
@@ -151,7 +155,7 @@ class TestRetryingForwardDestination {
 
     @Test
     void test_retryThenSuccess() throws Exception {
-        final ForwardQueueConfig forwardQueueConfig = ForwardQueueConfig.builder()
+        final ForwardHttpQueueConfig forwardQueueConfig = ForwardHttpQueueConfig.builder()
                 .maxRetryAge(StroomDuration.ofSeconds(10))
                 .retryDelay(StroomDuration.ofMillis(500))
                 .build();
@@ -162,7 +166,8 @@ class TestRetryingForwardDestination {
                 this::getDataDir,
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
-                proxyServices);
+                proxyServices,
+                mockFileStores);
 
         proxyServices.start();
 

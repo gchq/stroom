@@ -10,11 +10,11 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.NullSafe;
 import stroom.util.concurrent.AsyncReference;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -77,8 +77,8 @@ public class PrioritisedFilters implements Clearable {
             for (ProcessorFilter filter : NullSafe.list(filters)) {
                 try {
                     if (filter != null
-                            && filter.getPipelineUuid() != null
-                            && NullSafe.isEmptyString(filter.getPipelineName())) {
+                        && filter.getPipelineUuid() != null
+                        && NullSafe.isEmptyString(filter.getPipelineName())) {
                         final Optional<String> pipelineName = processorFilterService
                                 .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
                         pipelineName.ifPresent(newPipeName -> {

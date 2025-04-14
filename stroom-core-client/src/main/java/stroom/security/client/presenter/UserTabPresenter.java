@@ -10,7 +10,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.tab.client.presenter.TabData;
@@ -213,7 +213,7 @@ public class UserTabPresenter
 
     public void setUserRef(final UserRef userRef) {
         this.userRef = userRef;
-        this.label = GwtNullSafe.getOrElse(
+        this.label = NullSafe.getOrElse(
                 userRef,
                 ref -> ref.getType(CaseType.SENTENCE) + ": " + ref.toDisplayString(),
                 "Unknown User/Group");

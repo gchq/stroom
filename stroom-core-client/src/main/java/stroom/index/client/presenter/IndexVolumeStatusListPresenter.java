@@ -32,8 +32,8 @@ import stroom.index.shared.IndexVolumeResource;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -215,7 +215,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private boolean isEnabled(final IndexVolume volume) {
-        final VolumeUseState volumeUseState = GwtNullSafe.get(volume, IndexVolume::getState);
+        final VolumeUseState volumeUseState = NullSafe.get(volume, IndexVolume::getState);
         return VolumeUseState.ACTIVE == volumeUseState;
     }
 

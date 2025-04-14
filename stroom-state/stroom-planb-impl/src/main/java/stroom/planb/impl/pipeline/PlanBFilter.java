@@ -39,11 +39,11 @@ import stroom.planb.impl.db.TemporalState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.time.StroomDuration;
 

@@ -11,10 +11,10 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -297,8 +297,8 @@ public class ActiveShardsCacheImpl implements ActiveShardsCache {
                 // Look for non deleted, non-full, non-corrupt index shards.
                 final IndexShardStatus status = indexShard.getStatus();
                 if (status != null
-                        && REQUIRED_SHARD_STATES.contains(status)
-                        && indexShard.getDocumentCount() < maxDocsPerShard) {
+                    && REQUIRED_SHARD_STATES.contains(status)
+                    && indexShard.getDocumentCount() < maxDocsPerShard) {
                     indexShards.add(indexShard);
                 } else {
                     LOGGER.debug(() -> LogUtil.message("Ignoring shard {} with status: {}, docCount: {}",

@@ -22,10 +22,10 @@ import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
-import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;

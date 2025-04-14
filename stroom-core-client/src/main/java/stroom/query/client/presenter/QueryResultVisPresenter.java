@@ -36,7 +36,7 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Theme;
 import stroom.util.client.JSONUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
@@ -626,17 +626,17 @@ public class QueryResultVisPresenter
 
     @Override
     public List<ColumnRef> getColumns() {
-        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getColumns);
+        return NullSafe.get(visSelectionModel, VisSelectionModel::getColumns);
     }
 
     @Override
     public List<ComponentSelection> getSelection() {
-        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getSelection);
+        return NullSafe.get(visSelectionModel, VisSelectionModel::getSelection);
     }
 
     @Override
     public Set<String> getHighlights() {
-        return GwtNullSafe.get(visSelectionModel, VisSelectionModel::getHighlights);
+        return NullSafe.get(visSelectionModel, VisSelectionModel::getHighlights);
     }
 
     @Override

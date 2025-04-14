@@ -18,11 +18,11 @@
 package stroom.util.config;
 
 
-import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -687,6 +687,16 @@ public final class PropertyUtil {
         public boolean hasAnnotation(final Class<? extends Annotation> clazz) {
             Objects.requireNonNull(clazz);
             return fieldAnnotationsMap.containsKey(clazz) || getterAnnotationsMap.containsKey(clazz);
+        }
+
+        /**
+         * @return True if prop is non-null and either the field or getter have
+         * the passed {@link Annotation} class.
+         */
+        public static boolean hasAnnotation(final Prop prop,
+                                            final Class<? extends Annotation> clazz) {
+            return prop != null
+                   && prop.hasAnnotation(clazz);
         }
 
         public Collection<Annotation> getFieldAnnotations() {

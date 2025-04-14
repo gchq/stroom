@@ -57,9 +57,13 @@ class TestRangedStateDb {
             assertThat(db.count()).isEqualTo(1);
             testGet(db);
 
-            final RangedStateRequest stateRequest =
-                    new RangedStateRequest(11);
-            final Optional<RangedState> optional = db.getState(stateRequest);
+            checkState(db, 9, false);
+            for (int i = 10; i <= 30; i++) {
+                checkState(db, i, true);
+            }
+            checkState(db, 31, false);
+
+            final Optional<RangedState> optional = getState(db, 11);
             assertThat(optional).isNotEmpty();
             final RangedState res = optional.get();
             assertThat(res.key().keyStart()).isEqualTo(10);
@@ -94,6 +98,20 @@ class TestRangedStateDb {
             assertThat(results.getFirst()[2].toString()).isEqualTo("String");
             assertThat(results.getFirst()[3].toString()).isEqualTo("test99");
         }
+    }
+
+    private Optional<RangedState> getState(final RangedStateDb db, final long key) {
+        final RangedStateRequest request =
+                new RangedStateRequest(key);
+        return db.getState(request);
+    }
+
+    private void checkState(final RangedStateDb db,
+                            final long key,
+                            final boolean expected) {
+        final Optional<RangedState> optional = getState(db, key);
+        final boolean actual = optional.isPresent();
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test

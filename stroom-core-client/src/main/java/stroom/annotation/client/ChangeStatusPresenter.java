@@ -28,7 +28,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -83,7 +83,7 @@ public class ChangeStatusPresenter
                 .condition(Condition.EQUALS)
                 .value(annotationTagType.getDisplayValue())
                 .build());
-        if (!GwtNullSafe.isBlankString(filter)) {
+        if (!NullSafe.isBlankString(filter)) {
             builder.addTerm(ExpressionTerm.builder()
                     .field(AnnotationTagFields.NAME)
                     .condition(Condition.CONTAINS)

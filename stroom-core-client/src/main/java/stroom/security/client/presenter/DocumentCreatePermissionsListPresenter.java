@@ -32,7 +32,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -104,13 +104,13 @@ public class DocumentCreatePermissionsListPresenter
         if (documentType != null && currentPermissions != null) {
 
             // See if explicit permission.
-            if (GwtNullSafe.set(explicitCreatePermissions)
+            if (NullSafe.set(explicitCreatePermissions)
                     .contains(documentType.getType())) {
                 addDirect(sb, "Explicit Permission");
             }
 
             // See if implied by 'Create All' permission.
-            if (GwtNullSafe.set(explicitCreatePermissions)
+            if (NullSafe.set(explicitCreatePermissions)
                     .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS)) {
                 addDirect(sb, "Implied By 'Create All' Permission");
             }
@@ -123,7 +123,7 @@ public class DocumentCreatePermissionsListPresenter
             // See if implied by inherited 'Create All' permission.
             addPaths(
                     sb,
-                    GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
+                    NullSafe.map(NullSafe.get(currentPermissions,
                                     DocumentUserPermissionsReport::getInheritedCreatePermissionPaths))
                             .get(ExplorerConstants.ALL_CREATE_PERMISSIONS),
                     "Implied By 'Create All' Permission Inherited From:");
@@ -131,7 +131,7 @@ public class DocumentCreatePermissionsListPresenter
             // See if inherited.
             addPaths(
                     sb,
-                    GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
+                    NullSafe.map(NullSafe.get(currentPermissions,
                                     DocumentUserPermissionsReport::getInheritedCreatePermissionPaths))
                             .get(documentType.getType()),
                     "Inherited From:");
@@ -139,7 +139,7 @@ public class DocumentCreatePermissionsListPresenter
             // See if inherited and implied by ownership.
             addPaths(
                     sb,
-                    GwtNullSafe.map(GwtNullSafe.get(currentPermissions,
+                    NullSafe.map(NullSafe.get(currentPermissions,
                                     DocumentUserPermissionsReport::getInheritedPermissionPaths))
                             .get(DocumentPermission.OWNER),
 
@@ -224,7 +224,7 @@ public class DocumentCreatePermissionsListPresenter
                     TickBoxCell.create(false, false)) {
                 @Override
                 public TickBoxState getValue() {
-                    final boolean all = GwtNullSafe.set(explicitCreatePermissions)
+                    final boolean all = NullSafe.set(explicitCreatePermissions)
                             .contains(ExplorerConstants.ALL_CREATE_PERMISSIONS);
                     if (all) {
                         return TickBoxState.TICK;

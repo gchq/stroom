@@ -55,7 +55,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ClassNameBuilder;
 import stroom.security.client.presenter.UserRefPopupPresenter;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
@@ -227,7 +227,7 @@ public class AnnotationEditPresenter
                 .condition(Condition.EQUALS)
                 .value(annotationTagType.getDisplayValue())
                 .build());
-        if (!GwtNullSafe.isBlankString(filter)) {
+        if (!NullSafe.isBlankString(filter)) {
             builder.addTerm(ExpressionTerm.builder()
                     .field(AnnotationTagFields.NAME)
                     .condition(Condition.CONTAINS)
@@ -533,7 +533,7 @@ public class AnnotationEditPresenter
     private void addEntryText(final StringBuilder text,
                               final AnnotationEntry entry,
                               final EntryValue currentValue) {
-        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
+        final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (AnnotationEntryType.COMMENT.equals(entry.getEntryType())) {
             text.append(dateTimeFormatter.format(entry.getEntryTime()));
@@ -621,7 +621,7 @@ public class AnnotationEditPresenter
                                  final Date now,
                                  final SafeHtml line) {
         boolean added = false;
-        final String entryUiValue = GwtNullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
+        final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
 
         if (AnnotationEntryType.COMMENT.equals(entry.getEntryType())) {
             html.append(line);

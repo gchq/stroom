@@ -8,7 +8,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.query.api.v2.StringExpressionUtil;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -74,7 +74,7 @@ public class DataSourceClient {
                     .create(DATA_SOURCE_RESOURCE)
                     .method(res -> res.fetchDocumentation(dataSourceDocRef))
                     .onSuccess(documentation -> {
-                        final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
+                        final Optional<String> optMarkDown = NullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
                         if (descriptionConsumer != null) {
                             descriptionConsumer.accept(optMarkDown);

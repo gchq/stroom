@@ -18,10 +18,10 @@ package stroom.app.docs;
 
 import stroom.test.common.docs.StroomDocsUtil;
 import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

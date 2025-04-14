@@ -16,10 +16,10 @@ import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.common.v2.LmdbKV;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 

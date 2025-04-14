@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
+import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;

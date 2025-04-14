@@ -87,6 +87,10 @@ public class ChangeAssignedToViewImpl
         e.stopPropagation();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, ChangeAssignedToViewImpl> {
 
     }

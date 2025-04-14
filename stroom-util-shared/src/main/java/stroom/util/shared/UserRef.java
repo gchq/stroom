@@ -176,7 +176,7 @@ public final class UserRef {
     }
 
     public String toDisplayString(final DisplayType displayType) {
-        final Function<UserRef, String> displayTextFunc = GwtNullSafe.requireNonNullElse(
+        final Function<UserRef, String> displayTextFunc = NullSafe.requireNonNullElse(
                         displayType, DisplayType.AUTO)
                 .getDisplayTextFunc();
         return displayTextFunc.apply(this);
@@ -188,7 +188,7 @@ public final class UserRef {
         } else if (subjectId != null) {
             return subjectId;
         } else {
-            return GwtNullSafe.requireNonNullElseGet(fullName, () ->
+            return NullSafe.requireNonNullElseGet(fullName, () ->
                     "{" + uuid + "}");
         }
     }

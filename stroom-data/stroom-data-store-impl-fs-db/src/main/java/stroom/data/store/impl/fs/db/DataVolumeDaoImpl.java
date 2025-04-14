@@ -5,7 +5,7 @@ import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
-import stroom.util.NullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;

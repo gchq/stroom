@@ -23,7 +23,7 @@ import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -135,7 +135,7 @@ public class AccountsListPresenter
     }
 
     private void setButtonStates() {
-        final boolean hasSelectedItems = GwtNullSafe.hasItems(selectionModel.getSelectedItems());
+        final boolean hasSelectedItems = NullSafe.hasItems(selectionModel.getSelectedItems());
         editButton.setEnabled(hasSelectedItems);
         deleteButton.setEnabled(selectionModel.getSelected() != null);
     }

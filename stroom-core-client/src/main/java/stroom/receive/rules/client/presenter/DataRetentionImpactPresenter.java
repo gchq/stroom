@@ -37,7 +37,7 @@ import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -353,7 +353,7 @@ public class DataRetentionImpactPresenter
 
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) ->
-                                GwtNullSafe.toString(row.getRuleNumber()))
+                                NullSafe.toString(row.getRuleNumber()))
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),

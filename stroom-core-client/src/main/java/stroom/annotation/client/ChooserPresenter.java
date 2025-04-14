@@ -19,7 +19,7 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.util.client.BasicSelectionEventManager;
@@ -127,7 +127,7 @@ public class ChooserPresenter<T>
 
     public SafeHtml getSelectedDisplayValue() {
         final T selected = getSelected();
-        return GwtNullSafe.get(selected, displayValueFunction);
+        return NullSafe.get(selected, displayValueFunction);
     }
 
     public void setSelected(final T value) {

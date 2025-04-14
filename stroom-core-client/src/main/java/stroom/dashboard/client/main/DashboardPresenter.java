@@ -57,7 +57,7 @@ import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.HasTaskMonitorFactory;
-import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -195,7 +195,7 @@ public class DashboardPresenter
         editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
 
-        GwtNullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
+        NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
 //        final String linkParams = ;
         setParamsFromLink(urlParameters.getParams());
         setEmbedded(urlParameters.isEmbedded());
@@ -313,7 +313,11 @@ public class DashboardPresenter
         }
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new SimpleParentMenuItem(1, SafeHtmlUtil.from("Input"), inputs));
+        menuItems.add(new SimpleParentMenuItem(
+                1,
+                SafeHtmlUtil.from("Input"),
+                null,
+                inputs));
         menuItems.addAll(panels);
 
         ShowMenuEvent
@@ -393,7 +397,7 @@ public class DashboardPresenter
                         dashboardConfig.setComponents(componentConfigList);
                     }
 
-                    final String params = GwtNullSafe.string(dashboardConfig.getParameters());
+                    final String params = NullSafe.string(dashboardConfig.getParameters());
 
                     componentConfigList
                             .add(new ComponentConfig(
@@ -830,7 +834,7 @@ public class DashboardPresenter
         if (docRef != null) {
             title = docRef.getName();
         }
-        if (GwtNullSafe.isNonEmptyString(customTitle)) {
+        if (NullSafe.isNonEmptyString(customTitle)) {
             title = customTitle.replaceAll("\\$\\{name\\}", title);
         }
         return title;
