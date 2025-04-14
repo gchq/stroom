@@ -37,6 +37,8 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @UiField
     ItemListBox<DownloadSearchResultFileType> fileType;
     @UiField
+    TickBox downloadAllTables;
+    @UiField
     TickBox sample;
     @UiField
     ValueSpinner percent;
@@ -55,6 +57,18 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         fileType.addItem(DownloadSearchResultFileType.TSV);
 
         fileType.setSelectedItem(DownloadSearchResultFileType.EXCEL);
+
+        downloadAllTables.setEnabled(isExcelFileTypeSelected());
+        fileType.addSelectionHandler(event -> {
+            downloadAllTables.setEnabled(isExcelFileTypeSelected());
+            if (!isExcelFileTypeSelected()) {
+                downloadAllTables.setBooleanValue(false);
+            }
+        });
+    }
+
+    private boolean isExcelFileTypeSelected() {
+        return DownloadSearchResultFileType.EXCEL.equals(fileType.getSelectedItem());
     }
 
     @Override
@@ -65,6 +79,11 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @Override
     public DownloadSearchResultFileType getFileType() {
         return fileType.getSelectedItem();
+    }
+
+    @Override
+    public boolean downloadAllTables() {
+        return downloadAllTables.getBooleanValue();
     }
 
     @Override

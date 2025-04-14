@@ -34,6 +34,10 @@ public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.Downl
         return getView().getFileType();
     }
 
+    public boolean downloadAllTables() {
+        return getView().downloadAllTables();
+    }
+
     public boolean isSample() {
         return getView().isSample();
     }
@@ -45,6 +49,8 @@ public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.Downl
     public interface DownloadView extends View {
 
         DownloadSearchResultFileType getFileType();
+
+        boolean downloadAllTables();
 
         boolean isSample();
 
