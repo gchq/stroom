@@ -3,11 +3,10 @@ ext.moduleName = 'stroom.core.client'
 dependencies {
     implementation project(':stroom-core-client-widget')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util-shared')
-
-    implementation project(':stroom-docref')
 
     implementation libs.gin
     implementation libs.guice.gwt

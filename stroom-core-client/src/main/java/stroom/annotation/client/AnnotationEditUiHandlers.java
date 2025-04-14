@@ -25,6 +25,10 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
 
     void showAssignedToChooser(Element element);
 
+    void showCollectionChooser(Element element);
+
+    void showLabelChooser(Element element);
+
     void showCommentChooser(Element element);
 
     void onTitleChange();
@@ -35,5 +39,7 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
 
     void create();
 
-    void showLinkedEvents();
+    void showRetentionPeriodChooser(Element element);
+
+    void onDelete();
 }

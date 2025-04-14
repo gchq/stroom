@@ -21,6 +21,7 @@ import stroom.security.api.AppPermissionService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ServiceUserFactory;
+import stroom.security.api.UserGroupsService;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.UserService;
 import stroom.security.common.impl.ContentSecurityFilter;
@@ -75,6 +76,7 @@ public class SecurityModule extends AbstractModule {
         bind(UserRefLookup.class).to(UserRefLookupImpl.class);
         bind(UserInfoLookup.class).to(UserInfoLookupImpl.class);
         bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
+        bind(UserGroupsService.class).to(UserGroupsCache.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);

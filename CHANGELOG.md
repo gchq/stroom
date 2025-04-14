@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Annotations 2.0.
+
 * Issue **#4855** : Fix Plan B session state range.
 
 * Improve log message when proxy HTTP forwarding fails. Now includes the time taken and the bytes sent.

@@ -9,7 +9,6 @@ import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
@@ -93,7 +92,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         };
 
-        selectionModel = new MultiSelectionModelImpl<>(cellTable);
+        selectionModel = new MultiSelectionModelImpl<>();
         SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
                 selectionModel,
                 this);
@@ -367,12 +366,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         void doSelect(final I row, final SelectionType selectionType, final boolean stealFocus) {
             if (selectionModel != null) {
-                if (!selectionModel.isSelected(row)) {
-                    selectionModel.setSelected(row);
-                } else {
-                    MultiSelectEvent.fire(cellTable, selectionType);
-                }
-
+                selectionModel.setSelected(row, selectionType);
                 if (row != null && row.isHasChildren()) {
                     selectionList.navigate(row, false, stealFocus);
                 } else {

@@ -42,7 +42,7 @@ public class StroomEventLoggingUtil {
     private StroomEventLoggingUtil() {
     }
 
-    public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
+    public static <T> String buildTypeId(final T restResource, final String method) {
         return String.join(".",
                 Objects.requireNonNull(restResource.getClass().getSimpleName()),
                 Objects.requireNonNull(method));

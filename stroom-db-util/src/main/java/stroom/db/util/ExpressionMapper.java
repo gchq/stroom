@@ -2,6 +2,7 @@ package stroom.db.util;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.NullSafe;
 
 import org.jooq.Condition;
@@ -23,13 +24,18 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         this.termHandlerFactory = termHandlerFactory;
     }
 
+    public void addHandler(final QueryField dataSourceField,
+                           final Function<ExpressionTerm, Condition> handler) {
+        expressionMapper.addHandler(dataSourceField, handler);
+    }
+
     /**
      * Uses UUID for any {@link stroom.datasource.api.v2.DocRefField}s
      */
     public <T> ExpressionMapper map(final QueryField dataSourceField,
                                     final Field<T> field,
                                     final Converter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
+        addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 MultiConverter.wrapConverter(converter)));
@@ -43,7 +49,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                                     final Field<T> field,
                                     final Converter<T> converter,
                                     final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
+        addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 MultiConverter.wrapConverter(converter),
@@ -57,7 +63,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     public <T> ExpressionMapper multiMap(final QueryField dataSourceField,
                                          final Field<T> field,
                                          final MultiConverter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
+        addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 converter));
@@ -71,7 +77,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                                          final Field<T> field,
                                          final MultiConverter<T> converter,
                                          final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
+        addHandler(dataSourceField, termHandlerFactory.create(
                 dataSourceField,
                 field,
                 converter,

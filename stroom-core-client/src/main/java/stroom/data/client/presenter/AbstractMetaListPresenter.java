@@ -129,7 +129,7 @@ public abstract class AbstractMetaListPresenter
         this.expressionValidator = expressionValidator;
 
         this.dataGrid = new MyDataGrid<>();
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
 

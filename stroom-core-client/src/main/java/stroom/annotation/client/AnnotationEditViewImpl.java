@@ -17,20 +17,21 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -39,33 +40,32 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.List;
+
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
     private final Widget widget;
+
+    @UiField
+    Label annotationId;
     @UiField
     TextBox titleTextBox;
     @UiField
     TextBox subjectTextBox;
     @UiField
-    Label statusLabel;
-    @UiField
-    InlineSvgButton statusIcon;
-    @UiField
     Label status;
-    @UiField
-    Label assignedToLabel;
-    @UiField
-    InlineSvgButton assignedToIcon;
     @UiField
     Label assignedTo;
     @UiField
     Label assignYourself;
     @UiField
-    FlowPanel commentFlowPanel;
+    HTML labels;
     @UiField
-    Label commentLabel;
+    HTML collections;
     @UiField
-    InlineSvgButton commentIcon;
+    Label retentionPeriod;
+    @UiField
+    Button commentButton;
     @UiField
     Button create;
     @UiField
@@ -73,7 +73,18 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     SimplePanel history;
     @UiField
-    Label showLinkedEvents;
+    Button delete;
+
+    @UiField
+    SettingBlock statusBlock;
+    @UiField
+    SettingBlock assignedToBlock;
+    @UiField
+    SettingBlock annotationLabelBlock;
+    @UiField
+    SettingBlock annotationCollectionBlock;
+    @UiField
+    SettingBlock annotationRetentionPeriodBlock;
 
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
@@ -81,14 +92,16 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
         create.setIcon(SvgImage.ADD);
-
-        statusIcon.setSvg(SvgImage.ARROW_DOWN);
-        assignedToIcon.setSvg(SvgImage.ARROW_DOWN);
-        commentIcon.setSvg(SvgImage.ARROW_DOWN);
+        delete.setIcon(SvgImage.DELETE);
 
         setTitle(null);
         setSubject(null);
         setStatus(null);
+    }
+
+    @Override
+    public void setId(final long id) {
+        annotationId.setText("#" + id);
     }
 
     @Override
@@ -124,12 +137,12 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setStatus(final String status) {
-        if (status == null || status.trim().isEmpty()) {
+    public void setStatus(final AnnotationTag status) {
+        if (status == null) {
             this.status.setText("None");
             this.status.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.status.setText(status);
+            this.status.setText(status.getName());
             this.status.getElement().getStyle().setOpacity(1);
         }
     }
@@ -142,6 +155,51 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         } else {
             this.assignedTo.setText(assignedTo.toDisplayString());
             this.assignedTo.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setLabels(final List<AnnotationTag> labels) {
+        if (labels == null || labels.isEmpty()) {
+            this.labels.setText("None");
+            this.labels.getElement().getStyle().setOpacity(0.5);
+        } else {
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            for (final AnnotationTag annotationTag : labels) {
+                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
+                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
+                sb.appendHtmlConstant("</div>");
+            }
+            this.labels.setHTML(sb.toSafeHtml());
+            this.labels.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setCollections(final List<AnnotationTag> collections) {
+        if (collections == null || collections.isEmpty()) {
+            this.collections.setText("None");
+            this.collections.getElement().getStyle().setOpacity(0.5);
+        } else {
+            final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            for (final AnnotationTag annotationTag : collections) {
+                sb.appendHtmlConstant("<div class=\"lozengeOuter\">");
+                sb.append(AnnotationEditPresenter.createSwatch(annotationTag.getStyle(), annotationTag.getName()));
+                sb.appendHtmlConstant("</div>");
+            }
+            this.collections.setHTML(sb.toSafeHtml());
+            this.collections.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @Override
+    public void setRetentionPeriod(final String retentionPeriod) {
+        if (retentionPeriod == null || retentionPeriod.trim().isEmpty()) {
+            this.retentionPeriod.setText("None");
+            this.retentionPeriod.getElement().getStyle().setOpacity(0.5);
+        } else {
+            this.retentionPeriod.setText(retentionPeriod);
+            this.retentionPeriod.getElement().getStyle().setOpacity(1);
         }
     }
 
@@ -203,11 +261,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         finishTitleEdit();
     }
 
-//    @UiHandler("titleTextBox")
-//    public void onTitleFocus(final FocusEvent e) {
-//        startTitleEdit();
-//    }
-
     @UiHandler("titleTextBox")
     public void onTitleReturn(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
@@ -221,11 +274,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         finishSubjectEdit();
     }
 
-//    @UiHandler("subjectTextBox")
-//    public void onSubjectFocus(final FocusEvent e) {
-//        startSubjectEdit();
-//    }
-
     @UiHandler("subjectTextBox")
     public void onSubjectReturn(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
@@ -234,54 +282,83 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("statusLabel")
-    public void onStatusLabel(final ClickEvent e) {
+    @UiHandler("statusBlock")
+    public void onStatusBlock(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
+            getUiHandlers().showStatusChooser(statusBlock.getElement());
         }
     }
 
-    @UiHandler("status")
-    public void onStatus(final ClickEvent e) {
+//    @UiHandler("status")
+//    public void onStatus(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showStatusChooser(statusBlock.getElement());
+//        }
+//    }
+
+    @UiHandler("assignedToBlock")
+    public void onAssignedToBlock(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
+            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
         }
     }
 
-    @UiHandler("statusIcon")
-    public void onStatusIcon(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
-        }
-    }
-
-    @UiHandler("assignedToLabel")
-    public void onAssignedToLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
-
-    @UiHandler("assignedTo")
-    public void onAssignedTo(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
-
-    @UiHandler("assignedToIcon")
-    public void onAssignedToIcon(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showAssignedToChooser(assignedToLabel.getElement());
-        }
-    }
+//    @UiHandler("assignedTo")
+//    public void onAssignedTo(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
+//        }
+//    }
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
+        e.stopPropagation();
     }
+
+    @UiHandler("annotationLabelBlock")
+    public void onAnnotationLabelBlock(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
+        }
+    }
+
+//    @UiHandler("label")
+//    public void onLabel(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showLabelChooser(annotationLabelBlock.getElement());
+//        }
+//    }
+
+    @UiHandler("annotationCollectionBlock")
+    public void onAnnotationCollectionBlock(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
+        }
+    }
+
+//    @UiHandler("collection")
+//    public void onCollection(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showCollectionChooser(annotationCollectionBlock.getElement());
+//        }
+//    }
+
+    @UiHandler("annotationRetentionPeriodBlock")
+    public void onAnnotationRetentionPeriodBlock(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showRetentionPeriodChooser(annotationRetentionPeriodBlock.getElement());
+        }
+    }
+
+//    @UiHandler("retentionPeriod")
+//    public void onRetentionPeriod(final ClickEvent e) {
+//        if (getUiHandlers() != null) {
+//            getUiHandlers().showRetentionPeriodChooser(annotationRetentionPeriodBlock.getElement());
+//        }
+//    }
 
     @UiHandler("create")
     public void onCreate(final ClickEvent e) {
@@ -290,39 +367,23 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @UiHandler("commentLabel")
-    public void onCommentLabel(final ClickEvent e) {
-        if (getUiHandlers() != null && commentIcon.isEnabled()) {
-            getUiHandlers().showCommentChooser(commentLabel.getElement());
+    @UiHandler("commentButton")
+    public void onCommentButton(final ClickEvent e) {
+        if (getUiHandlers() != null && commentButton.isEnabled()) {
+            getUiHandlers().showCommentChooser(commentButton.getElement());
         }
     }
 
-    @UiHandler("commentIcon")
-    public void onCommentIcon(final ClickEvent e) {
-        if (getUiHandlers() != null && commentIcon.isEnabled()) {
-            getUiHandlers().showCommentChooser(commentLabel.getElement());
-        }
-    }
-
-    @UiHandler("showLinkedEvents")
-    public void onShowLinkedEvents(final ClickEvent e) {
+    @UiHandler("delete")
+    public void onDelete(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showLinkedEvents();
+            getUiHandlers().onDelete();
         }
     }
 
     @Override
     public void setHasCommentValues(final boolean hasCommentValues) {
-        // There may not be any preconfigured standard comments so enable/disable the QF dropdown
-        // accordingly
-        commentIcon.setEnabled(hasCommentValues);
-        if (hasCommentValues) {
-            commentLabel.addStyleName("clickable");
-            commentFlowPanel.addStyleName("clickable");
-        } else {
-            commentLabel.removeStyleName("clickable");
-            commentFlowPanel.removeStyleName("clickable");
-        }
+        commentButton.setVisible(hasCommentValues);
     }
 
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {

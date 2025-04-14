@@ -129,11 +129,12 @@ class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
     }
 
     private void create(final String name, final MetaType type) {
-        JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.context(metaDbConnProvider, context -> context
-                        .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
-                        .values(name, type.getPrimitiveValue())
-                        .execute()));
+        JooqUtil.context(metaDbConnProvider, context -> context
+                .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
+                .values(name, type.getPrimitiveValue())
+                .onDuplicateKeyUpdate()
+                .set(META_KEY.FIELD_TYPE, type.getPrimitiveValue())
+                .execute());
     }
 
     @Override

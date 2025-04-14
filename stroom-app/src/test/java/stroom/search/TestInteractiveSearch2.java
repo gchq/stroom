@@ -16,7 +16,7 @@
 
 package stroom.search;
 
-import stroom.annotation.api.AnnotationFields;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
@@ -485,7 +485,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
         final Column statusColumn = Column.builder()
                 .id("Status")
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
+                .expression(ParamSubstituteUtil.makeParam(AnnotationDecorationFields.ANNOTATION_STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

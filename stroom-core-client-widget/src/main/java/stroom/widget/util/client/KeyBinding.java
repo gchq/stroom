@@ -98,6 +98,7 @@ public class KeyBinding {
         addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
 
         // Binds for creating a document. Sort these by 2nd key
+        addCreateDocKeySequence(Action.CREATE_ANNOTATION, KeyCodes.KEY_A);
         addCreateDocKeySequence(Action.CREATE_ELASTIC_INDEX, KeyCodes.KEY_C);
         addCreateDocKeySequence(Action.CREATE_DASHBOARD, KeyCodes.KEY_D);
         addCreateDocKeySequence(Action.CREATE_FEED, KeyCodes.KEY_E);
@@ -539,6 +540,7 @@ public class KeyBinding {
         GOTO_USER_PERMISSION_REPORT,
 
         // Create Doc key sequences
+        CREATE_ANNOTATION, // A
         CREATE_ELASTIC_INDEX, // C
         CREATE_DASHBOARD, // D
         CREATE_FEED, // E

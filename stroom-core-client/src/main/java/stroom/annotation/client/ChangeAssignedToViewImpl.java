@@ -17,16 +17,15 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
+import stroom.util.shared.UserRef;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ChangeAssignedToViewImpl
@@ -36,9 +35,11 @@ public class ChangeAssignedToViewImpl
     private final Widget widget;
 
     @UiField
-    SimplePanel assignedTo;
+    Label assignedTo;
     @UiField
     Label assignYourself;
+    @UiField
+    SettingBlock assignedToBlock;
 
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
@@ -51,8 +52,31 @@ public class ChangeAssignedToViewImpl
     }
 
     @Override
-    public void setUserView(final View view) {
-        assignedTo.setWidget(view.asWidget());
+    public void focus() {
+//        assignedToBlock.setFocus(true);
+    }
+
+    @Override
+    public void setAssignYourselfVisible(final boolean visible) {
+        assignYourself.setVisible(visible);
+    }
+
+    @Override
+    public void setAssignedTo(final UserRef assignedTo) {
+        if (assignedTo == null) {
+            this.assignedTo.setText("Nobody");
+            this.assignedTo.getElement().getStyle().setOpacity(0.5);
+        } else {
+            this.assignedTo.setText(assignedTo.toDisplayString());
+            this.assignedTo.getElement().getStyle().setOpacity(1);
+        }
+    }
+
+    @UiHandler("assignedToBlock")
+    public void onAssignedToBlock(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showAssignedToChooser(assignedToBlock.getElement());
+        }
     }
 
     @UiHandler("assignYourself")
@@ -60,6 +84,7 @@ public class ChangeAssignedToViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
+        e.stopPropagation();
     }
 
 

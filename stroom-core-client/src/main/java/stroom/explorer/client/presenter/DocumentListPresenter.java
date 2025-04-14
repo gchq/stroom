@@ -73,7 +73,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
         };
         cellTable.addStyleName("FindCellTable");
 
-        selectionModel = new MultiSelectionModelImpl<>(cellTable);
+        selectionModel = new MultiSelectionModelImpl<>();
         SelectionEventManager<FindResult> selectionEventManager = new SelectionEventManager<>(
                 cellTable,
                 selectionModel,

@@ -1,8 +1,8 @@
 package stroom.hyperlink.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
+import stroom.annotation.client.CreateAnnotationEvent;
+import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
@@ -134,32 +134,36 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openAnnotation(final String href) {
         final Long annotationId = getLongParam(href, "annotationId");
-        final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
-        final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
-        final String eventIdList = getParam(href, "eventIdList");
-        final String title = getParam(href, "title");
-        final String subject = getParam(href, "subject");
-        final String status = getParam(href, "status");
-        final String assignedTo = getParam(href, "assignedTo");
-        final String comment = getParam(href, "comment");
+        if (annotationId != null) {
+            EditAnnotationEvent.fire(this, annotationId);
 
-        // assignedTo is a display name so have to convert it back to a unique username
-        final Annotation annotation = new Annotation();
-        annotation.setId(annotationId);
-        annotation.setTitle(title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        if (assignedTo != null) {
-            annotation.setAssignedTo(UserRef.builder().uuid(assignedTo).build());
-        }
-        annotation.setComment(comment);
+        } else {
+            final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
+            final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
+            final String eventIdList = getParam(href, "eventIdList");
+            String title = getParam(href, "title");
+            final String subject = getParam(href, "subject");
+            final String status = getParam(href, "status");
+            final String assignedTo = getParam(href, "assignedTo");
+            final String comment = getParam(href, "comment");
 
-        final List<EventId> linkedEvents = new ArrayList<>();
-        if (streamId != null && eventId != null) {
-            linkedEvents.add(new EventId(streamId, eventId));
+            title = title == null
+                    ? "New Annotation"
+                    : title;
+
+            final List<EventId> linkedEvents = new ArrayList<>();
+            if (streamId != null && eventId != null) {
+                linkedEvents.add(new EventId(streamId, eventId));
+            }
+            EventId.parseList(eventIdList, linkedEvents);
+
+            UserRef initialAssignTo = null;
+            if (assignedTo != null) {
+                initialAssignTo = UserRef.builder().uuid(assignedTo).build();
+            }
+
+            CreateAnnotationEvent.fire(this, title, subject, status, initialAssignTo, comment, linkedEvents);
         }
-        EventId.parseList(eventIdList, linkedEvents);
-        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
     }
 
     private void openData(final String href) {

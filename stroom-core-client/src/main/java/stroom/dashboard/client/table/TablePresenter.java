@@ -18,7 +18,6 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -234,7 +233,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.ANNOTATIONS));
-        annotateButton.setEnabled(false);
 
         columnsManager = new ColumnsManager(
                 this,
@@ -278,14 +276,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        annotationManager.setDataSourceSupplier(() -> getTableComponentSettings().getDataSourceRef());
+        annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            enableAnnotate();
             getComponents().fireComponentChangeEvent(this);
+
+            if (event.getSelectionType().isDoubleSelect()) {
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.get(0));
+                }
+            }
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final Range range = event.getNewRange();
@@ -325,9 +333,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        getTableComponentSettings(),
-                        selectionModel.getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), selectionModel.getSelectedItems());
             }
         }));
 
@@ -523,18 +529,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .timeZone(userPreferences.getTimeZone())
                 .localZoneId(timeZones.getLocalTimeZoneId())
                 .build();
-    }
-
-    private void enableAnnotate() {
-        final List<EventId> eventIdList = new ArrayList<>();
-        final List<Long> annotationIdList = new ArrayList<>();
-        annotationManager.addRowData(
-                getTableComponentSettings(),
-                selectionModel.getSelectedItems(),
-                eventIdList,
-                annotationIdList);
-        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
-        annotateButton.setEnabled(enabled);
     }
 
     @Override

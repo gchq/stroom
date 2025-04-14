@@ -181,10 +181,9 @@ class NodeInclusionChecker {
     }
 
     private boolean hasPermission(final FilterableNode filterableNode) {
-        return permCheckOutcomeMap.computeIfAbsent(filterableNode.node.getDocRef(), docRef -> {
-            return filter.getRequiredPermissions().stream()
-                    .allMatch(permission -> securityContext.hasDocumentPermission(docRef, permission));
-        });
+        return permCheckOutcomeMap.computeIfAbsent(filterableNode.node.getDocRef(), docRef ->
+                filter.getRequiredPermissions().stream()
+                        .allMatch(permission -> securityContext.hasDocumentPermission(docRef, permission)));
     }
 
     static boolean hasPermission(final SecurityContext securityContext,
