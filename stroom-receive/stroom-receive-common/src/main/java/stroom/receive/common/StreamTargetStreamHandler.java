@@ -116,7 +116,6 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
                          final Consumer<Long> progressHandler) throws IOException {
         long bytesWritten;
         LOGGER.debug(() -> "addEntry() - " + entryName);
-
         final StroomZipEntry entry = stroomZipEntries.addFile(entryName);
         final String baseName = entry.getBaseName();
         final StroomZipFileType stroomZipFileType = entry.getStroomZipFileType();
@@ -124,9 +123,9 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         // We don't want to aggregate reference feeds.
         final boolean singleEntry = feedProperties.isReference(currentFeedName);
 
-        // If the base name changes then reset and we will treat this as a new layer.
-        final boolean requiresNewLayer = layer.hasType(stroomZipFileType) || (lastBaseName != null &&
-                !lastBaseName.equals(baseName));
+        // If the base name changes then reset, and we will treat this as a new layer.
+        final boolean requiresNewLayer = layer.hasType(stroomZipFileType)
+                                         || (lastBaseName != null && !lastBaseName.equals(baseName));
         if (requiresNewLayer) {
             reset();
             if (singleEntry) {
