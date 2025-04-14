@@ -20,10 +20,10 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsV
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class GitRepoSettingsViewImpl extends ViewImpl implements GitRepoSettingsView {
@@ -31,11 +31,22 @@ public class GitRepoSettingsViewImpl extends ViewImpl implements GitRepoSettings
     private final Widget widget;
 
     @UiField
-    SimplePanel dependencies;
+    TextBox url;
+
+    @UiField
+    TextBox username;
+
+    @UiField
+    PasswordTextBox password;
+
+    @UiField
+    TextBox branch;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        // TODO Add validation for the TextBoxes
     }
 
     @Override
@@ -44,8 +55,13 @@ public class GitRepoSettingsViewImpl extends ViewImpl implements GitRepoSettings
     }
 
     @Override
-    public void setDependencyList(final View view) {
-        dependencies.setWidget(view.asWidget());
+    public void setUrl(final String url) {
+        this.url.setText(url);
+    }
+
+    @Override
+    public String getUrl() {
+        return this.url.getText();
     }
 
     public interface Binder extends UiBinder<Widget, GitRepoSettingsViewImpl> {
