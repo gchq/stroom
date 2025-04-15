@@ -18,51 +18,71 @@
 package stroom.gitrepo.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class GitRepoSettingsPresenter extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc> {
+public class GitRepoSettingsPresenter
+        extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
+        implements DirtyUiHandlers {
 
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
-                                   final GitRepoSettingsView view) {
+                                    final GitRepoSettingsView view) {
         super(eventBus, view);
+        view.setUiHandlers(this);
     }
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = event -> setDirty(true);
-        //registerHandler(gitRepoDependencyListPresenter.addDirtyHandler(dirtyHandler));
+        //final DirtyHandler dirtyHandler = event -> setDirty(true);
+        //registerHandler(gitRepoSettingsListPresenter.addDirtyHandler(dirtyHandler));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
         //gitRepoDependencyListPresenter.read(docRef, doc, readOnly);
+        this.getView().setUrl(doc.getUrl());
+        this.getView().setUsername(doc.getUsername());
+        this.getView().setPassword(doc.getPassword());
+        this.getView().setBranch(doc.getBranch());
+        this.getView().setPath(doc.getPath());
     }
 
     @Override
-    protected GitRepoDoc onWrite(GitRepoDoc gitRepo) {
+    protected GitRepoDoc onWrite(GitRepoDoc doc) {
         //gitRepo = gitRepoDependencyListPresenter.write(gitRepo);
-        return gitRepo;
+        doc.setUrl(this.getView().getUrl());
+        doc.setUsername(this.getView().getUsername());
+        doc.setPassword(this.getView().getPassword());
+        doc.setBranch(this.getView().getBranch());
+        doc.setPath(this.getView().getPath());
+        return doc;
     }
 
-    public interface GitRepoSettingsView extends View {
+    @Override
+    public void onDirty() {
+        this.setDirty(true);
+    }
 
-        /**
-         * Puts the GIT repository URL into the UI.
-         * @param url The GIT repository URL.
-         */
-        public void setUrl(String url);
+    public interface GitRepoSettingsView
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<DirtyUiHandlers> {
 
-        /**
-         * Returns the GIT repository URL from the UI.
-         * @return The GIT repository URL.
-         */
-        public String getUrl();
+        void setUrl(String url);
+        String getUrl();
+        String getUsername();
+        void setUsername(final String username);
+        String getPassword();
+        void setPassword(final String password);
+        String getBranch();
+        void setBranch(final String branch);
+        String getPath();
+        void setPath(final String directory);
     }
 }

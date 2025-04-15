@@ -23,5 +23,10 @@
                        title="The branch of the GIT repository"
                        ui:field="branch" />
         </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsPath" label="Git path">
+            <g:TextBox name="Path"
+                       title="The path within the GIT repository"
+                       ui:field="path" />
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
