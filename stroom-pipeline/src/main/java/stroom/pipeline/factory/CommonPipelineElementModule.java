@@ -48,6 +48,7 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.filter.SAXRecordDetector.class);
         bindElement(stroom.pipeline.filter.SchemaFilterSplit.class);
         bindElement(stroom.pipeline.filter.SplitFilter.class);
+        bindElement(stroom.pipeline.filter.MergeFilter.class);
         bindElement(stroom.pipeline.filter.TestFilter.class);
         bindElement(stroom.pipeline.filter.XsltFilter.class);
 
