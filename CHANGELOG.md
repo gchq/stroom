@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8.0] - 2025-04-15
+
+* Issue **#4856** : Fix dashboard permissions tab title.
+
+
 ## [v7.8-beta.19] - 2025-04-11
 
 * Issue **#4855** : Fix Plan B session state range.
@@ -1313,7 +1318,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8-beta.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.0...HEAD
+[v7.8.0]: https://github.com/gchq/stroom/compare/v7.8-beta.19...v7.8.0
 [v7.8-beta.19]: https://github.com/gchq/stroom/compare/v7.8-beta.18...v7.8-beta.19
 [v7.8-beta.18]: https://github.com/gchq/stroom/compare/v7.8-beta.17...v7.8-beta.18
 [v7.8-beta.17]: https://github.com/gchq/stroom/compare/v7.8-beta.16...v7.8-beta.17
