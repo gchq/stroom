@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -452,15 +453,30 @@ public class PreAggregator {
         return Collections.singletonList(new Part(partItems, partBytes, List.copyOf(partEntries)));
     }
 
-    private void closeAggregate(final FeedKey feedKey,
-                                final AggregateState aggregateState) {
-        LOGGER.debug("Closing aggregate: {}", aggregateState);
+    private boolean closeAggregate(final FeedKey feedKey,
+                                   final AggregateState aggregateState) {
+        LOGGER.debug(() -> LogUtil.message("closeAggregate() - feedKey: {}, {}, waiting for lock",
+                feedKey, aggregateState));
         final Lock lock = feedKeyLock.get(feedKey);
         lock.lock();
         try {
-            destination.accept(aggregateState.aggregateDir);
-            aggregateStateMap.remove(feedKey);
-            LOGGER.debug("Closed aggregate: {}", aggregateState);
+            // Now we hold the feedKey lock, re-check the aggregateStateMap
+            if (aggregateStateMap.containsKey(feedKey)) {
+                LOGGER.debug(() -> LogUtil.message("closeAggregate() - feedKey: {}, {}, acquired lock",
+                        feedKey, aggregateState));
+
+                destination.accept(aggregateState.aggregateDir);
+                aggregateStateMap.remove(feedKey);
+                LOGGER.debug(() -> LogUtil.message("closeAggregate() - feedKey: {}, {}, closed aggregate",
+                        feedKey, aggregateState));
+                return true;
+            } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "closeAggregate() - feedKey: {}, {}, " +
+                        "feedKey not in aggregateStateMap, another thread must have closed it.",
+                        feedKey, aggregateState));
+                return false;
+            }
         } finally {
             lock.unlock();
         }
@@ -570,13 +586,23 @@ public class PreAggregator {
      */
     private synchronized void closeOldAggregates() {
         final AtomicInteger count = new AtomicInteger();
-        aggregateStateMap.forEach((feedKey, aggregateState) -> {
-            if (aggregateState.isAggregateTooOld(aggregatorConfig)) {
-                // Close the current aggregate.
-                count.incrementAndGet();
-                closeAggregate(feedKey, aggregateState);
+        final Set<FeedKey> feedKeys = aggregateStateMap.keySet();
+        for (final FeedKey feedKey : feedKeys) {
+            // It's possible another thread may have removed it
+            final AggregateState aggregateState = aggregateStateMap.get(feedKey);
+            if (aggregateState != null
+                && aggregateState.isAggregateTooOld(aggregatorConfig)) {
+                // Close the current aggregate, under a feedKey lock, so again,
+                // another thread may beat us
+                final boolean didClose = closeAggregate(feedKey, aggregateState);
+                if (didClose) {
+                    count.incrementAndGet();
+                } else {
+                    LOGGER.debug("closeAggregate() - feedKey: {}, aggregateState: {}, didn't close",
+                            feedKey, aggregateState);
+                }
             }
-        });
+        }
         if (LOGGER.isDebugEnabled()) {
             if (count.get() > 0) {
                 LOGGER.debug("closeOldAggregates() - closed {} old aggregates", count);
