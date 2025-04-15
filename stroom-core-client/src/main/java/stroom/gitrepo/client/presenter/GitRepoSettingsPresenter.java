@@ -40,14 +40,7 @@ public class GitRepoSettingsPresenter
     }
 
     @Override
-    protected void onBind() {
-        //final DirtyHandler dirtyHandler = event -> setDirty(true);
-        //registerHandler(gitRepoSettingsListPresenter.addDirtyHandler(dirtyHandler));
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
-        //gitRepoDependencyListPresenter.read(docRef, doc, readOnly);
         this.getView().setUrl(doc.getUrl());
         this.getView().setUsername(doc.getUsername());
         this.getView().setPassword(doc.getPassword());
@@ -57,7 +50,6 @@ public class GitRepoSettingsPresenter
 
     @Override
     protected GitRepoDoc onWrite(GitRepoDoc doc) {
-        //gitRepo = gitRepoDependencyListPresenter.write(gitRepo);
         doc.setUrl(this.getView().getUrl());
         doc.setUsername(this.getView().getUsername());
         doc.setPassword(this.getView().getPassword());

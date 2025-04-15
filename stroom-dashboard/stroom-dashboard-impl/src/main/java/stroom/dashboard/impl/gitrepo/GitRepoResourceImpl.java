@@ -19,15 +19,12 @@ package stroom.dashboard.impl.gitrepo;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.gitrepo.shared.FetchLinkedGitRepoRequest;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.util.shared.EntityServiceException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-
-import java.util.List;
 
 @AutoLogged
 class GitRepoResourceImpl implements GitRepoResource {
@@ -60,10 +57,5 @@ class GitRepoResourceImpl implements GitRepoResource {
                 .uuid(uuid)
                 .type(GitRepoDoc.TYPE)
                 .build();
-    }
-
-    @Override
-    public List<GitRepoDoc> fetchLinkedGitRepos(final FetchLinkedGitRepoRequest request) {
-        return gitRepoStoreProvider.get().fetchLinkedGitRepos(request.getGitRepo(), request.getLoadedGitRepos());
     }
 }

@@ -22,10 +22,7 @@ import stroom.docstore.api.DocumentStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 
 import java.util.List;
-import java.util.Set;
 
 public interface GitRepoStore extends DocumentStore<GitRepoDoc> {
-    List<GitRepoDoc> fetchLinkedGitRepos(final DocRef script, final Set<DocRef> loadedGitRepos);
-
     List<DocRef> list();
 }

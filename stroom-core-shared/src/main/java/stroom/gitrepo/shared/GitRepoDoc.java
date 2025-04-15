@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.List;
 import java.util.Objects;
 
 @Description(
@@ -44,27 +42,19 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "dependencies",
-        "data",
         "url",
         "username",
         "password",
         "branch",
         "path"})
 @JsonInclude(Include.NON_NULL)
-public class GitRepoDoc extends Doc implements HasData {
+public class GitRepoDoc extends Doc {
 
     public static final String TYPE = "GitRepo";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;
-
-    @JsonProperty
-    private List<DocRef> dependencies;
-
-    @JsonProperty
-    private String data;
 
     @JsonProperty
     private String url;
@@ -94,8 +84,6 @@ public class GitRepoDoc extends Doc implements HasData {
                       @JsonProperty("createUser") final String createUser,
                       @JsonProperty("updateUser") final String updateUser,
                       @JsonProperty("description") final String description,
-                      @JsonProperty("dependencies") final List<DocRef> dependencies,
-                      @JsonProperty("data") final String data,
                       @JsonProperty("url") final String url,
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password,
@@ -103,8 +91,6 @@ public class GitRepoDoc extends Doc implements HasData {
                       @JsonProperty("path") final String path) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.dependencies = dependencies;
-        this.data = data;
 
         // Git settings
         this.url = url;
@@ -157,8 +143,6 @@ public class GitRepoDoc extends Doc implements HasData {
         }
         final GitRepoDoc that = (GitRepoDoc) o;
         return Objects.equals(description, that.description)
-               && Objects.equals(dependencies, that.dependencies)
-               && Objects.equals(data, that.data)
                && Objects.equals(url, that.url)
                && Objects.equals(username, that.username)
                && Objects.equals(password, that.password)
@@ -169,7 +153,7 @@ public class GitRepoDoc extends Doc implements HasData {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(),
-                description, dependencies, data, url, username, password, branch, path);
+                description, url, username, password, branch, path);
     }
 
     public String getDescription() {
@@ -177,20 +161,6 @@ public class GitRepoDoc extends Doc implements HasData {
     }
     public void setDescription(final String description) {
         this.description = description;
-    }
-    public List<DocRef> getDependencies() {
-        return dependencies;
-    }
-    public void setDependencies(final List<DocRef> dependencies) {
-        this.dependencies = dependencies;
-    }
-    @Override
-    public String getData() {
-        return data;
-    }
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
     public String getUrl() {
         return this.url;
