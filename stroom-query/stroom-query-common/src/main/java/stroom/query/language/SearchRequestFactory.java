@@ -1200,11 +1200,22 @@ public class SearchRequestFactory {
                                         final String fieldNameFilter) {
             final DocRef dataSource = queryBuilder.build().getDataSource();
             if (dataSource != null) {
+                String filter = fieldNameFilter;
+
+                // Create a regex name filter if the user has used a *.
+                if (filter.equals("*")) {
+                    filter = null;
+                } else if (filter.contains("*")) {
+                    filter = filter.replaceAll("\\*", ".*");
+                    filter = filter.replaceAll("\\?", ".?");
+                    filter = "/" + filter;
+                }
+
                 final FindFieldCriteria criteria = new FindFieldCriteria(
                         PageRequest.createDefault(),
                         FindFieldCriteria.DEFAULT_SORT_LIST,
                         dataSource,
-                        fieldNameFilter,
+                        filter,
                         null);
                 final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
                 final List<QueryField> fields = resultPage.getValues();
