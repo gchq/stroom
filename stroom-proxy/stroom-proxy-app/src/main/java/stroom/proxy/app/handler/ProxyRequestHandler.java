@@ -8,12 +8,14 @@ import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
+import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.net.HostNameUtil;
 
 import jakarta.inject.Inject;
@@ -23,6 +25,7 @@ import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -82,26 +85,33 @@ public class ProxyRequestHandler implements RequestHandler {
             appendReceivedPath(attributeMap);
 
             // Treat differently depending on compression type.
-            String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-            if (compression != null && !compression.isEmpty()) {
-                compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
-                if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
-                    throw new StroomStreamException(
-                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
-                }
+            String compression = NullSafe.getOrElse(
+                    attributeMap.get(StandardHeaderArguments.COMPRESSION),
+                    str -> str.toUpperCase(StreamUtil.DEFAULT_LOCALE),
+                    "");
+
+            if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+                throw new StroomStreamException(
+                        StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
             }
 
+            final Receiver receiver;
             if (ZERO_CONTENT.equals(attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
-
+                receiver = null;
             } else {
-                final Receiver receiver = receiverFactory.get(attributeMap);
+                receiver = receiverFactory.get(attributeMap);
                 receiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
             }
 
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy receipt id attribute to response: " + receiptIdStr);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Writing proxy receipt id {} to response. Receiver: {}, duration: {}, compression: '{}'",
+                    receiptIdStr,
+                    NullSafe.get(receiver, Object::getClass, Class::getSimpleName),
+                    Duration.between(startTime, Instant.now()),
+                    compression));
             try (final PrintWriter writer = response.getWriter()) {
                 writer.println(receiptIdStr);
             } catch (final IOException e) {
