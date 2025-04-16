@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Main entry point to handling proxy requests.
@@ -73,7 +74,6 @@ public class ProxyRequestHandler implements RequestHandler {
             requestAuthenticator.authenticate(request, attributeMap);
 
             final String receiptIdStr = receiptId.toString();
-            LOGGER.debug("Adding meta attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
             attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
             attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
 
@@ -85,12 +85,23 @@ public class ProxyRequestHandler implements RequestHandler {
             appendReceivedPath(attributeMap);
 
             // Treat differently depending on compression type.
+            // AttributeMap values are ready trimmed
             String compression = NullSafe.getOrElse(
                     attributeMap.get(StandardHeaderArguments.COMPRESSION),
                     str -> str.toUpperCase(StreamUtil.DEFAULT_LOCALE),
                     "");
 
-            if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "handle() - requestUri: {}, remoteHost/Addr: {}, attributeMap: {}, ",
+                    request.getRequestURI(),
+                    Objects.requireNonNullElseGet(
+                            request.getRemoteHost(),
+                            request::getRemoteAddr),
+                    attributeMap));
+
+            if (!compression.isEmpty()
+                && !StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+
                 throw new StroomStreamException(
                         StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
             }
