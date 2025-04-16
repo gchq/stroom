@@ -13,13 +13,18 @@ import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -40,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -301,8 +307,9 @@ public class ZipReceiver implements Receiver {
                                           final Path zipFilePath,
                                           final byte[] buffer) throws IOException {
         // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
-        LOGGER.debug("receiveZipStream() - defaultFeedName: '{}', defaultTypeName: '{}', zipFilePath: {}",
+        LOGGER.debug("receiveZipStream() - START defaultFeedName: '{}', defaultTypeName: '{}', zipFilePath: {}",
                 defaultFeedName, defaultTypeName, zipFilePath);
+        final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         final List<Entry> dataEntries = new ArrayList<>();
         final Map<String, ZipEntryGroup> groups = new HashMap<>();
         final ProxyZipValidator validator = new ProxyZipValidator();
@@ -311,7 +318,7 @@ public class ZipReceiver implements Receiver {
         // Receive data.
         try (final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStream)) {
             try (final ZipArchiveInputStream zipInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
-                // Write the incoming zip data to temp and record info about the entries as we go.
+                // Write the incoming zip data to the receiving dir and record info about the entries as we go.
                 try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, buffer)) {
 
                     ZipArchiveEntry entry = zipInputStream.getNextEntry();
@@ -362,6 +369,7 @@ public class ZipReceiver implements Receiver {
                                 }
 
                                 final long size = zipWriter.writeStream(entryName, zipInputStream);
+//                                final long size = writeEntry(zipWriter, entry, zipInputStream);
                                 zipEntryGroup.setContextEntry(new ZipEntryGroup.Entry(entryName, size));
 
                             } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
@@ -372,10 +380,12 @@ public class ZipReceiver implements Receiver {
                                 }
 
                                 final long size = zipWriter.writeStream(entryName, zipInputStream);
+//                                final long size = writeEntry(zipWriter, entry, zipInputStream);
                                 zipEntryGroup.setManifestEntry(new ZipEntryGroup.Entry(entryName, size));
 
                             } else {
                                 final long size = zipWriter.writeStream(entryName, zipInputStream);
+//                                final long size = writeEntry(zipWriter, entry, zipInputStream);
                                 dataEntries.add(new ZipEntryGroup.Entry(entryName, size));
                             }
 
@@ -453,7 +463,41 @@ public class ZipReceiver implements Receiver {
             LOGGER.debug(validator.getErrorMessage());
         }
 
+        LOGGER.debug(() -> LogUtil.message(
+                "receiveZipStream() - FINISH defaultFeedName: '{}', defaultTypeName: '{}', zipFilePath: {}, " +
+                "feedKey count: {}, total entry count: {}, duration: {}",
+                defaultFeedName,
+                defaultTypeName,
+                zipFilePath,
+                feedGroups.size(),
+                LogUtil.swallowExceptions(() -> feedGroups.values().stream().mapToInt(List::size).sum())
+                        .orElse(-1),
+                timer));
+
         return new ReceiveResult(feedGroups, receivedBytes, validator.isValid());
+    }
+
+    private static long writeEntry(final ZipWriter zipWriter,
+                                   final ZipArchiveEntry sourceEntry,
+                                   final ZipArchiveInputStream zipArchiveInputStream) throws IOException {
+        Objects.requireNonNull(sourceEntry);
+        final boolean hasKnownSize = ZipUtil.hasKnownUncompressedSize(sourceEntry);
+        final long size;
+        if (ZipUtil.hasKnownUncompressedSize(sourceEntry)) {
+            // We know the size so can just write the raw entry without having to de-compress/compress it
+            zipWriter.writeRawStream(sourceEntry, zipArchiveInputStream);
+            size = sourceEntry.getSize();
+        } else {
+            // We don't know the uncompressed size, so have to effectively de-compress/compress it to find out
+            size = zipWriter.writeStream(sourceEntry.getName(), zipArchiveInputStream);
+        }
+        LOGGER.debug(() -> LogUtil.message("writeEntry() - sourceEntry: {}, hasKnownSize: {}, size: {}",
+                sourceEntry,
+                hasKnownSize,
+                (size != ArchiveEntry.SIZE_UNKNOWN
+                        ? ByteSize.ofBytes(size).toString()
+                        : "?")));
+        return size;
     }
 
     static List<Path> splitZip(final Path zipFilePath,
@@ -461,8 +505,9 @@ public class ZipReceiver implements Receiver {
                                final Map<FeedKey, List<ZipEntryGroup>> feedGroups,
                                final Path outputParentDir,
                                final byte[] buffer) throws IOException {
-        LOGGER.debug("splitZip() - zipFilePath: {}, outputParentDir: {}", zipFilePath, outputParentDir);
+        LOGGER.debug("splitZip() - START zipFilePath: {}, outputParentDir: {}", zipFilePath, outputParentDir);
         final List<Path> groupDirs = new ArrayList<>();
+        final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         long id = 1;
         try (final ZipFile zipFile = createZipFile(zipFilePath)) {
             for (final Map.Entry<FeedKey, List<ZipEntryGroup>> entry : feedGroups.entrySet()) {
@@ -477,6 +522,10 @@ public class ZipReceiver implements Receiver {
                 writeZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup, buffer);
             }
         }
+        LOGGER.debug(() -> LogUtil.message(
+                "splitZip() - FINISH zipFilePath: {}, outputParentDir: {}, groupDirs count: {}, " +
+                "feedGroups count: {}, duration: {}",
+                zipFilePath, outputParentDir, groupDirs.size(), feedGroups.size(), timer));
         return groupDirs;
     }
 
@@ -492,16 +541,17 @@ public class ZipReceiver implements Receiver {
                                  final AttributeMap attributeMap,
                                  final FileGroup fileGroup,
                                  final byte[] buffer) throws IOException {
-        LOGGER.debug("writeZip() - feedKey: {}, fileGroup: {}", feedKey, fileGroup);
+        LOGGER.debug("writeZip() - START feedKey: {}, fileGroup: {}", feedKey, fileGroup);
+        final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         try {
             // Write zip.
-            int count = 1;
+            final AtomicInteger count = new AtomicInteger(0);
             final Path entriesFile = fileGroup.getEntries();
             try (final Writer entryWriter = Files.newBufferedWriter(entriesFile)) {
                 try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
                     for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
                         final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
-                        final String baseNameOut = NumericFileNameUtil.create(count);
+                        final String baseNameOut = NumericFileNameUtil.create(count.incrementAndGet());
                         LOGGER.trace("feedKey: {}, baseNameOut: {}, zipEntryGroupIn: {} => zipEntryGroupOut: {}",
                                 feedKey, baseNameOut, zipEntryGroupIn, zipEntryGroupOut);
                         zipEntryGroupOut.setManifestEntry(
@@ -530,8 +580,6 @@ public class ZipReceiver implements Receiver {
                                         baseNameOut,
                                         StroomZipFileType.DATA));
 
-                        count++;
-
                         // Write zip entry.
                         LOGGER.trace("Writing entries file {}", entriesFile);
                         zipEntryGroupOut.write(entryWriter);
@@ -542,6 +590,9 @@ public class ZipReceiver implements Receiver {
             // Write meta.
             AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
             AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
+            LOGGER.debug(() -> LogUtil.message(
+                    "writeZip() - FINISH feedKey: {}, fileGroup: {}, count: {}, duration: {}",
+                    feedKey, fileGroup, count, timer));
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
@@ -557,7 +608,9 @@ public class ZipReceiver implements Receiver {
         if (entry != null) {
             final ZipArchiveEntry zipEntry = zip.getEntry(entry.getName());
             final InputStream inputStream = zip.getInputStream(zipEntry);
+//            final InputStream inputStream = zip.getRawInputStream(zipEntry);
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
+//            zipWriter.writeRawStream(zipEntry, outEntryName, inputStream);
             zipWriter.writeStream(outEntryName, inputStream);
             return new Entry(outEntryName, entry.getUncompressedSize());
         }

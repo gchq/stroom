@@ -309,8 +309,13 @@ public class HttpSender implements StreamDestination {
             final ResponseStatus responseStatus = checkConnectionResponse(response, attributeMap);
             final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
             final String receiptId = responseStatus.receiptId;
-            LOGGER.debug("'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}",
-                    forwarderName, stroomStatusCode, receiptId, contentLength);
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}, compression: '{}'",
+                    forwarderName,
+                    stroomStatusCode,
+                    receiptId,
+                    ByteSize.ofBytes(contentLength),
+                    attributeMap.get(StandardHeaderArguments.COMPRESSION)));
 
             final EventType eventType = stroomStatusCode == StroomStatusCode.OK
                     ? EventType.SEND
@@ -481,7 +486,7 @@ public class HttpSender implements StreamDestination {
 
         try (final InputStream inputStream = response.getEntity().getContent()) {
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                return NullSafe.trim(IOUtils.toString(inputStream, StandardCharsets.UTF_8));
             }
         } catch (final IOException ioex) {
             LOGGER.debug(ioex.getMessage(), ioex);
