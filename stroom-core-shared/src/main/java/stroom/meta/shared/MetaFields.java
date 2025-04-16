@@ -28,6 +28,7 @@ public class MetaFields {
     private static final Map<String, QueryField> FIELD_MAP;
     private static final List<QueryField> EXTENDED_FIELDS = new ArrayList<>();
     private static final List<QueryField> ALL_FIELDS = new ArrayList<>();
+    private static final List<QueryField> PROCESSOR_FILTER_FIELDS = new ArrayList<>();
     private static final Map<String, QueryField> ALL_FIELD_MAP;
 
     // Non grouped fields
@@ -116,6 +117,11 @@ public class MetaFields {
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);
+
+        // Create a subset of fields for use in processor tasks.
+        PROCESSOR_FILTER_FIELDS.addAll(ALL_FIELDS);
+        PROCESSOR_FILTER_FIELDS.remove(STATUS);
+
         ALL_FIELD_MAP = ALL_FIELDS.stream()
                 .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
@@ -130,6 +136,10 @@ public class MetaFields {
 
     public static List<QueryField> getAllFields() {
         return ALL_FIELDS;
+    }
+
+    public static List<QueryField> getProcessorFilterFields() {
+        return PROCESSOR_FILTER_FIELDS;
     }
 
     public static Map<String, QueryField> getAllFieldMap() {
