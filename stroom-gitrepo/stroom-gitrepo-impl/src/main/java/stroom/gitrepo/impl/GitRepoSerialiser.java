@@ -1,4 +1,4 @@
-package stroom.dashboard.impl.gitrepo;
+package stroom.gitrepo.impl;
 
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;

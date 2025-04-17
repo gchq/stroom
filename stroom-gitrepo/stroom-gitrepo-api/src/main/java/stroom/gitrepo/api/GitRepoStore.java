@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.dashboard.impl.gitrepo;
+package stroom.gitrepo.api;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;

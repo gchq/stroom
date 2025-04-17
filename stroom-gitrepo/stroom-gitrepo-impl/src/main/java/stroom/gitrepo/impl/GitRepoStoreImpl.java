@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.dashboard.impl.gitrepo;
+package stroom.gitrepo.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -24,6 +24,7 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.gitrepo.api.GitRepoStore;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.gitrepo.shared.GitRepoDoc;

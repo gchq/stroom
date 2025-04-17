@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.gitrepo;
+package stroom.gitrepo.impl;
 
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.gitrepo.api.GitRepoStore;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.guice.GuiceUtil;
