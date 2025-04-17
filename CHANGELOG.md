@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8.0-debug.1] - 2025-04-17
+
+* Issue **#4863** : Stop errors being logged on proxy shutdown.
+
+* Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
+
+* Issue **#4881** : Debug for proc filter bug.
+
+
 ## [v7.8.0] - 2025-04-15
 
 * Issue **#4856** : Fix dashboard permissions tab title.
@@ -1318,7 +1327,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.0-debug.1...HEAD
+[v7.8.0-debug.1]: https://github.com/gchq/stroom/compare/v7.8.0...v7.8.0-debug.1
 [v7.8.0]: https://github.com/gchq/stroom/compare/v7.8-beta.19...v7.8.0
 [v7.8-beta.19]: https://github.com/gchq/stroom/compare/v7.8-beta.18...v7.8-beta.19
 [v7.8-beta.18]: https://github.com/gchq/stroom/compare/v7.8-beta.17...v7.8-beta.18
