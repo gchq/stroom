@@ -59,7 +59,7 @@ class SecurityFilter implements Filter {
 
     private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
             ".js", ".js.map", ".css", ".css.map", ".htm", ".html", ".json", ".png",
-            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
+            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2", ".java");
 
     private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
 
