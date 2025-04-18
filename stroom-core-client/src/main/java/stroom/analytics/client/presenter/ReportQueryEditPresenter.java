@@ -33,6 +33,14 @@ public class ReportQueryEditPresenter
         super(eventBus, queryEditPresenter);
     }
 
+    void start() {
+        queryEditPresenter.start();
+    }
+
+    void stop() {
+        queryEditPresenter.stop();
+    }
+
     @Override
     protected ReportDoc onWrite(final ReportDoc entity) {
         return entity

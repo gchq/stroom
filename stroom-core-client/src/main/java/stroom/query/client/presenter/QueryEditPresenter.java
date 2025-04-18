@@ -364,14 +364,14 @@ public class QueryEditPresenter
         }
     }
 
-    void start() {
+    public void start() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         }
         run(true, true);
     }
 
-    void stop() {
+    public void stop() {
         queryModel.stop();
     }
 
