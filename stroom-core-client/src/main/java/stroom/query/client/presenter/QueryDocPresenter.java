@@ -81,11 +81,6 @@ public class QueryDocPresenter
     }
 
     @Override
-    public String getType() {
-        return QueryDoc.TYPE;
-    }
-
-    @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
@@ -106,6 +101,11 @@ public class QueryDocPresenter
         } else {
             return false;
         }
+    }
+
+    @Override
+    public String getType() {
+        return QueryDoc.TYPE;
     }
 
     @Override
