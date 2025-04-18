@@ -88,6 +88,14 @@ public class DashboardSuperPresenter
     }
 
     @Override
+    protected void onRead(final DocRef docRef,
+                          final DashboardDoc document,
+                          final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        dashboardPresenter.onRead(docRef, document, readOnly);
+    }
+
+    @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), DASHBOARD.getType())) {

@@ -31,6 +31,7 @@ import stroom.meta.api.EffectiveMetaSet;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
+import stroom.meta.api.StreamFeedProvider;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -83,7 +84,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class MetaServiceImpl implements MetaService, Searchable {
+public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searchable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceImpl.class);
 
@@ -160,6 +161,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
             return null;
         }
         return list.getFirst();
+    }
+
+    @Override
+    public String getFeedName(final long id) {
+        final Meta meta = getMeta(id, true);
+        return NullSafe.get(meta, Meta::getFeedName);
     }
 
     @Override

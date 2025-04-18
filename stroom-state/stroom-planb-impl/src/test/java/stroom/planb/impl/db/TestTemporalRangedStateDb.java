@@ -59,6 +59,24 @@ class TestTemporalRangedStateDb {
             assertThat(db.count()).isEqualTo(100);
             testGet(db);
 
+            // Check exact time states.
+            checkState(db, 9, refTime.toEpochMilli(), false);
+            for (int i = 10; i <= 30; i++) {
+                checkState(db, i, refTime.toEpochMilli(), true);
+            }
+            checkState(db, 31, refTime.toEpochMilli(), false);
+
+            // Check before time states.
+            for (int i = 9; i <= 31; i++) {
+                checkState(db, i, refTime.toEpochMilli() - 1, false);
+            }
+
+            // Check after time states.
+            checkState(db, 9, refTime.toEpochMilli() + 1, false);
+            for (int i = 10; i <= 30; i++) {
+                checkState(db, i, refTime.toEpochMilli() + 1, true);
+            }
+            checkState(db, 31, refTime.toEpochMilli() + 1, false);
 
             final TemporalRangedStateRequest stateRequest =
                     new TemporalRangedStateRequest(11, refTime.toEpochMilli());
@@ -163,6 +181,17 @@ class TestTemporalRangedStateDb {
         final StateValue res = optional.get();
         assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(res.toString()).isEqualTo("test");
+    }
+
+    private void checkState(final TemporalRangedStateDb db,
+                            final long key,
+                            final long effectiveTime,
+                            final boolean expected) {
+        final TemporalRangedStateRequest request =
+                new TemporalRangedStateRequest(key, effectiveTime);
+        final Optional<TemporalRangedState> optional = db.getState(request);
+        final boolean actual = optional.isPresent();
+        assertThat(actual).isEqualTo(expected);
     }
 
     //

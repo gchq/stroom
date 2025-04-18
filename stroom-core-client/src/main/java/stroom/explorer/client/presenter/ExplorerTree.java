@@ -36,7 +36,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     @Override
     MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
         if (multiSelectionModel == null) {
-            multiSelectionModel = new MultiSelectionModelImpl<>(this);
+            multiSelectionModel = new MultiSelectionModelImpl<>();
         }
         return multiSelectionModel;
     }

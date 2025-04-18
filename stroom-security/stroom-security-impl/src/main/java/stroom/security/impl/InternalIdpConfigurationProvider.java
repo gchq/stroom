@@ -114,7 +114,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
     public List<String> getRequestScopes() {
         return localOpenIdConfigProvider.get().getRequestScopes();
 //        final AbstractOpenIdConfig abstractOpenIdConfig = openIdConfigProvider.get();
-//        return GwtNullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
+//        return NullSafe.isEmptyCollection(abstractOpenIdConfig.getRequestScopes())
 //                ? OpenId.DEFAULT_REQUEST_SCOPES
 //                : abstractOpenIdConfig.getRequestScopes();
     }

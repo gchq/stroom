@@ -667,7 +667,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                   final boolean reprocess,
                                   final int length) {
         // Validate expression.
-        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
+        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getProcessorFilterFields());
         expressionValidator.validate(expression);
 
         if (reprocess) {

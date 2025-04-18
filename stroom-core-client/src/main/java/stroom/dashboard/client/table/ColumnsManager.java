@@ -25,6 +25,7 @@ import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
+import stroom.query.client.presenter.ColumnHeaderHtmlUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -769,7 +770,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
                         .icon(SvgImage.SHOW)
-                        .text(column.getName())
+                        .text(ColumnHeaderHtmlUtil.getSafeHtml(column))
                         .command(() -> showColumn(column))
                         .build();
                 menuItems.add(item2);

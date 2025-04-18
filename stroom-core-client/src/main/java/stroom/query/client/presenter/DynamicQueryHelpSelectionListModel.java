@@ -18,7 +18,6 @@ package stroom.query.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.item.client.SelectionList;
 import stroom.item.client.SelectionListModel;
 import stroom.query.api.datasource.IndexFieldFields;
 import stroom.query.shared.QueryHelpRequest;
@@ -41,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -61,17 +61,13 @@ public class DynamicQueryHelpSelectionListModel
     private String query;
     private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
     private QueryHelpRequest lastRequest;
-    private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
+    private ResultPage<QueryHelpRow> lastResponse;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final EventBus eventBus,
                                               final RestFactory restFactory) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
-    }
-
-    public void setSelectionList(final SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList) {
-        this.selectionList = selectionList;
     }
 
     @Override
@@ -109,7 +105,9 @@ public class DynamicQueryHelpSelectionListModel
                     .method(res -> res.fetchQueryHelpItems(request))
                     .onSuccess(response -> {
                         // Only update if the request is still current.
-                        if (request == lastRequest) {
+                        if (request == lastRequest && !Objects.equals(lastResponse, response)) {
+                            lastResponse = response;
+
                             final ResultPage<QueryHelpSelectionItem> resultPage;
                             if (NullSafe.hasItems(response.getValues())) {
                                 List<QueryHelpSelectionItem> items = response

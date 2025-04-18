@@ -37,6 +37,9 @@ import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
 import stroom.query.api.Window;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.FunctionGroup;
 import stroom.query.api.token.KeywordGroup;
@@ -57,8 +60,11 @@ import stroom.query.language.token.Tokeniser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -86,34 +92,34 @@ public class SearchRequestFactory {
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
     private final DocResolver docResolver;
-
+    private final Provider<QueryFieldProvider> queryFieldProviderProvider;
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
-                                final DocResolver docResolver) {
+                                final DocResolver docResolver,
+                                final Provider<QueryFieldProvider> queryFieldProviderProvider) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
         this.docResolver = docResolver;
+        this.queryFieldProviderProvider = queryFieldProviderProvider;
     }
 
     public void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, docResolver).extractDataSourceOnly(string, consumer);
+        new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider)
+                .extractDataSourceOnly(string, consumer);
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, docResolver).create(string, in, expressionContext);
+        return new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider)
+                .create(string, in, expressionContext);
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     private static class Builder {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
-
         private final DocResolver docResolver;
+        private final Provider<QueryFieldProvider> queryFieldProviderProvider;
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
@@ -125,9 +131,11 @@ public class SearchRequestFactory {
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
-                final DocResolver docResolver) {
+                final DocResolver docResolver,
+                final Provider<QueryFieldProvider> queryFieldProviderProvider) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.docResolver = docResolver;
+            this.queryFieldProviderProvider = queryFieldProviderProvider;
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
@@ -809,7 +817,8 @@ public class SearchRequestFactory {
                                     sortMap,
                                     groupMap,
                                     filterMap,
-                                    tableSettingsBuilder);
+                                    tableSettingsBuilder,
+                                    queryBuilder);
                             remaining.removeFirst();
                         }
                         case LIMIT -> {
@@ -982,7 +991,7 @@ public class SearchRequestFactory {
 
             final Window window = hoppingWindowBuilder.build();
             final CompiledWindow compiledWindow = CompiledWindow.create(window);
-            // Add time window fields so they can be used by other expressions.
+            // Add time window fields, so they can be used by other expressions.
             compiledWindow.addWindowFields(expressionContext, fieldIndex, expressionMap);
             optionalCompiledWindow = Optional.of(compiledWindow);
             builder.window(window);
@@ -1030,7 +1039,8 @@ public class SearchRequestFactory {
                                    final Map<String, Sort> sortMap,
                                    final Map<String, Integer> groupMap,
                                    final Map<String, IncludeExcludeFilter> filterMap,
-                                   final TableSettings.Builder tableSettingsBuilder) {
+                                   final TableSettings.Builder tableSettingsBuilder,
+                                   final Query.Builder queryBuilder) {
             final List<AbstractToken> children = keywordGroup.getChildren();
             AbstractToken fieldToken = null;
             Expression fieldExpression = null;
@@ -1058,8 +1068,9 @@ public class SearchRequestFactory {
                         throw new TokenException(keywordGroup, e.getMessage());
                     }
 
-                } else if (TokenType.isString(token)) {
+                } else if (TokenType.isString(token) || TokenType.MULTIPLICATION.equals(token.getTokenType())) {
                     // If we have a string then it is either a field name or a column name if provided after AS.
+                    // Note that we also allow `*` (TokenType.MULTIPLICATION) to add `all` fields.
                     if (afterAs) {
                         if (doneAs) {
                             throw new TokenException(token, "Syntax exception, unexpected column name");
@@ -1090,31 +1101,16 @@ public class SearchRequestFactory {
                     afterAs = true;
 
                 } else if (TokenType.COMMA.equals(token.getTokenType())) {
-                    if (fieldToken != null) {
-                        final String columnId = createColumnId(columnCount, columnName);
-                        columns.add(createColumn(
-                                fieldToken,
-                                columnId,
-                                fieldToken.getUnescapedText(),
-                                columnName,
-                                true,
-                                false,
-                                sortMap,
-                                groupMap,
-                                filterMap));
-
-                    } else if (fieldExpression != null) {
-                        final String columnId = createColumnId(columnCount, columnName);
-                        columns.add(createColumn(
-                                columnId,
-                                fieldExpression,
-                                columnName,
-                                sortMap,
-                                groupMap,
-                                filterMap));
-                    } else {
-                        throw new TokenException(token, "Syntax exception, expected field name");
-                    }
+                    addColumn(sortMap,
+                            groupMap,
+                            filterMap,
+                            queryBuilder,
+                            columnCount,
+                            columns,
+                            token,
+                            fieldToken,
+                            columnName,
+                            fieldExpression);
 
                     fieldToken = null;
                     fieldExpression = null;
@@ -1125,18 +1121,61 @@ public class SearchRequestFactory {
             }
 
             // Add final field if we have one.
-            if (fieldToken != null) {
-                final String columnId = createColumnId(columnCount, columnName);
-                columns.add(createColumn(
-                        fieldToken,
-                        columnId,
-                        fieldToken.getUnescapedText(),
-                        columnName,
-                        true,
-                        false,
-                        sortMap,
+            if (fieldToken != null || fieldExpression != null) {
+                addColumn(sortMap,
                         groupMap,
-                        filterMap));
+                        filterMap,
+                        queryBuilder,
+                        columnCount,
+                        columns,
+                        fieldToken,
+                        fieldToken,
+                        columnName,
+                        fieldExpression);
+            }
+
+            // Modify columns if we have a time window.
+            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
+                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
+            tableSettingsBuilder.addColumns(modifiedColumns);
+        }
+
+        private void addColumn(final Map<String, Sort> sortMap,
+                               final Map<String, Integer> groupMap,
+                               final Map<String, IncludeExcludeFilter> filterMap,
+                               final Query.Builder queryBuilder,
+                               final Map<String, AtomicInteger> columnCount,
+                               final List<Column> columns,
+                               final AbstractToken token,
+                               final AbstractToken fieldToken,
+                               final String columnName,
+                               final Expression fieldExpression) {
+
+            if (fieldToken != null) {
+                if (columnName.equals("*") ||
+                    (TokenType.PARAM.equals(fieldToken.getTokenType()) && columnName.contains("*"))) {
+                    expandStarredField(
+                            sortMap,
+                            groupMap,
+                            filterMap,
+                            queryBuilder,
+                            columnCount,
+                            columns,
+                            fieldToken.getUnescapedText());
+
+                } else {
+                    final String columnId = createColumnId(columnCount, columnName);
+                    columns.add(createColumn(
+                            fieldToken,
+                            columnId,
+                            fieldToken.getUnescapedText(),
+                            columnName,
+                            true,
+                            false,
+                            sortMap,
+                            groupMap,
+                            filterMap));
+                }
 
             } else if (fieldExpression != null) {
                 final String columnId = createColumnId(columnCount, columnName);
@@ -1147,12 +1186,56 @@ public class SearchRequestFactory {
                         sortMap,
                         groupMap,
                         filterMap));
+            } else {
+                throw new TokenException(token, "Syntax exception, expected field name");
             }
+        }
 
-            // Modify columns if we have a time window.
-            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
-                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
-            tableSettingsBuilder.addColumns(modifiedColumns);
+        private void expandStarredField(final Map<String, Sort> sortMap,
+                                        final Map<String, Integer> groupMap,
+                                        final Map<String, IncludeExcludeFilter> filterMap,
+                                        final Query.Builder queryBuilder,
+                                        final Map<String, AtomicInteger> columnCount,
+                                        final List<Column> columns,
+                                        final String fieldNameFilter) {
+            final DocRef dataSource = queryBuilder.build().getDataSource();
+            if (dataSource != null) {
+                String filter = fieldNameFilter;
+
+                // Create a regex name filter if the user has used a *.
+                if (filter.equals("*")) {
+                    filter = null;
+                } else if (filter.contains("*")) {
+                    filter = filter.replaceAll("\\*", ".*");
+                    filter = filter.replaceAll("\\?", ".?");
+                    filter = "/" + filter;
+                }
+
+                final FindFieldCriteria criteria = new FindFieldCriteria(
+                        PageRequest.createDefault(),
+                        FindFieldCriteria.DEFAULT_SORT_LIST,
+                        dataSource,
+                        filter,
+                        null);
+                final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
+                final List<QueryField> fields = resultPage.getValues();
+                for (final QueryField field : fields) {
+                    final String fieldName = field.getFldName();
+                    final char[] chars = fieldName.toCharArray();
+                    final String columnId = createColumnId(columnCount, fieldName);
+                    final Token t = new Token(TokenType.STRING, chars, 0, chars.length - 1);
+                    columns.add(createColumn(
+                            t,
+                            columnId,
+                            t.getUnescapedText(),
+                            fieldName,
+                            true,
+                            false,
+                            sortMap,
+                            groupMap,
+                            filterMap));
+                }
+            }
         }
 
         private String createColumnId(final Map<String, AtomicInteger> map, final String name) {

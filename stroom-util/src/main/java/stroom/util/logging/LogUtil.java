@@ -19,8 +19,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class LogUtil {
@@ -255,7 +261,7 @@ public final class LogUtil {
         } else if (t.getMessage() == null) {
             return t.getClass().getSimpleName();
         } else {
-            return t.getClass().getSimpleName() + " " + t.getMessage();
+            return t.getClass().getSimpleName() + " '" + t.getMessage() + "'";
         }
     }
 
@@ -416,6 +422,45 @@ public final class LogUtil {
                 logConsumer.accept(
                         "Error dumping stack trace: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     */
+    public static <T> Optional<T> swallowExceptions(final Supplier<T> supplier) {
+        try {
+            return Optional.ofNullable(supplier.get());
+        } catch (Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     */
+    public static OptionalLong swallowExceptions(final LongSupplier supplier) {
+        try {
+            return OptionalLong.of(supplier.getAsLong());
+        } catch (Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return OptionalLong.empty();
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     */
+    public static OptionalInt swallowExceptions(final IntSupplier supplier) {
+        try {
+            return OptionalInt.of(supplier.getAsInt());
+        } catch (Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return OptionalInt.empty();
         }
     }
 }

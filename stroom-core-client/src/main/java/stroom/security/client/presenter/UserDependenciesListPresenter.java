@@ -158,12 +158,12 @@ public class UserDependenciesListPresenter
 //                DataGridUtil.svgPresetColumnBuilder(
 //                                false,
 //                                (UserDependency row) -> {
-//                                    final String documentType = GwtNullSafe.get(
+//                                    final String documentType = NullSafe.get(
 //                                            row,
 //                                            UserDependency::getDocRef,
 //                                            DocRef::getType);
 //                                    if (documentType != null) {
-//                                        return GwtNullSafe.get(documentTypes.getDocumentType(documentType),
+//                                        return NullSafe.get(documentTypes.getDocumentType(documentType),
 //                                                DocumentType::getIcon,
 //                                                svg -> new Preset(svg, documentType, true));
 //                                    } else {

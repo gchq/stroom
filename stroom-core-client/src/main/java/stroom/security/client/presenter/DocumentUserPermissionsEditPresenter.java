@@ -18,6 +18,9 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationResourceClient;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.ExpressionOperator;
@@ -31,6 +34,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -56,6 +60,7 @@ public class DocumentUserPermissionsEditPresenter
 
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
+    private final AnnotationResourceClient annotationResourceClient;
     private final Provider<DocumentUserCreatePermissionsEditPresenter>
             documentUserCreatePermissionsEditPresenterProvider;
 
@@ -67,11 +72,13 @@ public class DocumentUserPermissionsEditPresenter
                                                 final DocumentUserPermissionsEditView view,
                                                 final DocPermissionRestClient docPermissionClient,
                                                 final ExplorerClient explorerClient,
+                                                final AnnotationResourceClient annotationResourceClient,
                                                 final Provider<DocumentUserCreatePermissionsEditPresenter>
                                                         documentUserCreatePermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
+        this.annotationResourceClient = annotationResourceClient;
         this.documentUserCreatePermissionsEditPresenterProvider = documentUserCreatePermissionsEditPresenterProvider;
         getView().setUiHandlers(this);
     }
@@ -114,16 +121,27 @@ public class DocumentUserPermissionsEditPresenter
                           final Runnable onClose) {
         final AbstractDocumentPermissionsChange change = createChange();
 
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
-        final ExpressionOperator expression = builder.build();
+        if (Annotation.TYPE.equals(relatedDoc.getType()) ||
+            AnnotationTag.TYPE.equals(relatedDoc.getType())) {
+            final SingleDocumentPermissionChangeRequest request =
+                    new SingleDocumentPermissionChangeRequest(relatedDoc, change);
+            annotationResourceClient.changeDocumentPermissions(request, response -> {
+                onClose.run();
+                event.hide();
+            }, this);
 
-        final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
-                expression, change);
-        explorerClient.changeDocumentPermissions(request, response -> {
-            onClose.run();
-            event.hide();
-        }, this);
+        } else {
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
+            builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
+            final ExpressionOperator expression = builder.build();
+
+            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
+                    expression, change);
+            explorerClient.changeDocumentPermissions(request, response -> {
+                onClose.run();
+                event.hide();
+            }, this);
+        }
     }
 
     @Override

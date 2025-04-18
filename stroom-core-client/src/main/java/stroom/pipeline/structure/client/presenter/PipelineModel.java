@@ -287,9 +287,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
                 parentMap.put(linkTo, linkFrom);
 //                GWT.log("put "
-//                        + GwtNullSafe.get(linkFrom, PipelineElement::getId)
+//                        + NullSafe.get(linkFrom, PipelineElement::getId)
 //                        + " -> "
-//                        + GwtNullSafe.get(linkTo, PipelineElement::getId));
+//                        + NullSafe.get(linkTo, PipelineElement::getId));
                 childMap.computeIfAbsent(linkFrom, k -> new ArrayList<>()).add(linkTo);
             }
         }

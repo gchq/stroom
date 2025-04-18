@@ -348,7 +348,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     }
 
     public void read(final Job job) {
-//        getView().setHeading(GwtNullSafe.get(job, Job::getName));
+//        getView().setHeading(NullSafe.get(job, Job::getName));
         if (dataProvider.getDataDisplays().isEmpty()) {
             dataProvider.addDataDisplay(dataGrid);
         }

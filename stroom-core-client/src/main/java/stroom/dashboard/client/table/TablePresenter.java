@@ -18,7 +18,6 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -65,7 +64,6 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.IncludeExcludeFilter;
@@ -240,7 +238,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(securityContext
                 .hasAppPermission(AppPermission.ANNOTATIONS));
-        annotateButton.setEnabled(false);
 
         columnsManager = new ColumnsManager(
                 this,
@@ -284,14 +281,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        annotationManager.setDataSourceSupplier(() -> getTableComponentSettings().getDataSourceRef());
+        annotationManager.setColumnSupplier(() -> getTableComponentSettings().getColumns());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(selectionModel.addSelectionHandler(event -> {
-            enableAnnotate();
             getDashboardContext().fireComponentChangeEvent(this);
+
+            if (event.getSelectionType().isDoubleSelect()) {
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.get(0));
+                }
+            }
         }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final Range range = event.getNewRange();
@@ -332,9 +339,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        getTableComponentSettings(),
-                        selectionModel.getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), selectionModel.getSelectedItems());
             }
         }));
 
@@ -401,11 +406,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
+            final DocRef dataSource = currentSearchModel.getIndexLoader().getLoadedDataSourceRef();
+            final boolean changedDataSource = !Objects.equals(columnSelectionListModel.getDataSourceRef(), dataSource);
+            columnSelectionListModel.setDataSourceRef(dataSource);
 
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
                 addColumnPopup.init(columnSelectionListModel);
+            } else if (changedDataSource) {
+                addColumnPopup.refresh();
             }
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
@@ -524,18 +533,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .timeZone(userPreferences.getTimeZone())
                 .localZoneId(timeZones.getLocalTimeZoneId())
                 .build();
-    }
-
-    private void enableAnnotate() {
-        final List<EventId> eventIdList = new ArrayList<>();
-        final List<Long> annotationIdList = new ArrayList<>();
-        annotationManager.addRowData(
-                getTableComponentSettings(),
-                selectionModel.getSelectedItems(),
-                eventIdList,
-                annotationIdList);
-        final boolean enabled = !eventIdList.isEmpty() || !annotationIdList.isEmpty();
-        annotateButton.setEnabled(enabled);
     }
 
     @Override
@@ -1047,9 +1044,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final int start = dataGrid.getVisibleRange().getStart();
         dataGrid.setVisibleRange(new Range(
                 start,
-                tableComponentSettings.getPageSize() == null
-                        ? 100
-                        : tableComponentSettings.getPageSize()));
+                NullSafe.getOrElse(tableComponentSettings, TableComponentSettings::getPageSize, 100)));
     }
 
     @Override

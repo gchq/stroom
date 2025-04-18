@@ -608,7 +608,8 @@ public class EmbeddedQueryPresenter
                             queryModel.init(result.asDocRef());
                             query = result.getQuery();
                             initialised = true;
-                            if (queryOnOpen) {
+                            final Automate automate = settings.getAutomate();
+                            if (queryOnOpen || automate.isOpen()) {
                                 run(true, false);
                             }
                         }
@@ -759,6 +760,7 @@ public class EmbeddedQueryPresenter
     protected void changeSettings() {
         super.changeSettings();
         if (currentTablePresenter != null) {
+            currentTablePresenter.changeSettings();
             currentTablePresenter.refresh();
         }
         loadEmbeddedQuery();

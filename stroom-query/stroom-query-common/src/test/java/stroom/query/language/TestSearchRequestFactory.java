@@ -47,7 +47,8 @@ public class TestSearchRequestFactory extends AbstractQueryTest {
                     .build();
             searchRequest = new SearchRequestFactory(
                     (keywordGroup, parentTableSettings) -> null,
-                    new MockDocResolver())
+                    new MockDocResolver(),
+                    () -> criteria -> null)
                     .create(input, searchRequest, expressionContext);
             return JsonUtil.writeValueAsString(searchRequest);
 

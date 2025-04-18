@@ -688,7 +688,7 @@ public class MetaDaoImpl implements MetaDao {
 //        final Condition combinedConditions = JooqUtil.andConditions(criteriaCondition, statusCondition);
 //
 //        // Add a condition if we should check current status.
-//        final boolean containsPipelineCondition = GwtNullSafe.test(
+//        final boolean containsPipelineCondition = NullSafe.test(
 //                expression,
 //                expr ->
 //                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
@@ -704,7 +704,7 @@ public class MetaDaoImpl implements MetaDao {
 //        // TODO: 21/02/2023 See https://github.com/gchq/stroom/issues/3253 for changing meta_val
 //        //  to be a single row to avoid all these horrible joins
 //        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
-//        if (GwtNullSafe.hasItems(usedValKeys)) {
+//        if (NullSafe.hasItems(usedValKeys)) {
 //            // Add 1-* joins to meta_val if we need them.
 //            fromPart = metaExpressionMapper.addJoins(fromPart, meta.ID, usedValKeys);
 //        }

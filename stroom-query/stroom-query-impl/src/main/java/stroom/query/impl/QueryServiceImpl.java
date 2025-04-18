@@ -48,6 +48,7 @@ import stroom.query.api.TimeFilter;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
@@ -123,7 +124,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @AutoLogged
-class QueryServiceImpl implements QueryService {
+class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryServiceImpl.class);
 

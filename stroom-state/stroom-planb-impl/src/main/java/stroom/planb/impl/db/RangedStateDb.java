@@ -17,6 +17,8 @@ import java.util.Optional;
 
 public class RangedStateDb extends AbstractDb<Key, StateValue> {
 
+    private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(0);
+
     RangedStateDb(final Path path,
                   final ByteBufferFactory byteBufferFactory) {
         this(
@@ -43,21 +45,37 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
                                        final ByteBufferFactory byteBufferFactory,
                                        final PlanBDoc doc,
                                        final boolean readOnly) {
-        if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
-            return new RangedStateDb(path, byteBufferFactory, rangedStateSettings, readOnly);
-        } else {
-            throw new RuntimeException("No ranged state settings provided");
+        return new RangedStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+    }
+
+    private static RangedStateSettings getSettings(final PlanBDoc doc) {
+        if (doc.getSettings() instanceof final RangedStateSettings settings) {
+            return settings;
         }
+        return RangedStateSettings.builder().build();
     }
 
     public Optional<RangedState> getState(final RangedStateRequest request) {
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
         try {
-            start.putLong(request.key());
+            start.putLong(request.key() + 1);
             start.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeastBackward(start);
+//            read(readTxn -> {
+//                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+//                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+//                    while (iterator.hasNext()
+//                           && !Thread.currentThread().isInterrupted()) {
+//                        final BBKV kv = BBKV.create(iterator.next());
+//                        final long keyStart = kv.key().getLong(0);
+//                        final long keyEnd = kv.key().getLong(Long.BYTES);
+//                        System.out.println("start=" + keyStart + ", keyEnd=" + keyEnd);
+//                    }
+//                }
+//                return Optional.empty();
+//            });
 
+            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, ZERO);
             return read(readTxn -> {
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();

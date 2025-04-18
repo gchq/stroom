@@ -109,6 +109,17 @@ class QueryResourceImpl implements QueryResource {
     }
 
     @Override
+    public DocRef fetchDataSourceFromQueryString(final String query) {
+        try {
+            final Optional<DocRef> optional = queryServiceProvider.get().getReferencedDataSource(query);
+            return optional.orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return null;
+    }
+
+    @Override
     public QueryDoc update(final String uuid, final QueryDoc doc) {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");

@@ -142,7 +142,7 @@ public class ContentTemplates extends Doc {
 //    @JsonIgnore
 //    public List<ContentTemplate> getSortedContentTemplates() {
 //        //noinspection SimplifyStreamApiCallChains // Cos GWT
-//        return GwtNullSafe.stream(contentTemplates)
+//        return NullSafe.stream(contentTemplates)
 //                .filter(Objects::nonNull)
 //                .sorted(Comparator.comparing(ContentTemplate::getTemplateNumber))
 //                .collect(Collectors.toUnmodifiableList());

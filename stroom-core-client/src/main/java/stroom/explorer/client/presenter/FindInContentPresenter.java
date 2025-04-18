@@ -119,7 +119,7 @@ public class FindInContentPresenter
         };
         cellTable.addStyleName("FindCellTable");
 
-        selectionModel = new MultiSelectionModelImpl<>(cellTable);
+        selectionModel = new MultiSelectionModelImpl<>();
         SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
                 cellTable,
                 selectionModel,

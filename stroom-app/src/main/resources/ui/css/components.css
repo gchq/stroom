@@ -2477,3 +2477,24 @@ button.main-menu svg {
 .ExpressionTreeViewImpl-layoutPanel {
     position: absolute;
 }
+
+.multiChooser td {
+    vertical-align: middle;
+}
+
+.lozengeOuter {
+    padding: 3px 0;
+}
+
+.lozenge {
+    padding: 2px 10px;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 10rem;
+    display: inline-block;
+    border-color: var(--text-color);
+}
+
+.stroom-theme-dark .lozenge {
+    border: 1px solid rgba(255,255,255,.3);
+}
+

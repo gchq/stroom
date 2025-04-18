@@ -105,7 +105,7 @@ public class JobNodeListHelper {
 
 //    public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler() {
 //        return (Context context, Element elem, JobNodeAndInfo jobNodeAndInfo, NativeEvent event) ->
-//                executeJobNow(hasHandlers, taskListener, GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
+//                executeJobNow(hasHandlers, taskListener, NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
 //    }
 
     public void executeJobNow(final JobNode jobNode) {

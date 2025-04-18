@@ -127,7 +127,7 @@ public class ProcessorEditPresenter
 
         final boolean existingFilter = filter != null && filter.getId() != null;
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
-        final List<QueryField> fields = MetaFields.getAllFields();
+        final List<QueryField> fields = MetaFields.getProcessorFilterFields();
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,

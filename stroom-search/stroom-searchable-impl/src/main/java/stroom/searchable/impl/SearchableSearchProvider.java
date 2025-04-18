@@ -160,7 +160,12 @@ class SearchableSearchProvider implements SearchProvider {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
-        final DocRef docRef = searchable.getDataSourceDocRefs().getFirst();
+        final List<DocRef> docRefs = searchable.getDataSourceDocRefs();
+        if (docRefs == null || docRefs.isEmpty()) {
+            throw new RuntimeException("Unable to access data source");
+        }
+
+        final DocRef docRef = docRefs.getFirst();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 

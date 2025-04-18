@@ -1,5 +1,6 @@
 package stroom.query.client.presenter;
 
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionItem;
@@ -179,7 +180,7 @@ public class DynamicColumnSelectionListModel
             if ("Index".equals(dataSourceRef.getType()) ||
                 "SolrIndex".equals(dataSourceRef.getType()) ||
                 "ElasticIndex".equals(dataSourceRef.getType())) {
-                AnnotationFields.FIELDS.forEach(field -> {
+                AnnotationDecorationFields.DECORATION_FIELDS.forEach(field -> {
                     final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
                 });
@@ -204,6 +205,10 @@ public class DynamicColumnSelectionListModel
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
+    }
+
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
     }
 
     @Override
@@ -309,34 +314,38 @@ public class DynamicColumnSelectionListModel
             final Builder columnBuilder = Column.builder();
             columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
-
-            final FieldType fieldType = fieldInfo.getFldType();
-            if (fieldType != null) {
-                switch (fieldType) {
-                    case DATE:
-                        columnBuilder.format(Format.DATE_TIME);
-                        break;
-                    case INTEGER:
-                    case LONG:
-                    case FLOAT:
-                    case DOUBLE:
-                    case ID:
-                        columnBuilder.format(Format.NUMBER);
-                        break;
-                    default:
-                        columnBuilder.format(Format.GENERAL);
-                        break;
-                }
-            }
+            columnBuilder.format(Format.GENERAL);
 
             final String expression;
-            if (indexFieldName.startsWith("annotation:")) {
+
+            // Annotation decoration fields are special and are turned into links with general formatting.
+            if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
                 // Turn 'annotation:.*' fields into annotation links that make use of either the special
                 // eventId/streamId fields (so event results can link back to annotations) OR
                 // the annotation:Id field so Annotations datasource results can link back.
                 expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
                 columnBuilder.expression(expression);
+
             } else {
+                final FieldType fieldType = fieldInfo.getFldType();
+                if (fieldType != null) {
+                    switch (fieldType) {
+                        case DATE:
+                            columnBuilder.format(Format.DATE_TIME);
+                            break;
+                        case INTEGER:
+                        case LONG:
+                        case FLOAT:
+                        case DOUBLE:
+                        case ID:
+                            columnBuilder.format(Format.NUMBER);
+                            break;
+                        default:
+                            columnBuilder.format(Format.GENERAL);
+                            break;
+                    }
+                }
+
                 expression = ParamUtil.create(indexFieldName);
                 columnBuilder.expression(expression);
             }

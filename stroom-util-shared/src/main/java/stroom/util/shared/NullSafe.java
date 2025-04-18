@@ -1213,7 +1213,7 @@ public class NullSafe {
     /**
      * Allows you to test a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = GwtNullSafe.test(myList, list -> !list.isEmpty());
+     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null
@@ -1233,7 +1233,7 @@ public class NullSafe {
     /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = GwtNullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
+     *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null or the getter returns null,
@@ -1258,7 +1258,7 @@ public class NullSafe {
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
      *    List<Sting> list = null;
-     *    boolean hasValues = GwtNullSafe.test(list, list -> list.size > 0);
+     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
      * </code></pre>
      *
      * @return false if value is null, else return the value of the predicate when applied

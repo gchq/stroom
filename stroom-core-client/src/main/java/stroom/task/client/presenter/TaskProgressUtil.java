@@ -56,7 +56,7 @@ class TaskProgressUtil {
 //                .stream()
 //                .flatMap(List::stream)
 //                .map(TaskProgress::getId)
-//                .map(taskId -> GwtNullSafe.get(taskId.getParentId(), TaskId::getId)
+//                .map(taskId -> NullSafe.get(taskId.getParentId(), TaskId::getId)
 //                        + " - "
 //                        + taskId.getId())
 //                .forEach(GWT::log);

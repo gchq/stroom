@@ -17,7 +17,7 @@
 
 package stroom.search.solr.search;
 
-import stroom.annotation.api.AnnotationFields;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Query;
@@ -105,7 +105,7 @@ class SolrClusterSearchTaskHandler {
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(

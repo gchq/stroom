@@ -31,7 +31,6 @@ import stroom.widget.util.client.MultiSelectionModel;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -52,9 +51,6 @@ public class QueryHelpPresenter
     private final QueryHelpDetailProvider detailProvider;
     private final MarkdownConverter markdownConverter;
 
-    private String currentQuery;
-    private Timer requestTimer;
-
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
                               final QueryHelpView view,
@@ -70,7 +66,6 @@ public class QueryHelpPresenter
         this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-        model.setSelectionList(view.getSelectionList());
         view.getSelectionList().init(model);
     }
 
@@ -126,9 +121,9 @@ public class QueryHelpPresenter
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
                 if (detail != null &&
-                        detail.getInsertType() != null &&
-                        detail.getInsertType().isInsertable() &&
-                        detail.getInsertText() != null) {
+                    detail.getInsertType() != null &&
+                    detail.getInsertType().isInsertable() &&
+                    detail.getInsertText() != null) {
                     ClipboardUtil.copy(detail.getInsertText());
                 }
             });
@@ -141,9 +136,9 @@ public class QueryHelpPresenter
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
                 if (detail != null &&
-                        detail.getInsertType() != null &&
-                        detail.getInsertType().isInsertable() &&
-                        detail.getInsertText() != null) {
+                    detail.getInsertType() != null &&
+                    detail.getInsertType().isInsertable() &&
+                    detail.getInsertText() != null) {
                     InsertEditorTextEvent.fire(
                             this,
                             detail.getInsertText(),
@@ -154,22 +149,8 @@ public class QueryHelpPresenter
     }
 
     public void setQuery(final String query) {
-        // Debounce requests so we don't spam the backend
-        if (requestTimer != null) {
-            requestTimer.cancel();
-        }
-
-        requestTimer = new Timer() {
-            @Override
-            public void run() {
-                if (!Objects.equals(currentQuery, query)) {
-                    currentQuery = query;
-                    model.setQuery(query);
-                    refresh();
-                }
-            }
-        };
-        requestTimer.schedule(400);
+        model.setQuery(query);
+        refresh();
     }
 
     private HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {

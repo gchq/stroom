@@ -207,8 +207,8 @@ public class ExplorerTreeModel {
     private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
 //        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
-//                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
-//                + " tempOpenedItems: " + GwtNullSafe.size(result.getTemporaryOpenedItems()));
+//                + " openItems: " + NullSafe.size(result.getOpenedItems())
+//                + " tempOpenedItems: " + NullSafe.size(result.getTemporaryOpenedItems()));
 
         fetching = false;
         // Check if the filter settings have changed

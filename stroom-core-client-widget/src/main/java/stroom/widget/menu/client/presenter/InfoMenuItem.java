@@ -8,18 +8,11 @@ import com.google.gwt.user.client.Command;
 
 public class InfoMenuItem extends MenuItem {
 
-    private final SafeHtml text;
-
     public InfoMenuItem(final SafeHtml text,
                         final Action action,
                         final Boolean enabled,
                         final Command command) {
-        super(0, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
-        this.text = text;
-    }
-
-    public SafeHtml getText() {
-        return text;
+        super(0, text, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
     }
 
     public static Builder builder() {

@@ -6,11 +6,13 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 @Singleton
 public class ForwardFileDestinationFactoryImpl implements ForwardFileDestinationFactory {
@@ -62,20 +64,16 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
     private ForwardDestination getWrappedForwardDestination(final ForwardFileConfig config,
                                                             final ForwardFileDestinationImpl forwardFileDestination) {
         final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
-        final ForwardDestination destination;
-        if (forwardQueueConfig != null) {
-            // We have queue config so wrap out ultimate destination with some queue/retry logic
-            destination = new RetryingForwardDestination(
-                    forwardQueueConfig,
-                    forwardFileDestination,
-                    dataDirProvider,
-                    pathCreator,
-                    dirQueueFactory,
-                    proxyServices,
-                    fileStores);
-        } else {
-            destination = forwardFileDestination;
-        }
-        return destination;
+        Objects.requireNonNull(forwardQueueConfig, () -> LogUtil.message(
+                "No forwardQueueConfig set for destination '{}'", config.getName()));
+        // We have queue config so wrap out ultimate destination with some queue/retry logic
+        return new RetryingForwardDestination(
+                forwardQueueConfig,
+                forwardFileDestination,
+                dataDirProvider,
+                pathCreator,
+                dirQueueFactory,
+                proxyServices,
+                fileStores);
     }
 }

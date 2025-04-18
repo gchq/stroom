@@ -18,6 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -195,7 +196,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, value.getTooltip(), inner.toSafeHtml()));
+                final SafeHtml tooltip = NullSafe.getOrElse(value, MenuItem::getTooltip, value.getText());
+                sb.append(TEMPLATE.outer(className, tooltip.asString(), inner.toSafeHtml()));
             }
         }
 
