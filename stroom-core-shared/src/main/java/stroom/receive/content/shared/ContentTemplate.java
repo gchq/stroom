@@ -2,7 +2,7 @@ package stroom.receive.content.shared;
 
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

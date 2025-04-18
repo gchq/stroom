@@ -1,6 +1,5 @@
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexStore;
@@ -10,7 +9,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;

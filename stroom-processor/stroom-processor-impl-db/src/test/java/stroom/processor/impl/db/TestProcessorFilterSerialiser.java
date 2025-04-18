@@ -3,11 +3,11 @@ package stroom.processor.impl.db;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Param;
+import stroom.query.api.TimeRange;
 
 import jakarta.xml.bind.JAXBException;
 import org.assertj.core.api.Assertions;

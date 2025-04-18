@@ -16,8 +16,8 @@
 
 package stroom.searchable.api;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 

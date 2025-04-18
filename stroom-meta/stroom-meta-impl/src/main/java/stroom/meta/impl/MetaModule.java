@@ -1,6 +1,5 @@
 package stroom.meta.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.MetaSecurityFilter;
@@ -8,6 +7,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.api.StreamFeedProvider;
 import stroom.meta.shared.Meta;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;

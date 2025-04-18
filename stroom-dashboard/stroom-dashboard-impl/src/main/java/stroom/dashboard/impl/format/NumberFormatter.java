@@ -16,8 +16,8 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.query.api.v2.FormatSettings;
-import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.FormatSettings;
+import stroom.query.api.NumberFormatSettings;
 import stroom.query.language.functions.Val;
 
 public class NumberFormatter implements Formatter {

@@ -16,7 +16,15 @@
 
 package stroom.query.language.token;
 
-import stroom.query.language.token.TokenGroup.Builder;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.AbstractTokenGroup;
+import stroom.query.api.token.FunctionGroup;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenGroup.Builder;
+import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;

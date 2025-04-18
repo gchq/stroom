@@ -29,7 +29,7 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingStyle;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;

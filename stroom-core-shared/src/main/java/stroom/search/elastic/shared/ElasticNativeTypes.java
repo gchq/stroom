@@ -1,6 +1,6 @@
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.FieldType;
+import stroom.query.api.datasource.FieldType;
 
 import java.util.HashMap;
 import java.util.Map;

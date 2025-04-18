@@ -17,9 +17,9 @@
 package stroom.statistics.impl.sql.search;
 
 
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.statistics.impl.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -37,7 +37,7 @@ class TestFilterTermsTreeBuilder extends StroomUnitTest {
     private Set<String> fieldBlackList = Set.of(StatisticStoreDoc.FIELD_NAME_DATE_TIME);
 
     /**
-     * Verify that a tree of {@link stroom.query.api.v2.ExpressionItem} objects can be converted
+     * Verify that a tree of {@link stroom.query.api.ExpressionItem} objects can be converted
      * correctly into a {@link FilterTermsTree}
      */
     @Test

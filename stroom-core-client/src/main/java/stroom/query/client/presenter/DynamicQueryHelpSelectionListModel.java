@@ -16,10 +16,10 @@
 
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.IndexFieldFields;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionListModel;
+import stroom.query.api.datasource.IndexFieldFields;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;

@@ -12,19 +12,19 @@ import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.QLVisSettings;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.QLVisSettings;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.TableSettings;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.FunctionGroup;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.language.DocResolver;
 import stroom.query.language.VisualisationTokenConsumer;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.FunctionGroup;
-import stroom.query.language.token.KeywordGroup;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -258,7 +258,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return params;
     }
 
-    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(
+    private stroom.query.api.TableSettings mapVisSettingsToTableSettings(
             final VisualisationDoc visualisation,
             final VisSettings visSettings,
             final Controls controls,
@@ -334,13 +334,13 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
     }
 
     private Column.Builder convertField(final VisField visField,
-                                        final Map<String, stroom.query.api.v2.Format> formatMap) {
+                                        final Map<String, stroom.query.api.Format> formatMap) {
         final Column.Builder builder = Column.builder();
 
         builder.format(Format.GENERAL);
 
         if (visField.getId() != null) {
-            final stroom.query.api.v2.Format format = formatMap.get(visField.getId());
+            final stroom.query.api.Format format = formatMap.get(visField.getId());
             if (format != null) {
                 builder.format(format);
             }
@@ -379,7 +379,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return copy;
     }
 
-    private stroom.query.api.v2.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
+    private stroom.query.api.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
         if (sort == null) {
             return null;
         }
@@ -397,7 +397,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 } else {
                     return null;
                 }
-                return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
+                return new stroom.query.api.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
             }
         }
         return null;

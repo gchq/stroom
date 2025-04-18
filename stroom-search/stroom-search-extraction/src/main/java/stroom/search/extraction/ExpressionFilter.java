@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionTerm;
 
 import java.util.ArrayList;
 import java.util.List;

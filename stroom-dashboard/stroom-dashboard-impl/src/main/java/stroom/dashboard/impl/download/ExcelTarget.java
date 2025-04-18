@@ -16,13 +16,13 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.FormatSettings;
-import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Format;
+import stroom.query.api.Format.Type;
+import stroom.query.api.FormatSettings;
+import stroom.query.api.NumberFormatSettings;
 import stroom.query.common.v2.format.DateTimeFormatter;
 
 import org.apache.poi.ss.usermodel.Cell;

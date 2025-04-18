@@ -24,17 +24,17 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Param;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
@@ -165,7 +165,6 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
             if (dataSourceRef != null && expression != null) {
                 // Copy the expression.
                 ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
-
                 currentSearch = Search
                         .builder()
                         .dataSourceRef(dataSourceRef)

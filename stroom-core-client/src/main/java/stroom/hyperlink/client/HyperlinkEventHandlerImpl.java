@@ -94,7 +94,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             if (hyperlinkType != null) {
                 switch (hyperlinkType) {
                     case DASHBOARD: {
-                        ShowDashboardEvent.fire(this, href);
+                        ShowDashboardEvent.fire(this, event.getContext(), href);
                         break;
                     }
                     case TAB: {

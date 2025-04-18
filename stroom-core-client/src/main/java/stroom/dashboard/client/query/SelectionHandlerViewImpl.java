@@ -17,29 +17,20 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.docref.HasDisplayValue;
-import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SelectionHandlerViewImpl
-        extends ViewWithUiHandlers<SelectionHandlerUiHandlers>
+        extends ViewImpl
         implements SelectionHandlerView {
 
     private static final HasDisplayValue ANY = () -> "Any";
@@ -48,8 +39,6 @@ public class SelectionHandlerViewImpl
 
     @UiField
     SimplePanel layout;
-    @UiField
-    SelectionBox<HasDisplayValue> component;
     @UiField
     CustomCheckBox enabled;
     @UiField
@@ -67,41 +56,7 @@ public class SelectionHandlerViewImpl
 
     @Override
     public void focus() {
-        component.focus();
-    }
-
-    @Override
-    public void setComponentList(final List<Component> componentList) {
-        final HasDisplayValue component = this.component.getValue();
-
-        this.component.clear();
-        this.component.addItem(ANY);
-
-        final List<HasDisplayValue> newList = componentList.stream()
-                .map(e ->
-                        (HasDisplayValue) e)
-                .collect(Collectors.toList());
-        this.component.addItems(newList);
-
-        // Reselect component id.
-        this.component.setValue(component);
-    }
-
-    @Override
-    public Component getComponent() {
-        if (ANY.equals(this.component.getValue())) {
-            return null;
-        }
-        return (Component) this.component.getValue();
-    }
-
-    @Override
-    public void setComponent(final Component component) {
-        if (component == null) {
-            this.component.setValue(ANY);
-        } else {
-            this.component.setValue(component);
-        }
+        enabled.setFocus(true);
     }
 
     @Override
@@ -120,15 +75,8 @@ public class SelectionHandlerViewImpl
     }
 
     @Override
-    public void setCurrentSelection(final SafeHtml selection) {
-        this.currentSelection.setWidget(new HTML(selection));
-    }
-
-    @UiHandler("component")
-    public void onComponentValueChange(final ValueChangeEvent<HasDisplayValue> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onComponentChange();
-        }
+    public void setCurrentSelection(final View view) {
+        this.currentSelection.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, SelectionHandlerViewImpl> {

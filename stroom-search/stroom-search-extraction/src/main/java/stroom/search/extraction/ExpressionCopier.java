@@ -1,7 +1,7 @@
 package stroom.search.extraction;
 
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 
 public class ExpressionCopier {
 

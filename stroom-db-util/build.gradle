@@ -8,7 +8,6 @@ dependencies {
     implementation project(':stroom-explorer:stroom-collection-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

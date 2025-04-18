@@ -17,7 +17,7 @@
 package stroom.index.lucene980;
 
 import stroom.index.shared.IndexShard;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.task.api.TaskContext;

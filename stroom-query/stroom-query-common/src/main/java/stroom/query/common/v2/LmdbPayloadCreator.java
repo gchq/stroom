@@ -3,7 +3,7 @@ package stroom.query.common.v2;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.WriteTxn;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;

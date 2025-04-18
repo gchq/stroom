@@ -17,7 +17,6 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
-import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

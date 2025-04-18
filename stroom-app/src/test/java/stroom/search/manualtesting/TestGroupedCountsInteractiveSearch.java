@@ -22,13 +22,13 @@ package stroom.search.manualtesting;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexStore;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Row;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
@@ -175,7 +175,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         final Column groupedUserId = Column.builder()
                 .id("User")
                 .name("User")
-                .expression(ParamSubstituteUtil.makeParam("User"))
+                .expression(ParamUtil.create("User"))
                 .group(0)
                 .build();
 

@@ -18,8 +18,8 @@
 package stroom.state.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValDate;
 import stroom.state.impl.dao.Session;

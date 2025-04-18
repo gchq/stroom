@@ -16,7 +16,6 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexShardKey;
@@ -32,6 +31,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.AbstractFieldFilter;
 import stroom.search.extraction.FieldValue;
 import stroom.svg.shared.SvgImage;

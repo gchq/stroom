@@ -29,7 +29,6 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
 //    implementation project(':stroom-lmdb')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-importexport:stroom-importexport-api')

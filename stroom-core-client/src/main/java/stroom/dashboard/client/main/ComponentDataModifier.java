@@ -25,9 +25,9 @@ public interface ComponentDataModifier extends HasTaskMonitorFactory {
 
     boolean isDirty(ComponentConfig componentConfig);
 
-    Components getComponents();
+    DashboardContext getDashboardContext();
 
-    void setComponents(Components components);
+    void setDashboardContext(DashboardContext dashboardContext);
 
     void read(ComponentConfig componentConfig);
 

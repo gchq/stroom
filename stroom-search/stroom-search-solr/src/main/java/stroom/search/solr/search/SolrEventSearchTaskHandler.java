@@ -16,9 +16,9 @@
 
 package stroom.search.solr.search;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;

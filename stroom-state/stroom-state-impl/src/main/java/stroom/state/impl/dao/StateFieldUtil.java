@@ -1,6 +1,6 @@
 package stroom.state.impl.dao;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.state.shared.StateType;
 
 import java.util.List;

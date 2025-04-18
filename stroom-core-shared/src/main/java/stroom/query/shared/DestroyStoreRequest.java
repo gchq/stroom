@@ -16,8 +16,8 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

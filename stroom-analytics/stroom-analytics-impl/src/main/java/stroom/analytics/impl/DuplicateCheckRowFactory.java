@@ -2,7 +2,7 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateNotificationConfig;
-import stroom.query.api.v2.Row;
+import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumn;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.util.logging.LambdaLogger;

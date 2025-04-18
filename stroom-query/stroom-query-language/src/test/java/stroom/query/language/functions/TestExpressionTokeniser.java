@@ -16,12 +16,12 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.AbstractToken;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.language.token.StructureBuilder;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 
 import org.junit.jupiter.api.DynamicTest;

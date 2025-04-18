@@ -19,7 +19,7 @@ package stroom.state.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.language.functions.FieldIndex;
 import stroom.state.impl.dao.RangedStateFields;
 import stroom.state.impl.dao.TemporalRangedState;

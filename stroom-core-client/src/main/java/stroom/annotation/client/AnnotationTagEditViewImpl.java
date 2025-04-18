@@ -19,8 +19,8 @@ package stroom.annotation.client;
 import stroom.annotation.client.AnnotationTagEditPresenter.AnnotationTagEditView;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 

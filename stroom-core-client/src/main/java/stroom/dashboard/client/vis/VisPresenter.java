@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -38,11 +38,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.VisResult;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.TableSettings;
+import stroom.query.api.VisResult;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
@@ -135,7 +135,8 @@ public class VisPresenter
         this.currentPreferences = currentPreferences;
 
         visSelectionModel = new VisSelectionModel();
-        visSelectionModel.addSelectionHandler(event -> getComponents().fireComponentChangeEvent(VisPresenter.this));
+        visSelectionModel.addSelectionHandler(event ->
+                getDashboardContext().fireComponentChangeEvent(VisPresenter.this));
 
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
@@ -193,9 +194,7 @@ public class VisPresenter
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
-        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            setPause(!pause, true);
-        }));
+        registerHandler(getView().getRefreshButton().addClickHandler(e -> setPause(!pause, true)));
     }
 
     private void setPause(final boolean pause,
@@ -227,9 +226,9 @@ public class VisPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
                     event.getComponentId())) {
                 updateTableId(event.getComponentId());
@@ -243,16 +242,14 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getComponents().get(getVisSettings().getTableId());
-        if (component instanceof TablePresenter) {
-            final TablePresenter tablePresenter = (TablePresenter) component;
-
+        final Component component = getDashboardContext().getComponents().get(getVisSettings().getTableId());
+        if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
             final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
-            final TableSettings tableSettings = tablePresenter.getTableSettings();
+            final TableSettings tableSettings = tablePresenter.resolveTableSettings();
 
             // Refresh if the linked table settings have changed.
             if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {
@@ -272,9 +269,8 @@ public class VisPresenter
         cleanupSearchModelAssociation();
 
         if (queryId != null) {
-            final Component component = getComponents().get(queryId);
-            if (component instanceof QueryPresenter) {
-                final QueryPresenter queryPresenter = (QueryPresenter) component;
+            final Component component = getDashboardContext().getComponents().get(queryId);
+            if (component instanceof final QueryPresenter queryPresenter) {
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
                     currentSearchModel.addComponent(getComponentConfig().getId(), this);
@@ -608,7 +604,8 @@ public class VisPresenter
     @Override
     public void link() {
         String tableId = getVisSettings().getTableId();
-        tableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+        tableId = getDashboardContext()
+                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
         updateTableId(tableId);
     }
 
@@ -624,7 +621,7 @@ public class VisPresenter
     }
 
     private void refreshVisualisation() {
-        visFrame.setData(getComponents().getContext(), currentSettings, currentData);
+        visFrame.setData(getDashboardContext().getComponents().getContext(), currentSettings, currentData);
     }
 
     @Override

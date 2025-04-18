@@ -34,7 +34,7 @@ import stroom.planb.impl.db.State.Key;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;

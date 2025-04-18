@@ -149,7 +149,6 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-impl')

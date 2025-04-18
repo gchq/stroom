@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.SearchRequestSource.SourceType;
 
 public class KeyFactoryConfigImpl implements KeyFactoryConfig {
 

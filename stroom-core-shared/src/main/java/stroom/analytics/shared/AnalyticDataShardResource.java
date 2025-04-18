@@ -16,7 +16,7 @@
 
 package stroom.analytics.shared;
 
-import stroom.query.api.v2.Result;
+import stroom.query.api.Result;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;

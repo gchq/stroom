@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 
-import stroom.query.language.token.Param;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;

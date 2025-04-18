@@ -18,10 +18,10 @@
 package stroom.dashboard.client.table.cf;
 
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
-import stroom.query.api.v2.TextAttributes;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
+import stroom.query.api.CustomConditionalFormattingStyle;
+import stroom.query.api.TextAttributes;
 import stroom.widget.button.client.Button;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;

@@ -1,6 +1,6 @@
 package stroom.meta.api;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 
 import java.util.List;

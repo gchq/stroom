@@ -47,11 +47,9 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.client.presenter.QueryToolbarPresenter;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
@@ -101,7 +99,6 @@ public class DashboardPresenter
         implements
         FlexLayoutChangeHandler,
         DocumentTabData,
-        DashboardContext,
         HasToolbar,
         SearchStateListener,
         SearchErrorListener {
@@ -130,7 +127,7 @@ public class DashboardPresenter
     private ResultStoreInfo resultStoreInfo;
     private String externalLinkParameters;
 
-
+    private final DashboardContextImpl dashboardContext;
     private final InlineSvgToggleButton editModeButton;
     private final InlineSvgButton addComponentButton;
     private final InlineSvgButton setConstraintsButton;
@@ -152,6 +149,8 @@ public class DashboardPresenter
         this.components = components;
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
+        dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
+        queryToolbarPresenter.setParamValues(dashboardContext);
 
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
         flexLayout.setTabManager(tabManager);
@@ -205,6 +204,10 @@ public class DashboardPresenter
 //        dashboardPresenter.setQueryOnOpen(queryOnOpen);
     }
 
+    public void setParentContext(final DashboardContext parent) {
+        dashboardContext.setParent(parent);
+    }
+
     @Override
     public List<Widget> getToolbars() {
         final List<Widget> list = new ArrayList<>();
@@ -219,6 +222,7 @@ public class DashboardPresenter
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
             setDirty(true);
+            dashboardContext.fireContextChangeEvent();
             start();
         }));
         registerHandler(editModeButton.addClickHandler(e -> {
@@ -327,28 +331,10 @@ public class DashboardPresenter
                 .fire(this);
     }
 
-    @Override
-    public TimeRange getTimeRange() {
-        return queryToolbarPresenter.getTimeRange();
-    }
-
-    @Override
-    public List<Param> getParams() {
-        final List<Param> combinedParams = new ArrayList<>();
-        for (final Component component : components) {
-            if (component instanceof HasParams) {
-                combinedParams.addAll(((HasParams) component).getParams());
-            }
-        }
-        if (externalLinkParameters != null) {
-            combinedParams.addAll(ParamUtil.parse(externalLinkParameters));
-        }
-        return combinedParams;
-    }
-
     public void setParamsFromLink(final String params) {
         logger.log(Level.INFO, "Dashboard Presenter setParamsFromLink " + params);
         this.externalLinkParameters = params;
+        dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
     }
 
     void setEmbedded(final boolean embedded) {
@@ -370,7 +356,7 @@ public class DashboardPresenter
         if (!loaded) {
             loaded = true;
 
-            components.setDashboard(dashboard);
+            dashboardContext.setDashboardDocRef(docRef);
             components.clear();
             LayoutConfig layoutConfig = null;
 
@@ -538,7 +524,7 @@ public class DashboardPresenter
     private Component addComponent(final String type, final ComponentConfig componentConfig) {
         final Component component = components.add(type, componentConfig.getId());
         if (component != null) {
-            component.setDashboardContext(this);
+            component.setDashboardContext(dashboardContext);
 //            component.setDesignMode(designMode);
 
             if (component instanceof HasDirtyHandlers) {
@@ -557,6 +543,7 @@ public class DashboardPresenter
             }
 
             component.read(componentConfig);
+            dashboardContext.fireContextChangeEvent();
         }
 
         enableQueryButtons();
@@ -772,7 +759,8 @@ public class DashboardPresenter
                                 queryable.removeSearchStateListener(this);
                                 queryable.removeSearchErrorListener(this);
                             }
-                            components.remove(tab.getId(), true);
+                            components.remove(tab.getId());
+                            dashboardContext.fireContextChangeEvent();
                         }
                     }
                     enableQueryButtons();
@@ -796,7 +784,7 @@ public class DashboardPresenter
         if (!queryableComponents.isEmpty()) {
             queryInfo.prompt(() -> {
                 for (final Queryable queryable : queryableComponents) {
-                    queryable.setDashboardContext(this);
+                    queryable.setDashboardContext(dashboardContext);
                     queryable.start();
                 }
             }, this);
@@ -943,7 +931,7 @@ public class DashboardPresenter
 
             } else if (layoutConfig instanceof TabLayoutConfig) {
                 final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) layoutConfig;
-                if (tabLayoutConfig.getTabs().size() > 0) {
+                if (!tabLayoutConfig.getTabs().isEmpty()) {
                     if (tabLayoutConfig.getSelected() >= 0 &&
                         tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
                         return tabLayoutConfig.get(tabLayoutConfig.getSelected());
@@ -1127,6 +1115,7 @@ public class DashboardPresenter
     public DocRef getDocRef() {
         return docRef;
     }
+
 
     // --------------------------------------------------------------------------------
 

@@ -19,9 +19,9 @@ package stroom.processor.impl.db;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 
 import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.Test;

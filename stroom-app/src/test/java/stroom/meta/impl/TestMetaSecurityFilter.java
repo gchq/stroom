@@ -26,7 +26,7 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;

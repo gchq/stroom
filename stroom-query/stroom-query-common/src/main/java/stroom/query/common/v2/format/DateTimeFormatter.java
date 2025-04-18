@@ -16,9 +16,9 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.UserTimeZone;
-import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.Val;
 import stroom.util.shared.NullSafe;

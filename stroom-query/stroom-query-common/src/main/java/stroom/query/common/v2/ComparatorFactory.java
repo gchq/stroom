@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.Format.Type;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValComparators;
 import stroom.util.shared.NullSafe;

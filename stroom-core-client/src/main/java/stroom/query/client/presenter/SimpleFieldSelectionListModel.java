@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.item.client.AbstractSelectionListModel;
+import stroom.query.api.datasource.QueryField;
 import stroom.task.client.TaskMonitorFactory;
 
 import java.util.function.Consumer;

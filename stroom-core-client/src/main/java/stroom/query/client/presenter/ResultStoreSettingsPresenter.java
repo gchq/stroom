@@ -18,8 +18,8 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.api.v2.LifespanInfo;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.LifespanInfo;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.shared.UpdateStoreRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;

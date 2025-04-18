@@ -16,10 +16,10 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
-import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.FormatSettings;
+import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.FormatSettings;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.query.language.functions.Val;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;

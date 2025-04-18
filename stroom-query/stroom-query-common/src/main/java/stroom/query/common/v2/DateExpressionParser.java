@@ -16,12 +16,12 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.api.v2.TimeRange;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenType;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

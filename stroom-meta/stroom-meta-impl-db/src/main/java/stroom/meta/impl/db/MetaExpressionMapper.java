@@ -1,13 +1,13 @@
 package stroom.meta.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.CommonExpressionMapper;
 import stroom.db.util.TermHandler;
 import stroom.db.util.TermHandlerFactory;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
 import org.jooq.Condition;

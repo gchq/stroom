@@ -41,7 +41,6 @@ public abstract class AbstractComponentPresenter<V extends View>
 
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
-    private Components components;
     private ComponentConfig componentConfig;
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
@@ -56,16 +55,13 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     @Override
-    public Components getComponents() {
-        return components;
+    public DashboardContext getDashboardContext() {
+        return dashboardContext;
     }
 
-    /**
-     * Called just after a component is created from the component registry.
-     */
     @Override
-    public void setComponents(final Components components) {
-        this.components = components;
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
     }
 
     @Override
@@ -112,7 +108,7 @@ public abstract class AbstractComponentPresenter<V extends View>
                 settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
             }
 
-            settingsPresenter.setComponents(components);
+            settingsPresenter.setDashboardContext(dashboardContext);
             settingsPresenter.read(componentConfig);
 
             final PopupSize popupSize = PopupSize.resizable(800, 650);
@@ -218,16 +214,6 @@ public abstract class AbstractComponentPresenter<V extends View>
     //###############
     //# End TabData
     //###############
-
-
-    @Override
-    public void setDashboardContext(final DashboardContext dashboardContext) {
-        this.dashboardContext = dashboardContext;
-    }
-
-    protected DashboardContext getDashboardContext() {
-        return dashboardContext;
-    }
 
     @Override
     public void setDesignMode(final boolean designMode) {

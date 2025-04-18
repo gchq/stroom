@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.TimeFilter;
 
 public class DeleteCommand implements LmdbQueueItem {
 
