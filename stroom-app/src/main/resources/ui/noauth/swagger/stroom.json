@@ -13311,7 +13311,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+              "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -19297,7 +19297,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+              "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -19345,7 +19345,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+            "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
           }
         }
       },

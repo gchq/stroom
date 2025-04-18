@@ -9301,6 +9301,7 @@ components:
             type: string
             enum:
             - DATA_SOURCE
+            - QUERYABLE_FIELD
             - FIELD
             - FUNCTION
             - TITLE
@@ -14267,6 +14268,7 @@ components:
             type: string
             enum:
             - DATA_SOURCE
+            - QUERYABLE_FIELD
             - FIELD
             - FUNCTION
             - TITLE
@@ -14306,6 +14308,7 @@ components:
           type: string
           enum:
           - DATA_SOURCE
+          - QUERYABLE_FIELD
           - FIELD
           - FUNCTION
           - TITLE

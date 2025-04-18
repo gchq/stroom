@@ -276,6 +276,7 @@ class stroom.query.api.ConditionalFormattingRule$Builder - public stroom.query.a
 class stroom.query.api.ConditionalFormattingRule$Builder - public stroom.query.api.ConditionalFormattingRule$Builder stroom.query.api.ConditionalFormattingRule$Builder.hide(boolean)
 class stroom.query.api.ConditionalFormattingRule$Builder - public stroom.query.api.ConditionalFormattingRule$Builder stroom.query.api.ConditionalFormattingRule$Builder.id(java.lang.String)
 class stroom.query.api.ConditionalFormattingRule$Builder - public stroom.query.api.ConditionalFormattingRule$Builder stroom.query.api.ConditionalFormattingRule$Builder.textAttributes(stroom.query.api.TextAttributes)
+class stroom.query.api.ConditionalFormattingStyle - public byte stroom.query.api.ConditionalFormattingStyle.getPrimitiveValue()
 class stroom.query.api.ConditionalFormattingStyle - public final boolean java.lang.Enum.equals(java.lang.Object)
 class stroom.query.api.ConditionalFormattingStyle - public final int java.lang.Enum.compareTo(E)
 class stroom.query.api.ConditionalFormattingStyle - public final int java.lang.Enum.hashCode()
