@@ -946,6 +946,9 @@ class ExplorerServiceImpl
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
+        // Fire a POST_CREATE event
+        EntityEvent.fire(entityEventBus, result, EntityAction.POST_CREATE);
+
         return ExplorerNode.builder()
                 .docRef(result)
                 .rootNodeUuid(destinationFolder != null
@@ -1384,6 +1387,11 @@ class ExplorerServiceImpl
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
+
+        // Fire the PRE_DELETE event so listeners can find ancestors of
+        // the nodes before they disappear from the Explorer
+        explorerNodes.forEach(explorerNode ->
+                EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), EntityAction.PRE_DELETE));
 
         final HashSet<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {
@@ -1975,6 +1983,37 @@ class ExplorerServiceImpl
                 throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFldName()));
             }
         });
+    }
+
+    /**
+     * Determines whether there is a node of the given type above the
+     * given node. Written for GitRepo to determine whether the node
+     * should be saved to Git as well as the DB and local storage.
+     *
+     * @param docType The document type to look for in the ancestors.
+     *                Must not be null.
+     * @param node    Where to start searching the tree when looking for
+     *                ancestors. Must not be null.
+     * @return The ExplorerNode holding the closest ancestor of the given
+     *         docType, or null if no such ancestor is found.
+     */
+    @Override
+    public ExplorerNode getAncestorOfDocType(final String docType, final ExplorerNode node) {
+        Objects.requireNonNull(docType);
+        Objects.requireNonNull(node);
+
+        // Iterate up the tree to find each ancestor
+        final UnmodifiableTreeModel treeModel = explorerTreeModel.getModel();
+        ExplorerNode currentNode = node;
+        do {
+            currentNode = treeModel.getParent(treeModel.getNodeKey(currentNode));
+            if (currentNode != null && currentNode.getType().equals(docType)) {
+                return currentNode;
+            }
+        } while (currentNode != null && currentNode.getDepth() != 0);
+
+        // Didn't find anything
+        return null;
     }
 
     // --------------------------------------------------------------------------------

@@ -20,7 +20,9 @@ import stroom.docref.HasDisplayValue;
 
 public enum EntityAction implements HasDisplayValue {
     CREATE("Create"),
+    POST_CREATE("Post Create"), // After Explorer updated on CREATE
     UPDATE("Update"),
+    PRE_DELETE("Pre Delete"),
     DELETE("Delete"),
     CLEAR_CACHE("Clear Cache"),
     // Separate events for an explorer tree node update as the tree doesn't care about an update to the document

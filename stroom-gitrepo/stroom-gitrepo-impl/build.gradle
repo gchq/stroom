@@ -14,4 +14,5 @@ dependencies {
     implementation libs.guice
     implementation libs.jakarta.inject
     implementation libs.restygwt
+    implementation libs.slf4j.api
 }

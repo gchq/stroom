@@ -129,4 +129,17 @@ public interface ExplorerService extends Clearable {
     Set<String> parseNodeTags(final String tagsStr);
 
     String nodeTagsToString(final Set<String> tags);
+
+    /**
+     * Determines whether there is a node of the given type above the
+     * given node. Written for GitRepo to determine whether the node
+     * should be saved to Git as well as the DB and local storage.
+     * @param docType The document type to look for in the ancestors.
+     *                Must not be null.
+     * @param node Where to start searching the tree when looking for
+     *             ancestors. Must not be null.
+     * @return The ExplorerNode holding the closest ancestor of the given
+     *         docType, or null if no such ancestor is found.
+     */
+    ExplorerNode getAncestorOfDocType(final String docType, ExplorerNode node);
 }
