@@ -10345,6 +10345,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
@@ -13367,6 +13368,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
