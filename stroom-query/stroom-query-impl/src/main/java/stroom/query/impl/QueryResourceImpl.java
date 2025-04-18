@@ -255,7 +255,9 @@ class QueryResourceImpl implements QueryResource {
                     contextualQueryHelp.applicableStructureItems());
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+        } else if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.QUERYABLE_FIELD)) {
+            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FUNCTION)) {
             functionsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);

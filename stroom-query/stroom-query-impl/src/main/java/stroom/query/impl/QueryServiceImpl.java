@@ -871,6 +871,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         // 'from xxx '
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
+                case WHERE -> count > 2
+                        ? EnumSet.of(QueryHelpType.QUERYABLE_FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE)
+                        : EnumSet.of(QueryHelpType.QUERYABLE_FIELD);
                 case LIMIT -> count > 3
                         // LIMIT only allows numbers/strings
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
