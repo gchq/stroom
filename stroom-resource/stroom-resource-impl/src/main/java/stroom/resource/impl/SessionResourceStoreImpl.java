@@ -16,6 +16,8 @@
 
 package stroom.resource.impl;
 
+import stroom.data.zip.StroomFileNameUtil;
+import stroom.meta.api.AttributeMap;
 import stroom.resource.api.ResourceStore;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.IsServlet;
@@ -41,6 +43,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
 
     private static final Set<String> PATH_SPECS = Set.of("/resourcestore/*");
     private static final String UUID_ARG = "uuid";
+    private static final String ZIP_EXTENSION = ".zip";
 
     private final ResourceStoreImpl resourceStore;
     private final HttpServletRequestHolder httpServletRequestHolder;
@@ -119,15 +122,22 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
                 final ResourceKey resourceKey = getRealKey(new ResourceKey(uuid, null));
                 if (resourceKey != null) {
                     try {
-                        final Path file = resourceStore.getTempFile(resourceKey);
-                        if (file != null && Files.isRegularFile(file)) {
-                            if (resourceKey.getName().toLowerCase().endsWith(".zip")) {
-                                resp.setContentType("application/zip");
-                            } else {
-                                resp.setContentType("application/octet-stream");
+                        final Path baseFilePath = resourceStore.getTempFile(resourceKey);
+                        if (baseFilePath != null) {
+                            final Path filePath = baseFilePath.getParent().resolve((StroomFileNameUtil.constructFilename(null,
+                                    0,
+                                    baseFilePath.getFileName().toString(),
+                                    new AttributeMap(),
+                                    ZIP_EXTENSION)));
+                            if (Files.isRegularFile(filePath)) {
+                                if (resourceKey.getName().toLowerCase().endsWith(ZIP_EXTENSION)) {
+                                    resp.setContentType("application/zip");
+                                } else {
+                                    resp.setContentType("application/octet-stream");
+                                }
+                                resp.getOutputStream().write(Files.readAllBytes(filePath));
+                                found = true;
                             }
-                            resp.getOutputStream().write(Files.readAllBytes(file));
-                            found = true;
                         }
                     } finally {
                         deleteTempFile(resourceKey);
