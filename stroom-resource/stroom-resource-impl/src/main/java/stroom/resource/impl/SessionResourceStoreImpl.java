@@ -124,11 +124,12 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
                     try {
                         final Path baseFilePath = resourceStore.getTempFile(resourceKey);
                         if (baseFilePath != null) {
-                            final Path filePath = baseFilePath.getParent().resolve((StroomFileNameUtil.constructFilename(null,
-                                    0,
-                                    baseFilePath.getFileName().toString(),
-                                    new AttributeMap(),
-                                    ZIP_EXTENSION)));
+                            final Path filePath = baseFilePath.getParent().resolve((
+                                    StroomFileNameUtil.constructFilename(null,
+                                            0,
+                                            baseFilePath.getFileName().toString(),
+                                            null,
+                                            ZIP_EXTENSION)));
                             if (Files.isRegularFile(filePath)) {
                                 if (resourceKey.getName().toLowerCase().endsWith(ZIP_EXTENSION)) {
                                     resp.setContentType("application/zip");
