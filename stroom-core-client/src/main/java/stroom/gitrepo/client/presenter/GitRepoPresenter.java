@@ -19,7 +19,6 @@ package stroom.gitrepo.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -32,14 +31,12 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
 public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView, GitRepoDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
-    private static final TabData SCRIPT = new TabDataImpl("Script");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -52,32 +49,6 @@ public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
                             final DocumentUserPermissionsTabProvider<GitRepoDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SCRIPT, new AbstractTabProvider<GitRepoDoc, EditorPresenter>(eventBus) {
-            @Override
-            protected EditorPresenter createPresenter() {
-                final EditorPresenter editorPresenter = editorPresenterProvider.get();
-                editorPresenter.setMode(AceEditorMode.JAVASCRIPT);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
-                return editorPresenter;
-            }
-
-            @Override
-            public void onRead(final EditorPresenter presenter,
-                               final DocRef docRef,
-                               final GitRepoDoc document,
-                               final boolean readOnly) {
-                presenter.setText(document.getData());
-                presenter.setReadOnly(readOnly);
-                presenter.getFormatAction().setAvailable(!readOnly);
-            }
-
-            @Override
-            public GitRepoDoc onWrite(final EditorPresenter presenter, final GitRepoDoc document) {
-                document.setData(presenter.getText());
-                return document;
-            }
-        });
         addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<GitRepoDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
@@ -97,7 +68,7 @@ public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
-        selectTab(SCRIPT);
+        selectTab(SETTINGS);
     }
 
     @Override

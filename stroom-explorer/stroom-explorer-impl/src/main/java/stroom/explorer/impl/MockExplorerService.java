@@ -180,4 +180,9 @@ class MockExplorerService implements ExplorerService {
     public String nodeTagsToString(final Set<String> tags) {
         return null;
     }
+
+    @Override
+    public List<ExplorerNode> getAncestorOfDocType(final String docType, final ExplorerNode node) {
+        return Collections.emptyList();
+    }
 }

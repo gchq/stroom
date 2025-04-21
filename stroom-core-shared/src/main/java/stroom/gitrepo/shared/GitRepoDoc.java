@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.List;
 import java.util.Objects;
 
 @Description(
@@ -44,40 +42,79 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "dependencies",
-        "data"})
+        "url",
+        "username",
+        "password",
+        "branch",
+        "path"})
 @JsonInclude(Include.NON_NULL)
-public class GitRepoDoc extends Doc implements HasData {
+public class GitRepoDoc extends Doc {
 
     public static final String TYPE = "GitRepo";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
 
     @JsonProperty
     private String description;
+
     @JsonProperty
-    private List<DocRef> dependencies;
+    private String url;
+
     @JsonProperty
-    private String data;
+    private String username;
+
+    @JsonProperty
+    private String password;
+
+    @JsonProperty
+    private String branch;
+
+    @JsonProperty
+    private String path;
 
     public GitRepoDoc() {
     }
 
     @JsonCreator
     public GitRepoDoc(@JsonProperty("type") final String type,
-                     @JsonProperty("uuid") final String uuid,
-                     @JsonProperty("name") final String name,
-                     @JsonProperty("version") final String version,
-                     @JsonProperty("createTimeMs") final Long createTimeMs,
-                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                     @JsonProperty("createUser") final String createUser,
-                     @JsonProperty("updateUser") final String updateUser,
-                     @JsonProperty("description") final String description,
-                     @JsonProperty("dependencies") final List<DocRef> dependencies,
-                     @JsonProperty("data") final String data) {
+                      @JsonProperty("uuid") final String uuid,
+                      @JsonProperty("name") final String name,
+                      @JsonProperty("version") final String version,
+                      @JsonProperty("createTimeMs") final Long createTimeMs,
+                      @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                      @JsonProperty("createUser") final String createUser,
+                      @JsonProperty("updateUser") final String updateUser,
+                      @JsonProperty("description") final String description,
+                      @JsonProperty("url") final String url,
+                      @JsonProperty("username") final String username,
+                      @JsonProperty("password") final String password,
+                      @JsonProperty("branch") final String branch,
+                      @JsonProperty("path") final String path) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.dependencies = dependencies;
-        this.data = data;
+
+        // Git settings
+        this.url = url;
+        this.username = username;
+        this.password = password;
+        this.branch = branch;
+        this.path = path;
+
+        // Make sure none of the settings are null
+        if (this.url == null) {
+            this.url = "";
+        }
+        if (this.username == null) {
+            this.username = "";
+        }
+        if (this.password == null) {
+            this.password = "";
+        }
+        if (this.branch == null) {
+            this.branch = "";
+        }
+        if (this.path == null) {
+            this.path = "";
+        }
     }
 
     /**
@@ -96,51 +133,76 @@ public class GitRepoDoc extends Doc implements HasData {
         return DocRef.builder(TYPE);
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    public List<DocRef> getDependencies() {
-        return dependencies;
-    }
-
-    public void setDependencies(final List<DocRef> dependencies) {
-        this.dependencies = dependencies;
-    }
-
-    @Override
-    public String getData() {
-        return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final GitRepoDoc gitRepoDoc = (GitRepoDoc) o;
-        return Objects.equals(description, gitRepoDoc.description) &&
-               Objects.equals(dependencies, gitRepoDoc.dependencies) &&
-               Objects.equals(data, gitRepoDoc.data);
+        final GitRepoDoc that = (GitRepoDoc) o;
+        return Objects.equals(description, that.description)
+               && Objects.equals(url, that.url)
+               && Objects.equals(username, that.username)
+               && Objects.equals(password, that.password)
+               && Objects.equals(branch, that.branch)
+               && Objects.equals(path, that.path);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, dependencies, data);
+        return Objects.hash(super.hashCode(),
+                description, url, username, password, branch, path);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(final String description) {
+        this.description = description;
+    }
+    public String getUrl() {
+        return this.url;
+    }
+    public void setUrl(String url) {
+        this.url = url;
+    }
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(final String username) {
+        this.username = username;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(final String password) {
+        this.password = password;
+    }
+    public String getBranch() {
+        return branch;
+    }
+    public void setBranch(final String branch) {
+        this.branch = branch;
+    }
+    public String getPath() {
+        return path;
+    }
+    public void setPath(final String path) {
+        this.path = path;
+    }
+
+    /**
+     * Returns debugging info about the Doc.
+     */
+    @Override
+    public String toString() {
+        return "GitRepoDoc: {"
+                + description + ",\n"
+                + url + ",\n"
+                + username + ",\n"
+                + branch + "\n"
+                + path + "\n}";
     }
 }

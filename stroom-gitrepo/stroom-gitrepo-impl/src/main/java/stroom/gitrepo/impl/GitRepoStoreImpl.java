@@ -15,9 +15,8 @@
  *
  */
 
-package stroom.dashboard.impl.gitrepo;
+package stroom.gitrepo.impl;
 
-import stroom.content.GitRepo;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -25,17 +24,15 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.gitrepo.api.GitRepoStore;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.gitrepo.shared.GitRepoDoc;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,14 +42,11 @@ import java.util.function.BiConsumer;
 class GitRepoStoreImpl implements GitRepoStore {
 
     private final Store<GitRepoDoc> store;
-    private final SecurityContext securityContext;
 
     @Inject
     GitRepoStoreImpl(final StoreFactory storeFactory,
-                     final GitRepoSerialiser serialiser,
-                     final SecurityContext securityContext) {
+                     final GitRepoSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc.class);
-        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -119,12 +113,7 @@ class GitRepoStoreImpl implements GitRepoStore {
 
     private BiConsumer<GitRepoDoc, DependencyRemapper> createMapper() {
         return (doc, dependencyRemapper) -> {
-            if (doc.getDependencies() != null) {
-                doc.setDependencies(doc.getDependencies()
-                        .stream()
-                        .map(dependencyRemapper::remap)
-                        .toList());
-            }
+            // No dependencies to map
         };
     }
 
@@ -206,53 +195,4 @@ class GitRepoStoreImpl implements GitRepoStore {
         return store.getIndexableData(docRef);
     }
 
-    @Override
-    public List<GitRepoDoc> fetchLinkedGitRepos(final DocRef script, final Set<DocRef> loadedScripts) {
-        return securityContext.secureResult(() -> {
-            // Elevate the users permissions for the duration of this task so they can read the script if
-            // they have 'use' permission.
-            return securityContext.useAsReadResult(() -> {
-                final List<GitRepoDoc> scripts = new ArrayList<>();
-
-                final Set<DocRef> uiLoadedScripts;
-                if (loadedScripts == null) {
-                    uiLoadedScripts = new HashSet<>();
-                } else {
-                    uiLoadedScripts = loadedScripts;
-                }
-
-                // Load the script and it's dependencies.
-                loadScripts(script, uiLoadedScripts, new HashSet<>(), scripts);
-
-                return scripts;
-            });
-        });
-    }
-
-    private void loadScripts(final DocRef docRef,
-                             final Set<DocRef> uiLoadedScripts,
-                             final Set<DocRef> loadedScripts,
-                             final List<GitRepoDoc> scripts) {
-        // Prevent circular reference loading with this set.
-        if (!loadedScripts.contains(docRef)) {
-            loadedScripts.add(docRef);
-
-
-            final GitRepoDoc loadedScript = readDocument(docRef);
-            if (loadedScript != null) {
-                // Add required dependencies first.
-                if (loadedScript.getDependencies() != null) {
-                    for (final DocRef dep : loadedScript.getDependencies()) {
-                        loadScripts(dep, uiLoadedScripts, loadedScripts, scripts);
-                    }
-                }
-
-                // Add this script.
-                if (!uiLoadedScripts.contains(docRef)) {
-                    uiLoadedScripts.add(docRef);
-                    scripts.add(loadedScript);
-                }
-            }
-        }
-    }
 }

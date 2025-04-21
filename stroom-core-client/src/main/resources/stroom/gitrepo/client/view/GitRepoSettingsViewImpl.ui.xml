@@ -3,10 +3,30 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="gitRepoSettingsDependencies"
-                        label="Dependencies"
-                        addStyleNames="default-min-sizes flex-grow-1">
-            <g:SimplePanel ui:field="dependencies" styleName="dock-max stroom-control"/>
+        <form:FormGroup identity="gitRepoSettingsUrl" label="Git repository URL">
+            <g:TextBox name="Repository URL"
+                       title="The URL of the GIT repository"
+                       ui:field="url" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsUsername" label="Git repository username">
+            <g:TextBox name="Repository username"
+                       title="The username to access the GIT repository"
+                       ui:field="username" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsPassword" label="Git repository password">
+            <g:PasswordTextBox name="Repository password"
+                               title="The password to access the GIT repository"
+                               ui:field="password" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsBranch" label="Git branch">
+            <g:TextBox name="Branch"
+                       title="The branch of the GIT repository"
+                       ui:field="branch" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsPath" label="Git path">
+            <g:TextBox name="Path"
+                       title="The path within the GIT repository"
+                       ui:field="path" />
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>
