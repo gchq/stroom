@@ -254,7 +254,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                                     .getValues()
                                     .stream()
                                     .collect(Collectors.joining(","));
-                            if (filter.selection().isInvert()) {
+                            if (filter.getSelection().isInvert()) {
                                 value = "not in [" + value + "]";
                             } else {
                                 value = "in [" + value + "]";
@@ -465,7 +465,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         }
 
         final ExpressionOperator child = ExpressionOperator.builder().op(Op.OR).children(children).build();
-        if (found.selection().isInvert()) {
+        if (found.getSelection().isInvert()) {
             return Optional.of(ExpressionOperator.builder().op(Op.NOT).addOperator(child).build());
         }
         return Optional.of(child);
@@ -513,17 +513,71 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         DashboardContextChangeEvent.fire(this, this);
     }
 
-    private record ComponentState(String id,
-                                  String name,
-                                  List<Param> params,
-                                  List<List<Param>> selectionList,
-                                  List<ColumnSelectionFilter> filterList) {
+    private static class ComponentState {
 
+        private final String id;
+        private final String name;
+        private final List<Param> params;
+        private final List<List<Param>> selectionList;
+        private final List<ColumnSelectionFilter> filterList;
+
+        public ComponentState(final String id,
+                              final String name,
+                              final List<Param> params,
+                              final List<List<Param>> selectionList,
+                              final List<ColumnSelectionFilter> filterList) {
+            this.id = id;
+            this.name = name;
+            this.params = params;
+            this.selectionList = selectionList;
+            this.filterList = filterList;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<Param> getParams() {
+            return params;
+        }
+
+        public List<List<Param>> getSelectionList() {
+            return selectionList;
+        }
+
+        public List<ColumnSelectionFilter> getFilterList() {
+            return filterList;
+        }
     }
 
-    private record ColumnSelectionFilter(String id,
-                                         String name,
-                                         ColumnValueSelection selection) {
+    private static class ColumnSelectionFilter {
 
+        private final String id;
+        private final String name;
+        private final ColumnValueSelection selection;
+
+        public ColumnSelectionFilter(final String id,
+                                     final String name,
+                                     final ColumnValueSelection selection) {
+            this.id = id;
+            this.name = name;
+            this.selection = selection;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public ColumnValueSelection getSelection() {
+            return selection;
+        }
     }
 }

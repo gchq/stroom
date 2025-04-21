@@ -17,12 +17,17 @@
 package stroom.dashboard.client.embeddedquery;
 
 import stroom.dashboard.client.embeddedquery.BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView;
+import stroom.widget.button.client.Button;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -30,10 +35,10 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class BasicEmbeddedQuerySettingsViewImpl
-        extends ViewImpl
+        extends ViewWithUiHandlers<BasicEmbeddedQuerySettingsUiHandlers>
         implements BasicEmbeddedQuerySettingsView {
 
     private final Widget widget;
@@ -42,7 +47,13 @@ public class BasicEmbeddedQuerySettingsViewImpl
     @UiField
     TextBox name;
     @UiField
+    CustomCheckBox referenceExistingQuery;
+    @UiField
+    FormGroup queryRefFormGroup;
+    @UiField
     SimplePanel queryRef;
+    @UiField
+    Button copyQuery;
     @UiField
     CustomCheckBox queryOnOpen;
     @UiField
@@ -94,6 +105,27 @@ public class BasicEmbeddedQuerySettingsViewImpl
     }
 
     @Override
+    public boolean isReference() {
+        return referenceExistingQuery.getValue();
+    }
+
+    @Override
+    public void setReference(final boolean reference) {
+        this.referenceExistingQuery.setValue(reference);
+        updateEnabledState();
+    }
+
+    private void updateEnabledState() {
+        if (referenceExistingQuery.getValue()) {
+            queryRefFormGroup.getElement().getStyle().setOpacity(1);
+            copyQuery.setEnabled(false);
+        } else {
+            queryRefFormGroup.getElement().getStyle().setOpacity(0.5);
+            copyQuery.setEnabled(true);
+        }
+    }
+
+    @Override
     public boolean isQueryOnOpen() {
         return queryOnOpen.getValue();
     }
@@ -135,6 +167,17 @@ public class BasicEmbeddedQuerySettingsViewImpl
 
     public void onResize() {
         ((RequiresResize) widget).onResize();
+    }
+
+    @UiHandler("referenceExistingQuery")
+    public void onReference(final ValueChangeEvent<Boolean> e) {
+        getUiHandlers().onReference();
+        updateEnabledState();
+    }
+
+    @UiHandler("copyQuery")
+    public void onCopyQuery(final ClickEvent e) {
+        getUiHandlers().onCopyQuery();
     }
 
     public interface Binder extends UiBinder<Widget, BasicEmbeddedQuerySettingsViewImpl> {
