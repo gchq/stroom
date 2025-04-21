@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.embeddedquery;
 
+import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -44,7 +45,9 @@ import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.TableResult;
+import stroom.query.client.QueryClient;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultVisPresenter;
@@ -52,13 +55,12 @@ import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.query.shared.QueryResource;
+import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
@@ -86,13 +88,14 @@ public class EmbeddedQueryPresenter
             "Embedded Query",
             ComponentUse.PANEL);
 
-
-    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-
     static final int TEN_SECONDS = 10000;
 
+
+    private final QueryClient queryClient;
     private final RestFactory restFactory;
     private final QueryModel queryModel;
+    private final Provider<QueryDocPresenter> queryDocPresenterProvider;
+    private final ContentManager contentManager;
     //    private final QueryResultTabsView linkTabsLayoutView;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
@@ -117,13 +120,19 @@ public class EmbeddedQueryPresenter
                                   final Provider<EmbeddedQuerySettingsPresenter> settingsPresenterProvider,
                                   final Provider<QueryResultTablePresenter> tablePresenterProvider,
                                   final Provider<QueryResultVisPresenter> visPresenterProvider,
+                                  final Provider<QueryDocPresenter> queryDocPresenterProvider,
+                                  final QueryClient queryClient,
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
-                                  final ResultStoreModel resultStoreModel) {
+                                  final ResultStoreModel resultStoreModel,
+                                  final ContentManager contentManager) {
         super(eventBus, view, settingsPresenterProvider);
+        this.queryClient = queryClient;
         this.restFactory = restFactory;
         this.tablePresenterProvider = tablePresenterProvider;
         this.visPresenterProvider = visPresenterProvider;
+        this.queryDocPresenterProvider = queryDocPresenterProvider;
+        this.contentManager = contentManager;
 
         final stroom.query.client.presenter.ResultComponent tableResultConsumer = new ResultComponent() {
             boolean start;
@@ -344,9 +353,36 @@ public class EmbeddedQueryPresenter
     }
 
     public void editQuery() {
-        if (getQuerySettings().getQueryRef() != null) {
+        if (getQuerySettings().reference()) {
             OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
+        } else {
+            final QueryDoc doc = getQueryDoc();
+            final QueryDocPresenter queryDocPresenter = queryDocPresenterProvider.get();
+            queryDocPresenter.setSaveInterceptor(() -> {
+                final QueryDoc embeddedQueryDoc = queryDocPresenter.write(doc);
+                EmbeddedQueryComponentSettings settings = getQuerySettings();
+                EmbeddedQueryComponentSettings updatedSettings = settings
+                        .copy()
+                        .embeddedQueryDoc(embeddedQueryDoc)
+                        .build();
+                setSettings(updatedSettings);
+                updateQueryDoc(embeddedQueryDoc, updatedSettings);
+                queryDocPresenter.read(embeddedQueryDoc.asDocRef(), embeddedQueryDoc, false);
+                setDirty(true);
+            });
+            queryDocPresenter.read(doc.asDocRef(), doc, false);
+            contentManager.open(e -> e.getCallback().closeTab(true), queryDocPresenter, queryDocPresenter);
         }
+    }
+
+    private QueryDoc getQueryDoc() {
+        QueryDoc doc = getQuerySettings().getEmbeddedQueryDoc();
+        if (doc == null) {
+            doc = new QueryDoc();
+            doc.setUuid("Embedded Query");
+        }
+        doc.setName(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName());
+        return doc;
     }
 
     public void runQuery() {
@@ -588,34 +624,39 @@ public class EmbeddedQueryPresenter
     private void loadEmbeddedQuery() {
         final EmbeddedQueryComponentSettings settings = getQuerySettings();
         final DocRef queryRef = settings.getQueryRef();
-        if (queryRef != null && !Objects.equals(queryRef, loadedQueryRef)) {
-            initialised = false;
-            loadedQueryRef = queryRef;
-            restFactory
-                    .create(QUERY_RESOURCE)
-                    .method(res -> res.fetch(queryRef.getUuid()))
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            if (settings.getQueryTablePreferences() == null &&
-                                result.getQueryTablePreferences() != null) {
-                                setSettings(settings
-                                        .copy()
-                                        .queryTablePreferences(result.getQueryTablePreferences())
-                                        .build());
-                            }
+        if (settings.reference()) {
+            if (!Objects.equals(queryRef, loadedQueryRef)) {
+                initialised = false;
+                loadedQueryRef = queryRef;
+                queryClient.loadQueryDoc(queryRef, result ->
+                                updateQueryDoc(result, settings),
+                        this);
+            }
+        } else if (!Objects.equals(settings.getEmbeddedQueryDoc().asDocRef(), loadedQueryRef)) {
+            loadedQueryRef = settings.getEmbeddedQueryDoc().asDocRef();
+            updateQueryDoc(settings.getEmbeddedQueryDoc(), settings);
+        }
+    }
 
-                            // Read expression.
-                            queryModel.init(result.asDocRef());
-                            query = result.getQuery();
-                            initialised = true;
-                            final Automate automate = settings.getAutomate();
-                            if (queryOnOpen || automate.isOpen()) {
-                                run(true, false);
-                            }
-                        }
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
+    private void updateQueryDoc(final QueryDoc queryDoc,
+                                final EmbeddedQueryComponentSettings settings) {
+        if (queryDoc != null) {
+            if (settings.getQueryTablePreferences() == null &&
+                queryDoc.getQueryTablePreferences() != null) {
+                setSettings(settings
+                        .copy()
+                        .queryTablePreferences(queryDoc.getQueryTablePreferences())
+                        .build());
+            }
+
+            // Read expression.
+            queryModel.init(queryDoc.asDocRef());
+            query = queryDoc.getQuery();
+            initialised = true;
+            final Automate automate = settings.getAutomate();
+            if (queryOnOpen || automate.isOpen()) {
+                run(true, false);
+            }
         }
     }
 

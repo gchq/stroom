@@ -202,7 +202,7 @@ public class TabManager {
 
             final EmbeddedQueryComponentSettings embeddedQueryComponentSettings =
                     (EmbeddedQueryComponentSettings) embeddedQueryPresenter.getSettings();
-            if (embeddedQueryComponentSettings.getQueryRef() != null) {
+            if (embeddedQueryComponentSettings.getQueryRef() != null || !embeddedQueryComponentSettings.reference()) {
                 menuItems.add(createEditQuery(embeddedQueryPresenter));
                 menuItems.add(createRunQuery(embeddedQueryPresenter));
             }
