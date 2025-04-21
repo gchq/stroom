@@ -192,4 +192,17 @@ public class GitRepoDoc extends Doc {
     public void setPath(final String path) {
         this.path = path;
     }
+
+    /**
+     * Returns debugging info about the Doc.
+     */
+    @Override
+    public String toString() {
+        return "GitRepoDoc: {"
+                + description + ",\n"
+                + url + ",\n"
+                + username + ",\n"
+                + branch + "\n"
+                + path + "\n}";
+    }
 }

@@ -52,6 +52,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.TermMatcher;
+import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
@@ -115,7 +116,8 @@ class ExplorerServiceImpl
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM_TYPE,
             ExplorerConstants.FAVOURITES_TYPE,
-            ExplorerConstants.FOLDER_TYPE);
+            ExplorerConstants.FOLDER_TYPE,
+            GitRepoDoc.TYPE);
 
     // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
     // All are something only an OWNER (or admin) can do.
@@ -1073,6 +1075,9 @@ class ExplorerServiceImpl
             // Although the copy above will have fired entity events, they were before the deps
             // get re-mapped. Thus, we need to let the exp tree know that deps may have changed
             EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
+
+            // Tell listeners that the nodes are in the explorer tree
+            EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.POST_CREATE);
         });
 
         return new BulkActionResult(new ArrayList<>(remappings.values()), resultMessage.toString());
@@ -1248,6 +1253,7 @@ class ExplorerServiceImpl
             }
             // Let the tree know it has changed
             EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE);
         }
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
@@ -1288,6 +1294,7 @@ class ExplorerServiceImpl
 
         // Make sure the tree model is rebuilt.
         EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
+        EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE);
 
         return result;
     }
@@ -1322,6 +1329,7 @@ class ExplorerServiceImpl
 
             // Make sure the tree model is rebuilt.
             EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
             return afterNode;
         } catch (final Exception e) {
             explorerEventLog.update(beforeNode, afterNode, e);
@@ -1990,30 +1998,37 @@ class ExplorerServiceImpl
      * given node. Written for GitRepo to determine whether the node
      * should be saved to Git as well as the DB and local storage.
      *
-     * @param docType The document type to look for in the ancestors.
+     * @param ancestorDocType The document type to look for in the ancestors.
      *                Must not be null.
      * @param node    Where to start searching the tree when looking for
      *                ancestors. Must not be null.
-     * @return The ExplorerNode holding the closest ancestor of the given
-     *         docType, or null if no such ancestor is found.
+     * @return The list of ExplorerNodes, from the closest matching ancestor
+     * to the given node. List will be empty if no match is found.
+     * Never returns null.
      */
     @Override
-    public ExplorerNode getAncestorOfDocType(final String docType, final ExplorerNode node) {
-        Objects.requireNonNull(docType);
+    public List<ExplorerNode> getAncestorOfDocType(final String ancestorDocType, final ExplorerNode node) {
+        Objects.requireNonNull(ancestorDocType);
         Objects.requireNonNull(node);
 
         // Iterate up the tree to find each ancestor
         final UnmodifiableTreeModel treeModel = explorerTreeModel.getModel();
         ExplorerNode currentNode = node;
+        List<ExplorerNode> path = new ArrayList<>();
+        path.add(node);
         do {
+            // Note that getParent() can return null under certain conditions
+            // despite what IntelliJ will tell you...
             currentNode = treeModel.getParent(treeModel.getNodeKey(currentNode));
-            if (currentNode != null && currentNode.getType().equals(docType)) {
-                return currentNode;
+            LOGGER.error("======== Examining node '{}, {}, {}'", currentNode, currentNode.getType(), currentNode.getDepth());
+            path.add(currentNode);
+            if (currentNode != null && currentNode.getType().equals(ancestorDocType)) {
+                return path.reversed();
             }
-        } while (currentNode != null && currentNode.getDepth() != 0);
+        } while (currentNode != null && !currentNode.getType().equals(ExplorerConstants.SYSTEM_TYPE));
 
         // Didn't find anything
-        return null;
+        return Collections.emptyList();
     }
 
     // --------------------------------------------------------------------------------

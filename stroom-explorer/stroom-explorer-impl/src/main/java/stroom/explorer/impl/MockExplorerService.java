@@ -182,7 +182,7 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
-    public ExplorerNode getAncestorOfDocType(final String docType, final ExplorerNode node) {
-        return null;
+    public List<ExplorerNode> getAncestorOfDocType(final String docType, final ExplorerNode node) {
+        return Collections.emptyList();
     }
 }
