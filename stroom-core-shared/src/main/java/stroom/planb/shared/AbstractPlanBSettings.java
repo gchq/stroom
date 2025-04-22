@@ -40,20 +40,29 @@ import java.util.Objects;
 })
 @Description("Defines settings for Plan B")
 @JsonPropertyOrder({
-        "maxStoreSize"
+        "maxStoreSize",
+        "snapshotSettings"
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractPlanBSettings {
 
     @JsonProperty
     private final Long maxStoreSize;
+    @JsonProperty
+    private final SnapshotSettings snapshotSettings;
 
-    public AbstractPlanBSettings(final Long maxStoreSize) {
+    public AbstractPlanBSettings(final Long maxStoreSize,
+                                 final SnapshotSettings snapshotSettings) {
         this.maxStoreSize = maxStoreSize;
+        this.snapshotSettings = snapshotSettings;
     }
 
     public Long getMaxStoreSize() {
         return maxStoreSize;
+    }
+
+    public SnapshotSettings getSnapshotSettings() {
+        return snapshotSettings;
     }
 
     @Override
@@ -68,34 +77,43 @@ public abstract class AbstractPlanBSettings {
             return false;
         }
         final AbstractPlanBSettings doc = (AbstractPlanBSettings) o;
-        return Objects.equals(maxStoreSize, doc.maxStoreSize);
+        return Objects.equals(maxStoreSize, doc.maxStoreSize) &&
+               Objects.equals(snapshotSettings, doc.snapshotSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), maxStoreSize);
+        return Objects.hash(super.hashCode(), maxStoreSize, snapshotSettings);
     }
 
     @Override
     public String toString() {
         return "AbstractPlanBSettings{" +
                ", maxStoreSize=" + maxStoreSize +
+               ", snapshotSettings=" + snapshotSettings +
                '}';
     }
 
     public abstract static class AbstractBuilder<T extends AbstractPlanBSettings, B extends AbstractBuilder<T, ?>> {
 
         protected Long maxStoreSize;
+        protected SnapshotSettings snapshotSettings;
 
         public AbstractBuilder() {
         }
 
         public AbstractBuilder(final AbstractPlanBSettings settings) {
             this.maxStoreSize = settings.maxStoreSize;
+            this.snapshotSettings = settings.snapshotSettings;
         }
 
         public B maxStoreSize(final Long maxStoreSize) {
             this.maxStoreSize = maxStoreSize;
+            return self();
+        }
+
+        public B snapshotSettings(final SnapshotSettings snapshotSettings) {
+            this.snapshotSettings = snapshotSettings;
             return self();
         }
 

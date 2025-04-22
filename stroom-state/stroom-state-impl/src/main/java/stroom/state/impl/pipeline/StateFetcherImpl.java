@@ -8,7 +8,6 @@ import stroom.query.language.functions.ValNull;
 
 import jakarta.inject.Inject;
 
-import java.time.Instant;
 import java.util.Set;
 
 public class StateFetcherImpl implements StateFetcher {
@@ -21,7 +20,7 @@ public class StateFetcherImpl implements StateFetcher {
     }
 
     @Override
-    public Val getState(String map, String key, Instant effectiveTimeMs) {
+    public Val getState(String map, String key, long effectiveTimeMs) {
         for (final StateProvider provider : providers) {
             final Val val = provider.getState(map, key, effectiveTimeMs);
             if (val != null && !Type.NULL.equals(val.type())) {

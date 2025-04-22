@@ -5,7 +5,7 @@ import stroom.planb.impl.db.State.Key;
 
 import java.nio.charset.StandardCharsets;
 
-public class State extends KV<Key, StateValue> {
+public class State extends KV<Key, StateValue> implements PlanBValue  {
 
     public State(final Key key, final StateValue value) {
         super(key, value);

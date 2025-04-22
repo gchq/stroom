@@ -51,16 +51,16 @@ public class StateProviderImpl implements StateProvider {
     }
 
     @Override
-    public Val getState(final String mapName, final String keyName, final Instant effectiveTimeMs) {
+    public Val getState(final String mapName, final String keyName, final long effectiveTimeMs) {
         try {
             final String keyspace = mapName.toLowerCase(Locale.ROOT);
             final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
                     Optional.ofNullable(stateDocCache.get(keyspace)));
             return stateOptional
                     .map(stateDoc -> {
-                        final Key key = new Key(keyspace, keyName, effectiveTimeMs);
+                        final Key key = new Key(keyspace, keyName, Instant.ofEpochMilli(effectiveTimeMs));
                         return cache.get(key,
-                                k -> getState(stateDoc, keyspace, keyName, effectiveTimeMs));
+                                k -> getState(stateDoc, keyspace, keyName, Instant.ofEpochMilli(effectiveTimeMs)));
                     })
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {

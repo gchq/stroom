@@ -6,7 +6,7 @@ import stroom.planb.impl.db.TemporalState.Key;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
-public class TemporalState extends KV<Key, StateValue> {
+public class TemporalState extends KV<Key, StateValue> implements PlanBValue {
 
     public TemporalState(final Key key, final StateValue value) {
         super(key, value);

@@ -40,6 +40,13 @@ public class RangedStateSettingsViewImpl
     @UiField
     CustomCheckBox overwrite;
 
+    @UiField
+    CustomCheckBox useSnapshotsForLookup;
+    @UiField
+    CustomCheckBox useSnapshotsForGet;
+    @UiField
+    CustomCheckBox useSnapshotsForQuery;
+
     @Inject
     public RangedStateSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -74,6 +81,36 @@ public class RangedStateSettingsViewImpl
     }
 
     @Override
+    public boolean isUseSnapshotsForLookup() {
+        return useSnapshotsForLookup.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForLookup(final boolean useSnapshotsForLookup) {
+        this.useSnapshotsForLookup.setValue(useSnapshotsForLookup);
+    }
+
+    @Override
+    public boolean isUseSnapshotsForGet() {
+        return useSnapshotsForGet.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForGet(final boolean useSnapshotsForGet) {
+        this.useSnapshotsForGet.setValue(useSnapshotsForGet);
+    }
+
+    @Override
+    public boolean isUseSnapshotsForQuery() {
+        return useSnapshotsForQuery.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForQuery(final boolean useSnapshotsForQuery) {
+        this.useSnapshotsForQuery.setValue(useSnapshotsForQuery);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         maxStoreSize.setEnabled(!readOnly);
         overwrite.setEnabled(!readOnly);
@@ -86,6 +123,21 @@ public class RangedStateSettingsViewImpl
 
     @UiHandler("overwrite")
     public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForLookup")
+    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForGet")
+    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForQuery")
+    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();
     }
 

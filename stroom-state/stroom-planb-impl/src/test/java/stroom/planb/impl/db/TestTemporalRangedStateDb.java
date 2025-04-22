@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,14 +79,13 @@ class TestTemporalRangedStateDb {
 
             final TemporalRangedStateRequest stateRequest =
                     new TemporalRangedStateRequest(11, refTime.toEpochMilli());
-            final Optional<TemporalRangedState> optional = db.getState(stateRequest);
-            assertThat(optional).isNotEmpty();
-            final TemporalRangedState res = optional.get();
-            assertThat(res.key().keyStart()).isEqualTo(10);
-            assertThat(res.key().keyEnd()).isEqualTo(30);
-            assertThat(res.key().effectiveTime()).isEqualTo(refTime.toEpochMilli());
-            assertThat(res.val().typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.val().toString()).isEqualTo("test");
+            final TemporalRangedState state = db.getState(stateRequest);
+            assertThat(state).isNotNull();
+            assertThat(state.key().keyStart()).isEqualTo(10);
+            assertThat(state.key().keyEnd()).isEqualTo(30);
+            assertThat(state.key().effectiveTime()).isEqualTo(refTime.toEpochMilli());
+            assertThat(state.val().typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(state.val().toString()).isEqualTo("test");
 
 //            final TemporalRangedStateRequest stateRequest =
 //                    new TemporalRangedStateRequest("TEST_MAP", 11, refTime);
@@ -176,11 +174,10 @@ class TestTemporalRangedStateDb {
     private void testGet(final TemporalRangedStateDb db) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
-        final Optional<StateValue> optional = db.get(k);
-        assertThat(optional).isNotEmpty();
-        final StateValue res = optional.get();
-        assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-        assertThat(res.toString()).isEqualTo("test");
+        final StateValue value = db.get(k);
+        assertThat(value).isNotNull();
+        assertThat(value.typeId()).isEqualTo(StringValue.TYPE_ID);
+        assertThat(value.toString()).isEqualTo("test");
     }
 
     private void checkState(final TemporalRangedStateDb db,
@@ -189,9 +186,8 @@ class TestTemporalRangedStateDb {
                             final boolean expected) {
         final TemporalRangedStateRequest request =
                 new TemporalRangedStateRequest(key, effectiveTime);
-        final Optional<TemporalRangedState> optional = db.getState(request);
-        final boolean actual = optional.isPresent();
-        assertThat(actual).isEqualTo(expected);
+        final TemporalRangedState state = db.getState(request);
+        assertThat(state != null).isEqualTo(expected);
     }
 
     //

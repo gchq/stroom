@@ -12,5 +12,17 @@
                         helpText="If subsequent data that is loaded matches an existing key then should the existing be kept or overwritten? By default Plan B will overwrite existing data.">
             <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus"/>
         </form:FormGroup>
+        <form:FormGroup label="Use Snapshots For Lookup"
+                        helpText="Use snapshots for lookups.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForLookup" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Use Snapshots For Get"
+                        helpText="Use snapshots for get.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForGet" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Use Snapshots For Query"
+                        helpText="Use snapshots for query.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForQuery" addStyleNames="allow-focus"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

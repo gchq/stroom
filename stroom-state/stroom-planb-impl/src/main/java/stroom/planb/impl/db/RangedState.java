@@ -3,7 +3,7 @@ package stroom.planb.impl.db;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.RangedState.Key;
 
-public class RangedState extends KV<Key, StateValue> {
+public class RangedState extends KV<Key, StateValue> implements PlanBValue  {
 
     public RangedState(final Key key, final StateValue value) {
         super(key, value);

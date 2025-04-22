@@ -31,7 +31,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     public PlanBConfig(final String path) {
         this(CacheConfig
                         .builder()
-                        .maximumSize(100L)
+                        .maximumSize(1000L)
                         .expireAfterWrite(StroomDuration.ofMinutes(10))
                         .build(),
                 Collections.emptyList(),

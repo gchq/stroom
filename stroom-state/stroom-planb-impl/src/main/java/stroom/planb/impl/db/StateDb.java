@@ -6,7 +6,6 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 public class StateDb extends AbstractDb<Key, StateValue> {
 
@@ -46,9 +45,12 @@ public class StateDb extends AbstractDb<Key, StateValue> {
         return StateSettings.builder().build();
     }
 
-    public Optional<State> getState(final StateRequest request) {
+    public State getState(final StateRequest request) {
         final Key key = Key.builder().name(request.key()).build();
-        final Optional<StateValue> optional = get(key);
-        return optional.map(value -> new State(key, value));
+        final StateValue value = get(key);
+        if (value == null) {
+            return null;
+        }
+        return new State(key, value);
     }
 }

@@ -5,7 +5,7 @@ import stroom.planb.impl.db.TemporalRangedState.Key;
 
 import java.time.Instant;
 
-public class TemporalRangedState extends KV<Key, StateValue> {
+public class TemporalRangedState extends KV<Key, StateValue> implements PlanBValue {
 
     public TemporalRangedState(final Key key,
                                final StateValue value) {

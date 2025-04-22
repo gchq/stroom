@@ -28,8 +28,9 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
     public TemporalRangedStateSettings(@JsonProperty("condense") final DurationSetting condense,
                                        @JsonProperty("retention") final DurationSetting retention,
                                        @JsonProperty("maxStoreSize") final Long maxStoreSize,
+                                       @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
                                        @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
+        super(maxStoreSize, snapshotSettings);
         this.condense = condense;
         this.retention = retention;
         this.overwrite = overwrite;
@@ -128,6 +129,7 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
                     condense,
                     retention,
                     maxStoreSize,
+                    snapshotSettings,
                     overwrite);
         }
     }

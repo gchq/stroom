@@ -185,7 +185,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
         return vals;
     }
 
-    public Optional<Session> getState(final SessionRequest request) {
+    public Session getState(final SessionRequest request) {
         // Hash the value.
         final long nameHash = LongHashFunction.xx3().hashBytes(request.name());
         final long time = request.time();
@@ -212,19 +212,19 @@ public class SessionDb extends AbstractDb<Session, Session> {
                             final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
                             // We might have had a hash collision so test the key equality.
                             if (Arrays.equals(bytes, request.name())) {
-                                return Optional.of(new Session(bytes, startTimeMs, endTimeMs));
+                                return new Session(bytes, startTimeMs, endTimeMs);
                             }
                         } else if (endTimeMs < startTimeMs) {
                             final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
                             // We might have had a hash collision so test the key equality.
                             if (Arrays.equals(bytes, request.name())) {
                                 // We have found a session that ends before the requested time so return nothing.
-                                return Optional.empty();
+                                return null;
                             }
                         }
                     }
                 }
-                return Optional.empty();
+                return null;
             });
         } finally {
             byteBufferFactory.release(start);

@@ -28,6 +28,7 @@ import stroom.planb.impl.data.FileTransferResourceImpl;
 import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
@@ -82,7 +83,8 @@ public class PlanBModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)
-                .bind(FileTransferResourceImpl.class);
+                .bind(FileTransferResourceImpl.class)
+                .bind(PlanBRemoteQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);

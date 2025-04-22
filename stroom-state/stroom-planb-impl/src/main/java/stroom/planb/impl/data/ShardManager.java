@@ -63,7 +63,7 @@ public class ShardManager {
         FileUtil.deleteDir(statePaths.getSnapshotDir());
     }
 
-    private boolean isSnapshotNode() {
+    public boolean isSnapshotNode() {
         final List<String> nodes = NullSafe.list(configProvider.get().getNodeList());
         // If we have no node info or no nodes are configured then treat this as a shard writer node and not a
         // snapshot node.

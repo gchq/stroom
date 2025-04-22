@@ -6,7 +6,7 @@ import java.time.Instant;
 public record Session(
         byte[] key,
         long start,
-        long end) {
+        long end) implements PlanBValue {
 
     public static Builder builder() {
         return new Builder();

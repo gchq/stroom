@@ -264,7 +264,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     };
 
                     // Write delimited file.
-
                     try {
                         target.start();
 
