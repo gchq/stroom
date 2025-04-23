@@ -7212,7 +7212,7 @@
     },
     "/planb/v1/getValue" : {
       "post" : {
-        "operationId" : "getValue",
+        "operationId" : "planBQueryGetValue",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7225,7 +7225,7 @@
         "responses" : {
           "default" : {
             "content" : {
-              "application/octet-stream" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlanBValue"
                 }
@@ -7234,6 +7234,7 @@
             "description" : "default response"
           }
         },
+        "summary" : "Gets a value from a remote Plan B store.",
         "tags" : [ "Plan B Query" ]
       }
     },
@@ -17404,6 +17405,23 @@
           }
         }
       },
+      "Key" : {
+        "type" : "object",
+        "properties" : {
+          "effectiveTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keyEnd" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keyStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "KeyValueInputComponentSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -19527,6 +19545,16 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/StateValue"
+            }
+          }
         } ]
       },
       "RangedStateSettings" : {
@@ -21831,6 +21859,16 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/StateValue"
+            }
+          }
         } ]
       },
       "StateDoc" : {
@@ -21908,6 +21946,49 @@
             }
           }
         } ]
+      },
+      "StateValue" : {
+        "type" : "object",
+        "properties" : {
+          "byteBuffer" : {
+            "type" : "object",
+            "properties" : {
+              "char" : {
+                "type" : "string"
+              },
+              "direct" : {
+                "type" : "boolean"
+              },
+              "double" : {
+                "type" : "number",
+                "format" : "double"
+              },
+              "float" : {
+                "type" : "number",
+                "format" : "float"
+              },
+              "int" : {
+                "type" : "integer",
+                "format" : "int32"
+              },
+              "long" : {
+                "type" : "integer",
+                "format" : "int64"
+              },
+              "readOnly" : {
+                "type" : "boolean"
+              },
+              "short" : {
+                "type" : "integer",
+                "format" : "int32"
+              }
+            }
+          },
+          "typeId" : {
+            "type" : "string",
+            "format" : "byte"
+          }
+        }
       },
       "StatisticField" : {
         "type" : "object",
@@ -22803,6 +22884,16 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/StateValue"
+            }
+          }
         } ]
       },
       "TemporalRangedStateSettings" : {
@@ -22828,6 +22919,16 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/StateValue"
+            }
+          }
         } ]
       },
       "TemporalStateSettings" : {
