@@ -177,15 +177,16 @@ public class TestZipReceiver extends StroomUnitTest {
         // This also creates an entries file, but we ignore that
         final FileGroup fileGroup = createZip(attributeMap, feedKeys);
 
-        Assertions.assertThatThrownBy(() -> {
-                    doReceive(
-                            fileGroup.getZip(),
-                            attributeMap,
-                            attrMap -> {
-                                throw new StroomStreamException(
-                                        StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
-                            });
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            doReceive(
+                                    fileGroup.getZip(),
+                                    attributeMap,
+                                    attrMap -> {
+                                        throw new StroomStreamException(
+                                                StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+                                    });
+                        })
                 .isInstanceOf(StroomStreamException.class);
 
         // All rejected so nothing passed along
@@ -201,20 +202,21 @@ public class TestZipReceiver extends StroomUnitTest {
         // This also creates an entries file, but we ignore that
         final FileGroup fileGroup = createZip(attributeMap, feedKeys);
 
-        Assertions.assertThatThrownBy(() -> {
-                    doReceive(
-                            fileGroup.getZip(),
-                            attributeMap,
-                            attrMap -> {
-                                // Reject one of the feeds
-                                if (FEED_1.equals(attrMap.get(StandardHeaderArguments.FEED))) {
-                                    throw new StroomStreamException(
-                                            StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
-                                } else {
-                                    return true;
-                                }
-                            });
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            doReceive(
+                                    fileGroup.getZip(),
+                                    attributeMap,
+                                    attrMap -> {
+                                        // Reject one of the feeds
+                                        if (FEED_1.equals(attrMap.get(StandardHeaderArguments.FEED))) {
+                                            throw new StroomStreamException(
+                                                    StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+                                        } else {
+                                            return true;
+                                        }
+                                    });
+                        })
                 .isInstanceOf(StroomStreamException.class);
 
         // All rejected so nothing passed along

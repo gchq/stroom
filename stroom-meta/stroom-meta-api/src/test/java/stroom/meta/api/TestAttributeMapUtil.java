@@ -147,7 +147,8 @@ class TestAttributeMapUtil {
     @TestFactory
     Stream<DynamicTest> testReadKeys() {
         final String data1 = """
-                                
+                three:four
+
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
