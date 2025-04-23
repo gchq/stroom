@@ -207,8 +207,8 @@ public class AttributeMapUtil {
                                          final Stream<String> linesStream) throws IOException {
         final List<String> keysToFind = new ArrayList<>(keys);
         final List<String> values = new ArrayList<>(keys.size());
-        // Ensure we have n
-        for (int i = 0; i < keys.size(); i++) {
+        // Ensure we have a null value in all indexes, in case we don't find the key
+        for (final String ignored : keys) {
             values.add(null);
         }
 
