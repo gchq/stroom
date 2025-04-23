@@ -45,7 +45,6 @@ public class QueryNodeResolverImpl implements QueryNodeResolver {
             return null;
         }
 
-//        return nodes.getFirst();
-        return null;
+        return nodes.getFirst();
     }
 }
