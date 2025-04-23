@@ -215,14 +215,20 @@ public class AttributeMapUtil {
         linesStream
                 .takeWhile(ignored -> !keysToFind.isEmpty())
                 .filter(NullSafe::isNonBlankString)
+                .map(String::trim)
                 .forEach(line -> {
-                    final String trimmedLine = line.trim();
                     for (int keyIdx = 0; keyIdx < keysToFind.size(); keyIdx++) {
                         final String keyToFind = keysToFind.get(keyIdx);
                         if (NullSafe.isNonBlankString(keyToFind)) {
-                            final int len = keyToFind.length();
-                            if (trimmedLine.regionMatches(true, 0, keyToFind, 0, len)) {
-                                // Found our key, grab the value. Null keysToFind so we don't look for it again
+                            final boolean foundKey = line.regionMatches(
+                                    true,
+                                    0,
+                                    keyToFind,
+                                    0,
+                                    keyToFind.length());
+                            if (foundKey) {
+                                // Extract the value. Null out keysToFind, so we don't look for
+                                // this key again
                                 keysToFind.set(keyIdx, null);
                                 final int splitPos = line.indexOf(HEADER_DELIMITER);
                                 final String value;
@@ -230,7 +236,7 @@ public class AttributeMapUtil {
                                     value = line.substring(splitPos + 1);
                                     values.set(keyIdx, value.trim());
                                 }
-                                // break out to look for the next in keysToFind
+                                // break out to look for the next key in keysToFind
                                 break;
                             }
                         }
