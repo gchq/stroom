@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.repo.FeedKey;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -68,6 +69,11 @@ public class ZipEntryGroup {
 
     public void setTypeName(final String typeName) {
         this.typeName = typeName;
+    }
+
+    @JsonIgnore
+    public FeedKey getFeedKey() {
+        return new FeedKey(feedName, typeName);
     }
 
     public Entry getManifestEntry() {

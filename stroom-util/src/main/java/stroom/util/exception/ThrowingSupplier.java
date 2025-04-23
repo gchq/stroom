@@ -1,5 +1,7 @@
 package stroom.util.exception;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.function.Supplier;
 
 @FunctionalInterface
@@ -17,7 +19,11 @@ public interface ThrowingSupplier<T, E extends Throwable> {
             try {
                 return s.get();
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                if (e instanceof IOException ioe) {
+                    throw new UncheckedIOException(ioe);
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }

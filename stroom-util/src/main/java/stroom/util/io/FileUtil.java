@@ -39,6 +39,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -507,6 +508,43 @@ public final class FileUtil {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * List the direct subdirectories of parent.
+     */
+    public static List<Path> listDirs(final Path parent) {
+        return listPaths(parent, Files::isDirectory);
+    }
+
+    /**
+     * List the regular files that are a direct child of parent.
+     */
+    public static List<Path> listFiles(final Path parent) {
+        return listPaths(parent, Files::isRegularFile);
+    }
+
+    /**
+     * List the direct child paths in parent that match pathPredicate.
+     */
+    public static List<Path> listPaths(final Path parent,
+                                       final Predicate<Path> pathPredicate) {
+        if (parent == null) {
+            return Collections.emptyList();
+        } else {
+            try {
+                try (Stream<Path> pathStream = Files.list(parent)) {
+                    if (pathPredicate != null) {
+                        return pathStream.filter(pathPredicate)
+                                .toList();
+                    } else {
+                        return pathStream.toList();
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 }

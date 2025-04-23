@@ -15,17 +15,18 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.StringIdUtil;
+import stroom.util.zip.ZipUtil;
 
 import com.google.common.util.concurrent.Striped;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -491,12 +493,13 @@ public class PreAggregator {
 
         final Path parentDir = tempSplittingDirProvider.get();
         final List<PartDir> partDirs = new ArrayList<>();
-        try (final ZipArchiveInputStream zipArchiveInputStream =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
-            ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
-            if (entry == null) {
+
+        try (ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
+            final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
+            if (!entries.hasNext()) {
                 throw new RuntimeException("Unexpected empty zip file");
             }
+            ZipArchiveEntry entry = entries.next();
 
             int partNo = 1;
             for (final Part part : parts) {
@@ -528,8 +531,15 @@ public class PreAggregator {
 
                         if (add) {
                             final String entryName = baseNameOut + "." + fileName.getExtension();
-                            zipWriter.writeStream(entryName, zipArchiveInputStream);
-                            entry = zipArchiveInputStream.getNextEntry();
+                            // We are not changing the file, just the name, so we can work with the raw
+                            // compressed stream
+                            final InputStream rawInputStream = zipFile.getRawInputStream(entry);
+                            zipWriter.writeRawStream(entry, entryName, rawInputStream);
+                            if (entries.hasNext()) {
+                                entry = entries.next();
+                            } else {
+                                entry = null;
+                            }
                         }
                     }
                 }

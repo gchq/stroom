@@ -97,7 +97,6 @@ public class ZipWriter implements AutoCloseable {
         } finally {
             closeArchiveEntry();
         }
-
     }
 
     public void writeRawStream(final ZipArchiveEntry sourceZipArchiveEntry,
@@ -118,6 +117,7 @@ public class ZipWriter implements AutoCloseable {
     public void writeRawStream(final ZipArchiveEntry sourceZipArchiveEntry,
                                final ZipArchiveEntry destZipArchiveEntry,
                                final InputStream inputStream) throws IOException {
+
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         destZipArchiveEntry.setCompressedSize(sourceZipArchiveEntry.getCompressedSize());
         destZipArchiveEntry.setCrc(sourceZipArchiveEntry.getCrc());
@@ -130,7 +130,8 @@ public class ZipWriter implements AutoCloseable {
         destZipArchiveEntry.setRawFlag(sourceZipArchiveEntry.getRawFlag());
         destZipArchiveEntry.setSize(sourceZipArchiveEntry.getSize());
 
-        zipArchiveOutputStream.addRawArchiveEntry(sourceZipArchiveEntry, inputStream);
+        putRawArchiveEntry(destZipArchiveEntry, inputStream);
+//        zipArchiveOutputStream.addRawArchiveEntry(destZipArchiveEntry, inputStream);
         LOGGER.debug(() -> LogUtil.message(
                 "writeRawStream() - path: {}, zipArchiveEntry: {}, bytes: {}, duration: {}",
                 path,
@@ -139,6 +140,11 @@ public class ZipWriter implements AutoCloseable {
                         .map(Objects::toString)
                         .orElse("?"),
                 timer));
+    }
+
+    void putRawArchiveEntry(final ZipArchiveEntry zipArchiveEntry,
+                            final InputStream inputStream) throws IOException {
+        zipArchiveOutputStream.addRawArchiveEntry(zipArchiveEntry, inputStream);
     }
 
     void putArchiveEntry(final ZipArchiveEntry zipArchiveEntry) throws IOException {
