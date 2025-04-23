@@ -5,6 +5,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileName;
@@ -73,7 +74,7 @@ public class TestDataUtil {
                         zipWriter.writeStream(dataEntryName, new ByteArrayInputStream(dataBytes));
 
                         if (allowedFeedKeys == null || allowedFeedKeys.contains(feedKey)) {
-                            final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey.feed(), feedKey.type());
+                            final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
                             zipEntryGroup.setMetaEntry(new Entry(metaEntryName, metaBytes.length));
                             zipEntryGroup.setDataEntry(new Entry(dataEntryName, dataBytes.length));
 
@@ -141,8 +142,10 @@ public class TestDataUtil {
         } else {
             final Path path = entriesPaths.getFirst();
             try {
+                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
                 try (Stream<String> stream = Files.lines(path)) {
-                    return stream.map(ThrowingFunction.unchecked(ZipEntryGroup::read))
+                    return stream.map(ThrowingFunction.unchecked(line ->
+                                    ZipEntryGroup.read(line, feedKeyInterner)))
                             .toList();
                 }
             } catch (IOException e) {

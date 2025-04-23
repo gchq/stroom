@@ -45,6 +45,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.SignStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -57,6 +58,7 @@ import java.util.StringTokenizer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
 public class AttributeMapUtil {
@@ -140,19 +142,101 @@ public class AttributeMapUtil {
     }
 
     public static void read(final String data, final AttributeMap attributeMap) {
-        data.lines()
-                .map(String::trim)
-                .filter(Predicate.not(String::isEmpty))
+        try (Stream<String> linesStream = data.lines()) {
+            linesStream.map(String::trim)
+                    .filter(Predicate.not(String::isEmpty))
+                    .forEach(line -> {
+                        final int splitPos = line.indexOf(HEADER_DELIMITER);
+                        if (splitPos != -1) {
+                            final String key = line.substring(0, splitPos);
+                            String value = line.substring(splitPos + 1);
+                            attributeMap.put(key.trim(), value.trim());
+                        } else {
+                            attributeMap.put(line, null);
+                        }
+                    });
+        }
+    }
+
+    /**
+     * For when you just want the value for one or more keys.
+     * Saves having to de-serialise the whole file.
+     *
+     * @param data The {@link String} to extract values from.
+     * @param keys The keys to find values for. Assumed to be already trimmed.
+     * @return A list of values using the same indexing as the supplied keys. The length of the
+     * returned list will always match that of keys.
+     */
+    public static List<String> readKeys(final String data,
+                                        final List<String> keys) throws IOException {
+        if (NullSafe.hasItems(keys) && NullSafe.isNonBlankString(data)) {
+            // Meta keys come from headers so should be ascii, and thus we don't have to
+            // worry about multibyte 'chars' and other such oddities.
+            try (Stream<String> linesStream = data.lines()) {
+                return readKeys(keys, linesStream);
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * For when you just want the value for one or more keys.
+     * Saves having to de-serialise the whole file.
+     *
+     * @param path The file to extract values from.
+     * @param keys The keys to find values for. Assumed to be already trimmed.
+     * @return A list of values using the same indexing as the supplied keys. The length of the
+     * returned list will always match that of keys.
+     */
+    public static List<String> readKeys(final Path path,
+                                        final List<String> keys) throws IOException {
+        Objects.requireNonNull(path);
+        if (NullSafe.hasItems(keys)) {
+            // Meta keys come from headers so should be ascii, and thus we don't have to
+            // worry about multibyte 'chars' and other such oddities.
+            try (Stream<String> linesStream = Files.lines(path, DEFAULT_CHARSET)) {
+                return readKeys(keys, linesStream);
+            }
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private static List<String> readKeys(final List<String> keys,
+                                         final Stream<String> linesStream) throws IOException {
+        final List<String> keysToFind = new ArrayList<>(keys);
+        final List<String> values = new ArrayList<>(keys.size());
+        // Ensure we have n
+        for (int i = 0; i < keys.size(); i++) {
+            values.add(null);
+        }
+
+        linesStream
+                .takeWhile(ignored -> !keysToFind.isEmpty())
+                .filter(NullSafe::isNonBlankString)
                 .forEach(line -> {
-                    final int splitPos = line.indexOf(HEADER_DELIMITER);
-                    if (splitPos != -1) {
-                        final String key = line.substring(0, splitPos);
-                        String value = line.substring(splitPos + 1);
-                        attributeMap.put(key.trim(), value.trim());
-                    } else {
-                        attributeMap.put(line, null);
+                    final String trimmedLine = line.trim();
+                    for (int keyIdx = 0; keyIdx < keysToFind.size(); keyIdx++) {
+                        final String keyToFind = keysToFind.get(keyIdx);
+                        if (NullSafe.isNonBlankString(keyToFind)) {
+                            final int len = keyToFind.length();
+                            if (trimmedLine.regionMatches(true, 0, keyToFind, 0, len)) {
+                                // Found our key, grab the value. Null keysToFind so we don't look for it again
+                                keysToFind.set(keyIdx, null);
+                                final int splitPos = line.indexOf(HEADER_DELIMITER);
+                                final String value;
+                                if (splitPos != -1) {
+                                    value = line.substring(splitPos + 1);
+                                    values.set(keyIdx, value.trim());
+                                }
+                                // break out to look for the next in keysToFind
+                                break;
+                            }
+                        }
                     }
                 });
+        return values;
     }
 
     public static void read(final byte[] data, final AttributeMap attributeMap) throws IOException {

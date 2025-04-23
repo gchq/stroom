@@ -6,6 +6,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
@@ -168,12 +169,14 @@ public class ZipSplitter {
     private static Map<FeedKey, List<ZipEntryGroup>> readEntriesFile(final Path entriesFile)
             throws IOException {
 
-        // Read in the allowed (i.e. passed feed status check) zip entry groups
+        // Read in the allowed (i.e. passed feed status check) zip entry groups.
+        // Use the interner so common FeedKeys use the same instance
+        final FeedKeyInterner interner = FeedKey.createInterner();
         final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
         if (Files.isRegularFile(entriesFile)) {
             try (Stream<String> lines = Files.lines(entriesFile)) {
                 lines.filter(NullSafe::isNonBlankString)
-                        .map(ThrowingFunction.unchecked(ZipEntryGroup::read))
+                        .map(ThrowingFunction.unchecked(line -> ZipEntryGroup.read(line, interner)))
                         .forEach(zipEntryGroup ->
                                 allowed.computeIfAbsent(zipEntryGroup.getFeedKey(), k -> new ArrayList<>())
                                         .add(zipEntryGroup));
@@ -230,7 +233,7 @@ public class ZipSplitter {
             try (final Writer entryWriter = Files.newBufferedWriter(entriesFile)) {
                 try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
                     for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
-                        final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
+                        final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey);
                         final String baseNameOut = NumericFileNameUtil.create(count.incrementAndGet());
                         LOGGER.trace("feedKey: {}, baseNameOut: {}, zipEntryGroupIn: {} => zipEntryGroupOut: {}",
                                 feedKey, baseNameOut, zipEntryGroupIn, zipEntryGroupOut);

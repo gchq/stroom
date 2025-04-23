@@ -8,6 +8,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
@@ -141,7 +142,6 @@ public class ZipReceiver implements Receiver {
                 // Cleanup.
                 Files.deleteIfExists(sourceZip);
                 deleteDir(receivingDir);
-
                 throw StroomStreamException.create(e, attributeMap);
             }
 
@@ -275,11 +275,15 @@ public class ZipReceiver implements Receiver {
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         final String defaultFeedName = attributeMap.get(StandardHeaderArguments.FEED);
         final String defaultTypeName = attributeMap.get(StandardHeaderArguments.TYPE);
+        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+        final FeedKey defaultFeedKey = feedKeyInterner.intern(defaultFeedName, defaultTypeName);
 
         final Map<String, ZipEntryGroup> baseNameToGroupMap = new HashMap<>();
         final ProxyZipValidator validator = new ProxyZipValidator();
         final List<Entry> dataEntries = new ArrayList<>();
 
+        // Create a .zip.staging file for the inputStream to be written to. We can then
+        // copy what we want out of that zip into a new zip at zipFilePath
         final Path stagingZipFile = zipFilePath.resolveSibling(zipFilePath.getFileName() + ".staging");
         final long receivedBytes;
         try {
@@ -291,8 +295,8 @@ public class ZipReceiver implements Receiver {
             // Clone the zip with added/updated meta entries
             cloneZipFileWithUpdateMeta(
                     attributeMap,
-                    defaultFeedName,
-                    defaultTypeName,
+                    defaultFeedKey,
+                    feedKeyInterner,
                     baseNameToGroupMap,
                     validator,
                     dataEntries,
@@ -306,9 +310,9 @@ public class ZipReceiver implements Receiver {
         // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
         // Now look at the entries and see if we can match them to meta.
         final List<ZipEntryGroup> entryList = new ArrayList<>();
-        for (final ZipEntryGroup.Entry entry : dataEntries) {
+        for (final ZipEntryGroup.Entry dataEntry : dataEntries) {
             // We only care about data and any other content used to support it.
-            final FileName fileName = FileName.parse(entry.getName());
+            final FileName fileName = FileName.parse(dataEntry.getName());
 
             // First try the full name of the data file as if it were a base name.
             ZipEntryGroup zipEntryGroup = baseNameToGroupMap.get(fileName.getFullName());
@@ -319,8 +323,8 @@ public class ZipReceiver implements Receiver {
 
             if (zipEntryGroup == null) {
                 // If we can't find a matching group then create a new one.
-                zipEntryGroup = new ZipEntryGroup(defaultFeedName, defaultTypeName);
-                zipEntryGroup.setDataEntry(entry);
+                zipEntryGroup = new ZipEntryGroup(defaultFeedKey);
+                zipEntryGroup.setDataEntry(dataEntry);
                 entryList.add(zipEntryGroup);
 
             } else {
@@ -331,15 +335,14 @@ public class ZipReceiver implements Receiver {
                     // It might not be correct, but we will cope with this by duplicating the meta etc.
                     // associated with the data.
                     zipEntryGroup = new ZipEntryGroup(
-                            zipEntryGroup.getFeedName(),
-                            zipEntryGroup.getTypeName(),
+                            zipEntryGroup.getFeedKey(),
                             zipEntryGroup.getManifestEntry(),
                             zipEntryGroup.getMetaEntry(),
                             zipEntryGroup.getContextEntry(),
-                            entry);
+                            dataEntry);
                     entryList.add(zipEntryGroup);
                 } else {
-                    zipEntryGroup.setDataEntry(entry);
+                    zipEntryGroup.setDataEntry(dataEntry);
                     entryList.add(zipEntryGroup);
                 }
             }
@@ -363,8 +366,7 @@ public class ZipReceiver implements Receiver {
 
         // Split the groups by feed key.
         final Map<FeedKey, List<ZipEntryGroup>> feedGroups = entryList.stream()
-                .collect(Collectors.groupingBy(group ->
-                        new FeedKey(group.getFeedName(), group.getTypeName())));
+                .collect(Collectors.groupingBy(ZipEntryGroup::getFeedKey));
 
         // We might want to know what was wrong with the received data.
         if (!validator.isValid()) {
@@ -386,8 +388,8 @@ public class ZipReceiver implements Receiver {
     }
 
     static void cloneZipFileWithUpdateMeta(final AttributeMap attributeMap,
-                                           final String defaultFeedName,
-                                           final String defaultTypeName,
+                                           final FeedKey defaultFeedKey,
+                                           final FeedKeyInterner feedKeyInterner,
                                            final Map<String, ZipEntryGroup> baseNameToGroupMap,
                                            final ProxyZipValidator validator,
                                            final List<Entry> dataEntries,
@@ -395,9 +397,9 @@ public class ZipReceiver implements Receiver {
                                            final Path zipFilePath,
                                            final byte[] buffer) throws IOException {
 
-        LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedName: '{}', defaultTypeName: '{}', " +
+        LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedKey: '{}', " +
                      "stagingZipFilePath: {}, zipFilePath: {}",
-                defaultFeedName, defaultTypeName, stagingZipFilePath, zipFilePath);
+                defaultFeedKey, stagingZipFilePath, zipFilePath);
 
         final AtomicLong totalUncompressedSize = new AtomicLong();
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
@@ -405,8 +407,8 @@ public class ZipReceiver implements Receiver {
         try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, buffer)) {
             ZipUtil.forEachEntry(stagingZipFilePath, (stagingZip, entry) -> {
                 final long size = cloneZipEntry(
-                        defaultFeedName,
-                        defaultTypeName,
+                        defaultFeedKey,
+                        feedKeyInterner,
                         attributeMap,
                         stagingZip,
                         entry,
@@ -425,13 +427,13 @@ public class ZipReceiver implements Receiver {
             }
         }
 
-        LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedName: '{}', defaultTypeName: '{}', " +
+        LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedKey: '{}', " +
                      "stagingZipFilePath: {}, zipFilePath: {}, totalUncompressedSize: {}, duration: {}",
-                defaultFeedName, defaultTypeName, stagingZipFilePath, zipFilePath, totalUncompressedSize, timer);
+                defaultFeedKey, stagingZipFilePath, zipFilePath, totalUncompressedSize, timer);
     }
 
-    private static long cloneZipEntry(final String defaultFeedName,
-                                      final String defaultTypeName,
+    private static long cloneZipEntry(final FeedKey defaultFeedKey,
+                                      final FeedKeyInterner feedKeyInterner,
                                       final AttributeMap attributeMap,
                                       final ZipFile stagingZip,
                                       final ZipArchiveEntry entry,
@@ -457,7 +459,9 @@ public class ZipReceiver implements Receiver {
                         StroomZipFileType.fromExtension(fileName.getExtension());
 
                 if (StroomZipFileType.META.equals(stroomZipFileType)) {
-                    size = cloneAndUpdateMetaEntry(attributeMap,
+                    size = cloneAndUpdateMetaEntry(
+                            attributeMap,
+                            feedKeyInterner,
                             stagingZip,
                             entry,
                             zipWriter,
@@ -466,7 +470,7 @@ public class ZipReceiver implements Receiver {
                             baseName);
                 } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
                     final ZipEntryGroup zipEntryGroup = groups.computeIfAbsent(baseName, k ->
-                            new ZipEntryGroup(defaultFeedName, defaultTypeName));
+                            new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getContextEntry() != null) {
                         throw new RuntimeException("Duplicate context found: " + entryName);
                     }
@@ -475,7 +479,7 @@ public class ZipReceiver implements Receiver {
                     zipEntryGroup.setContextEntry(new Entry(entryName, size));
                 } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
                     final ZipEntryGroup zipEntryGroup = groups.computeIfAbsent(baseName, k ->
-                            new ZipEntryGroup(defaultFeedName, defaultTypeName));
+                            new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getManifestEntry() != null) {
                         throw new RuntimeException("Duplicate manifest found: " + entryName);
                     }
@@ -497,6 +501,7 @@ public class ZipReceiver implements Receiver {
      * @return The uncompressed size of the entry
      */
     private static long cloneAndUpdateMetaEntry(final AttributeMap attributeMap,
+                                                final FeedKeyInterner feedKeyInterner,
                                                 final ZipFile stagingZip,
                                                 final ZipArchiveEntry entry,
                                                 final ZipWriter zipWriter,
@@ -511,17 +516,18 @@ public class ZipReceiver implements Receiver {
 
         // defaultFeedName/defaultTypeName are in attributeMap, so act as fallbacks
         // unless they are explicitly set to null in the .meta
-        final String feedName = entryAttributeMap.get(StandardHeaderArguments.FEED);
-        final String typeName = entryAttributeMap.get(StandardHeaderArguments.TYPE);
+        // Intern the feedKey to save on mem use.
+        final FeedKey feedKey = feedKeyInterner.intern(
+                entryAttributeMap.get(StandardHeaderArguments.FEED),
+                entryAttributeMap.get(StandardHeaderArguments.TYPE));
 
         final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
         zipWriter.writeStream(entryName, new ByteArrayInputStream(bytes));
 
         final ZipEntryGroup zipEntryGroup = groups
-                .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedName, typeName));
+                .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedKey));
         // Ensure we override the feed and type names with the meta.
-        zipEntryGroup.setFeedName(feedName);
-        zipEntryGroup.setTypeName(typeName);
+        zipEntryGroup.setFeedKey(feedKey);
 
         if (zipEntryGroup.getMetaEntry() != null) {
             throw new RuntimeException("Duplicate meta found: " + entryName);

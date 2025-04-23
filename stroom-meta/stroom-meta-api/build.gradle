@@ -17,6 +17,7 @@ dependencies {
     testImplementation libs.junit.jupiter.api
     testImplementation libs.vavr
     testImplementation libs.commons.io
+    testImplementation libs.guice
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta.activation

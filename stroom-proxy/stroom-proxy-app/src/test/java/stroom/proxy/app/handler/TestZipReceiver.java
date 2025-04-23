@@ -2,22 +2,45 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
+import stroom.proxy.app.handler.TestDataUtil.ItemGroup;
+import stroom.proxy.app.handler.TestDataUtil.ProxyZipSnapshot;
 import stroom.proxy.app.handler.ZipReceiver.ReceiveResult;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.LogStream;
+import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.common.StroomStreamException;
+import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 public class TestZipReceiver extends StroomUnitTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZipReceiver.class);
@@ -30,10 +53,25 @@ public class TestZipReceiver extends StroomUnitTest {
     public static final FeedKey FEED_KEY_1_2 = new FeedKey(FEED_1, TYPE_2);
     public static final FeedKey FEED_KEY_2_1 = new FeedKey(FEED_2, TYPE_1);
     public static final FeedKey FEED_KEY_2_2 = new FeedKey(FEED_2, TYPE_2);
+    public static final int ZIP_ENTRY_COUNT = 2;
+
+    @Mock
+    private AttributeMapFilterFactory mockAttributeMapFilterFactory;
+    @Mock
+    private LogStream mockLogStream;
+    @Mock
+    private ZipSplitter mockZipSplitter;
+
+    @TempDir
+    private Path dataDir;
+    @TempDir
+    private Path destinationDir;
+    @TempDir
+    private Path inputDir;
 
     @Test
     void testReceiveSimpleZipStream() throws IOException {
-        final String defaultFeedName = "test-feed";
+        final String defaultFeedName = FEED_1;
         final String defaultTypeName = null;
         final byte[] buffer = LocalByteBuffer.get();
 
@@ -49,7 +87,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 attributeMap,
                 buffer);
         assertThat(receiveResult.feedGroups().size()).isEqualTo(1);
-        assertThat(receiveResult.receivedBytes()).isEqualTo(457);
+        assertThat(receiveResult.receivedBytes()).isEqualTo(459);
     }
 
     @Test
@@ -101,5 +139,232 @@ public class TestZipReceiver extends StroomUnitTest {
                     receivedZipFile,
                     buffer);
         }
+    }
+
+    @Test
+    void test_dropAll() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final Set<FeedKey> feedKeys = Set.of(FEED_KEY_1_1, FEED_KEY_2_2);
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        final List<Path> destinationPaths = doReceive(fileGroup.getZip(), attributeMap, attrMap -> false);
+
+        // All dropped so nothing goes to splitter or destination
+        assertThat(destinationPaths)
+                .isEmpty();
+        Mockito.verify(mockZipSplitter, Mockito.never())
+                .add(Mockito.any());
+    }
+
+    private FileGroup createZip(final AttributeMap attributeMap, final Set<FeedKey> feedKeys) throws IOException {
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = new FileGroup(inputDir);
+        TestDataUtil.writeZip(
+                fileGroup,
+                ZIP_ENTRY_COUNT,
+                attributeMap,
+                feedKeys,
+                null);
+        return fileGroup;
+    }
+
+    @Test
+    void test_allRejected() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final Set<FeedKey> feedKeys = Set.of(FEED_KEY_1_1, FEED_KEY_2_2);
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        Assertions.assertThatThrownBy(() -> {
+                    doReceive(
+                            fileGroup.getZip(),
+                            attributeMap,
+                            attrMap -> {
+                                throw new StroomStreamException(
+                                        StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+                            });
+                })
+                .isInstanceOf(StroomStreamException.class);
+
+        // All rejected so nothing passed along
+        Mockito.verify(mockZipSplitter, Mockito.never())
+                .add(Mockito.any());
+    }
+
+    @Test
+    void test_oneRejected() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final Set<FeedKey> feedKeys = Set.of(FEED_KEY_1_1, FEED_KEY_2_2);
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        Assertions.assertThatThrownBy(() -> {
+                    doReceive(
+                            fileGroup.getZip(),
+                            attributeMap,
+                            attrMap -> {
+                                // Reject one of the feeds
+                                if (FEED_1.equals(attrMap.get(StandardHeaderArguments.FEED))) {
+                                    throw new StroomStreamException(
+                                            StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+                                } else {
+                                    return true;
+                                }
+                            });
+                })
+                .isInstanceOf(StroomStreamException.class);
+
+        // All rejected so nothing passed along
+        Mockito.verify(mockZipSplitter, Mockito.never())
+                .add(Mockito.any());
+    }
+
+    @Test
+    void test_singleFeedKeyZip() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final Set<FeedKey> feedKeys = Set.of(FEED_KEY_1_1);
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        final List<Path> destinationPaths = doReceive(
+                fileGroup.getZip(),
+                attributeMap,
+                PermissiveAttributeMapFilter.INSTANCE);
+
+        assertThat(destinationPaths)
+                .hasSize(1);
+
+        for (final Path destinationPath : destinationPaths) {
+            LOGGER.info("destinationPath: {}", destinationPath);
+            final Path zipFilePath = TestDataUtil.getZipFile(destinationPath);
+            final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
+            assertThat(proxyZipSnapshot.getItemGroups())
+                    .hasSize(ZIP_ENTRY_COUNT);
+            // Make sure feed+type is in the meta for each entry
+            for (final ItemGroup itemGroup : proxyZipSnapshot.getItemGroups()) {
+                final String feed = itemGroup.meta().content().get(StandardHeaderArguments.FEED);
+                final String type = itemGroup.meta().content().get(StandardHeaderArguments.TYPE);
+                assertThat(feed)
+                        .isEqualTo(FEED_KEY_1_1.feed());
+                assertThat(type)
+                        .isEqualTo(FEED_KEY_1_1.type());
+            }
+
+            final List<ZipEntryGroup> entries = TestDataUtil.getEntries(destinationPath);
+            assertThat(entries)
+                    .hasSize(ZIP_ENTRY_COUNT);
+            for (final ZipEntryGroup zipEntryGroup : entries) {
+                assertThat(zipEntryGroup.getFeedName())
+                        .isEqualTo(FEED_KEY_1_1.feed());
+                assertThat(zipEntryGroup.getTypeName())
+                        .isEqualTo(FEED_KEY_1_1.type());
+            }
+        }
+
+        // Single feed zip so no split needed
+        Mockito.verify(mockZipSplitter, Mockito.never())
+                .add(Mockito.any());
+    }
+
+    @Test
+    void test_dropOneAllowOne() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final FeedKey allowedFeedKey = FEED_KEY_1_1;
+        final FeedKey droppedFeedKey = FEED_KEY_2_2;
+        final Set<FeedKey> feedKeys = Set.of(allowedFeedKey, droppedFeedKey);
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        final ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
+        Mockito.doNothing()
+                .when(mockZipSplitter)
+                .add(pathCaptor.capture());
+
+        final List<Path> destinationPaths = doReceive(
+                fileGroup.getZip(),
+                attributeMap,
+                attrMap ->
+                        allowedFeedKey.feed()
+                                .equals(attrMap.get(StandardHeaderArguments.FEED)));
+
+        final List<Path> zipSplitterPaths = pathCaptor.getAllValues();
+
+        // zip needs splitting so not sent to dest
+        assertThat(destinationPaths)
+                .hasSize(0);
+        assertThat(zipSplitterPaths)
+                .hasSize(1);
+
+        final Path zipSplitterPath = zipSplitterPaths.getFirst();
+        LOGGER.info(DirectorySnapshot.of(zipSplitterPath).toString());
+
+//        for (final Path destinationPath : destinationPaths) {
+//            LOGGER.info("destinationPath: {}", destinationPath);
+//            final Path zipFilePath = TestDataUtil.getZipFile(destinationPath);
+//            final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
+//            assertThat(proxyZipSnapshot.getItemGroups())
+//                    .hasSize(ZIP_ENTRY_COUNT);
+//            // Make sure feed+type is in the meta for each entry
+//            for (final ItemGroup itemGroup : proxyZipSnapshot.getItemGroups()) {
+//                final String feed = itemGroup.meta().content().get(StandardHeaderArguments.FEED);
+//                final String type = itemGroup.meta().content().get(StandardHeaderArguments.TYPE);
+//                assertThat(feed)
+//                        .isEqualTo(FEED_KEY_1_1.feed());
+//                assertThat(type)
+//                        .isEqualTo(FEED_KEY_1_1.type());
+//            }
+//
+//            final List<ZipEntryGroup> entries = TestDataUtil.getEntries(destinationPath);
+//            assertThat(entries)
+//                    .hasSize(ZIP_ENTRY_COUNT);
+//            for (final ZipEntryGroup zipEntryGroup : entries) {
+//                assertThat(zipEntryGroup.getFeedName())
+//                        .isEqualTo(FEED_KEY_1_1.feed());
+//                assertThat(zipEntryGroup.getTypeName())
+//                        .isEqualTo(FEED_KEY_1_1.type());
+//            }
+//        }
+
+        // Single feed zip so no split needed
+//        Mockito.verify(mockZipSplitter, Mockito.never())
+//                .add(Mockito.any());
+    }
+
+    private List<Path> doReceive(final Path testZipFile,
+                                 final AttributeMap attributeMap,
+                                 final AttributeMapFilter attributeMapFilter) throws IOException {
+
+        Mockito.when(mockAttributeMapFilterFactory.create())
+                .thenReturn(attributeMapFilter);
+
+        final ZipReceiver zipReceiver = new ZipReceiver(
+                mockAttributeMapFilterFactory,
+                () -> dataDir,
+                mockLogStream,
+                mockZipSplitter);
+
+        final List<Path> consumedPaths = new ArrayList<>();
+        final AtomicLong counter = new AtomicLong();
+        zipReceiver.setDestination(ThrowingConsumer.unchecked(aPath -> {
+            final Path destPath = destinationDir.resolve(
+                    NumericFileNameUtil.create(counter.incrementAndGet()));
+            Files.move(aPath, destPath);
+            consumedPaths.add(destPath);
+        }));
+
+        try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(testZipFile))) {
+            zipReceiver.receive(
+                    Instant.now(),
+                    attributeMap,
+                    "aURI",
+                    () -> inputStream);
+        }
+
+        return consumedPaths;
     }
 }

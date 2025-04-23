@@ -4,6 +4,9 @@ import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -14,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -137,6 +141,38 @@ class TestAttributeMapUtil {
                 .addCase("""
                         FOO:123
                         BAR:456""", attributeMap2)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testReadKeys() {
+        final String data1 = """
+                                
+                 Foo:Bar \s
+                  FeEd: MY_FEED   \s
+                 BAR:FOO \s
+                TyPE:EVENTS
+                one:two""";
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, List<String>>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(ThrowingFunction.unchecked(testCase -> {
+                    final String data = testCase.getInput()._1;
+                    final List<String> keys = testCase.getInput()._2;
+                    return AttributeMapUtil.readKeys(data, keys);
+                }))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, List.of("Feed", "type")), List.of())
+                .addCase(Tuple.of("", List.of("Feed", "type")), List.of())
+                .addCase(Tuple.of(data1, List.of("Feed")), List.of("MY_FEED"))
+                .addCase(Tuple.of(data1, List.of("FEED")), List.of("MY_FEED"))
+                .addCase(Tuple.of(data1, List.of("type")), List.of("EVENTS"))
+                .addCase(Tuple.of(data1, List.of("TYPE")), List.of("EVENTS"))
+                .addCase(Tuple.of(data1, List.of("FEED", "TYPE")), List.of("MY_FEED", "EVENTS"))
+                .addCase(Tuple.of(data1, List.of("feed", "type")), List.of("MY_FEED", "EVENTS"))
+                .addCase(Tuple.of(data1, List.of("type", "feed")), List.of("EVENTS", "MY_FEED"))
                 .build();
     }
 }
