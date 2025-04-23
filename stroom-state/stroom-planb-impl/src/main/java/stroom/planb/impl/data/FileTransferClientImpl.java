@@ -21,7 +21,6 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -51,8 +50,8 @@ public class FileTransferClientImpl implements FileTransferClient {
     public FileTransferClientImpl(final Provider<PlanBConfig> configProvider,
                                   final NodeService nodeService,
                                   final NodeInfo nodeInfo,
-                                  @Nullable final TargetNodeSetFactory targetNodeSetFactory,
-                                  @Nullable final WebTargetFactory webTargetFactory,
+                                  final TargetNodeSetFactory targetNodeSetFactory,
+                                  final WebTargetFactory webTargetFactory,
                                   final PartDestination partDestination,
                                   final SecurityContext securityContext) {
         this.configProvider = configProvider;
@@ -66,7 +65,8 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     @Override
     public void storePart(final FileDescriptor fileDescriptor,
-                          final Path path) {
+                          final Path path,
+                          final boolean synchroniseMerge) {
         securityContext.asProcessingUser(() -> {
             try {
                 final Set<String> targetNodes = new HashSet<>();
@@ -104,12 +104,14 @@ public class FileTransferClientImpl implements FileTransferClient {
                         storePartLocally(
                                 fileDescriptor,
                                 path,
-                                allowMove);
+                                allowMove,
+                                synchroniseMerge);
                     } else {
                         storePartRemotely(
                                 nodeName,
                                 fileDescriptor,
-                                path);
+                                path,
+                                synchroniseMerge);
                     }
                 }
             } catch (final IOException e) {
@@ -121,19 +123,21 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     private void storePartLocally(final FileDescriptor fileDescriptor,
                                   final Path path,
-                                  final boolean allowMove) throws IOException {
-        partDestination.receiveLocalPart(fileDescriptor, path, allowMove);
+                                  final boolean allowMove,
+                                  final boolean synchroniseMerge) throws IOException {
+        partDestination.receiveLocalPart(fileDescriptor, path, allowMove, synchroniseMerge);
     }
 
     private void storePartRemotely(final String targetNode,
                                    final FileDescriptor fileDescriptor,
-                                   final Path path) throws IOException {
+                                   final Path path,
+                                   final boolean synchroniseMerge) throws IOException {
         final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, targetNode);
         final String url = baseEndpointUrl + ResourcePaths.buildAuthenticatedApiPath(FileTransferResource.BASE_PATH,
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
         try {
-            storePartRemotely(webTarget, fileDescriptor, path);
+            storePartRemotely(webTarget, fileDescriptor, path, synchroniseMerge);
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
             throw new IOException("Unable to send file to '" + targetNode + "': " + e.getMessage(), e);
@@ -142,19 +146,22 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     void storePartRemotely(final WebTarget webTarget,
                            final FileDescriptor fileDescriptor,
-                           final Path path) throws IOException {
+                           final Path path,
+                           final boolean synchroniseMerge) throws IOException {
         try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
-            final Response response = webTarget
+            try (final Response response = webTarget
                     .request()
                     .header("createTime", fileDescriptor.createTimeMs())
                     .header("metaId", fileDescriptor.metaId())
                     .header("fileHash", fileDescriptor.fileHash())
                     .header("fileName", path.getFileName().toString())
-                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM));
-            if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
-                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
-            } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                    .header("synchroniseMerge", synchroniseMerge)
+                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM))) {
+                if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+                    throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+                } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                }
             }
         }
     }

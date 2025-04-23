@@ -60,6 +60,8 @@ public class TemporalRangedStateSettingsViewImpl
     @UiField
     TextBox maxStoreSize;
     @UiField
+    CustomCheckBox synchroniseMerge;
+    @UiField
     CustomCheckBox overwrite;
 
     @UiField
@@ -169,6 +171,16 @@ public class TemporalRangedStateSettingsViewImpl
     @Override
     public void setMaxStoreSize(final String maxStoreSize) {
         this.maxStoreSize.setValue(maxStoreSize);
+    }
+
+    @Override
+    public boolean getSynchroniseMerge() {
+        return synchroniseMerge.getValue();
+    }
+
+    @Override
+    public void setSynchroniseMerge(final boolean synchroniseMerge) {
+        this.synchroniseMerge.setValue(synchroniseMerge);
     }
 
     @Override
@@ -284,6 +296,11 @@ public class TemporalRangedStateSettingsViewImpl
 
     @UiHandler("maxStoreSize")
     public void onMaxStoreSize(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("synchroniseMerge")
+    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();
     }
 

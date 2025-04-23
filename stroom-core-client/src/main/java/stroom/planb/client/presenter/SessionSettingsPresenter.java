@@ -53,6 +53,7 @@ public class SessionSettingsPresenter
         getView().setCondense(settings.getCondense());
         getView().setRetention(settings.getRetention());
         setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
 
         final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
@@ -81,6 +82,7 @@ public class SessionSettingsPresenter
                 .condense(getView().getCondense())
                 .retention(getView().getRetention())
                 .maxStoreSize(getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
                 .snapshotSettings(snapshotSettings)
                 .build();
@@ -113,6 +115,10 @@ public class SessionSettingsPresenter
         String getMaxStoreSize();
 
         void setMaxStoreSize(String maxStoreSize);
+
+        boolean getSynchroniseMerge();
+
+        void setSynchroniseMerge(boolean synchroniseMerge);
 
         Boolean getOverwrite();
 

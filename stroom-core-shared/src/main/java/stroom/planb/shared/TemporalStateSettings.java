@@ -12,6 +12,8 @@ import java.util.Objects;
         "condense",
         "retention",
         "maxStoreSize",
+        "synchroniseMerge",
+        "snapshotSettings",
         "overwrite"
 })
 @JsonInclude(Include.NON_NULL)
@@ -28,9 +30,10 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
     public TemporalStateSettings(@JsonProperty("condense") final DurationSetting condense,
                                  @JsonProperty("retention") final DurationSetting retention,
                                  @JsonProperty("maxStoreSize") final Long maxStoreSize,
+                                 @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                                  @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
                                  @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize, snapshotSettings);
+        super(maxStoreSize, synchroniseMerge, snapshotSettings);
         this.condense = condense;
         this.retention = retention;
         this.overwrite = overwrite;
@@ -129,6 +132,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
                     condense,
                     retention,
                     maxStoreSize,
+                    synchroniseMerge,
                     snapshotSettings,
                     overwrite);
         }

@@ -50,6 +50,7 @@ public class RangedStateSettingsPresenter
     private void read(final RangedStateSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
         setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
 
         final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
@@ -76,6 +77,7 @@ public class RangedStateSettingsPresenter
         return RangedStateSettings
                 .builder()
                 .maxStoreSize(getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
                 .snapshotSettings(snapshotSettings)
                 .build();
@@ -100,6 +102,10 @@ public class RangedStateSettingsPresenter
         String getMaxStoreSize();
 
         void setMaxStoreSize(String maxStoreSize);
+
+        boolean getSynchroniseMerge();
+
+        void setSynchroniseMerge(boolean synchroniseMerge);
 
         Boolean getOverwrite();
 

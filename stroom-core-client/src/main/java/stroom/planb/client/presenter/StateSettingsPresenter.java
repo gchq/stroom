@@ -50,6 +50,7 @@ public class StateSettingsPresenter
     private void read(final StateSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
         setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
 
         final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
@@ -78,6 +79,7 @@ public class StateSettingsPresenter
         return StateSettings
                 .builder()
                 .maxStoreSize(getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
                 .snapshotSettings(snapshotSettings)
                 .build();
@@ -102,6 +104,10 @@ public class StateSettingsPresenter
         String getMaxStoreSize();
 
         void setMaxStoreSize(String maxStoreSize);
+
+        boolean getSynchroniseMerge();
+
+        void setSynchroniseMerge(boolean synchroniseMerge);
 
         Boolean getOverwrite();
 

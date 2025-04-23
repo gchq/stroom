@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
@@ -37,6 +38,7 @@ public class MergeProcessor {
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
     private final ReentrantLock maintenanceLock = new ReentrantLock();
+    private final CountLock countLock = new CountLock();
     private volatile boolean merging;
 
     @Inject
@@ -101,6 +103,9 @@ public class MergeProcessor {
                 } finally {
                     maintenanceLock.unlock();
 
+                    // Notify anybody that cares how far the merge process has got.
+                    countLock.setCount(currentStoreId);
+
                     // Increment store id.
                     storeId++;
                 }
@@ -163,6 +168,50 @@ public class MergeProcessor {
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    public void awaitMerge(final long storeId) {
+        countLock.await(storeId);
+    }
+
+    private static class CountLock {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CountLock.class);
+
+        private final ReentrantLock lock = new ReentrantLock();
+        private final Condition condition = lock.newCondition();
+        private long currentCount = -1;
+
+        public void setCount(final long count) {
+            try {
+                lock.lockInterruptibly();
+                try {
+                    currentCount = Math.max(currentCount, count);
+                    condition.signalAll();
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e::getMessage, e);
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        public void await(final long count) {
+            try {
+                lock.lockInterruptibly();
+                try {
+                    while (currentCount < count) {
+                        condition.await();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.error(e::getMessage, e);
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }

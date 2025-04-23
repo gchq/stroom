@@ -41,6 +41,7 @@ import java.util.Objects;
 @Description("Defines settings for Plan B")
 @JsonPropertyOrder({
         "maxStoreSize",
+        "synchroniseMerge",
         "snapshotSettings"
 })
 @JsonInclude(Include.NON_NULL)
@@ -49,16 +50,24 @@ public abstract class AbstractPlanBSettings {
     @JsonProperty
     private final Long maxStoreSize;
     @JsonProperty
+    private final boolean synchroniseMerge;
+    @JsonProperty
     private final SnapshotSettings snapshotSettings;
 
     public AbstractPlanBSettings(final Long maxStoreSize,
+                                 final boolean synchroniseMerge,
                                  final SnapshotSettings snapshotSettings) {
         this.maxStoreSize = maxStoreSize;
+        this.synchroniseMerge = synchroniseMerge;
         this.snapshotSettings = snapshotSettings;
     }
 
     public Long getMaxStoreSize() {
         return maxStoreSize;
+    }
+
+    public boolean isSynchroniseMerge() {
+        return synchroniseMerge;
     }
 
     public SnapshotSettings getSnapshotSettings() {
@@ -73,23 +82,22 @@ public abstract class AbstractPlanBSettings {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
-        final AbstractPlanBSettings doc = (AbstractPlanBSettings) o;
-        return Objects.equals(maxStoreSize, doc.maxStoreSize) &&
-               Objects.equals(snapshotSettings, doc.snapshotSettings);
+        final AbstractPlanBSettings settings = (AbstractPlanBSettings) o;
+        return synchroniseMerge == settings.synchroniseMerge &&
+               Objects.equals(maxStoreSize, settings.maxStoreSize) &&
+               Objects.equals(snapshotSettings, settings.snapshotSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), maxStoreSize, snapshotSettings);
+        return Objects.hash(maxStoreSize, synchroniseMerge, snapshotSettings);
     }
 
     @Override
     public String toString() {
         return "AbstractPlanBSettings{" +
-               ", maxStoreSize=" + maxStoreSize +
+               "maxStoreSize=" + maxStoreSize +
+               ", synchroniseMerge=" + synchroniseMerge +
                ", snapshotSettings=" + snapshotSettings +
                '}';
     }
@@ -97,6 +105,7 @@ public abstract class AbstractPlanBSettings {
     public abstract static class AbstractBuilder<T extends AbstractPlanBSettings, B extends AbstractBuilder<T, ?>> {
 
         protected Long maxStoreSize;
+        protected boolean synchroniseMerge;
         protected SnapshotSettings snapshotSettings;
 
         public AbstractBuilder() {
@@ -104,11 +113,17 @@ public abstract class AbstractPlanBSettings {
 
         public AbstractBuilder(final AbstractPlanBSettings settings) {
             this.maxStoreSize = settings.maxStoreSize;
+            this.synchroniseMerge = settings.synchroniseMerge;
             this.snapshotSettings = settings.snapshotSettings;
         }
 
         public B maxStoreSize(final Long maxStoreSize) {
             this.maxStoreSize = maxStoreSize;
+            return self();
+        }
+
+        public B synchroniseMerge(final boolean synchroniseMerge) {
+            this.synchroniseMerge = synchroniseMerge;
             return self();
         }
 

@@ -8,6 +8,7 @@ import stroom.util.shared.PermissionException;
 import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class PartDestination {
 
     private final SequentialFileStore fileStore;
     private final SecurityContext securityContext;
+    private final Provider<MergeProcessor> mergeProcessorProvider;
 
     private final Path receiveDir;
     private final AtomicLong receiveId = new AtomicLong();
@@ -28,9 +30,11 @@ public class PartDestination {
     @Inject
     public PartDestination(final SequentialFileStore fileStore,
                            final SecurityContext securityContext,
-                           final StatePaths statePaths) {
+                           final StatePaths statePaths,
+                           final Provider<MergeProcessor> mergeProcessorProvider) {
         this.fileStore = fileStore;
         this.securityContext = securityContext;
+        this.mergeProcessorProvider = mergeProcessorProvider;
 
         // Create the receive directory.
         receiveDir = statePaths.getReceiveDir();
@@ -48,12 +52,14 @@ public class PartDestination {
      * @param fileHash
      * @param fileName
      * @param inputStream
+     * @param synchroniseMerge
      * @throws IOException
      */
     public void receiveRemotePart(final long createTime,
                                   final long metaId,
                                   final String fileHash,
                                   final String fileName,
+                                  final boolean synchroniseMerge,
                                   final InputStream inputStream) throws IOException {
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
@@ -64,16 +70,17 @@ public class PartDestination {
                                        SequentialFile.ZIP_EXTENSION;
         final Path receiveFile = receiveDir.resolve(receiveFileName);
         StreamUtil.streamToFile(inputStream, receiveFile);
-        fileStore.add(fileDescriptor, receiveFile);
+
+        add(fileDescriptor, receiveFile, synchroniseMerge);
     }
 
     public void receiveLocalPart(final FileDescriptor fileDescriptor,
                                  final Path sourcePath,
-                                 final boolean allowMove)
-            throws IOException {
+                                 final boolean allowMove,
+                                 final boolean synchroniseMerge) throws IOException {
         if (allowMove) {
             // If we allow move then we can allow the file store to move the file directly into the store.
-            fileStore.add(fileDescriptor, sourcePath);
+            add(fileDescriptor, sourcePath, synchroniseMerge);
 
         } else {
             // Otherwise we need to copy the file to a temporary location first before it can be moved into the store.
@@ -81,7 +88,19 @@ public class PartDestination {
                                            SequentialFile.ZIP_EXTENSION;
             final Path receiveFile = receiveDir.resolve(receiveFileName);
             Files.copy(sourcePath, receiveFile);
-            fileStore.add(fileDescriptor, receiveFile);
+            add(fileDescriptor, receiveFile, synchroniseMerge);
+        }
+    }
+
+    private void add(final FileDescriptor fileDescriptor,
+                     final Path file,
+                     final boolean synchroniseMerge) throws IOException {
+        if (synchroniseMerge) {
+            final MergeProcessor mergeProcessor = mergeProcessorProvider.get();
+            final long storeId = fileStore.add(fileDescriptor, file);
+            mergeProcessor.awaitMerge(storeId);
+        } else {
+            fileStore.add(fileDescriptor, file);
         }
     }
 }

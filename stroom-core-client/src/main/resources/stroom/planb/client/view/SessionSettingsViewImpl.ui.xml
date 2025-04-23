@@ -10,6 +10,10 @@
                         helpText="How large is this Plan B store allowed to be, e.g. 10G.">
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
+        <form:FormGroup label="Synchronise Data Merges On Write"
+                        helpText="When writing data, should processors wait until data is fully merged into Plan B shards before marking stream processing as complete.">
+            <tickbox:CustomCheckBox ui:field="synchroniseMerge" addStyleNames="allow-focus"/>
+        </form:FormGroup>
         <form:FormGroup label="Overwrite Existing Data"
                         helpText="If subsequent data that is loaded matches an existing key then should the existing be kept or overwritten? By default Plan B will overwrite existing data.">
             <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus"/>

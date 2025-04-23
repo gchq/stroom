@@ -78,5 +78,6 @@ public interface FileTransferResource extends RestResource {
                       @HeaderParam("metaId") long metaId,
                       @HeaderParam("fileHash") String fileHash,
                       @HeaderParam("fileName") String fileName,
+                      @HeaderParam("synchroniseMerge") boolean synchroniseMerge,
                       InputStream inputStream);
 }
