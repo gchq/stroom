@@ -20,6 +20,12 @@ public class SnapshotSettings {
     @JsonProperty
     private final boolean useSnapshotsForQuery;
 
+    public SnapshotSettings() {
+        this.useSnapshotsForLookup = false;
+        this.useSnapshotsForGet = false;
+        this.useSnapshotsForQuery = false;
+    }
+
     @JsonCreator
     public SnapshotSettings(@JsonProperty("useSnapshotsForLookup") final boolean useSnapshotsForLookup,
                             @JsonProperty("useSnapshotsForGet") final boolean useSnapshotsForGet,

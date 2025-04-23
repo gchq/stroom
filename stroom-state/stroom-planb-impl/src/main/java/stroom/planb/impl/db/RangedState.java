@@ -3,13 +3,76 @@ package stroom.planb.impl.db;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.RangedState.Key;
 
-public class RangedState extends KV<Key, StateValue> implements PlanBValue  {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-    public RangedState(final Key key, final StateValue value) {
+@JsonPropertyOrder({"key", "value"})
+@JsonInclude(Include.NON_NULL)
+public class RangedState extends KV<Key, StateValue> implements PlanBValue {
+
+    @JsonCreator
+    public RangedState(@JsonProperty("key") final Key key,
+                       @JsonProperty("value") final StateValue value) {
         super(key, value);
     }
 
-    public record Key(long keyStart, long keyEnd) {
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractKVBuilder<RangedState, Builder, Key, StateValue> {
+
+        private Builder() {
+        }
+
+        private Builder(final RangedState key) {
+            super(key);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public RangedState build() {
+            return new RangedState(key, value);
+        }
+    }
+
+    @JsonPropertyOrder({"keyStart", "keyEnd"})
+    @JsonInclude(Include.NON_NULL)
+    public static class Key {
+
+        @JsonProperty
+        private final long keyStart;
+        @JsonProperty
+        private final long keyEnd;
+
+        @JsonCreator
+        public Key(@JsonProperty("keyStart") final long keyStart,
+                   @JsonProperty("keyEnd") final long keyEnd) {
+            this.keyStart = keyStart;
+            this.keyEnd = keyEnd;
+        }
+
+        public long getKeyStart() {
+            return keyStart;
+        }
+
+        public long getKeyEnd() {
+            return keyEnd;
+        }
+
+        public Builder copy() {
+            return new Builder(this);
+        }
 
         public static Builder builder() {
             return new Builder();
@@ -20,10 +83,10 @@ public class RangedState extends KV<Key, StateValue> implements PlanBValue  {
             private long keyStart;
             private long keyEnd;
 
-            public Builder() {
+            private Builder() {
             }
 
-            public Builder(final Key key) {
+            private Builder(final Key key) {
                 this.keyStart = key.keyStart;
                 this.keyEnd = key.keyEnd;
             }

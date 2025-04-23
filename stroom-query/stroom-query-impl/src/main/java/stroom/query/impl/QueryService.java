@@ -60,4 +60,5 @@ public interface QueryService {
 
     Optional<String> fetchDocumentation(DocRef dataSourceRef);
 
+    String getBestNode(String nodeName, QuerySearchRequest request);
 }

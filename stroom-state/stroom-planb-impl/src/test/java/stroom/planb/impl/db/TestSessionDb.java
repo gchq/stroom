@@ -252,7 +252,7 @@ class TestSessionDb {
         final Session k = Session.builder().start(refTime).end(refTime.plusSeconds(deltaSeconds)).key(key).build();
         final Session session = db.get(k);
         assertThat(session).isNotNull();
-        assertThat(session.key()).isEqualTo(key);
+        assertThat(session.getKey()).isEqualTo(key);
     }
 
     private void checkState(final SessionDb db,

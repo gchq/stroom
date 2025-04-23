@@ -24,6 +24,7 @@ import stroom.planb.impl.db.TemporalState;
 import stroom.planb.impl.db.TemporalState.Key;
 import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.impl.db.TemporalStateRequest;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateType;
@@ -86,7 +87,11 @@ public class PlanBQueryService {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
-        final SnapshotSettings snapshotSettings = doc.getSettings().getSnapshotSettings();
+        final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
+                doc,
+                PlanBDoc::getSettings,
+                AbstractPlanBSettings::getSnapshotSettings,
+                SnapshotSettings::new);
         final boolean local = snapshotSettings.isUseSnapshotsForLookup() || !shardManager.isSnapshotNode();
         final PlanBValue value = getPlanBValue(request, local);
         return convertToTemporalState(request.getKeyName(), value);
@@ -98,7 +103,11 @@ public class PlanBQueryService {
             LOGGER.warn(() -> "No Plan B doc found for '" + request.getMapName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + request.getMapName() + "'");
         }
-        final SnapshotSettings snapshotSettings = doc.getSettings().getSnapshotSettings();
+        final SnapshotSettings snapshotSettings = NullSafe.getOrElseGet(
+                doc,
+                PlanBDoc::getSettings,
+                AbstractPlanBSettings::getSnapshotSettings,
+                SnapshotSettings::new);
         final boolean local = snapshotSettings.isUseSnapshotsForGet() || !shardManager.isSnapshotNode();
         final PlanBValue value = getPlanBValue(request, local);
         return convertToVal(value, () -> StateType.SESSION.equals(doc.getStateType())
@@ -106,7 +115,16 @@ public class PlanBQueryService {
                 : ValNull.INSTANCE);
     }
 
-    public PlanBValue getPlanBValue(final GetRequest request,
+    public PlanBValue getPlanBValue(final GetRequest request) {
+        final PlanBDoc doc = planBDocCache.get(request.getMapName());
+        if (doc == null) {
+            LOGGER.warn(() -> "No PlanB doc found for '" + request.getMapName() + "'");
+            throw new RuntimeException("No PlanB doc found for '" + request.getMapName() + "'");
+        }
+        return getLocalValue(request.getMapName(), request.getKeyName(), request.getEventTime());
+    }
+
+    private PlanBValue getPlanBValue(final GetRequest request,
                                     final boolean local) {
         if (local) {
             // If we are allowing snapshots or if this node stores the data then query locally.
@@ -165,7 +183,7 @@ public class PlanBQueryService {
             case null -> null;
             case final State state -> new TemporalState(Key
                     .builder()
-                    .name(state.key().bytes())
+                    .name(state.key().getBytes())
                     .effectiveTime(0)
                     .build(), state.val());
             case final TemporalState temporalState -> temporalState;
@@ -189,7 +207,7 @@ public class PlanBQueryService {
                     StateValue
                             .builder()
                             .typeId(StringValue.TYPE_ID)
-                            .byteBuffer(ByteBuffer.wrap(session.key()))
+                            .byteBuffer(ByteBuffer.wrap(session.getKey()))
                             .build());
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };

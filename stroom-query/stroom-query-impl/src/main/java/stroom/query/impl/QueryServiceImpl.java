@@ -38,6 +38,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Param;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
+import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
@@ -149,6 +150,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
+    private final QueryNodeResolver queryNodeResolver;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -165,7 +167,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
-                     final ValPredicateFactory valPredicateFactory) {
+                     final ValPredicateFactory valPredicateFactory,
+                     final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -181,6 +184,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
+        this.queryNodeResolver = queryNodeResolver;
     }
 
     @Override
@@ -1044,5 +1048,22 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return securityContext.useAsReadResult(() ->
                 dataSourceProviderRegistry.fetchDocumentation(docRef));
+    }
+
+    @Override
+    public String getBestNode(final String nodeName, final QuerySearchRequest request) {
+        if (nodeName == null || nodeName.equals("null")) {
+            if (queryNodeResolver == null) {
+                return null;
+            }
+            try {
+                final SearchRequest mappedRequest = mapRequest(request);
+                final DocRef docRef = NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource);
+                return queryNodeResolver.getNode(docRef);
+            } catch (final RuntimeException e) {
+                return null;
+            }
+        }
+        return nodeName;
     }
 }

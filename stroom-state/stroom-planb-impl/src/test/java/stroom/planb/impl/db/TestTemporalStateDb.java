@@ -71,7 +71,7 @@ class TestTemporalStateDb {
             assertThat(value).isNotNull();
 //            assertThat(res.key()).isEqualTo("TEST_KEY");
 //            assertThat(res.effectiveTime()).isEqualTo(refTime);
-            assertThat(value.typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(value.toString()).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();

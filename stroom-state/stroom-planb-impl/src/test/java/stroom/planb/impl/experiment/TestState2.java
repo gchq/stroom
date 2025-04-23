@@ -103,7 +103,7 @@ class TestState2 {
             final Key key = Key.builder().name("TEST_KEY").build();
             final StateValue value = db.get(key);
             assertThat(value).isNotNull();
-            assertThat(value.typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(value.toString()).isEqualTo("test" + (expectedRows - 1));
 
             final FieldIndex fieldIndex = new FieldIndex();

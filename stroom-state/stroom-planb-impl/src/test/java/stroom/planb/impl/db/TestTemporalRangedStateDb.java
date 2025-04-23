@@ -81,10 +81,10 @@ class TestTemporalRangedStateDb {
                     new TemporalRangedStateRequest(11, refTime.toEpochMilli());
             final TemporalRangedState state = db.getState(stateRequest);
             assertThat(state).isNotNull();
-            assertThat(state.key().keyStart()).isEqualTo(10);
-            assertThat(state.key().keyEnd()).isEqualTo(30);
-            assertThat(state.key().effectiveTime()).isEqualTo(refTime.toEpochMilli());
-            assertThat(state.val().typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(state.key().getKeyStart()).isEqualTo(10);
+            assertThat(state.key().getKeyEnd()).isEqualTo(30);
+            assertThat(state.key().getEffectiveTime()).isEqualTo(refTime.toEpochMilli());
+            assertThat(state.val().getTypeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(state.val().toString()).isEqualTo("test");
 
 //            final TemporalRangedStateRequest stateRequest =
@@ -176,7 +176,7 @@ class TestTemporalRangedStateDb {
         final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
         final StateValue value = db.get(k);
         assertThat(value).isNotNull();
-        assertThat(value.typeId()).isEqualTo(StringValue.TYPE_ID);
+        assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(value.toString()).isEqualTo("test");
     }
 

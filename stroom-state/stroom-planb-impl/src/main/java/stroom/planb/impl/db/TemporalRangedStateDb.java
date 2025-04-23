@@ -129,17 +129,17 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
                     final Key key = serde.getKey(kv);
                     final StateValue value = serde.getVal(kv);
 
-                    if (key.effectiveTime() <= deleteBeforeMs) {
+                    if (key.getEffectiveTime() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {
                         if (lastKey != null &&
-                            lastKey.keyStart() == key.keyStart() &&
-                            lastKey.keyEnd() == key.keyEnd() &&
-                            lastValue.byteBuffer().equals(value.byteBuffer())) {
-                            if (key.effectiveTime() <= condenseBeforeMs) {
+                            lastKey.getKeyStart() == key.getKeyStart() &&
+                            lastKey.getKeyEnd() == key.getKeyEnd() &&
+                            lastValue.getByteBuffer().equals(value.getByteBuffer())) {
+                            if (key.getEffectiveTime() <= condenseBeforeMs) {
                                 // If the key and value are the same then delete the duplicate entry.
                                 dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                                 writer.tryCommit();

@@ -106,7 +106,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                         final long endTimeMs = keyVal.key().getLong(Long.BYTES + Long.BYTES);
                         final String value = new String(ByteBufferUtils.toBytes(keyVal.val()), StandardCharsets.UTF_8);
 
-                        // If the keyhash changes then we want to dump out all current sessions.
+                        // If the key hash changes then we want to dump out all current sessions.
                         if (lastKeyHash != null && lastKeyHash != keyHash) {
                             currentSessionMap.values().forEach(currentSession -> consumer.accept(extendSession(
                                     currentSession.vals,
@@ -248,19 +248,19 @@ public class SessionDb extends AbstractDb<Session, Session> {
                     final BBKV kv = BBKV.create(iterator.next());
                     final Session session = serde.getKey(kv);
 
-                    if (session.end() <= deleteBeforeMs) {
+                    if (session.getEnd() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {
                         if (lastSession != null &&
-                            Arrays.equals(lastSession.key(), session.key()) &&
-                            session.start() < condenseBeforeMs &&
-                            lastSession.end() >= session.start()) {
+                            Arrays.equals(lastSession.getKey(), session.getKey()) &&
+                            session.getStart() < condenseBeforeMs &&
+                            lastSession.getEnd() >= session.getStart()) {
 
                             // Extend the session.
-                            newSession = new Session(lastSession.key(), lastSession.start(), session.end());
+                            newSession = new Session(lastSession.getKey(), lastSession.getStart(), session.getEnd());
 
                             // Delete the previous session as we are extending it.
                             serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
@@ -284,10 +284,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
             // Insert new session.
             if (newSession != null) {
                 // Delete the last session if it will be merged into the new one.
-                if (lastSession != null &&
-                    Arrays.equals(lastSession.key(), newSession.key()) &&
-                    newSession.start() < condenseBeforeMs &&
-                    lastSession.end() >= newSession.start()) {
+                if (Arrays.equals(lastSession.getKey(), newSession.getKey()) &&
+                    newSession.getStart() < condenseBeforeMs &&
+                    lastSession.getEnd() >= newSession.getStart()) {
 
                     // Delete the previous session as we are extending it.
                     serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {

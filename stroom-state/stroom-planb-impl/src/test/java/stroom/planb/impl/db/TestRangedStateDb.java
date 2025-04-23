@@ -64,9 +64,9 @@ class TestRangedStateDb {
 
             final RangedState state = getState(db, 11);
             assertThat(state).isNotNull();
-            assertThat(state.key().keyStart()).isEqualTo(10);
-            assertThat(state.key().keyEnd()).isEqualTo(30);
-            assertThat(state.val().typeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(state.key().getKeyStart()).isEqualTo(10);
+            assertThat(state.key().getKeyEnd()).isEqualTo(30);
+            assertThat(state.val().getTypeId()).isEqualTo(StringValue.TYPE_ID);
             assertThat(state.val().toString()).isEqualTo("test99");
 //
 //            final FieldIndex fieldIndex = new FieldIndex();
@@ -139,7 +139,7 @@ class TestRangedStateDb {
         final Key k = Key.builder().keyStart(10).keyEnd(30).build();
         final StateValue value = db.get(k);
         assertThat(value).isNotNull();
-        assertThat(value.typeId()).isEqualTo(StringValue.TYPE_ID);
+        assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
         assertThat(value.toString()).isEqualTo("test99");
     }
 

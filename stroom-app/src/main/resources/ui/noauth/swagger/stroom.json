@@ -7210,6 +7210,33 @@
         "tags" : [ "State Stores" ]
       }
     },
+    "/planb/v1/getValue" : {
+      "post" : {
+        "operationId" : "getValue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBValue"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "tags" : [ "Plan B Query" ]
+      }
+    },
     "/preferences/v1" : {
       "get" : {
         "operationId" : "fetchUserPreferences",
@@ -11771,6 +11798,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "snapshotSettings" : {
+            "$ref" : "#/components/schemas/SnapshotSettings"
+          },
           "type" : {
             "type" : "string"
           }
@@ -14938,6 +14968,9 @@
             "automate" : {
               "$ref" : "#/components/schemas/Automate"
             },
+            "embeddedQueryDoc" : {
+              "$ref" : "#/components/schemas/QueryDoc"
+            },
             "lastQueryKey" : {
               "$ref" : "#/components/schemas/QueryKey"
             },
@@ -14949,6 +14982,9 @@
             },
             "queryTablePreferences" : {
               "$ref" : "#/components/schemas/QueryTablePreferences"
+            },
+            "reference" : {
+              "type" : "boolean"
             },
             "selectionFilter" : {
               "type" : "array",
@@ -16725,6 +16761,21 @@
           "metaId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "GetRequest" : {
+        "type" : "object",
+        "properties" : {
+          "eventTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keyName" : {
+            "type" : "string"
+          },
+          "mapName" : {
+            "type" : "string"
           }
         }
       },
@@ -18526,6 +18577,18 @@
           }
         }
       },
+      "PlanBValue" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "ProcessConfig" : {
         "type" : "object",
         "properties" : {
@@ -19459,6 +19522,12 @@
             "format" : "int64"
           }
         }
+      },
+      "RangedState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        } ]
       },
       "RangedStateSettings" : {
         "type" : "object",
@@ -21177,6 +21246,31 @@
           }
         }
       },
+      "Session" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "end" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "key" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string",
+                "format" : "byte"
+              }
+            },
+            "start" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        } ]
+      },
       "SessionDetails" : {
         "type" : "object",
         "properties" : {
@@ -21407,6 +21501,20 @@
           },
           "planBDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
+      "SnapshotSettings" : {
+        "type" : "object",
+        "properties" : {
+          "useSnapshotsForGet" : {
+            "type" : "boolean"
+          },
+          "useSnapshotsForLookup" : {
+            "type" : "boolean"
+          },
+          "useSnapshotsForQuery" : {
+            "type" : "boolean"
           }
         }
       },
@@ -21718,6 +21826,12 @@
         "xml" : {
           "name" : "splitLayout"
         }
+      },
+      "State" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        } ]
       },
       "StateDoc" : {
         "type" : "object",
@@ -22685,6 +22799,12 @@
           }
         }
       },
+      "TemporalRangedState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        } ]
+      },
       "TemporalRangedStateSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -22702,6 +22822,12 @@
               "$ref" : "#/components/schemas/DurationSetting"
             }
           }
+        } ]
+      },
+      "TemporalState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
         } ]
       },
       "TemporalStateSettings" : {

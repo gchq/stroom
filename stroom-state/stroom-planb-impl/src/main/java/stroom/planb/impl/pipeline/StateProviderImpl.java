@@ -14,10 +14,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class StateProviderImpl implements StateProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateProviderImpl.class);
@@ -34,7 +37,7 @@ public class StateProviderImpl implements StateProvider {
         this.stateDocCache = stateDocCache;
         this.planBQueryService = planBQueryService;
         this.securityContext = securityContext;
-        cache = Caffeine.newBuilder().maximumSize(1000).build();
+        cache = Caffeine.newBuilder().maximumSize(1000).expireAfterWrite(10, TimeUnit.MINUTES).build();
     }
 
     @Override
@@ -46,8 +49,7 @@ public class StateProviderImpl implements StateProvider {
             return stateOptional
                     .map(stateDoc -> {
                         final GetRequest request = new GetRequest(docName, keyName, effectiveTimeMs);
-                        return cache.get(request,
-                                planBQueryService::getVal);
+                        return cache.get(request, planBQueryService::getVal);
                     })
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {

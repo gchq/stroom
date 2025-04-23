@@ -20,6 +20,7 @@ import stroom.planb.impl.db.PlanBValue;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -41,7 +42,8 @@ public interface PlanBRemoteQueryResource extends RestResource {
 
     @POST
     @Path(GET_VALUE_PATH)
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+            summary = "Gets a value from a remote Plan B store.",
+            operationId = "planBQueryGetValue")
     PlanBValue getValue(GetRequest request);
 }

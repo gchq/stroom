@@ -3,8 +3,6 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.BBKV;
-import stroom.lmdb2.KV;
-import stroom.planb.impl.db.RangedState.Key;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -35,12 +33,12 @@ public class SessionSerde implements Serde<Session, Session> {
     @Override
     public <T> T createKeyByteBuffer(final Session key, final Function<ByteBuffer, T> function) {
         // Hash the key.
-        final long keyHash = LongHashFunction.xx3().hashBytes(key.key());
+        final long keyHash = LongHashFunction.xx3().hashBytes(key.getKey());
         final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
         try {
             keyByteBuffer.putLong(keyHash);
-            keyByteBuffer.putLong(key.start());
-            keyByteBuffer.putLong(key.end());
+            keyByteBuffer.putLong(key.getStart());
+            keyByteBuffer.putLong(key.getEnd());
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
         } finally {
@@ -52,9 +50,9 @@ public class SessionSerde implements Serde<Session, Session> {
     public <R> R createValueByteBuffer(final Session key,
                                        final Session value,
                                        final Function<ByteBuffer, R> function) {
-        final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(key.key().length);
+        final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(key.getKey().length);
         try {
-            valueByteBuffer.put(key.key());
+            valueByteBuffer.put(key.getKey());
             valueByteBuffer.flip();
             return function.apply(valueByteBuffer);
         } finally {
@@ -64,9 +62,9 @@ public class SessionSerde implements Serde<Session, Session> {
 
     @Override
     public <R> R createPrefixPredicate(final Session key, final Function<Predicate<BBKV>, R> function) {
-        final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(key.key().length);
+        final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(key.getKey().length);
         try {
-            prefixByteBuffer.put(key.key());
+            prefixByteBuffer.put(key.getKey());
             prefixByteBuffer.flip();
 
             return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), prefixByteBuffer));

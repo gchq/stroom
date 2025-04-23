@@ -26,6 +26,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+@Singleton
 public class StateProviderImpl implements StateProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateProviderImpl.class);

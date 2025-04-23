@@ -145,18 +145,19 @@ class QueryResourceImpl implements QueryResource {
     public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return queryServiceProvider.get().downloadSearchResults(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ResourceGeneration.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().downloadSearchResults(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -170,18 +171,19 @@ class QueryResourceImpl implements QueryResource {
     public DashboardSearchResponse search(final String nodeName, final QuerySearchRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request);
+            if (node == null) {
                 return queryServiceProvider.get().search(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             DashboardSearchResponse.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.SEARCH_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().search(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -312,18 +314,19 @@ class QueryResourceImpl implements QueryResource {
                                         final QueryColumnValuesRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return queryServiceProvider.get().getColumnValues(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ColumnValues.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.COLUMN_VALUES_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().getColumnValues(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
