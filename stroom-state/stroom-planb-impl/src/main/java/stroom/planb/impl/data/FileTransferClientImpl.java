@@ -21,6 +21,7 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -49,8 +50,8 @@ public class FileTransferClientImpl implements FileTransferClient {
     @Inject
     public FileTransferClientImpl(final Provider<PlanBConfig> configProvider,
                                   final NodeService nodeService,
-                                  final NodeInfo nodeInfo,
-                                  final TargetNodeSetFactory targetNodeSetFactory,
+                                  @Nullable final NodeInfo nodeInfo,
+                                  @Nullable final TargetNodeSetFactory targetNodeSetFactory,
                                   final WebTargetFactory webTargetFactory,
                                   final PartDestination partDestination,
                                   final SecurityContext securityContext) {
@@ -76,18 +77,22 @@ public class FileTransferClientImpl implements FileTransferClient {
                 final List<String> configuredNodes = planBConfig.getNodeList();
                 if (configuredNodes == null || configuredNodes.isEmpty()) {
                     LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
-                    targetNodes.add(nodeInfo.getThisNodeName());
+                    if (nodeInfo != null) {
+                        targetNodes.add(nodeInfo.getThisNodeName());
+                    }
 
                 } else {
                     try {
-                        final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                        for (final String node : configuredNodes) {
-                            if (enabledActiveNodes.contains(node)) {
-                                targetNodes.add(node);
-                            } else {
-                                throw new RuntimeException("Plan B target node '" +
-                                                           node +
-                                                           "' is not enabled or active");
+                        if (targetNodeSetFactory != null) {
+                            final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                            for (final String node : configuredNodes) {
+                                if (enabledActiveNodes.contains(node)) {
+                                    targetNodes.add(node);
+                                } else {
+                                    throw new RuntimeException("Plan B target node '" +
+                                                               node +
+                                                               "' is not enabled or active");
+                                }
                             }
                         }
                     } catch (final Exception e) {
@@ -98,7 +103,7 @@ public class FileTransferClientImpl implements FileTransferClient {
 
                 // Send the data to all nodes.
                 for (final String nodeName : targetNodes) {
-                    if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                    if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                         // Allow file move if the only target is the local node.
                         final boolean allowMove = targetNodes.size() == 1;
                         storePartLocally(
