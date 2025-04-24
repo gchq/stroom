@@ -36,9 +36,9 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
         final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
         try {
             // Hash the key.
-            final long keyHash = LongHashFunction.xx3().hashBytes(key.bytes());
+            final long keyHash = LongHashFunction.xx3().hashBytes(key.getBytes());
             keyByteBuffer.putLong(keyHash);
-            keyByteBuffer.putLong(key.effectiveTime());
+            keyByteBuffer.putLong(key.getEffectiveTime());
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
         } finally {
@@ -51,13 +51,13 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
                                        final StateValue value,
                                        final Function<ByteBuffer, T> function) {
         final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(Integer.BYTES +
-                                                                     key.bytes().length +
+                                                                     key.getBytes().length +
                                                                      Byte.BYTES +
-                                                                     value.byteBuffer().limit());
+                                                                     value.getByteBuffer().limit());
         try {
-            putPrefix(valueByteBuffer, key.bytes());
-            valueByteBuffer.put(value.typeId());
-            valueByteBuffer.put(value.byteBuffer());
+            putPrefix(valueByteBuffer, key.getBytes());
+            valueByteBuffer.put(value.getTypeId());
+            valueByteBuffer.put(value.getByteBuffer());
             valueByteBuffer.flip();
             return function.apply(valueByteBuffer);
         } finally {
@@ -67,9 +67,9 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
 
     @Override
     public <R> R createPrefixPredicate(final Key key, final Function<Predicate<BBKV>, R> function) {
-        final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(Integer.BYTES + key.bytes().length);
+        final ByteBuffer prefixByteBuffer = byteBufferFactory.acquire(Integer.BYTES + key.getBytes().length);
         try {
-            putPrefix(prefixByteBuffer, key.bytes());
+            putPrefix(prefixByteBuffer, key.getBytes());
             prefixByteBuffer.flip();
             return function.apply(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), prefixByteBuffer));
         } finally {

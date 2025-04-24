@@ -20,6 +20,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TemporalRangedStateSettingsPresenter.TemporalRangedStateSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
+import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.util.shared.ModelStringUtil;
 
@@ -52,7 +53,15 @@ public class TemporalRangedStateSettingsPresenter
         getView().setCondense(settings.getCondense());
         getView().setRetention(settings.getRetention());
         setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
+
+        final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
+        if (snapshotSettings != null) {
+            getView().setUseSnapshotsForLookup(snapshotSettings.isUseSnapshotsForLookup());
+            getView().setUseSnapshotsForGet(snapshotSettings.isUseSnapshotsForGet());
+            getView().setUseSnapshotsForQuery(snapshotSettings.isUseSnapshotsForQuery());
+        }
     }
 
     private void setMaxStoreSize(Long size) {
@@ -63,12 +72,19 @@ public class TemporalRangedStateSettingsPresenter
     }
 
     public AbstractPlanBSettings write() {
+        final SnapshotSettings snapshotSettings = new SnapshotSettings(
+                getView().isUseSnapshotsForLookup(),
+                getView().isUseSnapshotsForGet(),
+                getView().isUseSnapshotsForQuery());
+
         return TemporalRangedStateSettings
                 .builder()
                 .condense(getView().getCondense())
                 .retention(getView().getRetention())
                 .maxStoreSize(getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
+                .snapshotSettings(snapshotSettings)
                 .build();
     }
 
@@ -100,8 +116,24 @@ public class TemporalRangedStateSettingsPresenter
 
         void setMaxStoreSize(String maxStoreSize);
 
+        boolean getSynchroniseMerge();
+
+        void setSynchroniseMerge(boolean synchroniseMerge);
+
         Boolean getOverwrite();
 
         void setOverwrite(Boolean overwrite);
+
+        boolean isUseSnapshotsForLookup();
+
+        void setUseSnapshotsForLookup(boolean useSnapshotsForLookup);
+
+        boolean isUseSnapshotsForGet();
+
+        void setUseSnapshotsForGet(boolean useSnapshotsForGet);
+
+        boolean isUseSnapshotsForQuery();
+
+        void setUseSnapshotsForQuery(boolean useSnapshotsForQuery);
     }
 }

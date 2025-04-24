@@ -3,7 +3,6 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.lmdb2.BBKV;
-import stroom.lmdb2.KV;
 import stroom.planb.impl.db.RangedState.Key;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -35,8 +34,8 @@ public class RangedStateSerde implements Serde<Key, StateValue> {
     public <T> T createKeyByteBuffer(final Key key, final Function<ByteBuffer, T> function) {
         final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
         try {
-            keyByteBuffer.putLong(key.keyStart());
-            keyByteBuffer.putLong(key.keyEnd());
+            keyByteBuffer.putLong(key.getKeyStart());
+            keyByteBuffer.putLong(key.getKeyEnd());
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
         } finally {
@@ -49,10 +48,10 @@ public class RangedStateSerde implements Serde<Key, StateValue> {
                                        final StateValue value,
                                        final Function<ByteBuffer, R> function) {
         final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(Byte.BYTES +
-                                                                     value.byteBuffer().limit());
+                                                                     value.getByteBuffer().limit());
         try {
-            valueByteBuffer.put(value.typeId());
-            valueByteBuffer.put(value.byteBuffer());
+            valueByteBuffer.put(value.getTypeId());
+            valueByteBuffer.put(value.getByteBuffer());
             valueByteBuffer.flip();
             return function.apply(valueByteBuffer);
         } finally {

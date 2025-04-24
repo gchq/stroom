@@ -7,6 +7,7 @@ import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -119,10 +120,12 @@ public class ShardWriters {
 
             private final AbstractDb<?, ?> lmdb;
             private final AbstractDb.Writer writer;
+            private final boolean synchroniseMerge;
 
-            public WriterInstance(final AbstractDb<?, ?> lmdb) {
+            public WriterInstance(final AbstractDb<?, ?> lmdb, final boolean synchroniseMerge) {
                 this.lmdb = lmdb;
                 this.writer = lmdb.createWriter();
+                this.synchroniseMerge = synchroniseMerge;
             }
 
             public void addState(final State state) {
@@ -148,6 +151,10 @@ public class ShardWriters {
             public void addSession(final Session session) {
                 final SessionDb db = (SessionDb) lmdb;
                 db.insert(writer, session, session);
+            }
+
+            public boolean isSynchroniseMerge() {
+                return synchroniseMerge;
             }
 
             @Override
@@ -187,7 +194,12 @@ public class ShardWriters {
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
                             byteBufferFactory,
-                            false)));
+                            false),
+                            NullSafe.getOrElse(
+                                    doc,
+                                    PlanBDoc::getSettings,
+                                    AbstractPlanBSettings::isSynchroniseMerge,
+                                    false)));
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {
@@ -207,6 +219,11 @@ public class ShardWriters {
                 try {
                     writers.values().forEach(WriterInstance::close);
 
+                    final boolean synchroniseMerge = writers
+                            .values()
+                            .stream()
+                            .anyMatch(WriterInstance::isSynchroniseMerge);
+
                     // Zip all and delete dir.
                     zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
                     ZipUtil.zip(zipFile, dir);
@@ -218,7 +235,7 @@ public class ShardWriters {
                             System.currentTimeMillis(),
                             meta.getId(),
                             fileHash);
-                    fileTransferClient.storePart(fileDescriptor, zipFile);
+                    fileTransferClient.storePart(fileDescriptor, zipFile, synchroniseMerge);
 
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);

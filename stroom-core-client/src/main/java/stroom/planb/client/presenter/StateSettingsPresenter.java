@@ -19,6 +19,7 @@ package stroom.planb.client.presenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.util.shared.ModelStringUtil;
 
@@ -49,21 +50,38 @@ public class StateSettingsPresenter
     private void read(final StateSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
         setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
+
+        final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
+        if (snapshotSettings != null) {
+            getView().setUseSnapshotsForLookup(snapshotSettings.isUseSnapshotsForLookup());
+            getView().setUseSnapshotsForGet(snapshotSettings.isUseSnapshotsForGet());
+            getView().setUseSnapshotsForQuery(snapshotSettings.isUseSnapshotsForQuery());
+        }
     }
 
     private void setMaxStoreSize(Long size) {
         getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
-                size == null ? DEFAULT_MAX_STORE_SIZE : size,
+                size == null
+                        ? DEFAULT_MAX_STORE_SIZE
+                        : size,
                 true,
                 ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
     }
 
     public AbstractPlanBSettings write() {
+        final SnapshotSettings snapshotSettings = new SnapshotSettings(
+                getView().isUseSnapshotsForLookup(),
+                getView().isUseSnapshotsForGet(),
+                getView().isUseSnapshotsForQuery());
+
         return StateSettings
                 .builder()
                 .maxStoreSize(getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
+                .snapshotSettings(snapshotSettings)
                 .build();
     }
 
@@ -87,8 +105,24 @@ public class StateSettingsPresenter
 
         void setMaxStoreSize(String maxStoreSize);
 
+        boolean getSynchroniseMerge();
+
+        void setSynchroniseMerge(boolean synchroniseMerge);
+
         Boolean getOverwrite();
 
         void setOverwrite(Boolean overwrite);
+
+        boolean isUseSnapshotsForLookup();
+
+        void setUseSnapshotsForLookup(boolean useSnapshotsForLookup);
+
+        boolean isUseSnapshotsForGet();
+
+        void setUseSnapshotsForGet(boolean useSnapshotsForGet);
+
+        boolean isUseSnapshotsForQuery();
+
+        void setUseSnapshotsForQuery(boolean useSnapshotsForQuery);
     }
 }

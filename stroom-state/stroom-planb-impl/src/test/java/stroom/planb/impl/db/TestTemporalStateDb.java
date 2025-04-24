@@ -38,7 +38,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,13 +67,12 @@ class TestTemporalStateDb {
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalState.Key key = TemporalState.Key.builder().name("TEST_KEY").effectiveTime(refTime).build();
-            final Optional<StateValue> optional = db.get(key);
-            assertThat(optional).isNotEmpty();
-            final StateValue res = optional.get();
+            final StateValue value = db.get(key);
+            assertThat(value).isNotNull();
 //            assertThat(res.key()).isEqualTo("TEST_KEY");
 //            assertThat(res.effectiveTime()).isEqualTo(refTime);
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test");
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.toString()).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(TemporalStateFields.KEY);
@@ -240,8 +238,7 @@ class TestTemporalStateDb {
                             final boolean expected) {
         final TemporalStateRequest request =
                 new TemporalStateRequest(key, effectiveTime);
-        final Optional<TemporalState> optional = db.getState(request);
-        final boolean actual = optional.isPresent();
-        assertThat(actual).isEqualTo(expected);
+        final TemporalState state = db.getState(request);
+        assertThat(state != null).isEqualTo(expected);
     }
 }

@@ -13,7 +13,6 @@ import org.lmdbjava.KeyRange;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
-import java.util.Optional;
 
 public class RangedStateDb extends AbstractDb<Key, StateValue> {
 
@@ -55,7 +54,7 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
         return RangedStateSettings.builder().build();
     }
 
-    public Optional<RangedState> getState(final RangedStateRequest request) {
+    public RangedState getState(final RangedStateRequest request) {
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
         try {
             start.putLong(request.key() + 1);
@@ -85,15 +84,15 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
                         final long keyStart = kv.key().getLong(0);
                         final long keyEnd = kv.key().getLong(Long.BYTES);
                         if (keyEnd < request.key()) {
-                            return Optional.empty();
+                            return null;
                         } else if (keyStart <= request.key()) {
                             final Key key = Key.builder().keyStart(keyStart).keyEnd(keyEnd).build();
                             final StateValue value = serde.getVal(kv);
-                            return Optional.of(new RangedState(key, value));
+                            return new RangedState(key, value);
                         }
                     }
                 }
-                return Optional.empty();
+                return null;
             });
         } finally {
             byteBufferFactory.release(start);

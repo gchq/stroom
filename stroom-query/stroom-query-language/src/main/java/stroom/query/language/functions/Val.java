@@ -94,8 +94,6 @@ public sealed interface Val
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
-    // TODO rename of( to arrayOf( to make it a bit more clear you are getting an array back
-    //  Best done on master as it affects a lot of files
     static Val[] of(final Val... values) {
         return values;
     }

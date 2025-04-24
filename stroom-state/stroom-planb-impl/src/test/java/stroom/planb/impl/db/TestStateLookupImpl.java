@@ -28,6 +28,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestStateLookupImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateLookupImpl.class);
@@ -108,10 +110,8 @@ class TestStateLookupImpl {
                         key.getBytes(StandardCharsets.UTF_8),
                         time.toEpochMilli());
 
-                final TemporalState state = db.getState(request)
-                        .orElseThrow(() -> new RuntimeException(LogUtil.message(
-                                "No entry found for map: {}, key: {}, time: {}",
-                                mapName, key, time)));
+                final TemporalState state = db.getState(request);
+                assertThat(state).isNotNull();
                 final String val = state.val().toString();
                 Objects.requireNonNull(val);
             };

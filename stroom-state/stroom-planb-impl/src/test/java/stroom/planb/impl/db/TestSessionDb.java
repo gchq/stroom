@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -251,10 +250,9 @@ class TestSessionDb {
                          final Instant refTime,
                          final long deltaSeconds) {
         final Session k = Session.builder().start(refTime).end(refTime.plusSeconds(deltaSeconds)).key(key).build();
-        final Optional<Session> optional = db.get(k);
-        assertThat(optional).isNotEmpty();
-        final Session res = optional.get();
-        assertThat(res.key()).isEqualTo(key);
+        final Session session = db.get(k);
+        assertThat(session).isNotNull();
+        assertThat(session.getKey()).isEqualTo(key);
     }
 
     private void checkState(final SessionDb db,
@@ -262,9 +260,9 @@ class TestSessionDb {
                             final Instant time,
                             final boolean expected) {
         final SessionRequest request = new SessionRequest(key, time.toEpochMilli());
-        final Optional<Session> optional = db.getState(request);
-        final boolean actual = optional.isPresent();
-        assertThat(actual).isEqualTo(expected);
+        final Session session = db.getState(request);
+//        assertThat(session).isNotNull();
+        assertThat(session != null).isEqualTo(expected);
     }
 
 //    @Test

@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,13 +62,12 @@ class TestRangedStateDb {
             }
             checkState(db, 31, false);
 
-            final Optional<RangedState> optional = getState(db, 11);
-            assertThat(optional).isNotEmpty();
-            final RangedState res = optional.get();
-            assertThat(res.key().keyStart()).isEqualTo(10);
-            assertThat(res.key().keyEnd()).isEqualTo(30);
-            assertThat(res.val().typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.val().toString()).isEqualTo("test99");
+            final RangedState state = getState(db, 11);
+            assertThat(state).isNotNull();
+            assertThat(state.key().getKeyStart()).isEqualTo(10);
+            assertThat(state.key().getKeyEnd()).isEqualTo(30);
+            assertThat(state.val().getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(state.val().toString()).isEqualTo("test99");
 //
 //            final FieldIndex fieldIndex = new FieldIndex();
 //            fieldIndex.create(RangedStateFields.KEY_START);
@@ -100,7 +98,7 @@ class TestRangedStateDb {
         }
     }
 
-    private Optional<RangedState> getState(final RangedStateDb db, final long key) {
+    private RangedState getState(final RangedStateDb db, final long key) {
         final RangedStateRequest request =
                 new RangedStateRequest(key);
         return db.getState(request);
@@ -109,8 +107,8 @@ class TestRangedStateDb {
     private void checkState(final RangedStateDb db,
                             final long key,
                             final boolean expected) {
-        final Optional<RangedState> optional = getState(db, key);
-        final boolean actual = optional.isPresent();
+        final RangedState state = getState(db, key);
+        final boolean actual = state != null;
         assertThat(actual).isEqualTo(expected);
     }
 
@@ -139,11 +137,10 @@ class TestRangedStateDb {
 
     private void testGet(final RangedStateDb db) {
         final Key k = Key.builder().keyStart(10).keyEnd(30).build();
-        final Optional<StateValue> optional = db.get(k);
-        assertThat(optional).isNotEmpty();
-        final StateValue res = optional.get();
-        assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-        assertThat(res.toString()).isEqualTo("test99");
+        final StateValue value = db.get(k);
+        assertThat(value).isNotNull();
+        assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+        assertThat(value.toString()).isEqualTo("test99");
     }
 
 //    @Test

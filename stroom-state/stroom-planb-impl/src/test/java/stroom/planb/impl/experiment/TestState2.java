@@ -40,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -102,11 +101,10 @@ class TestState2 {
         try (final StateDb db = new StateDb(tempDir, byteBufferFactory, StateSettings.builder().build(), true)) {
             assertThat(db.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
-            final Optional<StateValue> optional = db.get(key);
-            assertThat(optional).isNotEmpty();
-            final StateValue res = optional.get();
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test" + (expectedRows - 1));
+            final StateValue value = db.get(key);
+            assertThat(value).isNotNull();
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.toString()).isEqualTo("test" + (expectedRows - 1));
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(StateFields.KEY);

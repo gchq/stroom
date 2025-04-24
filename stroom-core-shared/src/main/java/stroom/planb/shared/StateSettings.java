@@ -10,6 +10,8 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "maxStoreSize",
+        "synchroniseMerge",
+        "snapshotSettings",
         "overwrite"
 })
 @JsonInclude(Include.NON_NULL)
@@ -20,14 +22,17 @@ public class StateSettings extends AbstractPlanBSettings {
 
     @JsonCreator
     public StateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
+                         @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
+                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
                          @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
+        super(maxStoreSize, synchroniseMerge, snapshotSettings);
         this.overwrite = overwrite;
     }
 
     public Boolean getOverwrite() {
         return overwrite;
     }
+
 
     @Override
     public boolean equals(final Object o) {
@@ -90,6 +95,8 @@ public class StateSettings extends AbstractPlanBSettings {
         public StateSettings build() {
             return new StateSettings(
                     maxStoreSize,
+                    synchroniseMerge,
+                    snapshotSettings,
                     overwrite);
         }
     }

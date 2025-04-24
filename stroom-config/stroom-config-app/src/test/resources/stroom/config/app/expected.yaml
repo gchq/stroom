@@ -669,7 +669,7 @@ appConfig:
     stateDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
-      maximumSize: 100
+      maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
   processor:

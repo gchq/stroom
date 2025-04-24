@@ -4,10 +4,38 @@ import stroom.pipeline.refdata.store.FastInfosetUtil;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public record StateValue(byte typeId, ByteBuffer byteBuffer) {
+@JsonPropertyOrder({"typeId", "byteBuffer"})
+@JsonInclude(Include.NON_NULL)
+public class StateValue {
+
+    @JsonProperty
+    private final byte typeId;
+    @JsonProperty
+    private final ByteBuffer byteBuffer;
+
+    @JsonCreator
+    public StateValue(@JsonProperty("typeId") final byte typeId,
+                      @JsonProperty("byteBuffer") final ByteBuffer byteBuffer) {
+        this.typeId = typeId;
+        this.byteBuffer = byteBuffer;
+    }
+
+    public byte getTypeId() {
+        return typeId;
+    }
+
+    public ByteBuffer getByteBuffer() {
+        return byteBuffer;
+    }
 
     @Override
     public String toString() {
@@ -16,6 +44,10 @@ public record StateValue(byte typeId, ByteBuffer byteBuffer) {
             case FastInfosetValue.TYPE_ID -> FastInfosetUtil.byteBufferToString(byteBuffer.duplicate());
             default -> null;
         };
+    }
+
+    public Builder copy() {
+        return new Builder(this);
     }
 
     public static Builder builder() {
@@ -27,10 +59,10 @@ public record StateValue(byte typeId, ByteBuffer byteBuffer) {
         private byte typeId;
         private ByteBuffer byteBuffer;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final StateValue value) {
+        private Builder(final StateValue value) {
             this.typeId = value.typeId;
             this.byteBuffer = value.byteBuffer;
         }

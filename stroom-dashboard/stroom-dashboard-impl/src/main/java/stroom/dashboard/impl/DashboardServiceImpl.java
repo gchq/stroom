@@ -41,6 +41,7 @@ import stroom.query.api.Column;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
+import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.ResultRequest.ResultStyle;
@@ -131,6 +132,7 @@ class DashboardServiceImpl implements DashboardService {
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
+    private final QueryNodeResolver queryNodeResolver;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -146,7 +148,8 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final ValPredicateFactory valPredicateFactory) {
+                         final ValPredicateFactory valPredicateFactory,
+                         final QueryNodeResolver queryNodeResolver) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -161,6 +164,7 @@ class DashboardServiceImpl implements DashboardService {
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
+        this.queryNodeResolver = queryNodeResolver;
     }
 
     @Override
@@ -619,5 +623,17 @@ class DashboardServiceImpl implements DashboardService {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    @Override
+    public String getBestNode(final String nodeName, final DashboardSearchRequest request) {
+        if (nodeName == null || nodeName.equals("null")) {
+            if (queryNodeResolver == null) {
+                return null;
+            }
+            final DocRef docRef = NullSafe.get(request, DashboardSearchRequest::getSearch, Search::getDataSourceRef);
+            return queryNodeResolver.getNode(docRef);
+        }
+        return nodeName;
     }
 }

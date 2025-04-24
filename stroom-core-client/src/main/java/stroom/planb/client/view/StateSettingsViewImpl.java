@@ -38,7 +38,16 @@ public class StateSettingsViewImpl
     @UiField
     TextBox maxStoreSize;
     @UiField
+    CustomCheckBox synchroniseMerge;
+    @UiField
     CustomCheckBox overwrite;
+
+    @UiField
+    CustomCheckBox useSnapshotsForLookup;
+    @UiField
+    CustomCheckBox useSnapshotsForGet;
+    @UiField
+    CustomCheckBox useSnapshotsForQuery;
 
     @Inject
     public StateSettingsViewImpl(final Binder binder) {
@@ -62,6 +71,16 @@ public class StateSettingsViewImpl
     }
 
     @Override
+    public boolean getSynchroniseMerge() {
+        return synchroniseMerge.getValue();
+    }
+
+    @Override
+    public void setSynchroniseMerge(final boolean synchroniseMerge) {
+        this.synchroniseMerge.setValue(synchroniseMerge);
+    }
+
+    @Override
     public Boolean getOverwrite() {
         return overwrite.getValue()
                 ? null
@@ -71,6 +90,36 @@ public class StateSettingsViewImpl
     @Override
     public void setOverwrite(final Boolean overwrite) {
         this.overwrite.setValue(overwrite == null || overwrite);
+    }
+
+    @Override
+    public boolean isUseSnapshotsForLookup() {
+        return useSnapshotsForLookup.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForLookup(final boolean useSnapshotsForLookup) {
+        this.useSnapshotsForLookup.setValue(useSnapshotsForLookup);
+    }
+
+    @Override
+    public boolean isUseSnapshotsForGet() {
+        return useSnapshotsForGet.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForGet(final boolean useSnapshotsForGet) {
+        this.useSnapshotsForGet.setValue(useSnapshotsForGet);
+    }
+
+    @Override
+    public boolean isUseSnapshotsForQuery() {
+        return useSnapshotsForQuery.getValue();
+    }
+
+    @Override
+    public void setUseSnapshotsForQuery(final boolean useSnapshotsForQuery) {
+        this.useSnapshotsForQuery.setValue(useSnapshotsForQuery);
     }
 
     @Override
@@ -84,8 +133,28 @@ public class StateSettingsViewImpl
         getUiHandlers().onChange();
     }
 
+    @UiHandler("synchroniseMerge")
+    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
     @UiHandler("overwrite")
     public void onOverwrite(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForLookup")
+    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForGet")
+    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("useSnapshotsForQuery")
+    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();
     }
 

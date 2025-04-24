@@ -428,17 +428,17 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
-    public Optional<V> get(final K key) {
+    public V get(final K key) {
         return read(readTxn -> get(readTxn, key));
     }
 
-    private Optional<V> get(final Txn<ByteBuffer> readTxn, final K key) {
+    private V get(final Txn<ByteBuffer> readTxn, final K key) {
         return serde.createKeyByteBuffer(key, keyByteBuffer ->
                 serde.createPrefixPredicate(key, predicate -> {
                     // Just try to get directly first without the overhead of a cursor.
-                    Optional<V> optional = getDirect(readTxn, keyByteBuffer, predicate);
-                    if (optional.isPresent()) {
-                        return optional;
+                    V v = getDirect(readTxn, keyByteBuffer, predicate);
+                    if (v != null) {
+                        return v;
                     }
 
                     // We tried directly so now try looking beyond the provided key to see if there are any sequence
@@ -450,22 +450,22 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
     /**
      * Direct lookup for exact key, assuming that there are no sequence rows.
      */
-    private Optional<V> getDirect(final Txn<ByteBuffer> readTxn,
+    private V getDirect(final Txn<ByteBuffer> readTxn,
                                   final ByteBuffer keyByteBuffer,
                                   final Predicate<BBKV> predicate) {
         final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
         final BBKV kv = new BBKV(keyByteBuffer, valueByteBuffer);
         if (predicate.test(kv)) {
-            return Optional.of(serde.getVal(kv));
+            return serde.getVal(kv);
         }
-        return Optional.empty();
+        return null;
     }
 
     /**
      * After trying and failing to get a value directly by exact key, iterate over any subsequent sequence rows that
      * may exist.
      */
-    private Optional<V> getWithCursor(final Txn<ByteBuffer> readTxn,
+    private V getWithCursor(final Txn<ByteBuffer> readTxn,
                                       final ByteBuffer keyByteBuffer,
                                       final Predicate<BBKV> predicate) {
         final KeyRange<ByteBuffer> keyRange =
@@ -478,15 +478,15 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
 
                 // Stop iterating if we go beyond the prefix.
                 if (!ByteBufferUtils.containsPrefix(kv.key(), keyByteBuffer)) {
-                    return Optional.empty();
+                    return null;
                 }
 
                 if (predicate.test(kv)) {
-                    return Optional.of(serde.getVal(kv));
+                    return serde.getVal(kv);
                 }
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     public void search(final ExpressionCriteria criteria,

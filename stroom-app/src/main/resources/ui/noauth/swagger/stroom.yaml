@@ -4942,6 +4942,24 @@ paths:
       summary: Update an state store doc
       tags:
       - State Stores
+  /planb/v1/getValue:
+    post:
+      operationId: planBQueryGetValue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanBValue"
+          description: default response
+      summary: Gets a value from a remote Plan B store.
+      tags:
+      - Plan B Query
   /preferences/v1:
     get:
       operationId: fetchUserPreferences
@@ -8112,6 +8130,8 @@ components:
         maxStoreSize:
           type: integer
           format: int64
+        snapshotSettings:
+          $ref: "#/components/schemas/SnapshotSettings"
         type:
           type: string
       required:
@@ -10740,6 +10760,8 @@ components:
         properties:
           automate:
             $ref: "#/components/schemas/Automate"
+          embeddedQueryDoc:
+            $ref: "#/components/schemas/QueryDoc"
           lastQueryKey:
             $ref: "#/components/schemas/QueryKey"
           lastQueryNode:
@@ -10748,6 +10770,8 @@ components:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
             $ref: "#/components/schemas/QueryTablePreferences"
+          reference:
+            type: boolean
           selectionFilter:
             type: array
             items:
@@ -12091,6 +12115,16 @@ components:
         metaId:
           type: integer
           format: int64
+    GetRequest:
+      type: object
+      properties:
+        eventTime:
+          type: integer
+          format: int64
+        keyName:
+          type: string
+        mapName:
+          type: string
     GetScheduledTimesRequest:
       type: object
       properties:
@@ -12569,6 +12603,18 @@ components:
           type: string
         version:
           type: string
+    Key:
+      type: object
+      properties:
+        effectiveTime:
+          type: integer
+          format: int64
+        keyEnd:
+          type: integer
+          format: int64
+        keyStart:
+          type: integer
+          format: int64
     KeyValueInputComponentSettings:
       type: object
       allOf:
@@ -13651,6 +13697,15 @@ components:
           type: string
         version:
           type: string
+    PlanBValue:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     ProcessConfig:
       type: object
       properties:
@@ -14394,6 +14449,16 @@ components:
         to:
           type: integer
           format: int64
+    RangedState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/StateValue"
     RangedStateSettings:
       type: object
       allOf:
@@ -15649,6 +15714,23 @@ components:
             - INACTIVE
             - CLOSED
           uniqueItems: true
+    Session:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          end:
+            type: integer
+            format: int64
+          key:
+            type: array
+            items:
+              type: string
+              format: byte
+          start:
+            type: integer
+            format: int64
     SessionDetails:
       type: object
       properties:
@@ -15815,6 +15897,15 @@ components:
           format: int64
         planBDocRef:
           $ref: "#/components/schemas/DocRef"
+    SnapshotSettings:
+      type: object
+      properties:
+        useSnapshotsForGet:
+          type: boolean
+        useSnapshotsForLookup:
+          type: boolean
+        useSnapshotsForQuery:
+          type: boolean
     SolrConnectionConfig:
       type: object
       properties:
@@ -16054,6 +16145,16 @@ components:
             format: int32
       xml:
         name: splitLayout
+    State:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/StateValue"
     StateDoc:
       type: object
       properties:
@@ -16129,6 +16230,36 @@ components:
         properties:
           overwrite:
             type: boolean
+    StateValue:
+      type: object
+      properties:
+        byteBuffer:
+          type: object
+          properties:
+            char:
+              type: string
+            direct:
+              type: boolean
+            double:
+              type: number
+              format: double
+            float:
+              type: number
+              format: float
+            int:
+              type: integer
+              format: int32
+            long:
+              type: integer
+              format: int64
+            readOnly:
+              type: boolean
+            short:
+              type: integer
+              format: int32
+        typeId:
+          type: string
+          format: byte
     StatisticField:
       type: object
       properties:
@@ -16808,6 +16939,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
+    TemporalRangedState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/StateValue"
     TemporalRangedStateSettings:
       type: object
       allOf:
@@ -16820,6 +16961,16 @@ components:
             type: boolean
           retention:
             $ref: "#/components/schemas/DurationSetting"
+    TemporalState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/StateValue"
     TemporalStateSettings:
       type: object
       allOf:

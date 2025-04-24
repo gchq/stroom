@@ -716,10 +716,11 @@ public class PlanBFilter extends AbstractXMLFilter {
         } else if (time == null) {
             error(LogUtil.message("Session 'time' is null for {}", mapName));
         } else {
-            final Session.Builder sessionBuilder = new Session.Builder();
-            sessionBuilder.key(key);
-            sessionBuilder.start(time);
-            sessionBuilder.end(time);
+            final Session.Builder sessionBuilder = Session
+                    .builder()
+                    .key(key)
+                    .start(time)
+                    .end(time);
             if (timeout != null) {
                 sessionBuilder.end(time.plus(timeout));
             }

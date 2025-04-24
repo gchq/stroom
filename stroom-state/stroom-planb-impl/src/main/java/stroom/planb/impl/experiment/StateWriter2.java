@@ -30,7 +30,7 @@ public class StateWriter2 extends AbstractLmdbWriter2<Key, StateValue> {
         final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(Long.BYTES);
         try {
             // Hash the key.
-            final long keyHash = LongHashFunction.xx3().hashBytes(key.bytes());
+            final long keyHash = LongHashFunction.xx3().hashBytes(key.getBytes());
             keyByteBuffer.putLong(keyHash);
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
@@ -48,13 +48,13 @@ public class StateWriter2 extends AbstractLmdbWriter2<Key, StateValue> {
             final Txn<ByteBuffer> writeTxn = getOrCreateWriteTxn();
 
             // Insert the key into the key table.
-            final ByteBuffer valueByteBuffer1 = byteBufferFactory.acquire(key.bytes().length);
+            final ByteBuffer valueByteBuffer1 = byteBufferFactory.acquire(key.getBytes().length);
             try {
-                valueByteBuffer1.put(key.bytes());
+                valueByteBuffer1.put(key.getBytes());
                 valueByteBuffer1.flip();
 
                 // Hash the key.
-                final long keyHash = LongHashFunction.xx3().hashBytes(key.bytes());
+                final long keyHash = LongHashFunction.xx3().hashBytes(key.getBytes());
 
                 putUntilUnique(writeTxn, keyDb, keyFingerprintByteBuffer, valueByteBuffer1, keyHash);
             } finally {
@@ -62,14 +62,14 @@ public class StateWriter2 extends AbstractLmdbWriter2<Key, StateValue> {
             }
 
             // Insert the value into the value table.
-            final ByteBuffer valueByteBuffer2 = byteBufferFactory.acquire(Byte.BYTES + value.byteBuffer().limit());
+            final ByteBuffer valueByteBuffer2 = byteBufferFactory.acquire(Byte.BYTES + value.getByteBuffer().limit());
             try {
-                valueByteBuffer2.put(value.typeId());
-                valueByteBuffer2.put(value.byteBuffer().duplicate());
+                valueByteBuffer2.put(value.getTypeId());
+                valueByteBuffer2.put(value.getByteBuffer().duplicate());
                 valueByteBuffer2.flip();
 
                 // Hash the value.
-                final long valueHash = LongHashFunction.xx3().hashBytes(value.byteBuffer());
+                final long valueHash = LongHashFunction.xx3().hashBytes(value.getByteBuffer());
 
                 putUntilUnique(writeTxn, valueDb, valueFingerprintByteBuffer, valueByteBuffer2, valueHash);
             } finally {

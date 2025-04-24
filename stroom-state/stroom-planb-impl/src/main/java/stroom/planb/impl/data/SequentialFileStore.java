@@ -52,13 +52,13 @@ public class SequentialFileStore {
         }
     }
 
-    public void add(final FileDescriptor fileDescriptor,
+    public long add(final FileDescriptor fileDescriptor,
                     final Path path) throws IOException {
         final String fileHash = FileHashUtil.hash(path);
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
         }
-        add(path);
+        return add(path);
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -107,7 +107,7 @@ public class SequentialFileStore {
         return SequentialFile.get(stagingDir, storeId, true);
     }
 
-    private void add(final Path tempFile) throws IOException {
+    private long add(final Path tempFile) throws IOException {
         // Move the new data to the store.
         final long currentStoreId = storeId.getAndIncrement();
         final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
@@ -125,6 +125,7 @@ public class SequentialFileStore {
 
         // Let consumers know there is new data.
         afterStore(currentStoreId);
+        return currentStoreId;
     }
 
     private void move(final Path root, final List<Path> subDirs, final Path source, final Path dest)

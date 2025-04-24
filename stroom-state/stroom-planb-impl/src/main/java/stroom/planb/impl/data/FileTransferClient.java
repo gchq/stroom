@@ -6,7 +6,8 @@ import java.time.Instant;
 public interface FileTransferClient {
 
     void storePart(FileDescriptor fileDescriptor,
-                   Path path);
+                   Path path,
+                   boolean synchroniseMerge);
 
     Instant fetchSnapshot(String nodeName,
                           SnapshotRequest request,

@@ -28,11 +28,13 @@ import stroom.planb.impl.data.FileTransferResourceImpl;
 import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
+import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
@@ -70,6 +72,8 @@ public class PlanBModule extends AbstractModule {
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
 
+        bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PlanBDocStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
@@ -82,7 +86,8 @@ public class PlanBModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)
-                .bind(FileTransferResourceImpl.class);
+                .bind(FileTransferResourceImpl.class)
+                .bind(PlanBRemoteQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);

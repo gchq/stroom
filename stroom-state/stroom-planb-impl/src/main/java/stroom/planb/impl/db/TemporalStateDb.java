@@ -15,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Optional;
 
 public class TemporalStateDb extends AbstractDb<Key, StateValue> {
 
@@ -55,7 +54,7 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
         return TemporalStateSettings.builder().build();
     }
 
-    public Optional<TemporalState> getState(final TemporalStateRequest request) {
+    public TemporalState getState(final TemporalStateRequest request) {
         final long rowHash = LongHashFunction.xx3().hashBytes(request.key());
         final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
         final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
@@ -87,11 +86,11 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
                                     .effectiveTime(effectiveTime)
                                     .build();
                             final StateValue value = serde.getVal(kv);
-                            return Optional.of(new TemporalState(key, value));
+                            return new TemporalState(key, value);
                         }
                     }
                 }
-                return Optional.empty();
+                return null;
             });
         } finally {
             byteBufferFactory.release(start);
@@ -115,16 +114,16 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
                     final Key key = serde.getKey(kv);
                     final StateValue value = serde.getVal(kv);
 
-                    if (key.effectiveTime() <= deleteBeforeMs) {
+                    if (key.getEffectiveTime() <= deleteBeforeMs) {
                         // If this is data we no longer want to retain then delete it.
                         dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                         writer.tryCommit();
 
                     } else {
                         if (lastKey != null &&
-                            Arrays.equals(lastKey.bytes(), key.bytes()) &&
-                            lastValue.byteBuffer().equals(value.byteBuffer())) {
-                            if (key.effectiveTime() <= condenseBeforeMs) {
+                            Arrays.equals(lastKey.getBytes(), key.getBytes()) &&
+                            lastValue.getByteBuffer().equals(value.getByteBuffer())) {
+                            if (key.getEffectiveTime() <= condenseBeforeMs) {
                                 // If the key and value are the same then delete the duplicate entry.
                                 dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
                                 writer.tryCommit();

@@ -57,7 +57,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -254,21 +253,19 @@ class TestStateDb {
             final Key key = Key.builder().name("TEST_KEY").build();
 
             // Read the data.
-            Optional<StateValue> optional = db.get(key);
-            assertThat(optional).isNotEmpty();
-            StateValue res = optional.get();
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test99");
+            StateValue value = db.get(key);
+            assertThat(value).isNotNull();
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.toString()).isEqualTo("test99");
 
             // Delete the data.
             FileUtil.deleteDir(tempDir);
 
             // Try and read.
-            optional = db.get(key);
-            assertThat(optional).isNotEmpty();
-            res = optional.get();
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test99");
+            value = db.get(key);
+            assertThat(value).isNotNull();
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.toString()).isEqualTo("test99");
         }
     }
 
@@ -339,11 +336,10 @@ class TestStateDb {
         try (final StateDb db = new StateDb(tempDir, byteBufferFactory)) {
             assertThat(db.count()).isEqualTo(1);
             final Key key = Key.builder().name("TEST_KEY").build();
-            final Optional<StateValue> optional = db.get(key);
-            assertThat(optional).isNotEmpty();
-            final StateValue res = optional.get();
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.toString()).isEqualTo("test" + (expectedRows - 1));
+            final StateValue value = db.get(key);
+            assertThat(value).isNotNull();
+            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.toString()).isEqualTo("test" + (expectedRows - 1));
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(StateFields.KEY);
