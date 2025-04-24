@@ -11,11 +11,16 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -175,5 +180,87 @@ class TestAttributeMapUtil {
                 .addCase(Tuple.of(data1, List.of("feed", "type")), List.of("MY_FEED", "EVENTS"))
                 .addCase(Tuple.of(data1, List.of("type", "feed")), List.of("EVENTS", "MY_FEED"))
                 .build();
+    }
+
+    @Test
+    void testRead_path(@TempDir Path tempDir) throws IOException {
+        final String data = """
+                three:four
+
+                 Foo:Bar \s
+                  FeEd: MY_FEED   \s
+                 BAR:FOO \s
+                TyPE:EVENTS
+                one:two""";
+
+        final Path file = tempDir.resolve("001.meta");
+
+        Files.writeString(file, data, AttributeMapUtil.DEFAULT_CHARSET, StandardOpenOption.CREATE);
+
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.read(file, attributeMap);
+
+        assertThat(attributeMap)
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        "three", "four",
+                        "Foo", "Bar",
+                        "FeEd", "MY_FEED",
+                        "BAR", "FOO",
+                        "TyPE", "EVENTS",
+                        "one", "two"));
+    }
+
+    @Test
+    void testRead_inputStream(@TempDir Path tempDir) throws IOException {
+        final String data = """
+                three:four
+
+                 Foo:Bar \s
+                  FeEd: MY_FEED   \s
+                 BAR:FOO \s
+                TyPE:EVENTS
+                one:two""";
+
+        final Path file = tempDir.resolve("001.meta");
+
+        Files.writeString(file, data, AttributeMapUtil.DEFAULT_CHARSET, StandardOpenOption.CREATE);
+
+        try (InputStream inputStream = Files.newInputStream(file)) {
+            final AttributeMap attributeMap = new AttributeMap();
+            AttributeMapUtil.read(inputStream, attributeMap);
+
+            assertThat(attributeMap)
+                    .containsExactlyInAnyOrderEntriesOf(Map.of(
+                            "three", "four",
+                            "Foo", "Bar",
+                            "FeEd", "MY_FEED",
+                            "BAR", "FOO",
+                            "TyPE", "EVENTS",
+                            "one", "two"));
+        }
+    }
+
+    @Test
+    void testRead_string() {
+        final String data = """
+                three:four
+
+                 Foo:Bar \s
+                  FeEd: MY_FEED   \s
+                 BAR:FOO \s
+                TyPE:EVENTS
+                one:two""";
+
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.read(data, attributeMap);
+
+        assertThat(attributeMap)
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        "three", "four",
+                        "Foo", "Bar",
+                        "FeEd", "MY_FEED",
+                        "BAR", "FOO",
+                        "TyPE", "EVENTS",
+                        "one", "two"));
     }
 }

@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -124,7 +125,8 @@ public class AttributeMapUtil {
     }
 
     public static void read(final Path file, final AttributeMap attributeMap) throws IOException {
-        final String data = StreamUtil.fileToString(file, DEFAULT_CHARSET);
+        final String data = Files.readString(file, DEFAULT_CHARSET);
+//        final String data = StreamUtil.fileToString(file, DEFAULT_CHARSET);
         read(data, attributeMap);
     }
 
@@ -204,7 +206,7 @@ public class AttributeMapUtil {
     }
 
     private static List<String> readKeys(final List<String> keys,
-                                         final Stream<String> linesStream) throws IOException {
+                                         final Stream<String> linesStream) {
         final List<String> keysToFind = new ArrayList<>(keys);
         final List<String> values = new ArrayList<>(keys.size());
         // Ensure we have a null value in all indexes, in case we don't find the key
@@ -212,8 +214,9 @@ public class AttributeMapUtil {
             values.add(null);
         }
 
+        final AtomicInteger keysRemaining = new AtomicInteger(keysToFind.size());
         linesStream
-                .takeWhile(ignored -> !keysToFind.isEmpty())
+                .takeWhile(ignored -> keysRemaining.get() > 0)
                 .filter(NullSafe::isNonBlankString)
                 .map(String::trim)
                 .forEach(line -> {
@@ -230,6 +233,7 @@ public class AttributeMapUtil {
                                 // Extract the value. Null out keysToFind, so we don't look for
                                 // this key again
                                 keysToFind.set(keyIdx, null);
+                                keysRemaining.decrementAndGet();
                                 final int splitPos = line.indexOf(HEADER_DELIMITER);
                                 final String value;
                                 if (splitPos != -1) {
@@ -242,7 +246,7 @@ public class AttributeMapUtil {
                         }
                     }
                 });
-        return values;
+        return Collections.unmodifiableList(values);
     }
 
     public static void read(final byte[] data, final AttributeMap attributeMap) throws IOException {
