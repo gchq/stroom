@@ -76,6 +76,7 @@ dependencies {
 
     testImplementation libs.assertj.core
     testImplementation libs.classgraph
+    testImplementation libs.data.faker
     testImplementation libs.dropwizard.testing
     testImplementation libs.dropwizard.validation
     testImplementation libs.guice.extension

@@ -5,17 +5,18 @@ import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -66,12 +67,10 @@ public class Aggregator {
 
             } else if (sourceDirCount == 1) {
                 // If we only have one source dir then no merging is required, just forward.
-                try (final Stream<Path> stream = Files.list(dir)) {
-                    stream.forEach(fileGroupDir -> {
-                        LOGGER.debug("Passing {} to destination {} with no merging", fileGroupDir, destination);
-                        destination.accept(fileGroupDir);
-                    });
-                }
+                FileUtil.forEachChild(dir, fileGroupDir -> {
+                    LOGGER.debug("Passing {} to destination {} with no merging", fileGroupDir, destination);
+                    destination.accept(fileGroupDir);
+                });
 
             } else {
                 // Merge the files into an aggregate.
@@ -83,48 +82,47 @@ public class Aggregator {
                 final byte[] buffer = LocalByteBuffer.get();
 
                 try (final ProxyZipWriter zipWriter = new ProxyZipWriter(outputFileGroup.getZip(), buffer)) {
-                    try (final Stream<Path> stream = Files.list(dir)) {
-                        stream.forEach(fileGroupDir -> {
-                            final FileGroup fileGroup = new FileGroup(fileGroupDir);
+                    FileUtil.forEachChild(dir, fileGroupDir -> {
+                        final FileGroup fileGroup = new FileGroup(fileGroupDir);
 
-                            // Output meta if this is the first.
-                            if (!doneMeta.get()) {
-                                try {
-                                    Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
-                                    doneMeta.set(true);
-                                } catch (final IOException e) {
-                                    LOGGER.error(e::getMessage, e);
-                                    throw new UncheckedIOException(e);
-                                }
-                            }
-
-                            try (final ZipArchiveInputStream zipInputStream =
-                                    new ZipArchiveInputStream(
-                                            new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
-                                String lastBaseName = null;
-                                String outputBaseName = null;
-                                ZipArchiveEntry zipEntry = zipInputStream.getNextEntry();
-                                while (zipEntry != null) {
-                                    final String name = zipEntry.getName();
-                                    final FileName fileName = FileName.parse(name);
-                                    final String baseName = fileName.getBaseName();
-                                    if (lastBaseName == null || !lastBaseName.equals(baseName)) {
-                                        outputBaseName = NumericFileNameUtil.create(count.incrementAndGet());
-                                        lastBaseName = baseName;
-                                    }
-
-                                    zipWriter.writeStream(
-                                            outputBaseName + "." + fileName.getExtension(),
-                                            zipInputStream);
-
-                                    zipEntry = zipInputStream.getNextEntry();
-                                }
+                        // Output meta if this is the first.
+                        if (!doneMeta.get()) {
+                            try {
+                                Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
+                                doneMeta.set(true);
                             } catch (final IOException e) {
                                 LOGGER.error(e::getMessage, e);
                                 throw new UncheckedIOException(e);
                             }
-                        });
-                    }
+                        }
+
+                        try (ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
+                            final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
+
+                            String lastBaseName = null;
+                            String outputBaseName = null;
+                            while (entries.hasNext()) {
+                                final ZipArchiveEntry zipEntry = entries.next();
+                                final String name = zipEntry.getName();
+                                final FileName fileName = FileName.parse(name);
+                                final String baseName = fileName.getBaseName();
+                                if (lastBaseName == null || !lastBaseName.equals(baseName)) {
+                                    outputBaseName = NumericFileNameUtil.create(count.incrementAndGet());
+                                    lastBaseName = baseName;
+                                }
+
+                                // No need to decompress+recompress the entry as only the name is changing,
+                                // just write the raw compressed data into the new zip. Much faster.
+                                zipWriter.writeRawStream(
+                                        zipEntry,
+                                        outputBaseName + "." + fileName.getExtension(),
+                                        zipFile.getRawInputStream(zipEntry));
+                            }
+                        } catch (IOException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw new UncheckedIOException(e);
+                        }
+                    });
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.

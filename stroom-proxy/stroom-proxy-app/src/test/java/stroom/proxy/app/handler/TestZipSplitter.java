@@ -119,7 +119,7 @@ class TestZipSplitter {
             LOGGER.info("Contents of {}\n{}", consumedZip, proxyZipSnapshot);
         }
 
-        final List<Path> subDirs = FileUtil.listDirs(consumerDir);
+        final List<Path> subDirs = FileUtil.listChildDirs(consumerDir);
         assertThat(subDirs)
                 .hasSize(1);
 
@@ -242,7 +242,7 @@ class TestZipSplitter {
             LOGGER.info("Contents of {}\n{}", consumedZip, proxyZipSnapshot);
         }
 
-        final List<Path> subDirs = FileUtil.listDirs(consumerDir);
+        final List<Path> subDirs = FileUtil.listChildDirs(consumerDir);
         assertThat(subDirs)
                 .hasSize(2);
 
@@ -365,7 +365,7 @@ class TestZipSplitter {
             LOGGER.info("Contents of {}\n{}", consumedZip, proxyZipSnapshot);
         }
 
-        final List<Path> subDirs = FileUtil.listDirs(consumerDir);
+        final List<Path> subDirs = FileUtil.listChildDirs(consumerDir);
         assertThat(subDirs)
                 .hasSize(4);
 
@@ -491,7 +491,7 @@ class TestZipSplitter {
             LOGGER.info("Contents of {}\n{}", consumedZip, proxyZipSnapshot);
         }
 
-        final List<Path> subDirs = FileUtil.listDirs(consumerDir);
+        final List<Path> subDirs = FileUtil.listChildDirs(consumerDir);
         assertThat(subDirs)
                 .hasSize(3);
 

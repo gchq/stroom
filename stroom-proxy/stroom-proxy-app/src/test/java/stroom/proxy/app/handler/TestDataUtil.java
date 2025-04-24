@@ -6,6 +6,8 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.test.common.data.DataGenerator;
+import stroom.test.common.data.FlatDataWriterBuilder;
 import stroom.util.NullSafe;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileName;
@@ -21,6 +23,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,17 +39,31 @@ public class TestDataUtil {
     public static Path writeZip(final FeedKey... feedKeys) throws IOException {
         final Path tempDir = Files.createTempDirectory("temp");
         final FileGroup fileGroup = new FileGroup(tempDir);
-        writeZip(fileGroup, 1, NullSafe.stream(feedKeys).collect(Collectors.toSet()));
+        writeZip(fileGroup,
+                1,
+                1,
+                new AttributeMap(),
+                NullSafe.stream(feedKeys).collect(Collectors.toSet()),
+                null);
         return fileGroup.getZip();
     }
 
     public static void writeZip(final FileGroup fileGroup,
                                 final int entryCount,
                                 final Set<FeedKey> feedKeys) throws IOException {
-        writeZip(fileGroup, entryCount, new AttributeMap(), feedKeys, null);
+        writeZip(fileGroup, 1, entryCount, new AttributeMap(), feedKeys, null);
     }
 
     public static void writeZip(final FileGroup fileGroup,
+                                final int entryCount,
+                                final AttributeMap attributeMap,
+                                final Set<FeedKey> feedKeys,
+                                final Set<FeedKey> allowedFeedKeys) throws IOException {
+        writeZip(fileGroup, 1, entryCount, attributeMap, feedKeys, allowedFeedKeys);
+    }
+
+    public static void writeZip(final FileGroup fileGroup,
+                                final int dataLines,
                                 final int entryCount,
                                 final AttributeMap attributeMap,
                                 final Set<FeedKey> feedKeys,
@@ -69,7 +87,12 @@ public class TestDataUtil {
                         final String metaEntryName = baseName + StroomZipFileType.META.getDotExtension();
                         zipWriter.writeStream(metaEntryName, new ByteArrayInputStream(metaBytes));
 
-                        final byte[] dataBytes = "test".getBytes(StandardCharsets.UTF_8);
+                        final byte[] dataBytes;
+                        if (dataLines == 1) {
+                            dataBytes = "test".getBytes(StandardCharsets.UTF_8);
+                        } else {
+                            dataBytes = generateData(dataLines).getBytes(StandardCharsets.UTF_8);
+                        }
                         final String dataEntryName = baseName + StroomZipFileType.DATA.getDotExtension();
                         zipWriter.writeStream(dataEntryName, new ByteArrayInputStream(dataBytes));
 
@@ -86,17 +109,57 @@ public class TestDataUtil {
         }
     }
 
+    private static String generateData(final int lines) {
+        final long randomSeed = 234230890234L;
+        final LocalDateTime startDate = LocalDateTime.of(
+                2025, 4, 24, 10, 54, 32, 0);
+        final StringBuilder stringBuilder = new StringBuilder();
+        DataGenerator.buildDefinition()
+                .addFieldDefinition(DataGenerator.randomDateTimeField(
+                        "dateTime",
+                        startDate,
+                        startDate.plusDays(28),
+                        DateTimeFormatter.ISO_DATE_TIME
+                ))
+                .addFieldDefinition(DataGenerator.randomIpV4Field(
+                        "machineIp"))
+                .addFieldDefinition(DataGenerator.fakerField(
+                        "machineMacAddress",
+                        faker -> faker.internet().macAddress()
+                ))
+                .addFieldDefinition(DataGenerator.fakerField(
+                        "firstName",
+                        faker -> faker.name().firstName()))
+                .addFieldDefinition(DataGenerator.fakerField(
+                        "surname",
+                        faker -> faker.name().lastName()))
+                .setDataWriter(FlatDataWriterBuilder.builder()
+                        .delimitedBy(",")
+                        .enclosedBy("\"")
+                        .outputHeaderRow(true)
+                        .build())
+                .consumedBy(stringStream ->
+                        stringStream.forEach(line ->
+                                stringBuilder.append(line).append("n")))
+                .rowCount(lines)
+                .withRandomSeed(randomSeed)
+                .generate();
+
+        return stringBuilder.toString();
+    }
+
     public static void writeFileGroup(final FileGroup fileGroup,
+                                      final int dataLines,
                                       final int entryCount,
                                       final FeedKey feedKey) throws IOException {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
         AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-        writeZip(fileGroup, entryCount, Set.of(feedKey));
+        writeZip(fileGroup, dataLines, entryCount, new AttributeMap(), Set.of(feedKey), null);
     }
 
     public static Path getZipFile(final Path parentDir) {
-        final List<Path> zipPaths = FileUtil.listPaths(parentDir, path ->
+        final List<Path> zipPaths = FileUtil.listChildPaths(parentDir, path ->
                 Files.isRegularFile(path)
                 && path.getFileName().toString().endsWith(".zip"));
         if (zipPaths.isEmpty()) {
@@ -113,7 +176,7 @@ public class TestDataUtil {
      * if not found
      */
     public static AttributeMap getMeta(final Path parentDir) {
-        final List<Path> metaPaths = FileUtil.listPaths(parentDir, path ->
+        final List<Path> metaPaths = FileUtil.listChildPaths(parentDir, path ->
                 Files.isRegularFile(path)
                 && StroomZipFileType.META.hasExtension(path));
         if (metaPaths.isEmpty()) {
@@ -132,7 +195,7 @@ public class TestDataUtil {
     }
 
     public static List<ZipEntryGroup> getEntries(final Path parentDir) {
-        final List<Path> entriesPaths = FileUtil.listPaths(parentDir, path ->
+        final List<Path> entriesPaths = FileUtil.listChildPaths(parentDir, path ->
                 Files.isRegularFile(path)
                 && path.getFileName().toString().endsWith("." + FileGroup.ENTRIES_EXTENSION));
         if (entriesPaths.isEmpty()) {

@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestPreAggregator extends StroomUnitTest {
 
     private static final int MAX_ITEMS_PER_AGGREGATE = 3;
+    public static final FeedKey FEED_KEY = new FeedKey("test-feed", "test-type");
 
     @Mock
     private ProxyServices proxyServices;
@@ -181,7 +182,7 @@ public class TestPreAggregator extends StroomUnitTest {
         for (int i = 0; i < inputZipCount; i++) {
             final Path dir = numberedDirProvider.get();
             final FileGroup fileGroup = new FileGroup(dir);
-            TestDataUtil.writeFileGroup(fileGroup, entryCountPerZip, new FeedKey("test-feed", "test-type"));
+            TestDataUtil.writeFileGroup(fileGroup, 1, entryCountPerZip, FEED_KEY);
             preAggregator.addDir(dir);
         }
 
