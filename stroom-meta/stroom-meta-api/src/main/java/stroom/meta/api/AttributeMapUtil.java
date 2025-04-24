@@ -126,7 +126,6 @@ public class AttributeMapUtil {
 
     public static void read(final Path file, final AttributeMap attributeMap) throws IOException {
         final String data = Files.readString(file, DEFAULT_CHARSET);
-//        final String data = StreamUtil.fileToString(file, DEFAULT_CHARSET);
         read(data, attributeMap);
     }
 
@@ -162,12 +161,12 @@ public class AttributeMapUtil {
 
     /**
      * For when you just want the value for one or more keys.
-     * Saves having to de-serialise the whole file.
+     * Saves having to de-serialise the whole file to an {@link AttributeMap}.
      *
      * @param data The {@link String} to extract values from.
      * @param keys The keys to find values for. Assumed to be already trimmed.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of keys.
+     * returned list will always match that of the supplied keys list.
      */
     public static List<String> readKeys(final String data,
                                         final List<String> keys) throws IOException {
@@ -184,12 +183,12 @@ public class AttributeMapUtil {
 
     /**
      * For when you just want the value for one or more keys.
-     * Saves having to de-serialise the whole file.
+     * Saves having to de-serialise the whole file to an {@link AttributeMap}.
      *
      * @param path The file to extract values from.
      * @param keys The keys to find values for. Assumed to be already trimmed.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of keys.
+     * returned list will always match that of the supplied keys list.
      */
     public static List<String> readKeys(final Path path,
                                         final List<String> keys) throws IOException {

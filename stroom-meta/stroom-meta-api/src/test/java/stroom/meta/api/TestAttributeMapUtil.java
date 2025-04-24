@@ -22,6 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -179,6 +181,8 @@ class TestAttributeMapUtil {
                 .addCase(Tuple.of(data1, List.of("FEED", "TYPE")), List.of("MY_FEED", "EVENTS"))
                 .addCase(Tuple.of(data1, List.of("feed", "type")), List.of("MY_FEED", "EVENTS"))
                 .addCase(Tuple.of(data1, List.of("type", "feed")), List.of("EVENTS", "MY_FEED"))
+                .addCase(Tuple.of(data1, List.of("notHere")), Collections.singletonList(null))
+                .addCase(Tuple.of(data1, List.of("notHere", "notThere")), Arrays.asList(null, null))
                 .build();
     }
 
