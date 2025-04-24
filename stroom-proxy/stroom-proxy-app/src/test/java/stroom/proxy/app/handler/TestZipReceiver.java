@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -53,7 +54,7 @@ public class TestZipReceiver extends StroomUnitTest {
     public static final FeedKey FEED_KEY_1_2 = new FeedKey(FEED_1, TYPE_2);
     public static final FeedKey FEED_KEY_2_1 = new FeedKey(FEED_2, TYPE_1);
     public static final FeedKey FEED_KEY_2_2 = new FeedKey(FEED_2, TYPE_2);
-    public static final int ZIP_ENTRY_COUNT = 2;
+    public static final int ZIP_ENTRY_COUNT_PER_FEED_KEY = 2;
 
     @Mock
     private AttributeMapFilterFactory mockAttributeMapFilterFactory;
@@ -162,7 +163,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final FileGroup fileGroup = new FileGroup(inputDir);
         TestDataUtil.writeZip(
                 fileGroup,
-                ZIP_ENTRY_COUNT,
+                ZIP_ENTRY_COUNT_PER_FEED_KEY,
                 attributeMap,
                 feedKeys,
                 null);
@@ -245,7 +246,7 @@ public class TestZipReceiver extends StroomUnitTest {
             final Path zipFilePath = TestDataUtil.getZipFile(destinationPath);
             final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
             assertThat(proxyZipSnapshot.getItemGroups())
-                    .hasSize(ZIP_ENTRY_COUNT);
+                    .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY);
             // Make sure feed+type is in the meta for each entry
             for (final ItemGroup itemGroup : proxyZipSnapshot.getItemGroups()) {
                 final String feed = itemGroup.meta().content().get(StandardHeaderArguments.FEED);
@@ -258,7 +259,7 @@ public class TestZipReceiver extends StroomUnitTest {
 
             final List<ZipEntryGroup> entries = TestDataUtil.getEntries(destinationPath);
             assertThat(entries)
-                    .hasSize(ZIP_ENTRY_COUNT);
+                    .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY);
             for (final ZipEntryGroup zipEntryGroup : entries) {
                 assertThat(zipEntryGroup.getFeedName())
                         .isEqualTo(FEED_KEY_1_1.feed());
@@ -279,6 +280,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final FeedKey allowedFeedKey = FEED_KEY_1_1;
         final FeedKey droppedFeedKey = FEED_KEY_2_2;
         final Set<FeedKey> feedKeys = Set.of(allowedFeedKey, droppedFeedKey);
+
         // This also creates an entries file, but we ignore that
         final FileGroup fileGroup = createZip(attributeMap, feedKeys);
 
@@ -303,38 +305,91 @@ public class TestZipReceiver extends StroomUnitTest {
                 .hasSize(1);
 
         final Path zipSplitterPath = zipSplitterPaths.getFirst();
-        LOGGER.info(DirectorySnapshot.of(zipSplitterPath).toString());
+        LOGGER.info("Snapshot of {}\n{}", zipSplitterPath, DirectorySnapshot.of(zipSplitterPath));
+        final FileGroup outputFileGroup = new FileGroup(zipSplitterPath);
 
-//        for (final Path destinationPath : destinationPaths) {
-//            LOGGER.info("destinationPath: {}", destinationPath);
-//            final Path zipFilePath = TestDataUtil.getZipFile(destinationPath);
-//            final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
-//            assertThat(proxyZipSnapshot.getItemGroups())
-//                    .hasSize(ZIP_ENTRY_COUNT);
-//            // Make sure feed+type is in the meta for each entry
-//            for (final ItemGroup itemGroup : proxyZipSnapshot.getItemGroups()) {
-//                final String feed = itemGroup.meta().content().get(StandardHeaderArguments.FEED);
-//                final String type = itemGroup.meta().content().get(StandardHeaderArguments.TYPE);
-//                assertThat(feed)
-//                        .isEqualTo(FEED_KEY_1_1.feed());
-//                assertThat(type)
-//                        .isEqualTo(FEED_KEY_1_1.type());
-//            }
-//
-//            final List<ZipEntryGroup> entries = TestDataUtil.getEntries(destinationPath);
-//            assertThat(entries)
-//                    .hasSize(ZIP_ENTRY_COUNT);
-//            for (final ZipEntryGroup zipEntryGroup : entries) {
-//                assertThat(zipEntryGroup.getFeedName())
-//                        .isEqualTo(FEED_KEY_1_1.feed());
-//                assertThat(zipEntryGroup.getTypeName())
-//                        .isEqualTo(FEED_KEY_1_1.type());
-//            }
-//        }
+        final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
+        // The dropped entries are still in the zip at this point, ZipSplitter will remove them,
+        // but they won't be in the entries file.
+        assertThat(proxyZipSnapshot.getItemGroups())
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
 
-        // Single feed zip so no split needed
-//        Mockito.verify(mockZipSplitter, Mockito.never())
-//                .add(Mockito.any());
+        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
+        assertThat(entries)
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY);
+
+        assertThat(entries.stream()
+                .allMatch(entry -> Objects.equals(entry.getFeedKey(), allowedFeedKey)))
+                .isTrue();
+
+        // No feed/type in the meta file, as the zip may contain many different feeds
+        final AttributeMap meta = TestDataUtil.getMeta(zipSplitterPath);
+        assertThat(meta.get(StandardHeaderArguments.FEED))
+                .isNull();
+        assertThat(meta.get(StandardHeaderArguments.TYPE))
+                .isNull();
+    }
+
+    @Test
+    void test_dropOneAllowTwo() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final FeedKey allowedFeedKey1 = FEED_KEY_1_1;
+        final FeedKey allowedFeedKey2 = FEED_KEY_1_2;
+        final FeedKey droppedFeedKey = FEED_KEY_2_2;
+        final Set<FeedKey> allowedFeedKeys = Set.of(allowedFeedKey1, allowedFeedKey2);
+        final Set<FeedKey> feedKeys = Set.of(allowedFeedKey1, allowedFeedKey2, droppedFeedKey);
+
+        // This also creates an entries file, but we ignore that
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        final ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
+        Mockito.doNothing()
+                .when(mockZipSplitter)
+                .add(pathCaptor.capture());
+
+        final List<Path> destinationPaths = doReceive(
+                fileGroup.getZip(),
+                attributeMap,
+                attrMap -> {
+                    final FeedKey feedKey = FeedKey.of(
+                            attrMap.get(StandardHeaderArguments.FEED),
+                            attrMap.get(StandardHeaderArguments.TYPE));
+                    return allowedFeedKeys.contains(feedKey);
+                });
+
+        final List<Path> zipSplitterPaths = pathCaptor.getAllValues();
+
+        // zip needs splitting so not sent to dest
+        assertThat(destinationPaths)
+                .hasSize(0);
+        assertThat(zipSplitterPaths)
+                .hasSize(1);
+
+        final Path zipSplitterPath = zipSplitterPaths.getFirst();
+        LOGGER.info("Snapshot of {}\n{}", zipSplitterPath, DirectorySnapshot.of(zipSplitterPath));
+        final FileGroup outputFileGroup = new FileGroup(zipSplitterPath);
+
+        final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
+        // The dropped entries are still in the zip at this point, ZipSplitter will remove them,
+        // but they won't be in the entries file.
+        assertThat(proxyZipSnapshot.getItemGroups())
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
+
+        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
+        assertThat(entries)
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * allowedFeedKeys.size());
+
+        assertThat(entries.stream()
+                .allMatch(entry -> allowedFeedKeys.contains(entry.getFeedKey())))
+                .isTrue();
+
+        // No feed/type in the meta file, as the zip may contain many different feeds
+        final AttributeMap meta = TestDataUtil.getMeta(zipSplitterPath);
+        assertThat(meta.get(StandardHeaderArguments.FEED))
+                .isNull();
+        assertThat(meta.get(StandardHeaderArguments.TYPE))
+                .isNull();
     }
 
     private List<Path> doReceive(final Path testZipFile,

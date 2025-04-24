@@ -14,8 +14,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 
 @JsonPropertyOrder({
@@ -74,22 +77,10 @@ public class ZipEntryGroup {
         return NullSafe.get(feedKey, FeedKey::feed);
     }
 
-//    public void setFeedName(final String feedName) {
-//        if (!Objects.equals(feedName, getFeedName())) {
-//            this.feedKey = FeedKey.of(feedName, getTypeName());
-//        }
-//    }
-
     @JsonProperty("typeName")
     public String getTypeName() {
         return NullSafe.get(feedKey, FeedKey::type);
     }
-
-//    public void setTypeName(final String typeName) {
-//        if (!Objects.equals(typeName, getTypeName())) {
-//            this.feedKey = FeedKey.of(getFeedName(), typeName);
-//        }
-//    }
 
     @JsonIgnore
     public FeedKey getFeedKey() {
@@ -139,24 +130,46 @@ public class ZipEntryGroup {
         writer.write("\n");
     }
 
-    public static ZipEntryGroup read(final String line) throws IOException {
-        return JsonUtil.readValue(line, ZipEntryGroup.class);
+    public static List<ZipEntryGroup> read(final Path entriesFile) {
+        final FeedKeyInterner interner = FeedKey.createInterner();
+        return read(entriesFile, interner);
+    }
+
+    public static List<ZipEntryGroup> read(final Path entriesFile,
+                                           final FeedKeyInterner feedKeyInterner) {
+        try (Stream<String> linesStream = Files.lines(entriesFile)) {
+            return linesStream.map(line ->
+                            read(line, feedKeyInterner))
+                    .toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static ZipEntryGroup read(final String line,
-                                     final FeedKeyInterner feedKeyInterner) throws IOException {
+                                     final FeedKeyInterner feedKeyInterner) {
         final ZipEntryGroup zipEntryGroup = read(line);
         // Use an interned FeedKey to save on mem use
         feedKeyInterner.consumeInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
         return zipEntryGroup;
     }
 
+    private static ZipEntryGroup read(final String line) {
+        return JsonUtil.readValue(line, ZipEntryGroup.class);
+    }
+
     @JsonIgnore
     public long getTotalUncompressedSize() {
-        return Stream.of(manifestEntry, metaEntry, contextEntry, dataEntry)
-                .filter(Objects::nonNull)
-                .mapToLong(Entry::getUncompressedSize)
-                .sum();
+        return getUncompressedSize(manifestEntry)
+               + getUncompressedSize(metaEntry)
+               + getUncompressedSize(contextEntry)
+               + getUncompressedSize(dataEntry);
+    }
+
+    private static long getUncompressedSize(final Entry entry) {
+        return entry != null
+                ? entry.uncompressedSize
+                : 0;
     }
 
     @Override

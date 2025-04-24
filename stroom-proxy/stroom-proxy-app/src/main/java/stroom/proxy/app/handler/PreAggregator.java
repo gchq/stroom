@@ -168,9 +168,7 @@ public class PreAggregator {
                                 aggregateState.addItem(totalUncompressedSize);
 
                                 final FeedKey existingFeedKey = feedKeyRef.get();
-                                final FeedKey newFeedKey = new FeedKey(
-                                        zipEntryGroup.getFeedName(),
-                                        zipEntryGroup.getTypeName());
+                                final FeedKey newFeedKey = zipEntryGroup.getFeedKey();
                                 if (existingFeedKey != null) {
                                     if (!existingFeedKey.equals(newFeedKey)) {
                                         LOGGER.error("Unexpected feed key mismatch!!!");

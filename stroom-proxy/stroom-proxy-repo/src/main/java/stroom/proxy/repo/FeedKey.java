@@ -63,6 +63,11 @@ public final class FeedKey {
         return h;
     }
 
+    /**
+     * Creates an {@link FeedKeyInterner} to intern FeedKey instances to reduce the
+     * total number of unique {@link FeedKey} instances in memory.
+     * <p>Not thread safe. Only for local use.</p>
+     */
     public static FeedKeyInterner createInterner() {
         return new FeedKeyInterner();
     }

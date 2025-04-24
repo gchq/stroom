@@ -9,10 +9,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,54 +23,7 @@ public class TestZipEntryGroup extends StroomUnitTest {
     private static final int ENTRIES = 100;
 
     @Test
-    void test1() throws IOException {
-        final String data;
-
-        // Write data
-        try (final StringWriter writer = new StringWriter()) {
-            for (int i = 0; i < ENTRIES; i++) {
-                final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(FeedKey.of("test_feed", "test_type"));
-                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123));
-                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
-                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
-                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
-                zipEntryGroup.write(writer);
-            }
-            writer.flush();
-            data = writer.toString();
-            LOGGER.debug("data:\n{}", data);
-        }
-
-        // Read data
-        try (final BufferedReader bufferedReader = new BufferedReader(new StringReader(data))) {
-            String line = bufferedReader.readLine();
-            int i = 0;
-            while (line != null) {
-                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
-                assertThat(zipEntryGroup.getFeedName()).isEqualTo("test_feed");
-                assertThat(zipEntryGroup.getTypeName()).isEqualTo("test_type");
-                assertThat(zipEntryGroup.getManifestEntry().getName()).isEqualTo(i + ".mf");
-                assertThat(zipEntryGroup.getManifestEntry().getUncompressedSize()).isEqualTo(123);
-                assertThat(zipEntryGroup.getMetaEntry().getName()).isEqualTo(i + ".meta");
-                assertThat(zipEntryGroup.getMetaEntry().getUncompressedSize()).isEqualTo(234);
-                assertThat(zipEntryGroup.getContextEntry().getName()).isEqualTo(i + ".ctx");
-                assertThat(zipEntryGroup.getContextEntry().getUncompressedSize()).isEqualTo(345);
-                assertThat(zipEntryGroup.getDataEntry().getName()).isEqualTo(i + ".dat");
-                assertThat(zipEntryGroup.getDataEntry().getUncompressedSize()).isEqualTo(456);
-
-                assertThat(zipEntryGroup.getTotalUncompressedSize())
-                        .isEqualTo(123 + 234 + 345 + 456);
-
-                i++;
-                line = bufferedReader.readLine();
-            }
-
-            assertThat(i).isEqualTo(ENTRIES);
-        }
-    }
-
-    @Test
-    void test2() throws IOException {
+    void test() throws IOException {
         final String data;
         final FeedKeyInterner interner = FeedKey.createInterner();
         final FeedKey feedKey = interner.intern("test_feed", "test_type");
@@ -91,10 +44,9 @@ public class TestZipEntryGroup extends StroomUnitTest {
         }
 
         // Read data
-        try (final BufferedReader bufferedReader = new BufferedReader(new StringReader(data))) {
-            String line = bufferedReader.readLine();
-            int i = 0;
-            while (line != null) {
+        try (Stream<String> linesStream = data.lines()) {
+            AtomicInteger counter = new AtomicInteger();
+            linesStream.forEach(line -> {
                 // Use the interner, so we get the shared FeedKey obj on deser
                 final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, interner);
                 assertThat(zipEntryGroup.getFeedName())
@@ -106,23 +58,30 @@ public class TestZipEntryGroup extends StroomUnitTest {
                 assertThat(zipEntryGroup.getFeedKey())
                         .isEqualTo(feedKey)
                         .isSameAs(feedKey);
-                assertThat(zipEntryGroup.getManifestEntry().getName()).isEqualTo(i + ".mf");
-                assertThat(zipEntryGroup.getManifestEntry().getUncompressedSize()).isEqualTo(123);
-                assertThat(zipEntryGroup.getMetaEntry().getName()).isEqualTo(i + ".meta");
-                assertThat(zipEntryGroup.getMetaEntry().getUncompressedSize()).isEqualTo(234);
-                assertThat(zipEntryGroup.getContextEntry().getName()).isEqualTo(i + ".ctx");
-                assertThat(zipEntryGroup.getContextEntry().getUncompressedSize()).isEqualTo(345);
-                assertThat(zipEntryGroup.getDataEntry().getName()).isEqualTo(i + ".dat");
-                assertThat(zipEntryGroup.getDataEntry().getUncompressedSize()).isEqualTo(456);
+                assertThat(zipEntryGroup.getManifestEntry().getName())
+                        .isEqualTo(counter.get() + ".mf");
+                assertThat(zipEntryGroup.getManifestEntry().getUncompressedSize())
+                        .isEqualTo(123);
+                assertThat(zipEntryGroup.getMetaEntry().getName())
+                        .isEqualTo(counter.get() + ".meta");
+                assertThat(zipEntryGroup.getMetaEntry().getUncompressedSize())
+                        .isEqualTo(234);
+                assertThat(zipEntryGroup.getContextEntry().getName())
+                        .isEqualTo(counter.get() + ".ctx");
+                assertThat(zipEntryGroup.getContextEntry().getUncompressedSize())
+                        .isEqualTo(345);
+                assertThat(zipEntryGroup.getDataEntry().getName())
+                        .isEqualTo(counter.get() + ".dat");
+                assertThat(zipEntryGroup.getDataEntry().getUncompressedSize())
+                        .isEqualTo(456);
 
                 assertThat(zipEntryGroup.getTotalUncompressedSize())
                         .isEqualTo(123 + 234 + 345 + 456);
+                counter.incrementAndGet();
+            });
 
-                i++;
-                line = bufferedReader.readLine();
-            }
-
-            assertThat(i).isEqualTo(ENTRIES);
+            assertThat(counter)
+                    .hasValue(ENTRIES);
         }
     }
 }
