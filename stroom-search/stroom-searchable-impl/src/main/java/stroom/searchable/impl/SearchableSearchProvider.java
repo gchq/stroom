@@ -228,7 +228,11 @@ class SearchableSearchProvider implements SearchProvider {
                 final Instant queryStart = Instant.now();
                 try {
                     // Give the data array to each of our coprocessors
-                    searchable.search(criteria, coprocessors.getFieldIndex(), coprocessors);
+                    searchable.search(
+                            criteria,
+                            coprocessors.getFieldIndex(),
+                            searchRequest.getDateTimeSettings(),
+                            coprocessors);
 
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);

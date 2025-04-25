@@ -39,6 +39,7 @@ public interface PlanBRemoteQueryResource extends RestResource {
 
     String BASE_PATH = "/planb" + ResourcePaths.V1;
     String GET_VALUE_PATH = "/getValue";
+    String GET_STORE_INFO = "/getStoreInfo";
 
     @POST
     @Path(GET_VALUE_PATH)
@@ -46,4 +47,12 @@ public interface PlanBRemoteQueryResource extends RestResource {
             summary = "Gets a value from a remote Plan B store.",
             operationId = "planBQueryGetValue")
     PlanBValue getValue(GetRequest request);
+
+
+    @POST
+    @Path(GET_STORE_INFO)
+    @Operation(
+            summary = "Gets Plan B store info.",
+            operationId = "getPlanBStoreInfo")
+    PlanBShardInfoResponse getStoreInfo(PlanBShardInfoRequest request);
 }

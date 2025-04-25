@@ -219,6 +219,11 @@ public class DocumentTypeRegistry {
             "ProcessorTasks",
             "Processor Tasks",
             SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType PLAN_B_SHARD_INFO_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "PlanBShards",
+            "Plan B Shards",
+            SvgImage.DOCUMENT_SEARCHABLE);
 
 
     static {
@@ -264,6 +269,7 @@ public class DocumentTypeRegistry {
         put(STREAM_STORE_DOCUMENT_TYPE);
         put(INDEX_SHARDS_DOCUMENT_TYPE);
         put(PROCESSOR_TASK_DOCUMENT_TYPE);
+        put(PLAN_B_SHARD_INFO_DOCUMENT_TYPE);
     }
 
     private static void put(final DocumentType documentType) {

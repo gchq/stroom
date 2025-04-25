@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.pipeline.refdata.ReferenceDataServiceImpl;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.FileTransferClientImpl;
@@ -29,6 +30,7 @@ import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
+import stroom.planb.impl.data.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
@@ -39,6 +41,7 @@ import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.language.functions.StateProvider;
+import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -66,6 +69,11 @@ public class PlanBModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(PlanBDocCacheImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(PlanBShardInfoServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State
         bind(PlanBDocStore.class).to(PlanBDocStoreImpl.class);
