@@ -4757,6 +4757,12 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "in" : "header",
+          "name" : "synchroniseMerge",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "requestBody" : {
           "content" : {
@@ -7208,6 +7214,34 @@
         },
         "summary" : "Update an state store doc",
         "tags" : [ "State Stores" ]
+      }
+    },
+    "/planb/v1/getStoreInfo" : {
+      "post" : {
+        "operationId" : "getPlanBStoreInfo",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanBShardInfoRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBShardInfoResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets Plan B store info.",
+        "tags" : [ "Plan B Query" ]
       }
     },
     "/planb/v1/getValue" : {
@@ -11801,6 +11835,9 @@
           },
           "snapshotSettings" : {
             "$ref" : "#/components/schemas/SnapshotSettings"
+          },
+          "synchroniseMerge" : {
+            "type" : "boolean"
           },
           "type" : {
             "type" : "string"
@@ -18592,6 +18629,31 @@
           },
           "version" : {
             "type" : "string"
+          }
+        }
+      },
+      "PlanBShardInfoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "PlanBShardInfoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
           }
         }
       },
