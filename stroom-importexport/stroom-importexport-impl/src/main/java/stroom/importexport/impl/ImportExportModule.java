@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.importexport.api.ImportExportActionHandlersApi;
 import stroom.importexport.api.ImportExportDocumentEventLog;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 

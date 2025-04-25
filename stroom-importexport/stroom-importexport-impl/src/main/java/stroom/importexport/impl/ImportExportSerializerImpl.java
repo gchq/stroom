@@ -26,6 +26,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;

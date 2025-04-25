@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.importexport.impl;
+package stroom.importexport.api;
 
 import stroom.docref.DocRef;
-import stroom.importexport.api.ExportSummary;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 
@@ -33,7 +32,7 @@ public interface ImportExportSerializer {
      * @param dir             directory containing serialized DocRef items, e.g. files created by
      *                        ImportExportSerializer.write()
      * @param importStateList
-     * @param importMode
+     * @param importSettings
      * @return The set of all DocRef roots, typically this is the Explorer root DocRef plus any DocRefs
      * not held in the Explorer tree.
      */
@@ -47,7 +46,6 @@ public interface ImportExportSerializer {
      * @param docRefs         Set of the DocRefs and root folder DocRefs (as per that returned by
      *                        ImportExportSerializer.read()
      * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
-     * @param messageList
      * @return
      */
     ExportSummary write(final Path dir,
