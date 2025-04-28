@@ -15,6 +15,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj.core
     testImplementation libs.junit.jupiter.api
+    testImplementation libs.mockito.core
     testImplementation libs.vavr
     testImplementation libs.commons.io
     testImplementation libs.guice

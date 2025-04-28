@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @JsonPropertyOrder({
@@ -138,7 +139,9 @@ public class ZipEntryGroup {
     public static List<ZipEntryGroup> read(final Path entriesFile,
                                            final FeedKeyInterner feedKeyInterner) {
         try (Stream<String> linesStream = Files.lines(entriesFile)) {
-            return linesStream.map(line ->
+            return linesStream
+                    .filter(Predicate.not(String::isBlank))
+                    .map(line ->
                             read(line, feedKeyInterner))
                     .toList();
         } catch (IOException e) {

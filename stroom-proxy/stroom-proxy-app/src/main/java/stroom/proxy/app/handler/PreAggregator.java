@@ -573,17 +573,10 @@ public class PreAggregator {
     private AggregateState createAggregate(final FeedKey feedKey) {
         try {
             // Make a dir name.
-            final StringBuilder sb = new StringBuilder();
-            if (feedKey.feed() != null) {
-                sb.append(DirUtil.makeSafeName(feedKey.feed()));
-            }
-            sb.append("__");
-            if (feedKey.type() != null) {
-                sb.append(DirUtil.makeSafeName(feedKey.type()));
-            }
+            final String dirName = DirUtil.makeSafeName(feedKey);
 
             // Get or create the aggregate dir.
-            final Path aggregateDir = aggregatingDir.resolve(sb.toString());
+            final Path aggregateDir = aggregatingDir.resolve(dirName);
             LOGGER.debug(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
 
             // Ensure the dir exists.

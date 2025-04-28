@@ -85,8 +85,7 @@ public class TestZipReceiver extends StroomUnitTest {
 
         final ReceiveResult receiveResult = receive(
                 testZipFile,
-                attributeMap,
-                buffer);
+                attributeMap);
         assertThat(receiveResult.feedGroups().size()).isEqualTo(1);
         assertThat(receiveResult.receivedBytes()).isEqualTo(459);
     }
@@ -104,8 +103,7 @@ public class TestZipReceiver extends StroomUnitTest {
 
         final ReceiveResult receiveResult = receive(
                 testZipFile,
-                attributeMap,
-                buffer);
+                attributeMap);
         assertThat(receiveResult.feedGroups().size()).isEqualTo(2);
         assertThat(receiveResult.receivedBytes()).isEqualTo(842);
 
@@ -130,15 +128,13 @@ public class TestZipReceiver extends StroomUnitTest {
     }
 
     private ReceiveResult receive(final Path testZipFile,
-                                  final AttributeMap attributeMap,
-                                  final byte[] buffer) throws IOException {
+                                  final AttributeMap attributeMap) throws IOException {
         final Path receivedZipFile = Files.createTempFile("test", ".zip");
         try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(testZipFile))) {
             return ZipReceiver.receiveZipStream(
                     inputStream,
                     attributeMap,
-                    receivedZipFile,
-                    buffer);
+                    receivedZipFile);
         }
     }
 

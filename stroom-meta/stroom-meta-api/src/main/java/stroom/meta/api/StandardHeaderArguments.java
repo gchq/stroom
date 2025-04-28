@@ -20,6 +20,10 @@ import java.util.Set;
 
 public interface StandardHeaderArguments {
 
+    /**
+     * Intended to be set to a new GUID on receipt by the first proxy/stroom instance
+     * then never changed.
+     */
     String GUID = "GUID";
     String COMPRESSION = "Compression";
     String COMPRESSION_ZIP = "ZIP";
@@ -41,20 +45,52 @@ public interface StandardHeaderArguments {
 
     String USER_AGENT = "user-agent";
 
+    /**
+     * The IP address of the client that sent data to the FIRST proxy/stroom instance
+     * in the chain.
+     */
     String REMOTE_ADDRESS = "RemoteAddress";
+    /**
+     * The hostname of the client that sent data to the FIRST proxy/stroom instance
+     * in the chain.
+     */
     String REMOTE_HOST = "RemoteHost";
+    /**
+     * To be set to the current time by EACH proxy/stroom instance on receipt.
+     */
     String RECEIVED_TIME = "ReceivedTime";
     /**
      * A comma delimited list of ReceivedTime values, oldest first that includes the
      * ReceivedTime value as its last item.
      */
     String RECEIVED_TIME_HISTORY = "ReceivedTimeHistory";
+    /**
+     * A comma delimited list of hostnames of EACH proxy/stroom instance that have received
+     * this data. The most recent host is the last item in the list.
+     */
     String RECEIVED_PATH = "ReceivedPath";
     String EFFECTIVE_TIME = "EffectiveTime";
+    /**
+     * If an X509 certificate is present on a request, this will be set with the subject
+     * distinguished name from the certificate.
+     */
     String REMOTE_DN = "RemoteDN";
+    /**
+     * If an X509 certificate is present on a request, this will be set with the expiry
+     * datetime of the certificate in Stroom normal date format.
+     */
     String REMOTE_CERT_EXPIRY = "RemoteCertExpiry";
+    /**
+     * Set to the name of the file when uploading file based data to stroom.
+     */
     String REMOTE_FILE = "RemoteFile";
+    /**
+     * To be set to a unique receipt ID by EACH proxy/stroom instance on receipt.
+     */
     String RECEIPT_ID = "ReceiptId";
+    /**
+     * To have ReceiptId appended to it by EACH proxy/stroom instance on receipt.
+     */
     String RECEIPT_ID_PATH = "ReceiptIdPath";
     /**
      * The unique message from an AWS SQS queue.

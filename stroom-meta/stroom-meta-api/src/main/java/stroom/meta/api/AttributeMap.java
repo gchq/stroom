@@ -110,7 +110,23 @@ public class AttributeMap extends CIStringHashMap {
             }
             return super.put(key, val);
         } else {
-            return null;
+            return super.get(key);
+        }
+    }
+
+    /**
+     * Appends the time to the end of the existing value (delimited by {@link AttributeMapUtil#VALUE_DELIMITER})
+     * or sets the value if not present, but ONLY if item is not already present at the end of the current value.
+     * instant is converted to a normal date time string.
+     *
+     * @return The previous value for the key.
+     */
+    public String appendDateTimeIfDifferent(final String key, final Instant instant) {
+        if (instant != null) {
+            final String dateStr = DateUtil.createNormalDateTimeString(instant.toEpochMilli());
+            return appendItemIfDifferent(key, dateStr);
+        } else {
+            return super.get(key);
         }
     }
 
@@ -137,7 +153,52 @@ public class AttributeMap extends CIStringHashMap {
             }
             return super.put(key, val);
         } else {
-            return null;
+            return super.get(key);
+        }
+    }
+
+    /**
+     * Appends the time to the end of the existing value (delimited by {@link AttributeMapUtil#VALUE_DELIMITER})
+     * or sets the value if not present, but ONLY if item is not already present at the end of the current value.
+     * instant is converted to a normal date time string
+     *
+     * @return The previous value for the key.
+     */
+    public String appendItemIfDifferent(final String key, final String item) {
+        if (item != null) {
+            String normalisedItem = item.trim();
+            if (key != null && StandardHeaderArguments.DATE_HEADER_KEYS.contains(key)) {
+                normalisedItem = DateUtil.normaliseDate(item, true);
+            }
+            String val = super.get(key);
+            if (NullSafe.isEmptyString(val)) {
+                val = normalisedItem;
+                return super.put(key, val);
+            } else {
+                boolean doAppend = false;
+                if (val.contains(AttributeMapUtil.VALUE_DELIMITER)) {
+                    // Multiple items, check last one
+                    if (!val.endsWith(AttributeMapUtil.VALUE_DELIMITER + item)) {
+                        doAppend = true;
+                    }
+                } else {
+                    // Single item
+                    if (!Objects.equals(val, item)) {
+                        doAppend = true;
+                    }
+                }
+                if (doAppend) {
+                    if (!val.endsWith(AttributeMapUtil.VALUE_DELIMITER)) {
+                        val += AttributeMapUtil.VALUE_DELIMITER;
+                    }
+                    val += normalisedItem;
+                    return super.put(key, val);
+                } else {
+                    return super.get(key);
+                }
+            }
+        } else {
+            return super.get(key);
         }
     }
 

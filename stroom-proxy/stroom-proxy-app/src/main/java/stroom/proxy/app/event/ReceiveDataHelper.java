@@ -2,7 +2,6 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.AttributeMapFilterFactory;
 import stroom.proxy.repo.CSVFormatter;
@@ -24,6 +23,8 @@ import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
 
 public class ReceiveDataHelper {
 
@@ -53,28 +54,24 @@ public class ReceiveDataHelper {
     public UniqueId process(final HttpServletRequest request,
                             final Handler consumeHandler,
                             final Handler dropHandler) throws StroomStreamException {
-        final long startTimeMs = System.currentTimeMillis();
-
-        // Create attribute map from headers.
-        final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
-
+        final Instant startTime = Instant.now();
         // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
         final UniqueId receiptId = receiptIdGenerator.generateId();
 
+        // Create attribute map from headers.
+        final AttributeMap attributeMap = AttributeMapUtil.create(
+                request,
+                certificateExtractor,
+                startTime,
+                receiptId);
         try {
+            // TODO convert to DW Metrics in 7.9+
             Metrics.measure("ProxyRequestHandler - stream", () -> {
-//                final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-
                 // Authorise request.
                 requestAuthenticator.authenticate(request, attributeMap);
-//                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
+                // TODO convert to DW Metrics in 7.9+
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
-//                    // Validate the supplied attributes.
-//                    AttributeMapValidator.validate(
-//                            attributeMap,
-//                            receiveDataConfig::getMetaTypes);
-
                     // Test to see if we are going to accept this stream or drop the data.
                     if (attributeMapFilter.filter(attributeMap)) {
                         consumeHandler.handle(request, attributeMap, receiptId);
@@ -85,19 +82,20 @@ public class ReceiveDataHelper {
             });
         } catch (final Throwable e) {
             // Add the proxy request id to help error diagnosis.
-            final String receiptIdStr = receiptId.toString();
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
-
+            final AttributeMap errAttributeMap = AttributeMapUtil.create(
+                    request,
+                    certificateExtractor,
+                    startTime,
+                    receiptId);
             final StroomStreamException stroomStreamException = StroomStreamException.create(
-                    e, AttributeMapUtil.create(request, certificateExtractor));
+                    e, errAttributeMap);
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
             LOGGER.debug(() -> LogUtil.message("\"handleException()\",{},\"{}\"",
                     CSVFormatter.format(status.getAttributeMap(), true),
                     CSVFormatter.escape(stroomStreamException.getMessage())));
 
-            final long duration = System.currentTimeMillis() - startTimeMs;
+            final long durationMs = System.currentTimeMillis() - startTime.toEpochMilli();
             final StroomStatusCode stroomStatusCode = status.getStroomStatusCode();
             final EventType eventType = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(stroomStatusCode)
                     ? EventType.REJECT
@@ -109,9 +107,9 @@ public class ReceiveDataHelper {
                     eventType,
                     request.getRequestURI(),
                     stroomStatusCode,
-                    receiptIdStr,
+                    receiptId.toString(),
                     -1,
-                    duration,
+                    durationMs,
                     e.getMessage());
 
             throw stroomStreamException;

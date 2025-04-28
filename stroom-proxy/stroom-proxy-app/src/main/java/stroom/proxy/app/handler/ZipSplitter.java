@@ -6,10 +6,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
-import stroom.util.NullSafe;
-import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -29,13 +26,12 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -73,6 +69,7 @@ import java.util.stream.Stream;
 public class ZipSplitter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipSplitter.class);
+//    private static final String SPLIT_DIR_PREFIX = "split-";
 
     private final DirQueue splittingQueue;
     private final NumberedDirProvider splitZipDirProvider;
@@ -96,6 +93,7 @@ public class ZipSplitter {
                 splittingQueue::next,
                 sourceDir ->
                         splitZipByFeed(sourceDir, splitZipDirProvider, getDestination()));
+
         proxyServices.addParallelExecutor(
                 "Zip split by feed input queue transfer",
                 () -> dirQueueTransfer,
@@ -117,7 +115,7 @@ public class ZipSplitter {
     }
 
     /**
-     * Pkg private to ease testing
+     * Pkg private to ease testing. splitDirConsumer also there to aid testing.
      */
     static void splitZipByFeed(final Path sourceDir,
                                final NumberedDirProvider splitZipDirProvider,
@@ -131,6 +129,8 @@ public class ZipSplitter {
             // Read in the attribute map from the client's headers
             final AttributeMap attributeMap = readMetaFile(fileGroup.getMeta());
 
+            // These are all the entries in the zip that have been allowed by the attrMapFilter,
+            // so may be less than the number of entries in the zip
             final Map<FeedKey, List<ZipEntryGroup>> allowedEntries = readEntriesFile(fileGroup.getEntries());
             LOGGER.debug(() -> LogUtil.message("allowedEntries size: {}", allowedEntries.size()));
 
@@ -148,13 +148,14 @@ public class ZipSplitter {
                         groupDir, sourceDir, splitDirConsumer);
                 splitDirConsumer.accept(groupDir);
             }
+            // Passed all the splits on, so delete the source
+            deleteDir(sourceDir);
         } catch (Exception e) {
             LOGGER.error("Error splitting zip in {}: {}", sourceDir, LogUtil.exceptionMessage(e), e);
             throw new RuntimeException(e);
         } finally {
-            // We have sent all the splits downstream, so delete all the sources
-            deleteDir(splitZipDir); // should be empty now
-            deleteDir(sourceDir);
+            // Whatever happens delete the splits as they can always be re-created from source.
+            FileUtil.deleteDir(splitZipDir);
         }
     }
 
@@ -166,26 +167,19 @@ public class ZipSplitter {
         return attributeMap;
     }
 
-    private static Map<FeedKey, List<ZipEntryGroup>> readEntriesFile(final Path entriesFile)
-            throws IOException {
-
+    private static Map<FeedKey, List<ZipEntryGroup>> readEntriesFile(final Path entriesFile) {
         // Read in the allowed (i.e. passed feed status check) zip entry groups.
         // Use the interner so common FeedKeys use the same instance
-        final FeedKeyInterner interner = FeedKey.createInterner();
-        final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
         if (Files.isRegularFile(entriesFile)) {
-            try (Stream<String> lines = Files.lines(entriesFile)) {
-                lines.filter(NullSafe::isNonBlankString)
-                        .map(ThrowingFunction.unchecked(line -> ZipEntryGroup.read(line, interner)))
-                        .forEach(zipEntryGroup ->
-                                allowed.computeIfAbsent(zipEntryGroup.getFeedKey(), k -> new ArrayList<>())
-                                        .add(zipEntryGroup));
-            }
+            return ZipEntryGroup.read(entriesFile)
+                    .stream()
+                    .collect(Collectors.groupingBy(
+                            ZipEntryGroup::getFeedKey,
+                            Collectors.toList()));
         } else {
             throw new RuntimeException(LogUtil.message(
                     "Entries file {} not found. Should not get here with no entries file", entriesFile));
         }
-        return allowed;
     }
 
     static List<Path> splitZip(final Path zipFilePath,
@@ -193,22 +187,24 @@ public class ZipSplitter {
                                final Map<FeedKey, List<ZipEntryGroup>> allowedEntries,
                                final Path outputParentDir) throws IOException {
         LOGGER.debug("splitZip() - START zipFilePath: {}, outputParentDir: {}", zipFilePath, outputParentDir);
-        final byte[] buffer = LocalByteBuffer.get();
         final List<Path> groupDirs = new ArrayList<>();
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         long id = 1;
         try (final ZipFile zipFile = ZipUtil.createZipFile(zipFilePath)) {
-            // Only the entries in the map are to be included in the splits
+            // Only the entries in the map are to be included in the splits, so iterate over it
+            // then copy all the entries for that feedKey from the source zip into the dest zip.
+            final byte[] buffer = LocalByteBuffer.get();
             for (final Map.Entry<FeedKey, List<ZipEntryGroup>> entry : allowedEntries.entrySet()) {
                 final FeedKey feedKey = entry.getKey();
                 final List<ZipEntryGroup> zipEntryGroups = entry.getValue();
-                final String name = NumericFileNameUtil.create(id++);
+//                final String name = SPLIT_DIR_PREFIX + NumericFileNameUtil.create(id++);
+                final String name = DirUtil.makeSafeName(feedKey);
                 final Path groupDir = outputParentDir.resolve(name);
                 Files.createDirectory(groupDir);
                 final FileGroup fileGroup = new FileGroup(groupDir);
                 groupDirs.add(groupDir);
 
-                writeZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup, buffer);
+                writeSplitToZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup, buffer);
             }
         }
         LOGGER.debug(() -> LogUtil.message(
@@ -218,47 +214,47 @@ public class ZipSplitter {
         return groupDirs;
     }
 
-    private static void writeZip(final ZipFile zip,
-                                 final List<ZipEntryGroup> zipEntryGroupsIn,
-                                 final FeedKey feedKey,
-                                 final AttributeMap attributeMap,
-                                 final FileGroup fileGroup,
-                                 final byte[] buffer) throws IOException {
-        LOGGER.debug("writeZip() - START feedKey: {}, fileGroup: {}", feedKey, fileGroup);
+    private static void writeSplitToZip(final ZipFile sourceZip,
+                                        final List<ZipEntryGroup> zipEntryGroupsIn,
+                                        final FeedKey feedKey,
+                                        final AttributeMap attributeMap,
+                                        final FileGroup destFileGroup,
+                                        final byte[] buffer) throws IOException {
+        LOGGER.debug("writeZip() - START feedKey: {}, destFileGroup: {}", feedKey, destFileGroup);
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         try {
             // Write zip.
             final AtomicInteger count = new AtomicInteger(0);
-            final Path entriesFile = fileGroup.getEntries();
+            final Path entriesFile = destFileGroup.getEntries();
             try (final Writer entryWriter = Files.newBufferedWriter(entriesFile)) {
-                try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
+                try (final ProxyZipWriter destZipWriter = new ProxyZipWriter(destFileGroup.getZip(), buffer)) {
                     for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
                         final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey);
                         final String baseNameOut = NumericFileNameUtil.create(count.incrementAndGet());
                         LOGGER.trace("feedKey: {}, baseNameOut: {}, zipEntryGroupIn: {} => zipEntryGroupOut: {}",
                                 feedKey, baseNameOut, zipEntryGroupIn, zipEntryGroupOut);
                         zipEntryGroupOut.setManifestEntry(
-                                addUnchangedEntry(zip,
-                                        zipWriter,
+                                addUnchangedEntry(sourceZip,
+                                        destZipWriter,
                                         zipEntryGroupIn.getManifestEntry(),
                                         baseNameOut,
                                         StroomZipFileType.MANIFEST));
                         zipEntryGroupOut.setMetaEntry(
-                                addMetaEntry(zip,
-                                        zipWriter,
+                                addMetaEntry(sourceZip,
+                                        destZipWriter,
                                         zipEntryGroupIn.getMetaEntry(),
                                         baseNameOut,
                                         StroomZipFileType.META,
                                         attributeMap));
                         zipEntryGroupOut.setContextEntry(
-                                addUnchangedEntry(zip,
-                                        zipWriter,
+                                addUnchangedEntry(sourceZip,
+                                        destZipWriter,
                                         zipEntryGroupIn.getContextEntry(),
                                         baseNameOut,
                                         StroomZipFileType.CONTEXT));
                         zipEntryGroupOut.setDataEntry(
-                                addUnchangedEntry(zip,
-                                        zipWriter,
+                                addUnchangedEntry(sourceZip,
+                                        destZipWriter,
                                         zipEntryGroupIn.getDataEntry(),
                                         baseNameOut,
                                         StroomZipFileType.DATA));
@@ -272,10 +268,9 @@ public class ZipSplitter {
 
             // Write meta.
             AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
-            AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-            LOGGER.debug(() -> LogUtil.message(
-                    "writeZip() - FINISH feedKey: {}, fileGroup: {}, count: {}, duration: {}",
-                    feedKey, fileGroup, count, timer));
+            AttributeMapUtil.write(attributeMap, destFileGroup.getMeta());
+            LOGGER.debug("writeZip() - FINISH feedKey: {}, destFileGroup: {}, count: {}, duration: {}",
+                    feedKey, destFileGroup, count, timer);
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
