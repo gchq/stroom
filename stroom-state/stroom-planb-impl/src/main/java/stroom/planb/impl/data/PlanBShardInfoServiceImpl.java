@@ -96,6 +96,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final StatePaths statePaths;
     private final PlanBDocStore planBDocStore;
+    private final ShardManager shardManager;
 
     @Inject
     public PlanBShardInfoServiceImpl(final SecurityContext securityContext,
@@ -107,7 +108,8 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final StatePaths statePaths,
-                                     final PlanBDocStore planBDocStore) {
+                                     final PlanBDocStore planBDocStore,
+                                     final ShardManager shardManager) {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.nodeServiceProvider = nodeServiceProvider;
@@ -118,6 +120,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.statePaths = statePaths;
         this.planBDocStore = planBDocStore;
+        this.shardManager = shardManager;
     }
 
     @Override
@@ -335,6 +338,12 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                 values[i] = type;
             } else if (field.equals(PlanBShardInfoFields.BYTE_SIZE_FIELD.getFldName())) {
                 values[i] = String.valueOf(FileUtil.getByteSize(dir));
+            } else if (field.equals(PlanBShardInfoFields.SETTINGS_FIELD.getFldName()) &&
+                       optionalPlanBDoc.isPresent()) {
+                final Shard shard = shardManager.getShardForMapName(optionalPlanBDoc.get().getName());
+                if (shard != null) {
+                    values[i] = shard.getInfo();
+                }
             }
         }
 

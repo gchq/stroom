@@ -315,4 +315,27 @@ class LocalShard implements Shard {
     public PlanBDoc getDoc() {
         return doc;
     }
+
+    @Override
+    public String getInfo() {
+        try {
+            lock.lock();
+            try {
+                // Open if needed.
+                if (!open) {
+                    open();
+                    open = true;
+                }
+
+                return db.getInfo();
+
+            } finally {
+                lock.unlock();
+            }
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        return null;
+    }
 }

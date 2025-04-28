@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-interface Shard {
+public interface Shard {
 
     String SNAPSHOT_INFO_FILE_NAME = "snapshot.txt";
 
@@ -63,4 +63,11 @@ interface Shard {
      * @return The Plan B doc associated with this shard.
      */
     PlanBDoc getDoc();
+
+    /**
+     * Get information about the environment and associated databases as a JSON string.
+     *
+     * @return Information about the environment and associated databases as a JSON string.
+     */
+    String getInfo();
 }
