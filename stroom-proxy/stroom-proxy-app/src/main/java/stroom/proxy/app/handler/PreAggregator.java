@@ -131,7 +131,9 @@ public class PreAggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-        LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
+        if (movedSplitCount.get() > 0) {
+            LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
+        }
 
         // Periodically close old aggregates.
         // This need to be started at the end of the ctor, so we know that everything above can
@@ -144,7 +146,7 @@ public class PreAggregator {
     }
 
     private void initialiseAggregateStateMap() {
-        LOGGER.info("Initialising the state of existing pre-aggregates");
+        LOGGER.debug("Initialising the state of existing pre-aggregates");
         // Read all the current aggregates and establish the aggregation state.
         try (final Stream<Path> stream = Files.list(aggregatingDir)) {
             // Look at each aggregate dir.
@@ -197,8 +199,10 @@ public class PreAggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-        LOGGER.info(() ->
-                LogUtil.message("Completed initialisation of {} pre-aggregates", aggregateStateMap.size()));
+        final int size = aggregateStateMap.size();
+        if (size > 0) {
+            LOGGER.info("Completed initialisation of {} pre-aggregates", size);
+        }
     }
 
     private FeedKey readFeedKeyFromMeta(final FileGroup fileGroup) throws IOException {
