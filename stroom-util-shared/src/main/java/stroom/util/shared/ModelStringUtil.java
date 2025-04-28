@@ -361,8 +361,11 @@ public final class ModelStringUtil {
                                             + " and you number was " + formatCsv(num) + ")");
         }
         if (num < Integer.MIN_VALUE) {
-            throw new NumberFormatException(str + " is too small for an int.  (Min value "
-                                            + formatCsv(Integer.MIN_VALUE) + " and you number was " + formatCsv(num) + ")");
+            throw new NumberFormatException(str + " is too small for an int.  (Min value " +
+                                            formatCsv(Integer.MIN_VALUE) +
+                                            " and you number was " +
+                                            formatCsv(num) +
+                                            ")");
         }
         return num.intValue();
     }
