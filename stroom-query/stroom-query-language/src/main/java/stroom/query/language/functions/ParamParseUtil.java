@@ -55,7 +55,7 @@ public class ParamParseUtil {
                 function = (Function) param;
             } else if (!(param instanceof ValString)) {
                 throw new ParseException("String or function expected as " + getPos(pos) + " argument of '" +
-                        functionName + "' function", 0);
+                                         functionName + "' function", 0);
             } else {
                 function = new StaticValueFunction((Val) param);
             }
@@ -75,7 +75,7 @@ public class ParamParseUtil {
                 if (num != null) {
                     if (positive && num <= 0) {
                         throw new ParseException("Positive number expected as " + getPos(pos) + " argument of '" +
-                                functionName + "' function", 0);
+                                                 functionName + "' function", 0);
                     }
                     return num;
                 }
@@ -83,6 +83,20 @@ public class ParamParseUtil {
         }
         throw new ParseException(
                 "Number expected as " + getPos(pos) + " argument of '" + functionName + "' function", 0);
+    }
+
+    public static boolean parseBooleanParam(final Param[] params,
+                                            final int pos,
+                                            final String functionName) throws ParseException {
+        if (params.length > pos) {
+            final Param param = params[pos];
+            if (!(param instanceof ValBoolean)) {
+                throw new ParseException(
+                        "Boolean expected as " + getPos(pos) + " argument of '" + functionName + "' function", 0);
+            }
+            return ((ValBoolean) param).toBoolean();
+        }
+        return false;
     }
 
     private static String getPos(int pos) {
