@@ -17,8 +17,10 @@
 package stroom.util.zip;
 
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.io.ByteSize;
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
@@ -40,6 +42,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -94,7 +97,7 @@ public final class ZipUtil {
     }
 
     public static void zip(final Path dir,
-                            final ZipArchiveOutputStream zipOutputStream) {
+                           final ZipArchiveOutputStream zipOutputStream) {
         zip(dir, zipOutputStream, path -> true, name -> true);
     }
 
@@ -182,5 +185,26 @@ public final class ZipUtil {
             }
         }
         return pathList;
+    }
+
+    /**
+     * Get the uncompressed size of the entry, if known.
+     */
+    public static Optional<ByteSize> getEntryUncompressedSize(final ArchiveEntry archiveEntry) {
+        return Optional.ofNullable(archiveEntry)
+                .map(ArchiveEntry::getSize)
+                .filter(size -> size != ArchiveEntry.SIZE_UNKNOWN)
+                .map(ByteSize::ofBytes);
+    }
+
+    /**
+     * @return True if the uncompressed size of the entry is known.
+     */
+    public static boolean hasKnownUncompressedSize(final ArchiveEntry archiveEntry) {
+        if (archiveEntry == null) {
+            return false;
+        } else {
+            return archiveEntry.getSize() != ArchiveEntry.SIZE_UNKNOWN;
+        }
     }
 }
