@@ -69,6 +69,9 @@ public class ZipWriter implements AutoCloseable {
         }
     }
 
+    /**
+     * @return The number of bytes read.
+     */
     public long writeString(final String name,
                             final String string) throws IOException {
         return writeStream(
@@ -76,11 +79,17 @@ public class ZipWriter implements AutoCloseable {
                 new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8)));
     }
 
+    /**
+     * @return The number of bytes read.
+     */
     public long writeStream(final String name,
                             final InputStream inputStream) throws IOException {
         return writeStream(new ZipArchiveEntry(name), inputStream);
     }
 
+    /**
+     * @return The number of bytes read.
+     */
     private long writeStream(final ZipArchiveEntry zipArchiveEntry,
                              final InputStream inputStream) throws IOException {
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
