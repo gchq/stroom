@@ -32,7 +32,11 @@ public abstract class KV<K, V> {
                '}';
     }
 
-    public static abstract class AbstractKVBuilder<T, B extends AbstractKVBuilder<T, ?, K, V>, K, V>
+
+    // --------------------------------------------------------------------------------
+
+
+    public abstract static class AbstractKVBuilder<T, B extends AbstractKVBuilder<T, ?, K, V>, K, V>
             extends AbstractBuilder<T, B> {
 
         protected K key;
