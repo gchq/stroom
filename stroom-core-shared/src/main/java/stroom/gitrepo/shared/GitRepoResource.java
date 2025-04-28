@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -52,4 +53,12 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
             operationId = "updateGitRepo")
     GitRepoDoc update(@PathParam("uuid") String uuid,
                      @Parameter(description = "doc", required = true) GitRepoDoc doc);
+
+    @POST
+    @Path("/pushToGit")
+    @Operation(
+            summary = "Push items to Git",
+            operationId = "pushToGit")
+    GitRepoPushResponse pushToGit(
+            @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
 }

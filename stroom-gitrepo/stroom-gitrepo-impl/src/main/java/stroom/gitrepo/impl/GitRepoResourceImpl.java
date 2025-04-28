@@ -21,23 +21,36 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.gitrepo.shared.GitRepoPushResponse;
 import stroom.gitrepo.shared.GitRepoResource;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.io.IOException;
 
 @AutoLogged
 class GitRepoResourceImpl implements GitRepoResource {
 
     private final Provider<GitRepoStore> gitRepoStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<GitRepoStorageService> gitRepoStorageServiceProvider;
+
+    /**
+     * Logger so we can follow what is going on.
+     */
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoResourceImpl.class);
 
     @Inject
     GitRepoResourceImpl(final Provider<GitRepoStore> gitRepoStoreProvider,
-                        final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                        final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                        final Provider<GitRepoStorageService> gitRepoStorageServiceProvider) {
         this.gitRepoStoreProvider = gitRepoStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.gitRepoStorageServiceProvider = gitRepoStorageServiceProvider;
     }
 
     @Override
@@ -51,6 +64,20 @@ class GitRepoResourceImpl implements GitRepoResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(gitRepoStoreProvider.get(), doc);
+    }
+
+    @Override
+    public GitRepoPushResponse pushToGit(final GitRepoDoc gitRepoDoc) {
+        GitRepoPushResponse response;
+        try {
+            LOGGER.error("Pushing Git repo: '{}'", gitRepoDoc);
+            gitRepoStorageServiceProvider.get().exportDoc(gitRepoDoc);
+            response = new GitRepoPushResponse(true, "Pushed ok");
+        }
+        catch (IOException e) {
+            response = new GitRepoPushResponse(false, e.getMessage());
+        }
+        return response;
     }
 
     private DocRef getDocRef(final String uuid) {

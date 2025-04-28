@@ -17,12 +17,16 @@
 
 package stroom.gitrepo.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.gitrepo.shared.GitRepoResource;
+import stroom.task.client.TaskMonitorFactory;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -30,12 +34,18 @@ import com.gwtplatform.mvp.client.View;
 
 public class GitRepoSettingsPresenter
         extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
-        implements DirtyUiHandlers {
+        implements GitRepoSettingsUiHandlers {
+
+    private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
+
+    private final RestFactory restFactory;
 
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
-                                    final GitRepoSettingsView view) {
+                                    final GitRepoSettingsView view,
+                                    final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
@@ -63,8 +73,26 @@ public class GitRepoSettingsPresenter
         this.setDirty(true);
     }
 
+    @Override
+    public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
+        // TODO - wrong as UUID doesn't get set
+        final GitRepoDoc doc = onWrite(new GitRepoDoc());
+        restFactory
+                .create(GIT_REPO_RESOURCE)
+                .method(res -> res.pushToGit(doc))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Push failure", result.getMessage(), null);
+                    }
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     public interface GitRepoSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<DirtyUiHandlers> {
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
         void setUrl(String url);
         String getUrl();

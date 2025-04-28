@@ -19,7 +19,10 @@ package stroom.gitrepo.client.view;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
+import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
+import stroom.widget.button.client.Button;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,7 +34,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class GitRepoSettingsViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<GitRepoSettingsUiHandlers>
         implements GitRepoSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
@@ -50,6 +53,9 @@ public class GitRepoSettingsViewImpl
 
     @UiField
     TextBox path;
+
+    @UiField
+    Button gitRepoPush;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -121,6 +127,14 @@ public class GitRepoSettingsViewImpl
     public void onWidgetValueChange(final KeyDownEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
+        }
+    }
+
+    @UiHandler("gitRepoPush")
+    public void onGitRepoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
+        // TODO
+        if (getUiHandlers() != null) {
+            getUiHandlers().onGitRepoPush(gitRepoPush);
         }
     }
 

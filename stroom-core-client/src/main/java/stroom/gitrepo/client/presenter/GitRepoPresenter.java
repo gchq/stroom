@@ -62,7 +62,7 @@ public class GitRepoPresenter extends DocumentEditTabPresenter<LinkTabPanelView,
 
             @Override
             public GitRepoDoc onWrite(final MarkdownEditPresenter presenter,
-                                     final GitRepoDoc document) {
+                                      final GitRepoDoc document) {
                 document.setDescription(presenter.getText());
                 return document;
             }
