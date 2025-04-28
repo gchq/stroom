@@ -17,6 +17,7 @@
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 
@@ -49,6 +50,23 @@ public interface ImportExportSerializer {
      * @return
      */
     ExportSummary write(final Path dir,
+                        final Set<DocRef> docRefs,
+                        final boolean omitAuditFields);
+
+    /**
+     * Variant of the write() method to be used when exporting to Git.
+     * @param rootNode         Path to root node of the export. If null then
+     *                         performs the same as the other write() method.
+     *                         Otherwise removes these path elements from the start of
+     *                         the exported path. Normally this should be the path to the
+     *                         GitRepo node, including that node.
+     * @param dir              Where to serialize the DocRef items to on disk.
+     * @param docRefs          Set of the DocRefs to serialize.
+     * @param omitAuditFields  Do not export audit fields.
+     * @return
+     */
+    ExportSummary write(final List<ExplorerNode> rootNode,
+                        final Path dir,
                         final Set<DocRef> docRefs,
                         final boolean omitAuditFields);
 }
