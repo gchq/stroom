@@ -104,38 +104,41 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
     @Override
     public void condense(final long condenseBeforeMs,
                          final long deleteBeforeMs) {
-        write(writer -> {
-            Key lastKey = null;
-            StateValue lastValue = null;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(writer.getWriteTxn())) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final BBKV kv = BBKV.create(iterator.next());
-                    final Key key = serde.getKey(kv);
-                    final StateValue value = serde.getVal(kv);
+        read(readTxn -> {
+            write(writer -> {
+                Key lastKey = null;
+                StateValue lastValue = null;
+                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                    while (iterator.hasNext()
+                           && !Thread.currentThread().isInterrupted()) {
+                        final BBKV kv = BBKV.create(iterator.next());
+                        final Key key = serde.getKey(kv);
+                        final StateValue value = serde.getVal(kv);
 
-                    if (key.effectiveTime() <= deleteBeforeMs) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                        writer.tryCommit();
+                        if (key.effectiveTime() <= deleteBeforeMs) {
+                            // If this is data we no longer want to retain then delete it.
+                            dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                            writer.tryCommit();
 
-                    } else {
-                        if (lastKey != null &&
-                            Arrays.equals(lastKey.bytes(), key.bytes()) &&
-                            lastValue.byteBuffer().equals(value.byteBuffer())) {
-                            if (key.effectiveTime() <= condenseBeforeMs) {
-                                // If the key and value are the same then delete the duplicate entry.
-                                dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                                writer.tryCommit();
+                        } else {
+                            if (lastKey != null &&
+                                Arrays.equals(lastKey.bytes(), key.bytes()) &&
+                                lastValue.byteBuffer().equals(value.byteBuffer())) {
+                                if (key.effectiveTime() <= condenseBeforeMs) {
+                                    // If the key and value are the same then delete the duplicate entry.
+                                    dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                                    writer.tryCommit();
+                                }
                             }
-                        }
 
-                        lastKey = key;
-                        lastValue = value;
+                            lastKey = key;
+                            lastValue = value;
+                        }
                     }
                 }
-            }
+            });
+            return null;
         });
     }
 }
