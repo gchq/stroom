@@ -41,6 +41,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
 
     private static final Set<String> PATH_SPECS = Set.of("/resourcestore/*");
     private static final String UUID_ARG = "uuid";
+    private static final String ZIP_EXTENSION = ".zip";
 
     private final ResourceStoreImpl resourceStore;
     private final HttpServletRequestHolder httpServletRequestHolder;
@@ -121,7 +122,7 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
                     try {
                         final Path tempFile = resourceStore.getTempFile(resourceKey);
                         if (tempFile != null && Files.isRegularFile(tempFile)) {
-                            if (resourceKey.getName().toLowerCase().endsWith(".zip")) {
+                            if (resourceKey.getName().toLowerCase().endsWith(ZIP_EXTENSION)) {
                                 resp.setContentType("application/zip");
                             } else {
                                 resp.setContentType("application/octet-stream");

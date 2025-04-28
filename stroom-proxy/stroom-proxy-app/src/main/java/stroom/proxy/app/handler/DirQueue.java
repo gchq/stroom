@@ -4,6 +4,7 @@ import stroom.proxy.repo.queue.QueueMonitor;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.exception.ThrowingSupplier;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -152,13 +153,21 @@ public class DirQueue {
                 // Increment the sequence id.
                 final long id = ++writeId;
                 queueMonitor.setWritePos(id);
+                final Path targetDir = DirUtil.createPath(rootDir, id);
+                final Path targetParent = targetDir.getParent();
                 try {
-                    final Path targetDir = DirUtil.createPath(rootDir, id);
-                    DirUtil.ensureDirExists(targetDir.getParent());
+                    DirUtil.ensureDirExists(targetParent);
                     Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
                     LOGGER.trace("{} ({}) - Added sourceDir {}", name, rootDir, sourceDir);
                 } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
+                    final boolean targetParentExists = LogUtil.swallowExceptions(
+                                    ThrowingSupplier.unchecked(() -> Files.exists(targetParent)))
+                            .orElse(false);
+                    final boolean sourceExists = LogUtil.swallowExceptions(
+                                    ThrowingSupplier.unchecked(() -> Files.exists(sourceDir)))
+                            .orElse(false);
+                    LOGGER.error("Error moving {} -> {}, sourceExists: {}, targetParentExists: {}, msg: {}",
+                            sourceDir, targetDir, sourceExists, targetParentExists, LogUtil.exceptionMessage(e), e);
                     throw new UncheckedIOException(e);
                 }
                 condition.signalAll();
