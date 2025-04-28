@@ -18,6 +18,7 @@ package stroom.task.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
@@ -78,6 +79,7 @@ public class SearchableDual implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
         final String[] fields = fieldIndex.getFields();
         final Val[] valArr = new Val[fields.length];

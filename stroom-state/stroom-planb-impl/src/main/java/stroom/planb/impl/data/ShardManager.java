@@ -120,7 +120,7 @@ public class ShardManager {
         shardMap.values().forEach(Shard::cleanup);
     }
 
-    private Shard getShardForMapName(final String mapName) {
+    public Shard getShardForMapName(final String mapName) {
         final PlanBDoc doc = planBDocCache.get(mapName);
         if (doc == null) {
             LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");

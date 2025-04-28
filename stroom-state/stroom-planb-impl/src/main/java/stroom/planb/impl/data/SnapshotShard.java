@@ -343,11 +343,45 @@ class SnapshotShard implements Shard {
             LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
             db = PlanBDb.open(doc, dbDir, byteBufferFactory, true);
         }
+
+        public String getInfo() {
+            try {
+                lock.lock();
+                try {
+                    if (destroy) {
+                        throw new DestroyedException();
+                    }
+
+                    // Open if needed.
+                    if (!open) {
+                        open();
+                        open = true;
+                    }
+
+                    return db.getInfo();
+
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final Exception e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+            return null;
+        }
     }
 
     @Override
     public PlanBDoc getDoc() {
         return doc;
+    }
+
+    @Override
+    public String getInfo() {
+        final SnapshotInstance instance = snapshotInstance;
+        if (instance == null) {
+            return null;
+        }
+        return instance.getInfo();
     }
 
     private static class DestroyedException extends Exception {

@@ -117,6 +117,23 @@ public final class ModelStringUtil {
     }
 
     /**
+     * Return nice string like "25 B", "4 K", "45 M", rounded to the desired significantFigures.
+     *
+     * @param significantFigures The number of significant digits required, however if the number of
+     *                           integer digits is greater that will be used. This is to ensure we always
+     *                           show full precision for the integer part, e.g. output '1023B' when
+     *                           significantFigures is 3.
+     */
+    public static String formatMetricByteSizeString(final Long streamSize,
+                                                    final boolean stripTrailingZeros,
+                                                    final int significantFigures) {
+        if (streamSize == null) {
+            return "";
+        }
+        return formatNumberString(streamSize, METRIC_BYTE_SIZE_DIVIDER, stripTrailingZeros, significantFigures);
+    }
+
+    /**
      * Return nice string like "25 B", "4 K", "45 M", etc.
      */
     public static String formatIECByteSizeString(final Long streamSize) {
@@ -341,11 +358,14 @@ public final class ModelStringUtil {
         }
         if (num > Integer.MAX_VALUE) {
             throw new NumberFormatException(str + " is too big for an int.  (Max value " + formatCsv(Integer.MAX_VALUE)
-                    + " and you number was " + formatCsv(num) + ")");
+                                            + " and you number was " + formatCsv(num) + ")");
         }
         if (num < Integer.MIN_VALUE) {
-            throw new NumberFormatException(str + " is too small for an int.  (Min value "
-                    + formatCsv(Integer.MIN_VALUE) + " and you number was " + formatCsv(num) + ")");
+            throw new NumberFormatException(str + " is too small for an int.  (Min value " +
+                                            formatCsv(Integer.MIN_VALUE) +
+                                            " and you number was " +
+                                            formatCsv(num) +
+                                            ")");
         }
         return num.intValue();
     }
@@ -583,9 +603,9 @@ public final class ModelStringUtil {
         @Override
         public String toString() {
             return "Divider{" +
-                    "div=" + div +
-                    ", unit=" + Arrays.toString(unit) +
-                    '}';
+                   "div=" + div +
+                   ", unit=" + Arrays.toString(unit) +
+                   '}';
         }
     }
 }

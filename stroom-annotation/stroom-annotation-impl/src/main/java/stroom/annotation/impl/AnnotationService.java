@@ -31,6 +31,7 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.impl.PermissionChangeService;
 import stroom.meta.api.MetaService;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
@@ -170,6 +171,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
         checkAppPermission();
 

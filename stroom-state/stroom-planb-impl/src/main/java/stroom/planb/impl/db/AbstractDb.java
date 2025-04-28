@@ -20,6 +20,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasPrimitiveValue;
@@ -30,21 +31,30 @@ import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
+import org.lmdbjava.EnvInfo;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.KeyRangeType;
 import org.lmdbjava.PutFlags;
+import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -59,6 +69,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
 
     private final Semaphore concurrentReaderSemaphore;
 
+    private final LmdbEnvDir lmdbEnvDir;
     private final LmdbKeySequence lmdbKeySequence;
     final Serde<K, V> serde;
     final ByteBufferFactory byteBufferFactory;
@@ -78,7 +89,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                       final Long mapSize,
                       final Boolean overwrite,
                       final boolean readOnly) {
-        final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
+        this.lmdbEnvDir = new LmdbEnvDir(path, true);
         this.byteBufferFactory = byteBufferFactory;
         this.serde = serde;
         this.readOnly = readOnly;
@@ -451,8 +462,8 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
      * Direct lookup for exact key, assuming that there are no sequence rows.
      */
     private V getDirect(final Txn<ByteBuffer> readTxn,
-                                  final ByteBuffer keyByteBuffer,
-                                  final Predicate<BBKV> predicate) {
+                        final ByteBuffer keyByteBuffer,
+                        final Predicate<BBKV> predicate) {
         final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
         final BBKV kv = new BBKV(keyByteBuffer, valueByteBuffer);
         if (predicate.test(kv)) {
@@ -466,8 +477,8 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
      * may exist.
      */
     private V getWithCursor(final Txn<ByteBuffer> readTxn,
-                                      final ByteBuffer keyByteBuffer,
-                                      final Predicate<BBKV> predicate) {
+                            final ByteBuffer keyByteBuffer,
+                            final Predicate<BBKV> predicate) {
         final KeyRange<ByteBuffer> keyRange =
                 new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, keyByteBuffer, keyByteBuffer);
         try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
@@ -599,4 +610,108 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
             return byteBuffer.duplicate();
         }
     }
+
+
+    public String getInfo() {
+        try {
+            final Inf inf = read(txn -> {
+                try {
+                    final List<String> dbNames = env
+                            .getDbiNames()
+                            .stream()
+                            .map(String::new)
+                            .sorted()
+                            .toList();
+                    final EnvInf envInf = new EnvInf(env.stat(), env.info(), env.getMaxKeySize(), dbNames);
+
+                    final Stat stat = read(dbi::stat);
+                    final DbInf dbInf = new DbInf("db", stat);
+
+                    return new Inf(envInf, Collections.singletonList(dbInf), isReadOnly(), readSchemaVersion(txn));
+                } catch (final Exception e) {
+                    LOGGER.debug(e::getMessage, e);
+                }
+                return null;
+            });
+            return JsonUtil.writeValueAsString(inf);
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return null;
+    }
+
+    private record Inf(EnvInf env, List<DbInf> db, boolean readOnly, int schemaVersion) {
+
+    }
+
+    private record EnvInf(Stat stat, EnvInfo envInfo, int maxKeySize, List<String> dbNames) {
+
+    }
+
+    private record DbInf(String name, Stat stat) {
+
+    }
+
+//    private Map<String, String> getEnvInfo(final Txn<ByteBuffer> txn) {
+//        final Map<String, String> statMap = convertStatToMap(env.stat());
+//        final Map<String, String> envInfo = convertEnvInfoToMap(env.info());
+//
+//        final String dbNames = env
+//                .getDbiNames()
+//                .stream()
+//                .map(String::new)
+//                .collect(Collectors.joining(", "));
+//
+//        final Map<String, String> map = new HashMap<>();
+//        map.putAll(statMap);
+//        map.putAll(envInfo);
+//        map.put("maxKeySize", Integer.toString(env.getMaxKeySize()));
+//        map.put("dbNames", dbNames);
+//        return map;
+//    }
+//
+//    private Map<String, String> getDbInfo(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> db) {
+//        final Stat stat = db.stat(txn);
+//        return convertStatToMap(stat);
+//    }
+//
+//    private long getSizeOnDisk() {
+//        long totalSizeBytes;
+//        final Path localDir = lmdbEnvDir.getEnvDir().toAbsolutePath();
+//        try (final Stream<Path> fileStream = Files.list(localDir)) {
+//            totalSizeBytes = fileStream
+//                    .mapToLong(path -> {
+//                        try {
+//                            return Files.size(path);
+//                        } catch (IOException e) {
+//                            throw new RuntimeException(e);
+//                        }
+//                    })
+//                    .sum();
+//        } catch (IOException
+//                 | RuntimeException e) {
+//            LOGGER.error("Error calculating disk usage for path {}",
+//                    localDir.normalize(), e);
+//            totalSizeBytes = -1;
+//        }
+//        return totalSizeBytes;
+//    }
+//
+//    private static Map<String, String> convertStatToMap(final Stat stat) {
+//        return Map.of("pageSize", Integer.toString(stat.pageSize),
+//                "branchPages", Long.toString(stat.branchPages),
+//                "depth", Integer.toString(stat.depth),
+//                "entries", Long.toString(stat.entries),
+//                "leafPages", Long.toString(stat.leafPages),
+//                "overFlowPages", Long.toString(stat.overflowPages));
+//    }
+//
+//    private static Map<String, String> convertEnvInfoToMap(final EnvInfo envInfo) {
+//        return Map.of("maxReaders", Integer.toString(envInfo.maxReaders),
+//                "numReaders", Integer.toString(envInfo.numReaders),
+//                "lastPageNumber", Long.toString(envInfo.lastPageNumber),
+//                "lastTransactionId", Long.toString(envInfo.lastTransactionId),
+//                "mapAddress", Long.toString(envInfo.mapAddress),
+//                "mapSize", Long.toString(envInfo.mapSize));
+//    }
 }
