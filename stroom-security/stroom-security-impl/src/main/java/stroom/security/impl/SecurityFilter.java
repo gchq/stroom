@@ -170,7 +170,9 @@ class SecurityFilter implements Filter {
                         userIdentity,
                         fullPath));
                 // Set the identity in session if we have a session and cookie
-                UserIdentitySessionUtil.set(request, userIdentity);
+                if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
+                    UserIdentitySessionUtil.set(request, userIdentity);
+                }
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->

@@ -10,7 +10,6 @@ import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.servlet.UserAgentSessionUtil;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -103,7 +102,6 @@ class OpenIdManager {
         // If we have a state id then this should be a return from the auth service.
         LOGGER.debug(() -> LogUtil.message("We have the following backChannelOIDC state: {}", state));
 
-        UserAgentSessionUtil.set(request);
 
         final Optional<UserIdentity> optionalUserIdentity =
                 userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
