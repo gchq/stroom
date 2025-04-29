@@ -39,6 +39,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -507,6 +509,98 @@ public final class FileUtil {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * List the direct subdirectories of parent.
+     */
+    public static List<Path> listChildDirs(final Path parent) {
+        return listChildPaths(parent, Files::isDirectory);
+    }
+
+    /**
+     * List the regular files that are a direct child of parent.
+     */
+    public static List<Path> listChildFiles(final Path parent) {
+        return listChildPaths(parent, Files::isRegularFile);
+    }
+
+    /**
+     * List the direct child paths in parent that match pathPredicate.
+     */
+    public static List<Path> listChildPaths(final Path parent) {
+        return listChildPaths(parent, null);
+    }
+
+    /**
+     * List the direct child paths in parent that match pathPredicate.
+     */
+    public static List<Path> listChildPaths(final Path parent,
+                                            final Predicate<Path> pathPredicate) {
+        if (parent == null) {
+            return Collections.emptyList();
+        } else {
+            try {
+                try (Stream<Path> pathStream = Files.list(parent)) {
+                    if (pathPredicate != null) {
+                        return pathStream.filter(pathPredicate)
+                                .toList();
+                    } else {
+                        return pathStream.toList();
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    /**
+     * For each subdirectory that is a direct child of parent, call childConsumer.
+     */
+    public static void forEachChildDir(final Path parent,
+                                       final Consumer<Path> childConsumer) {
+        forEachChild(parent, Files::isDirectory, childConsumer);
+    }
+
+    /**
+     * For each regular file that is a direct child of parent, call childConsumer.
+     */
+    public static void forEachChildFile(final Path parent,
+                                        final Consumer<Path> childConsumer) {
+        forEachChild(parent, Files::isRegularFile, childConsumer);
+    }
+
+    /**
+     * For each path (of any type) that is a direct child of parent, call childConsumer.
+     */
+    public static void forEachChild(final Path parent,
+                                    final Consumer<Path> childConsumer) {
+        forEachChild(parent, null, childConsumer);
+    }
+
+    /**
+     * For each path (of any type) that is a direct child of parent, call childConsumer if it
+     * matches pathPredicate.
+     */
+    public static void forEachChild(final Path parent,
+                                    final Predicate<Path> pathPredicate,
+                                    final Consumer<Path> childConsumer) {
+        if (parent != null) {
+            Objects.requireNonNull(childConsumer);
+            try {
+                try (Stream<Path> pathStream = Files.list(parent)) {
+                    if (pathPredicate != null) {
+                        pathStream.filter(pathPredicate)
+                                .forEach(childConsumer);
+                    } else {
+                        pathStream.forEach(childConsumer);
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 }

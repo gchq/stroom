@@ -75,8 +75,8 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.SYSTEM_ID,
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
                 "XML Schemas/" +
-                        "data-splitter/" +
-                        "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.data.xsd");
+                "data-splitter/" +
+                "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.data.xsd");
     }
 
     public SchemaFilter getSchemaFilter(final String namespaceURI, final ErrorReceiverProxy errorReceiverProxy) {

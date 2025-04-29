@@ -17,9 +17,14 @@ public final class DirNames {
     public static final String RECEIVING_ZIP = "01_receiving_zip";
 
     /**
+     * Where we queue zips that need to be split by feed.
+     */
+    public static final String SPLIT_ZIP_QUEUE = "02_split_zip_input_queue";
+
+    /**
      * This is the location for splitting source data where zip files contain multiple feeds.
      */
-    public static final String SPLIT_ZIP = "02_split_zip";
+    public static final String SPLIT_ZIP = "03_split_zip_splits";
 
 //    /**
 //     * This is the final receive location for received zip data as we might have split the zip data.

@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.repo.FeedKey;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -530,6 +531,24 @@ public class DirUtil {
         return NullSafe.get(string, str ->
                 SAFE_NAME_PATTERN.matcher(string)
                         .replaceAll("_"));
+    }
+
+    /**
+     * @param feedKey
+     * @return A dir name like '{@code <feed>__<type>}',
+     * where {@link DirUtil#makeSafeName(String)} has been called for each part.
+     */
+    public static String makeSafeName(final FeedKey feedKey) {
+        // Make a dir name.
+        final StringBuilder sb = new StringBuilder();
+        if (feedKey.feed() != null) {
+            sb.append(DirUtil.makeSafeName(feedKey.feed()));
+        }
+        sb.append("__");
+        if (feedKey.type() != null) {
+            sb.append(DirUtil.makeSafeName(feedKey.type()));
+        }
+        return sb.toString();
     }
 
 

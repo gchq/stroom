@@ -11,8 +11,6 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
-import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -71,35 +69,18 @@ public class ProxyRequestHandler implements RequestHandler {
 
     private void doHandle(final HttpServletRequest request, final HttpServletResponse response) {
         try {
-            final Instant startTime = Instant.now();
-
-            // Create attribute map from headers.
-            final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
+            final Instant receiveTime = Instant.now();
 
             // Create a new proxy id for the request, so we can track progress of the stream
             // through the various proxies and into stroom and report back the ID to the sender,
             final UniqueId receiptId = receiptIdGenerator.generateId();
 
-            // Authorise request.
-            requestAuthenticator.authenticate(request, attributeMap);
-
-            final String receiptIdStr = receiptId.toString();
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
-
-            // Save the time the data was received.
-            attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->
-                    DateUtil.createNormalDateTimeString());
-
-            // Append the hostname.
-            appendReceivedPath(attributeMap);
-
-            // Treat differently depending on compression type.
-            // AttributeMap values are ready trimmed
-            String compression = NullSafe.getOrElse(
-                    attributeMap.get(StandardHeaderArguments.COMPRESSION),
-                    str -> str.toUpperCase(StreamUtil.DEFAULT_LOCALE),
-                    "");
+            // Create attribute map from headers.
+            final AttributeMap attributeMap = AttributeMapUtil.create(
+                    request,
+                    certificateExtractor,
+                    receiveTime,
+                    receiptId);
 
             LOGGER.debug(() -> LogUtil.message(
                     "handle() - requestUri: {}, remoteHost/Addr: {}, attributeMap: {}, ",
@@ -109,12 +90,14 @@ public class ProxyRequestHandler implements RequestHandler {
                             request::getRemoteAddr),
                     attributeMap));
 
-            if (!compression.isEmpty()
-                && !StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+            // Authorise request.
+            requestAuthenticator.authenticate(request, attributeMap);
 
-                throw new StroomStreamException(
-                        StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
-            }
+            // Treat differently depending on compression type.
+            final String compression = AttributeMapUtil.validateAndNormaliseCompression(
+                    attributeMap,
+                    compressionVal -> new StroomStreamException(
+                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compressionVal));
 
             final Receiver receiver;
             final String contentLength = attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH);
@@ -125,7 +108,7 @@ public class ProxyRequestHandler implements RequestHandler {
             } else {
                 receiver = receiverFactory.get(attributeMap);
                 receiver.receive(
-                        startTime,
+                        receiveTime,
                         attributeMap,
                         request.getRequestURI(),
                         request::getInputStream);
@@ -135,36 +118,17 @@ public class ProxyRequestHandler implements RequestHandler {
 
             LOGGER.debug(() -> LogUtil.message(
                     "Writing proxy receipt id {} to response. Receiver: {}, duration: {}, compression: '{}'",
-                    receiptIdStr,
+                    receiptId,
                     NullSafe.get(receiver, Object::getClass, Class::getSimpleName),
-                    Duration.between(startTime, Instant.now()),
+                    Duration.between(receiveTime, Instant.now()),
                     compression));
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(receiptIdStr);
+                writer.println(receiptId);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         } catch (final StroomStreamException e) {
             e.sendErrorResponse(response);
         }
-    }
-
-    private void appendReceivedPath(final AttributeMap attributeMap) {
-//        if (appendReceivedPath) {
-        // Here we build up a list of stroom servers that have received
-        // the message
-
-        // The initial one will be initially set at the boundary proxy/stroom server
-        final String entryReceivedServer = attributeMap.get(StandardHeaderArguments.RECEIVED_PATH);
-
-        if (entryReceivedServer != null) {
-            if (!entryReceivedServer.contains(hostName)) {
-                attributeMap.put(StandardHeaderArguments.RECEIVED_PATH,
-                        entryReceivedServer + "," + hostName);
-            }
-        } else {
-            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, hostName);
-        }
-//        }
     }
 }

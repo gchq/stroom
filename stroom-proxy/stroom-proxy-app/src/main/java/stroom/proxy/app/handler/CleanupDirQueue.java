@@ -28,7 +28,7 @@ public class CleanupDirQueue {
     CleanupDirQueue(final DataDirProvider dataDirProvider) {
         dir = dataDirProvider.get().resolve("99_deleting");
         DirUtil.ensureDirExists(dir);
-        LOGGER.info("Deleting contents of {}", LogUtil.path(dir));
+        LOGGER.info("Initialising CleanupDirQueue. Deleting contents of {}", LogUtil.path(dir));
         FileUtil.deleteContents(dir);
     }
 

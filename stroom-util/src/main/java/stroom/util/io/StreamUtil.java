@@ -178,18 +178,31 @@ public final class StreamUtil {
         }
     }
 
+    /**
+     * Read file into a String, wrapping any {@link IOException} with an
+     * {@link UncheckedIOException}.
+     *
+     * @return The contents of the file as a string using {@link StreamUtil#DEFAULT_CHARSET}.
+     */
     public static String fileToString(final Path file) {
-        return fileToString(file, DEFAULT_CHARSET);
+        try {
+            return Files.readString(file, DEFAULT_CHARSET);
+        } catch (IOException ioEx) {
+            // Wrap it
+            throw new UncheckedIOException(ioEx);
+        }
     }
 
     /**
-     * Reads a file and returns it as a string.
+     * Read file into a String, wrapping any {@link IOException} with an
+     * {@link UncheckedIOException}.
+     *
+     * @return The contents of the file as a string using the supplied charset.
      */
     public static String fileToString(final Path file, final Charset charset) {
         try {
-            final byte[] bytes = Files.readAllBytes(file);
-            return new String(bytes, charset);
-        } catch (final IOException ioEx) {
+            return Files.readString(file, charset);
+        } catch (IOException ioEx) {
             // Wrap it
             throw new UncheckedIOException(ioEx);
         }
