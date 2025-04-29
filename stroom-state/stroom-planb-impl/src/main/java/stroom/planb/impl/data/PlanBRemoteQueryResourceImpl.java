@@ -28,6 +28,7 @@ public class PlanBRemoteQueryResourceImpl implements PlanBRemoteQueryResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public PlanBShardInfoResponse getStoreInfo(final PlanBShardInfoRequest request) {
         return new PlanBShardInfoResponse(planBShardInfoServiceProvider.get().getStoreInfo(request.getFields()));
     }
