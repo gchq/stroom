@@ -29,6 +29,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
@@ -114,15 +115,12 @@ public class DataUploadTaskHandler {
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
             attributeMap.put(StandardHeaderArguments.TYPE, typeName);
-            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, receivedTime);
-            attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
             attributeMap.put("UploadedBy", securityContext.getUserIdentityForAudit());
             // Create a new receiptId for the request, so we can track progress and report back the
             // receiptId to the sender
-            final String receiptId = receiptIdGenerator.generateId().toString();
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId);
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId);
+            final UniqueId receiptId = receiptIdGenerator.generateId();
+            AttributeMapUtil.addReceiptInfo(attributeMap, receivedTime, receiptId);
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(taskContext, "Uploading");
 

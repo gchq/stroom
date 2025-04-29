@@ -142,6 +142,14 @@ public class AttributeMapUtil {
         // If GUID is not set, add GUID, RemoteAddress and RemoteHost
         addGuidAndRemoteClientDetails(httpServletRequest, attributeMap);
 
+        addReceiptInfo(attributeMap, receiveTime, receiptId);
+
+        return attributeMap;
+    }
+
+    public static void addReceiptInfo(final AttributeMap attributeMap,
+                                      final Instant receiveTime,
+                                      final UniqueId receiptId) {
         // Add ReceiptId and ReceiptIdPath
         // Create a new receipt id for the request, so we can track progress of the stream
         // through the various proxies and into stroom and report back the ID to the sender,
@@ -154,8 +162,6 @@ public class AttributeMapUtil {
         // Include this host in the ReceivedPath
         attributeMap.appendItemIfDifferent(
                 StandardHeaderArguments.RECEIVED_PATH, HostNameUtil.determineHostName());
-
-        return attributeMap;
     }
 
     public static AttributeMap create(final InputStream inputStream) throws IOException {
