@@ -40,6 +40,8 @@ public class GitRepoSettingsPresenter
 
     private final RestFactory restFactory;
 
+    private GitRepoDoc gitRepoDoc = null;
+
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
@@ -51,6 +53,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
+        gitRepoDoc = doc;
         this.getView().setUrl(doc.getUrl());
         this.getView().setUsername(doc.getUsername());
         this.getView().setPassword(doc.getPassword());
@@ -75,20 +78,24 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
-        // TODO - wrong as UUID doesn't get set
-        final GitRepoDoc doc = onWrite(new GitRepoDoc());
-        restFactory
-                .create(GIT_REPO_RESOURCE)
-                .method(res -> res.pushToGit(doc))
-                .onSuccess(result -> {
-                    if (result.isOk()) {
-                        AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
-                    } else {
-                        AlertEvent.fireError(this, "Push failure", result.getMessage(), null);
-                    }
-                })
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
+        // Use the gitRepoDoc saved in the onRead() method, if available
+        if (gitRepoDoc != null) {
+            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(res -> res.pushToGit(doc))
+                    .onSuccess(result -> {
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
+                        } else {
+                            AlertEvent.fireError(this, "Push failure", result.getMessage(), null);
+                        }
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        } else {
+            AlertEvent.fireWarn(this, "Git repository information not available", "", null);
+        }
     }
 
     public interface GitRepoSettingsView

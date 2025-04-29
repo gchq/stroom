@@ -16,7 +16,6 @@
 
 package stroom.gitrepo.client.view;
 
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
@@ -123,16 +122,22 @@ public class GitRepoSettingsViewImpl
      * Sets the Dirty flag if any of the UI widget's content changes.
      * @param e Event from the UI widget
      */
+    @SuppressWarnings("unused")
     @UiHandler({"url", "username", "password", "branch", "path"})
-    public void onWidgetValueChange(final KeyDownEvent e) {
+    public void onWidgetValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
     }
 
+    /**
+     * Handles 'Push to Git' button clicks.
+     * Passes the button to display the wait timer.
+     * @param event The button push event.
+     */
+    @SuppressWarnings("unused")
     @UiHandler("gitRepoPush")
     public void onGitRepoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
-        // TODO
         if (getUiHandlers() != null) {
             getUiHandlers().onGitRepoPush(gitRepoPush);
         }
