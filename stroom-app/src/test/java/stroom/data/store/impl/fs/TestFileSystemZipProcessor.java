@@ -23,6 +23,7 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StreamTargetStreamHandler;
@@ -30,6 +31,9 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.concurrent.UniqueId;
+import stroom.util.concurrent.UniqueId.NodeType;
+import stroom.util.concurrent.UniqueIdGenerator;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
@@ -68,6 +72,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTargetStreamHandlers streamTargetStreamHandlers;
 
+    private final UniqueIdGenerator uniqueIdGenerator = new UniqueIdGenerator(NodeType.STROOM, "node1");
+
     @Test
     void testSimpleSingleFile() throws IOException {
         final Path file = getCurrentTestDir().resolve(
@@ -92,7 +98,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                     new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
                     expectedContent,
                     expectedBoundaries,
-                    Instant.now());
+                    Instant.now(),
+                    uniqueIdGenerator.generateId());
         } finally {
             Files.delete(file);
         }
@@ -127,7 +134,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             "revt.mf.dat")),
                     expectedContent,
                     expectedBoundaries,
-                    Instant.now());
+                    Instant.now(),
+                    uniqueIdGenerator.generateId());
         } finally {
             Files.delete(file);
         }
@@ -158,19 +166,27 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final Instant receivedTime = Instant.now();
             final String receivedTimeStr = DateUtil.createNormalDateTimeString(receivedTime);
             final String hostName = HostNameUtil.determineHostName();
+            final UniqueId receiptId = uniqueIdGenerator.generateId();
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
             Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             map.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
             map.put(StreamTypeNames.META, LogUtil.message("""
-                    Meta11:1
-                    Meta12:1
-                    ReceivedPath:{}
-                    ReceivedTime:{}
-                    ReceivedTimeHistory:{}
-                    StreamSize:12
-                    """, hostName, receivedTimeStr, receivedTimeStr));
+                            Meta11:1
+                            Meta12:1
+                            ReceiptId:{}
+                            ReceiptIdPath:{}
+                            ReceivedPath:{}
+                            ReceivedTime:{}
+                            ReceivedTimeHistory:{}
+                            StreamSize:12
+                            """,
+                    receiptId.toString(),
+                    receiptId.toString(),
+                    hostName,
+                    receivedTimeStr,
+                    receivedTimeStr));
             expectedBoundaries.add(map);
 
             doTest(file,
@@ -178,7 +194,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                     new HashSet<>(Arrays.asList("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat")),
                     expectedContent,
                     expectedBoundaries,
-                    receivedTime);
+                    receivedTime,
+                    receiptId);
         } finally {
             Files.delete(file);
         }
@@ -219,32 +236,47 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final Instant receivedTime = Instant.now();
             final String receivedTimeStr = DateUtil.createNormalDateTimeString(receivedTime);
             final String hostName = HostNameUtil.determineHostName();
+            final UniqueId receiptId = uniqueIdGenerator.generateId();
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
             Map<String, String> map = new HashMap<>();
             map.put(null, "File1\nFile1\n");
             map.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
             map.put(StreamTypeNames.META, LogUtil.message("""
-                    Meta1a
-                    Meta1b
-                    ReceivedPath:{}
-                    ReceivedTime:{}
-                    ReceivedTimeHistory:{}
-                    StreamSize:12
-                    """, hostName, receivedTimeStr, receivedTimeStr));
+                            Meta1a
+                            Meta1b
+                            ReceiptId:{}
+                            ReceiptIdPath:{}
+                            ReceivedPath:{}
+                            ReceivedTime:{}
+                            ReceivedTimeHistory:{}
+                            StreamSize:12
+                            """,
+                    receiptId.toString(),
+                    receiptId.toString(),
+                    hostName,
+                    receivedTimeStr,
+                    receivedTimeStr));
             expectedBoundaries.add(map);
 
             map = new HashMap<>();
             map.put(null, "File2\nFile2\n");
             map.put(StreamTypeNames.CONTEXT, "Context2\nContext2\n");
             map.put(StreamTypeNames.META, LogUtil.message("""
-                    Meta2a
-                    Meta2b
-                    ReceivedPath:{}
-                    ReceivedTime:{}
-                    ReceivedTimeHistory:{}
-                    StreamSize:12
-                    """, hostName, receivedTimeStr, receivedTimeStr));
+                            Meta2a
+                            Meta2b
+                            ReceiptId:{}
+                            ReceiptIdPath:{}
+                            ReceivedPath:{}
+                            ReceivedTime:{}
+                            ReceivedTimeHistory:{}
+                            StreamSize:12
+                            """,
+                    receiptId.toString(),
+                    receiptId.toString(),
+                    hostName,
+                    receivedTimeStr,
+                    receivedTimeStr));
             expectedBoundaries.add(map);
 
             doTest(file,
@@ -253,7 +285,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
                     expectedContent,
                     expectedBoundaries,
-                    receivedTime);
+                    receivedTime,
+                    receiptId);
         } finally {
             Files.delete(file);
         }
@@ -289,7 +322,8 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                             "revt.mf.dat")),
                     expectedContent,
                     expectedBoundaries,
-                    Instant.now());
+                    Instant.now(),
+                    uniqueIdGenerator.generateId());
         } finally {
             Files.delete(file);
         }
@@ -300,11 +334,15 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                         final Set<String> expectedFiles,
                         final HashMap<String, String> expectedContent,
                         final List<Map<String, String>> expectedBoundaries,
-                        final Instant receivedTime) throws IOException {
+                        final Instant receivedTime,
+                        final UniqueId receiptId) throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+
+        // Set the attrs that would normally be set by AttributeMapUtil.create
+        AttributeMapUtil.addReceiptInfo(attributeMap, receivedTime, receiptId);
 
         final AtomicReference<StreamTargetStreamHandler> handlerRef = new AtomicReference<>();
         streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {

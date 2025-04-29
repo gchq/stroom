@@ -1,12 +1,12 @@
 package stroom.proxy.app.handler;
 
-import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 import stroom.util.io.FileName;
@@ -15,17 +15,18 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.StringIdUtil;
+import stroom.util.zip.ZipUtil;
 
 import com.google.common.util.concurrent.Striped;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +56,11 @@ public class PreAggregator {
     // TODO How many stripes we have is open to question as we are ultimately IO bound
     //  when adding all the parts
     private static final int FEED_KEY_LOCK_STRIPES = 32;
+    private static final List<String> FEED_AND_TYPE_HEADER_KEYS = List.of(
+            StandardHeaderArguments.FEED,
+            StandardHeaderArguments.TYPE);
+    private static final int FEED_HEADER_KEY_INDEX = FEED_AND_TYPE_HEADER_KEYS.indexOf(StandardHeaderArguments.FEED);
+    private static final int TYPE_HEADER_KEY_INDEX = FEED_AND_TYPE_HEADER_KEYS.indexOf(StandardHeaderArguments.TYPE);
 
     private final NumberedDirProvider tempSplittingDirProvider;
     private final Path stagedSplittingDir;
@@ -124,7 +131,9 @@ public class PreAggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-        LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
+        if (movedSplitCount.get() > 0) {
+            LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
+        }
 
         // Periodically close old aggregates.
         // This need to be started at the end of the ctor, so we know that everything above can
@@ -137,14 +146,15 @@ public class PreAggregator {
     }
 
     private void initialiseAggregateStateMap() {
-        LOGGER.info("Initialising the state of existing pre-aggregates");
+        LOGGER.debug("Initialising the state of existing pre-aggregates");
         // Read all the current aggregates and establish the aggregation state.
         try (final Stream<Path> stream = Files.list(aggregatingDir)) {
             // Look at each aggregate dir.
             stream.forEach(aggregateDir -> {
                 final AggregateState aggregateState = new AggregateState(aggregateDir);
                 final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
-
+                // Intern the feedKeys in the entries to reduce mem use
+                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
                 // Now examine each file group to read state.
                 try (final Stream<Path> groupStream = Files.list(aggregateDir)) {
                     // Now read the entries.
@@ -155,14 +165,12 @@ public class PreAggregator {
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(entriesFile)) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
+                                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, feedKeyInterner);
                                 final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
                                 aggregateState.addItem(totalUncompressedSize);
 
                                 final FeedKey existingFeedKey = feedKeyRef.get();
-                                final FeedKey newFeedKey = new FeedKey(
-                                        zipEntryGroup.getFeedName(),
-                                        zipEntryGroup.getTypeName());
+                                final FeedKey newFeedKey = zipEntryGroup.getFeedKey();
                                 if (existingFeedKey != null) {
                                     if (!existingFeedKey.equals(newFeedKey)) {
                                         LOGGER.error("Unexpected feed key mismatch!!!");
@@ -191,16 +199,17 @@ public class PreAggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-        LOGGER.info(() ->
-                LogUtil.message("Completed initialisation of {} pre-aggregates", aggregateStateMap.size()));
+        final int size = aggregateStateMap.size();
+        if (size > 0) {
+            LOGGER.info("Completed initialisation of {} pre-aggregates", size);
+        }
     }
 
     private FeedKey readFeedKeyFromMeta(final FileGroup fileGroup) throws IOException {
-        final AttributeMap attributeMap = new AttributeMap();
-        AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
-        final String feed = attributeMap.get(StandardHeaderArguments.FEED);
-        final String type = attributeMap.get(StandardHeaderArguments.TYPE);
-        return new FeedKey(feed, type);
+        final List<String> values = AttributeMapUtil.readKeys(fileGroup.getMeta(), FEED_AND_TYPE_HEADER_KEYS);
+        final String feed = values.get(FEED_HEADER_KEY_INDEX);
+        final String type = values.get(TYPE_HEADER_KEY_INDEX);
+        return FeedKey.of(feed, type);
     }
 
     public void addDir(final Path dir) {
@@ -303,10 +312,14 @@ public class PreAggregator {
         }
 
         // If we have an aggregate we can close now then do so.
-        final AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
+        final AggregateState aggregateState = getOrCreateAggregateState(feedKey);
         if (aggregateState.isReadyToClose(aggregatorConfig)) {
             closeAggregate(feedKey, aggregateState);
         }
+    }
+
+    private AggregateState getOrCreateAggregateState(final FeedKey feedKey) {
+        return aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
     }
 
     private void deleteEmptyDir(final Path dir, final Runnable onSuccessfulDelete) {
@@ -336,8 +349,7 @@ public class PreAggregator {
     private AggregateState addPartToAggregate(final FeedKey feedKey,
                                               final Path dir,
                                               final Part part) throws IOException {
-        final AggregateState aggregateState = aggregateStateMap
-                .computeIfAbsent(feedKey, this::createAggregate);
+        final AggregateState aggregateState = getOrCreateAggregateState(feedKey);
         final long newPartCount = aggregateState.partCount + 1;
         final Path destDir = aggregateState.aggregateDir.resolve(StringIdUtil.idToString(newPartCount));
         Files.move(dir, destDir, StandardCopyOption.ATOMIC_MOVE);
@@ -366,7 +378,7 @@ public class PreAggregator {
                                            final FileGroup fileGroup) throws IOException {
         // Determine if we need to split this data into parts.
         final List<Part> parts = new ArrayList<>();
-        AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
+        AggregateState aggregateState = getOrCreateAggregateState(feedKey);
 
         // Calculate where we might want to split the incoming data.
         final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
@@ -377,11 +389,14 @@ public class PreAggregator {
         long partBytes = 0;
         final List<ZipEntryGroup> partEntries = new ArrayList<>();
         boolean firstEntry = true;
+        // Intern the feedKeys in the entries to reduce mem use
+        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+        feedKeyInterner.intern(feedKey);
 
         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
             String line = bufferedReader.readLine();
             while (line != null) {
-                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
+                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, feedKeyInterner);
                 final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
 
                 // If the current aggregate has items then we might want to close and start a new one.
@@ -396,8 +411,7 @@ public class PreAggregator {
                         closeAggregate(feedKey, aggregateState);
 
                         // Create a new aggregate.
-                        aggregateState = aggregateStateMap
-                                .computeIfAbsent(feedKey, this::createAggregate);
+                        aggregateState = getOrCreateAggregateState(feedKey);
                     } else {
                         // Split. Copy the list as the source is about to be cleared
                         final Part part = new Part(partItems, partBytes, List.copyOf(partEntries));
@@ -439,10 +453,12 @@ public class PreAggregator {
         long partItems = 0;
         long partBytes = 0;
         final List<ZipEntryGroup> partEntries = new ArrayList<>();
+        // Intern the feedKeys in the entries to reduce mem use
+        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
             String line = bufferedReader.readLine();
             while (line != null) {
-                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
+                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, feedKeyInterner);
                 final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
                 partItems++;
                 partBytes += totalUncompressedSize;
@@ -450,7 +466,7 @@ public class PreAggregator {
                 line = bufferedReader.readLine();
             }
         }
-        return Collections.singletonList(new Part(partItems, partBytes, List.copyOf(partEntries)));
+        return List.of(new Part(partItems, partBytes, List.copyOf(partEntries)));
     }
 
     private boolean closeAggregate(final FeedKey feedKey,
@@ -491,12 +507,13 @@ public class PreAggregator {
 
         final Path parentDir = tempSplittingDirProvider.get();
         final List<PartDir> partDirs = new ArrayList<>();
-        try (final ZipArchiveInputStream zipArchiveInputStream =
-                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
-            ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
-            if (entry == null) {
+
+        try (ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
+            final Iterator<ZipArchiveEntry> entries = zipFile.getEntries().asIterator();
+            if (!entries.hasNext()) {
                 throw new RuntimeException("Unexpected empty zip file");
             }
+            ZipArchiveEntry entry = entries.next();
 
             int partNo = 1;
             for (final Part part : parts) {
@@ -528,8 +545,15 @@ public class PreAggregator {
 
                         if (add) {
                             final String entryName = baseNameOut + "." + fileName.getExtension();
-                            zipWriter.writeStream(entryName, zipArchiveInputStream);
-                            entry = zipArchiveInputStream.getNextEntry();
+                            // We are not changing the file, just the name, so we can work with the raw
+                            // compressed stream
+                            final InputStream rawInputStream = zipFile.getRawInputStream(entry);
+                            zipWriter.writeRawStream(entry, entryName, rawInputStream);
+                            if (entries.hasNext()) {
+                                entry = entries.next();
+                            } else {
+                                entry = null;
+                            }
                         }
                     }
                 }
@@ -553,17 +577,10 @@ public class PreAggregator {
     private AggregateState createAggregate(final FeedKey feedKey) {
         try {
             // Make a dir name.
-            final StringBuilder sb = new StringBuilder();
-            if (feedKey.feed() != null) {
-                sb.append(DirUtil.makeSafeName(feedKey.feed()));
-            }
-            sb.append("__");
-            if (feedKey.type() != null) {
-                sb.append(DirUtil.makeSafeName(feedKey.type()));
-            }
+            final String dirName = DirUtil.makeSafeName(feedKey);
 
             // Get or create the aggregate dir.
-            final Path aggregateDir = aggregatingDir.resolve(sb.toString());
+            final Path aggregateDir = aggregatingDir.resolve(dirName);
             LOGGER.debug(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
 
             // Ensure the dir exists.

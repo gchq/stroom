@@ -28,6 +28,10 @@ public class ByteCountInputStream extends WrappedInputStream {
         super(inputStream);
     }
 
+    public static ByteCountInputStream wrap(final InputStream inputStream) {
+        return new ByteCountInputStream(inputStream);
+    }
+
     @Override
     public int read() throws IOException {
         int r = super.read();

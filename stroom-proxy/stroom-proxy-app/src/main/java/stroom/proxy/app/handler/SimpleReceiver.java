@@ -95,22 +95,20 @@ public class SimpleReceiver implements Receiver {
                     final byte[] buffer = LocalByteBuffer.get();
 
                     try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
-                        // Write meta first.
+                        // Write .meta in the zip first
                         final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
                         final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                         zipWriter.writeStream(META_FILE_NAME, new ByteArrayInputStream(metaBytes));
 
                         // Deal with GZIP compression.
-                        final InputStream in;
                         final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-                        if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
-                            in = new GzipCompressorInputStream(bufferedInputStream);
-                        } else {
-                            in = bufferedInputStream;
-                        }
+                        final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
+                                ? new GzipCompressorInputStream(bufferedInputStream)
+                                : bufferedInputStream;
 
-                        // Write the data.
-                        zipWriter.writeStream(DATA_FILE_NAME, in);
+                        // Write the .dat file in the zip
+                        bytesRead = zipWriter.writeStream(DATA_FILE_NAME, in);
+
 
                         // Write the entries for quick reference.
                         final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(
@@ -121,12 +119,12 @@ public class SimpleReceiver implements Receiver {
                                 null,
                                 new Entry(DATA_FILE_NAME, bytesRead));
 
-                        // Write zip entry.
+                        // Write .entries file, so we know what is in the zip
                         try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
                             zipEntryGroup.write(entryWriter);
                         }
 
-                        // Write the meta.
+                        // Write the .meta file
                         AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
                     }
 
@@ -135,6 +133,8 @@ public class SimpleReceiver implements Receiver {
                 }
 
                 final Duration duration = Duration.between(startTime, Instant.now());
+                LOGGER.debug("receive() - Received simple stream, duration: {}, attributeMap: {}",
+                        duration, attributeMap);
                 logStream.log(
                         RECEIVE_LOG,
                         attributeMap,

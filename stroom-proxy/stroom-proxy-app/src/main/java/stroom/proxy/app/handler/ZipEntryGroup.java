@@ -1,6 +1,10 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,8 +14,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @JsonPropertyOrder({
@@ -25,18 +33,18 @@ import java.util.stream.Stream;
 @JsonInclude(Include.NON_NULL)
 public class ZipEntryGroup {
 
-    private String feedName;
-    private String typeName;
+    // Hold the feed+type as a FeedKey to try to reduce mem usage
+    // but serialise as individual feedName and typeName
+    @JsonIgnore
+    private FeedKey feedKey;
 
     private Entry manifestEntry;
     private Entry metaEntry;
     private Entry contextEntry;
     private Entry dataEntry;
 
-    public ZipEntryGroup(final String feedName,
-                         final String typeName) {
-        this.feedName = feedName;
-        this.typeName = typeName;
+    public ZipEntryGroup(final FeedKey feedKey) {
+        this.feedKey = feedKey;
     }
 
     @JsonCreator
@@ -46,28 +54,43 @@ public class ZipEntryGroup {
                          @JsonProperty("metaEntry") final Entry metaEntry,
                          @JsonProperty("contextEntry") final Entry contextEntry,
                          @JsonProperty("dataEntry") final Entry dataEntry) {
-        this.feedName = feedName;
-        this.typeName = typeName;
+        this.feedKey = FeedKey.of(feedName, typeName);
         this.manifestEntry = manifestEntry;
         this.metaEntry = metaEntry;
         this.contextEntry = contextEntry;
         this.dataEntry = dataEntry;
     }
 
+    public ZipEntryGroup(final FeedKey feedKey,
+                         final Entry manifestEntry,
+                         final Entry metaEntry,
+                         final Entry contextEntry,
+                         final Entry dataEntry) {
+        this.feedKey = feedKey;
+        this.manifestEntry = manifestEntry;
+        this.metaEntry = metaEntry;
+        this.contextEntry = contextEntry;
+        this.dataEntry = dataEntry;
+    }
+
+    @JsonProperty("feedName")
     public String getFeedName() {
-        return feedName;
+        return NullSafe.get(feedKey, FeedKey::feed);
     }
 
-    public void setFeedName(final String feedName) {
-        this.feedName = feedName;
-    }
-
+    @JsonProperty("typeName")
     public String getTypeName() {
-        return typeName;
+        return NullSafe.get(feedKey, FeedKey::type);
     }
 
-    public void setTypeName(final String typeName) {
-        this.typeName = typeName;
+    @JsonIgnore
+    public FeedKey getFeedKey() {
+        return feedKey;
+    }
+
+    @JsonIgnore
+    public void setFeedKey(final FeedKey feedKey) {
+        this.feedKey = feedKey;
     }
 
     public Entry getManifestEntry() {
@@ -108,23 +131,54 @@ public class ZipEntryGroup {
         writer.write("\n");
     }
 
-    public static ZipEntryGroup read(final String line) throws IOException {
+    public static List<ZipEntryGroup> read(final Path entriesFile) {
+        final FeedKeyInterner interner = FeedKey.createInterner();
+        return read(entriesFile, interner);
+    }
+
+    public static List<ZipEntryGroup> read(final Path entriesFile,
+                                           final FeedKeyInterner feedKeyInterner) {
+        try (Stream<String> linesStream = Files.lines(entriesFile)) {
+            return linesStream
+                    .filter(Predicate.not(String::isBlank))
+                    .map(line ->
+                            read(line, feedKeyInterner))
+                    .toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static ZipEntryGroup read(final String line,
+                                     final FeedKeyInterner feedKeyInterner) {
+        final ZipEntryGroup zipEntryGroup = read(line);
+        // Use an interned FeedKey to save on mem use
+        feedKeyInterner.consumeInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
+        return zipEntryGroup;
+    }
+
+    private static ZipEntryGroup read(final String line) {
         return JsonUtil.readValue(line, ZipEntryGroup.class);
     }
 
     @JsonIgnore
     public long getTotalUncompressedSize() {
-        return Stream.of(manifestEntry, metaEntry, contextEntry, dataEntry)
-                .filter(Objects::nonNull)
-                .mapToLong(Entry::getUncompressedSize)
-                .sum();
+        return getUncompressedSize(manifestEntry)
+               + getUncompressedSize(metaEntry)
+               + getUncompressedSize(contextEntry)
+               + getUncompressedSize(dataEntry);
+    }
+
+    private static long getUncompressedSize(final Entry entry) {
+        return entry != null
+                ? entry.uncompressedSize
+                : 0;
     }
 
     @Override
     public String toString() {
         return "ZipEntryGroup{" +
-               "feedName='" + feedName + '\'' +
-               ", typeName='" + typeName + '\'' +
+               "feedKey='" + feedKey + '\'' +
                ", manifestEntry=" + entryToStr(manifestEntry) +
                ", metaEntry=" + entryToStr(metaEntry) +
                ", contextEntry=" + entryToStr(contextEntry) +
@@ -134,7 +188,10 @@ public class ZipEntryGroup {
 
     private String entryToStr(final Entry entry) {
         if (entry != null) {
-            return entry.getName() + "(" + entry.getUncompressedSize() + ")";
+            return entry.getName()
+                   + "("
+                   + ModelStringUtil.formatCsv(entry.getUncompressedSize())
+                   + ")";
         } else {
             return "null";
         }

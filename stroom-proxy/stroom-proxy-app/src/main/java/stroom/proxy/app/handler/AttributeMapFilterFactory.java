@@ -55,7 +55,7 @@ public class AttributeMapFilterFactory {
             attributeMapFilter = new FeedStatusAttributeMapFilter(remoteFeedStatusService);
         } else {
             LOGGER.info("Permitting receipt of all data");
-            attributeMapFilter = new PermissiveAttributeMapFilter();
+            attributeMapFilter = PermissiveAttributeMapFilter.INSTANCE;
         }
     }
 

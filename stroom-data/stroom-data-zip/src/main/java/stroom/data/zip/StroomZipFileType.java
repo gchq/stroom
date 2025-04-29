@@ -2,6 +2,7 @@ package stroom.data.zip;
 
 import stroom.util.NullSafe;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -74,6 +75,13 @@ public enum StroomZipFileType {
      */
     public String getDotExtension() {
         return "." + extension;
+    }
+
+    /**
+     * @return True if path ends with this extension (or one of the aliases).
+     */
+    public boolean hasExtension(final Path path) {
+        return path != null && hasExtension(path.getFileName().toString());
     }
 
     /**

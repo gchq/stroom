@@ -49,16 +49,16 @@ public final class StreamFactory {
         return null;
     }
 
-    public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
-        if (receivedTimeMs != null) {
-            return receivedTimeMs;
-        }
-        if (doDefault) {
-            return System.currentTimeMillis();
-        }
-        return null;
-    }
+//    public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
+//        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
+//        if (receivedTimeMs != null) {
+//            return receivedTimeMs;
+//        }
+//        if (doDefault) {
+//            return System.currentTimeMillis();
+//        }
+//        return null;
+//    }
 
     /**
      * Helper to avoid null pointers

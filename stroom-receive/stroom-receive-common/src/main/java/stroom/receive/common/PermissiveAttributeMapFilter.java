@@ -21,6 +21,8 @@ import stroom.meta.api.AttributeMap;
 
 public class PermissiveAttributeMapFilter implements AttributeMapFilter {
 
+    public static final PermissiveAttributeMapFilter INSTANCE = new PermissiveAttributeMapFilter();
+
     @Override
     public boolean filter(AttributeMap attributeMap) {
         return true;
