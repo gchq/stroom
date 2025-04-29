@@ -396,6 +396,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 
         if (NullSafe.isEmptyCollection(dataFeedKeys)) {
             LOGGER.debug("Unknown data feed key {}, attributeMap: {}", unHashedKey, attributeMap);
+            // We need to throw here because we know it looks like a DFK, so
+            // we don't want to pass it on to the next filter.
             throw new StroomStreamException(StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
         }
 
