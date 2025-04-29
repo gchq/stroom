@@ -181,3 +181,4 @@ proxyConfig:
     aggregateInputQueueThreadCount: 1
     forwardingInputQueueThreadCount: 1
     preAggregateInputQueueThreadCount: 1
+    zipSplittingInputQueueThreadCount: 1

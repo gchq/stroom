@@ -1,5 +1,8 @@
 package stroom.util.exception;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 @FunctionalInterface
 public interface ThrowingRunnable<E extends Throwable> {
 
@@ -15,7 +18,11 @@ public interface ThrowingRunnable<E extends Throwable> {
             try {
                 runnable.run();
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                if (e instanceof IOException ioe) {
+                    throw new UncheckedIOException(ioe);
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }

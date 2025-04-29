@@ -25,13 +25,9 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.util.date.DateUtil;
+import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteCountInputStream;
-import stroom.util.io.StreamUtil;
-import stroom.util.net.HostNameUtil;
-import stroom.util.shared.NullSafe;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -50,14 +46,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public class StroomStreamProcessor {
 
     private static final String ZERO_CONTENT = "0";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomStreamProcessor.class);
-    private static volatile String hostName;
 
     private final AttributeMap globalAttributeMap;
     private final StreamHandler handler;
@@ -70,61 +64,6 @@ public class StroomStreamProcessor {
         this.globalAttributeMap = attributeMap;
         this.handler = handler;
         this.progressHandler = progressHandler;
-    }
-
-    public String getHostName() {
-        if (hostName == null) {
-            StroomStreamProcessor.hostName = HostNameUtil.determineHostName();
-        }
-        return hostName;
-    }
-
-    public void processRequestHeader(final HttpServletRequest httpServletRequest,
-                                     final Instant receivedTime) {
-        String guid = globalAttributeMap.get(StandardHeaderArguments.GUID);
-
-        // Allocate a GUID if we have not got one.
-        if (guid == null) {
-            guid = UUID.randomUUID().toString();
-            globalAttributeMap.put(StandardHeaderArguments.GUID, guid);
-
-            // Only allocate RemoteXxx details if the GUID has not been
-            // allocated. This is to prevent us setting them to proxy's addr/host
-            // when it has already set them to the addr/host of the actual client.
-
-            // Allocate remote address if not set.
-            final String remoteAddr = httpServletRequest.getRemoteAddr();
-            if (NullSafe.isNonEmptyString(remoteAddr)) {
-                globalAttributeMap.put(StandardHeaderArguments.REMOTE_ADDRESS, remoteAddr);
-            }
-
-            // Allocate remote address if not set.
-            final String remoteHost = httpServletRequest.getRemoteHost();
-            if (NullSafe.isNonEmptyString(remoteHost)) {
-                globalAttributeMap.put(StandardHeaderArguments.REMOTE_HOST, remoteHost);
-            }
-        }
-
-        setAndAppendReceivedTime(globalAttributeMap, receivedTime);
-    }
-
-    private void setAndAppendReceivedTime(final AttributeMap attributeMap, final Instant receivedTime) {
-        final String prevReceivedTime = attributeMap.get(StandardHeaderArguments.RECEIVED_TIME);
-
-        if (NullSafe.isNonEmptyString(prevReceivedTime)) {
-            // If prev time is not in history, add it, but ensure it is in a normal form
-            final String normalisedPrevReceivedTime = DateUtil.normaliseDate(prevReceivedTime, true);
-            attributeMap.appendItemIf(
-                    StandardHeaderArguments.RECEIVED_TIME_HISTORY,
-                    normalisedPrevReceivedTime,
-                    curVal ->
-                            !(NullSafe.contains(curVal, prevReceivedTime)
-                              || NullSafe.contains(curVal, normalisedPrevReceivedTime)));
-        }
-        // Add our new time to the end of the history
-        attributeMap.appendDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, receivedTime);
-        // Now overwrite the receivedTime with the new time
-        attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, receivedTime);
     }
 
     public void processZipFile(final Path zipFilePath) {
@@ -173,17 +112,10 @@ public class StroomStreamProcessor {
                                    final String prefix,
                                    final Instant receivedTime) {
 
-        final String key = StandardHeaderArguments.COMPRESSION;
-        String compression = globalAttributeMap.get(key);
-        if (NullSafe.isNonEmptyString(compression)) {
-            compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
-            // Put the normalised value back in the map
-            globalAttributeMap.put(key, compression);
-            if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
-                throw new StroomStreamException(
-                        StroomStatusCode.UNKNOWN_COMPRESSION, globalAttributeMap, compression);
-            }
-        }
+        final String compression = AttributeMapUtil.validateAndNormaliseCompression(
+                globalAttributeMap,
+                compressionVal -> new StroomStreamException(
+                        StroomStatusCode.UNKNOWN_COMPRESSION, globalAttributeMap, compressionVal));
 
         if (ZERO_CONTENT.equals(globalAttributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
             LOGGER.warn("process() - Skipping Zero Content " + globalAttributeMap);
@@ -264,11 +196,16 @@ public class StroomStreamProcessor {
                 // stream.
                 try {
                     // TODO See the javadoc for ZipArchiveInputStream as getNextZipEntry
-                    // may return an entry that is not in the zip dictionary or it may
-                    // return multiple entries with the same name. Our code probably
-                    // works because we would not expect the zips to have been mutated which
-                    // may cause these cases, however we are on slightly shaky ground grabbing
-                    // entries without consulting the zip's dictionary.
+                    //  may return an entry that is not in the zip dictionary or it may
+                    //  return multiple entries with the same name. Our code probably
+                    //  works because we would not expect the zips to have been mutated which
+                    //  may cause these cases, however we are on slightly shaky ground grabbing
+                    //  entries without consulting the zip's dictionary.
+                    //  We could write the stream to a file then read it via ZipFile as we
+                    //  do in proxy, but this has the added cost of the extra write to disk.
+                    //  If the zip has been sent by a v7.8+ proxy then we are assured that the
+                    //  zip stream is clean as proxy creates a zip from a ZipFile on receipt, thus
+                    //  omitting any 'deleted' entries.
                     zipEntry = zipArchiveInputStream.getNextEntry();
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(
@@ -305,17 +242,21 @@ public class StroomStreamProcessor {
                 }
 
                 if (StroomZipFileType.META.equals(stroomZipEntry.getStroomZipFileType())) {
-                    final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
+                    final AttributeMap entryAttributeMap;
                     // We have to wrap our stream reading code in an individual
                     // try/catch, so we can return to the client an error in the case
                     // of a corrupt stream.
                     try {
-                        // This read() will overwrite any entries that have already been set from HTTP headers
+                        // This will overwrite any entries that have already been set from HTTP headers
                         // or by the receipt code prior to this. E.g. if the .meta in the zip contains ReceivedTime
                         // it will overwrite the value set when this stream was received by this thread.
                         // Thus, some keys need to be set below to ensure we have them.
-                        AttributeMapUtil.read(zipArchiveInputStream, entryAttributeMap);
-                    } catch (final IOException ioEx) {
+                        entryAttributeMap = AttributeMapUtil.mergeAttributeMaps(
+                                globalAttributeMap,
+                                ThrowingConsumer.unchecked(derivedAttributeMap ->
+                                        AttributeMapUtil.read(zipArchiveInputStream, derivedAttributeMap)));
+
+                    } catch (final UncheckedIOException ioEx) {
                         throw new StroomStreamException(
                                 StroomStatusCode.COMPRESSED_STREAM_INVALID,
                                 globalAttributeMap,
@@ -327,14 +268,14 @@ public class StroomStreamProcessor {
 
                     // The entry one will be initially set at the boundary Stroom
                     // server
-                    final String hostName = getHostName();
-                    entryAttributeMap.appendItemIf(
-                            StandardHeaderArguments.RECEIVED_PATH,
-                            hostName,
-                            curVal -> !NullSafe.contains(curVal, hostName));
+//                    final String hostName = getHostName();
+//                    entryAttributeMap.appendItemIf(
+//                            StandardHeaderArguments.RECEIVED_PATH,
+//                            hostName,
+//                            curVal -> !NullSafe.contains(curVal, hostName));
 
                     // Set RECEIVED_TIME and append to RECEIVED_TIME_HISTORY in the meta
-                    setAndAppendReceivedTime(entryAttributeMap, receivedTime);
+//                    AttributeMapUtil.setAndAppendReceivedTime(entryAttributeMap, receivedTime);
 
                     if (entryAttributeMap.containsKey(StandardHeaderArguments.STREAM_SIZE)) {
                         // Header already has stream size so just send it on

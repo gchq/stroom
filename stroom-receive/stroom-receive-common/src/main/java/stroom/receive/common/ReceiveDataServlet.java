@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.Set;
 
@@ -104,7 +105,11 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
         } catch (final RuntimeException e) {
             final StroomStreamException stroomStreamException =
                     StroomStreamException.create(e,
-                            AttributeMapUtil.create(request, certificateExtractor));
+                            AttributeMapUtil.create(
+                                    request,
+                                    certificateExtractor,
+                                    Instant.now(),
+                                    null));
             stroomStreamException.sendErrorResponse(response);
         }
     }

@@ -13,6 +13,22 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4863** : Stop errors being logged on proxy shutdown.
+
+* Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
+
+* Issue **#4889** : Fix stream downloads resulting in HTTP error 404.
+
+* Proxy - Change the way zip receipt works to speed up client requests and to reduce cpu/io load caused by de-compressing/compressing the zip entries. Change the zip splitting to be asynchronous from the initial receipt, so the client doesn't have to wait for it to happen.
+
+* Issue **#4914** : Fix Plan B condense bug.
+
+* Issue **#4915** : Fix Plan B interrupt exception.
+
+* Rationalise the handling/setting of meta attributes between proxy and stroom to ensure common receipt handling. Also change proxy and stroom to set/append ReceiptId, ReceiptIdPath, ReceivedTime, ReceivedTimeHistory and ReceivedPath attributes within zip meta entries.
+
+* Proxy - Fix receipt of un-compressed data not recording the data size in bytes.
+
 * Issue **#4856** : Fix dashboard permissions tab title.
 
 
