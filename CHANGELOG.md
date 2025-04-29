@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.10] - 2025-04-29
+
+* Issue **#4875** : Fix select *.
+
+* Issue **#3928** : Add merge filter for deeply nested data.
+
+* Issue **#4211** : Prevent stream status in processing filters.
+
+* Issue **#4927** : Fix TOKEN data feed auth when DATA_FEED_KEY is enabled.
+
 * Issue **#4863** : Stop errors being logged on proxy shutdown.
 
 * Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
@@ -1418,7 +1428,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.10...HEAD
+[v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
 [v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
 [v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
 [v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7
