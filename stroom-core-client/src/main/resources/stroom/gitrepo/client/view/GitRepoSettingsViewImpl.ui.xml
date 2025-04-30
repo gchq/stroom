@@ -34,6 +34,9 @@
                         title="Commit Message"
                         ui:field="commitMessage" />
         </form:FormGroup>
-        <b:Button ui:field="gitRepoPush" text="Push to Git" addStyleNames="allow-focus" />
+        <b:Button ui:field="gitRepoPush"
+                  text="Push to Git"
+                  addStyleNames="allow-focus"
+                  title="Add a commit message before pushing" />
     </g:FlowPanel>
 </ui:UiBinder>

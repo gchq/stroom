@@ -64,7 +64,12 @@ public class GitRepoSettingsViewImpl
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
+        // Set the state of the git repo push button
+        this.gitRepoPush.setEnabled(false);
+
         // TODO Add validation for the TextBoxes
+
+
     }
 
     @Override
@@ -119,6 +124,7 @@ public class GitRepoSettingsViewImpl
     @Override
     public void setCommitMessage(String commitMessage) {
         this.commitMessage.setText(commitMessage);
+        this.onCommitMessageValueChange(null);
     }
 
     @Override
@@ -140,6 +146,15 @@ public class GitRepoSettingsViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
+    }
+
+    /**
+     * Enables/disables the Push button depending on whether there is anything
+     * in the Commit Message text box.
+     */
+    @UiHandler({"commitMessage"})
+    public void onCommitMessageValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
+        this.gitRepoPush.setEnabled(!this.getCommitMessage().isEmpty());
     }
 
     /**
