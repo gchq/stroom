@@ -397,7 +397,7 @@ public class ApiKeyService {
         if (!user.isEnabled()) {
             LOGGER.warn("Disabled user '{}' attempted API key authentication. {}",
                     user.getDisplayName(), user);
-            throw new AuthenticationException(LogUtil.message("User account '{}' is disabled.",
+            throw new AuthenticationException(LogUtil.message("User '{}' is disabled.",
                     user.getDisplayName()));
         }
     }

@@ -162,7 +162,7 @@ public class StroomUserIdentityFactory
 
         return optUser
                 .flatMap(user -> {
-                    verifyEnabledOrThrow(user, "interactive");
+                    verifyEnabledOrThrow(user, "interactive external IDP");
                     final User effectiveUser = updateUserInfo(subjectId, user, jwtClaims);
                     final UserIdentity userIdentity = createAuthFlowUserIdentity(
                             jwtClaims, request, tokenResponse, effectiveUser);
@@ -515,7 +515,7 @@ public class StroomUserIdentityFactory
         if (!user.isEnabled()) {
             LOGGER.warn("Disabled user '{}' attempted {} authentication. {}",
                     user.getDisplayName(), authType, user);
-            throw new AuthenticationException(LogUtil.message("User account '{}' is disabled.",
+            throw new AuthenticationException(LogUtil.message("User '{}' is disabled.",
                     user.getDisplayName()));
         }
     }
