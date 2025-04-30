@@ -59,6 +59,14 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
     @Operation(
             summary = "Push items to Git",
             operationId = "pushToGit")
-    GitRepoPushResponse pushToGit(
+    GitRepoResponse pushToGit(
             @Parameter(description = "gitRepoPushDto", required = true) GitRepoPushDto gitRepoPushDto);
+
+    @POST
+    @Path("/pullFromGit")
+    @Operation(
+            summary = "Pull items from Git",
+            operationId = "pullFromGit")
+    GitRepoResponse pullFromGit(
+            @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
 }

@@ -55,10 +55,13 @@ public class GitRepoSettingsViewImpl
     TextBox path;
 
     @UiField
+    TextArea commitMessage;
+
+    @UiField
     Button gitRepoPush;
 
     @UiField
-    TextArea commitMessage;
+    Button gitRepoPull;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -68,8 +71,6 @@ public class GitRepoSettingsViewImpl
         this.gitRepoPush.setEnabled(false);
 
         // TODO Add validation for the TextBoxes
-
-
     }
 
     @Override
@@ -159,7 +160,7 @@ public class GitRepoSettingsViewImpl
 
     /**
      * Handles 'Push to Git' button clicks.
-     * Passes the button to display the wait timer.
+     * Passes the button to display the wait icon.
      * @param event The button push event.
      */
     @SuppressWarnings("unused")
@@ -167,6 +168,19 @@ public class GitRepoSettingsViewImpl
     public void onGitRepoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onGitRepoPush(gitRepoPush);
+        }
+    }
+
+    /**
+     * Handles 'Pull from Git' button clicks.
+     * Passes the button to display the wait icon.
+     * @param event The button push event.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("gitRepoPull")
+    public void onGitRepoPullClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onGitRepoPull(gitRepoPull);
         }
     }
 

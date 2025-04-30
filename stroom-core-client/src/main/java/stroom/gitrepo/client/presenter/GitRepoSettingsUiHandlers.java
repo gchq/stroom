@@ -12,4 +12,10 @@ public interface GitRepoSettingsUiHandlers extends DirtyUiHandlers {
      * 'Push' button event handler.
      */
     void onGitRepoPush(TaskMonitorFactory taskMonitorFactory);
+
+    /**
+     * 'Pull' button event handler.
+     */
+    void onGitRepoPull(TaskMonitorFactory taskMonitorFactory);
+
 }

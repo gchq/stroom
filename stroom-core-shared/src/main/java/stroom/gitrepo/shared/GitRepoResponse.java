@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class GitRepoPushResponse {
+public class GitRepoResponse {
 
     @JsonProperty
     private final boolean ok;
@@ -14,8 +14,8 @@ public class GitRepoPushResponse {
     private final String message;
 
     @JsonCreator
-    public GitRepoPushResponse(@JsonProperty("ok") final boolean ok,
-                               @JsonProperty("message") final String message) {
+    public GitRepoResponse(@JsonProperty("ok") final boolean ok,
+                           @JsonProperty("message") final String message) {
         this.ok = ok;
         this.message = message;
     }

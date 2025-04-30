@@ -38,5 +38,9 @@
                   text="Push to Git"
                   addStyleNames="allow-focus"
                   title="Add a commit message before pushing" />
+        <b:Button ui:field="gitRepoPull"
+                  text="Pull from Git"
+                  addStyleNames="allow-focus"
+                  title="Pull remote changes into Stroom" />
     </g:FlowPanel>
 </ui:UiBinder>

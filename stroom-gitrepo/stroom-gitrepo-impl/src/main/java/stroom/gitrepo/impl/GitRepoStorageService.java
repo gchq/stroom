@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -165,6 +166,19 @@ public class GitRepoStorageService {
         }
 
         return messages;
+    }
+
+    /**
+     * Called when the user presses the Pull from Git button in the UI.
+     * @param gitRepoDoc The document holding the Git repo settings
+     * @return A list of messages about the import
+     * @throws IOException if something goes wrong
+     */
+    public List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
+        LOGGER.error(">>>>>> Yay got the pull command from the UI! <<<<<<");
+
+        // Placeholder
+        return Collections.emptyList();
     }
 
     /**

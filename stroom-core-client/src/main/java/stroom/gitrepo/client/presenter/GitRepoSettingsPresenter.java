@@ -77,6 +77,10 @@ public class GitRepoSettingsPresenter
         this.setDirty(true);
     }
 
+    /**
+     * Called when Git Push button is pressed.
+     * @param taskMonitorFactory Where the wait icon is displayed.
+     */
     @Override
     public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
         // Use the gitRepoDoc saved in the onRead() method, if available
@@ -94,7 +98,32 @@ public class GitRepoSettingsPresenter
                         if (result.isOk()) {
                             AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
                         } else {
-                            AlertEvent.fireError(this, "Push failure", result.getMessage(), null);
+                            AlertEvent.fireError(this, "Push Failure", result.getMessage(), null);
+                        }
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        } else {
+            AlertEvent.fireWarn(this, "Git repository information not available", "", null);
+        }
+    }
+
+    /**
+     * Called when the Git Pull button is pressed.
+     * @param taskMonitorFactory Where to display the wait icon.
+     */
+    @Override
+    public void onGitRepoPull(TaskMonitorFactory taskMonitorFactory) {
+        if (gitRepoDoc != null) {
+            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(res -> res.pullFromGit(doc))
+                    .onSuccess(result -> {
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(this, "Pull Success", result.getMessage(), null);
+                        } else {
+                            AlertEvent.fireError(this, "Pull Failure", result.getMessage(), null);
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)

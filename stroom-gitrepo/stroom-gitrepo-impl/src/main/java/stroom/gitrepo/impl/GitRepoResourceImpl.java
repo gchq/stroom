@@ -22,7 +22,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
-import stroom.gitrepo.shared.GitRepoPushResponse;
+import stroom.gitrepo.shared.GitRepoResponse;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,9 +80,9 @@ class GitRepoResourceImpl implements GitRepoResource {
      *         whether it worked.
      */
     @Override
-    public GitRepoPushResponse pushToGit(final GitRepoPushDto gitRepoPushDto) {
+    public GitRepoResponse pushToGit(final GitRepoPushDto gitRepoPushDto) {
         Objects.requireNonNull(gitRepoPushDto);
-        GitRepoPushResponse response;
+        GitRepoResponse response;
         try {
             LOGGER.error("Pushing Git repo: '{}'", gitRepoPushDto.getGitRepoDoc());
             List<Message> messages = gitRepoStorageServiceProvider.get()
@@ -91,7 +91,30 @@ class GitRepoResourceImpl implements GitRepoResource {
             response = this.createResponse(messages);
         }
         catch (Exception e) {
-            response = new GitRepoPushResponse(false, e.getMessage());
+            response = new GitRepoResponse(false, e.getMessage());
+        }
+        return response;
+    }
+
+    /**
+     * Called on the server when a REST request is received from the
+     * UI for a Git Pull.
+     * @param gitRepoDoc The doc holding git repo info.
+     * @return a GitRepoRespose with all the messages about
+     * whether it worked.
+     */
+    @Override
+    public GitRepoResponse pullFromGit(final GitRepoDoc gitRepoDoc) {
+        Objects.requireNonNull(gitRepoDoc);
+        GitRepoResponse response;
+        try {
+            LOGGER.error("Pulling from Git repo: {}", gitRepoDoc);
+            List<Message> messages = gitRepoStorageServiceProvider.get()
+                    .importDoc(gitRepoDoc);
+            response = this.createResponse(messages);
+        }
+        catch (Exception e) {
+            response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
     }
@@ -109,7 +132,7 @@ class GitRepoResourceImpl implements GitRepoResource {
      * @param messages The collection of messages for the export process.
      * @return the response for the UI. Never returns null.
      */
-    private GitRepoPushResponse createResponse(List<Message> messages) {
+    private GitRepoResponse createResponse(List<Message> messages) {
         Objects.requireNonNull(messages);
         var buf = new StringBuilder("Success:\n");
         for (var m: messages) {
@@ -117,6 +140,6 @@ class GitRepoResourceImpl implements GitRepoResource {
             buf.append("\n");
         }
 
-        return new GitRepoPushResponse(true, buf.toString());
+        return new GitRepoResponse(true, buf.toString());
     }
 }
