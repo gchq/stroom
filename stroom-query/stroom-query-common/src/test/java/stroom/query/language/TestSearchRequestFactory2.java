@@ -6,6 +6,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,8 @@ public class TestSearchRequestFactory2 {
                 """;
         final SearchRequestFactory searchRequestFactory = new SearchRequestFactory(
                 (keywordGroup, parentTableSettings) -> null,
-                new MockDocResolver());
+                MockDocResolver.getInstance(),
+                MockSecurityContext.getInstance());
         for (int i = 0; i < 2; i++) {
             searchRequest = searchRequestFactory.create(input, searchRequest, expressionContext);
             final String out = JsonUtil.writeValueAsString(searchRequest);

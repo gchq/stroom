@@ -54,6 +54,7 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
+import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -86,23 +87,27 @@ public class SearchRequestFactory {
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
     private final DocResolver docResolver;
-
+    private final SecurityContext securityContext;
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
-                                final DocResolver docResolver) {
+                                final DocResolver docResolver,
+                                final SecurityContext securityContext) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
         this.docResolver = docResolver;
+        this.securityContext = securityContext;
     }
 
     public void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, docResolver).extractDataSourceOnly(string, consumer);
+        new Builder(visualisationTokenConsumer, docResolver, securityContext)
+                .extractDataSourceOnly(string, consumer);
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, docResolver).create(string, in, expressionContext);
+        return new Builder(visualisationTokenConsumer, docResolver, securityContext)
+                .create(string, in, expressionContext);
     }
 
 
@@ -114,6 +119,7 @@ public class SearchRequestFactory {
         private final VisualisationTokenConsumer visualisationTokenConsumer;
 
         private final DocResolver docResolver;
+        private final SecurityContext securityContext;
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
@@ -125,9 +131,11 @@ public class SearchRequestFactory {
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
-                final DocResolver docResolver) {
+                final DocResolver docResolver,
+                final SecurityContext securityContext) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.docResolver = docResolver;
+            this.securityContext = securityContext;
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
@@ -250,7 +258,10 @@ public class SearchRequestFactory {
                 throw new TokenException(dataSourceToken, "Expected a token of type string");
             }
             final String dataSourceName = dataSourceToken.getUnescapedText();
-            consumer.accept(docResolver.resolveDataSourceRef(dataSourceName));
+            final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
+                    docResolver.resolveDataSourceRef(dataSourceName));
+
+            consumer.accept(dataSourceDocRef);
 
             return tokens.subList(1, tokens.size());
         }
