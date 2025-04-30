@@ -27,6 +27,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -55,6 +56,9 @@ public class GitRepoSettingsViewImpl
 
     @UiField
     Button gitRepoPush;
+
+    @UiField
+    TextArea commitMessage;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -107,6 +111,14 @@ public class GitRepoSettingsViewImpl
     @Override
     public void setPath(String path) {
         this.path.setText(path);
+    }
+    @Override
+    public String getCommitMessage() {
+        return this.commitMessage.getText();
+    }
+    @Override
+    public void setCommitMessage(String commitMessage) {
+        this.commitMessage.setText(commitMessage);
     }
 
     @Override

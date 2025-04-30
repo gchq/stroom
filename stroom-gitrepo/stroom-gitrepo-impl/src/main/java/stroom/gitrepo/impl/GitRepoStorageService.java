@@ -1,23 +1,18 @@
 package stroom.gitrepo.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.Store;
-import stroom.docstore.api.StoreFactory;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Clearable;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Singleton;
 import jakarta.inject.Inject;
@@ -32,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -42,18 +38,7 @@ import java.util.Set;
  * thus should be saved to or loaded from Git as well as the DB.
  */
 @Singleton
-@EntityEventHandler(action = {
-        //EntityAction.CREATE,
-        //EntityAction.POST_CREATE,
-        //EntityAction.UPDATE,
-        //EntityAction.PRE_DELETE,
-        //EntityAction.DELETE
-        /*,
-        EntityAction.CLEAR_CACHE,
-        EntityAction.CREATE_EXPLORER_NODE,
-        EntityAction.UPDATE_EXPLORER_NODE,
-        EntityAction.DELETE_EXPLORER_NODE*/ })
-public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
+public class GitRepoStorageService {
 
     /**
      * The tree model to find parents of the event item.
@@ -64,11 +49,6 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
      * Finds children of an ExplorerNode
      */
     private final ExplorerNodeService explorerNodeService;
-
-    /**
-     * Where we're going to get the GitRepoDoc from.
-     */
-    private final Store<GitRepoDoc> store;
 
     /**
      * Provides the ability to import and export stuff to disk.
@@ -103,77 +83,41 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
 
     /**
      * Constructor so we can log when this object is constructed.
+     * Called by injection system.
      */
+    @SuppressWarnings("unused")
     @Inject
     public GitRepoStorageService(final ExplorerService explorerService,
                                  final ExplorerNodeService explorerNodeService,
-                                 final GitRepoSerialiser serialiser,
-                                 final StoreFactory storeFactory,
                                  final ImportExportSerializer importExportSerializer,
                                  final GitRepoConfig config,
                                  final PathCreator pathCreator) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
-        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc.class);
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
-        LOGGER.error("================================= GitRepoStorageService::ctor()");
-    }
-
-    /**
-     * Called when an event happens - CRUD.
-     * @param event The event.
-     */
-    @Override
-    public void onChange(final EntityEvent event) {
-        LOGGER.error("================================= GitRepoStorageService::onChange({})", event);
-
-        // Convert the docRef to an ExplorerNode
-        Optional<ExplorerNode> oNode = explorerService.getFromDocRef(event.getDocRef());
-        if (oNode.isPresent()) {
-            ExplorerNode node = oNode.get();
-
-            // Search up the tree
-            //List<ExplorerNode> path = explorerService.getAncestorOfDocType(GitRepoDoc.TYPE, node);
-            Optional<ExplorerNode> gitRepoAncestor = this.getGitRepoAncestor(node);
-            if (gitRepoAncestor.isPresent()) {
-                LOGGER.error("========================= Found GitRepo ancestor path '{}'", gitRepoAncestor.get());
-                try {
-                    this.updateGit(gitRepoAncestor.get());
-                }
-                catch (IOException e) {
-                    // TODO Handle this exception properly
-                    LOGGER.error("Could not update GIT", e);
-                }
-            } else {
-                LOGGER.error("========================= No GitRepo ancestor!");
-            }
-        } else {
-            LOGGER.error("================= Cannot convert event's DocRef to ExplorerNode: '{}'", event);
-        }
-    }
-
-    /**
-     * ?
-     */
-    @Override
-    public void clear() {
-        LOGGER.error("================================= GitRepoStorageService::clear()");
     }
 
     /**
      * Called by pressing the Git Settings 'Push to Git' button.
-     * @param gitRepoDoc The document that we're pushing the button on
+     *
+     * @param gitRepoDoc    The document that we're pushing the button on.
+     *                      Must not be null.
+     * @param commitMessage The Git commit message. Must not be null.
+     * @return The export summary. Might return if the export hasn't yet taken
+     *         place.
      * @throws IOException if something goes wrong
      */
-    public void exportDoc(GitRepoDoc gitRepoDoc) throws IOException {
-        LOGGER.error("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc, gitRepoDoc.getUuid());
+    public List<Message> exportDoc(GitRepoDoc gitRepoDoc,
+                                   final String commitMessage)
+            throws IOException {
+        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc, gitRepoDoc.getUuid());
+        List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
         Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
-        ExplorerNode gitRepoExplorerNode;
-        gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
+        ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
 
         // Work out where the GitRepo node is in the explorer tree
         List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
@@ -183,9 +127,7 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
             final Path localDir = pathCreator.toAppPath(config.getLocalDir());
-            LOGGER.error("Local directory is '{}'", localDir);
             final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
-            LOGGER.error("Git work directory is '{}'", gitWork);
 
             // Delete everything under gitWork (but not the .git directory)
             this.ensureDirectoryExists(gitWork);
@@ -195,63 +137,65 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
             try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
 
                 // Export everything
-                this.export(gitRepoNodePath, gitRepoExplorerNode, gitWork);
+                ExportSummary exportSummary =
+                        this.export(gitRepoNodePath, gitRepoExplorerNode, gitWork);
+                messages.addAll(exportSummary.getMessages());
+                messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
                 // Add everything to commit & commit locally
-                // We add as 'update' and 'not as update' to try to catch deleted files.
+                // We add as 'update' and 'not as update' to catch deleted files.
                 git.add().setUpdate(false).addFilepattern(".").call();
                 git.add().setUpdate(true).addFilepattern(".").call();
                 git.commit()
                         .setCommitter("Anonymous", gitRepoDoc.getUsername())
-                        .setMessage("Automatic commit")
+                        .setMessage(commitMessage)
                         .call();
+                messages.add(new Message(Severity.INFO, "Local commit successful"));
 
                 // Push to remote
                 git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                LOGGER.error("Pushed to git");
+                messages.add(new Message(Severity.INFO, "Pushed to Git"));
             } catch (GitAPIException e) {
-                throw new IOException("Couldn't commit and push GIT", e);
+                this.throwException("Couldn't commit and push GIT", e, messages);
+            } catch (IOException e) {
+                this.throwException("Error pushing to GIT", e, messages);
             }
+        } else {
+            throw new IOException("Git repository URL isn't configured; cannot push");
         }
 
+        return messages;
     }
 
     /**
-     * Returns the GitRepoDoc that is represented by the first element in the path.
-     * @param gitRepoNode The ExplorerNode representing the GitRepo.
-     * @return The GitRepoDoc that holds the GIT settings to use.
+     * Creates an exception with as much context info as possible for display
+     * to the user in the UI.
+     * @param errorMessage The message that describes the problem. Must not
+     *                     be null.
+     * @param cause The exception that caused this error. Can be null if no
+     *              triggering exception.
+     * @param messages Any messages from the export. Never null. Can be empty.
+     * @throws IOException suitable for throwing to indicate to the caller
+     * that an error has occurred.
      */
-    private GitRepoDoc getGitRepoDoc(ExplorerNode gitRepoNode) {
-        DocRef gitRepoDocRef = gitRepoNode.getDocRef();
-        GitRepoDoc gitRepoDoc = store.readDocument(gitRepoDocRef);
-        LOGGER.error("Using GitRepoDoc with settings: {}", gitRepoDoc);
-        return gitRepoDoc;
-    }
-
-    /**
-     * Returns the GitRepo ancestor of the current node, if it exists.
-     * May return the current node if that is a GitRepo.
-     * @param node The node to start searching at.
-     * @return Optional containing the GitRepo ancestor, or an empty
-     * Optional if there is no GitRepo ancestor.
-     */
-    private Optional<ExplorerNode> getGitRepoAncestor(ExplorerNode node) {
-        var currentNode = node;
-        ExplorerNode gitRepoNode = null;
-        do {
-            if (currentNode.getType().equals(GitRepoDoc.TYPE)) {
-                gitRepoNode = currentNode;
+    private void throwException(String errorMessage,
+                                Exception cause,
+                                List<Message> messages)
+    throws IOException {
+        LOGGER.error("Error pushing to GIT: {}, {}, {}", errorMessage, cause, messages);
+        var buf = new StringBuilder(errorMessage);
+        if (cause != null) {
+            buf.append("\n    ");
+            buf.append(cause.getMessage());
+        }
+        if (!messages.isEmpty()) {
+            buf.append("\n\nAdditional information:");
+            for (var m : messages) {
+                buf.append("\n    ");
+                buf.append(m);
             }
-            else {
-                var optionalCurrentNode =
-                        this.explorerNodeService.getParent(currentNode.getDocRef());
-                currentNode = optionalCurrentNode.orElse(null);
-            }
-        } while (currentNode != null
-                 && gitRepoNode == null
-                 && !currentNode.getType().equals(ExplorerConstants.SYSTEM_TYPE));
-
-        return Optional.ofNullable(currentNode);
+        }
+        throw new IOException(buf.toString(), cause);
     }
 
     /**
@@ -268,8 +212,6 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
                 throw new IOException("Could not create directories '"
                                       + path
                                       + "' for GIT document");
-            } else {
-                LOGGER.error("Created directories for {}", path);
             }
         }
     }
@@ -289,7 +231,6 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
 
                 // Ignore any .git subtree
                 if (dir.endsWith(GIT_REPO_DIRNAME)) {
-                    LOGGER.error(">>>>> Ignoring .git subtree");
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 else {
@@ -303,7 +244,6 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
                    throws IOException {
                 // Don't delete README files
                 if (!p.endsWith(GIT_README_MD)) {
-                    LOGGER.error(">>>>>> Deleting file '{}'", p);
                     Files.delete(p);
                 }
                 return FileVisitResult.CONTINUE;
@@ -316,12 +256,8 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
 
                 // Don't delete the root dir or the .git dir
                 if (!dir.equals(root) && !dir.endsWith(GIT_REPO_DIRNAME)) {
-                        LOGGER.error(">>>>>> Deleting directory '{}'", dir);
                         Files.delete(dir);
-                } else {
-                    LOGGER.error(">>>>> Not deleting directory {}", dir);
                 }
-
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -335,14 +271,12 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
      */
     private void recurseExplorerNodes(final ExplorerNode node, Set<DocRef> docRefs) {
         if (!node.getType().equals(GitRepoDoc.TYPE)) {
-            LOGGER.error(">>>> Adding node '{}' to export", node);
             docRefs.add(node.getDocRef());
         }
         List<ExplorerNode> children = this.explorerNodeService.getChildren(node.getDocRef());
         for (ExplorerNode child : children) {
             // Don't recurse any child GitRepoDoc nodes
             if (!child.getType().equals(GitRepoDoc.TYPE)) {
-                LOGGER.error(">>>> Found child node '{}'", child);
                 this.recurseExplorerNodes(child, docRefs);
             }
         }
@@ -353,19 +287,19 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
      * Stroom import/export format (unzipped).
      * @param node The root node to export.
      * @param exportDir The directory to export to.
+     * @return The export summary.
      */
-    public void export(List<ExplorerNode> gitRepoNodePath,
+    private ExportSummary export(List<ExplorerNode> gitRepoNodePath,
                        ExplorerNode node,
                        Path exportDir) {
         final Set<DocRef> docRefs = new HashSet<>();
         this.recurseExplorerNodes(node, docRefs);
 
-        final ExportSummary exportSummary = importExportSerializer.write(
+        return importExportSerializer.write(
                 gitRepoNodePath,
                 exportDir,
                 docRefs,
                 true);
-        // TODO - report the exportSummary
     }
 
     /**
@@ -376,7 +310,6 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
     private CredentialsProvider getGitCreds(GitRepoDoc gitRepoDoc) {
         String username = gitRepoDoc.getUsername();
         String password = gitRepoDoc.getPassword();
-        LOGGER.error("\\\\\\\\ Creds: {}: {}", username, password);
         return new UsernamePasswordCredentialsProvider(username, password);
     }
 
@@ -389,14 +322,15 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
      */
     private Git gitConstruct(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
             throws IOException, GitAPIException {
+
+        // This refers to the .git directory within the Work directory
         Path gitRepoDir = gitWorkDir.resolve(GIT_REPO_DIRNAME);
 
-        Git git;
+        // Git root object
+        final Git git;
 
         // Initialise the git repo if necessary
         if (!Files.exists(gitRepoDir)) {
-            // Checkout from repo
-
             // Clone the remote repo
             git = Git.cloneRepository()
                     .setURI(gitRepoDoc.getUrl())
@@ -411,54 +345,4 @@ public class GitRepoStorageService implements EntityEvent.Handler, Clearable {
         return git;
     }
 
-    /**
-     * Updates GIT based on the data received from the event system.
-     * @param gitRepoExplorerNode The node of the GitRepo that we're
-     *                           going to update.
-     */
-    private void updateGit(ExplorerNode gitRepoExplorerNode)
-            throws IOException {
-
-        // Get git repository settings from GitRepo
-        final GitRepoDoc gitRepoDoc = this.getGitRepoDoc(gitRepoExplorerNode);
-
-        // Work out where the GitRepo node is in the explorer tree
-        List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoExplorerNode.getDocRef());
-        gitRepoNodePath.add(gitRepoExplorerNode);
-
-        // Only try to do anything if the settings exist
-        if (!gitRepoDoc.getUrl().isEmpty()) {
-            // Find the path to the root of the local Git repository
-            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
-            LOGGER.error("Local directory is '{}'", localDir);
-            final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
-            LOGGER.error("Git work directory is '{}'", gitWork);
-
-            // Delete everything under gitWork (but not the .git directory)
-            this.ensureDirectoryExists(gitWork);
-            this.deleteFileTree(gitWork);
-
-            // Create Git object for the gitWork directory
-            try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
-
-                // Export everything
-                this.export(gitRepoNodePath, gitRepoExplorerNode, gitWork);
-
-                // Add everything to commit & commit locally
-                // We add as 'update' and 'not as update' to try to catch deleted files.
-                git.add().setUpdate(false).addFilepattern(".").call();
-                git.add().setUpdate(true).addFilepattern(".").call();
-                git.commit()
-                        .setCommitter("Anonymous", gitRepoDoc.getUsername())
-                        .setMessage("Automatic commit")
-                        .call();
-
-                // Push to remote
-                git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                LOGGER.error("Pushed to git");
-            } catch (GitAPIException e) {
-                throw new IOException("Couldn't commit and push GIT", e);
-            }
-        }
-    }
 }

@@ -29,6 +29,11 @@
                        title="The path within the GIT repository"
                        ui:field="path" />
         </form:FormGroup>
+        <form:FormGroup identity="gitRepoCommitMessage" label="Commit Message">
+            <g:TextArea name="CommitMessage"
+                        title="Commit Message"
+                        ui:field="commitMessage" />
+        </form:FormGroup>
         <b:Button ui:field="gitRepoPush" text="Push to Git" addStyleNames="allow-focus" />
     </g:FlowPanel>
 </ui:UiBinder>

@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.task.client.TaskMonitorFactory;
 
@@ -81,10 +82,15 @@ public class GitRepoSettingsPresenter
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
             final GitRepoDoc doc = onWrite(gitRepoDoc);
+            final GitRepoPushDto dto = new GitRepoPushDto(doc, this.getView().getCommitMessage());
             restFactory
                     .create(GIT_REPO_RESOURCE)
-                    .method(res -> res.pushToGit(doc))
+                    .method(res -> res.pushToGit(dto))
                     .onSuccess(result -> {
+                        // Wipe the commit message
+                        this.getView().setCommitMessage("");
+
+                        // Pop up an alert to show what happened
                         if (result.isOk()) {
                             AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
                         } else {
@@ -111,5 +117,7 @@ public class GitRepoSettingsPresenter
         void setBranch(final String branch);
         String getPath();
         void setPath(final String directory);
+        String getCommitMessage();
+        void setCommitMessage(final String commitMessage);
     }
 }

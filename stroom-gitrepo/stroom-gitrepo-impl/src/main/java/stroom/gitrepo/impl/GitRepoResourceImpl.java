@@ -21,17 +21,23 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoPushResponse;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
+/**
+ * Server-side code to respond to REST requests for the GitRepo.
+ */
 @AutoLogged
 class GitRepoResourceImpl implements GitRepoResource {
 
@@ -66,15 +72,25 @@ class GitRepoResourceImpl implements GitRepoResource {
         return documentResourceHelperProvider.get().update(gitRepoStoreProvider.get(), doc);
     }
 
+    /**
+     * Called on the server when a REST request is received from the
+     * UI for a Git Push.
+     * @param gitRepoPushDto The DTO holding the info.
+     * @return a GitRepoResponse with all the messages about
+     *         whether it worked.
+     */
     @Override
-    public GitRepoPushResponse pushToGit(final GitRepoDoc gitRepoDoc) {
+    public GitRepoPushResponse pushToGit(final GitRepoPushDto gitRepoPushDto) {
+        Objects.requireNonNull(gitRepoPushDto);
         GitRepoPushResponse response;
         try {
-            LOGGER.error("Pushing Git repo: '{}'", gitRepoDoc);
-            gitRepoStorageServiceProvider.get().exportDoc(gitRepoDoc);
-            response = new GitRepoPushResponse(true, "Pushed ok");
+            LOGGER.error("Pushing Git repo: '{}'", gitRepoPushDto.getGitRepoDoc());
+            List<Message> messages = gitRepoStorageServiceProvider.get()
+                            .exportDoc(gitRepoPushDto.getGitRepoDoc(),
+                                       gitRepoPushDto.getCommitMessage());
+            response = this.createResponse(messages);
         }
-        catch (IOException e) {
+        catch (Exception e) {
             response = new GitRepoPushResponse(false, e.getMessage());
         }
         return response;
@@ -85,5 +101,22 @@ class GitRepoResourceImpl implements GitRepoResource {
                 .uuid(uuid)
                 .type(GitRepoDoc.TYPE)
                 .build();
+    }
+
+    /**
+     * Converts the response from the exportDoc method into something we can
+     * send back to the UI and show to the user.
+     * @param messages The collection of messages for the export process.
+     * @return the response for the UI. Never returns null.
+     */
+    private GitRepoPushResponse createResponse(List<Message> messages) {
+        Objects.requireNonNull(messages);
+        var buf = new StringBuilder("Success:\n");
+        for (var m: messages) {
+            buf.append(m);
+            buf.append("\n");
+        }
+
+        return new GitRepoPushResponse(true, buf.toString());
     }
 }
