@@ -38,6 +38,7 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import event.logging.AuthenticateOutcomeReason;
 import jakarta.inject.Inject;
@@ -48,6 +49,7 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,7 +128,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             AuthStatus status = loginWithCertificate(request);
             if (status.getError().isPresent()) {
                 LOGGER.error("Failed to log in with certificate, user: " + status.getError().get().getSubject()
-                        + ", message: " + status.getError().get().getMessage());
+                             + ", message: " + status.getError().get().getMessage());
             }
 
             return status;
@@ -151,8 +153,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 return new AuthStatusImpl(new BadRequestException(cn,
                         AuthenticateOutcomeReason.INCORRECT_CA,
                         "Found CN but the identity cannot be extracted (CN = " +
-                                cn +
-                                ")"), true);
+                        cn +
+                        ")"), true);
 
             } else {
                 final String userId = optionalUserId.get();
@@ -162,31 +164,24 @@ class AuthenticationServiceImpl implements AuthenticationService {
                     return new AuthStatusImpl(new BadRequestException(userId,
                             AuthenticateOutcomeReason.INCORRECT_USERNAME,
                             "An account for the userId does not exist (userId = " +
-                                    userId +
-                                    ")"), true);
+                            userId +
+                            ")"), true);
 
                 } else {
                     final Account account = optionalAccount.get();
-
-                    if (account.isLocked()) {
-                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
-                                "User account " + account.getUserId() + " is locked"), true);
-                    }
-                    if (account.isInactive()) {
-                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
-                                "User account " + account.getUserId() + " is inactive"), true);
-                    }
-                    if (!account.isEnabled()) {
-                        return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
-                                "User account " + account.getUserId() + " is not currently enabled"), true);
-
+                    try {
+                        final String authType = "internal IDP certificate";
+                        verifyAccountStateOrThrow(account, "locked", authType, () -> !account.isLocked());
+                        verifyAccountStateOrThrow(account, "inactive", authType, () -> !account.isInactive());
+                        verifyAccountStateOrThrow(account, "disabled", authType, account::isEnabled);
+                    } catch (BadRequestException badRequestException) {
+                        return new AuthStatusImpl(badRequestException, true);
                     }
 
-                    LOGGER.info(() -> "Logging user in: " + userId);
-                    AuthStateImpl newState = new AuthStateImpl(account, false,
+                    LOGGER.info("Logging user in: {}", userId);
+                    AuthStateImpl newState = new AuthStateImpl(
+                            account,
+                            false,
                             System.currentTimeMillis());
                     setAuthState(request.getSession(true), newState);
 
@@ -411,10 +406,33 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
         if (authState.isRequirePasswordChange()) {
             return authState.getLastCredentialCheckMs()
-                    < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
+                   < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL;
         }
         return false;
     }
+
+    /**
+     * @param account              The user account to check
+     * @param isValidStateSupplier Should return true for a valid state.
+     * @throws BadRequestException if user is in an invalid state
+     */
+    private void verifyAccountStateOrThrow(final Account account,
+                                           final String stateType,
+                                           final String authType,
+                                           final BooleanSupplier isValidStateSupplier) {
+        if (!isValidStateSupplier.getAsBoolean()) {
+            LOGGER.warn("User account '{}' attempted {} authentication with the account in a {} state. {}",
+                    account.getUserId(), authType, stateType, account);
+            throw new BadRequestException(
+                    account.getUserId(),
+                    AuthenticateOutcomeReason.ACCOUNT_LOCKED,
+                    LogUtil.message("User account '{}' is {}.", account.getUserId(), stateType));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class AuthStateImpl implements AuthState {
 

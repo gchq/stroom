@@ -134,7 +134,10 @@ public class StroomUserIdentityFactory
                             + request.getRequestURI()));
 
             final UserIdentity runAsUserIdentity = userCache.getByUuid(runAsUserUuid)
-                    .map(User::asRef)
+                    .map(user -> {
+                        verifyEnabledOrThrow(user, "OAuth token");
+                        return user.asRef();
+                    })
                     .map(BasicUserIdentity::new)
                     .orElseThrow(() -> new AuthenticationException(LogUtil.message("{} {} not found",
                             headerKey, runAsUserUuid)));
@@ -159,13 +162,14 @@ public class StroomUserIdentityFactory
 
         return optUser
                 .flatMap(user -> {
+                    verifyEnabledOrThrow(user, "interactive external IDP");
                     final User effectiveUser = updateUserInfo(subjectId, user, jwtClaims);
                     final UserIdentity userIdentity = createAuthFlowUserIdentity(
                             jwtClaims, request, tokenResponse, effectiveUser);
                     return Optional.of(userIdentity);
                 })
                 .or(() -> {
-                    throw new AuthenticationException("Unable to find user: " + subjectId);
+                    throw new AuthenticationException(LogUtil.message("User '{}' failed authentication", subjectId));
                 });
     }
 
@@ -500,6 +504,19 @@ public class StroomUserIdentityFactory
                 // Don't know if it is a user or a group so invalidate both
                 cacheBySubjectId.invalidate(subjectId);
             }
+        }
+    }
+
+    /**
+     * @param user The user to check
+     * @throws AuthenticationException if user is disabled.
+     */
+    private void verifyEnabledOrThrow(final User user, final String authType) {
+        if (!user.isEnabled()) {
+            LOGGER.warn("Disabled user '{}' attempted {} authentication. {}",
+                    user.getDisplayName(), authType, user);
+            throw new AuthenticationException(LogUtil.message("User '{}' is disabled.",
+                    user.getDisplayName()));
         }
     }
 }
