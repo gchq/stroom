@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
 import stroom.security.common.impl.UserIdentitySessionUtil;
@@ -9,13 +10,14 @@ import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.UriBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,14 +30,17 @@ class OpenIdManager {
     // We have to use the stroom specific one as only that one has the code flow
     private final StroomUserIdentityFactory userIdentityFactory;
     private final AuthenticationStateCache authenticationStateCache;
+    private final UriFactory uriFactory;
 
     @Inject
     public OpenIdManager(final OpenIdConfiguration openIdConfiguration,
                          final StroomUserIdentityFactory userIdentityFactory,
-                         final AuthenticationStateCache authenticationStateCache) {
+                         final AuthenticationStateCache authenticationStateCache,
+                         final UriFactory uriFactory) {
         this.openIdConfiguration = openIdConfiguration;
         this.userIdentityFactory = userIdentityFactory;
         this.authenticationStateCache = authenticationStateCache;
+        this.uriFactory = uriFactory;
     }
 
     public String redirect(final HttpServletRequest request,
@@ -97,27 +102,29 @@ class OpenIdManager {
                                    final AuthenticationState state) {
         Objects.requireNonNull(code, "Null code");
 
-        boolean loggedIn = false;
-        String redirectUri = null;
+        String redirectUri;
 
         // If we have a state id then this should be a return from the auth service.
         LOGGER.debug(() -> LogUtil.message("We have the following backChannelOIDC state: {}", state));
 
-        UserAgentSessionUtil.set(request);
+        try {
+            final Optional<UserIdentity> optionalUserIdentity =
+                    userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
-        final Optional<UserIdentity> optionalUserIdentity =
-                userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
+            if (optionalUserIdentity.isPresent()) {
+                // Set the token in the session.
+                UserIdentitySessionUtil.set(request, optionalUserIdentity.get());
 
-        if (optionalUserIdentity.isPresent()) {
-            // Set the token in the session.
-            UserIdentitySessionUtil.set(request, optionalUserIdentity.get());
-            loggedIn = true;
-        }
-
-        // If we manage to login then redirect to the original URL held in the state.
-        if (loggedIn) {
-            LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
-            redirectUri = state.getInitiatingUri();
+                // Successful login, so redirect to the original URL held in the state.
+                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
+                redirectUri = state.getInitiatingUri();
+            } else {
+                LOGGER.debug("No userIdentity so redirect to error page");
+                redirectUri = createErrorUri("Authentication failed");
+            }
+        } catch (Exception e) {
+            LOGGER.debug("backChannelOIDC() - {}", e.getMessage(), e);
+            redirectUri = createErrorUri(e.getMessage());
         }
 
         return redirectUri;
@@ -215,6 +222,17 @@ class OpenIdManager {
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, redirect.build().toString());
-        return uriBuilder.build().toString();
+        final String uriStr = uriBuilder.build().toString();
+        LOGGER.debug("Sending user to logout screen with uri: {}", uriStr);
+        return uriStr;
+    }
+
+    private String createErrorUri(final String message) {
+        final URI uri = uriFactory.uiUri(ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH));
+        UriBuilder uriBuilder = UriBuilder.fromUri(uri);
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, "error", message);
+        final String uriStr = uriBuilder.build().toString();
+        LOGGER.debug("Sending user to error screen with uri: {}", uriStr);
+        return uriStr;
     }
 }

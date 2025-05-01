@@ -18,8 +18,13 @@ public final class UserAgentSessionUtil {
         // Utility class.
     }
 
-    public static void set(final HttpServletRequest request) {
+    public static void setUserAgentInSession(final HttpServletRequest request) {
         final HttpSession session = request.getSession(false);
+        setUserAgentInSession(request, session);
+    }
+
+    public static void setUserAgentInSession(final HttpServletRequest request,
+                                             final HttpSession session) {
         if (session != null) {
             final String userAgent = request.getHeader(USER_AGENT);
             if (userAgent != null) {

@@ -12,6 +12,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
+
+* Issue **#4892** : Prevent disabled users from authenticating.
+
+* Issue **#4925** : Fix UI IndexOutOfBoundsException.
+
+* Issue **#4926** : Fix UI NPE.
+
+* Issue **#4893** : Fix text editor context menu styling.
+
+* Issue **#4916** : Fix query results download so it doesn't require VIEW on the View. It now only needs USE on the View.
+
+* Fix permissions checking when executing a Query. It no longer requires VIEW permission on the extraction pipeline, just USE.
+
+
+## [v7.9-beta.10] - 2025-04-29
+
+* Issue **#4875** : Fix select *.
+
+* Issue **#3928** : Add merge filter for deeply nested data.
+
+* Issue **#4211** : Prevent stream status in processing filters.
+
+* Issue **#4927** : Fix TOKEN data feed auth when DATA_FEED_KEY is enabled.
 
 * Issue **#4863** : Stop errors being logged on proxy shutdown.
 
@@ -1418,7 +1442,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.10...HEAD
+[v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
 [v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
 [v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
 [v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7

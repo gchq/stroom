@@ -28,7 +28,7 @@ public class TableRowStyles implements RowStyles<TableRow> {
     @Override
     public String getStyleNames(final TableRow row, final int rowIndex) {
         final ClassNameBuilder classNameBuilder = new ClassNameBuilder();
-        if (row.getMatchingRule() != null && !userPreferencesManager.isHideConditionalStyles()) {
+        if (row != null && row.getMatchingRule() != null && !userPreferencesManager.isHideConditionalStyles()) {
             ConditionalFormattingRule rule = conditionalFormattingRules.get(row.getMatchingRule());
             if (rule != null) {
                 // Fixed styles.

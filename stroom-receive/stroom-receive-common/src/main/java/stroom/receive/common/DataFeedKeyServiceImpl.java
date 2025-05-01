@@ -54,8 +54,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     static final String BEARER_PREFIX = "Bearer ";
     // The meat of the key is random Base58 chars
     static final int DATA_FEED_KEY_RANDOM_PART_LENGTH = 128;
+    private static final String DATA_FEED_KEY_PREFIX = "sdk_";
     private static final Pattern DATA_FEED_KEY_PATTERN = Pattern.compile(
-            "^sdk_[A-HJ-NP-Za-km-z1-9]{" + DATA_FEED_KEY_RANDOM_PART_LENGTH + "}$");
+            "^" + DATA_FEED_KEY_PREFIX + "[A-HJ-NP-Za-km-z1-9]{" + DATA_FEED_KEY_RANDOM_PART_LENGTH + "}$");
     private static final Comparator<CachedHashedDataFeedKey> HASHED_DATA_FEED_KEY_COMPARATOR =
             Comparator.comparingLong(CachedHashedDataFeedKey::getExpiryDateEpochMs)
                     .reversed();
@@ -341,49 +342,66 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 //        }
 //    }
 
+    private boolean looksLikeADatafeedKey(final String unHashedKey, final AttributeMap attributeMap) {
+        if (NullSafe.isBlankString(unHashedKey)) {
+            LOGGER.debug("Blank unHashedKey, attributeMap: {}", attributeMap);
+            return false;
+        } else if (!unHashedKey.startsWith(DATA_FEED_KEY_PREFIX)) {
+            // Do a simple prefix check first as we will get more keys that are not datafeed keys
+            LOGGER.debug("unHashedKey '{}' doesn't start with prefix '{}', attributeMap: {}",
+                    unHashedKey, DATA_FEED_KEY_PREFIX, attributeMap);
+            return false;
+        } else if (!DATA_FEED_KEY_PATTERN.matcher(unHashedKey).matches()) {
+            LOGGER.debug("unHashedCacheKey '{}' is not a data feed key, pattern: '{}', attributeMap: {}",
+                    unHashedKey, DATA_FEED_KEY_PATTERN, attributeMap);
+            return false;
+        } else {
+            LOGGER.debug("unHashedCacheKey '{}' looks like a data feed key, pattern: '{}', attributeMap: {}",
+                    unHashedKey, DATA_FEED_KEY_PATTERN, attributeMap);
+            return true;
+        }
+    }
+
     /**
      * @return A populated {@link Optional} if the key is known to use and is valid, else empty.
      */
     private Optional<HashedDataFeedKey> lookupAndValidateKey(final String unHashedKey,
                                                              final AttributeMap attributeMap,
                                                              final ReceiveDataConfig receiveDataConfig) {
-        if (NullSafe.isBlankString(unHashedKey)) {
-            LOGGER.debug("Blank unHashedKey, attributeMap: {}", attributeMap);
+        if (!looksLikeADatafeedKey(unHashedKey, attributeMap)) {
             return Optional.empty();
         }
 
-        final CIKey keyOwnerKey = getOwnerMetaKey(receiveDataConfig);
+        // If we get here we are dealing with a key that looks like a data feed key,
+        // so we can validate it as such
+
+        final CIKey keyOwnerMetaKey = getOwnerMetaKey(receiveDataConfig);
         final String keyOwner = NullSafe.get(
                 attributeMap,
-                map -> map.get(keyOwnerKey.get()),
+                map -> map.get(keyOwnerMetaKey.get()),
                 String::trim);
         if (NullSafe.isBlankString(keyOwner)) {
             LOGGER.debug("Blank keyOwner, attributeMap: {}", attributeMap);
             throw new StroomStreamException(
                     StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED,
                     attributeMap,
-                    "Mandatory header '" + keyOwnerKey + "' must be provided to authenticate with a data feed key.");
+                    "Mandatory header '" + keyOwnerMetaKey +
+                    "' must be provided to authenticate with a data feed key.");
         }
 
-        final UnHashedCacheKey unHashedCacheKey = new UnHashedCacheKey(unHashedKey, CIKey.ofDynamicKey(keyOwner));
+        // We cache already authenticated un-hashed keys to save the hashing cost.
+        // Cache get will trigger the hashing and checking if not found
+        final Set<CachedHashedDataFeedKey> dataFeedKeys = unHashedKeyToDataFeedKeyCache.get(
+                new UnHashedCacheKey(unHashedKey, CIKey.ofDynamicKey(keyOwner)));
 
-        final Set<CachedHashedDataFeedKey> dataFeedKeys = unHashedKeyToDataFeedKeyCache.get(unHashedCacheKey);
         if (NullSafe.isEmptyCollection(dataFeedKeys)) {
             LOGGER.debug("Unknown data feed key {}, attributeMap: {}", unHashedKey, attributeMap);
-            // Data Feed Key is not known to us regardless of account ID
-            if (DATA_FEED_KEY_PATTERN.matcher(unHashedKey).matches()) {
-                // It looks like a DFK, but we got no match, so we can throw
-                throw new StroomStreamException(StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
-            } else {
-                // Doesn't look like a DFK so let the next filter have a go
-                return Optional.empty();
-            }
+            // We need to throw here because we know it looks like a DFK, so
+            // we don't want to pass it on to the next filter.
+            throw new StroomStreamException(StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);
         }
 
-        final CIKey keyOwnerMetaKey = getOwnerMetaKey(receiveDataConfig);
-        final String ownerFromAttrMap = getAttribute(attributeMap, keyOwnerMetaKey)
-                .orElse(null);
-        final Predicate<CachedHashedDataFeedKey> filter = createKeyOwnerFilter(keyOwnerMetaKey, ownerFromAttrMap);
+        final Predicate<CachedHashedDataFeedKey> filter = createKeyOwnerFilter(keyOwnerMetaKey, keyOwner);
 
         // In the event that we have more than one key for an accountId, get the one with
         // the latest expire time.
@@ -396,9 +414,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         if (NullSafe.isEmptyCollection(filteredKeys)) {
             // Got a match on the un-hashed key, but is a bad accountId.
             // Stops someone using their own DFK to authenticate to someone else's accountId.
-            LOGGER.debug("No un-expired keys matching data feed key {}, ownerMetaKey: {}, " +
-                         "ownerFromAttrMap: {}, dataFeedKeys: {}",
-                    unHashedKey, keyOwnerMetaKey, ownerFromAttrMap, dataFeedKeys);
+            LOGGER.debug("No un-expired keys matching data feed key {}, keyOwnerMetaKey: {}, " +
+                         "keyOwner: {}, dataFeedKeys: {}",
+                    unHashedKey, keyOwnerMetaKey, keyOwner, dataFeedKeys);
             if (DATA_FEED_KEY_PATTERN.matcher(unHashedKey).matches()) {
                 // It looks like a DFK, but we go no match, so we can throw
                 throw new StroomStreamException(StroomStatusCode.DATA_FEED_KEY_NOT_AUTHENTICATED, attributeMap);

@@ -4,6 +4,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
@@ -114,15 +115,22 @@ public class ApiKeyService {
      * is returned.
      */
     public Optional<UserIdentity> fetchVerifiedIdentity(final HttpServletRequest request) {
-        final String authHeaderVal = NullSafe.get(
+        final String token = NullSafe.get(
                 request.getHeader(HttpHeaders.AUTHORIZATION),
                 header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
 
         // We need to do a basic check to see if it looks like an API key else we will fill the cache with
         // JWT tokens mapped to empty Optionals.
-        if (!NullSafe.isBlankString(authHeaderVal)
-            && authHeaderVal.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
-            return fetchVerifiedIdentity(authHeaderVal);
+        if (!NullSafe.isBlankString(token)
+            && token.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
+
+            final Optional<UserIdentity> optUserIdentity = apiKeyToAuthenticatedUserCache.get(token);
+
+            if (optUserIdentity.isEmpty() && apiKeyGenerator.isApiKey(token)) {
+                // Stops the next filter from trying to authenticate it
+                throw new AuthenticationException("API key failed authentication");
+            }
+            return optUserIdentity;
         } else {
             return Optional.empty();
         }
@@ -170,7 +178,10 @@ public class ApiKeyService {
                         final Optional<User> optionalUser = Optional.ofNullable(apiKey.getOwner())
                                 .flatMap(userCache::getByRef);
                         optUserIdentity = optionalUser
-                                .map(User::asRef)
+                                .map(user -> {
+                                    verifyEnabledOrThrow(user);
+                                    return user.asRef();
+                                })
                                 .map(BasicUserIdentity::new);
                         LOGGER.debug("optUserIdentity: {}", optUserIdentity);
                         break;
@@ -375,6 +386,19 @@ public class ApiKeyService {
                                             "the API keys of other users.", AppPermission.MANAGE_USERS_PERMISSION));
                 }
             }
+        }
+    }
+
+    /**
+     * @param user The user to check
+     * @throws AuthenticationException if user is disabled.
+     */
+    private void verifyEnabledOrThrow(final User user) {
+        if (!user.isEnabled()) {
+            LOGGER.warn("Disabled user '{}' attempted API key authentication. {}",
+                    user.getDisplayName(), user);
+            throw new AuthenticationException(LogUtil.message("User '{}' is disabled.",
+                    user.getDisplayName()));
         }
     }
 
