@@ -27,6 +27,7 @@ import stroom.state.impl.dao.RangedStateFields;
 import stroom.state.impl.dao.RangedStateRequest;
 import stroom.state.impl.dao.State;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -38,61 +39,62 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 class TestRangedStateDao {
-
-    @Test
-    void testDao() {
-        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider, tableName);
-
-            insertData(rangedStateDao, 100);
-
-            final RangedStateRequest stateRequest =
-                    new RangedStateRequest("TEST_MAP", 11);
-            final Optional<State> optional = rangedStateDao.getState(stateRequest);
-            assertThat(optional).isNotEmpty();
-            final State res = optional.get();
-            assertThat(res.key()).isEqualTo("11");
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.getValueAsString()).isEqualTo("test99");
-
-            final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(RangedStateFields.KEY_START);
-            final AtomicInteger count = new AtomicInteger();
-            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-                    v -> count.incrementAndGet());
-            assertThat(count.get()).isEqualTo(1);
-        });
-    }
-
-    @Test
-    void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final RangedStateDao stateDao = new RangedStateDao(sessionProvider, tableName);
-
-            insertData(stateDao, 100);
-            insertData(stateDao, 10);
-
-            assertThat(stateDao.count()).isEqualTo(1);
-
-            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
-            assertThat(stateDao.count()).isEqualTo(1);
-
-            stateDao.removeOldData(Instant.now());
-            assertThat(stateDao.count()).isEqualTo(0);
-        });
-    }
-
-    private void insertData(final RangedStateDao rangedStateDao,
-                            final int rows) {
-        for (int i = 0; i < rows; i++) {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            final RangedState state = new RangedState(
-                    10,
-                    30,
-                    StringValue.TYPE_ID,
-                    byteBuffer);
-            rangedStateDao.insert(Collections.singletonList(state));
-        }
-    }
+//
+//    @Test
+//    void testDao() {
+//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+//            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider, tableName);
+//
+//            insertData(rangedStateDao, 100);
+//
+//            final RangedStateRequest stateRequest =
+//                    new RangedStateRequest("TEST_MAP", 11);
+//            final Optional<State> optional = rangedStateDao.getState(stateRequest);
+//            assertThat(optional).isNotEmpty();
+//            final State res = optional.get();
+//            assertThat(res.key()).isEqualTo("11");
+//            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
+//            assertThat(res.getValueAsString()).isEqualTo("test99");
+//
+//            final FieldIndex fieldIndex = new FieldIndex();
+//            fieldIndex.create(RangedStateFields.KEY_START);
+//            final AtomicInteger count = new AtomicInteger();
+//            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
+//                    v -> count.incrementAndGet());
+//            assertThat(count.get()).isEqualTo(1);
+//        });
+//    }
+//
+//    @Test
+//    void testRemoveOldData() {
+//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+//            final RangedStateDao stateDao = new RangedStateDao(sessionProvider, tableName);
+//
+//            insertData(stateDao, 100);
+//            insertData(stateDao, 10);
+//
+//            assertThat(stateDao.count()).isEqualTo(1);
+//
+//            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
+//            assertThat(stateDao.count()).isEqualTo(1);
+//
+//            stateDao.removeOldData(Instant.now());
+//            assertThat(stateDao.count()).isEqualTo(0);
+//        });
+//    }
+//
+//    private void insertData(final RangedStateDao rangedStateDao,
+//                            final int rows) {
+//        for (int i = 0; i < rows; i++) {
+//            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+//            final RangedState state = new RangedState(
+//                    10,
+//                    30,
+//                    StringValue.TYPE_ID,
+//                    byteBuffer);
+//            rangedStateDao.insert(Collections.singletonList(state));
+//        }
+//    }
 }

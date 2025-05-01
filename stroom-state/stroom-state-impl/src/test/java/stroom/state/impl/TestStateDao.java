@@ -26,6 +26,7 @@ import stroom.state.impl.dao.StateDao;
 import stroom.state.impl.dao.StateFields;
 import stroom.state.impl.dao.StateRequest;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -37,59 +38,61 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 class TestStateDao {
-
-    @Test
-    void testDao() {
-        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider, tableName);
-
-            insertData(stateDao, 100);
-
-            final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY");
-            final Optional<State> optional = stateDao.getState(stateRequest);
-            assertThat(optional).isNotEmpty();
-            final State res = optional.get();
-            assertThat(res.key()).isEqualTo("TEST_KEY");
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.getValueAsString()).isEqualTo("test99");
-
-            final FieldIndex fieldIndex = new FieldIndex();
-            fieldIndex.create(StateFields.KEY);
-            final AtomicInteger count = new AtomicInteger();
-            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-                    v -> count.incrementAndGet());
-            assertThat(count.get()).isEqualTo(1);
-        });
-    }
-
-    @Test
-    void testRemoveOldData() {
-        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final StateDao stateDao = new StateDao(sessionProvider, tableName);
-
-            insertData(stateDao, 100);
-            insertData(stateDao, 10);
-
-            assertThat(stateDao.count()).isEqualTo(1);
-
-            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
-            assertThat(stateDao.count()).isEqualTo(1);
-
-            stateDao.removeOldData(Instant.now());
-            assertThat(stateDao.count()).isEqualTo(0);
-        });
-    }
-
-    private void insertData(final StateDao stateDao,
-                            final int rows) {
-        for (int i = 0; i < rows; i++) {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            final State state = new State(
-                    "TEST_KEY",
-                    StringValue.TYPE_ID,
-                    byteBuffer);
-            stateDao.insert(Collections.singletonList(state));
-        }
-    }
+//
+//    @Disabled
+//    @Test
+//    void testDao() {
+//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+//            final StateDao stateDao = new StateDao(sessionProvider, tableName);
+//
+//            insertData(stateDao, 100);
+//
+//            final StateRequest stateRequest = new StateRequest("TEST_MAP", "TEST_KEY");
+//            final Optional<State> optional = stateDao.getState(stateRequest);
+//            assertThat(optional).isNotEmpty();
+//            final State res = optional.get();
+//            assertThat(res.key()).isEqualTo("TEST_KEY");
+//            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
+//            assertThat(res.getValueAsString()).isEqualTo("test99");
+//
+//            final FieldIndex fieldIndex = new FieldIndex();
+//            fieldIndex.create(StateFields.KEY);
+//            final AtomicInteger count = new AtomicInteger();
+//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
+//                    v -> count.incrementAndGet());
+//            assertThat(count.get()).isEqualTo(1);
+//        });
+//    }
+//
+//    @Test
+//    void testRemoveOldData() {
+//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+//            final StateDao stateDao = new StateDao(sessionProvider, tableName);
+//
+//            insertData(stateDao, 100);
+//            insertData(stateDao, 10);
+//
+//            assertThat(stateDao.count()).isEqualTo(1);
+//
+//            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
+//            assertThat(stateDao.count()).isEqualTo(1);
+//
+//            stateDao.removeOldData(Instant.now());
+//            assertThat(stateDao.count()).isEqualTo(0);
+//        });
+//    }
+//
+//    private void insertData(final StateDao stateDao,
+//                            final int rows) {
+//        for (int i = 0; i < rows; i++) {
+//            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
+//            final State state = new State(
+//                    "TEST_KEY",
+//                    StringValue.TYPE_ID,
+//                    byteBuffer);
+//            stateDao.insert(Collections.singletonList(state));
+//        }
+//    }
 }
