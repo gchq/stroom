@@ -4,7 +4,13 @@ import stroom.docref.DocRef;
 
 public class MockDocResolver extends DocResolver {
 
-    public MockDocResolver() {
+    public static final MockDocResolver INSTANCE = new MockDocResolver();
+
+    public static MockDocResolver getInstance() {
+        return INSTANCE;
+    }
+
+    private MockDocResolver() {
         super(null, null);
     }
 

@@ -65,6 +65,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
+        dataSourceSelectionPresenter.setItemType("Data Source");
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);

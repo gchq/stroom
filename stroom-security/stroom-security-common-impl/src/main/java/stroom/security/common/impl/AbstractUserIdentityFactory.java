@@ -136,7 +136,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                  + optUserIdentity.map(Objects::toString).orElse("EMPTY"));
                 }
             }
-
         }
         return optUserIdentity;
     }
@@ -245,7 +244,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 .flatMap(jwtContext ->
                         createUserIdentity(request, state, tokenResponse, jwtContext))
                 .or(() -> {
-                    throw new RuntimeException("Unable to extract JWT claims");
+                    throw new AuthenticationException("Unable to authenticate ID token");
                 });
 
         LOGGER.debug(() -> "Got auth flow user identity "
