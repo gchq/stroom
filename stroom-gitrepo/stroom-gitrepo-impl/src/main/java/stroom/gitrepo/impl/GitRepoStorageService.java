@@ -8,6 +8,8 @@ import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,7 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -132,7 +133,7 @@ public class GitRepoStorageService {
 
             // Delete everything under gitWork (but not the .git directory)
             this.ensureDirectoryExists(gitWork);
-            this.deleteFileTree(gitWork);
+            this.deleteFileTree(gitWork, true);
 
             // Create Git object for the gitWork directory
             try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
@@ -175,10 +176,54 @@ public class GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     public List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
-        LOGGER.error(">>>>>> Yay got the pull command from the UI! <<<<<<");
+        LOGGER.info("Importing document '{}' from GIT", gitRepoDoc);
+        List<Message> messages = new ArrayList<>();
 
-        // Placeholder
-        return Collections.emptyList();
+        DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
+        Optional<ExplorerNode> optGitRepoExplorerNode = explorerService.getFromDocRef(gitRepoDocRef);
+        ExplorerNode gitRepoExplorerNode = optGitRepoExplorerNode.orElseThrow(IOException::new);
+
+        // Work out where the GitRepo node is in the explorer tree
+        List<ExplorerNode> gitRepoNodePath = this.explorerNodeService.getPath(gitRepoDocRef);
+        gitRepoNodePath.add(gitRepoExplorerNode);
+
+        // Only try to do anything if the settings exist
+        if (!gitRepoDoc.getUrl().isEmpty()) {
+            // Find the path to the root of the local Git repository
+            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
+            final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
+
+            // Delete everything under gitWork (including all git stuff)
+            this.ensureDirectoryExists(gitWork);
+            this.deleteFileTree(gitWork, false);
+
+            // Grab everything from server - it won't be too big
+            // Create Git object for the gitWork directory
+            try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
+                messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
+
+                List<ImportState> importStates = new ArrayList<>();
+                ImportSettings importSettings = ImportSettings.builder()
+                        .enableFilters(false)
+                        .useImportFolders(false)
+                        .useImportNames(false)
+                        .rootDocRef(gitRepoDocRef)
+                        .build();
+                Set<DocRef> docRefs = importExportSerializer.read(gitWork, importStates, importSettings);
+                for (var docRef: docRefs) {
+                    messages.add(new Message(Severity.INFO, "Imported " + docRef.getName()));
+                }
+                messages.add(new Message(Severity.INFO, "Completed Git Pull"));
+            } catch (GitAPIException e) {
+                this.throwException("Couldn't pull from GIT", e, messages);
+            } catch (IOException e) {
+                this.throwException("Error pulling from GIT", e, messages);
+            }
+        } else {
+            throw new IOException("Git repository URL isn't configured; cannot pull");
+        }
+
+        return messages;
     }
 
     /**
@@ -196,7 +241,7 @@ public class GitRepoStorageService {
                                 Exception cause,
                                 List<Message> messages)
     throws IOException {
-        LOGGER.error("Error pushing to GIT: {}, {}, {}", errorMessage, cause, messages);
+        LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
         var buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
@@ -233,10 +278,14 @@ public class GitRepoStorageService {
     /**
      * Deletes a file tree recursively. Does not delete any .git
      * directories nor any README.md.
-     * @param root Delete everything under this directory.
+     * @param root Delete everything under this directory. Must not be null.
+     * @param keepGitStuff If true then keep Git key files - .git/, README.md.
+     *                     If false then delete everything.
      * @throws IOException if something goes wrong.
      */
-    private void deleteFileTree(Path root) throws IOException {
+    private void deleteFileTree(final Path root, final boolean keepGitStuff)
+            throws IOException {
+
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult
@@ -244,7 +293,7 @@ public class GitRepoStorageService {
                               BasicFileAttributes attrs) {
 
                 // Ignore any .git subtree
-                if (dir.endsWith(GIT_REPO_DIRNAME)) {
+                if (keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 else {
@@ -257,7 +306,7 @@ public class GitRepoStorageService {
             visitFile(Path p, BasicFileAttributes attrs)
                    throws IOException {
                 // Don't delete README files
-                if (!p.endsWith(GIT_README_MD)) {
+                if ( !(keepGitStuff && p.endsWith(GIT_README_MD)) ) {
                     Files.delete(p);
                 }
                 return FileVisitResult.CONTINUE;
@@ -269,7 +318,7 @@ public class GitRepoStorageService {
                    throws IOException {
 
                 // Don't delete the root dir or the .git dir
-                if (!dir.equals(root) && !dir.endsWith(GIT_REPO_DIRNAME)) {
+                if (!dir.equals(root) && !(keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME))) {
                         Files.delete(dir);
                 }
                 return FileVisitResult.CONTINUE;
@@ -346,10 +395,13 @@ public class GitRepoStorageService {
         // Initialise the git repo if necessary
         if (!Files.exists(gitRepoDir)) {
             // Clone the remote repo
+            // Note depth is 1 - we only want the latest items not the history
+            LOGGER.info("Cloning repository '{}' to '{}'", gitRepoDoc.getUrl(), gitWorkDir);
             git = Git.cloneRepository()
                     .setURI(gitRepoDoc.getUrl())
                     .setDirectory(gitWorkDir.toFile())
                     .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                    .setDepth(1)
                     .call();
         }
         else {
