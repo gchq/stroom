@@ -84,7 +84,7 @@ class GitRepoResourceImpl implements GitRepoResource {
         Objects.requireNonNull(gitRepoPushDto);
         GitRepoResponse response;
         try {
-            LOGGER.error("Pushing Git repo: '{}'", gitRepoPushDto.getGitRepoDoc());
+            LOGGER.info("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
             List<Message> messages = gitRepoStorageServiceProvider.get()
                             .exportDoc(gitRepoPushDto.getGitRepoDoc(),
                                        gitRepoPushDto.getCommitMessage());
@@ -108,7 +108,7 @@ class GitRepoResourceImpl implements GitRepoResource {
         Objects.requireNonNull(gitRepoDoc);
         GitRepoResponse response;
         try {
-            LOGGER.error("Pulling from Git repo: {}", gitRepoDoc);
+            LOGGER.info("Pulling from Git repo: {}", gitRepoDoc.getUrl());
             List<Message> messages = gitRepoStorageServiceProvider.get()
                     .importDoc(gitRepoDoc);
             response = this.createResponse(messages);

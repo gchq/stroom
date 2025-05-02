@@ -3,12 +3,14 @@ package stroom.gitrepo.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -176,7 +178,6 @@ public class GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     public List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
-        LOGGER.info("Importing document '{}' from GIT", gitRepoDoc);
         List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
@@ -202,16 +203,28 @@ public class GitRepoStorageService {
             try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
                 messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
 
+                // ImportSettings.auto() is used in a few places. This consists of
+                // .importMode(ImportMode.IGNORE_CONFIRMATION)
+                // .enableFilters(true)
+                // We want to make sure that the import goes to the root of the
+                // gitRepoDocRef rather than where it might have been in the
+                // original export.
+
                 List<ImportState> importStates = new ArrayList<>();
                 ImportSettings importSettings = ImportSettings.builder()
+                        .importMode(ImportMode.IGNORE_CONFIRMATION)
                         .enableFilters(false)
-                        .useImportFolders(false)
-                        .useImportNames(false)
+                        .useImportFolders(true)
+                        .useImportNames(true)
                         .rootDocRef(gitRepoDocRef)
                         .build();
                 Set<DocRef> docRefs = importExportSerializer.read(gitWork, importStates, importSettings);
                 for (var docRef: docRefs) {
-                    messages.add(new Message(Severity.INFO, "Imported " + docRef.getName()));
+                    // ImportExportSerializerImpl adds the System docref to the returned set
+                    // but we don't use that here, so ignore it
+                    if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
+                        messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
+                    }
                 }
                 messages.add(new Message(Severity.INFO, "Completed Git Pull"));
             } catch (GitAPIException e) {

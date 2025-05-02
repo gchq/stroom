@@ -184,7 +184,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Get the tags.
             final Set<String> tags = explorerService.parseNodeTags(properties.getProperty("tags"));
 
-
             // Create a doc ref.
             final DocRef docRef = new DocRef(type, uuid, name);
             // Create or get the import state.
@@ -331,6 +330,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                                      final ImportState importState,
                                      final Map<DocRef, ImportState> confirmMap,
                                      final ImportSettings importSettings) {
+
+        // This shows where the thing is in the Explorer Tree
         final String importPath = resolvePath(path, importSettings);
 
         String destPath = importPath;
@@ -525,11 +526,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final String[] elements = path.split("/");
 
         for (final String element : elements) {
-            if (element.length() > 0) {
+            if (!element.isEmpty()) {
                 List<ExplorerNode> nodes = explorerNodeService.getNodesByName(parent, element);
-                nodes = nodes.stream().filter(n -> FOLDER.equals(n.getType())).toList();
+                nodes = nodes.stream().filter(ExplorerConstants::isFolder).toList();
 
-                if (nodes.size() == 0) {
+                if (nodes.isEmpty()) {
                     // No parent node can be found for this element so create one if possible.
                     final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
                     if (!securityContext.hasDocumentCreatePermission(folderRef, FOLDER)) {
@@ -548,7 +549,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     }
 
                 } else {
-                    parent = nodes.get(0);
+                    parent = nodes.getFirst();
                 }
             }
         }
