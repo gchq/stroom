@@ -27,7 +27,7 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.impl.ImportExportFileNameUtil;
-import stroom.importexport.impl.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;

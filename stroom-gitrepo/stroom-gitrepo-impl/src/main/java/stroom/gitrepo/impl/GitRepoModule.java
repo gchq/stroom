@@ -22,7 +22,6 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -46,9 +45,5 @@ public class GitRepoModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(GitRepoResourceImpl.class);
-
-        // Bind the Event handler to detect when docs are saved
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(GitRepoStorageService.class);
     }
 }

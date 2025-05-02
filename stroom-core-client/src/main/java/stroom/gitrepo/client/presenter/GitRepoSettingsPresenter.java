@@ -17,12 +17,17 @@
 
 package stroom.gitrepo.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.gitrepo.shared.GitRepoPushDto;
+import stroom.gitrepo.shared.GitRepoResource;
+import stroom.task.client.TaskMonitorFactory;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -30,17 +35,26 @@ import com.gwtplatform.mvp.client.View;
 
 public class GitRepoSettingsPresenter
         extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
-        implements DirtyUiHandlers {
+        implements GitRepoSettingsUiHandlers {
+
+    private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
+
+    private final RestFactory restFactory;
+
+    private GitRepoDoc gitRepoDoc = null;
 
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
-                                    final GitRepoSettingsView view) {
+                                    final GitRepoSettingsView view,
+                                    final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
+        gitRepoDoc = doc;
         this.getView().setUrl(doc.getUrl());
         this.getView().setUsername(doc.getUsername());
         this.getView().setPassword(doc.getPassword());
@@ -63,8 +77,64 @@ public class GitRepoSettingsPresenter
         this.setDirty(true);
     }
 
+    /**
+     * Called when Git Push button is pressed.
+     * @param taskMonitorFactory Where the wait icon is displayed.
+     */
+    @Override
+    public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
+        // Use the gitRepoDoc saved in the onRead() method, if available
+        if (gitRepoDoc != null) {
+            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            final GitRepoPushDto dto = new GitRepoPushDto(doc, this.getView().getCommitMessage());
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(res -> res.pushToGit(dto))
+                    .onSuccess(result -> {
+                        // Wipe the commit message
+                        this.getView().setCommitMessage("");
+
+                        // Pop up an alert to show what happened
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
+                        } else {
+                            AlertEvent.fireError(this, "Push Failure", result.getMessage(), null);
+                        }
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        } else {
+            AlertEvent.fireWarn(this, "Git repository information not available", "", null);
+        }
+    }
+
+    /**
+     * Called when the Git Pull button is pressed.
+     * @param taskMonitorFactory Where to display the wait icon.
+     */
+    @Override
+    public void onGitRepoPull(TaskMonitorFactory taskMonitorFactory) {
+        if (gitRepoDoc != null) {
+            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(res -> res.pullFromGit(doc))
+                    .onSuccess(result -> {
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(this, "Pull Success", result.getMessage(), null);
+                        } else {
+                            AlertEvent.fireError(this, "Pull Failure", result.getMessage(), null);
+                        }
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+        } else {
+            AlertEvent.fireWarn(this, "Git repository information not available", "", null);
+        }
+    }
+
     public interface GitRepoSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<DirtyUiHandlers> {
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
         void setUrl(String url);
         String getUrl();
@@ -76,5 +146,7 @@ public class GitRepoSettingsPresenter
         void setBranch(final String branch);
         String getPath();
         void setPath(final String directory);
+        String getCommitMessage();
+        void setCommitMessage(final String commitMessage);
     }
 }

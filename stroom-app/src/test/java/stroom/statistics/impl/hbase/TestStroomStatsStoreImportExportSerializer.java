@@ -21,7 +21,7 @@ package stroom.statistics.impl.hbase;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.importexport.impl.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.hbase.shared.StatisticField;

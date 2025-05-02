@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportActionHandlersApi;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -27,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class ImportExportActionHandlers {
+class ImportExportActionHandlers implements ImportExportActionHandlersApi {
 
     private final Provider<Set<ImportExportActionHandler>> importExportActionHandlerProviders;
     private volatile Map<String, ImportExportActionHandler> handlers;
@@ -41,7 +42,8 @@ class ImportExportActionHandlers {
         return getHandlers().get(type);
     }
 
-    Map<String, ImportExportActionHandler> getHandlers() {
+    @Override
+    public Map<String, ImportExportActionHandler> getHandlers() {
         if (handlers == null) {
             final Map<String, ImportExportActionHandler> map = new HashMap<>();
             for (ImportExportActionHandler handler : importExportActionHandlerProviders.get()) {

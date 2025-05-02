@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="gitRepoSettingsUrl" label="Git repository URL">
             <g:TextBox name="Repository URL"
@@ -28,5 +29,20 @@
                        title="The path within the GIT repository"
                        ui:field="path" />
         </form:FormGroup>
+        <form:FormGroup identity="gitRepoCommitMessage" label="Commit Message">
+            <g:TextArea name="CommitMessage"
+                        title="Commit Message"
+                        ui:field="commitMessage" />
+        </form:FormGroup>
+        <b:Button ui:field="gitRepoPush"
+                  text="Push to Git"
+                  addStyleNames="allow-focus"
+                  title="Add a commit message before pushing"
+                  width="200px" />
+        <b:Button ui:field="gitRepoPull"
+                  text="Pull from Git"
+                  addStyleNames="allow-focus"
+                  title="Pull remote changes into Stroom"
+                  width="200px" />
     </g:FlowPanel>
 </ui:UiBinder>

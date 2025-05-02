@@ -1993,44 +1993,6 @@ class ExplorerServiceImpl
         });
     }
 
-    /**
-     * Determines whether there is a node of the given type above the
-     * given node. Written for GitRepo to determine whether the node
-     * should be saved to Git as well as the DB and local storage.
-     *
-     * @param ancestorDocType The document type to look for in the ancestors.
-     *                Must not be null.
-     * @param node    Where to start searching the tree when looking for
-     *                ancestors. Must not be null.
-     * @return The list of ExplorerNodes, from the closest matching ancestor
-     * to the given node. List will be empty if no match is found.
-     * Never returns null.
-     */
-    @Override
-    public List<ExplorerNode> getAncestorOfDocType(final String ancestorDocType, final ExplorerNode node) {
-        Objects.requireNonNull(ancestorDocType);
-        Objects.requireNonNull(node);
-
-        // Iterate up the tree to find each ancestor
-        final UnmodifiableTreeModel treeModel = explorerTreeModel.getModel();
-        ExplorerNode currentNode = node;
-        List<ExplorerNode> path = new ArrayList<>();
-        path.add(node);
-        do {
-            // Note that getParent() can return null under certain conditions
-            // despite what IntelliJ will tell you...
-            currentNode = treeModel.getParent(treeModel.getNodeKey(currentNode));
-            LOGGER.error("======== Examining node '{}, {}, {}'", currentNode, currentNode.getType(), currentNode.getDepth());
-            path.add(currentNode);
-            if (currentNode != null && currentNode.getType().equals(ancestorDocType)) {
-                return path.reversed();
-            }
-        } while (currentNode != null && !currentNode.getType().equals(ExplorerConstants.SYSTEM_TYPE));
-
-        // Didn't find anything
-        return Collections.emptyList();
-    }
-
     // --------------------------------------------------------------------------------
 
 

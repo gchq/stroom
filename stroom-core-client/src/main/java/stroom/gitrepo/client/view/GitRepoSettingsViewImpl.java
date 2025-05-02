@@ -16,22 +16,25 @@
 
 package stroom.gitrepo.client.view;
 
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
+import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
+import stroom.widget.button.client.Button;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class GitRepoSettingsViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<GitRepoSettingsUiHandlers>
         implements GitRepoSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
@@ -51,9 +54,21 @@ public class GitRepoSettingsViewImpl
     @UiField
     TextBox path;
 
+    @UiField
+    TextArea commitMessage;
+
+    @UiField
+    Button gitRepoPush;
+
+    @UiField
+    Button gitRepoPull;
+
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        // Set the state of the git repo push button
+        this.gitRepoPush.setEnabled(false);
 
         // TODO Add validation for the TextBoxes
     }
@@ -103,6 +118,15 @@ public class GitRepoSettingsViewImpl
     public void setPath(String path) {
         this.path.setText(path);
     }
+    @Override
+    public String getCommitMessage() {
+        return this.commitMessage.getText();
+    }
+    @Override
+    public void setCommitMessage(String commitMessage) {
+        this.commitMessage.setText(commitMessage);
+        this.onCommitMessageValueChange(null);
+    }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
@@ -117,10 +141,46 @@ public class GitRepoSettingsViewImpl
      * Sets the Dirty flag if any of the UI widget's content changes.
      * @param e Event from the UI widget
      */
+    @SuppressWarnings("unused")
     @UiHandler({"url", "username", "password", "branch", "path"})
-    public void onWidgetValueChange(final KeyDownEvent e) {
+    public void onWidgetValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
+        }
+    }
+
+    /**
+     * Enables/disables the Push button depending on whether there is anything
+     * in the Commit Message text box.
+     */
+    @UiHandler({"commitMessage"})
+    public void onCommitMessageValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
+        this.gitRepoPush.setEnabled(!this.getCommitMessage().isEmpty());
+    }
+
+    /**
+     * Handles 'Push to Git' button clicks.
+     * Passes the button to display the wait icon.
+     * @param event The button push event.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("gitRepoPush")
+    public void onGitRepoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onGitRepoPush(gitRepoPush);
+        }
+    }
+
+    /**
+     * Handles 'Pull from Git' button clicks.
+     * Passes the button to display the wait icon.
+     * @param event The button push event.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("gitRepoPull")
+    public void onGitRepoPullClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onGitRepoPull(gitRepoPull);
         }
     }
 
