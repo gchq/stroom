@@ -37,7 +37,7 @@ public class GitRepoPushDto {
      */
     @SuppressWarnings("unused")
     public GitRepoPushDto() {
-
+        // No code
     }
 
     /**

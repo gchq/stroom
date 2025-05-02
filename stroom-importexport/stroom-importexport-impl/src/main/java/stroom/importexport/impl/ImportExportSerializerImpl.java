@@ -78,7 +78,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private final ExplorerService explorerService;
     private final ExplorerNodeService explorerNodeService;
-    private final ImportExportActionHandlers importExportActionHandlers;
+    private final ImportExportActionHandlersImpl importExportActionHandlers;
     private final SecurityContext securityContext;
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private static final byte[] LINE_END_CHAR_BYTES = "\n".getBytes(Charset.defaultCharset());
@@ -86,7 +86,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     @Inject
     ImportExportSerializerImpl(final ExplorerService explorerService,
                                final ExplorerNodeService explorerNodeService,
-                               final ImportExportActionHandlers importExportActionHandlers,
+                               final ImportExportActionHandlersImpl importExportActionHandlers,
                                final SecurityContext securityContext,
                                final ImportExportDocumentEventLog importExportDocumentEventLog) {
         this.explorerService = explorerService;

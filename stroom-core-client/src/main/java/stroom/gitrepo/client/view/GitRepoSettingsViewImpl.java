@@ -33,6 +33,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+/**
+ * Backs up GitRepoSettingsViewImpl.ui.xml for the GitRepo Settings tab.
+ */
 public class GitRepoSettingsViewImpl
         extends ViewWithUiHandlers<GitRepoSettingsUiHandlers>
         implements GitRepoSettingsView, ReadOnlyChangeHandler {

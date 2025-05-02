@@ -33,14 +33,27 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * Provides the main functionality on the client behind the GitRepo Settings tab.
+ */
 public class GitRepoSettingsPresenter
         extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
         implements GitRepoSettingsUiHandlers {
 
+    /**
+     * Server REST API.
+     */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
+    /**
+     * Provides REST connection to the server.
+     */
     private final RestFactory restFactory;
 
+    /**
+     * Local copy of the gitRepoDoc, saved in the onRead() method.
+     * Might be null if onRead() hasn't been called yet.
+     */
     private GitRepoDoc gitRepoDoc = null;
 
     @Inject
@@ -63,7 +76,7 @@ public class GitRepoSettingsPresenter
     }
 
     @Override
-    protected GitRepoDoc onWrite(GitRepoDoc doc) {
+    protected GitRepoDoc onWrite(final GitRepoDoc doc) {
         doc.setUrl(this.getView().getUrl());
         doc.setUsername(this.getView().getUsername());
         doc.setPassword(this.getView().getPassword());
@@ -82,7 +95,7 @@ public class GitRepoSettingsPresenter
      * @param taskMonitorFactory Where the wait icon is displayed.
      */
     @Override
-    public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
+    public void onGitRepoPush(final TaskMonitorFactory taskMonitorFactory) {
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
             final GitRepoDoc doc = onWrite(gitRepoDoc);
@@ -113,7 +126,7 @@ public class GitRepoSettingsPresenter
      * @param taskMonitorFactory Where to display the wait icon.
      */
     @Override
-    public void onGitRepoPull(TaskMonitorFactory taskMonitorFactory) {
+    public void onGitRepoPull(final TaskMonitorFactory taskMonitorFactory) {
         if (gitRepoDoc != null) {
             final GitRepoDoc doc = onWrite(gitRepoDoc);
             restFactory

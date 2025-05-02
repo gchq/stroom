@@ -16,7 +16,7 @@
 
 package stroom.importexport.impl;
 
-import stroom.importexport.api.ImportExportActionHandlersApi;
+import stroom.importexport.api.ImportExportActionHandlers;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.lifecycle.api.LifecycleBinder;
@@ -32,7 +32,7 @@ public class ImportExportModule extends AbstractModule {
         bind(ImportExportService.class).to(ImportExportServiceImpl.class);
         bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
-        bind(ImportExportActionHandlersApi.class).to(ImportExportActionHandlers.class);
+        bind(ImportExportActionHandlers.class).to(ImportExportActionHandlersImpl.class);
 
         //Startup with very low priority to ensure it starts after everything else
         //in particular
