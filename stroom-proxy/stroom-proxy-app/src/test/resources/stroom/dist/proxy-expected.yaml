@@ -131,6 +131,9 @@ proxyConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    metaKeyValuePatterns:
+      AccountId: "^[0-9]+$"
+      Component: "^[A-Z_]+$"
     metaTypes:
     - "Context"
     - "Detections"

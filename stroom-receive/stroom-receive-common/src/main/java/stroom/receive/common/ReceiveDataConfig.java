@@ -4,6 +4,8 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -24,9 +26,12 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -34,6 +39,8 @@ import java.util.stream.Collectors;
 public class ReceiveDataConfig
         extends AbstractConfig
         implements IsStroomConfig, IsProxyConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataConfig.class);
 
     public static final String DEFAULT_X509_CERT_HEADER = "X-SSL-CERT";
     public static final String DEFAULT_X509_CERT_DN_HEADER = "X-SSL-CLIENT-S-DN";
@@ -66,6 +73,8 @@ public class ReceiveDataConfig
     private final String feedNameTemplate;
     @JsonProperty
     private final Set<String> feedNameGenerationMandatoryHeaders;
+    @JsonProperty
+    private final Map<String, String> metaKeyValuePatterns;
 
     public ReceiveDataConfig() {
         receiptPolicyUuid = null;
@@ -95,6 +104,9 @@ public class ReceiveDataConfig
                 StandardHeaderArguments.COMPONENT,
                 StandardHeaderArguments.FORMAT,
                 StandardHeaderArguments.SCHEMA));
+        metaKeyValuePatterns = CollectionUtil.asUnmodifiabledConsistentOrderMap(Map.of(
+                StandardHeaderArguments.ACCOUNT_ID, "^[0-9]+$",
+                StandardHeaderArguments.COMPONENT, "^[A-Z_]+$"));
     }
 
     @SuppressWarnings("unused")
@@ -112,7 +124,8 @@ public class ReceiveDataConfig
             @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
             @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled,
             @JsonProperty("feedNameTemplate") final String feedNameTemplate,
-            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders) {
+            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
+            @JsonProperty("metaKeyValuePatterns") final Map<String, String> metaKeyValuePatterns) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = cleanSet(metaTypes);
@@ -127,6 +140,7 @@ public class ReceiveDataConfig
         this.feedNameGenerationEnabled = feedNameGenerationEnabled;
         this.feedNameTemplate = feedNameTemplate;
         this.feedNameGenerationMandatoryHeaders = cleanSet(feedNameGenerationMandatoryHeaders);
+        this.metaKeyValuePatterns = NullSafe.map(metaKeyValuePatterns);
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -143,7 +157,8 @@ public class ReceiveDataConfig
                 builder.allowedCertificateProviders,
                 builder.feedNameGenerationEnabled,
                 builder.feedNameTemplate,
-                builder.feedNameGenerationMandatoryHeaders);
+                builder.feedNameGenerationMandatoryHeaders,
+                builder.metaKeyValuePatterns);
     }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
@@ -267,6 +282,10 @@ public class ReceiveDataConfig
         return feedNameGenerationMandatoryHeaders;
     }
 
+    public Map<String, String> getMetaKeyValuePatterns() {
+        return metaKeyValuePatterns;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -274,6 +293,34 @@ public class ReceiveDataConfig
     public boolean isAuthenticationRequiredValid() {
         return !authenticationRequired
                || !enabledAuthenticationTypes.isEmpty();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonIgnore
+    @ValidationMethod(message = "The metaKeyValuePatterns map must contain non-empty keys and values. " +
+                                "Each value must be a valid regex pattern.")
+    public boolean isMetaKeyValuePatternsValid() {
+        if (NullSafe.isEmptyMap(metaKeyValuePatterns)) {
+            return true;
+        } else {
+            return metaKeyValuePatterns.entrySet()
+                    .stream()
+                    .allMatch(entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+                        if (NullSafe.isEmptyString(key) || NullSafe.isEmptyString(value)) {
+                            return false;
+                        } else {
+                            try {
+                                Pattern.compile(value);
+                            } catch (Exception e) {
+                                LOGGER.error("'{}' is not a valid regex pattern", value, e);
+                                return false;
+                            }
+                            return true;
+                        }
+                    });
+        }
     }
 
     private static String toTemplate(final String... parts) {
@@ -370,6 +417,7 @@ public class ReceiveDataConfig
 
     public static final class Builder {
 
+        private Map<String, String> metaKeyValuePatterns;
         private String receiptPolicyUuid;
         private Set<String> metaTypes;
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
@@ -465,6 +513,24 @@ public class ReceiveDataConfig
 
         public Builder withFeedNameGenerationMandatoryHeaders(final Set<String> feedNameGenerationMandatoryHeaders) {
             this.feedNameGenerationMandatoryHeaders = NullSafe.mutableSet(feedNameGenerationMandatoryHeaders);
+            return this;
+        }
+
+        public Builder withMetaKeyValuePatterns(final Map<String, String> metaKeyValuePatterns) {
+            if (this.metaKeyValuePatterns == null) {
+                this.metaKeyValuePatterns = new HashMap<>();
+            }
+            this.metaKeyValuePatterns.putAll(metaKeyValuePatterns);
+            return this;
+        }
+
+        public Builder addMetaKeyValuePattern(final String key, final String pattern) {
+            if (this.metaKeyValuePatterns == null) {
+                this.metaKeyValuePatterns = new HashMap<>();
+            }
+            if (NullSafe.isNonEmptyString(key)) {
+                this.metaKeyValuePatterns.put(key, pattern);
+            }
             return this;
         }
 

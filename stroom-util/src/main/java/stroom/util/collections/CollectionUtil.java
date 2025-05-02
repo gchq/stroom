@@ -3,8 +3,11 @@ package stroom.util.collections;
 import stroom.util.shared.NullSafe;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -61,6 +64,29 @@ public class CollectionUtil {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             return Collections.unmodifiableSet(cleanedSet);
+        }
+    }
+
+    /**
+     * Return a {@link Map} containing the entries in map, sorted by key
+     * and with null entries and null keys filtered out.
+     */
+    public static <K extends Comparable<K>, V> Map<K, V> asUnmodifiabledConsistentOrderMap(final Map<K, V> map) {
+        if (NullSafe.isEmptyMap(map)) {
+            return Collections.emptyMap();
+        } else {
+            // Use a LinkedHashSet to ensure iteration order is consistent
+            final LinkedHashMap<K, V> cleanedMap = map.entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey()) // Sort the items for consistent insert order
+                    .filter(Objects::nonNull)
+                    .filter(kvEntry -> kvEntry.getKey() != null)
+                    .collect(Collectors.toMap(
+                            Entry::getKey,
+                            Entry::getValue,
+                            (o, o2) -> o,
+                            LinkedHashMap::new));
+            return Collections.unmodifiableMap(cleanedMap);
         }
     }
 
