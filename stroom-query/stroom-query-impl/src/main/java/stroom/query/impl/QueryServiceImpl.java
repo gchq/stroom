@@ -650,7 +650,9 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public ContextualQueryHelp getQueryHelpContext(final String query, final int row, final int col) {
+    public ContextualQueryHelp getQueryHelpContext(final String query,
+                                                   final int row,
+                                                   final int col) {
         return securityContext.useAsReadResult(() -> {
             if (NullSafe.isBlankString(query) || (row == 0 && col == 0)) {
                 return EMPTY_QUERY_CONTEXT;
