@@ -24,6 +24,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
@@ -47,6 +48,7 @@ import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -218,10 +220,22 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public ResultPage<CompletionItem> fetchCompletions(final CompletionsRequest request) {
         final List<CompletionItem> list = new ArrayList<>();
-        final ContextualQueryHelp contextualQueryHelp = queryServiceProvider.get()
-                .getQueryHelpContext(request.getText(), request.getRow(), request.getColumn());
+        final ContextualQueryHelp contextualQueryHelp;
+        final Set<QueryHelpType> contextualHelpTypes;
+        final Set<String> applicableStructureItems;
 
-        final Set<QueryHelpType> contextualHelpTypes = contextualQueryHelp.queryHelpTypes();
+        if (TextType.EXPRESSION == request.getTextType()) {
+            // An expression on its own doesn't have keywords, so can't determine contextual items,
+            // at least not in the same way
+            contextualQueryHelp = null;
+            contextualHelpTypes = request.getIncludedTypes();
+            applicableStructureItems = Collections.emptySet();
+        } else {
+            contextualQueryHelp = queryServiceProvider.get()
+                    .getQueryHelpContext(request.getText(), request.getRow(), request.getColumn());
+            contextualHelpTypes = contextualQueryHelp.queryHelpTypes();
+            applicableStructureItems = contextualQueryHelp.applicableStructureItems();
+        }
 
         LOGGER.debug("\n  request: {}, \n  contextualQueryHelp: {}", request, contextualQueryHelp);
         // Only return the types asked for by the client and that are appropriate for the context
@@ -234,7 +248,7 @@ class QueryResourceImpl implements QueryResource {
                     request,
                     reduceMaxCompletions(maxCompletions, list),
                     list,
-                    contextualQueryHelp.applicableStructureItems());
+                    applicableStructureItems);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
             fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
@@ -256,7 +270,7 @@ class QueryResourceImpl implements QueryResource {
                                    final Set<QueryHelpType> contextualHelpTypes,
                                    final QueryHelpType queryHelpType) {
         return request.isTypeIncluded(queryHelpType)
-                && contextualHelpTypes.contains(queryHelpType);
+               && contextualHelpTypes.contains(queryHelpType);
     }
 
     @Override
