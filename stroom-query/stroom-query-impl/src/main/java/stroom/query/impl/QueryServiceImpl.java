@@ -41,6 +41,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
@@ -525,10 +526,12 @@ class QueryServiceImpl implements QueryService {
 
         QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
+        Exception exception = null;
+        SearchRequest mappedRequest = null;
 
         if (query != null) {
             try {
-                final SearchRequest mappedRequest = mapRequest(searchRequest);
+                mappedRequest = mapRequest(searchRequest);
                 LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
@@ -542,31 +545,10 @@ class QueryServiceImpl implements QueryService {
                     // Add this search to the history so the user can get back to this
                     // search again.
                     storeSearchHistory(searchRequest);
-
-                    // Log this search request for the current user.
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            mappedRequest.getQuery().getDataSource(),
-                            mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            null);
                 }
-
             } catch (final TokenException e) {
+                exception = e;
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
-
-                if (queryKey == null) {
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            null,
-                            null,
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            e);
-                }
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
@@ -578,18 +560,8 @@ class QueryServiceImpl implements QueryService {
                         null);
 
             } catch (final RuntimeException e) {
+                exception = e;
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
-
-                if (queryKey == null) {
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            null,
-                            null,
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            e);
-                }
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
@@ -599,6 +571,23 @@ class QueryServiceImpl implements QueryService {
                         null,
                         true,
                         null);
+            } finally {
+                if (queryKey == null) {
+                    searchEventLog.search(
+                            searchRequest.getQueryKey(),
+                            NullSafe.get(
+                                    searchRequest,
+                                    QuerySearchRequest::getSearchRequestSource,
+                                    SearchRequestSource::getComponentId),
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getExpression),
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams(),
+                            NullSafe.get(result, DashboardSearchResponse::getResults),
+                            exception);
+                }
             }
         }
 
