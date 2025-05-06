@@ -71,9 +71,6 @@ public class GitRepoDoc extends Doc {
     @JsonProperty
     private String path;
 
-    public GitRepoDoc() {
-    }
-
     @JsonCreator
     public GitRepoDoc(@JsonProperty("type") final String type,
                       @JsonProperty("uuid") final String uuid,
