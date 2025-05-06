@@ -40,7 +40,6 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
@@ -48,6 +47,9 @@ import java.util.function.BiFunction;
  * A schema that tries a number of different approaches to store keys in the most efficient way depending on their type.
  */
 class AutoKeySchema extends AbstractSchema<String, StateValue> {
+
+//    private static final String LONG_STRING = String.valueOf(Long.MAX_VALUE);
+//    private static final int MAX_LONG_STRING = LONG_STRING.length() + 1;
 
     private final StateSettings settings;
     private final PutFlags[] putFlags;
@@ -104,110 +106,58 @@ class AutoKeySchema extends AbstractSchema<String, StateValue> {
                              final String key,
                              final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function,
                              final boolean read) throws UseHashException {
-        Objects.requireNonNull(key, "Key is null");
-        if (!key.isEmpty()) {
-            final char firstChar = key.charAt(0);
-            if (Character.isDigit(firstChar) || firstChar == '-' || firstChar == '+') {
-                if (!key.contains(".")) {
-                    try {
-                        final long l = Long.parseLong(key);
-                        if (l == 0) {
-                            // Zero is a special case and only requires the type be stored.
-                            return byteBuffers.use(Byte.BYTES, keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.ZERO.getPrimitiveValue());
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        } else if (l > 0) {
-                            // We have a positive integer, so we can store unsigned with a variable byte length.
-                            final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(l);
-                            return byteBuffers.use(Byte.BYTES + unsignedBytes.length(), keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.UNSIGNED.getPrimitiveValue());
-                                unsignedBytes.put(keyByteBuffer, l);
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        } else if (l >= Byte.MIN_VALUE) {
-                            // We have a negative byte.
-                            return byteBuffers.use(Byte.BYTES + Byte.BYTES, keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.BYTE.getPrimitiveValue());
-                                keyByteBuffer.put((byte) l);
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        } else if (l >= Short.MIN_VALUE) {
-                            // We have a negative short.
-                            return byteBuffers.use(Byte.BYTES + Short.BYTES, keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.SHORT.getPrimitiveValue());
-                                keyByteBuffer.putShort((short) l);
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        } else if (l >= Integer.MIN_VALUE) {
-                            // We have a negative integer.
-                            return byteBuffers.use(Byte.BYTES + Integer.BYTES, keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.INT.getPrimitiveValue());
-                                keyByteBuffer.putInt((int) l);
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        } else {
-                            // All other negative integers should be stored as negative longs.
-                            return byteBuffers.use(Byte.BYTES + Long.BYTES, keyByteBuffer -> {
-                                keyByteBuffer.put(AutoKeyType.LONG.getPrimitiveValue());
-                                keyByteBuffer.putLong(l);
-                                keyByteBuffer.flip();
-                                return function.apply(txn, keyByteBuffer);
-                            });
-                        }
-
-                    } catch (final NumberFormatException e) {
-                        // Ignore.
-                    }
-                }
-
-                // Try double or float.
-                try {
-                    final double d = Double.parseDouble(key);
-                    final float f = (float) d;
-                    // If there is no reduction in precision using a float then use a float.
-                    if ((double) f == d) {
-                        return byteBuffers.use(Byte.BYTES + Float.BYTES, keyByteBuffer -> {
-                            keyByteBuffer.put(AutoKeyType.FLOAT.getPrimitiveValue());
-                            keyByteBuffer.putFloat(f);
-                            keyByteBuffer.flip();
-                            return function.apply(txn, keyByteBuffer);
-                        });
-                    } else {
-                        return byteBuffers.use(Byte.BYTES + Double.BYTES, keyByteBuffer -> {
-                            keyByteBuffer.put(AutoKeyType.DOUBLE.getPrimitiveValue());
-                            keyByteBuffer.putDouble(d);
-                            keyByteBuffer.flip();
-                            return function.apply(txn, keyByteBuffer);
-                        });
-                    }
-                } catch (final NumberFormatException e) {
-                    // Ignore.
-                }
-            }
-        }
+//        Objects.requireNonNull(key, "Key is null");
+//        if (!key.isEmpty()) {
+//            final char firstChar = key.charAt(0);
+//            if (Character.isDigit(firstChar) || firstChar == '-' || firstChar == '+') {
+//                if (key.length() <= MAX_LONG_STRING && !key.contains(".")) {
+//                    try {
+//                        final long l = Long.parseLong(key);
+//                        if (l == 0) {
+//                            // Zero is a special case and only requires the type be stored.
+//                            return useZero(txn, function);
+//                        } else if (l > 0) {
+//                            // We have a positive integer, so we can store unsigned with a variable byte length.
+//                            return useUnsigned(txn, l, function);
+//                        } else if (l >= Byte.MIN_VALUE) {
+//                            // We have a negative byte.
+//                            return useByte(txn, (byte) l, function);
+//                        } else if (l >= Short.MIN_VALUE) {
+//                            // We have a negative short.
+//                            return useShort(txn, (short) l, function);
+//                        } else if (l >= Integer.MIN_VALUE) {
+//                            // We have a negative integer.
+//                            return useInteger(txn, (int) l, function);
+//                        } else {
+//                            // All other negative integers should be stored as negative longs.
+//                            return useLong(txn, l, function);
+//                        }
+//
+//                    } catch (final ArithmeticException e) {
+//                        // Ignore.
+//                    }
+//                }
+//
+//                // Try double or float.
+//                try {
+//                    final double d = Double.parseDouble(key);
+//                    final float f = (float) d;
+//                    // If there is no reduction in precision using a float then use a float.
+//                    if ((double) f == d) {
+//                        return useFloat(txn, f, function);
+//                    } else {
+//                        return useDouble(txn, d, function);
+//                    }
+//                } catch (final NumberFormatException e) {
+//                    // Ignore.
+//                }
+//            }
+//        }
 
         // The string is not a number so just use the bytes.
-        byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
         if (keyLookup != null && bytes.length > settings.getStateKeySchema().getDeduplicateThreshold()) {
-            if (read) {
-                return keyLookup.get(txn, bytes, (Optional<ByteBuffer> optionalIdByteBuffer) -> {
-                    if (optionalIdByteBuffer.isEmpty()) {
-                        return null;
-                    } else {
-                        final ByteBuffer idByteBuffer = optionalIdByteBuffer.get();
-                        return useIdByteBuffer(txn, idByteBuffer, function);
-                    }
-                });
-            } else {
-                return keyLookup.put(txn, bytes, idByteBuffer ->
-                        useIdByteBuffer(txn, idByteBuffer, function));
-            }
+            return useLookup(txn, bytes, function, read);
         }
 
         if (bytes.length > 510) {
@@ -215,6 +165,118 @@ class AutoKeySchema extends AbstractSchema<String, StateValue> {
         }
 
         // Just use the bytes as the key directly.
+        return useBytes(txn, bytes, function);
+    }
+
+    private <R> R useZero(final Txn<ByteBuffer> txn,
+                          final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.ZERO.getPrimitiveValue());
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useUnsigned(final Txn<ByteBuffer> txn,
+                              final long l,
+                              final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(l);
+        return byteBuffers.use(Byte.BYTES + unsignedBytes.length(), keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.UNSIGNED.getPrimitiveValue());
+            unsignedBytes.put(keyByteBuffer, l);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useByte(final Txn<ByteBuffer> txn,
+                          final byte b,
+                          final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Byte.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.BYTE.getPrimitiveValue());
+            keyByteBuffer.put(b);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useShort(final Txn<ByteBuffer> txn,
+                           final short s,
+                           final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Short.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.SHORT.getPrimitiveValue());
+            keyByteBuffer.putShort(s);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useInteger(final Txn<ByteBuffer> txn,
+                             final int i,
+                             final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Integer.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.INT.getPrimitiveValue());
+            keyByteBuffer.putInt(i);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useLong(final Txn<ByteBuffer> txn,
+                          final long l,
+                          final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Long.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.LONG.getPrimitiveValue());
+            keyByteBuffer.putLong(l);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useFloat(final Txn<ByteBuffer> txn,
+                           final float f,
+                           final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Float.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.FLOAT.getPrimitiveValue());
+            keyByteBuffer.putFloat(f);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useDouble(final Txn<ByteBuffer> txn,
+                            final double d,
+                            final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
+        return byteBuffers.use(Byte.BYTES + Double.BYTES, keyByteBuffer -> {
+            keyByteBuffer.put(AutoKeyType.DOUBLE.getPrimitiveValue());
+            keyByteBuffer.putDouble(d);
+            keyByteBuffer.flip();
+            return function.apply(txn, keyByteBuffer);
+        });
+    }
+
+    private <R> R useLookup(final Txn<ByteBuffer> txn,
+                            final byte[] bytes,
+                            final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function,
+                            final boolean read) {
+        if (read) {
+            return keyLookup.get(txn, bytes, (Optional<ByteBuffer> optionalIdByteBuffer) -> {
+                if (optionalIdByteBuffer.isEmpty()) {
+                    return null;
+                } else {
+                    final ByteBuffer idByteBuffer = optionalIdByteBuffer.get();
+                    return useIdByteBuffer(txn, idByteBuffer, function);
+                }
+            });
+        } else {
+            return keyLookup.put(txn, bytes, idByteBuffer ->
+                    useIdByteBuffer(txn, idByteBuffer, function));
+        }
+    }
+
+    private <R> R useBytes(final Txn<ByteBuffer> txn,
+                           final byte[] bytes,
+                           final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
         return byteBuffers.use(Byte.BYTES + bytes.length, keyByteBuffer -> {
             keyByteBuffer.put(AutoKeyType.BYTES.getPrimitiveValue());
             keyByteBuffer.put(bytes);

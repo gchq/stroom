@@ -17,7 +17,7 @@ public class ByteBuffers {
         this.byteBufferFactory = byteBufferFactory;
     }
 
-    public <R> R use(int size, Function<ByteBuffer, R> function) {
+    public <R> R use(final int size, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(size);
         try {
             return function.apply(byteBuffer);
@@ -26,7 +26,7 @@ public class ByteBuffers {
         }
     }
 
-    public void use(int size, Consumer<ByteBuffer> consumer) {
+    public void use(final int size, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(size);
         try {
             consumer.accept(byteBuffer);
@@ -35,7 +35,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useByte(byte b, Function<ByteBuffer, R> function) {
+    public <R> R useByte(final byte b, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Byte.BYTES);
         try {
             byteBuffer.put(b);
@@ -46,7 +46,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useByte(byte b, Consumer<ByteBuffer> consumer) {
+    public void useByte(final byte b, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Byte.BYTES);
         try {
             byteBuffer.put(b);
@@ -57,7 +57,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useChar(char c, Function<ByteBuffer, R> function) {
+    public <R> R useChar(final char c, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Character.BYTES);
         try {
             byteBuffer.putChar(c);
@@ -68,7 +68,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useChar(char c, Consumer<ByteBuffer> consumer) {
+    public void useChar(final char c, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Character.BYTES);
         try {
             byteBuffer.putChar(c);
@@ -79,7 +79,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useShort(short s, Function<ByteBuffer, R> function) {
+    public <R> R useShort(final short s, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Short.BYTES);
         try {
             byteBuffer.putShort(s);
@@ -90,7 +90,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useShort(short s, Consumer<ByteBuffer> consumer) {
+    public void useShort(final short s, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Short.BYTES);
         try {
             byteBuffer.putShort(s);
@@ -101,7 +101,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useInt(int i, Function<ByteBuffer, R> function) {
+    public <R> R useInt(final int i, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
         try {
             byteBuffer.putInt(i);
@@ -112,7 +112,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useInt(int i, Consumer<ByteBuffer> consumer) {
+    public void useInt(final int i, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
         try {
             byteBuffer.putInt(i);
@@ -123,7 +123,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useLong(long l, Function<ByteBuffer, R> function) {
+    public <R> R useLong(final long l, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Long.BYTES);
         try {
             byteBuffer.putLong(l);
@@ -134,7 +134,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useLong(long l, Consumer<ByteBuffer> consumer) {
+    public void useLong(final long l, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Long.BYTES);
         try {
             byteBuffer.putLong(l);
@@ -145,7 +145,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useFloat(float f, Function<ByteBuffer, R> function) {
+    public <R> R useFloat(final float f, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Float.BYTES);
         try {
             byteBuffer.putFloat(f);
@@ -156,7 +156,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useFloat(float f, Consumer<ByteBuffer> consumer) {
+    public void useFloat(final float f, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Float.BYTES);
         try {
             byteBuffer.putFloat(f);
@@ -167,7 +167,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useDouble(double d, Function<ByteBuffer, R> function) {
+    public <R> R useDouble(final double d, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Double.BYTES);
         try {
             byteBuffer.putDouble(d);
@@ -178,7 +178,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useDouble(double d, Consumer<ByteBuffer> consumer) {
+    public void useDouble(final double d, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(Double.BYTES);
         try {
             byteBuffer.putDouble(d);
@@ -189,7 +189,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useBytes(byte[] bytes, Function<ByteBuffer, R> function) {
+    public <R> R useBytes(final byte[] bytes, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(bytes.length);
         try {
             byteBuffer.put(bytes);
@@ -200,7 +200,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useBytes(byte[] bytes, Consumer<ByteBuffer> consumer) {
+    public void useBytes(final byte[] bytes, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(bytes.length);
         try {
             byteBuffer.put(bytes);
@@ -211,7 +211,7 @@ public class ByteBuffers {
         }
     }
 
-    public <R> R useCopy(ByteBuffer in, Function<ByteBuffer, R> function) {
+    public <R> R useCopy(final ByteBuffer in, final Function<ByteBuffer, R> function) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(in.remaining());
         try {
             byteBuffer.put(in);
@@ -222,7 +222,7 @@ public class ByteBuffers {
         }
     }
 
-    public void useCopy(ByteBuffer in, Consumer<ByteBuffer> consumer) {
+    public void useCopy(final ByteBuffer in, final Consumer<ByteBuffer> consumer) {
         final ByteBuffer byteBuffer = byteBufferFactory.acquire(in.remaining());
         try {
             byteBuffer.put(in);
