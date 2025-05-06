@@ -164,16 +164,28 @@ public class GitRepoSettingsPresenter
             extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
         void setUrl(String url);
+
         String getUrl();
+
         String getUsername();
+
         void setUsername(final String username);
+
         String getPassword();
+
         void setPassword(final String password);
+
         String getBranch();
+
         void setBranch(final String branch);
+
         String getPath();
+
         void setPath(final String directory);
+
         String getCommitMessage();
+
         void setCommitMessage(final String commitMessage);
+
     }
 }

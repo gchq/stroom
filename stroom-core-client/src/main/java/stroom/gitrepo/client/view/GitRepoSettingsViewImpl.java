@@ -85,46 +85,57 @@ public class GitRepoSettingsViewImpl
     public String getUrl() {
         return url.getText();
     }
+
     @Override
     public void setUrl(final String url) {
         this.url.setText(url);
     }
+
     @Override
     public String getUsername() {
         return username.getText();
     }
+
     @Override
     public void setUsername(final String username) {
         this.username.setText(username);
     }
+
     @Override
     public String getPassword() {
         return password.getText();
     }
+
     @Override
     public void setPassword(final String password) {
         this.password.setText(password);
     }
+
     @Override
     public String getBranch() {
         return branch.getText();
     }
+
     @Override
     public void setBranch(final String branch) {
         this.branch.setText(branch);
     }
+
     @Override
     public String getPath() {
         return path.getText();
     }
+
     @Override
     public void setPath(String path) {
         this.path.setText(path);
     }
+
     @Override
     public String getCommitMessage() {
         return this.commitMessage.getText();
     }
+
     @Override
     public void setCommitMessage(String commitMessage) {
         this.commitMessage.setText(commitMessage);
