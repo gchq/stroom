@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
@@ -109,9 +110,15 @@ public class GitRepoSettingsPresenter
 
                         // Pop up an alert to show what happened
                         if (result.isOk()) {
-                            AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
+                            AlertEvent.fireInfo(GitRepoSettingsPresenter.this,
+                                    "Push Success",
+                                    result.getMessage(),
+                                    null);
                         } else {
-                            AlertEvent.fireError(this, "Push Failure", result.getMessage(), null);
+                            AlertEvent.fireError(GitRepoSettingsPresenter.this,
+                                    "Push Failure",
+                                    result.getMessage(),
+                                    null);
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -134,9 +141,16 @@ public class GitRepoSettingsPresenter
                     .method(res -> res.pullFromGit(doc))
                     .onSuccess(result -> {
                         if (result.isOk()) {
-                            AlertEvent.fireInfo(this, "Pull Success", result.getMessage(), null);
+                            AlertEvent.fireInfo(this,
+                                    "Pull Success",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
                         } else {
-                            AlertEvent.fireError(this, "Pull Failure", result.getMessage(), null);
+                            AlertEvent.fireError(
+                                    this,
+                                    "Pull Failure",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
