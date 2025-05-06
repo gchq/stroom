@@ -8787,6 +8787,11 @@ components:
           format: int32
         text:
           type: string
+        textType:
+          type: string
+          enum:
+          - STROOM_QUERY_LANGUAGE
+          - EXPRESSION
     ComponentConfig:
       type: object
       properties:
