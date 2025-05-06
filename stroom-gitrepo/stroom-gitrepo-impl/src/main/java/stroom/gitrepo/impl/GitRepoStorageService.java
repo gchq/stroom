@@ -116,7 +116,7 @@ public class GitRepoStorageService {
     public List<Message> exportDoc(GitRepoDoc gitRepoDoc,
                                    final String commitMessage)
             throws IOException {
-        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc, gitRepoDoc.getUuid());
+        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
         List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
@@ -366,11 +366,13 @@ public class GitRepoStorageService {
                        Path exportDir) {
         final Set<DocRef> docRefs = new HashSet<>();
         this.recurseExplorerNodes(node, docRefs);
+        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         return importExportSerializer.write(
                 gitRepoNodePath,
                 exportDir,
                 docRefs,
+                docTypesToIgnore,
                 true);
     }
 

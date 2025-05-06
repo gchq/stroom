@@ -47,7 +47,7 @@ public interface ImportExportSerializer {
      * @param docRefs         Set of the DocRefs and root folder DocRefs (as per that returned by
      *                        ImportExportSerializer.read()
      * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
-     * @return
+     * @return summary of the export.
      */
     ExportSummary write(final Path dir,
                         final Set<DocRef> docRefs,
@@ -62,11 +62,14 @@ public interface ImportExportSerializer {
      *                         GitRepo node, including that node.
      * @param dir              Where to serialize the DocRef items to on disk.
      * @param docRefs          Set of the DocRefs to serialize.
+     * @param typesToIgnore    Set of the Doc types that shouldn't be exported, nor
+     *                         their children. Must not be null.
      * @param omitAuditFields  Do not export audit fields.
-     * @return
+     * @return summary of the export.
      */
     ExportSummary write(final List<ExplorerNode> rootNode,
                         final Path dir,
                         final Set<DocRef> docRefs,
+                        final Set<String> typesToIgnore,
                         final boolean omitAuditFields);
 }
