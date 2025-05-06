@@ -1,5 +1,9 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.state;
 
+import stroom.planb.impl.db.RangedStateFields;
+import stroom.planb.impl.db.SessionFields;
+import stroom.planb.impl.db.TemporalRangedStateFields;
+import stroom.planb.impl.db.TemporalStateFields;
 import stroom.planb.shared.StateType;
 import stroom.query.api.datasource.QueryField;
 

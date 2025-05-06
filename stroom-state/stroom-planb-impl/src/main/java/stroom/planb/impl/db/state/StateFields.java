@@ -1,4 +1,4 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.state;
 
 import stroom.query.api.datasource.QueryField;
 

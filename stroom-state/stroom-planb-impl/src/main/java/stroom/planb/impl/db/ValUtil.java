@@ -1,5 +1,6 @@
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -19,16 +20,18 @@ public class ValUtil {
     private static final ValString STRING = ValString.create("String");
     private static final ValString FAST_INFOSET = ValString.create("Fast Infoset");
 
-    public static Val getType(final byte valueType) {
-        return switch (valueType) {
+    public static Val getType(final ByteBuffer byteBuffer) {
+        final byte typeId = byteBuffer.get();
+        return switch (typeId) {
             case stroom.pipeline.refdata.store.StringValue.TYPE_ID -> STRING;
             case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID -> FAST_INFOSET;
             default -> ValNull.INSTANCE;
         };
     }
 
-    public static Val getValue(final byte valueType, final ByteBuffer byteBuffer) {
-        return switch (valueType) {
+    public static Val getValue(final ByteBuffer byteBuffer) {
+        final byte typeId = byteBuffer.get();
+        return switch (typeId) {
             case stroom.pipeline.refdata.store.StringValue.TYPE_ID ->
                     ValString.create(convertString(byteBuffer));
             case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID ->
@@ -37,20 +40,18 @@ public class ValUtil {
         };
     }
 
-    public static String getString(final byte valueType, final ByteBuffer byteBuffer) {
-        return switch (valueType) {
-            case stroom.pipeline.refdata.store.StringValue.TYPE_ID ->
-                    convertString(byteBuffer);
-            case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID ->
-                    convertFastInfoset(byteBuffer);
-            default -> null;
-        };
-    }
+//    public static String getString(final byte valueType, final ByteBuffer byteBuffer) {
+//        return switch (valueType) {
+//            case stroom.pipeline.refdata.store.StringValue.TYPE_ID ->
+//                    convertString(byteBuffer);
+//            case stroom.pipeline.refdata.store.FastInfosetValue.TYPE_ID ->
+//                    convertFastInfoset(byteBuffer);
+//            default -> null;
+//        };
+//    }
 
     private static String convertString(final ByteBuffer byteBuffer) {
-        final byte[] bytes = new byte[byteBuffer.limit()];
-        byteBuffer.get(bytes);
-        return new String(bytes, StandardCharsets.UTF_8);
+        return ByteBufferUtils.toString(byteBuffer);
     }
 
     private static String convertFastInfoset(final ByteBuffer byteBuffer) {

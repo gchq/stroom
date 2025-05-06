@@ -1,7 +1,7 @@
 package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.util.logging.LambdaLogger;
@@ -17,35 +17,35 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LmdbKeySequence {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbKeySequence.class);
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
 
-    public LmdbKeySequence(final ByteBufferFactory byteBufferFactory) {
-        this.byteBufferFactory = byteBufferFactory;
+    public LmdbKeySequence(final ByteBuffers byteBuffers) {
+        this.byteBuffers = byteBuffers;
     }
 
-    public void find(final Dbi<ByteBuffer> dbi,
-                     final Txn<ByteBuffer> writeTxn,
-                     final ByteBuffer rowKey,
-                     final ByteBuffer rowValue,
-                     final Predicate<BBKV> matchPredicate,
-                     final Consumer<Match> matchConsumer) {
+    public <R> R find(final Dbi<ByteBuffer> dbi,
+                      final Txn<ByteBuffer> writeTxn,
+                      final ByteBuffer rowKey,
+                      final ByteBuffer rowValue,
+                      final Predicate<BBKV> matchPredicate,
+                      final Function<Match, R> matchConsumer) {
         // Just try to find without a cursor.
         final ByteBuffer valueBuffer = dbi.get(writeTxn, rowKey);
         if (valueBuffer != null && matchPredicate.test(new BBKV(rowKey, valueBuffer))) {
             // Found our value, job done
             LOGGER.debug("Found row directly {}", rowValue);
-            matchConsumer.accept(new Match(rowKey, null));
+            return matchConsumer.apply(new Match(rowKey, null));
 
         } else {
             // Look forward from the provided row key across all subsequent sequence numbers.
-            final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, rowKey, rowKey);
+            final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, rowKey, null);
             // Iterate over all entries with the same hash. Will only be one unless
             // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
             // gaps in the seq numbers.
@@ -68,8 +68,7 @@ public class LmdbKeySequence {
                     if (matchPredicate.test(kv)) {
                         // Found our value, job done
                         LOGGER.debug("Found row with cursor {}", kv.val());
-                        matchConsumer.accept(new Match(key, null));
-                        return;
+                        return matchConsumer.apply(new Match(key, null));
                     } else {
                         LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
                                 seqNo,
@@ -95,7 +94,7 @@ public class LmdbKeySequence {
                     nextNo = lastSeqNo + 1;
                 }
 
-                matchConsumer.accept(new Match(null, nextNo));
+                return matchConsumer.apply(new Match(null, nextNo));
             }
         }
     }
@@ -148,31 +147,26 @@ public class LmdbKeySequence {
      * Updates the keyBuffer with the provided sequence number value.
      * Absolute, no flip required.
      */
-    public void addSequenceNumber(final ByteBuffer keyBuffer,
-                                  final int offset,
-                                  final long sequenceNumber,
-                                  final Consumer<ByteBuffer> keyBufferConsumer) {
+    public <R> R addSequenceNumber(final ByteBuffer keyBuffer,
+                                   final int offset,
+                                   final long sequenceNumber,
+                                   final Function<ByteBuffer, R> keyBufferConsumer) {
         final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(sequenceNumber);
 
         // See if the key byte buffer is big enough to add the sequence number.
         if (keyBuffer.capacity() - keyBuffer.limit() >= unsignedBytes.length()) {
             keyBuffer.limit(offset + unsignedBytes.length());
             unsignedBytes.put(keyBuffer, offset, sequenceNumber);
-            keyBufferConsumer.accept(keyBuffer);
+            return keyBufferConsumer.apply(keyBuffer);
 
         } else {
             // We need to make a bigger buffer to store the sequence number.
-            final ByteBuffer newBuffer = byteBufferFactory
-                    .acquire(offset + unsignedBytes.length());
-            try {
+            return byteBuffers.use(offset + unsignedBytes.length(), newBuffer -> {
                 newBuffer.put(keyBuffer);
                 unsignedBytes.put(newBuffer, sequenceNumber);
                 newBuffer.flip();
-                keyBufferConsumer.accept(newBuffer);
-
-            } finally {
-                byteBufferFactory.release(newBuffer);
-            }
+                return keyBufferConsumer.apply(newBuffer);
+            });
         }
     }
 

@@ -1,8 +1,9 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalRangedStateSettings;
 
@@ -19,32 +20,32 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
     private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(0);
 
     TemporalRangedStateDb(final Path path,
-                          final ByteBufferFactory byteBufferFactory) {
+                          final ByteBuffers byteBuffers) {
         this(
                 path,
-                byteBufferFactory,
+                byteBuffers,
                 TemporalRangedStateSettings.builder().build(),
                 false);
     }
 
     TemporalRangedStateDb(final Path path,
-                          final ByteBufferFactory byteBufferFactory,
+                          final ByteBuffers byteBuffers,
                           final TemporalRangedStateSettings settings,
                           final boolean readOnly) {
         super(
                 path,
-                byteBufferFactory,
-                new TemporalRangedStateSerde(byteBufferFactory),
+                byteBuffers,
+                new TemporalRangedStateSerde(byteBuffers),
                 settings.getMaxStoreSize(),
                 settings.getOverwrite(),
                 readOnly);
     }
 
     public static TemporalRangedStateDb create(final Path path,
-                                               final ByteBufferFactory byteBufferFactory,
+                                               final ByteBuffers byteBuffers,
                                                final PlanBDoc doc,
                                                final boolean readOnly) {
-        return new TemporalRangedStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+        return new TemporalRangedStateDb(path, byteBuffers, getSettings(doc), readOnly);
     }
 
     private static TemporalRangedStateSettings getSettings(final PlanBDoc doc) {
@@ -55,11 +56,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
     }
 
     public TemporalRangedState getState(final TemporalRangedStateRequest request) {
-        final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
-        try {
-            start.putLong(request.key() + 1);
-            start.flip();
-
+        return byteBuffers.useLong(request.key() + 1, start -> {
 //            read(readTxn -> {
 //                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
 //                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -108,9 +105,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, StateValue> {
                 }
                 return result;
             });
-        } finally {
-            byteBufferFactory.release(start);
-        }
+        });
     }
 
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for

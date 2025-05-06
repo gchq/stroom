@@ -13,10 +13,6 @@ import stroom.planb.impl.db.RangedStateRequest;
 import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.SessionDb;
 import stroom.planb.impl.db.SessionRequest;
-import stroom.planb.impl.db.State;
-import stroom.planb.impl.db.StateDb;
-import stroom.planb.impl.db.StateRequest;
-import stroom.planb.impl.db.StateValue;
 import stroom.planb.impl.db.TemporalRangedState;
 import stroom.planb.impl.db.TemporalRangedStateDb;
 import stroom.planb.impl.db.TemporalRangedStateRequest;
@@ -24,6 +20,10 @@ import stroom.planb.impl.db.TemporalState;
 import stroom.planb.impl.db.TemporalState.Key;
 import stroom.planb.impl.db.TemporalStateDb;
 import stroom.planb.impl.db.TemporalStateRequest;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.state.StateRequest;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SnapshotSettings;
@@ -165,7 +165,7 @@ public class PlanBQueryService {
                                     final String keyName,
                                     final long eventTimeMs) {
         return shardManager.get(mapName, reader -> switch (reader) {
-            case final StateDb db -> db.getState(new StateRequest(keyName.getBytes(StandardCharsets.UTF_8)));
+            case final StateDb db -> db.getState(new StateRequest(keyName));
             case final TemporalStateDb db ->
                     db.getState(new TemporalStateRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTimeMs));
             case final RangedStateDb db -> db.getState(new RangedStateRequest(Long.parseLong(keyName)));

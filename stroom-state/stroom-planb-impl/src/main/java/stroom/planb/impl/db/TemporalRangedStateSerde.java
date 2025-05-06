@@ -1,9 +1,10 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -25,40 +26,33 @@ public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
 
     private static final int KEY_LENGTH = Long.BYTES + Long.BYTES + Long.BYTES;
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
 
-    public TemporalRangedStateSerde(final ByteBufferFactory byteBufferFactory) {
-        this.byteBufferFactory = byteBufferFactory;
+    public TemporalRangedStateSerde(final ByteBuffers byteBuffers) {
+        this.byteBuffers = byteBuffers;
     }
 
     @Override
     public <T> T createKeyByteBuffer(final Key key, final Function<ByteBuffer, T> function) {
-        final ByteBuffer keyByteBuffer = byteBufferFactory.acquire(KEY_LENGTH);
-        try {
+        return byteBuffers.use(KEY_LENGTH, keyByteBuffer -> {
             keyByteBuffer.putLong(key.getKeyStart());
             keyByteBuffer.putLong(key.getKeyEnd());
             keyByteBuffer.putLong(key.getEffectiveTime());
             keyByteBuffer.flip();
             return function.apply(keyByteBuffer);
-        } finally {
-            byteBufferFactory.release(keyByteBuffer);
-        }
+        });
     }
 
     @Override
     public <R> R createValueByteBuffer(final Key key,
                                        final StateValue value,
                                        final Function<ByteBuffer, R> function) {
-        final ByteBuffer valueByteBuffer = byteBufferFactory.acquire(Byte.BYTES +
-                                                                     value.getByteBuffer().limit());
-        try {
+        return byteBuffers.use(Byte.BYTES + value.getByteBuffer().limit(), valueByteBuffer -> {
             valueByteBuffer.put(value.getTypeId());
             valueByteBuffer.put(value.getByteBuffer());
             valueByteBuffer.flip();
             return function.apply(valueByteBuffer);
-        } finally {
-            byteBufferFactory.release(valueByteBuffer);
-        }
+        });
     }
 
     @Override
@@ -95,15 +89,10 @@ public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
                     final long effectiveTime = kv.key().getLong(Long.BYTES + Long.BYTES);
                     return ValDate.create(effectiveTime);
                 };
-                case TemporalRangedStateFields.VALUE_TYPE -> kv -> {
-                    final byte typeId = kv.val().get(0);
-                    return ValUtil.getType(typeId);
-                };
-                case TemporalRangedStateFields.VALUE -> kv -> {
-                    final byte typeId = kv.val().get(0);
-                    final int valueStart = Byte.BYTES;
-                    return ValUtil.getValue(typeId, kv.val().slice(valueStart, kv.val().limit() - valueStart));
-                };
+                case TemporalRangedStateFields.VALUE_TYPE -> kv ->
+                        ValUtil.getType(kv.val().duplicate());
+                case TemporalRangedStateFields.VALUE -> kv ->
+                        ValUtil.getValue(kv.val().duplicate());
                 default -> byteBuffer -> ValNull.INSTANCE;
             };
         }

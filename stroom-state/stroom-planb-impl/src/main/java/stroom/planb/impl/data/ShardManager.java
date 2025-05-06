@@ -1,13 +1,13 @@
 package stroom.planb.impl.data;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
-import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
@@ -34,7 +34,7 @@ public class ShardManager {
 
     public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final PlanBDocCache planBDocCache;
     private final PlanBDocStore planBDocStore;
     private final Map<String, Shard> shardMap = new ConcurrentHashMap<>();
@@ -44,14 +44,14 @@ public class ShardManager {
     private final FileTransferClient fileTransferClient;
 
     @Inject
-    public ShardManager(final ByteBufferFactory byteBufferFactory,
+    public ShardManager(final ByteBuffers byteBuffers,
                         final PlanBDocCache planBDocCache,
                         final PlanBDocStore planBDocStore,
                         final NodeInfo nodeInfo,
                         final Provider<PlanBConfig> configProvider,
                         final StatePaths statePaths,
                         final FileTransferClient fileTransferClient) {
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.planBDocCache = planBDocCache;
         this.planBDocStore = planBDocStore;
         this.nodeInfo = nodeInfo;
@@ -111,7 +111,7 @@ public class ShardManager {
         shard.createSnapshot(request, outputStream);
     }
 
-    public <R> R get(final String mapName, final Function<AbstractDb<?, ?>, R> function) {
+    public <R> R get(final String mapName, final Function<Db<?, ?>, R> function) {
         final Shard shard = getShardForMapName(mapName);
         return shard.get(function);
     }
@@ -142,14 +142,14 @@ public class ShardManager {
 
     private Shard createShard(final PlanBDoc doc) {
         if (isSnapshotNode()) {
-            return new SnapshotShard(byteBufferFactory,
+            return new SnapshotShard(byteBuffers,
                     configProvider,
                     statePaths,
                     fileTransferClient,
                     doc);
         }
         return new LocalShard(
-                byteBufferFactory,
+                byteBuffers,
                 configProvider,
                 statePaths,
                 doc);

@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.BBKV;
 import stroom.planb.shared.PlanBDoc;
@@ -35,32 +35,32 @@ import java.util.function.Predicate;
 public class SessionDb extends AbstractDb<Session, Session> {
 
     SessionDb(final Path path,
-              final ByteBufferFactory byteBufferFactory) {
+              final ByteBuffers byteBuffers) {
         this(
                 path,
-                byteBufferFactory,
+                byteBuffers,
                 SessionSettings.builder().build(),
                 false);
     }
 
     SessionDb(final Path path,
-              final ByteBufferFactory byteBufferFactory,
+              final ByteBuffers byteBuffers,
               final SessionSettings settings,
               final boolean readOnly) {
         super(
                 path,
-                byteBufferFactory,
-                new SessionSerde(byteBufferFactory),
+                byteBuffers,
+                new SessionSerde(byteBuffers),
                 settings.getMaxStoreSize(),
                 settings.getOverwrite(),
                 readOnly);
     }
 
     public static SessionDb create(final Path path,
-                                   final ByteBufferFactory byteBufferFactory,
+                                   final ByteBuffers byteBuffers,
                                    final PlanBDoc doc,
                                    final boolean readOnly) {
-        return new SessionDb(path, byteBufferFactory, getSettings(doc), readOnly);
+        return new SessionDb(path, byteBuffers, getSettings(doc), readOnly);
     }
 
     private static SessionSettings getSettings(final PlanBDoc doc) {
@@ -189,47 +189,44 @@ public class SessionDb extends AbstractDb<Session, Session> {
         // Hash the value.
         final long nameHash = LongHashFunction.xx3().hashBytes(request.name());
         final long time = request.time();
-        final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
-        final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
-        try {
+        return byteBuffers.use(Long.BYTES + Long.BYTES, start -> {
             start.putLong(nameHash);
             start.putLong(time + 1);
             start.flip();
 
-            stop.putLong(nameHash);
-            stop.flip();
+            return byteBuffers.use(Long.BYTES, stop -> {
+                stop.putLong(nameHash);
+                stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
-            return read(readTxn -> {
-                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                    while (iterator.hasNext()
-                           && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        final long startTimeMs = keyVal.key().getLong(Long.BYTES);
-                        final long endTimeMs = keyVal.key().getLong(Long.BYTES + Long.BYTES);
-                        if (startTimeMs <= time && endTimeMs >= time) {
-                            final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
-                            // We might have had a hash collision so test the key equality.
-                            if (Arrays.equals(bytes, request.name())) {
-                                return new Session(bytes, startTimeMs, endTimeMs);
-                            }
-                        } else if (endTimeMs < startTimeMs) {
-                            final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
-                            // We might have had a hash collision so test the key equality.
-                            if (Arrays.equals(bytes, request.name())) {
-                                // We have found a session that ends before the requested time so return nothing.
-                                return null;
+                final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
+                return read(readTxn -> {
+                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                        while (iterator.hasNext()
+                               && !Thread.currentThread().isInterrupted()) {
+                            final KeyVal<ByteBuffer> keyVal = iterator.next();
+                            final long startTimeMs = keyVal.key().getLong(Long.BYTES);
+                            final long endTimeMs = keyVal.key().getLong(Long.BYTES + Long.BYTES);
+                            if (startTimeMs <= time && endTimeMs >= time) {
+                                final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
+                                // We might have had a hash collision so test the key equality.
+                                if (Arrays.equals(bytes, request.name())) {
+                                    return new Session(bytes, startTimeMs, endTimeMs);
+                                }
+                            } else if (endTimeMs < startTimeMs) {
+                                final byte[] bytes = ByteBufferUtils.toBytes(keyVal.val());
+                                // We might have had a hash collision so test the key equality.
+                                if (Arrays.equals(bytes, request.name())) {
+                                    // We have found a session that ends before the requested time so return nothing.
+                                    return null;
+                                }
                             }
                         }
                     }
-                }
-                return null;
+                    return null;
+                });
             });
-        } finally {
-            byteBufferFactory.release(start);
-            byteBufferFactory.release(stop);
-        }
+        });
     }
 
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for

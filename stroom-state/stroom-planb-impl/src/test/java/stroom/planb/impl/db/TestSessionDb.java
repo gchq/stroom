@@ -17,8 +17,8 @@
 
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
 import stroom.planb.shared.SessionSettings;
@@ -44,6 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSessionDb {
 
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+
     @Test
     void test(@TempDir Path tempDir) {
         final Ranges ranges = testWrite(tempDir);
@@ -52,7 +54,6 @@ class TestSessionDb {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange = ranges.highRange;
         final InstantRange lowRange = ranges.lowRange;
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
 //        try (final SessionWriter writer = new SessionWriter(tempDir, byteBufferFactory)) {
 //            highRange = insertData(writer, key, refTime, 100, 10);
 //            lowRange = insertData(writer, key, refTime, 10, -10);
@@ -60,7 +61,7 @@ class TestSessionDb {
 
         try (final SessionDb db = new SessionDb(
                 tempDir,
-                byteBufferFactory,
+                BYTE_BUFFERS,
                 SessionSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(109);
@@ -204,8 +205,7 @@ class TestSessionDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionDb db = new SessionDb(dbPath1, byteBufferFactory)) {
+        try (final SessionDb db = new SessionDb(dbPath1, BYTE_BUFFERS)) {
             db.merge(dbPath2);
         }
     }
@@ -217,8 +217,7 @@ class TestSessionDb {
 
         testWrite(dbPath);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionDb db = new SessionDb(dbPath, byteBufferFactory)) {
+        try (final SessionDb db = new SessionDb(dbPath, BYTE_BUFFERS)) {
             assertThat(db.count()).isEqualTo(109);
             db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
@@ -232,8 +231,7 @@ class TestSessionDb {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange;
         final InstantRange lowRange;
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final SessionDb db = new SessionDb(dbDir, byteBufferFactory)) {
+        try (final SessionDb db = new SessionDb(dbDir, BYTE_BUFFERS)) {
             highRange = insertData(db, key, refTime, 100, 10);
             lowRange = insertData(db, key, refTime, 10, -10);
         }

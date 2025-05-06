@@ -1,49 +1,50 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.shared.PlanBDoc;
 
 import java.nio.file.Path;
 
 public class PlanBDb {
 
-    public static AbstractDb<?, ?> open(final PlanBDoc doc,
-                                        final Path targetPath,
-                                        final ByteBufferFactory byteBufferFactory,
-                                        final boolean readOnly) {
+    public static Db<?, ?> open(final PlanBDoc doc,
+                                final Path targetPath,
+                                final ByteBuffers byteBuffers,
+                                final boolean readOnly) {
         switch (doc.getStateType()) {
             case STATE -> {
                 return StateDb.create(
                         targetPath,
-                        byteBufferFactory,
+                        byteBuffers,
                         doc,
                         readOnly);
             }
             case TEMPORAL_STATE -> {
                 return TemporalStateDb.create(
                         targetPath,
-                        byteBufferFactory,
+                        byteBuffers,
                         doc,
                         readOnly);
             }
             case RANGED_STATE -> {
                 return RangedStateDb.create(
                         targetPath,
-                        byteBufferFactory,
+                        byteBuffers,
                         doc,
                         readOnly);
             }
             case TEMPORAL_RANGED_STATE -> {
                 return TemporalRangedStateDb.create(
                         targetPath,
-                        byteBufferFactory,
+                        byteBuffers,
                         doc,
                         readOnly);
             }
             case SESSION -> {
                 return SessionDb.create(
                         targetPath,
-                        byteBufferFactory,
+                        byteBuffers,
                         doc,
                         readOnly);
             }

@@ -32,10 +32,10 @@ import stroom.planb.impl.db.RangedState;
 import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.State;
-import stroom.planb.impl.db.StateValue;
 import stroom.planb.impl.db.TemporalRangedState;
 import stroom.planb.impl.db.TemporalState;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
@@ -552,11 +552,8 @@ public class PlanBFilter extends AbstractXMLFilter {
             error(LogUtil.message("State 'key' is null for {}", mapName));
         } else {
             LOGGER.trace("Putting key {} into table {}", key, mapName);
-            final State.Key k = State.Key.builder()
-                    .name(key)
-                    .build();
             final StateValue v = getStateValue();
-            writer.addState(doc, new State(k, v));
+            writer.addState(doc, new State(key, v));
         }
     }
 

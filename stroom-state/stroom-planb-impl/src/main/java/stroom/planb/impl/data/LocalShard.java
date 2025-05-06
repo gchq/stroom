@@ -1,9 +1,9 @@
 package stroom.planb.impl.data;
 
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.DurationSetting;
@@ -41,7 +41,7 @@ class LocalShard implements Shard {
     private static final String DATA_FILE_NAME = "data.mdb";
     private static final String LOCK_FILE_NAME = "lock.mdb";
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final Provider<PlanBConfig> configProvider;
     private final Path shardDir;
 
@@ -49,16 +49,16 @@ class LocalShard implements Shard {
 
     private final PlanBDoc doc;
     private final AtomicInteger useCount = new AtomicInteger();
-    private volatile AbstractDb<?, ?> db;
+    private volatile Db<?, ?> db;
     private volatile boolean open;
     private volatile Instant lastAccessTime;
     private volatile Instant lastWriteTime;
 
-    public LocalShard(final ByteBufferFactory byteBufferFactory,
+    public LocalShard(final ByteBuffers byteBuffers,
                       final Provider<PlanBConfig> configProvider,
                       final StatePaths statePaths,
                       final PlanBDoc doc) {
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.configProvider = configProvider;
         this.doc = doc;
         lastWriteTime = Instant.now();
@@ -265,7 +265,7 @@ class LocalShard implements Shard {
     }
 
     @Override
-    public <R> R get(final Function<AbstractDb<?, ?>, R> function) {
+    public <R> R get(final Function<Db<?, ?>, R> function) {
         incrementUseCount();
         try {
             return function.apply(db);
@@ -298,7 +298,7 @@ class LocalShard implements Shard {
     private void open() {
         if (Files.exists(shardDir)) {
             LOGGER.info(() -> "Found local shard for '" + doc + "'");
-            db = PlanBDb.open(doc, shardDir, byteBufferFactory, false);
+            db = PlanBDb.open(doc, shardDir, byteBuffers, false);
 
 
         } else {

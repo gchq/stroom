@@ -1,8 +1,9 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.RangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangedStateSettings;
 
@@ -19,32 +20,32 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
     private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(0);
 
     RangedStateDb(final Path path,
-                  final ByteBufferFactory byteBufferFactory) {
+                  final ByteBuffers byteBuffers) {
         this(
                 path,
-                byteBufferFactory,
+                byteBuffers,
                 RangedStateSettings.builder().build(),
                 false);
     }
 
     RangedStateDb(final Path path,
-                  final ByteBufferFactory byteBufferFactory,
+                  final ByteBuffers byteBuffers,
                   final RangedStateSettings settings,
                   final boolean readOnly) {
         super(
                 path,
-                byteBufferFactory,
-                new RangedStateSerde(byteBufferFactory),
+                byteBuffers,
+                new RangedStateSerde(byteBuffers),
                 settings.getMaxStoreSize(),
                 settings.getOverwrite(),
                 readOnly);
     }
 
     public static RangedStateDb create(final Path path,
-                                       final ByteBufferFactory byteBufferFactory,
+                                       final ByteBuffers byteBuffers,
                                        final PlanBDoc doc,
                                        final boolean readOnly) {
-        return new RangedStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+        return new RangedStateDb(path, byteBuffers, getSettings(doc), readOnly);
     }
 
     private static RangedStateSettings getSettings(final PlanBDoc doc) {
@@ -55,11 +56,7 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
     }
 
     public RangedState getState(final RangedStateRequest request) {
-        final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES);
-        try {
-            start.putLong(request.key() + 1);
-            start.flip();
-
+        return byteBuffers.useLong(request.key() + 1, start -> {
 //            read(readTxn -> {
 //                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
 //                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -94,8 +91,6 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
                 }
                 return null;
             });
-        } finally {
-            byteBufferFactory.release(start);
-        }
+        });
     }
 }

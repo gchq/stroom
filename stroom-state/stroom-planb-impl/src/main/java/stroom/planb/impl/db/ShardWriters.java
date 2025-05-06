@@ -1,12 +1,14 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
@@ -32,17 +34,17 @@ public class ShardWriters {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardWriters.class);
 
     private final PlanBDocCache planBDocCache;
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
 
     @Inject
     ShardWriters(final PlanBDocCache planBDocCache,
-                 final ByteBufferFactory byteBufferFactory,
+                 final ByteBuffers byteBuffers,
                  final StatePaths statePaths,
                  final FileTransferClient fileTransferClient) {
         this.planBDocCache = planBDocCache;
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
     }
@@ -56,13 +58,13 @@ public class ShardWriters {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new ShardWriter(planBDocCache, byteBufferFactory, fileTransferClient, dir, meta);
+        return new ShardWriter(planBDocCache, byteBuffers, fileTransferClient, dir, meta);
     }
 
     public static class ShardWriter implements AutoCloseable {
 
         private final PlanBDocCache planBDocCache;
-        private final ByteBufferFactory byteBufferFactory;
+        private final ByteBuffers byteBuffers;
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
@@ -70,12 +72,12 @@ public class ShardWriters {
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
         public ShardWriter(final PlanBDocCache planBDocCache,
-                           final ByteBufferFactory byteBufferFactory,
+                           final ByteBuffers byteBuffers,
                            final FileTransferClient fileTransferClient,
                            final Path dir,
                            final Meta meta) {
             this.planBDocCache = planBDocCache;
-            this.byteBufferFactory = byteBufferFactory;
+            this.byteBuffers = byteBuffers;
             this.fileTransferClient = fileTransferClient;
             this.dir = dir;
             this.meta = meta;
@@ -118,11 +120,11 @@ public class ShardWriters {
 
         private static class WriterInstance implements AutoCloseable {
 
-            private final AbstractDb<?, ?> lmdb;
-            private final AbstractDb.Writer writer;
+            private final Db<?, ?> lmdb;
+            private final LmdbWriter writer;
             private final boolean synchroniseMerge;
 
-            public WriterInstance(final AbstractDb<?, ?> lmdb, final boolean synchroniseMerge) {
+            public WriterInstance(final Db<?, ?> lmdb, final boolean synchroniseMerge) {
                 this.lmdb = lmdb;
                 this.writer = lmdb.createWriter();
                 this.synchroniseMerge = synchroniseMerge;
@@ -193,7 +195,7 @@ public class ShardWriters {
             return writers.computeIfAbsent(doc, k ->
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
-                            byteBufferFactory,
+                            byteBuffers,
                             false),
                             NullSafe.getOrElse(
                                     doc,

@@ -17,11 +17,12 @@
 
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.RangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.RangedStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -43,14 +44,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRangedStateDb {
 
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+
     @Test
     void test(@TempDir Path tempDir) {
         testWrite(tempDir);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final RangedStateDb db = new RangedStateDb(
                 tempDir,
-                byteBufferFactory,
+                BYTE_BUFFERS,
                 RangedStateSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(1);
@@ -122,15 +124,13 @@ class TestRangedStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final RangedStateDb db = new RangedStateDb(dbPath1, byteBufferFactory)) {
+        try (final RangedStateDb db = new RangedStateDb(dbPath1, BYTE_BUFFERS)) {
             db.merge(dbPath2);
         }
     }
 
     private void testWrite(final Path dbDir) {
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final RangedStateDb db = new RangedStateDb(dbDir, byteBufferFactory)) {
+        try (final RangedStateDb db = new RangedStateDb(dbDir, BYTE_BUFFERS)) {
             insertData(db, 100);
         }
     }

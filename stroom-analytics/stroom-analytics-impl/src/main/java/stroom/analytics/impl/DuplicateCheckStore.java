@@ -7,6 +7,7 @@ import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -45,6 +46,7 @@ class DuplicateCheckStore {
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final DuplicateCheckRowSerde duplicateCheckRowSerde;
     private final LmdbEnv lmdbEnv;
     private final LmdbDb db;
@@ -56,13 +58,15 @@ class DuplicateCheckStore {
 
     DuplicateCheckStore(final DuplicateCheckDirs duplicateCheckDirs,
                         final ByteBufferFactory byteBufferFactory,
+                        final ByteBuffers byteBuffers,
                         final DuplicateCheckStoreConfig duplicateCheckStoreConfig,
                         final DuplicateCheckRowSerde duplicateCheckRowSerde,
                         final Provider<Executor> executorProvider,
                         final String analyticRuleUUID) {
         this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.duplicateCheckRowSerde = duplicateCheckRowSerde;
-        lmdbKeySequence = new LmdbKeySequence(byteBufferFactory);
+        lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleUUID);
 
         // See if the DB dir already exists.
@@ -117,14 +121,9 @@ class DuplicateCheckStore {
     }
 
     private void writeSchemaVersion(final WriteTxn txn, final int schemaVersion) {
-        final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
-        try {
-            byteBuffer.putInt(schemaVersion);
-            byteBuffer.flip();
+        byteBuffers.useInt(schemaVersion, byteBuffer -> {
             infoDb.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
-        } finally {
-            byteBufferFactory.release(byteBuffer);
-        }
+        });
     }
 
     synchronized void writeColumnNames(final List<String> columnNames) {
@@ -168,8 +167,7 @@ class DuplicateCheckStore {
         boolean didPut = db.put(writeTxn, lmdbKV.key(), lmdbKV.val(), PutFlags.MDB_NOOVERWRITE);
         if (!didPut) {
             // If we didn't put then check to see if this was because this is an exact duplicate.
-            final AtomicBoolean ok = new AtomicBoolean();
-            lmdbKeySequence.find(
+            didPut = lmdbKeySequence.find(
                     db.getDbi(),
                     writeTxn.get(),
                     lmdbKV.key(),
@@ -178,7 +176,7 @@ class DuplicateCheckStore {
                     match -> {
                         if (match.foundKey() == null) {
                             LOGGER.debug("Didn't find row {}", duplicateCheckRow);
-                            lmdbKeySequence.addSequenceNumber(
+                            return lmdbKeySequence.addSequenceNumber(
                                     lmdbKV.key(),
                                     duplicateCheckRowSerde.getKeyLength(),
                                     match.nextSequenceNumber(),
@@ -191,11 +189,11 @@ class DuplicateCheckStore {
                                             throw new RuntimeException("Expected to put value but failed");
                                         }
                                         uncommittedCount++;
-                                        ok.set(success);
+                                        return true;
                                     });
                         }
+                        return false;
                     });
-            didPut = ok.get();
         }
 
         if (LOGGER.isDebugEnabled()) {

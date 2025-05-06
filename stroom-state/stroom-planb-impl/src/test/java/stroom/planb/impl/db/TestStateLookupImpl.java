@@ -1,9 +1,10 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestStateLookupImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateLookupImpl.class);
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
 
     private static final String KV_TYPE = "KV";
     private static final String PADDING = IntStream.rangeClosed(1, 300)
@@ -57,8 +59,7 @@ class TestStateLookupImpl {
         final Map<Integer, List<String>> mapNamesMap = new HashMap<>(refStreamDefCount);
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb db = new TemporalStateDb(tempDir, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(tempDir, BYTE_BUFFERS)) {
             db.write(writer -> {
                 for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
                     final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
@@ -94,7 +95,7 @@ class TestStateLookupImpl {
 
         try (final TemporalStateDb db = new TemporalStateDb(
                 tempDir,
-                byteBufferFactory,
+                BYTE_BUFFERS,
                 TemporalStateSettings.builder().build(),
                 true)) {
             final Random random = new Random(892374809);

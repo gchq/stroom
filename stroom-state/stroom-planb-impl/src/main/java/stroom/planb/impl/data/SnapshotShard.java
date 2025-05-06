@@ -1,8 +1,8 @@
 package stroom.planb.impl.data;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
@@ -28,7 +28,7 @@ class SnapshotShard implements Shard {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SnapshotShard.class);
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
@@ -38,19 +38,19 @@ class SnapshotShard implements Shard {
 
     private volatile SnapshotInstance snapshotInstance;
 
-    public SnapshotShard(final ByteBufferFactory byteBufferFactory,
+    public SnapshotShard(final ByteBuffers byteBuffers,
                          final Provider<PlanBConfig> configProvider,
                          final StatePaths statePaths,
                          final FileTransferClient fileTransferClient,
                          final PlanBDoc doc) {
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.configProvider = configProvider;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
         this.doc = doc;
 
         snapshotInstance = new SnapshotInstance(
-                byteBufferFactory,
+                byteBuffers,
                 configProvider,
                 statePaths,
                 fileTransferClient,
@@ -72,7 +72,7 @@ class SnapshotShard implements Shard {
                     final SnapshotInstance currentInstance = snapshotInstance;
                     if (currentInstance.getExpiryTime().isBefore(Instant.now())) {
                         final SnapshotInstance newInstance = new SnapshotInstance(
-                                byteBufferFactory,
+                                byteBuffers,
                                 configProvider,
                                 statePaths,
                                 fileTransferClient,
@@ -124,7 +124,7 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public <R> R get(final Function<AbstractDb<?, ?>, R> function) {
+    public <R> R get(final Function<Db<?, ?>, R> function) {
         R result = null;
 
         boolean success = false;
@@ -154,7 +154,7 @@ class SnapshotShard implements Shard {
 
     private static class SnapshotInstance {
 
-        private final ByteBufferFactory byteBufferFactory;
+        private final ByteBuffers byteBuffers;
         private final Provider<PlanBConfig> configProvider;
         private final PlanBDoc doc;
         private final Path dbDir;
@@ -163,13 +163,13 @@ class SnapshotShard implements Shard {
         private final AtomicInteger useCount = new AtomicInteger();
         private final Instant currentSnapshotTime;
 
-        private volatile AbstractDb<?, ?> db;
+        private volatile Db<?, ?> db;
         private volatile boolean open;
         private volatile Instant lastAccessTime;
         private volatile Instant expiryTime;
         private volatile boolean destroy;
 
-        public SnapshotInstance(final ByteBufferFactory byteBufferFactory,
+        public SnapshotInstance(final ByteBuffers byteBuffers,
                                 final Provider<PlanBConfig> configProvider,
                                 final StatePaths statePaths,
                                 final FileTransferClient fileTransferClient,
@@ -220,7 +220,7 @@ class SnapshotShard implements Shard {
                 expiryTime = createTime.plus(configProvider.get().getSnapshotRetryFetchInterval());
             }
 
-            this.byteBufferFactory = byteBufferFactory;
+            this.byteBuffers = byteBuffers;
             this.configProvider = configProvider;
             this.currentSnapshotTime = currentSnapshotTime;
             this.expiryTime = expiryTime;
@@ -275,7 +275,7 @@ class SnapshotShard implements Shard {
             }
         }
 
-        public <R> R get(final Function<AbstractDb<?, ?>, R> function) throws DestroyedException {
+        public <R> R get(final Function<Db<?, ?>, R> function) throws DestroyedException {
             incrementUseCount();
             try {
                 return function.apply(db);
@@ -341,7 +341,7 @@ class SnapshotShard implements Shard {
 
             // If we already fetched the snapshot then reopen.
             LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
-            db = PlanBDb.open(doc, dbDir, byteBufferFactory, true);
+            db = PlanBDb.open(doc, dbDir, byteBuffers, true);
         }
 
         public String getInfo() {

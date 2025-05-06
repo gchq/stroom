@@ -5,7 +5,7 @@ import stroom.bytebuffer.ByteBufferSupport;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class ByteBufferFactoryImpl extends ByteBufferFactory {
+public class ByteBufferFactoryImpl implements ByteBufferFactory {
 
     private static final double LOG2 = Math.log(2);
     static final int MAX_CACHED_BUFFER_SIZE = 1024;
@@ -41,10 +41,10 @@ public class ByteBufferFactoryImpl extends ByteBufferFactory {
             }
 
             final int roundedSize = pow2(exponent);
-            return super.acquire(roundedSize);
+            return ByteBuffer.allocateDirect(roundedSize);
         }
 
-        return super.acquire(size);
+        return ByteBuffer.allocateDirect(size);
     }
 
     @Override

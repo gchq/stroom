@@ -1,4 +1,4 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.state;
 
 import stroom.pipeline.refdata.store.FastInfosetUtil;
 import stroom.pipeline.refdata.store.FastInfosetValue;

@@ -2,6 +2,7 @@ package stroom.planb.impl.db;
 
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

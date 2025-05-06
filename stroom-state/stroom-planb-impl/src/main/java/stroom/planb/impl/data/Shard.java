@@ -1,6 +1,6 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.shared.PlanBDoc;
 
 import java.io.OutputStream;
@@ -45,7 +45,7 @@ public interface Shard {
      * @param <R>
      * @return
      */
-    <R> R get(Function<AbstractDb<?, ?>, R> function);
+    <R> R get(Function<Db<?, ?>, R> function);
 
     /**
      * Close the DB if it isn't currently in use for read or write.

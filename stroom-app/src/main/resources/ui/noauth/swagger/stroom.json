@@ -21925,7 +21925,7 @@
           "type" : "object",
           "properties" : {
             "key" : {
-              "$ref" : "#/components/schemas/Key"
+              "type" : "string"
             },
             "value" : {
               "$ref" : "#/components/schemas/StateValue"
@@ -21996,6 +21996,26 @@
           }
         }
       },
+      "StateKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "deduplicateLargeKeys" : {
+            "type" : "boolean"
+          },
+          "deduplicateThreshold" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG", "BYTES", "HASH_KEY", "FOREIGN_KEY", "SMART" ]
+          }
+        }
+      },
       "StateSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -22005,6 +22025,9 @@
           "properties" : {
             "overwrite" : {
               "type" : "boolean"
+            },
+            "stateKeySchema" : {
+              "$ref" : "#/components/schemas/StateKeySchema"
             }
           }
         } ]

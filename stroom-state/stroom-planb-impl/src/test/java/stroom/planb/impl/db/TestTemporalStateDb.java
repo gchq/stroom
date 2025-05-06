@@ -17,10 +17,11 @@
 
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -43,15 +44,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTemporalStateDb {
 
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+
     @Test
     void test(@TempDir Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final TemporalStateDb db = new TemporalStateDb(
                 tempDir,
-                byteBufferFactory,
+                BYTE_BUFFERS,
                 TemporalStateSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(100);
@@ -111,8 +113,7 @@ class TestTemporalStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath1, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath1, BYTE_BUFFERS)) {
             db.merge(dbPath2);
         }
     }
@@ -124,8 +125,7 @@ class TestTemporalStateDb {
 
         testWrite(dbPath);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath, BYTE_BUFFERS)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
@@ -139,9 +139,8 @@ class TestTemporalStateDb {
         final Path dbPath = rootDir.resolve("db");
         Files.createDirectory(dbPath);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(dbPath, BYTE_BUFFERS)) {
             insertData(db, refTime, "TEST_KEY", "test", 100, 60 * 60 * 24);
             insertData(db, refTime, "TEST_KEY2", "test2", 100, 60 * 60 * 24);
             insertData(db, refTime, "TEST_KEY", "test", 10, -60 * 60 * 24);
@@ -158,9 +157,8 @@ class TestTemporalStateDb {
     }
 
     private void testWrite(final Path dbDir) {
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = new TemporalStateDb(dbDir, byteBufferFactory)) {
+        try (final TemporalStateDb db = new TemporalStateDb(dbDir, BYTE_BUFFERS)) {
             insertData(db, refTime, "TEST_KEY", "test", 100, 10);
         }
     }

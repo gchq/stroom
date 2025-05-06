@@ -1,8 +1,9 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalStateSettings;
 
@@ -19,32 +20,32 @@ import java.util.Iterator;
 public class TemporalStateDb extends AbstractDb<Key, StateValue> {
 
     TemporalStateDb(final Path path,
-                    final ByteBufferFactory byteBufferFactory) {
+                    final ByteBuffers byteBuffers) {
         this(
                 path,
-                byteBufferFactory,
+                byteBuffers,
                 TemporalStateSettings.builder().build(),
                 false);
     }
 
     TemporalStateDb(final Path path,
-                    final ByteBufferFactory byteBufferFactory,
+                    final ByteBuffers byteBuffers,
                     final TemporalStateSettings settings,
                     final boolean readOnly) {
         super(
                 path,
-                byteBufferFactory,
-                new TemporalStateSerde(byteBufferFactory),
+                byteBuffers,
+                new TemporalStateSerde(byteBuffers),
                 settings.getMaxStoreSize(),
                 settings.getOverwrite(),
                 readOnly);
     }
 
     public static TemporalStateDb create(final Path path,
-                                         final ByteBufferFactory byteBufferFactory,
+                                         final ByteBuffers byteBuffers,
                                          final PlanBDoc doc,
                                          final boolean readOnly) {
-        return new TemporalStateDb(path, byteBufferFactory, getSettings(doc), readOnly);
+        return new TemporalStateDb(path, byteBuffers, getSettings(doc), readOnly);
     }
 
     private static TemporalStateSettings getSettings(final PlanBDoc doc) {
@@ -56,46 +57,43 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
 
     public TemporalState getState(final TemporalStateRequest request) {
         final long rowHash = LongHashFunction.xx3().hashBytes(request.key());
-        final ByteBuffer start = byteBufferFactory.acquire(Long.BYTES + Long.BYTES);
-        final ByteBuffer stop = byteBufferFactory.acquire(Long.BYTES);
-        try {
+        return byteBuffers.use(Long.BYTES + Long.BYTES, start -> {
             start.putLong(rowHash);
             start.putLong(request.effectiveTime() + 1);
             start.flip();
 
-            stop.putLong(rowHash);
-            stop.flip();
+            return byteBuffers.use(Long.BYTES, stop -> {
+                stop.putLong(rowHash);
+                stop.flip();
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
-            return read(readTxn -> {
-                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                    while (iterator.hasNext()
-                           && !Thread.currentThread().isInterrupted()) {
-                        final BBKV kv = BBKV.create(iterator.next());
-                        final long effectiveTime = kv.key().getLong(Long.BYTES);
-                        final int keyLength = kv.val().getInt(0);
-                        final byte[] keyBytes = new byte[keyLength];
-                        kv.val().get(Integer.BYTES, keyBytes);
+                final KeyRange<ByteBuffer> keyRange = KeyRange.openBackward(start, stop);
+                return read(readTxn -> {
+                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                        while (iterator.hasNext()
+                               && !Thread.currentThread().isInterrupted()) {
+                            final BBKV kv = BBKV.create(iterator.next());
+                            final long effectiveTime = kv.key().getLong(Long.BYTES);
+                            final int keyLength = kv.val().getInt(0);
+                            final byte[] keyBytes = new byte[keyLength];
+                            kv.val().get(Integer.BYTES, keyBytes);
 
-                        // We might have had a hash collision so test the key equality.
-                        if (Arrays.equals(keyBytes, request.key())) {
-                            final Key key = Key
-                                    .builder()
-                                    .name(keyBytes)
-                                    .effectiveTime(effectiveTime)
-                                    .build();
-                            final StateValue value = serde.getVal(kv);
-                            return new TemporalState(key, value);
+                            // We might have had a hash collision so test the key equality.
+                            if (Arrays.equals(keyBytes, request.key())) {
+                                final Key key = Key
+                                        .builder()
+                                        .name(keyBytes)
+                                        .effectiveTime(effectiveTime)
+                                        .build();
+                                final StateValue value = serde.getVal(kv);
+                                return new TemporalState(key, value);
+                            }
                         }
                     }
-                }
-                return null;
+                    return null;
+                });
             });
-        } finally {
-            byteBufferFactory.release(start);
-            byteBufferFactory.release(stop);
-        }
+        });
     }
 
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for

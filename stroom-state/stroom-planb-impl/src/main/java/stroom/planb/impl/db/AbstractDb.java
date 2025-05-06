@@ -1,7 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.BBKV;
@@ -52,7 +52,7 @@ import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public abstract class AbstractDb<K, V> implements AutoCloseable {
+public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDb.class);
     private static final int CURRENT_SCHEMA_VERSION = 1;
@@ -65,11 +65,11 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
 
     private final LmdbEnvDir lmdbEnvDir;
     private final LmdbKeySequence lmdbKeySequence;
-    final Serde<K, V> serde;
-    final ByteBufferFactory byteBufferFactory;
-    final Env<ByteBuffer> env;
-    final Dbi<ByteBuffer> dbi;
-    final Dbi<ByteBuffer> infoDbi;
+    protected final Serde<K, V> serde;
+    protected final ByteBuffers byteBuffers;
+    protected final Env<ByteBuffer> env;
+    protected final Dbi<ByteBuffer> dbi;
+    protected final Dbi<ByteBuffer> infoDbi;
     private final DBWriter dbWriter;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
     private final ReentrantLock dbCommitLock = new ReentrantLock();
@@ -78,17 +78,17 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
     private final Runnable commitRunnable;
 
     public AbstractDb(final Path path,
-                      final ByteBufferFactory byteBufferFactory,
+                      final ByteBuffers byteBuffers,
                       final Serde<K, V> serde,
                       final Long mapSize,
                       final Boolean overwrite,
                       final boolean readOnly) {
         this.lmdbEnvDir = new LmdbEnvDir(path, true);
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.serde = serde;
         this.readOnly = readOnly;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
-        lmdbKeySequence = new LmdbKeySequence(byteBufferFactory);
+        lmdbKeySequence = new LmdbKeySequence(byteBuffers);
 
         if (readOnly) {
             LOGGER.info(() -> "Opening: " + path);
@@ -170,11 +170,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                                                 final ByteBuffer foundKey = match.foundKey();
                                                 if (foundKey != null) {
                                                     // We need to copy the buffer to use it after delete.
-                                                    final ByteBuffer copy = byteBufferFactory.acquire(foundKey.limit());
-                                                    try {
-                                                        copy.put(foundKey);
-                                                        copy.flip();
-
+                                                    byteBuffers.useCopy(foundKey, copy -> {
                                                         dbi.delete(writeTxn, copy);
                                                         if (!dbi.put(writeTxn,
                                                                 copy,
@@ -182,10 +178,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                                                                 PutFlags.MDB_NOOVERWRITE)) {
                                                             throw new RuntimeException("Unable to put after delete");
                                                         }
-
-                                                    } finally {
-                                                        byteBufferFactory.release(copy);
-                                                    }
+                                                    });
 
                                                 } else {
                                                     // If we didn't find the item then insert it with a new sequence
@@ -197,6 +190,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                                                             hashClashCommitRunnable,
                                                             match.nextSequenceNumber());
                                                 }
+                                                return null;
                                             }));
                         }
                     };
@@ -223,6 +217,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
                                                             hashClashCommitRunnable,
                                                             match.nextSequenceNumber());
                                                 }
+                                                return null;
                                             }));
                         }
                     };
@@ -244,6 +239,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
             if (!dbi.put(writeTxn, sequenceKeyBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE)) {
                 throw new RuntimeException("Unable to put at sequence " + sequenceNumber);
             }
+            return null;
         });
     }
 
@@ -267,6 +263,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
+    @Override
     public void merge(final Path source) {
         write(writer -> {
             final Env.Builder<ByteBuffer> builder = Env.create()
@@ -296,25 +293,27 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         FileUtil.deleteDir(source);
     }
 
+    @Override
     public void condense(final long condenseBeforeMs,
                          final long deleteBeforeMs) {
         // Don't condense by default.
     }
 
-    boolean insert(final Writer writer,
-                   final KV<K, V> kv) {
-        return insert(writer, kv.key(), kv.val());
+    @Override
+    public void insert(final LmdbWriter writer,
+                       final KV<K, V> kv) {
+        insert(writer, kv.key(), kv.val());
     }
 
-    boolean insert(final Writer writer,
-                   final K key,
-                   final V value) {
-        return serde.createKeyByteBuffer(key, keyByteBuffer ->
+    public void insert(final LmdbWriter writer,
+                       final K key,
+                       final V value) {
+        serde.createKeyByteBuffer(key, keyByteBuffer ->
                 serde.createValueByteBuffer(key, value, valueByteBuffer ->
                         insert(writer, keyByteBuffer, valueByteBuffer)));
     }
 
-    private boolean insert(final Writer writer,
+    private boolean insert(final LmdbWriter writer,
                            final ByteBuffer keyByteBuffer,
                            final ByteBuffer valueByteBuffer) {
         dbWriter.write(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer);
@@ -322,92 +321,25 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         return true;
     }
 
-    public static class Writer implements AutoCloseable {
-
-        private final Env<ByteBuffer> env;
-        private final ReentrantLock dbCommitLock;
-        private final Runnable commitListener;
-        private final ReentrantLock writeTxnLock;
-        private Txn<ByteBuffer> writeTxn;
-        private int commitCount = 0;
-
-        public Writer(final Env<ByteBuffer> env,
-                      final ReentrantLock dbCommitLock,
-                      final Runnable commitListener,
-                      final ReentrantLock writeTxnLock) {
-            this.env = env;
-            this.dbCommitLock = dbCommitLock;
-            this.commitListener = commitListener;
-            this.writeTxnLock = writeTxnLock;
-
-            // We are only allowed a single write txn and we can only write with a single thread so ensure this is the
-            // case.
-            writeTxnLock.lock();
-        }
-
-        Txn<ByteBuffer> getWriteTxn() {
-            if (writeTxn == null) {
-                writeTxn = env.txnWrite();
-            }
-            return writeTxn;
-        }
-
-        void tryCommit() {
-            commitCount++;
-            if (commitCount > 10000) {
-                commit();
-            }
-        }
-
-        void commit() {
-            dbCommitLock.lock();
-            try {
-                if (writeTxn != null) {
-                    try {
-                        writeTxn.commit();
-                    } finally {
-                        try {
-                            writeTxn.close();
-                        } finally {
-                            writeTxn = null;
-                        }
-                    }
-                }
-
-                commitCount = 0;
-                commitListener.run();
-            } finally {
-                dbCommitLock.unlock();
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                commit();
-            } finally {
-                writeTxnLock.unlock();
-            }
-        }
+    @Override
+    public final LmdbWriter createWriter() {
+        return new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock);
     }
 
-    Writer createWriter() {
-        return new Writer(env, dbCommitLock, commitRunnable, writeTxnLock);
-    }
-
-    <T> T write(final Function<Writer, T> function) {
-        try (final Writer writer = new Writer(env, dbCommitLock, commitRunnable, writeTxnLock)) {
+    public final <T> T write(final Function<LmdbWriter, T> function) {
+        try (final LmdbWriter writer = new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock)) {
             return function.apply(writer);
         }
     }
 
-    void write(final Consumer<Writer> consumer) {
-        try (final Writer writer = new Writer(env, dbCommitLock, commitRunnable, writeTxnLock)) {
+    public final void write(final Consumer<LmdbWriter> consumer) {
+        try (final LmdbWriter writer = new LmdbWriter(env, dbCommitLock, commitRunnable, writeTxnLock)) {
             consumer.accept(writer);
         }
     }
 
-    public void lock(final Runnable runnable) {
+    @Override
+    public final void lock(final Runnable runnable) {
         dbCommitLock.lock();
         try {
             runnable.run();
@@ -416,7 +348,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
-    <R> R read(final Function<Txn<ByteBuffer>, R> function) {
+    public final <R> R read(final Function<Txn<ByteBuffer>, R> function) {
         try {
             concurrentReaderSemaphore.acquire();
             try {
@@ -433,6 +365,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
+    @Override
     public V get(final K key) {
         return read(readTxn -> get(readTxn, key));
     }
@@ -494,6 +427,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         return null;
     }
 
+    @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
@@ -536,11 +470,13 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         };
     }
 
-    public long count() {
+    @Override
+    public final long count() {
         return read(readTxn -> dbi.stat(readTxn).entries);
     }
 
-    public boolean isReadOnly() {
+    @Override
+    public final boolean isReadOnly() {
         return readOnly;
     }
 
@@ -559,26 +495,14 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
     }
 
     private void writeSchemaVersion(final Txn<ByteBuffer> txn, final int schemaVersion) {
-        final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
-        try {
-            byteBuffer.putInt(schemaVersion);
-            byteBuffer.flip();
+        byteBuffers.useInt(schemaVersion, byteBuffer -> {
             infoDbi.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
-        } finally {
-            byteBufferFactory.release(byteBuffer);
-        }
+        });
     }
 
     @Override
-    public void close() {
+    public final void close() {
         env.close();
-    }
-
-    private interface DBWriter {
-
-        void write(Txn<ByteBuffer> writeTxn,
-                   ByteBuffer keyByteBuffer,
-                   ByteBuffer valueByteBuffer);
     }
 
     private enum InfoKey implements HasPrimitiveValue {
@@ -605,8 +529,8 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
-
-    public String getInfo() {
+    @Override
+    public final String getInfo() {
         try {
             final Inf inf = read(txn -> {
                 try {
@@ -645,67 +569,4 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
     private record DbInf(String name, Stat stat) {
 
     }
-
-//    private Map<String, String> getEnvInfo(final Txn<ByteBuffer> txn) {
-//        final Map<String, String> statMap = convertStatToMap(env.stat());
-//        final Map<String, String> envInfo = convertEnvInfoToMap(env.info());
-//
-//        final String dbNames = env
-//                .getDbiNames()
-//                .stream()
-//                .map(String::new)
-//                .collect(Collectors.joining(", "));
-//
-//        final Map<String, String> map = new HashMap<>();
-//        map.putAll(statMap);
-//        map.putAll(envInfo);
-//        map.put("maxKeySize", Integer.toString(env.getMaxKeySize()));
-//        map.put("dbNames", dbNames);
-//        return map;
-//    }
-//
-//    private Map<String, String> getDbInfo(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> db) {
-//        final Stat stat = db.stat(txn);
-//        return convertStatToMap(stat);
-//    }
-//
-//    private long getSizeOnDisk() {
-//        long totalSizeBytes;
-//        final Path localDir = lmdbEnvDir.getEnvDir().toAbsolutePath();
-//        try (final Stream<Path> fileStream = Files.list(localDir)) {
-//            totalSizeBytes = fileStream
-//                    .mapToLong(path -> {
-//                        try {
-//                            return Files.size(path);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    })
-//                    .sum();
-//        } catch (IOException
-//                 | RuntimeException e) {
-//            LOGGER.error("Error calculating disk usage for path {}",
-//                    localDir.normalize(), e);
-//            totalSizeBytes = -1;
-//        }
-//        return totalSizeBytes;
-//    }
-//
-//    private static Map<String, String> convertStatToMap(final Stat stat) {
-//        return Map.of("pageSize", Integer.toString(stat.pageSize),
-//                "branchPages", Long.toString(stat.branchPages),
-//                "depth", Integer.toString(stat.depth),
-//                "entries", Long.toString(stat.entries),
-//                "leafPages", Long.toString(stat.leafPages),
-//                "overFlowPages", Long.toString(stat.overflowPages));
-//    }
-//
-//    private static Map<String, String> convertEnvInfoToMap(final EnvInfo envInfo) {
-//        return Map.of("maxReaders", Integer.toString(envInfo.maxReaders),
-//                "numReaders", Integer.toString(envInfo.numReaders),
-//                "lastPageNumber", Long.toString(envInfo.lastPageNumber),
-//                "lastTransactionId", Long.toString(envInfo.lastTransactionId),
-//                "mapAddress", Long.toString(envInfo.mapAddress),
-//                "mapSize", Long.toString(envInfo.mapSize));
-//    }
 }

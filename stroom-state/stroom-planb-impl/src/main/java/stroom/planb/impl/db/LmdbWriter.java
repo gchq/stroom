@@ -1,0 +1,76 @@
+package stroom.planb.impl.db;
+
+import org.lmdbjava.Env;
+import org.lmdbjava.Txn;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class LmdbWriter implements AutoCloseable {
+
+    private final Env<ByteBuffer> env;
+    private final ReentrantLock dbCommitLock;
+    private final Runnable commitListener;
+    private final ReentrantLock writeTxnLock;
+    private Txn<ByteBuffer> writeTxn;
+    private int commitCount = 0;
+
+    public LmdbWriter(final Env<ByteBuffer> env,
+                      final ReentrantLock dbCommitLock,
+                      final Runnable commitListener,
+                      final ReentrantLock writeTxnLock) {
+        this.env = env;
+        this.dbCommitLock = dbCommitLock;
+        this.commitListener = commitListener;
+        this.writeTxnLock = writeTxnLock;
+
+        // We are only allowed a single write txn and we can only write with a single thread so ensure this is the
+        // case.
+        writeTxnLock.lock();
+    }
+
+    public Txn<ByteBuffer> getWriteTxn() {
+        if (writeTxn == null) {
+            writeTxn = env.txnWrite();
+        }
+        return writeTxn;
+    }
+
+    public void tryCommit() {
+        commitCount++;
+        if (commitCount > 10000) {
+            commit();
+        }
+    }
+
+    public void commit() {
+        dbCommitLock.lock();
+        try {
+            if (writeTxn != null) {
+                try {
+                    writeTxn.commit();
+                } finally {
+                    try {
+                        writeTxn.close();
+                    } finally {
+                        writeTxn = null;
+                    }
+                }
+            }
+
+            commitCount = 0;
+            commitListener.run();
+        } finally {
+            dbCommitLock.unlock();
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            commit();
+        } finally {
+            writeTxnLock.unlock();
+        }
+    }
+}

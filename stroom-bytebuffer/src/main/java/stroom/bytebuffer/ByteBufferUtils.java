@@ -436,6 +436,10 @@ public class ByteBufferUtils {
         return result;
     }
 
+    public static String toString(final ByteBuffer byteBuffer) {
+        return new String(toBytes(byteBuffer), StandardCharsets.UTF_8);
+    }
+
 //    public static void debug(final ByteBuffer byteBuffer) {
 //        System.out.println(Arrays.toString(toBytes(byteBuffer.slice())));
 //    }

@@ -1,5 +1,7 @@
 package stroom.planb.impl.db;
 
+import stroom.planb.impl.db.state.State;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 

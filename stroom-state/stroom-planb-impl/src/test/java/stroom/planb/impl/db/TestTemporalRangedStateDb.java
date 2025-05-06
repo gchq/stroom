@@ -17,11 +17,12 @@
 
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -44,15 +45,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTemporalRangedStateDb {
 
+    private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+
     @Test
     void test(@TempDir Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final TemporalRangedStateDb db = new TemporalRangedStateDb(
                 tempDir,
-                byteBufferFactory,
+                BYTE_BUFFERS,
                 TemporalRangedStateSettings.builder().build(),
                 true)) {
             assertThat(db.count()).isEqualTo(100);
@@ -138,8 +140,7 @@ class TestTemporalRangedStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath1, byteBufferFactory)) {
+        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath1, BYTE_BUFFERS)) {
             db.merge(dbPath2);
         }
     }
@@ -151,8 +152,7 @@ class TestTemporalRangedStateDb {
 
         testWrite(dbPath);
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
-        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath, byteBufferFactory)) {
+        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath, BYTE_BUFFERS)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
@@ -164,9 +164,8 @@ class TestTemporalRangedStateDb {
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
 
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         try (final TemporalRangedStateDb db =
-                new TemporalRangedStateDb(dbDir, byteBufferFactory)) {
+                new TemporalRangedStateDb(dbDir, BYTE_BUFFERS)) {
             insertData(db, refTime, "test", 100, 10);
         }
     }
