@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.8.3] - 2025-05-06
+
+* Issue **#4929** : Improve Plan B merge performance.
+
+* Uplift the stroom/proxy docker base images to 21.0.7_6-jdk-alpine from 21.0.5_11-jdk-alpine.
+
+* Issue **#4934** : Change the audit logging for dashboard queries to log the column names. It now logs one event for each table attached to the query.
+
+* Fix field/function completions not being offered in the dashboard column expression editor.
+
+
 ## [v7.8.2] - 2025-04-30
 
 * Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
@@ -1354,7 +1365,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.8.3...HEAD
+[v7.8.3]: https://github.com/gchq/stroom/compare/v7.8.2...v7.8.3
 [v7.8.2]: https://github.com/gchq/stroom/compare/v7.8.1...v7.8.2
 [v7.8.1]: https://github.com/gchq/stroom/compare/v7.8.0...v7.8.1
 [v7.8.0]: https://github.com/gchq/stroom/compare/v7.8-beta.19...v7.8.0
