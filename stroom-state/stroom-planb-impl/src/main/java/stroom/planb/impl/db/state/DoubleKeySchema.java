@@ -5,8 +5,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDouble;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
-class DoubleKeySchema extends SimpleKeySchema<Double> {
+class DoubleKeySchema extends SimpleKeySchema {
 
     DoubleKeySchema(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
@@ -15,24 +16,15 @@ class DoubleKeySchema extends SimpleKeySchema<Double> {
     }
 
     @Override
-    Double parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         try {
-            return Double.parseDouble(key);
+            final double d = Double.parseDouble(key);
+            return byteBuffers.useDouble(d, function);
         } catch (final NumberFormatException e) {
             throw new RuntimeException("Expected state key to be a double but could not parse '" +
                                        key +
                                        "' as double");
         }
-    }
-
-    @Override
-    int keyLength(final Double key) {
-        return Double.BYTES;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final Double key) {
-        byteBuffer.putDouble(0, key);
     }
 
     @Override

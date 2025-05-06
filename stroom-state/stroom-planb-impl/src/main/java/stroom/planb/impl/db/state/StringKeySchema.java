@@ -7,8 +7,9 @@ import stroom.query.language.functions.ValString;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 
-class StringKeySchema extends SimpleKeySchema<byte[]> {
+class StringKeySchema extends SimpleKeySchema {
 
     StringKeySchema(final PlanBEnv envSupport,
                     final ByteBuffers byteBuffers,
@@ -17,22 +18,12 @@ class StringKeySchema extends SimpleKeySchema<byte[]> {
     }
 
     @Override
-    byte[] parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         final byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
         if (bytes.length > 511) {
             throw new RuntimeException("Key length exceeds 511 bytes");
         }
-        return bytes;
-    }
-
-    @Override
-    int keyLength(final byte[] key) {
-        return key.length;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final byte[] key) {
-        byteBuffer.put(0, key);
+        return byteBuffers.useBytes(bytes, function);
     }
 
     @Override

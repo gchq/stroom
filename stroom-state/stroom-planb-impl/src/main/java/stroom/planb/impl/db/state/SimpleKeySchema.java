@@ -23,15 +23,14 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The simplest schema that just stores the key and value directly.
- *
- * @param <T>
  */
-abstract class SimpleKeySchema<T> extends AbstractSchema<String, StateValue> {
+abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
 
     private static final byte[] NAME = "db".getBytes(UTF_8);
 
@@ -48,20 +47,15 @@ abstract class SimpleKeySchema<T> extends AbstractSchema<String, StateValue> {
         stateValueSerde = new StateValueSerde(byteBuffers);
     }
 
-    abstract T parseKey(String key);
-
-    abstract int keyLength(T key);
-
     @Override
     public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
-        final T k = parseKey(kv.key());
-        byteBuffers.use(keyLength(k), keyByteBuffer -> {
-            writeKey(keyByteBuffer, k);
+        useKey(kv.key(), keyByteBuffer -> {
             stateValueSerde.write(kv.val(), valueByteBuffer -> {
                 if (dbi.put(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer, putFlags)) {
                     writer.tryCommit();
                 }
             });
+            return null;
         });
     }
 
@@ -94,20 +88,16 @@ abstract class SimpleKeySchema<T> extends AbstractSchema<String, StateValue> {
 
     @Override
     public StateValue get(final String key) {
-        final T k = parseKey(key);
-        return byteBuffers.use(keyLength(k), keyByteBuffer -> {
-            writeKey(keyByteBuffer, k);
-            return env.read(readTxn -> {
-                final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
-                if (valueByteBuffer == null) {
-                    return null;
-                }
-                return stateValueSerde.read(valueByteBuffer);
-            });
-        });
+        return useKey(key, keyByteBuffer -> env.read(readTxn -> {
+            final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
+            if (valueByteBuffer == null) {
+                return null;
+            }
+            return stateValueSerde.read(valueByteBuffer);
+        }));
     }
 
-    abstract void writeKey(final ByteBuffer byteBuffer, final T key);
+    abstract <R> R useKey(final String key, Function<ByteBuffer, R> function);
 
     @Override
     public void search(final ExpressionCriteria criteria,

@@ -5,8 +5,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
-class ShortKeySchema extends SimpleKeySchema<Short> {
+class ShortKeySchema extends SimpleKeySchema {
 
     ShortKeySchema(final PlanBEnv env,
                    final ByteBuffers byteBuffers,
@@ -15,24 +16,15 @@ class ShortKeySchema extends SimpleKeySchema<Short> {
     }
 
     @Override
-    Short parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         try {
-            return Short.parseShort(key);
+            final short s = Short.parseShort(key);
+            return byteBuffers.useShort(s, function);
         } catch (final NumberFormatException e) {
             throw new RuntimeException("Expected state key to be a short but could not parse '" +
                                        key +
                                        "' as short");
         }
-    }
-
-    @Override
-    int keyLength(final Short key) {
-        return Short.BYTES;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final Short key) {
-        byteBuffer.putShort(0, key);
     }
 
     @Override

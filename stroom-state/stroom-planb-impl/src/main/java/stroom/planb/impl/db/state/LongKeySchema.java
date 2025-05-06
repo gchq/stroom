@@ -5,8 +5,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
-class LongKeySchema extends SimpleKeySchema<Long> {
+class LongKeySchema extends SimpleKeySchema {
 
     LongKeySchema(final PlanBEnv env,
                   final ByteBuffers byteBuffers,
@@ -15,24 +16,15 @@ class LongKeySchema extends SimpleKeySchema<Long> {
     }
 
     @Override
-    Long parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         try {
-            return Long.parseLong(key);
+            final long l = Long.parseLong(key);
+            return byteBuffers.useLong(l, function);
         } catch (final NumberFormatException e) {
             throw new RuntimeException("Expected state key to be an long but could not parse '" +
                                        key +
                                        "' as long");
         }
-    }
-
-    @Override
-    int keyLength(final Long key) {
-        return Long.BYTES;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final Long key) {
-        byteBuffer.putLong(0, key);
     }
 
     @Override

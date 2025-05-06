@@ -5,8 +5,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
-class ByteKeySchema extends SimpleKeySchema<Byte> {
+class ByteKeySchema extends SimpleKeySchema {
 
     ByteKeySchema(final PlanBEnv env,
                   final ByteBuffers byteBuffers,
@@ -15,24 +16,15 @@ class ByteKeySchema extends SimpleKeySchema<Byte> {
     }
 
     @Override
-    Byte parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         try {
-            return Byte.parseByte(key);
+            final byte b = Byte.parseByte(key);
+            return byteBuffers.useByte(b, function);
         } catch (final NumberFormatException e) {
             throw new RuntimeException("Expected state key to be a byte but could not parse '" +
                                        key +
                                        "' as byte");
         }
-    }
-
-    @Override
-    int keyLength(final Byte key) {
-        return Byte.BYTES;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final Byte key) {
-        byteBuffer.put(0, key);
     }
 
     @Override

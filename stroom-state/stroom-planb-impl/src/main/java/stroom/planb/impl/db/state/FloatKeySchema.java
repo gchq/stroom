@@ -5,8 +5,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValFloat;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
-class FloatKeySchema extends SimpleKeySchema<Float> {
+class FloatKeySchema extends SimpleKeySchema {
 
     FloatKeySchema(final PlanBEnv env,
                    final ByteBuffers byteBuffers,
@@ -15,24 +16,15 @@ class FloatKeySchema extends SimpleKeySchema<Float> {
     }
 
     @Override
-    Float parseKey(final String key) {
+    <R> R useKey(final String key, final Function<ByteBuffer, R> function) {
         try {
-            return Float.parseFloat(key);
+            final float f = Float.parseFloat(key);
+            return byteBuffers.useFloat(f, function);
         } catch (final NumberFormatException e) {
             throw new RuntimeException("Expected state key to be a float but could not parse '" +
                                        key +
                                        "' as float");
         }
-    }
-
-    @Override
-    int keyLength(final Float key) {
-        return Float.BYTES;
-    }
-
-    @Override
-    void writeKey(final ByteBuffer byteBuffer, final Float key) {
-        byteBuffer.putFloat(0, key);
     }
 
     @Override
