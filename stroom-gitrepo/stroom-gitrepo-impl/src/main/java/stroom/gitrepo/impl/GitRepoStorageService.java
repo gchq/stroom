@@ -20,7 +20,6 @@ import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
