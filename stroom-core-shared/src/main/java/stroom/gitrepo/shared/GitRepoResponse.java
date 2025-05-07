@@ -16,6 +16,7 @@ public class GitRepoResponse {
 
     @JsonProperty
     private final boolean ok;
+
     @JsonProperty
     private final String message;
 

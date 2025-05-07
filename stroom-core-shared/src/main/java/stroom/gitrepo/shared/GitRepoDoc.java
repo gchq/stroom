@@ -156,36 +156,47 @@ public class GitRepoDoc extends Doc {
     public String getDescription() {
         return description;
     }
+
     public void setDescription(final String description) {
         this.description = description;
     }
+
     public String getUrl() {
         return this.url;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
+
     public String getUsername() {
         return username;
     }
+
     public void setUsername(final String username) {
         this.username = username;
     }
+
     public String getPassword() {
         return password;
     }
+
     public void setPassword(final String password) {
         this.password = password;
     }
+
     public String getBranch() {
         return branch;
     }
+
     public void setBranch(final String branch) {
         this.branch = branch;
     }
+
     public String getPath() {
         return path;
     }
+
     public void setPath(final String path) {
         this.path = path;
     }

@@ -70,6 +70,7 @@ public class GitRepoPushDto {
     public GitRepoDoc getGitRepoDoc() {
         return gitRepoDoc;
     }
+
     @SuppressWarnings("unused")
     public void setGitRepoDoc(final GitRepoDoc gitRepoDoc) {
         this.gitRepoDoc = gitRepoDoc;
@@ -78,6 +79,7 @@ public class GitRepoPushDto {
     public String getCommitMessage() {
         return commitMessage;
     }
+
     @SuppressWarnings("unused")
     public void setCommitMessage(final String commitMessage) {
         this.commitMessage = commitMessage;
