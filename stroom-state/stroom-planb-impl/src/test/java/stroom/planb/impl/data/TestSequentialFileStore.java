@@ -18,7 +18,7 @@ class TestSequentialFileStore {
         final Path rootDir = Files.createTempDirectory("root");
         try {
             final StatePaths statePaths = new StatePaths(rootDir);
-            final SequentialFileStore fileStore = new SequentialFileStore(statePaths);
+            final StagingFileStore fileStore = new StagingFileStore(statePaths);
             assertThat(fileStore.getMinStoreId()).isEqualTo(-1);
             assertThat(fileStore.getMaxStoreId()).isEqualTo(-1);
 
@@ -60,7 +60,7 @@ class TestSequentialFileStore {
         }
     }
 
-    private void addFile(final Path rootDir, final SequentialFileStore fileStore, final int i) throws IOException {
+    private void addFile(final Path rootDir, final StagingFileStore fileStore, final int i) throws IOException {
         final Path file = rootDir.resolve(i + ".txt");
         Files.writeString(file, "test");
         final String fileHash = FileHashUtil.hash(file);

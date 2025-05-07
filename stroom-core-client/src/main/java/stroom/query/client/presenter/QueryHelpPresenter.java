@@ -21,6 +21,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
@@ -191,6 +192,10 @@ public class QueryHelpPresenter
     public void setIncludedTypes(Set<QueryHelpType> includedTypes) {
         model.setIncludedTypes(includedTypes);
         keyedAceCompletionProvider.setIncludedTypes(includedTypes);
+    }
+
+    public void setTextType(TextType textType) {
+        keyedAceCompletionProvider.setTextType(textType);
     }
 
     @Override

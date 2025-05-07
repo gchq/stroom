@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 public class PartDestination {
 
-    private final SequentialFileStore fileStore;
+    private final StagingFileStore fileStore;
     private final SecurityContext securityContext;
     private final Provider<MergeProcessor> mergeProcessorProvider;
 
@@ -28,7 +28,7 @@ public class PartDestination {
     private final AtomicLong receiveId = new AtomicLong();
 
     @Inject
-    public PartDestination(final SequentialFileStore fileStore,
+    public PartDestination(final StagingFileStore fileStore,
                            final SecurityContext securityContext,
                            final StatePaths statePaths,
                            final Provider<MergeProcessor> mergeProcessorProvider) {

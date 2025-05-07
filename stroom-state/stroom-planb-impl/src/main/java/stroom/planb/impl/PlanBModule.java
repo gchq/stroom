@@ -21,7 +21,6 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.pipeline.refdata.ReferenceDataServiceImpl;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.FileTransferClientImpl;
@@ -117,13 +116,18 @@ public class PlanBModule extends AbstractModule {
                         .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
         ScheduledJobsBinder.create(binder())
+                .bindJobTo(SnapshotCreatorRunnable.class, builder -> builder
+                        .name(ShardManager.SNAPSHOT_CREATOR_TASK_NAME)
+                        .description("Plan B snapshot creation")
+                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
+                        .advanced(true));
+        ScheduledJobsBinder.create(binder())
                 .bindJobTo(ShardManagerCleanupRunnable.class, builder -> builder
                         .name(ShardManager.CLEANUP_TASK_NAME)
                         .description("Plan B shard cleanup")
                         .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
     }
-
 
     private static class StateMergeRunnable extends RunnableWrapper {
 
@@ -138,6 +142,14 @@ public class PlanBModule extends AbstractModule {
         @Inject
         StateMaintenanceRunnable(final MergeProcessor mergeProcessor) {
             super(mergeProcessor::maintainShards);
+        }
+    }
+
+    private static class SnapshotCreatorRunnable extends RunnableWrapper {
+
+        @Inject
+        SnapshotCreatorRunnable(final ShardManager shardManager) {
+            super(shardManager::createSnapshots);
         }
     }
 

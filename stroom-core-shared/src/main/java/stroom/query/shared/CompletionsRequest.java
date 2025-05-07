@@ -32,6 +32,8 @@ public class CompletionsRequest {
     @JsonProperty
     private final DocRef dataSourceRef;
     @JsonProperty
+    private final TextType textType;
+    @JsonProperty
     private final String text;
     @JsonProperty
     private final int row;
@@ -46,11 +48,13 @@ public class CompletionsRequest {
 
 
     /**
+     * @param textType
      * @param includedTypes  Set to false to exclude datasources and structure items.
      * @param maxCompletions
      */
     @JsonCreator
     public CompletionsRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
+                              @JsonProperty("textType") final TextType textType,
                               @JsonProperty("text") final String text,
                               @JsonProperty("row") final int row,
                               @JsonProperty("column") final int column,
@@ -58,6 +62,7 @@ public class CompletionsRequest {
                               @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes,
                               @JsonProperty("maxCompletions") final Integer maxCompletions) {
         this.dataSourceRef = dataSourceRef;
+        this.textType = textType;
         this.text = text;
         this.row = row;
         this.column = column;
@@ -68,6 +73,10 @@ public class CompletionsRequest {
 
     public DocRef getDataSourceRef() {
         return dataSourceRef;
+    }
+
+    public TextType getTextType() {
+        return textType;
     }
 
     public String getText() {
@@ -105,13 +114,34 @@ public class CompletionsRequest {
     @Override
     public String toString() {
         return "CompletionsRequest{" +
-                "dataSourceRef=" + dataSourceRef +
-                ", text='" + text + '\'' +
-                ", row=" + row +
-                ", column=" + column +
-                ", pattern='" + pattern + '\'' +
-                ", includedTypes=" + includedTypes +
-                ", maxCompletions=" + maxCompletions +
-                '}';
+               "dataSourceRef=" + dataSourceRef +
+               ", textType=" + textType +
+               ", text='" + text + '\'' +
+               ", row=" + row +
+               ", column=" + column +
+               ", pattern='" + pattern + '\'' +
+               ", includedTypes=" + includedTypes +
+               ", maxCompletions=" + maxCompletions +
+               '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum TextType {
+        /**
+         * A full StroomQL statement, e.g.
+         * <p>
+         * from MyDatasource
+         * select ${field}
+         * </p>
+         */
+        STROOM_QUERY_LANGUAGE,
+        /**
+         * An expression such as '{@code concat(${StreamId},':',${EventId})}'.
+         */
+        EXPRESSION,
+        ;
     }
 }

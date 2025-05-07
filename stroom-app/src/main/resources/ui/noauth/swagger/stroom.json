@@ -13396,6 +13396,10 @@
           },
           "text" : {
             "type" : "string"
+          },
+          "textType" : {
+            "type" : "string",
+            "enum" : [ "STROOM_QUERY_LANGUAGE", "EXPRESSION" ]
           }
         }
       },
