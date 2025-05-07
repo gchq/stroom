@@ -17,14 +17,14 @@ import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
-class LongStringKeySchema extends AbstractSchema<String, StateValue> {
+class HashedKeySchema extends AbstractSchema<String, StateValue> {
 
     private final HashedKeySupport hashedKeySupport;
 
-    public LongStringKeySchema(final PlanBEnv env,
-                               final ByteBuffers byteBuffers,
-                               final StateSettings settings,
-                               final HashClashCount hashClashCount) {
+    public HashedKeySchema(final PlanBEnv env,
+                           final ByteBuffers byteBuffers,
+                           final StateSettings settings,
+                           final HashClashCount hashClashCount) {
         super(env, byteBuffers);
         final HashFactory hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,

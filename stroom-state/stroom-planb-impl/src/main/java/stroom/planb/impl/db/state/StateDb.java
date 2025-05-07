@@ -50,7 +50,7 @@ public class StateDb implements Db<String, StateValue> {
                 settings,
                 StateSettings::getStateKeySchema,
                 StateKeySchema::getStateKeyType,
-                StateKeyType.LONG_STRING);
+                StateKeyType.HASHED);
         schema = switch (stateKeyType) {
             case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite);
             case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite);
@@ -59,9 +59,9 @@ public class StateDb implements Db<String, StateValue> {
             case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite);
             case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite);
             case STRING -> new StringKeySchema(env, byteBuffers, overwrite);
-            case LONG_STRING -> new LongStringKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
+            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
             case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
-            case AUTO -> new AutoKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
+            case VARIABLE -> new VariableKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
         };
     }
 

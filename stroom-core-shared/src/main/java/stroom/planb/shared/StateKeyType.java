@@ -18,12 +18,12 @@ public enum StateKeyType implements HasDisplayValue {
     // Treat all keys as bytes but with a max length of 511.
     STRING("String (max 511 bytes)"),
     // Treat all keys as bytes but hashes and sequence numbers to allow for byte arrays longer than 511.
-    LONG_STRING("Long string (unlimited bytes)"),
+    HASHED("Hashed string (deprecated)"),
     // Always use a lookup table to store all keys. The key is a hash plus a sequence number.
     // Lookups deduplicate data and reduce storage requirements but impact performance.
     LOOKUP("Lookup table (unlimited bytes, deduplicated data)"),
     // Use automatic key type selection. The best key type is chosen to optimise performance and storage cost.
-    AUTO("Automatic");
+    VARIABLE("Automatic");
 
     private final String displayValue;
 

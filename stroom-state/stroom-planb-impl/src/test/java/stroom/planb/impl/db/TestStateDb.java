@@ -456,7 +456,7 @@ class TestStateDb {
 
                 // Long string keys - hashes.
                 .addNamedCase("Long string key (hash)",
-                        new TestRun(getSettings(StateKeyType.LONG_STRING), "TEST_KEY", iterations),
+                        new TestRun(getSettings(StateKeyType.HASHED), "TEST_KEY", iterations),
                         true)
 
                 // Lookup keys.
@@ -465,69 +465,54 @@ class TestStateDb {
                         true)
 
 
-                // Auto keys.
-                .addNamedCase("Auto byte key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Byte.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Auto byte key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Byte.MAX_VALUE), iterations),
-                        true)
+//                // Auto keys.
+//                .addNamedCase("Auto byte key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Byte.MIN_VALUE), iterations),
+//                        true)
+//                .addNamedCase("Auto byte key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Byte.MAX_VALUE), iterations),
+//                        true)
+//
+//                .addNamedCase("Auto short key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Short.MIN_VALUE), iterations),
+//                        true)
+//                .addNamedCase("Auto short key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Short.MAX_VALUE), iterations),
+//                        true)
+//
+//                .addNamedCase("Auto integer key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MIN_VALUE), iterations),
+//                        true)
+//                .addNamedCase("Auto integer key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MAX_VALUE), iterations),
+//                        true)
+//
+//                .addNamedCase("Auto long key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Long.MIN_VALUE), iterations),
+//                        true)
+//                .addNamedCase("Auto long key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Long.MAX_VALUE), iterations),
+//                        true)
+//
+//                .addNamedCase("Auto float key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), MIN_FLOAT, iterations),
+//                        true)
+//                .addNamedCase("Auto float key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), MAX_FLOAT, iterations),
+//                        true)
+//
+//                .addNamedCase("Auto double key min",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), MIN_DOUBLE, iterations),
+//                        true)
+//                .addNamedCase("Auto double key max",
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), MAX_DOUBLE, iterations),
+//                        true)
 
-                .addNamedCase("Auto short key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Short.MIN_VALUE), iterations),
+                .addNamedCase("Variable string key",
+                        new TestRun(getSettings(StateKeyType.VARIABLE), "TEST_KEY", iterations),
                         true)
-                .addNamedCase("Auto short key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Short.MAX_VALUE), iterations),
-                        true)
-
-                .addNamedCase("Auto integer key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Integer.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Auto integer key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Integer.MAX_VALUE), iterations),
-                        true)
-
-                .addNamedCase("Auto long key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Long.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Auto long key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), String.valueOf(Long.MAX_VALUE), iterations),
-                        true)
-
-                .addNamedCase("Auto float key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), MIN_FLOAT, iterations),
-                        true)
-                .addNamedCase("Auto float key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), MAX_FLOAT, iterations),
-                        true)
-
-                .addNamedCase("Auto double key min",
-                        new TestRun(getSettings(StateKeyType.AUTO), MIN_DOUBLE, iterations),
-                        true)
-                .addNamedCase("Auto double key max",
-                        new TestRun(getSettings(StateKeyType.AUTO), MAX_DOUBLE, iterations),
-                        true)
-
-                .addNamedCase("Auto string key",
-                        new TestRun(getSettings(StateKeyType.AUTO), "TEST_KEY", iterations),
-                        true)
-                .addNamedCase("Auto string lookup key",
-                        new TestRun(StateSettings
-                                .builder()
-                                .stateKeySchema(StateKeySchema.builder()
-                                        .stateKeyType(StateKeyType.AUTO)
-                                        .deduplicateLargeKeys(true)
-                                        .deduplicateThreshold(20)
-                                        .build())
-                                .build(), makeKey(800), iterations),
-                        true)
-                .addNamedCase("Auto string hash key",
-                        new TestRun(StateSettings
-                                .builder()
-                                .stateKeySchema(StateKeySchema.builder()
-                                        .stateKeyType(StateKeyType.AUTO)
-                                        .build())
-                                .build(), makeKey(800), iterations),
+                .addNamedCase("Variable string lookup key",
+                        new TestRun(getSettings(StateKeyType.VARIABLE), makeKey(800), iterations),
                         true)
                 .build();
     }
