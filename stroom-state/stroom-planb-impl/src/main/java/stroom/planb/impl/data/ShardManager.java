@@ -11,6 +11,7 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -19,11 +20,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -33,6 +36,7 @@ public class ShardManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardManager.class);
 
     public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
+    public static final String SNAPSHOT_CREATOR_TASK_NAME = "Plan B Snapshot Creator";
 
     private final ByteBufferFactory byteBufferFactory;
     private final PlanBDocCache planBDocCache;
@@ -70,12 +74,6 @@ public class ShardManager {
         return nodeInfo != null && !nodes.isEmpty() && !nodes.contains(nodeInfo.getThisNodeName());
     }
 
-    public void merge(final Path sourceDir) throws IOException {
-        final String docUuid = sourceDir.getFileName().toString();
-        final Shard shard = getShardForDocUuid(docUuid);
-        shard.merge(sourceDir);
-    }
-
     public void condenseAll() {
         shardMap.values().forEach(shard -> {
             try {
@@ -106,9 +104,24 @@ public class ShardManager {
         shard.checkSnapshotStatus(request);
     }
 
-    public void createSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
+    public void createSnapshots() {
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        shardMap.values().forEach(shard -> futures.add(CompletableFuture.runAsync(shard::createSnapshot)));
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
         final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
-        shard.createSnapshot(request, outputStream);
+        if (shard instanceof final StoreShard storeShard) {
+            try {
+                final Path path = storeShard.getSnapshotZip();
+                if (Files.exists(path)) {
+                    StreamUtil.streamToStream(Files.newInputStream(path), outputStream);
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
     }
 
     public <R> R get(final String mapName, final Function<AbstractDb<?, ?>, R> function) {
@@ -129,7 +142,7 @@ public class ShardManager {
         return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
     }
 
-    private Shard getShardForDocUuid(final String docUuid) {
+    public Shard getShardForDocUuid(final String docUuid) {
         return shardMap.computeIfAbsent(docUuid, k -> {
             final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
             if (doc == null) {
@@ -148,7 +161,7 @@ public class ShardManager {
                     fileTransferClient,
                     doc);
         }
-        return new LocalShard(
+        return new StoreShard(
                 byteBufferFactory,
                 configProvider,
                 statePaths,

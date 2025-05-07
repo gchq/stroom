@@ -28,8 +28,8 @@ import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.StagingFileStore;
 import stroom.planb.impl.db.State.Key;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
@@ -109,7 +109,7 @@ class TestStateDb {
     @Test
     void testFullProcess(@TempDir final Path rootDir) throws IOException {
         final StatePaths statePaths = new StatePaths(rootDir);
-        final SequentialFileStore fileStore = new SequentialFileStore(statePaths);
+        final StagingFileStore fileStore = new StagingFileStore(statePaths);
         final int parts = 10;
 
         // Write parts.
@@ -203,7 +203,7 @@ class TestStateDb {
                             // Compress.
 
                             // Lock when compressing, so we don't zip half written data.
-                            db1.lock(() -> {
+                            db1.lockCommits(() -> {
                                 try {
                                     ZipUtil.zip(zipFile, source);
                                 } catch (final IOException e) {
@@ -211,7 +211,7 @@ class TestStateDb {
                                 }
                             });
 
-                            // Uncompress.
+                            // Decompress.
                             ZipUtil.unzip(zipFile, target);
                             Files.delete(zipFile);
                             // Read.
@@ -272,7 +272,7 @@ class TestStateDb {
         }
     }
 
-    private void writePart(final SequentialFileStore fileStore, final String keyName) {
+    private void writePart(final StagingFileStore fileStore, final String keyName) {
         try {
             final Function<Integer, Key> keyFunction = i -> Key.builder().name(keyName).build();
             final Function<Integer, StateValue> valueFunction = i -> {

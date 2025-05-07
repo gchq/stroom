@@ -402,7 +402,7 @@ public abstract class AbstractDb<K, V> implements AutoCloseable {
         }
     }
 
-    public void lock(final Runnable runnable) {
+    public void lockCommits(final Runnable runnable) {
         dbCommitLock.lock();
         try {
             runnable.run();

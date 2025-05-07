@@ -52,7 +52,7 @@ public class FileTransferServiceImpl implements FileTransferService {
         if (!securityContext.isProcessingUser()) {
             throw new PermissionException(securityContext.getUserRef(), "Only processing users can use this resource");
         }
-        shardManager.createSnapshot(request, outputStream);
+        shardManager.fetchSnapshot(request, outputStream);
     }
 
     /**

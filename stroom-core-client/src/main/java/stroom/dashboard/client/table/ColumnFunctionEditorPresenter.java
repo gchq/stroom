@@ -28,6 +28,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -129,15 +130,18 @@ public class ColumnFunctionEditorPresenter
         queryHelpPresenter.setIncludedTypes(EnumSet.of(
                 QueryHelpType.FIELD,
                 QueryHelpType.FUNCTION));
-        queryHelpPresenter.linkToEditor(this.editorPresenter);
+        queryHelpPresenter.setTextType(TextType.EXPRESSION);
         queryHelpPresenter.refresh();
-
         editorPresenter.focus();
 
         // If this is done without the scheduler then we get weird behaviour when you click
         // in the text area if line wrap is set to on.  If it is initially set to off and the user
         // manually sets it to on all is fine. Confused.
-        Scheduler.get().scheduleDeferred(this::setupEditor);
+        Scheduler.get().scheduleDeferred(() -> {
+            setupEditor();
+            // Needs to be called after the editor is setup
+            queryHelpPresenter.linkToEditor(this.editorPresenter);
+        });
     }
 
     @Override
@@ -178,7 +182,7 @@ public class ColumnFunctionEditorPresenter
                 e.hide();
             } else {
                 final String msg = "Expression has unsaved changes.\n"
-                        + "Are you sure you want to close this window?";
+                                   + "Are you sure you want to close this window?";
                 ConfirmEvent.fire(ColumnFunctionEditorPresenter.this, msg, confirm -> {
                     if (confirm) {
                         e.hide();

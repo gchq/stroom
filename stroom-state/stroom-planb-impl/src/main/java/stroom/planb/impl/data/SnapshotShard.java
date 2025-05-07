@@ -14,7 +14,6 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Provider;
 
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -115,12 +114,10 @@ class SnapshotShard implements Shard {
 
     @Override
     public void checkSnapshotStatus(final SnapshotRequest request) {
-        throw new RuntimeException("You cannot create a snapshot from a snapshot");
     }
 
     @Override
-    public void createSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
-        throw new RuntimeException("You cannot create a snapshot from a snapshot");
+    public void createSnapshot() {
     }
 
     @Override
