@@ -29,7 +29,6 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.StagingFileStore;
 import stroom.planb.impl.db.State.Key;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateSettings;
@@ -106,22 +105,8 @@ class TestStateDb {
     }
 
     @Test
-    void testFullProcess(@TempDir final Path rootDir) throws IOException {
+    void testFullProcess(@TempDir final Path rootDir) {
         final StatePaths statePaths = new StatePaths(rootDir);
-        final StagingFileStore fileStore = new StagingFileStore(statePaths);
-        final int parts = 10;
-
-        // Write parts.
-        final List<CompletableFuture<Void>> list = new ArrayList<>();
-        for (int thread = 0; thread < parts; thread++) {
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(fileStore, "TEST_KEY_1")));
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(fileStore, "TEST_KEY_2")));
-        }
-        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
-
-        // Consume and merge parts.
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final PlanBDoc doc = PlanBDoc
                 .builder()
@@ -149,11 +134,24 @@ class TestStateDb {
                 statePaths,
                 null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                fileStore,
                 statePaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager);
+
+        final int parts = 10;
+
+        // Write parts.
+        final List<CompletableFuture<Void>> list = new ArrayList<>();
+        for (int thread = 0; thread < parts; thread++) {
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, "TEST_KEY_1")));
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, "TEST_KEY_2")));
+        }
+        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+        // Consume and merge parts.
         for (int i = 0; i < parts; i++) {
             mergeProcessor.merge(i);
         }
@@ -269,7 +267,7 @@ class TestStateDb {
         }
     }
 
-    private void writePart(final StagingFileStore fileStore, final String keyName) {
+    private void writePart(final MergeProcessor mergeProcessor, final String keyName) {
         try {
             final Function<Integer, Key> keyFunction = i -> Key.builder().name(keyName).build();
             final Function<Integer, StateValue> valueFunction = i -> {
@@ -284,7 +282,7 @@ class TestStateDb {
             ZipUtil.zip(zipFile, partPath);
             FileUtil.deleteDir(partPath);
             final String fileHash = FileHashUtil.hash(zipFile);
-            fileStore.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile);
+            mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

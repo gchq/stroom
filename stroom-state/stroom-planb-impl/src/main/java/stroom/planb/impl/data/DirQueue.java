@@ -12,7 +12,10 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -22,6 +25,7 @@ public class DirQueue {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirQueue.class);
     private final Path rootDir;
+    private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
     /**
      * ID last written to, i.e. 0 if never written to
@@ -131,13 +135,17 @@ public class DirQueue {
      *
      * @param sourceDir The source dir to move to the queue.
      */
-    public long add(final Path sourceDir) {
+    public void add(final Path sourceDir, final CountDownLatch countDownLatch) {
         final long id;
         try {
             lock.lockInterruptibly();
             try {
                 // Increment the sequence id.
                 id = ++writeId;
+                if (countDownLatch != null) {
+                    latches.put(id, countDownLatch);
+                }
+
                 final Path targetDir = DirUtil.createPath(rootDir, id);
                 final Path targetParent = targetDir.getParent();
                 try {
@@ -162,7 +170,6 @@ public class DirQueue {
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
         }
-        return id;
     }
 
     /**
@@ -199,15 +206,7 @@ public class DirQueue {
     }
 
     private Dir createDir(final long id, final Path path) {
-        return new Dir(this, id, path);
-    }
-
-    long getReadId() {
-        return readId;
-    }
-
-    long getWriteId() {
-        return writeId;
+        return new Dir(this, id, path, latches.remove(id));
     }
 
     @Override

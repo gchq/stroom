@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 public class PartDestination {
 
-    private final StagingFileStore fileStore;
     private final SecurityContext securityContext;
     private final Provider<MergeProcessor> mergeProcessorProvider;
 
@@ -28,11 +27,9 @@ public class PartDestination {
     private final AtomicLong receiveId = new AtomicLong();
 
     @Inject
-    public PartDestination(final StagingFileStore fileStore,
-                           final SecurityContext securityContext,
+    public PartDestination(final SecurityContext securityContext,
                            final StatePaths statePaths,
                            final Provider<MergeProcessor> mergeProcessorProvider) {
-        this.fileStore = fileStore;
         this.securityContext = securityContext;
         this.mergeProcessorProvider = mergeProcessorProvider;
 
@@ -71,16 +68,17 @@ public class PartDestination {
         final Path receiveFile = receiveDir.resolve(receiveFileName);
         StreamUtil.streamToFile(inputStream, receiveFile);
 
-        add(fileDescriptor, receiveFile, synchroniseMerge);
+        mergeProcessorProvider.get().add(fileDescriptor, receiveFile, synchroniseMerge);
     }
 
     public void receiveLocalPart(final FileDescriptor fileDescriptor,
                                  final Path sourcePath,
                                  final boolean allowMove,
                                  final boolean synchroniseMerge) throws IOException {
+        final MergeProcessor mergeProcessor = mergeProcessorProvider.get();
         if (allowMove) {
             // If we allow move then we can allow the file store to move the file directly into the store.
-            add(fileDescriptor, sourcePath, synchroniseMerge);
+            mergeProcessor.add(fileDescriptor, sourcePath, synchroniseMerge);
 
         } else {
             // Otherwise we need to copy the file to a temporary location first before it can be moved into the store.
@@ -88,19 +86,7 @@ public class PartDestination {
                                            SequentialFile.ZIP_EXTENSION;
             final Path receiveFile = receiveDir.resolve(receiveFileName);
             Files.copy(sourcePath, receiveFile);
-            add(fileDescriptor, receiveFile, synchroniseMerge);
-        }
-    }
-
-    private void add(final FileDescriptor fileDescriptor,
-                     final Path file,
-                     final boolean synchroniseMerge) throws IOException {
-        if (synchroniseMerge) {
-            final MergeProcessor mergeProcessor = mergeProcessorProvider.get();
-            final long storeId = fileStore.add(fileDescriptor, file);
-            mergeProcessor.awaitMerge(storeId);
-        } else {
-            fileStore.add(fileDescriptor, file);
+            mergeProcessor.add(fileDescriptor, receiveFile, synchroniseMerge);
         }
     }
 }

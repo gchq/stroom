@@ -12,8 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -24,6 +27,7 @@ import java.util.stream.Stream;
 public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
+    private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
     private final Path path;
     private final AtomicLong storeId = new AtomicLong();
@@ -43,13 +47,14 @@ public class SequentialFileStore {
         }
     }
 
-    public long add(final FileDescriptor fileDescriptor,
-                    final Path path) throws IOException {
+    public void add(final FileDescriptor fileDescriptor,
+                    final Path path,
+                    final CountDownLatch countDownLatch) throws IOException {
         final String fileHash = FileHashUtil.hash(path);
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
         }
-        return add(path);
+        add(path, countDownLatch);
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -95,13 +100,16 @@ public class SequentialFileStore {
 //    }
 
     private SequentialFile getStoreFileSet(final long storeId) {
-        return SequentialFile.get(path, storeId, true);
+        return SequentialFile.get(path, storeId, true, latches.remove(storeId));
     }
 
-    public long add(final Path tempFile) throws IOException {
+    private void add(final Path tempFile, final CountDownLatch countDownLatch) throws IOException {
         // Move the new data to the store.
         final long currentStoreId = storeId.getAndIncrement();
         final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
+        if (countDownLatch != null) {
+            latches.put(currentStoreId, countDownLatch);
+        }
 
         try {
             move(
@@ -116,7 +124,6 @@ public class SequentialFileStore {
 
         // Let consumers know there is new data.
         afterStore(currentStoreId);
-        return currentStoreId;
     }
 
     private void move(final Path root, final List<Path> subDirs, final Path source, final Path dest)
