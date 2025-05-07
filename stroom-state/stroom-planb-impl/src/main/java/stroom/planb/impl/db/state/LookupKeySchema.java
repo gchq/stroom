@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-public class ForeignKeySchema extends AbstractSchema<String, StateValue> {
+public class LookupKeySchema extends AbstractSchema<String, StateValue> {
 
     private final HashFactory hashFactory;
     private final LookupDb keyLookup;
@@ -40,10 +40,10 @@ public class ForeignKeySchema extends AbstractSchema<String, StateValue> {
     private final PutFlags[] putFlags;
     private final StateValueSerde stateValueSerde;
 
-    ForeignKeySchema(final PlanBEnv env,
-                     final ByteBuffers byteBuffers,
-                     final StateSettings settings,
-                     final HashClashCount hashClashCount) {
+    LookupKeySchema(final PlanBEnv env,
+                    final ByteBuffers byteBuffers,
+                    final StateSettings settings,
+                    final HashClashCount hashClashCount) {
         super(env, byteBuffers);
         this.hashClashCount = hashClashCount;
 

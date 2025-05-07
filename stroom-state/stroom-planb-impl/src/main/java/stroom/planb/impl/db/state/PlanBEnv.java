@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class PlanBEnv {
+public class PlanBEnv implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBEnv.class);
 
@@ -120,6 +120,7 @@ public class PlanBEnv {
         return readOnly;
     }
 
+    @Override
     public final void close() {
         env.close();
     }

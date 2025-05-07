@@ -60,7 +60,7 @@ public class StateDb implements Db<String, StateValue> {
             case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite);
             case STRING -> new StringKeySchema(env, byteBuffers, overwrite);
             case LONG_STRING -> new LongStringKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
-            case LOOKUP -> new ForeignKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
+            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
             case AUTO -> new AutoKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
         };
     }

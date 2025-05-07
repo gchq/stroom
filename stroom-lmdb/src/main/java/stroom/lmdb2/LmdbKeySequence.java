@@ -52,7 +52,6 @@ public class LmdbKeySequence {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
                 Long lastSeqNo = null;
-                Long nextNo = null;
                 while (iterator.hasNext()) {
                     final BBKV kv = BBKV.create(iterator.next());
                     final ByteBuffer key = kv.key();
@@ -80,17 +79,14 @@ public class LmdbKeySequence {
                     if (lastSeqNo == null) {
                         lastSeqNo = seqNo;
                     } else if (seqNo > lastSeqNo) {
-                        // See if we have found a possible insert position.
-                        if (nextNo == null && lastSeqNo + 1 < seqNo) {
-                            nextNo = lastSeqNo + 1;
-                        }
                         lastSeqNo = seqNo;
                     }
                 }
 
+                final long nextNo;
                 if (lastSeqNo == null) {
                     nextNo = 1L;
-                } else if (nextNo == null) {
+                } else {
                     nextNo = lastSeqNo + 1;
                 }
 
