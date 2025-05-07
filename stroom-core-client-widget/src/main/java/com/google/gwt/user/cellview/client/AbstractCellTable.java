@@ -2602,9 +2602,12 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
 
         // Do not use getRowElement() because that will flush the presenter.
         int rowIndex = getKeyboardSelectedRow();
-        if (rowIndex < 0 || rowIndex >= getTableBodyElement().getRows().getLength()) {
+        if (rowIndex < 0 ||
+            rowIndex >= getTableBodyElement().getRows().getLength() ||
+            rowIndex >= getVisibleItemCount()) {
             return null;
         }
+
         TableRowElement tr = getSubRowElement(rowIndex + getPageStart(), keyboardSelectedSubrow);
         if (tr != null) {
             int cellCount = tr.getCells().getLength();

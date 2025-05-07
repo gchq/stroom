@@ -17,12 +17,16 @@
 package stroom.util.zip;
 
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.io.ByteSize;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +35,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -40,6 +46,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -94,7 +103,7 @@ public final class ZipUtil {
     }
 
     public static void zip(final Path dir,
-                            final ZipArchiveOutputStream zipOutputStream) {
+                           final ZipArchiveOutputStream zipOutputStream) {
         zip(dir, zipOutputStream, path -> true, name -> true);
     }
 
@@ -182,5 +191,66 @@ public final class ZipUtil {
             }
         }
         return pathList;
+    }
+
+    /**
+     * Get the uncompressed size of the entry, if known.
+     */
+    public static Optional<ByteSize> getEntryUncompressedSize(final ArchiveEntry archiveEntry) {
+        return Optional.ofNullable(archiveEntry)
+                .map(ArchiveEntry::getSize)
+                .filter(size -> size != ArchiveEntry.SIZE_UNKNOWN)
+                .map(ByteSize::ofBytes);
+    }
+
+    /**
+     * @return True if the uncompressed size of the entry is known.
+     */
+    public static boolean hasKnownUncompressedSize(final ArchiveEntry archiveEntry) {
+        if (archiveEntry == null) {
+            return false;
+        } else {
+            return archiveEntry.getSize() != ArchiveEntry.SIZE_UNKNOWN;
+        }
+    }
+
+    public static ZipFile createZipFile(final Path zipFilePath) {
+        try {
+            // Not clear if we should be using setSeekableByteChannel or setFile ??
+            return ZipFile.builder()
+                    .setSeekableByteChannel(Files.newByteChannel(zipFilePath))
+                    .get();
+        } catch (IOException e) {
+            throw new UncheckedIOException(LogUtil.message(
+                    "Error creating ZipFile object for zipFilePath {}: {}",
+                    zipFilePath, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    public static String getEntryContent(final ZipFile zipFile,
+                                         final ZipArchiveEntry entry) {
+        try (final InputStream inputStream = zipFile.getInputStream(entry)) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Iterate over each entry in the zip file.
+     */
+    public static void forEachEntry(final Path zipFilePath,
+                                    final BiConsumer<ZipFile, ZipArchiveEntry> entryConsumer) {
+        Objects.requireNonNull(entryConsumer);
+        try (ZipFile zipFile = createZipFile(zipFilePath)) {
+            zipFile.getEntries()
+                    .asIterator()
+                    .forEachRemaining(entry ->
+                            entryConsumer.accept(zipFile, entry));
+        } catch (IOException e) {
+            throw new UncheckedIOException(LogUtil.message(
+                    "Error iterating over entries in zipFilePath {}: {}",
+                    zipFilePath, LogUtil.exceptionMessage(e)), e);
+        }
     }
 }

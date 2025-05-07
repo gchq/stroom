@@ -28,7 +28,6 @@ import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
@@ -162,20 +161,6 @@ class TestStateDb {
     @Test
     void testFullProcess(@TempDir final Path rootDir) {
         final StatePaths statePaths = new StatePaths(rootDir);
-        final SequentialFileStore fileStore = new SequentialFileStore(statePaths);
-        final int parts = 10;
-
-        // Write parts.
-        final List<CompletableFuture<Void>> list = new ArrayList<>();
-        for (int thread = 0; thread < parts; thread++) {
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(fileStore, "TEST_KEY_1")));
-            list.add(CompletableFuture.runAsync(() ->
-                    writePart(fileStore, "TEST_KEY_2")));
-        }
-        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
-
-        // Consume and merge parts.
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final PlanBDoc doc = PlanBDoc
                 .builder()
@@ -203,11 +188,24 @@ class TestStateDb {
                 statePaths,
                 null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                fileStore,
                 statePaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager);
+
+        final int parts = 10;
+
+        // Write parts.
+        final List<CompletableFuture<Void>> list = new ArrayList<>();
+        for (int thread = 0; thread < parts; thread++) {
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, "TEST_KEY_1")));
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, "TEST_KEY_2")));
+        }
+        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+        // Consume and merge parts.
         for (int i = 0; i < parts; i++) {
             mergeProcessor.merge(i);
         }
@@ -262,7 +260,7 @@ class TestStateDb {
                                 }
                             });
 
-                            // Uncompress.
+                            // Decompress.
                             ZipUtil.unzip(zipFile, target);
                             Files.delete(zipFile);
                             // Read.
@@ -320,7 +318,7 @@ class TestStateDb {
         }
     }
 
-    private void writePart(final SequentialFileStore fileStore, final String keyName) {
+    private void writePart(final MergeProcessor mergeProcessor, final String keyName) {
         try {
             final Function<Integer, String> keyFunction = i -> keyName;
             final Function<Integer, StateValue> valueFunction = i -> {
@@ -335,7 +333,7 @@ class TestStateDb {
             ZipUtil.zip(zipFile, partPath);
             FileUtil.deleteDir(partPath);
             final String fileHash = FileHashUtil.hash(zipFile);
-            fileStore.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile);
+            mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -481,10 +479,12 @@ class TestStateDb {
 //                        true)
 //
 //                .addNamedCase("Auto integer key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MIN_VALUE), iterations),
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MIN_VALUE),
+//                        iterations),
 //                        true)
 //                .addNamedCase("Auto integer key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MAX_VALUE), iterations),
+//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MAX_VALUE),
+//                        iterations),
 //                        true)
 //
 //                .addNamedCase("Auto long key min",

@@ -13,6 +13,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -165,17 +166,26 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             final FeedStatusConfig feedStatusConfig,
             final Function<Response, GetFeedStatusResponse> responseConsumer) {
 
-        LOGGER.debug("Sending request {}", request);
+        LOGGER.debug(() -> LogUtil.message("Sending {} to {}{}",
+                request,
+                feedStatusConfig.getFeedStatusUrl(),
+                GET_FEED_STATUS_PATH));
 
         final WebTarget webTarget = getFeedStatusWebTarget(feedStatusConfig);
 
+        final DurationTimer timer = DurationTimer.start();
         try (final Response response = getFeedStatusResponse(feedStatusConfig, webTarget, request)) {
-            LOGGER.debug("Received response {}", response);
+            LOGGER.debug("Received response {}, duration: {}", response, timer);
             return responseConsumer.apply(response);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error sending request {} to {}{}: {}",
-                    request, feedStatusConfig.getFeedStatusUrl(), GET_FEED_STATUS_PATH, e.getMessage()), e);
+                    "Error sending {} to {}{}, duration: {}, msg: {}",
+                    request,
+                    feedStatusConfig.getFeedStatusUrl(),
+                    GET_FEED_STATUS_PATH,
+                    timer,
+                    e.getMessage()),
+                    e);
         }
     }
 

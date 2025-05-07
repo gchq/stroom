@@ -187,9 +187,9 @@ public class ExtractionDecorator {
                                     try {
                                         info(taskContext, () ->
                                                 "Creating extraction tasks - stored data queue size: " +
-                                                        storedDataQueue.size() +
-                                                        " stream event map size: " +
-                                                        streamEventMap.size());
+                                                storedDataQueue.size() +
+                                                " stream event map size: " +
+                                                streamEventMap.size());
 
                                         // If we have some values then map them.
                                         SearchProgressLog.increment(queryKey,
@@ -318,7 +318,7 @@ public class ExtractionDecorator {
         // Sort events if we are performing extraction.
         final long[] eventIds;
         if (receivers.size() > 1 ||
-                (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
+            (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
             eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
         } else {
             eventIds = null;
@@ -410,7 +410,7 @@ public class ExtractionDecorator {
                 // Something went wrong extracting data from this stream.
                 final ExtractionException extractionException =
                         new ExtractionException("Unable to extract data from stream source with id: " +
-                                streamId + " - " + e.getMessage(), e);
+                                                streamId + " - " + e.getMessage(), e);
                 errorConsumer.add(extractionException);
             }
         }
@@ -424,7 +424,8 @@ public class ExtractionDecorator {
             }
 
             // Get the translation that will be used to display results.
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            final PipelineDoc pipelineDoc = securityContext.useAsReadResult(() ->
+                    pipelineStore.readDocument(pipelineRef));
             if (pipelineDoc == null) {
                 throw new ExtractionException("Unable to find result pipeline: " + pipelineRef);
             }

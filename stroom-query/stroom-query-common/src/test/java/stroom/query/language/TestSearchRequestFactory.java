@@ -7,6 +7,7 @@ import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.token.AbstractQueryTest;
+import stroom.security.mock.MockSecurityContext;
 import stroom.util.json.JsonUtil;
 
 import java.nio.file.Files;
@@ -47,8 +48,9 @@ public class TestSearchRequestFactory extends AbstractQueryTest {
                     .build();
             searchRequest = new SearchRequestFactory(
                     (keywordGroup, parentTableSettings) -> null,
-                    new MockDocResolver(),
-                    () -> criteria -> null)
+                    MockDocResolver.getInstance(),
+                    () -> criteria -> null,
+                    MockSecurityContext.getInstance())
                     .create(input, searchRequest, expressionContext);
             return JsonUtil.writeValueAsString(searchRequest);
 

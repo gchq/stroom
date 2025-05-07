@@ -527,23 +527,30 @@ class TestAttributeMap {
     }
 
     @Test
-    void testAppendItem_present() {
+    void testAppendItemIfDifferent_present() {
         final String key = "foo";
         final String item1 = "1";
         final String item2 = "2";
 
         final AttributeMap attributeMap = new AttributeMap();
 
-        final String val1 = attributeMap.appendItem(key, item1);
+        final String val1 = attributeMap.appendItemIfDifferent(key, item1);
         assertThat(val1)
                 .isEqualTo(null);
         assertThat(attributeMap.get(key))
                 .isEqualTo(item1);
 
-        final String val2 = attributeMap.appendItem(key, item2);
+        final String val2 = attributeMap.appendItemIfDifferent(key, item2);
 
         assertThat(val2)
                 .isEqualTo(item1);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
+
+        // Append same thing again
+        final String val3 = attributeMap.appendItemIfDifferent(key, item2);
+        assertThat(val3)
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
         assertThat(attributeMap.get(key))
                 .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
     }

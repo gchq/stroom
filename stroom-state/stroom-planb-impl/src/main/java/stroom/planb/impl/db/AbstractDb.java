@@ -359,7 +359,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 concurrentReaderSemaphore.release();
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
             Thread.currentThread().interrupt();
             throw new UncheckedInterruptedException(e);
         }

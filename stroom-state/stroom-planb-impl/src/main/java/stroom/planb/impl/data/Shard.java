@@ -3,7 +3,6 @@ package stroom.planb.impl.data;
 import stroom.planb.impl.db.Db;
 import stroom.planb.shared.PlanBDoc;
 
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.function.Function;
 
@@ -31,12 +30,9 @@ public interface Shard {
     void checkSnapshotStatus(SnapshotRequest request);
 
     /**
-     * Actually create a snapshot and stream it to the supplied output stream.
-     *
-     * @param request      The request to create a snapshot.
-     * @param outputStream The output stream to write the snapshot to.
+     * Create a snapshot ready to be streamed to a requesting node.
      */
-    void createSnapshot(SnapshotRequest request, OutputStream outputStream);
+    void createSnapshot();
 
     /**
      * Get data from this shard.
@@ -51,6 +47,7 @@ public interface Shard {
      * Close the DB if it isn't currently in use for read or write.
      */
     void cleanup();
+
 
     /**
      * Delete the DB if the associated doc has been deleted.

@@ -9363,6 +9363,11 @@ components:
           format: int32
         text:
           type: string
+        textType:
+          type: string
+          enum:
+          - STROOM_QUERY_LANGUAGE
+          - EXPRESSION
     ComponentConfig:
       type: object
       properties:
@@ -16265,11 +16270,6 @@ components:
     StateKeySchema:
       type: object
       properties:
-        deduplicateLargeKeys:
-          type: boolean
-        deduplicateThreshold:
-          type: integer
-          format: int32
         hashLength:
           type: string
           enum:
@@ -16278,12 +16278,16 @@ components:
         stateKeyType:
           type: string
           enum:
-          - INTEGER
+          - BYTE
+          - SHORT
+          - INT
           - LONG
-          - BYTES
-          - HASH_KEY
-          - FOREIGN_KEY
-          - SMART
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - HASHED
+          - LOOKUP
+          - VARIABLE
     StateSettings:
       type: object
       allOf:
@@ -16294,6 +16298,8 @@ components:
             type: boolean
           stateKeySchema:
             $ref: "#/components/schemas/StateKeySchema"
+          stateValueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     StateValue:
       type: object
       properties:
@@ -16324,6 +16330,26 @@ components:
         typeId:
           type: string
           format: byte
+    StateValueSchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateValueType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - LOOKUP
+          - VARIABLE
     StatisticField:
       type: object
       properties:

@@ -36,6 +36,7 @@ import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -93,17 +94,16 @@ class ReceiveDataRequestHandler implements RequestHandler {
         securityContext.asProcessingUser(() -> {
             final Instant receivedTime = Instant.now();
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-            final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
+            final UniqueId receiptId = receiptIdGenerator.generateId();
+            final AttributeMap attributeMap = AttributeMapUtil.create(
+                    request,
+                    certificateExtractor,
+                    receivedTime,
+                    receiptId);
 
             // Authenticate the request depending on the configured auth methods.
             // Adds sender details to the attributeMap
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
-
-            // Create a new receiptId for the request, so we can track progress and report back the
-            // receiptId to the sender
-            final String receiptId = receiptIdGenerator.generateId().toString();
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptId);
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptId);
 
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
@@ -123,7 +123,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                     attributeMap,
                                     handler,
                                     progressHandler);
-                            stroomStreamProcessor.processRequestHeader(request, receivedTime);
                             stroomStreamProcessor.processInputStream(inputStream, "", receivedTime);
                         });
                     } catch (final RuntimeException | IOException e) {

@@ -6,6 +6,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.io.PrintWriter;
@@ -428,6 +429,8 @@ public final class LogUtil {
     /**
      * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
      * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
      */
     public static <T> Optional<T> swallowExceptions(final Supplier<T> supplier) {
         try {
@@ -441,6 +444,8 @@ public final class LogUtil {
     /**
      * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
      * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
      */
     public static OptionalLong swallowExceptions(final LongSupplier supplier) {
         try {
@@ -454,6 +459,8 @@ public final class LogUtil {
     /**
      * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
      * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
      */
     public static OptionalInt swallowExceptions(final IntSupplier supplier) {
         try {
@@ -462,5 +469,27 @@ public final class LogUtil {
             LOGGER.debug("Error swallowed", e);
             return OptionalInt.empty();
         }
+    }
+
+    /**
+     * If DEBUG logging is enabled, create, start and return a new {@link DurationTimer}
+     * instance, else just return null.
+     * This avoids unnecessary object creation if DEBUG is not enabled.
+     */
+    public static DurationTimer startTimerIfDebugEnabled(final Logger logger) {
+        return logger != null && logger.isDebugEnabled()
+                ? DurationTimer.start()
+                : null;
+    }
+
+    /**
+     * If DEBUG logging is enabled, create, start and return a new {@link DurationTimer}
+     * instance, else just return null.
+     * This avoids unnecessary object creation if TRACE is not enabled.
+     */
+    public static DurationTimer startTimerIfTraceEnabled(final Logger logger) {
+        return logger != null && logger.isTraceEnabled()
+                ? DurationTimer.start()
+                : null;
     }
 }

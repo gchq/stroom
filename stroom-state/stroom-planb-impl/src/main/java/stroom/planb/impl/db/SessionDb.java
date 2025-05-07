@@ -234,68 +234,73 @@ public class SessionDb extends AbstractDb<Session, Session> {
     @Override
     public void condense(final long condenseBeforeMs,
                          final long deleteBeforeMs) {
-        write(writer -> {
-            Session lastSession = null;
-            Session newSession = null;
+        read(readTxn -> {
+            write(writer -> {
+                Session lastSession = null;
+                Session newSession = null;
 
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(writer.getWriteTxn())) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final BBKV kv = BBKV.create(iterator.next());
-                    final Session session = serde.getKey(kv);
+                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                    while (iterator.hasNext()
+                           && !Thread.currentThread().isInterrupted()) {
+                        final BBKV kv = BBKV.create(iterator.next());
+                        final Session session = serde.getKey(kv);
 
-                    if (session.getEnd() <= deleteBeforeMs) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                        writer.tryCommit();
+                        if (session.getEnd() <= deleteBeforeMs) {
+                            // If this is data we no longer want to retain then delete it.
+                            dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                            writer.tryCommit();
 
-                    } else {
-                        if (lastSession != null &&
-                            Arrays.equals(lastSession.getKey(), session.getKey()) &&
-                            session.getStart() < condenseBeforeMs &&
-                            lastSession.getEnd() >= session.getStart()) {
-
-                            // Extend the session.
-                            newSession = new Session(lastSession.getKey(), lastSession.getStart(), session.getEnd());
-
-                            // Delete the previous session as we are extending it.
-                            serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
-                                dbi.delete(writer.getWriteTxn(), keyByteBuffer);
-                                writer.tryCommit();
-                                return null;
-                            });
                         } else {
-                            // Insert new session.
-                            if (newSession != null) {
-                                insert(writer, newSession, newSession);
-                                newSession = null;
-                            }
-                        }
+                            if (lastSession != null &&
+                                Arrays.equals(lastSession.getKey(), session.getKey()) &&
+                                session.getStart() < condenseBeforeMs &&
+                                lastSession.getEnd() >= session.getStart()) {
 
-                        lastSession = session;
+                                // Extend the session.
+                                newSession = new Session(lastSession.getKey(),
+                                        lastSession.getStart(),
+                                        session.getEnd());
+
+                                // Delete the previous session as we are extending it.
+                                serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
+                                    dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+                                    writer.tryCommit();
+                                    return null;
+                                });
+                            } else {
+                                // Insert new session.
+                                if (newSession != null) {
+                                    insert(writer, newSession, newSession);
+                                    newSession = null;
+                                }
+                            }
+
+                            lastSession = session;
+                        }
                     }
                 }
-            }
 
-            // Insert new session.
-            if (newSession != null) {
-                // Delete the last session if it will be merged into the new one.
-                if (Arrays.equals(lastSession.getKey(), newSession.getKey()) &&
-                    newSession.getStart() < condenseBeforeMs &&
-                    lastSession.getEnd() >= newSession.getStart()) {
+                // Insert new session.
+                if (newSession != null) {
+                    // Delete the last session if it will be merged into the new one.
+                    if (Arrays.equals(lastSession.getKey(), newSession.getKey()) &&
+                        newSession.getStart() < condenseBeforeMs &&
+                        lastSession.getEnd() >= newSession.getStart()) {
 
-                    // Delete the previous session as we are extending it.
-                    serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
-                        dbi.delete(writer.getWriteTxn(), keyByteBuffer);
-                        writer.tryCommit();
-                        return null;
-                    });
+                        // Delete the previous session as we are extending it.
+                        serde.createKeyByteBuffer(lastSession, keyByteBuffer -> {
+                            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+                            writer.tryCommit();
+                            return null;
+                        });
+                    }
+
+                    // Insert the new session.
+                    insert(writer, newSession, newSession);
                 }
-
-                // Insert the new session.
-                insert(writer, newSession, newSession);
-            }
+            });
+            return null;
         });
     }
 

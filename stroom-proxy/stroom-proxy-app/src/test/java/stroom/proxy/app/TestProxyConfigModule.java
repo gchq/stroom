@@ -52,9 +52,10 @@ class TestProxyConfigModule {
 
         final Predicate<Class<?>> classFilter = clazz ->
                 clazz.getSimpleName().endsWith("Config")
-                        && !clazz.equals(AbstractConfig.class)
-                        && !clazz.equals(ProxyConfig.class)
-                        && IsProxyConfig.class.isAssignableFrom(clazz);
+                && !clazz.equals(AbstractConfig.class)
+                && !clazz.equals(ProxyConfig.class)
+                && IsProxyConfig.class.isAssignableFrom(clazz)
+                && !clazz.getSimpleName().startsWith("Test");
 
         LOGGER.info("Finding all IsProxyConfig classes");
 
@@ -67,7 +68,7 @@ class TestProxyConfigModule {
                 .map((ClassInfo classInfo2) -> {
                     try {
                         return classInfo2.load();
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Unable to load class {}", classInfo2), e);
                     }
@@ -156,8 +157,8 @@ class TestProxyConfigModule {
 
         if (!classesWithMultipleInstances.isEmpty()) {
             LOGGER.error("The following IsProxyConfig classes have a different injected instance to the " +
-                    "instance in the AppConfig tree.\n" +
-                    "You need to add Guice bindings for them in AppConfigModule");
+                         "instance in the AppConfig tree.\n" +
+                         "You need to add Guice bindings for them in AppConfigModule");
             classesWithMultipleInstances.stream()
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {

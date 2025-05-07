@@ -275,22 +275,28 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
 
     private JwsParts parseJws(final String jws) {
-        LOGGER.debug(() -> "jws=" + jws);
+        LOGGER.debug("jws: {}", jws);
 
-        // Step 1: Get the key id from JWT headers (the kid field)
-        // Regex split on single char will not use regex so no need to pre-compile
-        final String[] parts = jws.split("\\.");
-        final String header = parts[0];
-        final String payload = parts[1];
-        final String signature = parts[2];
+        try {
+            // Step 1: Get the key id from JWT headers (the kid field)
+            // Regex split on single char will not use regex so no need to pre-compile
+            final String[] parts = jws.split("\\.");
+            final String header = parts[0];
+            final String payload = parts[1];
+            final String signature = parts[2];
 
-        LOGGER.debug(() -> "header=" + header + ", payload=" + payload + ", signature=" + signature);
+            LOGGER.debug("""
+                    parseJws()
+                    header: {}
+                    payload: {}
+                    signature: {}""", header, payload, signature);
 
-        return new JwsParts(
-                jws,
-                header,
-                payload,
-                signature);
+            return new JwsParts(jws, header, payload, signature);
+        } catch (Exception e) {
+            LOGGER.debug("Unable to parse '{}' as a JWT", jws, e);
+            throw new AuthenticationException(LogUtil.message(
+                    "Error parsing token as a JSON Web Token: {}", e.getMessage()));
+        }
     }
 
     private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {
@@ -558,19 +564,19 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         final Response res = target
                 .request()
                 .get();
-        if (res.getStatus() == HttpStatus.OK_200) {
+        final int status = res.getStatus();
+        if (status == HttpStatus.OK_200) {
             final String pubKey = res.readEntity(String.class);
-            LOGGER.debug(() -> "Received public key \"" + pubKey + "\"");
+            LOGGER.debug("Received public key '{}'", pubKey);
 
             // The public key is PEM format.
             return decodePublicKey(pubKey, "EC");
         } else {
-            throw new RuntimeException("Unable to retrieve public key from \"" +
-                                       uri +
-                                       "\"" +
-                                       res.getStatus() +
-                                       ": " +
-                                       res.readEntity(String.class));
+            throw new AuthenticationException(LogUtil.message(
+                    "Unable to retrieve public key from uri: '{}', status: {}, response: '{}'",
+                    uri,
+                    status,
+                    LogUtil.swallowExceptions(() -> res.readEntity(String.class))));
         }
     }
 
@@ -586,12 +592,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
 
             // create a key object from the bytes
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+            final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance(alg);
             publicKey = keyFactory.generatePublic(keySpec);
 
         } catch (final RuntimeException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            LOGGER.error(alg + " " + e.getMessage(), e);
+            LOGGER.error("decodePublicKey() - alg: {}, message: {}", alg, LogUtil.exceptionMessage(e), e);
         }
 
         return publicKey;

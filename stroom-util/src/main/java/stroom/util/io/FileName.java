@@ -1,5 +1,8 @@
 package stroom.util.io;
 
+
+import stroom.util.shared.NullSafe;
+
 import java.util.Objects;
 
 public class FileName {
@@ -16,13 +19,13 @@ public class FileName {
 
     public static FileName fromParts(final String baseName, final String extension) {
         if (baseName == null) {
-            if (extension == null || extension.isEmpty()) {
+            if (NullSafe.isEmptyString(extension)) {
                 return new FileName("", "", "");
             } else {
                 return new FileName("." + extension, "", extension);
             }
         } else {
-            if (extension == null || extension.isEmpty()) {
+            if (NullSafe.isEmptyString(extension)) {
                 return new FileName(baseName, baseName, "");
             } else {
                 return new FileName(baseName + "." + extension, baseName, extension);
@@ -68,8 +71,8 @@ public class FileName {
         }
         final FileName fileName = (FileName) o;
         return Objects.equals(fullName, fileName.fullName) &&
-                Objects.equals(baseName, fileName.baseName) &&
-                Objects.equals(extension, fileName.extension);
+               Objects.equals(baseName, fileName.baseName) &&
+               Objects.equals(extension, fileName.extension);
     }
 
     @Override
@@ -80,9 +83,9 @@ public class FileName {
     @Override
     public String toString() {
         return "FileName{" +
-                "fullName='" + fullName + '\'' +
-                ", baseName='" + baseName + '\'' +
-                ", extension='" + extension + '\'' +
-                '}';
+               "fullName='" + fullName + '\'' +
+               ", baseName='" + baseName + '\'' +
+               ", extension='" + extension + '\'' +
+               '}';
     }
 }

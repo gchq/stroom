@@ -1,12 +1,8 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.StatePaths;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -16,8 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,40 +24,37 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-@Singleton
 public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
+    private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
-    private final Path stagingDir;
+    private final Path path;
     private final AtomicLong storeId = new AtomicLong();
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicLong addedStoreId = new AtomicLong(-1);
 
-    @Inject
-    public SequentialFileStore(final StatePaths statePaths) {
-
-        // Create the root directory
-        ensureDirExists(statePaths.getRootDir());
+    public SequentialFileStore(final Path path) {
 
         // Create the store directory and initialise the store id.
-        stagingDir = statePaths.getStagingDir();
-        if (ensureDirExists(stagingDir)) {
-            long maxId = getMaxId(stagingDir);
+        this.path = path;
+        if (ensureDirExists(path)) {
+            long maxId = getMaxId(path);
             storeId.set(maxId + 1);
             addedStoreId.set(maxId);
         }
     }
 
-    public long add(final FileDescriptor fileDescriptor,
-                    final Path path) throws IOException {
+    public void add(final FileDescriptor fileDescriptor,
+                    final Path path,
+                    final CountDownLatch countDownLatch) throws IOException {
         final String fileHash = FileHashUtil.hash(path);
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
         }
-        return add(path);
+        add(path, countDownLatch);
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -104,13 +100,16 @@ public class SequentialFileStore {
 //    }
 
     private SequentialFile getStoreFileSet(final long storeId) {
-        return SequentialFile.get(stagingDir, storeId, true);
+        return SequentialFile.get(path, storeId, true, latches.remove(storeId));
     }
 
-    private long add(final Path tempFile) throws IOException {
+    private void add(final Path tempFile, final CountDownLatch countDownLatch) throws IOException {
         // Move the new data to the store.
         final long currentStoreId = storeId.getAndIncrement();
         final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
+        if (countDownLatch != null) {
+            latches.put(currentStoreId, countDownLatch);
+        }
 
         try {
             move(
@@ -125,7 +124,6 @@ public class SequentialFileStore {
 
         // Let consumers know there is new data.
         afterStore(currentStoreId);
-        return currentStoreId;
     }
 
     private void move(final Path root, final List<Path> subDirs, final Path source, final Path dest)
@@ -169,11 +167,11 @@ public class SequentialFileStore {
     }
 
     public long getMaxStoreId() {
-        return getMaxId(stagingDir);
+        return getMaxId(path);
     }
 
     public long getMinStoreId() {
-        return getMinId(stagingDir);
+        return getMinId(path);
     }
 
     private long getMaxId(final Path path) {

@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -125,5 +127,36 @@ class TestUniqueIdGenerator {
         // No dupes should have dropped out, so size is unchanged
         assertThat(uniqueIds)
                 .hasSize(totalCount);
+    }
+
+    /**
+     * On a 12 core/24 thread cpu, I get about 4mil ops/sec
+     */
+    @Disabled // Manual perf test only
+    @Test
+    void testPerf() {
+        final UniqueIdGenerator uniqueIdGenerator = new UniqueIdGenerator(NodeType.STROOM, "stroom1");
+
+        final int iterations = 10_000_000;
+        final String[] arr = new String[iterations];
+
+        final DurationTimer timer = DurationTimer.start();
+        IntStream.range(0, iterations)
+                .parallel()
+                .forEach(i -> {
+                    final String str = uniqueIdGenerator.generateId().toString();
+                    arr[i] = str;
+                });
+
+        final Duration duration = timer.get();
+        LOGGER.info("time: {}, {} ops/sec",
+                duration,
+                iterations / ((double) duration.toMillis() / 1000));
+
+        for (int i = 0; i < iterations; i++) {
+            Assertions.assertThat(arr[i])
+                    .isNotNull()
+                    .isNotBlank();
+        }
     }
 }

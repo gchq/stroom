@@ -13,6 +13,62 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.9-beta.12] - 2025-05-07
+
+* Fix compile issues.
+
+
+## [v7.9-beta.11] - 2025-05-07
+
+* Issue **#4929** : Improve Plan B merge performance.
+
+* Uplift the stroom/proxy docker base images to 21.0.7_6-jdk-alpine from 21.0.5_11-jdk-alpine.
+
+* Issue **#4934** : Change the audit logging for dashboard queries to log the column names. It now logs one event for each table attached to the query.
+
+* Fix field/function completions not being offered in the dashboard column expression editor.
+
+* Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
+
+* Issue **#4892** : Prevent disabled users from authenticating.
+
+* Issue **#4925** : Fix UI IndexOutOfBoundsException.
+
+* Issue **#4926** : Fix UI NPE.
+
+* Issue **#4893** : Fix text editor context menu styling.
+
+* Issue **#4916** : Fix query results download so it doesn't require VIEW on the View. It now only needs USE on the View.
+
+* Fix permissions checking when executing a Query. It no longer requires VIEW permission on the extraction pipeline, just USE.
+
+
+## [v7.9-beta.10] - 2025-04-29
+
+* Issue **#4875** : Fix select *.
+
+* Issue **#3928** : Add merge filter for deeply nested data.
+
+* Issue **#4211** : Prevent stream status in processing filters.
+
+* Issue **#4927** : Fix TOKEN data feed auth when DATA_FEED_KEY is enabled.
+
+* Issue **#4863** : Stop errors being logged on proxy shutdown.
+
+* Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
+
+* Issue **#4889** : Fix stream downloads resulting in HTTP error 404.
+
+* Proxy - Change the way zip receipt works to speed up client requests and to reduce cpu/io load caused by de-compressing/compressing the zip entries. Change the zip splitting to be asynchronous from the initial receipt, so the client doesn't have to wait for it to happen.
+
+* Issue **#4914** : Fix Plan B condense bug.
+
+* Issue **#4915** : Fix Plan B interrupt exception.
+
+* Rationalise the handling/setting of meta attributes between proxy and stroom to ensure common receipt handling. Also change proxy and stroom to set/append ReceiptId, ReceiptIdPath, ReceivedTime, ReceivedTimeHistory and ReceivedPath attributes within zip meta entries.
+
+* Proxy - Fix receipt of un-compressed data not recording the data size in bytes.
+
 * Issue **#4856** : Fix dashboard permissions tab title.
 
 
@@ -1402,7 +1458,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.12...HEAD
+[v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
+[v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
+[v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
 [v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
 [v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
 [v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7

@@ -179,7 +179,8 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
                         final byte firstByte = keyVal.key().get(0);
                         final VariableKeyType keyType =
                                 VariableKeyType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
-                        if (Objects.requireNonNull(keyType) == VariableKeyType.LOOKUP) {// Omit the key type.
+                        if (Objects.requireNonNull(keyType) == VariableKeyType.LOOKUP) {
+                            // Omit the key type.
                             final ByteBuffer slice = keyVal.key().slice(1, keyVal.key().limit());
                             sourceKeyLookup.get(writer.getWriteTxn(), slice, optionalRealKey -> {
                                 final ByteBuffer realKey = optionalRealKey.orElseThrow(() ->

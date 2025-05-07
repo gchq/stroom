@@ -13396,6 +13396,10 @@
           },
           "text" : {
             "type" : "string"
+          },
+          "textType" : {
+            "type" : "string",
+            "enum" : [ "STROOM_QUERY_LANGUAGE", "EXPRESSION" ]
           }
         }
       },
@@ -21999,20 +22003,13 @@
       "StateKeySchema" : {
         "type" : "object",
         "properties" : {
-          "deduplicateLargeKeys" : {
-            "type" : "boolean"
-          },
-          "deduplicateThreshold" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "hashLength" : {
             "type" : "string",
             "enum" : [ "INTEGER", "LONG" ]
           },
           "stateKeyType" : {
             "type" : "string",
-            "enum" : [ "INTEGER", "LONG", "BYTES", "HASH_KEY", "FOREIGN_KEY", "SMART" ]
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "HASHED", "LOOKUP", "VARIABLE" ]
           }
         }
       },
@@ -22028,6 +22025,9 @@
             },
             "stateKeySchema" : {
               "$ref" : "#/components/schemas/StateKeySchema"
+            },
+            "stateValueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
@@ -22072,6 +22072,19 @@
           "typeId" : {
             "type" : "string",
             "format" : "byte"
+          }
+        }
+      },
+      "StateValueSchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateValueType" : {
+            "type" : "string",
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "LOOKUP", "VARIABLE" ]
           }
         }
       },

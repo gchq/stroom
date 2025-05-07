@@ -17,51 +17,37 @@
 
 package stroom.state;
 
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.dao.TemporalState;
-import stroom.state.impl.dao.TemporalStateDao;
-import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 @ExtendWith(MockitoExtension.class)
 class TestStateDao extends AbstractCoreIntegrationTest {
-
-    @Test
-    void testDao() {
-        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
-
-            final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
-            final TemporalState state = new TemporalState(
-                    "TEST_KEY",
-                    Instant.ofEpochMilli(0),
-                    StringValue.TYPE_ID,
-                    byteBuffer);
-            stateDao.insert(Collections.singletonList(state));
-
-            final TemporalStateRequest stateRequest = new TemporalStateRequest(tableName,
-                    "TEST_KEY",
-                    Instant.ofEpochSecond(10));
-            final Optional<TemporalState> optional = stateDao.getState(stateRequest);
-            assertThat(optional).isNotEmpty();
-            final TemporalState res = optional.get();
-            assertThat(res.key()).isEqualTo("TEST_KEY");
-            assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
-            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
-            assertThat(res.getValueAsString()).isEqualTo("test");
-        });
-    }
+//
+//    @Test
+//    void testDao() {
+//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
+//            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
+//
+//            final ByteBuffer byteBuffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
+//            final TemporalState state = new TemporalState(
+//                    "TEST_KEY",
+//                    Instant.ofEpochMilli(0),
+//                    StringValue.TYPE_ID,
+//                    byteBuffer);
+//            stateDao.insert(Collections.singletonList(state));
+//
+//            final TemporalStateRequest stateRequest = new TemporalStateRequest(tableName,
+//                    "TEST_KEY",
+//                    Instant.ofEpochSecond(10));
+//            final Optional<TemporalState> optional = stateDao.getState(stateRequest);
+//            assertThat(optional).isNotEmpty();
+//            final TemporalState res = optional.get();
+//            assertThat(res.key()).isEqualTo("TEST_KEY");
+//            assertThat(res.effectiveTime()).isEqualTo(Instant.ofEpochMilli(0));
+//            assertThat(res.typeId()).isEqualTo(StringValue.TYPE_ID);
+//            assertThat(res.getValueAsString()).isEqualTo("test");
+//        });
+//    }
 }

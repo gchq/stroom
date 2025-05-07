@@ -4,6 +4,7 @@ import stroom.security.api.UserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,13 +37,14 @@ public final class UserIdentitySessionUtil {
     }
 
     /**
-     * Set the userIdentity on the session if session cookies are found, creating the session as required
+     * Set the userIdentity on the session, creating the session as required
      */
     public static void set(final HttpServletRequest request, final UserIdentity userIdentity) {
-        if (requestHasSessionCookie(request)) {
-            // Set the user ref in the session.
-            set(request.getSession(true), userIdentity);
-        }
+        // Set the user ref in the session.
+        final HttpSession session = request.getSession(true);
+        set(session, userIdentity);
+        // Now we have the session make note of the user-agent for logging and sessionListServlet duties
+        UserAgentSessionUtil.setUserAgentInSession(request, session);
     }
 
     public static Optional<UserIdentity> get(final HttpSession session) {

@@ -7,6 +7,7 @@ import stroom.query.api.ResultRequest;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.security.mock.MockSecurityContext;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
@@ -47,8 +48,9 @@ public class TestSearchRequestFactory2 {
                 """;
         final SearchRequestFactory searchRequestFactory = new SearchRequestFactory(
                 (keywordGroup, parentTableSettings) -> null,
-                new MockDocResolver(),
-                () -> criteria -> null);
+                MockDocResolver.getInstance(),
+                () -> criteria -> null,
+                MockSecurityContext.getInstance());
         for (int i = 0; i < 2; i++) {
             searchRequest = searchRequestFactory.create(input, searchRequest, expressionContext);
             final String out = JsonUtil.writeValueAsString(searchRequest);
@@ -88,8 +90,9 @@ public class TestSearchRequestFactory2 {
                 QueryField.createText("Field2")));
         final SearchRequestFactory searchRequestFactory = new SearchRequestFactory(
                 (keywordGroup, parentTableSettings) -> null,
-                new MockDocResolver(),
-                () -> criteria -> resultPage);
+                MockDocResolver.getInstance(),
+                () -> criteria -> resultPage,
+                MockSecurityContext.getInstance());
         final Map<String, String> expressionMap = new HashMap<>();
         searchRequest = searchRequestFactory.create(input, searchRequest, expressionContext);
         searchRequest.getResultRequests().forEach(rr ->

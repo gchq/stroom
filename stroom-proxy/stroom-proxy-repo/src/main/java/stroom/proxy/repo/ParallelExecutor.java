@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -117,12 +118,13 @@ public class ParallelExecutor implements Managed {
                 // We need to release the blocked threads so the executor can shut down
                 resume();
             }
-            LOGGER.debug("Stopping parallel executor '{}', threadCount: {}",
+            LOGGER.info("Stopping parallel executor '{}', threadCount: {}",
                     threadNamePrefix, threadCount);
+            final DurationTimer timer = DurationTimer.start();
             executorService.shutdownNow();
             final boolean didTerminate = executorService.awaitTermination(1, TimeUnit.DAYS);
-            LOGGER.debug("Stopped parallel executor '{}', threadCount: {}, didTerminate: {}",
-                    threadNamePrefix, threadCount, didTerminate);
+            LOGGER.info("Stopped parallel executor '{}', threadCount: {}, didTerminate: {}, duration: {}",
+                    threadNamePrefix, threadCount, didTerminate, timer);
             isStopped.set(true);
         } else {
             throw new IllegalStateException(LogUtil.message(
@@ -197,6 +199,10 @@ public class ParallelExecutor implements Managed {
             LOGGER.debug("Running task");
             try {
                 task.run();
+            } catch (UncheckedInterruptedException e) {
+                // Swallow the exception to keep this thread running
+                LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
+                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
             } catch (Exception e) {
                 // Swallow the exception to keep this thread running
                 LOGGER.error("Error running parallel executor '{}' task: {}",

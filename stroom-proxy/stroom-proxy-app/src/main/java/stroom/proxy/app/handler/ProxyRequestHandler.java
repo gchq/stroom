@@ -11,11 +11,11 @@ import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
-import stroom.util.date.DateUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +24,9 @@ import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Main entry point to handling proxy requests.
@@ -67,49 +69,46 @@ public class ProxyRequestHandler implements RequestHandler {
 
     private void doHandle(final HttpServletRequest request, final HttpServletResponse response) {
         try {
-            final Instant startTime = Instant.now();
-
-            // Create attribute map from headers.
-            final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
+            final Instant receiveTime = Instant.now();
 
             // Create a new proxy id for the request, so we can track progress of the stream
             // through the various proxies and into stroom and report back the ID to the sender,
             final UniqueId receiptId = receiptIdGenerator.generateId();
 
+            // Create attribute map from headers.
+            final AttributeMap attributeMap = AttributeMapUtil.create(
+                    request,
+                    certificateExtractor,
+                    receiveTime,
+                    receiptId);
+
+            LOGGER.debug(() -> LogUtil.message(
+                    "handle() - requestUri: {}, remoteHost/Addr: {}, attributeMap: {}, ",
+                    request.getRequestURI(),
+                    Objects.requireNonNullElseGet(
+                            request.getRemoteHost(),
+                            request::getRemoteAddr),
+                    attributeMap));
+
             // Authorise request.
             requestAuthenticator.authenticate(request, attributeMap);
 
-            final String receiptIdStr = receiptId.toString();
-            LOGGER.debug("Adding meta attribute {}: {}", StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
-            attributeMap.put(StandardHeaderArguments.RECEIPT_ID, receiptIdStr);
-            attributeMap.appendItem(StandardHeaderArguments.RECEIPT_ID_PATH, receiptIdStr);
-
-            // Save the time the data was received.
-            attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->
-                    DateUtil.createNormalDateTimeString());
-
-            // Append the hostname.
-            appendReceivedPath(attributeMap);
-
             // Treat differently depending on compression type.
-            String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-            if (compression != null && !compression.isEmpty()) {
-                compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
-                if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
-                    throw new StroomStreamException(
-                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
-                }
-            }
+            final String compression = AttributeMapUtil.validateAndNormaliseCompression(
+                    attributeMap,
+                    compressionVal -> new StroomStreamException(
+                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compressionVal));
 
+            final Receiver receiver;
             final String contentLength = attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH);
             dataReceiptMetrics.recordContentLength(contentLength);
-
             if (ZERO_CONTENT.equals(contentLength)) {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
+                receiver = null;
             } else {
-                final Receiver receiver = receiverFactory.get(attributeMap);
+                receiver = receiverFactory.get(attributeMap);
                 receiver.receive(
-                        startTime,
+                        receiveTime,
                         attributeMap,
                         request.getRequestURI(),
                         request::getInputStream);
@@ -117,33 +116,19 @@ public class ProxyRequestHandler implements RequestHandler {
 
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy receipt id attribute to response: " + receiptIdStr);
+            LOGGER.debug(() -> LogUtil.message(
+                    "Writing proxy receipt id {} to response. Receiver: {}, duration: {}, compression: '{}'",
+                    receiptId,
+                    NullSafe.get(receiver, Object::getClass, Class::getSimpleName),
+                    Duration.between(receiveTime, Instant.now()),
+                    compression));
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(receiptIdStr);
+                writer.println(receiptId);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         } catch (final StroomStreamException e) {
             e.sendErrorResponse(response);
         }
-    }
-
-    private void appendReceivedPath(final AttributeMap attributeMap) {
-//        if (appendReceivedPath) {
-        // Here we build up a list of stroom servers that have received
-        // the message
-
-        // The initial one will be initially set at the boundary proxy/stroom server
-        final String entryReceivedServer = attributeMap.get(StandardHeaderArguments.RECEIVED_PATH);
-
-        if (entryReceivedServer != null) {
-            if (!entryReceivedServer.contains(hostName)) {
-                attributeMap.put(StandardHeaderArguments.RECEIVED_PATH,
-                        entryReceivedServer + "," + hostName);
-            }
-        } else {
-            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, hostName);
-        }
-//        }
     }
 }

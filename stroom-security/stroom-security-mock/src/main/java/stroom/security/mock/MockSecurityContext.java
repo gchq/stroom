@@ -30,6 +30,8 @@ import java.util.function.Supplier;
 
 public class MockSecurityContext implements SecurityContext, ContentPackUserService {
 
+    private static final MockSecurityContext INSTANCE = new MockSecurityContext();
+
     private static final UserRef MOCK_ADMIN = UserRef
             .builder()
             .uuid(UUID.randomUUID().toString())
@@ -38,9 +40,18 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
             .fullName("Ad Min")
             .build();
 
+    private static final UserIdentity USER_IDENTITY = new BasicUserIdentity(MOCK_ADMIN);
+
+    public static MockSecurityContext getInstance() {
+        return INSTANCE;
+    }
+
+    public MockSecurityContext() {
+    }
+
     @Override
     public UserIdentity getUserIdentity() {
-        return new BasicUserIdentity(getUserRef());
+        return USER_IDENTITY;
     }
 
     @Override

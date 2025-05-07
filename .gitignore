@@ -34,6 +34,7 @@ proxy-local.yml*
 *.iml
 .idea/*
 !.idea/codeStyles
+!.idea/inspectionProfiles
 !.idea/runConfigurations
 !.idea/icon.png
 !.idea/checkstyle-idea.xml
