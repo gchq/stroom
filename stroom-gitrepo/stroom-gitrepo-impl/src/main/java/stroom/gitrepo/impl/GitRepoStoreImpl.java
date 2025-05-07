@@ -25,9 +25,9 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.gitrepo.api.GitRepoStore;
+import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;

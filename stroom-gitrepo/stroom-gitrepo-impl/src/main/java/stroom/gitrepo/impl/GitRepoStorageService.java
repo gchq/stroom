@@ -18,8 +18,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import jakarta.inject.Singleton;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -249,7 +250,8 @@ public class GitRepoStorageService {
     private void throwException(String errorMessage,
                                 Exception cause,
                                 List<Message> messages)
-    throws IOException {
+            throws IOException {
+
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
         var buf = new StringBuilder(errorMessage);
         if (cause != null) {
@@ -297,38 +299,34 @@ public class GitRepoStorageService {
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult
-            preVisitDirectory(Path dir,
-                              BasicFileAttributes attrs) {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
 
                 // Ignore any .git subtree
                 if (keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME)) {
                     return FileVisitResult.SKIP_SUBTREE;
-                }
-                else {
+                } else {
                     return FileVisitResult.CONTINUE;
                 }
             }
 
             @Override
-            public FileVisitResult
-            visitFile(Path p, BasicFileAttributes attrs)
-                   throws IOException {
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
+                    throws IOException {
+
                 // Don't delete README files
-                if ( !(keepGitStuff && p.endsWith(GIT_README_MD)) ) {
+                if (!(keepGitStuff && p.endsWith(GIT_README_MD))) {
                     Files.delete(p);
                 }
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult
-            postVisitDirectory(Path dir, IOException ex)
-                   throws IOException {
+            public FileVisitResult postVisitDirectory(Path dir, IOException ex)
+                    throws IOException {
 
                 // Don't delete the root dir or the .git dir
                 if (!dir.equals(root) && !(keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME))) {
-                        Files.delete(dir);
+                    Files.delete(dir);
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -414,8 +412,7 @@ public class GitRepoStorageService {
                     .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                     .setDepth(1)
                     .call();
-        }
-        else {
+        } else {
             git = Git.open(gitWorkDir.toFile());
         }
 
@@ -439,8 +436,7 @@ public class GitRepoStorageService {
                 .setDepth(1)
                 .call()) {
             // No code - close automatically
-        }
-        catch (GitAPIException e) {
+        } catch (GitAPIException e) {
             throw new IOException("Git error cloning repository "
                                   + gitRepoDoc.getUrl(), e);
         }
