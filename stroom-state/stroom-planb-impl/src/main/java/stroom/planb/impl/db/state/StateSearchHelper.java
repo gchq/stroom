@@ -10,15 +10,18 @@ import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValuesConsumer;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
+import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class StateSearchHelper {
@@ -28,7 +31,7 @@ public class StateSearchHelper {
                               final DateTimeSettings dateTimeSettings,
                               final ExpressionPredicateFactory expressionPredicateFactory,
                               final ValuesConsumer consumer,
-                              final ValExtractor[] valExtractors,
+                              final ValuesExtractor valuesExtractor,
                               final PlanBEnv env,
                               final Dbi<ByteBuffer> dbi) {
         // Ensure we have fields for all expression criteria.
@@ -44,11 +47,7 @@ public class StateSearchHelper {
         env.read(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final Val[] vals = new Val[valExtractors.length];
-                    for (int i = 0; i < vals.length; i++) {
-                        final ValExtractor valExtractor = valExtractors[i];
-                        vals[i] = valExtractor.apply(readTxn, keyVal);
-                    }
+                    final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
                     if (predicate.test(vals)) {
                         consumer.accept(vals);
                     }
@@ -66,5 +65,47 @@ public class StateSearchHelper {
             }
             return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
+    }
+
+    public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
+                                                        final Function<Context, Val> keyValueConverter,
+                                                        final Function<Context, StateValue> stateValueFunction) {
+        final String[] fields = fieldIndex.getFields();
+        final Converter[] converters = new Converter[fields.length];
+        final boolean extractValue = fieldIndex.getPos(StateFields.VALUE_TYPE) != null ||
+                                     fieldIndex.getPos(StateFields.VALUE) != null;
+        final Function<Context, StateValue> svf;
+        if (extractValue) {
+            svf = stateValueFunction;
+        } else {
+            svf = context -> null;
+        }
+
+        for (int i = 0; i < fields.length; i++) {
+            converters[i] = switch (fields[i]) {
+                case StateFields.KEY -> (context, stateValue) -> keyValueConverter.apply(context);
+                case StateFields.VALUE_TYPE -> (context, stateValue) -> stateValue.getType();
+                case StateFields.VALUE -> (context, stateValue) -> stateValue.getValue();
+                default -> (context, stateValue) -> ValNull.INSTANCE;
+            };
+        }
+        return (readTxn, kv) -> {
+            final Context context = new Context(readTxn, kv);
+            final Val[] values = new Val[fields.length];
+            final StateValue stateValue = svf.apply(context);
+            for (int i = 0; i < fields.length; i++) {
+                values[i] = converters[i].convert(context, stateValue);
+            }
+            return values;
+        };
+    }
+
+    public record Context(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv) {
+
+    }
+
+    public interface Converter {
+
+        Val convert(Context context, StateValue stateValue);
     }
 }

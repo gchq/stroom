@@ -4,12 +4,11 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.ValUtil;
+import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 
@@ -17,6 +16,7 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
+import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
@@ -39,12 +39,13 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
 
     SimpleKeySchema(final PlanBEnv envSupport,
                     final ByteBuffers byteBuffers,
-                    final Boolean overwrite) {
+                    final Boolean overwrite,
+                    final StateValueSerde stateValueSerde) {
         super(envSupport, byteBuffers);
+        this.stateValueSerde = stateValueSerde;
         this.putFlags = overwrite
                 ? new PutFlags[]{}
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
-        stateValueSerde = new StateValueSerde(byteBuffers);
     }
 
     @Override
@@ -62,7 +63,7 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
-            final Env.Builder<ByteBuffer> builder = Env.create()
+            final Builder<ByteBuffer> builder = Env.create()
                     .setMaxDbs(1)
                     .setMaxReaders(1);
             try (final Env<ByteBuffer> sourceEnv = builder.open(source.toFile(),
@@ -105,32 +106,30 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                fieldIndex,
+                getKeyExtractionFunction(),
+                getStateValueExtractionFunction());
         StateSearchHelper.search(
                 criteria,
                 fieldIndex,
                 dateTimeSettings,
                 expressionPredicateFactory,
                 consumer,
-                getValExtractors(fieldIndex),
+                valuesExtractor,
                 env,
                 dbi);
     }
 
-    public ValExtractor[] getValExtractors(final FieldIndex fieldIndex) {
-        final ValExtractor[] extractors = new ValExtractor[fieldIndex.size()];
-        for (int i = 0; i < fieldIndex.getFields().length; i++) {
-            final String field = fieldIndex.getField(i);
-            extractors[i] = switch (field) {
-                case StateFields.KEY -> (readTxn, kv) ->
-                        createKeyVal(kv.key());
-                case StateFields.VALUE_TYPE -> (readTxn, kv) ->
-                        ValUtil.getType(kv.val().duplicate());
-                case StateFields.VALUE -> (readTxn, kv) ->
-                        ValUtil.getValue(kv.val().duplicate());
-                default -> (readTxn, kv) -> ValNull.INSTANCE;
-            };
-        }
-        return extractors;
+    private Function<Context, Val> getKeyExtractionFunction() {
+        return context -> {
+            final ByteBuffer byteBuffer = context.kv().key().duplicate();
+            return createKeyVal(byteBuffer);
+        };
+    }
+
+    private Function<Context, StateValue> getStateValueExtractionFunction() {
+        return context -> stateValueSerde.read(context.kv().val());
     }
 
     abstract Val createKeyVal(ByteBuffer byteBuffer);

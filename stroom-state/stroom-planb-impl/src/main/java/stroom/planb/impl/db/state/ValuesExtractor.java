@@ -7,6 +7,7 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 
-public interface ValExtractor {
-    Val apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
+public interface ValuesExtractor {
+
+    Val[] apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
 }

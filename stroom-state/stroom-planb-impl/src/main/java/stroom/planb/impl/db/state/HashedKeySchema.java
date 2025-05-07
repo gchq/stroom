@@ -24,14 +24,22 @@ class HashedKeySchema extends AbstractSchema<String, StateValue> {
     public HashedKeySchema(final PlanBEnv env,
                            final ByteBuffers byteBuffers,
                            final StateSettings settings,
-                           final HashClashCount hashClashCount) {
+                           final HashClashCount hashClashCount,
+                           final StateValueSerde stateValueSerde) {
         super(env, byteBuffers);
         final HashFactory hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
                 StateSettings::getStateKeySchema,
                 StateKeySchema::getHashLength));
         final boolean overwrite = settings.overwrite();
-        hashedKeySupport = new HashedKeySupport(env, dbi, byteBuffers, hashFactory, overwrite, hashClashCount);
+        hashedKeySupport = new HashedKeySupport(
+                env,
+                dbi,
+                byteBuffers,
+                hashFactory,
+                overwrite,
+                hashClashCount,
+                stateValueSerde);
     }
 
     @Override

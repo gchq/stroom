@@ -7,16 +7,16 @@ import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.LookupDb;
-import stroom.planb.impl.db.ValUtil;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * A schema that tries a number of different approaches to store keys in the most efficient way depending on their type.
@@ -51,8 +52,10 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
     public VariableKeySchema(final PlanBEnv env,
                              final ByteBuffers byteBuffers,
                              final StateSettings settings,
-                             final HashClashCount hashClashCount) {
+                             final HashClashCount hashClashCount,
+                             final StateValueSerde stateValueSerde) {
         super(env, byteBuffers);
+        this.stateValueSerde = stateValueSerde;
 
         hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -71,7 +74,6 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
         this.putFlags = overwrite
                 ? new PutFlags[]{}
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
-        stateValueSerde = new StateValueSerde(byteBuffers);
     }
 
 
@@ -216,59 +218,41 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                fieldIndex,
+                getKeyExtractionFunction(),
+                getStateValueExtractionFunction());
         StateSearchHelper.search(
                 criteria,
                 fieldIndex,
                 dateTimeSettings,
                 expressionPredicateFactory,
                 consumer,
-                getValExtractors(fieldIndex),
+                valuesExtractor,
                 env,
                 dbi);
     }
 
-    public ValExtractor[] getValExtractors(final FieldIndex fieldIndex) {
-        final ValExtractor[] extractors = new ValExtractor[fieldIndex.size()];
-        for (int i = 0; i < fieldIndex.getFields().length; i++) {
-            final String field = fieldIndex.getField(i);
-            extractors[i] = switch (field) {
-                case StateFields.KEY -> (readTxn, kv) -> {
-
-                    final ByteBuffer key = kv.key().duplicate();
-                    final byte firstByte = key.get();
-                    final VariableKeyType keyType =
-                            VariableKeyType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
-                    switch (keyType) {
-                        case DIRECT -> {
-                            return ValString.create(ByteBufferUtils.toString(key));
-                        }
-                        case LOOKUP -> {
-                            final ByteBuffer byteBuffer = keyLookup.getValue(readTxn, key);
-                            if (byteBuffer == null) {
-                                throw new RuntimeException("Unable to find key");
-                            }
-                            return ValString.create(ByteBufferUtils.toString(byteBuffer));
-                        }
-                        default -> throw new RuntimeException("Unexpected auto key type " + keyType);
+    private Function<Context, Val> getKeyExtractionFunction() {
+        return context -> {
+            final ByteBuffer key = context.kv().key().duplicate();
+            final byte firstByte = key.get();
+            final VariableKeyType keyType =
+                    VariableKeyType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
+            return switch (keyType) {
+                case DIRECT -> ValString.create(ByteBufferUtils.toString(key));
+                case LOOKUP -> {
+                    final ByteBuffer byteBuffer = keyLookup.getValue(context.readTxn(), key);
+                    if (byteBuffer == null) {
+                        throw new RuntimeException("Unable to find key");
                     }
-
-                };
-                case StateFields.VALUE_TYPE -> (readTxn, kv) -> {
-                    final ByteBuffer value = kv.val().duplicate();
-
-                    // If we aren't using a hash key then the value is just the value.
-                    return ValUtil.getType(value);
-
-                };
-                case StateFields.VALUE -> (readTxn, kv) -> {
-                    final ByteBuffer value = kv.val().duplicate();
-
-                    // If we aren't using a hash key then the value is just the value.
-                    return ValUtil.getValue(value);
-                };
-                default -> (readTxn, kv) -> ValNull.INSTANCE;
+                    yield ValString.create(ByteBufferUtils.toString(byteBuffer));
+                }
             };
-        }
-        return extractors;
+        };
+    }
+
+    private Function<Context, StateValue> getStateValueExtractionFunction() {
+        return context -> stateValueSerde.read(context.kv().val());
     }
 }

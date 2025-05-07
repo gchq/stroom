@@ -11,8 +11,9 @@ class ByteKeySchema extends SimpleKeySchema {
 
     ByteKeySchema(final PlanBEnv env,
                   final ByteBuffers byteBuffers,
-                  final Boolean overwrite) {
-        super(env, byteBuffers, overwrite);
+                  final Boolean overwrite,
+                  final StateValueSerde stateValueSerde) {
+        super(env, byteBuffers, overwrite, stateValueSerde);
     }
 
     @Override

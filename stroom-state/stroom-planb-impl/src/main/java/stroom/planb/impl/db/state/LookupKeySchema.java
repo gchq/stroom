@@ -7,17 +7,16 @@ import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.LookupDb;
-import stroom.planb.impl.db.ValUtil;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
@@ -31,6 +30,7 @@ import org.lmdbjava.PutFlags;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 public class LookupKeySchema extends AbstractSchema<String, StateValue> {
 
@@ -43,9 +43,11 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
     LookupKeySchema(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final StateSettings settings,
-                    final HashClashCount hashClashCount) {
+                    final HashClashCount hashClashCount,
+                    final StateValueSerde stateValueSerde) {
         super(env, byteBuffers);
         this.hashClashCount = hashClashCount;
+        this.stateValueSerde = stateValueSerde;
 
         hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -56,7 +58,6 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
         this.putFlags = settings.overwrite()
                 ? new PutFlags[]{}
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
-        stateValueSerde = new StateValueSerde(byteBuffers);
     }
 
     private byte[] parseKey(String key) {
@@ -140,35 +141,29 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                fieldIndex,
+                getKeyExtractionFunction(),
+                getStateValueExtractionFunction());
         StateSearchHelper.search(
                 criteria,
                 fieldIndex,
                 dateTimeSettings,
                 expressionPredicateFactory,
                 consumer,
-                getValExtractors(fieldIndex),
+                valuesExtractor,
                 env,
                 dbi);
     }
 
-    public ValExtractor[] getValExtractors(final FieldIndex fieldIndex) {
-        final ValExtractor[] extractors = new ValExtractor[fieldIndex.size()];
-        for (int i = 0; i < fieldIndex.getFields().length; i++) {
-            final String field = fieldIndex.getField(i);
-            extractors[i] = switch (field) {
-                case StateFields.KEY -> (readTxn, kv) ->
-                        createKeyVal(keyLookup.getValue(readTxn, kv.key()));
-                case StateFields.VALUE_TYPE -> (readTxn, kv) ->
-                        ValUtil.getType(kv.val().duplicate());
-                case StateFields.VALUE -> (readTxn, kv) ->
-                        ValUtil.getValue(kv.val().duplicate());
-                default -> (readTxn, kv) -> ValNull.INSTANCE;
-            };
-        }
-        return extractors;
+    private Function<Context, Val> getKeyExtractionFunction() {
+        return context -> {
+            final ByteBuffer byteBuffer = context.kv().key().duplicate();
+            return ValString.create(ByteBufferUtils.toString(keyLookup.getValue(context.readTxn(), byteBuffer)));
+        };
     }
 
-    private Val createKeyVal(ByteBuffer byteBuffer) {
-        return ValString.create(ByteBufferUtils.toString(byteBuffer));
+    private Function<Context, StateValue> getStateValueExtractionFunction() {
+        return context -> stateValueSerde.read(context.kv().val());
     }
 }

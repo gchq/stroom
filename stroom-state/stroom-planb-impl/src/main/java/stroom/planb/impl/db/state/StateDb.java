@@ -51,17 +51,21 @@ public class StateDb implements Db<String, StateValue> {
                 StateSettings::getStateKeySchema,
                 StateKeySchema::getStateKeyType,
                 StateKeyType.HASHED);
+
+        final StateValueSerde stateValueSerde = new StandardStateValueSerde(byteBuffers);
+
         schema = switch (stateKeyType) {
-            case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite);
-            case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite);
-            case INT -> new IntegerKeySchema(env, byteBuffers, overwrite);
-            case LONG -> new LongKeySchema(env, byteBuffers, overwrite);
-            case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite);
-            case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite);
-            case STRING -> new StringKeySchema(env, byteBuffers, overwrite);
-            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
-            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
-            case VARIABLE -> new VariableKeySchema(env, byteBuffers, settings, hashClashCommitRunnable);
+            case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case INT -> new IntegerKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case LONG -> new LongKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case STRING -> new StringKeySchema(env, byteBuffers, overwrite, stateValueSerde);
+            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, stateValueSerde);
+            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, stateValueSerde);
+            case VARIABLE -> new VariableKeySchema(env, byteBuffers, settings, hashClashCommitRunnable,
+                    stateValueSerde);
         };
     }
 

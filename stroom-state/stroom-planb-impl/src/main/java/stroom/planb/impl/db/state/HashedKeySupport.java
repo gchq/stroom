@@ -6,14 +6,14 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.BBKV;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.ValUtil;
 import stroom.planb.impl.db.hash.Hash;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
+import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
@@ -45,13 +45,15 @@ class HashedKeySupport {
     private final boolean overwrite;
     private final LmdbKeySequence lmdbKeySequence;
     private final HashClashCount hashClashCount;
+    private final StateValueSerde stateValueSerde;
 
     public HashedKeySupport(final PlanBEnv env,
                             final Dbi<ByteBuffer> dbi,
                             final ByteBuffers byteBuffers,
                             final HashFactory hashFactory,
                             final boolean overwrite,
-                            final HashClashCount hashClashCount) {
+                            final HashClashCount hashClashCount,
+                            final StateValueSerde stateValueSerde) {
         this.env = env;
         this.dbi = dbi;
         this.byteBuffers = byteBuffers;
@@ -59,6 +61,7 @@ class HashedKeySupport {
         this.overwrite = overwrite;
         this.lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         this.hashClashCount = hashClashCount;
+        this.stateValueSerde = stateValueSerde;
     }
 
     public void insert(final LmdbWriter writer, final String key, final StateValue val) {
@@ -334,39 +337,35 @@ class HashedKeySupport {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
+        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                fieldIndex,
+                getKeyExtractionFunction(),
+                getStateValueExtractionFunction());
         StateSearchHelper.search(
                 criteria,
                 fieldIndex,
                 dateTimeSettings,
                 expressionPredicateFactory,
                 consumer,
-                getValExtractors(fieldIndex),
+                valuesExtractor,
                 env,
                 dbi);
     }
 
-    public ValExtractor[] getValExtractors(final FieldIndex fieldIndex) {
-        final ValExtractor[] extractors = new ValExtractor[fieldIndex.size()];
-        for (int i = 0; i < fieldIndex.getFields().length; i++) {
-            final String field = fieldIndex.getField(i);
-            extractors[i] = switch (field) {
-                case StateFields.KEY -> (readTxn, kv) -> {
-                    final int keyLength = kv.val().getInt(0);
-                    return ValString.create(ByteBufferUtils.toString(kv.val().slice(Integer.BYTES, keyLength)));
-                };
-                case StateFields.VALUE_TYPE -> (readTxn, kv) -> {
-                    final int keyLength = kv.val().getInt(0);
-                    final int valueStart = Integer.BYTES + keyLength;
-                    return ValUtil.getType(kv.val().slice(valueStart, kv.val().limit() - valueStart));
-                };
-                case StateFields.VALUE -> (readTxn, kv) -> {
-                    final int keyLength = kv.val().getInt(0);
-                    final int valueStart = Integer.BYTES + keyLength;
-                    return ValUtil.getValue(kv.val().slice(valueStart, kv.val().limit() - valueStart));
-                };
-                default -> (readTxn, kv) -> ValNull.INSTANCE;
-            };
-        }
-        return extractors;
+    private Function<Context, Val> getKeyExtractionFunction() {
+        return context -> {
+            final ByteBuffer byteBuffer = context.kv().val();
+            final int keyLength = byteBuffer.getInt(0);
+            return ValString.create(ByteBufferUtils.toString(byteBuffer.slice(Integer.BYTES, keyLength)));
+        };
+    }
+
+    private Function<Context, StateValue> getStateValueExtractionFunction() {
+        return context -> {
+            final ByteBuffer byteBuffer = context.kv().val();
+            final int keyLength = byteBuffer.getInt(0);
+            final int valueStart = Integer.BYTES + keyLength;
+            return stateValueSerde.read(byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart));
+        };
     }
 }

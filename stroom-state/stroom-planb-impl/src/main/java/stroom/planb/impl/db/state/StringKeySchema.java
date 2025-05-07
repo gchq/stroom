@@ -11,10 +11,11 @@ import java.util.function.Function;
 
 class StringKeySchema extends SimpleKeySchema {
 
-    StringKeySchema(final PlanBEnv envSupport,
+    StringKeySchema(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
-                    final Boolean overwrite) {
-        super(envSupport, byteBuffers, overwrite);
+                    final Boolean overwrite,
+                    final StateValueSerde stateValueSerde) {
+        super(env, byteBuffers, overwrite, stateValueSerde);
     }
 
     @Override
