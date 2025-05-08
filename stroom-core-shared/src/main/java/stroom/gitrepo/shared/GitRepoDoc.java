@@ -71,6 +71,13 @@ public class GitRepoDoc extends Doc {
     @JsonProperty
     private String path;
 
+    /**
+     * No-args constructor; needed by some code. Also causes issues with unit tests :-(
+     */
+    public GitRepoDoc() {
+        // No code
+    }
+
     @JsonCreator
     public GitRepoDoc(@JsonProperty("type") final String type,
                       @JsonProperty("uuid") final String uuid,
