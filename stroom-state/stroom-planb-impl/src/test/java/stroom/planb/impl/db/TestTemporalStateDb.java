@@ -20,19 +20,18 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,11 +68,11 @@ class TestTemporalStateDb {
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
             final TemporalState.Key key = TemporalState.Key.builder().name("TEST_KEY").effectiveTime(refTime).build();
-            final StateValue value = db.get(key);
+            final Val value = db.get(key);
             assertThat(value).isNotNull();
 //            assertThat(res.key()).isEqualTo("TEST_KEY");
 //            assertThat(res.effectiveTime()).isEqualTo(refTime);
-            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test");
 
             final FieldIndex fieldIndex = new FieldIndex();
@@ -210,7 +209,6 @@ class TestTemporalStateDb {
                             final int rows,
                             final long deltaSeconds) {
         db.write(writer -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
             for (int i = 0; i < rows; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
                 final TemporalState.Key k = TemporalState.Key
@@ -218,13 +216,7 @@ class TestTemporalStateDb {
                         .name(key)
                         .effectiveTime(effectiveTime)
                         .build();
-
-                final StateValue v = StateValue
-                        .builder()
-                        .typeId(StringValue.TYPE_ID)
-                        .byteBuffer(byteBuffer.duplicate())
-                        .build();
-
+                final Val v = ValString.create(value);
                 db.insert(writer, k, v);
             }
         });

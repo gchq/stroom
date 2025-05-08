@@ -3,9 +3,9 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalStateSettings;
+import stroom.query.language.functions.Val;
 
 import net.openhft.hashing.LongHashFunction;
 import org.lmdbjava.CursorIterable;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class TemporalStateDb extends AbstractDb<Key, StateValue> {
+public class TemporalStateDb extends AbstractDb<Key, Val> {
 
     TemporalStateDb(final Path path,
                     final ByteBuffers byteBuffers) {
@@ -85,7 +85,7 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
                                         .name(keyBytes)
                                         .effectiveTime(effectiveTime)
                                         .build();
-                                final StateValue value = serde.getVal(kv);
+                                final Val value = serde.getVal(kv);
                                 return new TemporalState(key, value);
                             }
                         }
@@ -104,14 +104,14 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
         read(readTxn -> {
             write(writer -> {
                 Key lastKey = null;
-                StateValue lastValue = null;
+                Val lastValue = null;
                 try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
                     final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
                     while (iterator.hasNext()
                            && !Thread.currentThread().isInterrupted()) {
                         final BBKV kv = BBKV.create(iterator.next());
                         final Key key = serde.getKey(kv);
-                        final StateValue value = serde.getVal(kv);
+                        final Val value = serde.getVal(kv);
 
                         if (key.getEffectiveTime() <= deleteBeforeMs) {
                             // If this is data we no longer want to retain then delete it.
@@ -121,7 +121,7 @@ public class TemporalStateDb extends AbstractDb<Key, StateValue> {
                         } else {
                             if (lastKey != null &&
                                 Arrays.equals(lastKey.getBytes(), key.getBytes()) &&
-                                lastValue.getByteBuffer().equals(value.getByteBuffer())) {
+                                lastValue.equals(value)) {
                                 if (key.getEffectiveTime() <= condenseBeforeMs) {
                                     // If the key and value are the same then delete the duplicate entry.
                                     dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());

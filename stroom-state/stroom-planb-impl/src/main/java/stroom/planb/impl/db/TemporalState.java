@@ -2,7 +2,7 @@ package stroom.planb.impl.db;
 
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.TemporalState.Key;
-import stroom.planb.impl.db.state.StateValue;
+import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,11 +15,11 @@ import java.time.Instant;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-public class TemporalState extends KV<Key, StateValue> implements PlanBValue {
+public class TemporalState extends KV<Key, Val> implements PlanBValue {
 
     @JsonCreator
     public TemporalState(@JsonProperty("key") final Key key,
-                         @JsonProperty("value") final StateValue value) {
+                         @JsonProperty("value") final Val value) {
         super(key, value);
     }
 
@@ -31,7 +31,7 @@ public class TemporalState extends KV<Key, StateValue> implements PlanBValue {
         return new Builder();
     }
 
-    public static class Builder extends AbstractKVBuilder<TemporalState, Builder, Key, StateValue> {
+    public static class Builder extends AbstractKVBuilder<TemporalState, Builder, Key, Val> {
 
         private Builder() {
         }

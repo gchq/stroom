@@ -30,28 +30,29 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * The simplest schema that just stores the key and value directly.
  */
-abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
+abstract class SimpleKeySchema extends AbstractSchema<String, Val> {
 
     private static final byte[] NAME = "db".getBytes(UTF_8);
 
     private final PutFlags[] putFlags;
-    private final StateValueSerde stateValueSerde;
+    private final ValSerde valSerde;
 
     SimpleKeySchema(final PlanBEnv envSupport,
                     final ByteBuffers byteBuffers,
                     final Boolean overwrite,
-                    final StateValueSerde stateValueSerde) {
+                    final ValSerde valSerde) {
         super(envSupport, byteBuffers);
-        this.stateValueSerde = stateValueSerde;
+        this.valSerde = valSerde;
         this.putFlags = overwrite
                 ? new PutFlags[]{}
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<String, Val> kv) {
         useKey(kv.key(), keyByteBuffer -> {
-            stateValueSerde.write(kv.val(), valueByteBuffer -> {
+            final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
+            valSerde.write(writeTxn, kv.val(), valueByteBuffer -> {
                 if (dbi.put(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer, putFlags)) {
                     writer.tryCommit();
                 }
@@ -88,13 +89,13 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
     }
 
     @Override
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         return useKey(key, keyByteBuffer -> env.read(readTxn -> {
             final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
             if (valueByteBuffer == null) {
                 return null;
             }
-            return stateValueSerde.read(valueByteBuffer);
+            return valSerde.read(readTxn, valueByteBuffer);
         }));
     }
 
@@ -106,19 +107,23 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
-        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
-                fieldIndex,
-                getKeyExtractionFunction(),
-                getStateValueExtractionFunction());
-        StateSearchHelper.search(
-                criteria,
-                fieldIndex,
-                dateTimeSettings,
-                expressionPredicateFactory,
-                consumer,
-                valuesExtractor,
-                env,
-                dbi);
+        env.read(readTxn -> {
+            final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                    fieldIndex,
+                    getKeyExtractionFunction(),
+                    getValExtractionFunction(readTxn));
+            StateSearchHelper.search(
+                    readTxn,
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    consumer,
+                    valuesExtractor,
+                    env,
+                    dbi);
+            return null;
+        });
     }
 
     private Function<Context, Val> getKeyExtractionFunction() {
@@ -128,8 +133,8 @@ abstract class SimpleKeySchema extends AbstractSchema<String, StateValue> {
         };
     }
 
-    private Function<Context, StateValue> getStateValueExtractionFunction() {
-        return context -> stateValueSerde.read(context.kv().val());
+    private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
+        return context -> valSerde.read(readTxn, context.kv().val());
     }
 
     abstract Val createKeyVal(ByteBuffer byteBuffer);

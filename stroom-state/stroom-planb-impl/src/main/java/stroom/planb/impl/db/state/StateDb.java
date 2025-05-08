@@ -13,6 +13,7 @@ import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,12 +21,12 @@ import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
-public class StateDb implements Db<String, StateValue> {
+public class StateDb implements Db<String, Val> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateDb.class);
 
     private final PlanBEnv env;
-    private final Schema<String, StateValue> schema;
+    private final Schema<String, Val> schema;
 
     public StateDb(final Path path,
                    final ByteBuffers byteBuffers) {
@@ -52,7 +53,7 @@ public class StateDb implements Db<String, StateValue> {
                 StateKeySchema::getStateKeyType,
                 StateKeyType.HASHED);
 
-        final StateValueSerde stateValueSerde = new StandardStateValueSerde(byteBuffers);
+        final ValSerde stateValueSerde = new StandardStateValueSerde(byteBuffers);
 
         schema = switch (stateKeyType) {
             case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite, stateValueSerde);
@@ -84,7 +85,7 @@ public class StateDb implements Db<String, StateValue> {
     }
 
     public State getState(final StateRequest request) {
-        final StateValue value = get(request.key());
+        final Val value = get(request.key());
         if (value == null) {
             return null;
         }
@@ -92,7 +93,7 @@ public class StateDb implements Db<String, StateValue> {
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<String, Val> kv) {
         schema.insert(writer, kv);
     }
 
@@ -107,7 +108,7 @@ public class StateDb implements Db<String, StateValue> {
     }
 
     @Override
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         return schema.get(key);
     }
 

@@ -26,28 +26,29 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.PutFlags;
+import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-public class LookupKeySchema extends AbstractSchema<String, StateValue> {
+public class LookupKeySchema extends AbstractSchema<String, Val> {
 
     private final HashFactory hashFactory;
     private final LookupDb keyLookup;
     private final HashClashCount hashClashCount;
     private final PutFlags[] putFlags;
-    private final StateValueSerde stateValueSerde;
+    private final ValSerde valSerde;
 
     LookupKeySchema(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final StateSettings settings,
                     final HashClashCount hashClashCount,
-                    final StateValueSerde stateValueSerde) {
+                    final ValSerde valSerde) {
         super(env, byteBuffers);
         this.hashClashCount = hashClashCount;
-        this.stateValueSerde = stateValueSerde;
+        this.valSerde = valSerde;
 
         hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -60,16 +61,17 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     }
 
-    private byte[] parseKey(String key) {
+    private byte[] parseKey(final String key) {
         return key.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<String, Val> kv) {
+        final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         final byte[] keyBytes = parseKey(kv.key());
-        keyLookup.put(writer.getWriteTxn(), keyBytes, keyIdBuffer -> {
-            stateValueSerde.write(kv.val(), valueByteBuffer -> {
-                if (dbi.put(writer.getWriteTxn(), keyIdBuffer, valueByteBuffer, putFlags)) {
+        keyLookup.put(writeTxn, keyBytes, keyIdBuffer -> {
+            valSerde.write(writeTxn, kv.val(), valueByteBuffer -> {
+                if (dbi.put(writeTxn, keyIdBuffer, valueByteBuffer, putFlags)) {
                     writer.tryCommit();
                 }
             });
@@ -120,7 +122,7 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
     }
 
     @Override
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         final byte[] keyBytes = parseKey(key);
         return env.read(readTxn -> keyLookup.get(readTxn, keyBytes, optionalRealKey -> {
             if (optionalRealKey.isEmpty()) {
@@ -131,7 +133,7 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
             if (valueByteBuffer == null) {
                 return null;
             }
-            return stateValueSerde.read(valueByteBuffer);
+            return valSerde.read(readTxn, valueByteBuffer);
         }));
     }
 
@@ -141,19 +143,23 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
-        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
-                fieldIndex,
-                getKeyExtractionFunction(),
-                getStateValueExtractionFunction());
-        StateSearchHelper.search(
-                criteria,
-                fieldIndex,
-                dateTimeSettings,
-                expressionPredicateFactory,
-                consumer,
-                valuesExtractor,
-                env,
-                dbi);
+        env.read(readTxn -> {
+            final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                    fieldIndex,
+                    getKeyExtractionFunction(),
+                    getValExtractionFunction(readTxn));
+            StateSearchHelper.search(
+                    readTxn,
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    consumer,
+                    valuesExtractor,
+                    env,
+                    dbi);
+            return null;
+        });
     }
 
     private Function<Context, Val> getKeyExtractionFunction() {
@@ -163,7 +169,7 @@ public class LookupKeySchema extends AbstractSchema<String, StateValue> {
         };
     }
 
-    private Function<Context, StateValue> getStateValueExtractionFunction() {
-        return context -> stateValueSerde.read(context.kv().val());
+    private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
+        return context -> valSerde.read(readTxn, context.kv().val());
     }
 }

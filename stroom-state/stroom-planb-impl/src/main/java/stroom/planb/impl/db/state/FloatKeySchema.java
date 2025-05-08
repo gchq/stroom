@@ -12,7 +12,7 @@ class FloatKeySchema extends SimpleKeySchema {
     FloatKeySchema(final PlanBEnv env,
                    final ByteBuffers byteBuffers,
                    final Boolean overwrite,
-                   final StateValueSerde stateValueSerde) {
+                   final ValSerde stateValueSerde) {
         super(env, byteBuffers, overwrite, stateValueSerde);
     }
 

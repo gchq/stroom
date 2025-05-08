@@ -1,15 +1,14 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalRangedState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
 
 import org.lmdbjava.CursorIterable.KeyVal;
 
@@ -22,7 +21,7 @@ import java.util.function.Predicate;
  * KEY =   <KEY_START><KEY_END><EFFECTIVE_TIME>
  * VALUE = <VALUE_TYPE><VALUE_BYTES>
  */
-public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
+public class TemporalRangedStateSerde implements Serde<Key, Val> {
 
     private static final int KEY_LENGTH = Long.BYTES + Long.BYTES + Long.BYTES;
 
@@ -45,14 +44,9 @@ public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
 
     @Override
     public <R> R createValueByteBuffer(final Key key,
-                                       final StateValue value,
+                                       final Val value,
                                        final Function<ByteBuffer, R> function) {
-        return byteBuffers.use(Byte.BYTES + value.getByteBuffer().limit(), valueByteBuffer -> {
-            valueByteBuffer.put(value.getTypeId());
-            valueByteBuffer.put(value.getByteBuffer());
-            valueByteBuffer.flip();
-            return function.apply(valueByteBuffer);
-        });
+        return ValSerdeUtil.write(value, byteBuffers, function);
     }
 
     @Override
@@ -90,9 +84,9 @@ public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
                     return ValDate.create(effectiveTime);
                 };
                 case TemporalRangedStateFields.VALUE_TYPE -> kv ->
-                        ValUtil.getType(kv.val().duplicate());
+                        ValString.create(ValSerdeUtil.read(kv.val().duplicate()).type().toString());
                 case TemporalRangedStateFields.VALUE -> kv ->
-                        ValUtil.getValue(kv.val().duplicate());
+                        ValSerdeUtil.read(kv.val().duplicate());
                 default -> byteBuffer -> ValNull.INSTANCE;
             };
         }
@@ -108,15 +102,9 @@ public class TemporalRangedStateSerde implements Serde<Key, StateValue> {
         return new Key(keyStart, keyEnd, effectiveTime);
     }
 
-
     @Override
-    public StateValue getVal(final BBKV kv) {
-        final ByteBuffer byteBuffer = kv.val();
-        final byte typeId = byteBuffer.get(0);
-        final int valueStart = Byte.BYTES;
-        final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-        final byte[] valueBytes = ByteBufferUtils.toBytes(slice);
-        return new StateValue(typeId, ByteBuffer.wrap(valueBytes));
+    public Val getVal(final BBKV kv) {
+        return ValSerdeUtil.read(kv.val());
     }
 
     @Override

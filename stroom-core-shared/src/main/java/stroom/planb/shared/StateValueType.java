@@ -3,6 +3,8 @@ package stroom.planb.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum StateValueType implements HasDisplayValue {
+    // Treat all values as booleans.
+    BOOLEAN("True or False"),
     // Treat all values as bytes.
     BYTE("Byte (1 byte from +127 to -128)"),
     // Treat all values as shorts.

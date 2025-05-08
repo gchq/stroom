@@ -12,12 +12,13 @@ import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
-class HashedKeySchema extends AbstractSchema<String, StateValue> {
+class HashedKeySchema extends AbstractSchema<String, Val> {
 
     private final HashedKeySupport hashedKeySupport;
 
@@ -25,7 +26,7 @@ class HashedKeySchema extends AbstractSchema<String, StateValue> {
                            final ByteBuffers byteBuffers,
                            final StateSettings settings,
                            final HashClashCount hashClashCount,
-                           final StateValueSerde stateValueSerde) {
+                           final ValSerde stateValueSerde) {
         super(env, byteBuffers);
         final HashFactory hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -43,12 +44,12 @@ class HashedKeySchema extends AbstractSchema<String, StateValue> {
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<String, Val> kv) {
         hashedKeySupport.insert(writer, kv.key(), kv.val());
     }
 
     @Override
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         return hashedKeySupport.get(key);
     }
 

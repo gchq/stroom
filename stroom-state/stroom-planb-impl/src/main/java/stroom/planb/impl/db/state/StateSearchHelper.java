@@ -11,6 +11,7 @@ import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 
 import org.lmdbjava.CursorIterable;
@@ -26,7 +27,8 @@ import java.util.function.Predicate;
 
 public class StateSearchHelper {
 
-    public static void search(final ExpressionCriteria criteria,
+    public static void search(final Txn<ByteBuffer> readTxn,
+                              final ExpressionCriteria criteria,
                               final FieldIndex fieldIndex,
                               final DateTimeSettings dateTimeSettings,
                               final ExpressionPredicateFactory expressionPredicateFactory,
@@ -44,17 +46,14 @@ public class StateSearchHelper {
         final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-        env.read(readTxn -> {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
-                    if (predicate.test(vals)) {
-                        consumer.accept(vals);
-                    }
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
+            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
+                final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
+                if (predicate.test(vals)) {
+                    consumer.accept(vals);
                 }
             }
-            return null;
-        });
+        }
     }
 
     private static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
@@ -69,32 +68,32 @@ public class StateSearchHelper {
 
     public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
                                                         final Function<Context, Val> keyValueConverter,
-                                                        final Function<Context, StateValue> stateValueFunction) {
+                                                        final Function<Context, Val> valValueFunction) {
         final String[] fields = fieldIndex.getFields();
         final Converter[] converters = new Converter[fields.length];
         final boolean extractValue = fieldIndex.getPos(StateFields.VALUE_TYPE) != null ||
                                      fieldIndex.getPos(StateFields.VALUE) != null;
-        final Function<Context, StateValue> svf;
+        final Function<Context, Val> svf;
         if (extractValue) {
-            svf = stateValueFunction;
+            svf = valValueFunction;
         } else {
             svf = context -> null;
         }
 
         for (int i = 0; i < fields.length; i++) {
             converters[i] = switch (fields[i]) {
-                case StateFields.KEY -> (context, stateValue) -> keyValueConverter.apply(context);
-                case StateFields.VALUE_TYPE -> (context, stateValue) -> stateValue.getType();
-                case StateFields.VALUE -> (context, stateValue) -> stateValue.getValue();
+                case StateFields.KEY -> (context, val) -> keyValueConverter.apply(context);
+                case StateFields.VALUE_TYPE -> (context, val) -> ValString.create(val.type().toString());
+                case StateFields.VALUE -> (context, val) -> val;
                 default -> (context, stateValue) -> ValNull.INSTANCE;
             };
         }
         return (readTxn, kv) -> {
             final Context context = new Context(readTxn, kv);
             final Val[] values = new Val[fields.length];
-            final StateValue stateValue = svf.apply(context);
+            final Val val = svf.apply(context);
             for (int i = 0; i < fields.length; i++) {
-                values[i] = converters[i].convert(context, stateValue);
+                values[i] = converters[i].convert(context, val);
             }
             return values;
         };
@@ -106,6 +105,6 @@ public class StateSearchHelper {
 
     public interface Converter {
 
-        Val convert(Context context, StateValue stateValue);
+        Val convert(Context context, Val val);
     }
 }

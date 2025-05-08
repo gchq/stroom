@@ -7,6 +7,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.classgraph
+    implementation libs.fast.infoset
     implementation libs.guava
     implementation libs.jackson.annotations
     implementation libs.jaxb.api

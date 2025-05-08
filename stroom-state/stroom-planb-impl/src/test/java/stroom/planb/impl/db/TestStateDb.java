@@ -21,7 +21,6 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
@@ -32,7 +31,6 @@ import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateFields;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
@@ -41,9 +39,11 @@ import stroom.planb.shared.StateType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDouble;
 import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.TestUtil;
@@ -60,8 +60,6 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -90,42 +88,36 @@ class TestStateDb {
     private static final String MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE).toString();
 
     @Test
-    void testReadWrite(@TempDir Path tempDir) {
+    void testReadWrite(@TempDir final Path tempDir) {
         final Function<Integer, String> keyFunction = i -> "TEST_KEY";
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWriteRead(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
     }
 
     @Test
-    void testReadWriteIntegerMax(@TempDir Path tempDir) {
+    void testReadWriteIntegerMax(@TempDir final Path tempDir) {
         testReadWriteKeyType(tempDir, StateKeyType.INT, String.valueOf(Integer.MAX_VALUE));
     }
 
     @Test
-    void testReadWriteIntegerMin(@TempDir Path tempDir) {
+    void testReadWriteIntegerMin(@TempDir final Path tempDir) {
         testReadWriteKeyType(tempDir, StateKeyType.INT, String.valueOf(Integer.MIN_VALUE));
     }
 
     @Test
-    void testReadWriteLongMax(@TempDir Path tempDir) {
+    void testReadWriteLongMax(@TempDir final Path tempDir) {
         testReadWriteKeyType(tempDir, StateKeyType.LONG, String.valueOf(Long.MAX_VALUE));
     }
 
     @Test
-    void testReadWriteLongMin(@TempDir Path tempDir) {
+    void testReadWriteLongMin(@TempDir final Path tempDir) {
         testReadWriteKeyType(tempDir, StateKeyType.LONG, String.valueOf(Long.MIN_VALUE));
     }
 
-    void testReadWriteKeyType(@TempDir Path tempDir, StateKeyType stateKeyType, String key) {
+    void testReadWriteKeyType(@TempDir final Path tempDir, final StateKeyType stateKeyType, final String key) {
         final Function<Integer, String> keyFunction = i -> key;
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
-        StateSettings settings = StateSettings
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
+        final StateSettings settings = StateSettings
                 .builder()
                 .stateKeySchema(StateKeySchema.builder().stateKeyType(stateKeyType).build())
                 .build();
@@ -140,17 +132,11 @@ class TestStateDb {
         Files.createDirectory(dbPath2);
 
         final Function<Integer, String> keyFunction = i -> "TEST_KEY1";
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
         testWrite(dbPath1, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
         final Function<Integer, String> keyFunction2 = i -> "TEST_KEY2";
-        final Function<Integer, StateValue> valueFunction2 = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test2" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction2 = i -> ValString.create("test2" + i);
         testWrite(dbPath2, BASIC_SETTINGS, 100, keyFunction2, valueFunction2);
 
         try (final StateDb db = new StateDb(dbPath1, BYTE_BUFFERS)) {
@@ -224,10 +210,7 @@ class TestStateDb {
     void testZipUnzip(@TempDir final Path rootDir) throws IOException {
         // Simulate constant writing to shard.
         final Function<Integer, String> keyFunction = i -> "TEST_KEY1";
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
 
         final Path source = rootDir.resolve("source");
         final Path zipFile = rootDir.resolve("zip.zip");
@@ -285,12 +268,9 @@ class TestStateDb {
     }
 
     @Test
-    void testDeleteWhileRead(@TempDir Path tempDir) {
+    void testDeleteWhileRead(@TempDir final Path tempDir) {
         final Function<Integer, String> keyFunction = i -> "TEST_KEY";
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWrite(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
         try (final StateDb db = new StateDb(
@@ -302,9 +282,9 @@ class TestStateDb {
             final String key = "TEST_KEY";
 
             // Read the data.
-            StateValue value = db.get(key);
+            Val value = db.get(key);
             assertThat(value).isNotNull();
-            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test99");
 
             // Delete the data.
@@ -313,7 +293,7 @@ class TestStateDb {
             // Try and read.
             value = db.get(key);
             assertThat(value).isNotNull();
-            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test99");
         }
     }
@@ -321,10 +301,7 @@ class TestStateDb {
     private void writePart(final MergeProcessor mergeProcessor, final String keyName) {
         try {
             final Function<Integer, String> keyFunction = i -> keyName;
-            final Function<Integer, StateValue> valueFunction = i -> {
-                final ByteBuffer byteBuffer = ByteBuffer.wrap(("test1" + i).getBytes(StandardCharsets.UTF_8));
-                return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-            };
+            final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
             final Path partPath = Files.createTempDirectory("part");
             final Path mapPath = partPath.resolve(MAP_UUID);
             Files.createDirectories(mapPath);
@@ -564,10 +541,7 @@ class TestStateDb {
                      final int rows,
                      final boolean read) {
         final Function<Integer, String> keyFunction = i -> key;
-        final Function<Integer, StateValue> valueFunction = i -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
-            return StateValue.builder().typeId(StringValue.TYPE_ID).byteBuffer(byteBuffer).build();
-        };
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWrite(tempDir, settings, rows, keyFunction, valueFunction);
         if (read) {
             testRead(tempDir, settings, rows, keyFunction);
@@ -578,7 +552,7 @@ class TestStateDb {
                                final StateSettings settings,
                                final int insertRows,
                                final Function<Integer, String> keyFunction,
-                               final Function<Integer, StateValue> valueFunction) {
+                               final Function<Integer, Val> valueFunction) {
         testWrite(tempDir, settings, insertRows, keyFunction, valueFunction);
         testRead(tempDir, settings, insertRows, keyFunction);
     }
@@ -587,7 +561,7 @@ class TestStateDb {
                            final StateSettings settings,
                            final int insertRows,
                            final Function<Integer, String> keyFunction,
-                           final Function<Integer, StateValue> valueFunction) {
+                           final Function<Integer, Val> valueFunction) {
         try (final StateDb db = new StateDb(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
@@ -600,9 +574,9 @@ class TestStateDb {
         try (final StateDb db = new StateDb(tempDir, BYTE_BUFFERS, settings, true)) {
             assertThat(db.count()).isEqualTo(1);
             final String key = keyFunction.apply(0);
-            final StateValue value = db.get(key);
+            final Val value = db.get(key);
             assertThat(value).isNotNull();
-            assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value.toString()).isEqualTo("test" + (expectedRows - 1));
 
             final FieldIndex fieldIndex = new FieldIndex();
@@ -619,7 +593,7 @@ class TestStateDb {
                     results::add);
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst()[0].toString()).isEqualTo(key);
-            assertThat(results.getFirst()[1].toString()).isEqualTo("String");
+            assertThat(results.getFirst()[1].toString()).isEqualTo("string");
             assertThat(results.getFirst()[2].toString()).isEqualTo("test" + (expectedRows - 1));
         }
     }
@@ -645,11 +619,11 @@ class TestStateDb {
     private void insertData(final StateDb db,
                             final int rows,
                             final Function<Integer, String> keyFunction,
-                            final Function<Integer, StateValue> valueFunction) {
+                            final Function<Integer, Val> valueFunction) {
         try (final LmdbWriter writer = db.createWriter()) {
             for (int i = 0; i < rows; i++) {
                 final String k = keyFunction.apply(i);
-                final StateValue v = valueFunction.apply(i);
+                final Val v = valueFunction.apply(i);
                 db.insert(writer, new State(k, v));
             }
         }

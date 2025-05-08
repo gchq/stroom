@@ -39,7 +39,7 @@ import java.util.function.Function;
 /**
  * A schema that tries a number of different approaches to store keys in the most efficient way depending on their type.
  */
-class VariableKeySchema extends AbstractSchema<String, StateValue> {
+class VariableKeySchema extends AbstractSchema<String, Val> {
 
     private static final int USE_LOOKUP_THRESHOLD = 32;
 
@@ -47,15 +47,15 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
     private final HashFactory hashFactory;
     private final HashClashCount hashClashCount;
     private final LookupDb keyLookup;
-    private final StateValueSerde stateValueSerde;
+    private final ValSerde valSerde;
 
     public VariableKeySchema(final PlanBEnv env,
                              final ByteBuffers byteBuffers,
                              final StateSettings settings,
                              final HashClashCount hashClashCount,
-                             final StateValueSerde stateValueSerde) {
+                             final ValSerde valSerde) {
         super(env, byteBuffers);
-        this.stateValueSerde = stateValueSerde;
+        this.valSerde = valSerde;
 
         hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -133,9 +133,9 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<String, StateValue> kv) {
+    public void insert(final LmdbWriter writer, final KV<String, Val> kv) {
         useVariableKey(writer.getWriteTxn(), kv.key(), (txn, keyByteBuffer) -> {
-            stateValueSerde.write(kv.val(), valueByteBuffer -> {
+            valSerde.write(txn, kv.val(), valueByteBuffer -> {
                 if (dbi.put(txn, keyByteBuffer, valueByteBuffer, putFlags)) {
                     writer.tryCommit();
                 }
@@ -145,13 +145,13 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
     }
 
     @Override
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         return env.read(readTxn -> useVariableKey(readTxn, key, (txn, keyByteBuffer) -> {
             final ByteBuffer valueByteBuffer = dbi.get(txn, keyByteBuffer);
             if (valueByteBuffer == null) {
                 return null;
             }
-            return stateValueSerde.read(valueByteBuffer);
+            return valSerde.read(readTxn, valueByteBuffer);
         }, true));
     }
 
@@ -219,19 +219,23 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
-        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
-                fieldIndex,
-                getKeyExtractionFunction(),
-                getStateValueExtractionFunction());
-        StateSearchHelper.search(
-                criteria,
-                fieldIndex,
-                dateTimeSettings,
-                expressionPredicateFactory,
-                consumer,
-                valuesExtractor,
-                env,
-                dbi);
+        env.read(readTxn -> {
+            final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                    fieldIndex,
+                    getKeyExtractionFunction(),
+                    getValExtractionFunction(readTxn));
+            StateSearchHelper.search(
+                    readTxn,
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    consumer,
+                    valuesExtractor,
+                    env,
+                    dbi);
+            return null;
+        });
     }
 
     private Function<Context, Val> getKeyExtractionFunction() {
@@ -253,7 +257,7 @@ class VariableKeySchema extends AbstractSchema<String, StateValue> {
         };
     }
 
-    private Function<Context, StateValue> getStateValueExtractionFunction() {
-        return context -> stateValueSerde.read(context.kv().val());
+    private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
+        return context -> valSerde.read(readTxn, context.kv().val());
     }
 }

@@ -374,7 +374,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         return serde.createKeyByteBuffer(key, keyByteBuffer ->
                 serde.createPrefixPredicate(key, predicate -> {
                     // Just try to get directly first without the overhead of a cursor.
-                    V v = getDirect(readTxn, keyByteBuffer, predicate);
+                    final V v = getDirect(readTxn, keyByteBuffer, predicate);
                     if (v != null) {
                         return v;
                     }

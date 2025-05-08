@@ -4,7 +4,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
@@ -23,7 +22,7 @@ import java.util.function.Predicate;
  * KEY =   <KEY_HASH><EFFECTIVE_TIME>
  * VALUE = <KEY_LENGTH><KEY_BYTES><VALUE_TYPE><VALUE_BYTES>
  */
-public class TemporalStateSerde implements Serde<Key, StateValue> {
+public class TemporalStateSerde implements Serde<Key, Val> {
 
     private static final int KEY_LENGTH = Long.BYTES + Long.BYTES;
 
@@ -47,16 +46,9 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
 
     @Override
     public <T> T createValueByteBuffer(final Key key,
-                                       final StateValue value,
+                                       final Val value,
                                        final Function<ByteBuffer, T> function) {
-        return byteBuffers.use(Integer.BYTES + key.getBytes().length + Byte.BYTES + value.getByteBuffer().limit(),
-                valueByteBuffer -> {
-                    putPrefix(valueByteBuffer, key.getBytes());
-                    valueByteBuffer.put(value.getTypeId());
-                    valueByteBuffer.put(value.getByteBuffer());
-                    valueByteBuffer.flip();
-                    return function.apply(valueByteBuffer);
-                });
+        return ValSerdeUtil.write(value, byteBuffers, function);
     }
 
     @Override
@@ -103,12 +95,14 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
                 case TemporalStateFields.VALUE_TYPE -> kv -> {
                     final int keyLength = kv.val().getInt(0);
                     final int valueStart = Integer.BYTES + keyLength;
-                    return ValUtil.getType(kv.val().slice(valueStart, kv.val().limit() - valueStart));
+                    return ValString.create(ValSerdeUtil
+                            .read(kv.val().slice(valueStart, kv.val().limit() - valueStart)).type()
+                            .toString());
                 };
                 case TemporalStateFields.VALUE -> kv -> {
                     final int keyLength = kv.val().getInt(0);
                     final int valueStart = Integer.BYTES + keyLength;
-                    return ValUtil.getValue(kv.val().slice(valueStart, kv.val().limit() - valueStart));
+                    return ValSerdeUtil.read(kv.val().slice(valueStart, kv.val().limit() - valueStart));
                 };
                 default -> byteBuffer -> ValNull.INSTANCE;
             };
@@ -127,14 +121,12 @@ public class TemporalStateSerde implements Serde<Key, StateValue> {
     }
 
     @Override
-    public StateValue getVal(final BBKV kv) {
+    public Val getVal(final BBKV kv) {
         final ByteBuffer byteBuffer = kv.val();
         final int keyLength = byteBuffer.getInt(0);
-        final byte typeId = byteBuffer.get(Integer.BYTES + keyLength);
-        final int valueStart = Integer.BYTES + keyLength + Byte.BYTES;
+        final int valueStart = Integer.BYTES + keyLength;
         final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-        final byte[] valueBytes = ByteBufferUtils.toBytes(slice);
-        return new StateValue(typeId, ByteBuffer.wrap(valueBytes));
+        return ValSerdeUtil.read(slice);
     }
 
     @Override

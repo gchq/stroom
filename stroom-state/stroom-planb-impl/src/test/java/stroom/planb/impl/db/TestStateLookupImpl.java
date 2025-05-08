@@ -2,10 +2,10 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalStateSettings;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,7 +15,6 @@ import stroom.util.shared.ModelStringUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -77,14 +76,9 @@ class TestStateLookupImpl {
                         for (int keyIdx = 0; keyIdx < entryCount; keyIdx++) {
                             final String key = buildKey(keyIdx);
                             final String val = buildKeyStoreValue(mapName, keyIdx, key);
-                            final ByteBuffer byteBuffer = ByteBuffer.wrap(val.getBytes(StandardCharsets.UTF_8));
 
                             final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
-                            final StateValue v = StateValue
-                                    .builder()
-                                    .typeId(StringValue.TYPE_ID)
-                                    .byteBuffer(byteBuffer)
-                                    .build();
+                            final Val v = ValString.create(val);
 
                             db.insert(writer, k, v);
                         }

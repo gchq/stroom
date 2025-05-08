@@ -9,16 +9,18 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.refdata.store.UnknownRefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.planb.impl.db.TemporalState;
+import stroom.query.language.functions.ValXml;
 import stroom.util.logging.LogUtil;
 
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -62,27 +64,25 @@ public class StateValueProxy implements RefDataValueProxy {
 
     @Override
     public Optional<RefDataValue> supplyValue() {
-        switch (state.val().getTypeId()) {
-            case StringValue.TYPE_ID -> {
-                return Optional.of(new StringValue(state.val().toString()));
-            }
-            case FastInfosetValue.TYPE_ID -> {
-                return Optional.of(new FastInfosetValue(state.val().getByteBuffer().duplicate()));
-            }
-            case NullValue.TYPE_ID -> {
-                return Optional.of(NullValue.getInstance());
-            }
-            default -> {
-                return Optional.of(new UnknownRefDataValue(state.val().getByteBuffer().duplicate()));
-            }
-        }
+        return switch (state.val().type()) {
+            case XML -> Optional.of(new FastInfosetValue(((ValXml) state.val()).getByteBuffer().duplicate()));
+            case NULL -> Optional.of(NullValue.getInstance());
+            default -> Optional.of(new StringValue(state.val().toString()));
+        };
     }
 
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
-        typedByteBufferConsumer.accept(new TypedByteBuffer(
-                state.val().getTypeId(),
-                state.val().getByteBuffer().duplicate()));
+        switch (state.val().type()) {
+            case XML -> typedByteBufferConsumer.accept(new TypedByteBuffer(
+                    FastInfosetValue.TYPE_ID,
+                    ((ValXml) state.val()).getByteBuffer().duplicate()));
+            case NULL -> {
+            }
+            default -> typedByteBufferConsumer.accept(new TypedByteBuffer(
+                    StringValue.TYPE_ID,
+                    ByteBuffer.wrap(state.val().toString().getBytes(StandardCharsets.UTF_8))));
+        }
         return true;
     }
 

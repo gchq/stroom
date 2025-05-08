@@ -6,6 +6,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.BBKV;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.ValSerdeUtil;
 import stroom.planb.impl.db.hash.Hash;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
@@ -45,7 +46,7 @@ class HashedKeySupport {
     private final boolean overwrite;
     private final LmdbKeySequence lmdbKeySequence;
     private final HashClashCount hashClashCount;
-    private final StateValueSerde stateValueSerde;
+    private final ValSerde stateValueSerde;
 
     public HashedKeySupport(final PlanBEnv env,
                             final Dbi<ByteBuffer> dbi,
@@ -53,7 +54,7 @@ class HashedKeySupport {
                             final HashFactory hashFactory,
                             final boolean overwrite,
                             final HashClashCount hashClashCount,
-                            final StateValueSerde stateValueSerde) {
+                            final ValSerde stateValueSerde) {
         this.env = env;
         this.dbi = dbi;
         this.byteBuffers = byteBuffers;
@@ -64,7 +65,7 @@ class HashedKeySupport {
         this.stateValueSerde = stateValueSerde;
     }
 
-    public void insert(final LmdbWriter writer, final String key, final StateValue val) {
+    public void insert(final LmdbWriter writer, final String key, final Val val) {
         // Split byte hash writing.
         // We've been told that we need to use a key hash so try that.
         final byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
@@ -73,16 +74,13 @@ class HashedKeySupport {
             hash.write(keyByteBuffer);
             keyByteBuffer.flip();
 
-            byteBuffers.use(Integer.BYTES + bytes.length + Byte.BYTES + val.getByteBuffer().limit(),
-                    valueByteBuffer -> {
-                        valueByteBuffer.putInt(bytes.length);
-                        valueByteBuffer.put(bytes);
-                        valueByteBuffer.put(val.getTypeId());
-                        valueByteBuffer.put(val.getByteBuffer());
-                        valueByteBuffer.flip();
-
-                        hashedKeyPut(writer, keyByteBuffer, valueByteBuffer);
-                    });
+            ValSerdeUtil.write(val, byteBuffers, Integer.BYTES + bytes.length, valueByteBuffer -> {
+                valueByteBuffer.putInt(bytes.length);
+                valueByteBuffer.put(bytes);
+            }, valueByteBuffer -> {
+                hashedKeyPut(writer, keyByteBuffer, valueByteBuffer);
+                return null;
+            });
         });
     }
 
@@ -199,16 +197,16 @@ class HashedKeySupport {
         consumer.accept(keyVal -> ByteBufferUtils.containsPrefix(keyVal.val(), slice));
     }
 
-    public StateValue get(final String key) {
+    public Val get(final String key) {
         final byte[] bytes = key.getBytes(StandardCharsets.UTF_8);
         return env.read(readTxn -> get(readTxn, bytes));
     }
 
-    private StateValue get(final Txn<ByteBuffer> readTxn, final byte[] key) {
+    private Val get(final Txn<ByteBuffer> readTxn, final byte[] key) {
         return createKeyByteBuffer(key, keyByteBuffer ->
                 createPrefixPredicate(key, predicate -> {
                     // Just try to get directly first without the overhead of a cursor.
-                    StateValue v = getDirect(readTxn, keyByteBuffer, predicate);
+                    Val v = getDirect(readTxn, keyByteBuffer, predicate);
                     if (v != null) {
                         return v;
                     }
@@ -246,9 +244,9 @@ class HashedKeySupport {
     /**
      * Direct lookup for exact key, assuming that there are no sequence rows.
      */
-    private StateValue getDirect(final Txn<ByteBuffer> readTxn,
-                                 final ByteBuffer keyByteBuffer,
-                                 final Predicate<BBKV> predicate) {
+    private Val getDirect(final Txn<ByteBuffer> readTxn,
+                          final ByteBuffer keyByteBuffer,
+                          final Predicate<BBKV> predicate) {
         final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
         final BBKV kv = new BBKV(keyByteBuffer, valueByteBuffer);
         if (predicate.test(kv)) {
@@ -261,9 +259,9 @@ class HashedKeySupport {
      * After trying and failing to get a value directly by exact key, iterate over any subsequent sequence rows that
      * may exist.
      */
-    private StateValue getWithCursor(final Txn<ByteBuffer> readTxn,
-                                     final ByteBuffer keyByteBuffer,
-                                     final Predicate<BBKV> predicate) {
+    private Val getWithCursor(final Txn<ByteBuffer> readTxn,
+                              final ByteBuffer keyByteBuffer,
+                              final Predicate<BBKV> predicate) {
         final KeyRange<ByteBuffer> keyRange =
                 new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, keyByteBuffer, keyByteBuffer);
         try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn, keyRange)) {
@@ -285,14 +283,12 @@ class HashedKeySupport {
         return null;
     }
 
-    public StateValue getVal(final BBKV kv) {
+    public Val getVal(final BBKV kv) {
         final ByteBuffer byteBuffer = kv.val();
         final int keyLength = byteBuffer.getInt(0);
-        final byte typeId = byteBuffer.get(Integer.BYTES + keyLength);
-        final int valueStart = Integer.BYTES + keyLength + Byte.BYTES;
+        final int valueStart = Integer.BYTES + keyLength;
         final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-        final byte[] valueBytes = ByteBufferUtils.toBytes(slice);
-        return new StateValue(typeId, ByteBuffer.wrap(valueBytes));
+        return ValSerdeUtil.read(slice);
     }
 
     public void merge(final Path source) {
@@ -337,19 +333,23 @@ class HashedKeySupport {
                        final DateTimeSettings dateTimeSettings,
                        final ExpressionPredicateFactory expressionPredicateFactory,
                        final ValuesConsumer consumer) {
-        final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
-                fieldIndex,
-                getKeyExtractionFunction(),
-                getStateValueExtractionFunction());
-        StateSearchHelper.search(
-                criteria,
-                fieldIndex,
-                dateTimeSettings,
-                expressionPredicateFactory,
-                consumer,
-                valuesExtractor,
-                env,
-                dbi);
+        env.read(readTxn -> {
+            final ValuesExtractor valuesExtractor = StateSearchHelper.createValuesExtractor(
+                    fieldIndex,
+                    getKeyExtractionFunction(),
+                    getValExtractionFunction(readTxn));
+            StateSearchHelper.search(
+                    readTxn,
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    consumer,
+                    valuesExtractor,
+                    env,
+                    dbi);
+            return null;
+        });
     }
 
     private Function<Context, Val> getKeyExtractionFunction() {
@@ -360,12 +360,12 @@ class HashedKeySupport {
         };
     }
 
-    private Function<Context, StateValue> getStateValueExtractionFunction() {
+    private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
         return context -> {
             final ByteBuffer byteBuffer = context.kv().val();
             final int keyLength = byteBuffer.getInt(0);
             final int valueStart = Integer.BYTES + keyLength;
-            return stateValueSerde.read(byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart));
+            return stateValueSerde.read(readTxn, byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart));
         };
     }
 }

@@ -20,21 +20,19 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.db.TemporalRangedState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -86,7 +84,7 @@ class TestTemporalRangedStateDb {
             assertThat(state.key().getKeyStart()).isEqualTo(10);
             assertThat(state.key().getKeyEnd()).isEqualTo(30);
             assertThat(state.key().getEffectiveTime()).isEqualTo(refTime.toEpochMilli());
-            assertThat(state.val().getTypeId()).isEqualTo(StringValue.TYPE_ID);
+            assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test");
 
 //            final TemporalRangedStateRequest stateRequest =
@@ -173,9 +171,9 @@ class TestTemporalRangedStateDb {
     private void testGet(final TemporalRangedStateDb db) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
-        final StateValue value = db.get(k);
+        final Val value = db.get(k);
         assertThat(value).isNotNull();
-        assertThat(value.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+        assertThat(value.type()).isEqualTo(Type.STRING);
         assertThat(value.toString()).isEqualTo("test");
     }
 
@@ -234,15 +232,10 @@ class TestTemporalRangedStateDb {
                             final int rows,
                             final long deltaSeconds) {
         db.write(writer -> {
-            final ByteBuffer byteBuffer = ByteBuffer.wrap((value).getBytes(StandardCharsets.UTF_8));
             for (int i = 0; i < rows; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
                 final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
-                final StateValue v = StateValue
-                        .builder()
-                        .typeId(StringValue.TYPE_ID)
-                        .byteBuffer(byteBuffer.duplicate())
-                        .build();
+                final Val v = ValString.create(value);
                 db.insert(writer, k, v);
             }
         });

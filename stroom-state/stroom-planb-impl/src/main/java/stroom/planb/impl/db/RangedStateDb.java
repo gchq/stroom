@@ -3,9 +3,9 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.RangedState.Key;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangedStateSettings;
+import stroom.query.language.functions.Val;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Iterator;
 
-public class RangedStateDb extends AbstractDb<Key, StateValue> {
+public class RangedStateDb extends AbstractDb<Key, Val> {
 
     private static final ByteBuffer ZERO = ByteBuffer.allocateDirect(0);
 
@@ -84,7 +84,7 @@ public class RangedStateDb extends AbstractDb<Key, StateValue> {
                             return null;
                         } else if (keyStart <= request.key()) {
                             final Key key = Key.builder().keyStart(keyStart).keyEnd(keyEnd).build();
-                            final StateValue value = serde.getVal(kv);
+                            final Val value = serde.getVal(kv);
                             return new RangedState(key, value);
                         }
                     }

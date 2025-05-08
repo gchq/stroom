@@ -3,7 +3,6 @@ package stroom.planb.impl.data;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.pipeline.refdata.store.StringValue;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.PlanBValue;
@@ -23,7 +22,6 @@ import stroom.planb.impl.db.TemporalStateRequest;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
-import stroom.planb.impl.db.state.StateValue;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SnapshotSettings;
@@ -49,7 +47,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Supplier;
@@ -125,7 +122,7 @@ public class PlanBQueryService {
     }
 
     private PlanBValue getPlanBValue(final GetRequest request,
-                                    final boolean local) {
+                                     final boolean local) {
         if (local) {
             // If we are allowing snapshots or if this node stores the data then query locally.
             return getLocalValue(request.getMapName(), request.getKeyName(), request.getEventTime());
@@ -204,14 +201,9 @@ public class PlanBQueryService {
                     .name(keyName)
                     .effectiveTime(0)
                     .build(),
-                    StateValue
-                            .builder()
-                            .typeId(StringValue.TYPE_ID)
-                            .byteBuffer(ByteBuffer.wrap(session.getKey()))
-                            .build());
+                    ValString.create(new String(session.getKey(), StandardCharsets.UTF_8)));
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };
-
     }
 
     private Val convertToVal(final PlanBValue planBValue,
