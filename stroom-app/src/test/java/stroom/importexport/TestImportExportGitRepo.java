@@ -22,16 +22,21 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
+import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
+import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -68,6 +73,9 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
     @SuppressWarnings("unused")
     @Inject
     private ImportExportSerializer importExportSerializer;
+    @SuppressWarnings("unused")
+    @Inject
+    private FeedStore feedStore;
     @SuppressWarnings("unused")
     @Inject
     private PipelineStore pipelineStore;
@@ -118,14 +126,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
             }
         }
 
+        @Nonnull
         @Override
-        public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
+        public FileVisitResult preVisitDirectory(final Path dir, @Nonnull final BasicFileAttributes attrs) {
             checkPath(dir);
             return FileVisitResult.CONTINUE;
         }
 
+        @Nonnull
         @Override
-        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(final Path file, @Nonnull final BasicFileAttributes attrs) {
             checkPath(file);
             return FileVisitResult.CONTINUE;
         }
@@ -197,11 +207,13 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         pipelineDoc.setDescription("Pipeline Description");
         pipelineStore.writeDocument(pipelineDoc);
 
-        // Something under the GitRepo to export
         final ExplorerNode feedNode = explorerService.create(FeedDoc.TYPE,
                 "FEED",
                 folder1,
                 null);
+        final FeedDoc feedDoc = feedStore.readDocument(pipelineNode.getDocRef());
+        feedDoc.setDescription("Feed Description");
+        feedStore.writeDocument(feedDoc);
 
         commonTestControl.createRequiredXMLSchemas();
 
@@ -248,4 +260,144 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
     }
 
+    /**
+     * Does the same as testExport1 but tries to import again.
+     * @throws IOException If something goes really wrong
+     */
+    @Test
+    void testExportThenImport() throws IOException {
+
+        final ExplorerNode systemNode = explorerNodeService.getRoot();
+        final DocRef systemDocRef = systemNode != null
+                ? systemNode.getDocRef()
+                : null;
+        assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(1);
+
+        // GitRepo
+        final ExplorerNode gitRepoNode = explorerService.create(GitRepoDoc.TYPE,
+                "GitRepo",
+                systemNode,
+                null);
+        GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
+        gitRepoDoc.setDescription("GitRepo Description");
+        gitRepoStore.writeDocument(gitRepoDoc);
+
+        final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
+                "folder1",
+                gitRepoNode,
+                null);
+        final ExplorerNode folder2 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
+                "folder2",
+                gitRepoNode,
+                null);
+
+        assertThat(explorerNodeService.getDescendants(systemDocRef).size()).isEqualTo(4);
+
+        final ExplorerNode pipelineNode = explorerService.create(PipelineDoc.TYPE,
+                "Pipeline",
+                folder2,
+                null);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
+        pipelineDoc.setDescription("Pipeline Description");
+        pipelineStore.writeDocument(pipelineDoc);
+
+        // Something under the GitRepo to export
+        final ExplorerNode feedNode = explorerService.create(FeedDoc.TYPE,
+                "FEED",
+                folder1,
+                null);
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
+        feedDoc.setDescription("Feed Description");
+        feedStore.writeDocument(feedDoc);
+
+        commonTestControl.createRequiredXMLSchemas();
+
+        final Path testDataDir = getCurrentTestDir().resolve("ExportGitRepoTest");
+        LOGGER.info("Writing to test dir: {}", testDataDir);
+
+        FileUtil.deleteDir(testDataDir);
+        Files.createDirectories(testDataDir);
+
+        // List of paths to remove from the exported paths
+        // Basically the path to the GitRepoDoc node
+        List<ExplorerNode> rootNodePath = List.of(ExplorerConstants.SYSTEM_NODE, gitRepoNode);
+
+        // List of nodes to export.
+        Set<DocRef> docRefsToExport = Set.of(
+                gitRepoDoc.asDocRef(),
+                feedNode.getDocRef(),
+                pipelineNode.getDocRef());
+
+        // List of doctypes to ignore - GitRepos so we ignore recursive repos
+        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
+
+        // Run the export to disk
+        importExportSerializer.write(
+                rootNodePath,
+                testDataDir,
+                docRefsToExport,
+                docTypesToIgnore,
+                true);
+
+        List<String> pathPatterns = List.of(
+                "",
+                "folder1",
+                "folder1/FEED\\.Feed\\.[-a-f0-9]*.meta",
+                "folder1/FEED\\.Feed\\.[-a-f0-9]*.node",
+                "folder2",
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
+                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.xml");
+
+        this.testGitFilesOnDisk("testExport2",
+                testDataDir,
+                pathPatterns);
+
+        // Remove all entries from the database
+        commonTestControl.clear();
+
+        // GitRepo
+        final ExplorerNode gitRepoNode2 = explorerService.create(GitRepoDoc.TYPE,
+                "GitRepo",
+                systemNode,
+                null);
+        GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef());
+        gitRepoDoc2.setDescription("GitRepo Description");
+        gitRepoStore.writeDocument(gitRepoDoc2);
+
+        List<ImportState> importStates = new ArrayList<>();
+        ImportSettings importSettings = ImportSettings.builder()
+                .importMode(ImportMode.IGNORE_CONFIRMATION)
+                .enableFilters(false)
+                .useImportFolders(true)
+                .useImportNames(true)
+                .rootDocRef(gitRepoNode2.getDocRef())
+                .build();
+        importExportSerializer.read(testDataDir, importStates, importSettings);
+
+        var folder1_1 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
+        assertThat(folder1_1)
+                .as("GitRepo node has folder1 child")
+                .isNotEmpty()
+                .hasSize(1);
+        var folder1_1_node = folder1_1.getFirst();
+        var feedNodeList = this.explorerNodeService.getNodesByName(folder1_1_node, "FEED");
+        assertThat(feedNodeList)
+                .as("folder1 has a FEED child")
+                .isNotEmpty()
+                .hasSize(1);
+        var folder2_1 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
+        assertThat(folder2_1)
+                .as("GitRepo node has folder2 child")
+                .isNotEmpty()
+                .hasSize(1);
+        var folder2_1_node = folder2_1.getFirst();
+        var pipelineNodeList = this.explorerNodeService.getNodesByName(folder2_1_node, "Pipeline");
+        assertThat(pipelineNodeList)
+                .as("folder2 has a pipeline child")
+                .isNotEmpty()
+                .hasSize(1);
+
+
+    }
 }
