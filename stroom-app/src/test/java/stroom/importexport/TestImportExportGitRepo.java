@@ -211,7 +211,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "FEED",
                 folder1,
                 null);
-        final FeedDoc feedDoc = feedStore.readDocument(pipelineNode.getDocRef());
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
         feedDoc.setDescription("Feed Description");
         feedStore.writeDocument(feedDoc);
 
