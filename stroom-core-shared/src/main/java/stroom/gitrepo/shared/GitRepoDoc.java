@@ -54,28 +54,28 @@ public class GitRepoDoc extends Doc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private String description = "";
 
     @JsonProperty
-    private String url;
+    private String url = "";
 
     @JsonProperty
-    private String username;
+    private String username = "";
 
     @JsonProperty
-    private String password;
+    private String password = "";
 
     @JsonProperty
-    private String branch;
+    private String branch = "";
 
     @JsonProperty
-    private String path;
+    private String path = "";
 
     /**
      * No-args constructor; needed by some code. Also causes issues with unit tests :-(
      */
     public GitRepoDoc() {
-        // No code
+        super();
     }
 
     @JsonCreator
