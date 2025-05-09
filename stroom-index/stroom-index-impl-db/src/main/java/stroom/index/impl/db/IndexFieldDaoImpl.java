@@ -153,7 +153,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             if (!existingFieldNames.contains(field.getFldName())) {
                                 c = c.values(
                                         fieldSourceId,
-                                        (byte) field.getFldType().getIndex(),
+                                        field.getFldType().getPrimitiveValue(),
                                         field.getFldName(),
                                         field.getAnalyzerType().getDisplayValue(),
                                         field.isIndexed(),
@@ -176,11 +176,11 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     // Deadlocks are likely as the upsert will create gap locks in the ID idx which has
                     // fields from different indexes all mixed in together.
                     if (e instanceof DataAccessException
-                            && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
-                            && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
+                        && e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+                        && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
                         LOGGER.warn(() -> LogUtil.message(
                                 "Deadlock trying to upsert {} {} into {}. Attempt: {}. Will retry. " +
-                                        "Enable DEBUG for full stacktrace.",
+                                "Enable DEBUG for full stacktrace.",
                                 fields.size(),
                                 StringUtil.plural("field", fields.size()),
                                 INDEX_FIELD.getName(),
@@ -235,7 +235,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     final boolean termPositions = r.get(INDEX_FIELD.TERM_POSITIONS);
                     final boolean caseSensitive = r.get(INDEX_FIELD.CASE_SENSITIVE);
 
-                    final FieldType fieldType = FieldType.get(typeId);
+                    final FieldType fieldType = FieldType.fromTypeId(typeId);
                     final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(analyzer);
                     return IndexFieldImpl
                             .builder()
