@@ -1,8 +1,7 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.db.serde;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.LookupDb;
-import stroom.planb.impl.db.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.Txn;

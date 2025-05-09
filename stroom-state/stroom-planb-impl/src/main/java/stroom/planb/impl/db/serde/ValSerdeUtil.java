@@ -1,4 +1,4 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.serde;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
@@ -46,90 +46,122 @@ public class ValSerdeUtil {
     public static <R> R write(final Val val,
                               final ByteBuffers byteBuffers,
                               final Function<ByteBuffer, R> function) {
-        return write(val, byteBuffers, 0, bb -> {
-        }, function);
+        return write(val, byteBuffers, function, Addition.NONE, Addition.NONE);
+    }
+
+    public static class Addition {
+
+        public static final Addition NONE = new Addition(0, bb -> {
+        });
+
+        private final int length;
+        private final Consumer<ByteBuffer> consumer;
+
+        public Addition(final int length, final Consumer<ByteBuffer> consumer) {
+            this.length = length;
+            this.consumer = consumer;
+        }
+
+        public int getLength() {
+            return length;
+        }
+
+        public Consumer<ByteBuffer> getConsumer() {
+            return consumer;
+        }
     }
 
     public static <R> R write(final Val val,
                               final ByteBuffers byteBuffers,
-                              final int prefixLength,
-                              final Consumer<ByteBuffer> prefixConsumer,
-                              final Function<ByteBuffer, R> function) {
+                              final Function<ByteBuffer, R> function,
+                              final Addition prefix,
+                              final Addition suffix) {
+        final int len = prefix.length + 1 + suffix.length;
         final Type type = val.type();
         return switch (type) {
-            case NULL -> byteBuffers.use(prefixLength + 1, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case NULL -> byteBuffers.use(len, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case BOOLEAN -> byteBuffers.use(prefixLength + 2, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case BOOLEAN -> byteBuffers.use(len + Byte.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.put(val.toBoolean()
                         ? (byte) 1
                         : (byte) 0);
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case BYTE -> byteBuffers.use(prefixLength + 2, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case BYTE -> byteBuffers.use(len + Byte.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.put(((ValByte) val).getValue());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case SHORT -> byteBuffers.use(prefixLength + 1 + Short.BYTES, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case SHORT -> byteBuffers.use(len + Short.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.putShort(((ValShort) val).getValue());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case INTEGER -> byteBuffers.use(prefixLength + 1 + Integer.BYTES, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case INTEGER -> byteBuffers.use(len + Integer.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.putInt(val.toInteger());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case LONG, DURATION, DATE -> byteBuffers.use(prefixLength + 1 + Long.BYTES, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case LONG, DURATION, DATE -> byteBuffers.use(len + Long.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.putLong(val.toLong());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case FLOAT -> byteBuffers.use(prefixLength + 1 + Float.BYTES, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case FLOAT -> byteBuffers.use(len + Float.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.putFloat(val.toFloat());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
-            case DOUBLE -> byteBuffers.use(prefixLength + 1 + Double.BYTES, byteBuffer -> {
-                prefixConsumer.accept(byteBuffer);
+            case DOUBLE -> byteBuffers.use(len + Double.BYTES, byteBuffer -> {
+                prefix.getConsumer().accept(byteBuffer);
                 byteBuffer.put(type.getId());
                 byteBuffer.putDouble(val.toDouble());
+                suffix.getConsumer().accept(byteBuffer);
                 byteBuffer.flip();
                 return function.apply(byteBuffer);
             });
             case STRING, ERR -> {
                 final byte[] bytes = val.toString().getBytes(StandardCharsets.UTF_8);
-                yield byteBuffers.use(prefixLength + 1 + bytes.length, byteBuffer -> {
-                    prefixConsumer.accept(byteBuffer);
+                yield byteBuffers.use(len + bytes.length, byteBuffer -> {
+                    prefix.getConsumer().accept(byteBuffer);
                     byteBuffer.put(type.getId());
                     byteBuffer.put(bytes);
+                    suffix.getConsumer().accept(byteBuffer);
                     byteBuffer.flip();
                     return function.apply(byteBuffer);
                 });
             }
             case XML -> {
                 final ByteBuffer bb = ((ValXml) val).getByteBuffer();
-                yield byteBuffers.use(prefixLength + 1 + bb.remaining(), byteBuffer -> {
-                    prefixConsumer.accept(byteBuffer);
+                yield byteBuffers.use(len + bb.remaining(), byteBuffer -> {
+                    prefix.getConsumer().accept(byteBuffer);
                     byteBuffer.put(type.getId());
                     byteBuffer.put(bb);
+                    suffix.getConsumer().accept(byteBuffer);
                     byteBuffer.flip();
                     return function.apply(byteBuffer);
                 });

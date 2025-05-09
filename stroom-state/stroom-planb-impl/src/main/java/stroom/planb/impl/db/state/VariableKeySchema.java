@@ -10,6 +10,8 @@ import stroom.planb.impl.db.LookupDb;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.serde.ValSerde;
+import stroom.planb.impl.db.serde.VariableValType;
 import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;
@@ -114,7 +116,7 @@ class VariableKeySchema extends AbstractSchema<String, Val> {
                            final byte[] bytes,
                            final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
         return byteBuffers.use(Byte.BYTES + bytes.length, keyByteBuffer -> {
-            keyByteBuffer.put(VariableKeyType.DIRECT.getPrimitiveValue());
+            keyByteBuffer.put(VariableValType.DIRECT.getPrimitiveValue());
             keyByteBuffer.put(bytes);
             keyByteBuffer.flip();
             return function.apply(txn, keyByteBuffer);
@@ -125,7 +127,7 @@ class VariableKeySchema extends AbstractSchema<String, Val> {
                                   final ByteBuffer idByteBuffer,
                                   final BiFunction<Txn<ByteBuffer>, ByteBuffer, R> function) {
         return byteBuffers.use(Byte.BYTES + idByteBuffer.limit(), keyByteBuffer -> {
-            keyByteBuffer.put(VariableKeyType.LOOKUP.getPrimitiveValue());
+            keyByteBuffer.put(VariableValType.LOOKUP.getPrimitiveValue());
             keyByteBuffer.put(idByteBuffer);
             keyByteBuffer.flip();
             return function.apply(txn, keyByteBuffer);
@@ -177,9 +179,9 @@ class VariableKeySchema extends AbstractSchema<String, Val> {
                 try (final CursorIterable<ByteBuffer> cursorIterable = sourceDbi.iterate(readTxn)) {
                     for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                         final byte firstByte = keyVal.key().get(0);
-                        final VariableKeyType keyType =
-                                VariableKeyType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
-                        if (Objects.requireNonNull(keyType) == VariableKeyType.LOOKUP) {
+                        final VariableValType keyType =
+                                VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
+                        if (Objects.requireNonNull(keyType) == VariableValType.LOOKUP) {
                             // Omit the key type.
                             final ByteBuffer slice = keyVal.key().slice(1, keyVal.key().limit());
                             sourceKeyLookup.get(writer.getWriteTxn(), slice, optionalRealKey -> {
@@ -187,7 +189,7 @@ class VariableKeySchema extends AbstractSchema<String, Val> {
                                         new RuntimeException("Unable to retrieve source key"));
                                 keyLookup.put(writer.getWriteTxn(), realKey, keyIdBuffer -> {
                                     byteBuffers.use(Byte.BYTES + keyIdBuffer.limit(), keyByteBuffer -> {
-                                        keyByteBuffer.put(VariableKeyType.LOOKUP.getPrimitiveValue());
+                                        keyByteBuffer.put(VariableValType.LOOKUP.getPrimitiveValue());
                                         keyByteBuffer.put(keyIdBuffer);
                                         keyByteBuffer.flip();
                                         if (dbi.put(writer.getWriteTxn(), keyByteBuffer, keyVal.val(), putFlags)) {
@@ -242,8 +244,8 @@ class VariableKeySchema extends AbstractSchema<String, Val> {
         return context -> {
             final ByteBuffer key = context.kv().key().duplicate();
             final byte firstByte = key.get();
-            final VariableKeyType keyType =
-                    VariableKeyType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
+            final VariableValType keyType =
+                    VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(firstByte);
             return switch (keyType) {
                 case DIRECT -> ValString.create(ByteBufferUtils.toString(key));
                 case LOOKUP -> {

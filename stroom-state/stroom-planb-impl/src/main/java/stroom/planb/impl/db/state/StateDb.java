@@ -5,11 +5,27 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.LookupDb;
 import stroom.planb.impl.db.hash.HashClashCount;
+import stroom.planb.impl.db.hash.HashFactory;
+import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.serde.BooleanValSerde;
+import stroom.planb.impl.db.serde.ByteValSerde;
+import stroom.planb.impl.db.serde.DoubleValSerde;
+import stroom.planb.impl.db.serde.FloatValSerde;
+import stroom.planb.impl.db.serde.IntegerValSerde;
+import stroom.planb.impl.db.serde.LongValSerde;
+import stroom.planb.impl.db.serde.LookupValSerde;
+import stroom.planb.impl.db.serde.ShortValSerde;
+import stroom.planb.impl.db.serde.StringValSerde;
+import stroom.planb.impl.db.serde.ValSerde;
+import stroom.planb.impl.db.serde.VariableValSerde;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -53,20 +69,63 @@ public class StateDb implements Db<String, Val> {
                 StateKeySchema::getStateKeyType,
                 StateKeyType.HASHED);
 
-        final ValSerde stateValueSerde = new StandardStateValueSerde(byteBuffers);
+        final StateValueType stateValueType = NullSafe.getOrElse(
+                settings,
+                StateSettings::getStateValueSchema,
+                StateValueSchema::getStateValueType,
+                StateValueType.STRING);
+
+        final ValSerde valSerde = switch (stateValueType) {
+            case BOOLEAN -> new BooleanValSerde(byteBuffers);
+            case BYTE -> new ByteValSerde(byteBuffers);
+            case SHORT -> new ShortValSerde(byteBuffers);
+            case INT -> new IntegerValSerde(byteBuffers);
+            case LONG -> new LongValSerde(byteBuffers);
+            case FLOAT -> new FloatValSerde(byteBuffers);
+            case DOUBLE -> new DoubleValSerde(byteBuffers);
+            case STRING -> new StringValSerde(byteBuffers);
+            case LOOKUP -> {
+                final HashFactory valueHashFactory = HashFactoryFactory.create(NullSafe.get(
+                        settings,
+                        StateSettings::getStateValueSchema,
+                        StateValueSchema::getHashLength));
+                final LookupDb lookupDb = new LookupDb(
+                        env,
+                        byteBuffers,
+                        valueHashFactory,
+                        hashClashCommitRunnable,
+                        "value",
+                        overwrite);
+                yield new LookupValSerde(lookupDb, byteBuffers);
+            }
+            case VARIABLE -> {
+                final HashFactory valueHashFactory = HashFactoryFactory.create(NullSafe.get(
+                        settings,
+                        StateSettings::getStateValueSchema,
+                        StateValueSchema::getHashLength));
+                final LookupDb lookupDb = new LookupDb(
+                        env,
+                        byteBuffers,
+                        valueHashFactory,
+                        hashClashCommitRunnable,
+                        "value",
+                        overwrite);
+                yield new VariableValSerde(lookupDb, byteBuffers);
+            }
+        };
 
         schema = switch (stateKeyType) {
-            case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case INT -> new IntegerKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case LONG -> new LongKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case STRING -> new StringKeySchema(env, byteBuffers, overwrite, stateValueSerde);
-            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, stateValueSerde);
-            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, stateValueSerde);
+            case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite, valSerde);
+            case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite, valSerde);
+            case INT -> new IntegerKeySchema(env, byteBuffers, overwrite, valSerde);
+            case LONG -> new LongKeySchema(env, byteBuffers, overwrite, valSerde);
+            case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite, valSerde);
+            case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite, valSerde);
+            case STRING -> new StringKeySchema(env, byteBuffers, overwrite, valSerde);
+            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, valSerde);
+            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, valSerde);
             case VARIABLE -> new VariableKeySchema(env, byteBuffers, settings, hashClashCommitRunnable,
-                    stateValueSerde);
+                    valSerde);
         };
     }
 

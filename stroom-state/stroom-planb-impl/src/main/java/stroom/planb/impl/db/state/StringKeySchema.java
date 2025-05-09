@@ -2,6 +2,7 @@ package stroom.planb.impl.db.state;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.serde.ValSerde;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
@@ -14,8 +15,8 @@ class StringKeySchema extends SimpleKeySchema {
     StringKeySchema(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final Boolean overwrite,
-                    final ValSerde stateValueSerde) {
-        super(env, byteBuffers, overwrite, stateValueSerde);
+                    final ValSerde valSerde) {
+        super(env, byteBuffers, overwrite, valSerde);
     }
 
     @Override

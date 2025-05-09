@@ -1,4 +1,4 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.db.serde;
 
 import stroom.query.language.functions.Val;
 

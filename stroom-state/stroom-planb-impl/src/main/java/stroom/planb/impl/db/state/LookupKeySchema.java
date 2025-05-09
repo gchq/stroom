@@ -10,6 +10,7 @@ import stroom.planb.impl.db.LookupDb;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.serde.ValSerde;
 import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;

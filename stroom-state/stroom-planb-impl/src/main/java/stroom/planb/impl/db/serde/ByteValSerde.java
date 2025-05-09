@@ -1,52 +1,44 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.db.serde;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValByte;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-public class BooleanValSerde implements ValSerde {
+public class ByteValSerde implements ValSerde {
 
     private final ByteBuffers byteBuffers;
 
-    public BooleanValSerde(final ByteBuffers byteBuffers) {
+    public ByteValSerde(final ByteBuffers byteBuffers) {
         this.byteBuffers = byteBuffers;
     }
 
     @Override
     public Val read(final Txn<ByteBuffer> readTxn, final ByteBuffer byteBuffer) {
         final byte b = byteBuffer.get();
-        return ValBoolean.create(b != 0);
+        return ValByte.create(b);
     }
 
     @Override
     public void write(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
         byteBuffers.use(Byte.BYTES, byteBuffer -> {
             try {
-                if (Type.BOOLEAN.equals(value.type())) {
-                    final ValBoolean valBoolean = (ValBoolean) value;
-                    byteBuffer.put(valBoolean.toBoolean()
-                            ? (byte) 1
-                            : (byte) 0);
+                if (Type.BYTE.equals(value.type())) {
+                    final ValByte valByte = (ValByte) value;
+                    byteBuffer.put(valByte.getValue());
                 } else {
-                    final Boolean b = value.toBoolean();
-                    if (b == null) {
-                        byteBuffer.put((byte) 0);
-                    } else {
-                        byteBuffer.put(b
-                                ? (byte) 1
-                                : (byte) 0);
-                    }
+                    final byte b = Byte.parseByte(value.toString());
+                    byteBuffer.put(b);
                 }
-            } catch (final NumberFormatException e) {
+            } catch (final NumberFormatException | NullPointerException e) {
                 throw new RuntimeException("Expected state key to be a byte but could not parse '" +
                                            value +
-                                           "' as boolean");
+                                           "' as byte");
             }
             byteBuffer.flip();
             consumer.accept(byteBuffer);

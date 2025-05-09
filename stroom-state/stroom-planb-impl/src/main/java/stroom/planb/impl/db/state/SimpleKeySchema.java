@@ -4,6 +4,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.serde.ValSerde;
 import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;

@@ -6,10 +6,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.BBKV;
 import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.ValSerdeUtil;
 import stroom.planb.impl.db.hash.Hash;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
+import stroom.planb.impl.db.serde.ValSerde;
 import stroom.planb.impl.db.state.StateSearchHelper.Context;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -46,7 +46,7 @@ class HashedKeySupport {
     private final boolean overwrite;
     private final LmdbKeySequence lmdbKeySequence;
     private final HashClashCount hashClashCount;
-    private final ValSerde stateValueSerde;
+    private final ValSerde valSerde;
 
     public HashedKeySupport(final PlanBEnv env,
                             final Dbi<ByteBuffer> dbi,
@@ -54,7 +54,7 @@ class HashedKeySupport {
                             final HashFactory hashFactory,
                             final boolean overwrite,
                             final HashClashCount hashClashCount,
-                            final ValSerde stateValueSerde) {
+                            final ValSerde valSerde) {
         this.env = env;
         this.dbi = dbi;
         this.byteBuffers = byteBuffers;
@@ -62,7 +62,7 @@ class HashedKeySupport {
         this.overwrite = overwrite;
         this.lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         this.hashClashCount = hashClashCount;
-        this.stateValueSerde = stateValueSerde;
+        this.valSerde = valSerde;
     }
 
     public void insert(final LmdbWriter writer, final String key, final Val val) {
@@ -74,12 +74,14 @@ class HashedKeySupport {
             hash.write(keyByteBuffer);
             keyByteBuffer.flip();
 
-            ValSerdeUtil.write(val, byteBuffers, Integer.BYTES + bytes.length, valueByteBuffer -> {
-                valueByteBuffer.putInt(bytes.length);
-                valueByteBuffer.put(bytes);
-            }, valueByteBuffer -> {
-                hashedKeyPut(writer, keyByteBuffer, valueByteBuffer);
-                return null;
+            valSerde.write(writer.getWriteTxn(), val, valueByteBuffer -> {
+                byteBuffers.use(Integer.BYTES + bytes.length + valueByteBuffer.limit(), bb -> {
+                    bb.putInt(bytes.length);
+                    bb.put(bytes);
+                    bb.put(valueByteBuffer);
+                    bb.flip();
+                    hashedKeyPut(writer, keyByteBuffer, bb);
+                });
             });
         });
     }
@@ -250,7 +252,7 @@ class HashedKeySupport {
         final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
         final BBKV kv = new BBKV(keyByteBuffer, valueByteBuffer);
         if (predicate.test(kv)) {
-            return getVal(kv);
+            return getVal(readTxn, kv);
         }
         return null;
     }
@@ -276,19 +278,19 @@ class HashedKeySupport {
                 }
 
                 if (predicate.test(kv)) {
-                    return getVal(kv);
+                    return getVal(readTxn, kv);
                 }
             }
         }
         return null;
     }
 
-    public Val getVal(final BBKV kv) {
+    public Val getVal(final Txn<ByteBuffer> readTxn, final BBKV kv) {
         final ByteBuffer byteBuffer = kv.val();
         final int keyLength = byteBuffer.getInt(0);
         final int valueStart = Integer.BYTES + keyLength;
         final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-        return ValSerdeUtil.read(slice);
+        return valSerde.read(readTxn, slice);
     }
 
     public void merge(final Path source) {
@@ -365,7 +367,8 @@ class HashedKeySupport {
             final ByteBuffer byteBuffer = context.kv().val();
             final int keyLength = byteBuffer.getInt(0);
             final int valueStart = Integer.BYTES + keyLength;
-            return stateValueSerde.read(readTxn, byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart));
+            final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
+            return valSerde.read(readTxn, slice);
         };
     }
 }

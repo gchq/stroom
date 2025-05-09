@@ -7,6 +7,7 @@ import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
+import stroom.planb.impl.db.serde.ValSerde;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
@@ -26,7 +27,7 @@ class HashedKeySchema extends AbstractSchema<String, Val> {
                            final ByteBuffers byteBuffers,
                            final StateSettings settings,
                            final HashClashCount hashClashCount,
-                           final ValSerde stateValueSerde) {
+                           final ValSerde valSerde) {
         super(env, byteBuffers);
         final HashFactory hashFactory = HashFactoryFactory.create(NullSafe.get(
                 settings,
@@ -40,7 +41,7 @@ class HashedKeySchema extends AbstractSchema<String, Val> {
                 hashFactory,
                 overwrite,
                 hashClashCount,
-                stateValueSerde);
+                valSerde);
     }
 
     @Override

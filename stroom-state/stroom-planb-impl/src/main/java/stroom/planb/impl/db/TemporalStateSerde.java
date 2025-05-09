@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.BBKV;
 import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.impl.db.serde.ValSerdeUtil;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
