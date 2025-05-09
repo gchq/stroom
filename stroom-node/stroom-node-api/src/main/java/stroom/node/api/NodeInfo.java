@@ -16,7 +16,20 @@
 
 package stroom.node.api;
 
+import java.util.Objects;
+
 public interface NodeInfo {
 
+    /**
+     * @return The name of the local node, i.e. the node this code is running on.
+     */
     String getThisNodeName();
+
+    /**
+     * @return True if the passed nodeName matches that of the local node, i.e. the
+     * node this code is running on.
+     */
+    default boolean isThisNode(final String nodeName) {
+        return Objects.equals(nodeName, getThisNodeName());
+    }
 }

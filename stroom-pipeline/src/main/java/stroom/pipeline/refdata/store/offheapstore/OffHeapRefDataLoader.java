@@ -131,20 +131,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                          @Assisted final long effectiveTimeMs,
                          @Assisted final RefDataOffHeapStore refDataOffHeapStore,
                          @Assisted final RefDataLmdbEnv refStoreLmdbEnv,
-                         final KeyValueStoreDb keyValueStoreDb,
-                         final RangeStoreDb rangeStoreDb,
-                         final ValueStore valueStore,
-                         final MapDefinitionUIDStore mapDefinitionUIDStore,
-                         final ProcessingInfoDb processingInfoDb,
                          final OffHeapStagingStoreFactory offHeapStagingStoreFactory,
                          final TaskContextFactory taskContextFactory) {
 
-        this.keyValueStoreDb = keyValueStoreDb;
-        this.rangeStoreDb = rangeStoreDb;
-        this.processingInfoDb = processingInfoDb;
+        this.keyValueStoreDb = refDataOffHeapStore.getKeyValueStoreDb();
+        this.rangeStoreDb = refDataOffHeapStore.getRangeStoreDb();
+        this.processingInfoDb = refDataOffHeapStore.getProcessingInfoDb();
         this.offHeapStagingStoreFactory = offHeapStagingStoreFactory;
-        this.valueStore = valueStore;
-        this.mapDefinitionUIDStore = mapDefinitionUIDStore;
+        this.valueStore = refDataOffHeapStore.getValueStore();
+        this.mapDefinitionUIDStore = refDataOffHeapStore.getMapDefinitionUIDStore();
         this.refStoreLmdbEnv = refStoreLmdbEnv;
         this.refStreamDefinition = refStreamDefinition;
         this.refDataOffHeapStore = refDataOffHeapStore;

@@ -617,6 +617,8 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
     referenceData:
+      autoPurgeEnabled: true
+      compactAfterPurgeEnabled: false
       effectiveStreamCache:
         expireAfterAccess: null
         expireAfterWrite: "PT10M"
