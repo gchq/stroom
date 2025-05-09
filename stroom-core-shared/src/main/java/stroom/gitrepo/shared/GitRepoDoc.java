@@ -72,10 +72,10 @@ public class GitRepoDoc extends Doc {
     private String path = "";
 
     /**
-     * No-args constructor; needed by some code. Also causes issues with unit tests :-(
+     * No-args constructor; needed by some code.
      */
     public GitRepoDoc() {
-        super();
+        // No code
     }
 
     @JsonCreator
