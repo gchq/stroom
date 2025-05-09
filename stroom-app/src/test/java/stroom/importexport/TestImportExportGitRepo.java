@@ -375,24 +375,24 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .build();
         importExportSerializer.read(testDataDir, importStates, importSettings);
 
-        var folder1_1 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
-        assertThat(folder1_1)
+        var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
+        assertThat(folder12)
                 .as("GitRepo node has folder1 child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder1_1_node = folder1_1.getFirst();
-        var feedNodeList = this.explorerNodeService.getNodesByName(folder1_1_node, "FEED");
+        var folder12node = folder12.getFirst();
+        var feedNodeList = this.explorerNodeService.getNodesByName(folder12node, "FEED");
         assertThat(feedNodeList)
                 .as("folder1 has a FEED child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder2_1 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
-        assertThat(folder2_1)
+        var folder22 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
+        assertThat(folder22)
                 .as("GitRepo node has folder2 child")
                 .isNotEmpty()
                 .hasSize(1);
-        var folder2_1_node = folder2_1.getFirst();
-        var pipelineNodeList = this.explorerNodeService.getNodesByName(folder2_1_node, "Pipeline");
+        var folder22node = folder22.getFirst();
+        var pipelineNodeList = this.explorerNodeService.getNodesByName(folder22node, "Pipeline");
         assertThat(pipelineNodeList)
                 .as("folder2 has a pipeline child")
                 .isNotEmpty()
