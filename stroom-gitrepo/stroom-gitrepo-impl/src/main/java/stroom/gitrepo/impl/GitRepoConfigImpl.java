@@ -8,10 +8,13 @@ import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Provides configuration for the GitRepo stuff on the server.
+ */
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
 public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, IsStroomConfig {
@@ -20,6 +23,9 @@ public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, 
      */
     static final String DEFAULT_LOCAL_DIR = "git_repo";
 
+    /**
+     * Where local GitRepos are stored.
+     */
     private final String localDir;
 
     /**
@@ -33,11 +39,15 @@ public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, 
      * Constructor called when creating configuration from JSON or YAML.
      * @param localDir The local git repository relative path.
      */
+    @SuppressWarnings("unused")
     @JsonCreator
     public GitRepoConfigImpl(@JsonProperty("localDir") final String localDir) {
         this.localDir = localDir;
     }
 
+    /**
+     * @return Where to store local Git repos.
+     */
     @Override
     @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -49,6 +59,9 @@ public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, 
         return localDir;
     }
 
+    /**
+     * @return debug info about this object.
+     */
     @Override
     public String toString() {
         return "GitRepoConfig { localDir='" + localDir + "'}";

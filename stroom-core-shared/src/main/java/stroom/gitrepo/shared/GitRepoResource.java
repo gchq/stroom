@@ -33,6 +33,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
+/**
+ * Provides the REST API for the GitRepo UI elements.
+ */
 @Tag(name = "GitRepos")
 @Path("/gitRepo" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)

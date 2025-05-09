@@ -54,24 +54,28 @@ public class GitRepoDoc extends Doc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.GIT_REPO_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private String description = "";
 
     @JsonProperty
-    private String url;
+    private String url = "";
 
     @JsonProperty
-    private String username;
+    private String username = "";
 
     @JsonProperty
-    private String password;
+    private String password = "";
 
     @JsonProperty
-    private String branch;
+    private String branch = "";
 
     @JsonProperty
-    private String path;
+    private String path = "";
 
+    /**
+     * No-args constructor; needed by some code.
+     */
     public GitRepoDoc() {
+        // No code
     }
 
     @JsonCreator
@@ -159,36 +163,47 @@ public class GitRepoDoc extends Doc {
     public String getDescription() {
         return description;
     }
+
     public void setDescription(final String description) {
         this.description = description;
     }
+
     public String getUrl() {
         return this.url;
     }
+
     public void setUrl(String url) {
         this.url = url;
     }
+
     public String getUsername() {
         return username;
     }
+
     public void setUsername(final String username) {
         this.username = username;
     }
+
     public String getPassword() {
         return password;
     }
+
     public void setPassword(final String password) {
         this.password = password;
     }
+
     public String getBranch() {
         return branch;
     }
+
     public void setBranch(final String branch) {
         this.branch = branch;
     }
+
     public String getPath() {
         return path;
     }
+
     public void setPath(final String path) {
         this.path = path;
     }

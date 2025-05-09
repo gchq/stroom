@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
@@ -33,14 +34,27 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * Provides the main functionality on the client behind the GitRepo Settings tab.
+ */
 public class GitRepoSettingsPresenter
         extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
         implements GitRepoSettingsUiHandlers {
 
+    /**
+     * Server REST API.
+     */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
+    /**
+     * Provides REST connection to the server.
+     */
     private final RestFactory restFactory;
 
+    /**
+     * Local copy of the gitRepoDoc, saved in the onRead() method.
+     * Might be null if onRead() hasn't been called yet.
+     */
     private GitRepoDoc gitRepoDoc = null;
 
     @Inject
@@ -63,7 +77,7 @@ public class GitRepoSettingsPresenter
     }
 
     @Override
-    protected GitRepoDoc onWrite(GitRepoDoc doc) {
+    protected GitRepoDoc onWrite(final GitRepoDoc doc) {
         doc.setUrl(this.getView().getUrl());
         doc.setUsername(this.getView().getUsername());
         doc.setPassword(this.getView().getPassword());
@@ -82,7 +96,7 @@ public class GitRepoSettingsPresenter
      * @param taskMonitorFactory Where the wait icon is displayed.
      */
     @Override
-    public void onGitRepoPush(TaskMonitorFactory taskMonitorFactory) {
+    public void onGitRepoPush(final TaskMonitorFactory taskMonitorFactory) {
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
             final GitRepoDoc doc = onWrite(gitRepoDoc);
@@ -96,9 +110,15 @@ public class GitRepoSettingsPresenter
 
                         // Pop up an alert to show what happened
                         if (result.isOk()) {
-                            AlertEvent.fireInfo(this, "Push Success", result.getMessage(), null);
+                            AlertEvent.fireInfo(GitRepoSettingsPresenter.this,
+                                    "Push Success",
+                                    result.getMessage(),
+                                    null);
                         } else {
-                            AlertEvent.fireError(this, "Push Failure", result.getMessage(), null);
+                            AlertEvent.fireError(GitRepoSettingsPresenter.this,
+                                    "Push Failure",
+                                    result.getMessage(),
+                                    null);
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -113,7 +133,7 @@ public class GitRepoSettingsPresenter
      * @param taskMonitorFactory Where to display the wait icon.
      */
     @Override
-    public void onGitRepoPull(TaskMonitorFactory taskMonitorFactory) {
+    public void onGitRepoPull(final TaskMonitorFactory taskMonitorFactory) {
         if (gitRepoDoc != null) {
             final GitRepoDoc doc = onWrite(gitRepoDoc);
             restFactory
@@ -121,9 +141,16 @@ public class GitRepoSettingsPresenter
                     .method(res -> res.pullFromGit(doc))
                     .onSuccess(result -> {
                         if (result.isOk()) {
-                            AlertEvent.fireInfo(this, "Pull Success", result.getMessage(), null);
+                            AlertEvent.fireInfo(this,
+                                    "Pull Success",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
                         } else {
-                            AlertEvent.fireError(this, "Pull Failure", result.getMessage(), null);
+                            AlertEvent.fireError(
+                                    this,
+                                    "Pull Failure",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(GitRepoSettingsPresenter.this));
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -137,16 +164,28 @@ public class GitRepoSettingsPresenter
             extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
         void setUrl(String url);
+
         String getUrl();
+
         String getUsername();
+
         void setUsername(final String username);
+
         String getPassword();
+
         void setPassword(final String password);
+
         String getBranch();
+
         void setBranch(final String branch);
+
         String getPath();
+
         void setPath(final String directory);
+
         String getCommitMessage();
+
         void setCommitMessage(final String commitMessage);
+
     }
 }

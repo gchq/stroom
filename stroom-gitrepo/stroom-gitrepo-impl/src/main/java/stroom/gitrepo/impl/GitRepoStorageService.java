@@ -18,8 +18,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
-import jakarta.inject.Singleton;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -38,8 +38,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Class to work out whether a given item is a descendant of a GitRepo and
- * thus should be saved to or loaded from Git as well as the DB.
+ * Class to call the ImportExport mechanism to handle the import and export to
+ * local Git repositories, then to sync the local repo with a remote repo.
  */
 @Singleton
 public class GitRepoStorageService {
@@ -116,7 +116,7 @@ public class GitRepoStorageService {
     public List<Message> exportDoc(GitRepoDoc gitRepoDoc,
                                    final String commitMessage)
             throws IOException {
-        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc, gitRepoDoc.getUuid());
+        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
         List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
@@ -200,38 +200,34 @@ public class GitRepoStorageService {
 
             // Grab everything from server - it won't be too big
             // Create Git object for the gitWork directory
-            try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
-                messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
+            this.gitClone(gitRepoDoc, gitWork);
+            messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
 
-                // ImportSettings.auto() is used in a few places. This consists of
-                // .importMode(ImportMode.IGNORE_CONFIRMATION)
-                // .enableFilters(true)
-                // We want to make sure that the import goes to the root of the
-                // gitRepoDocRef rather than where it might have been in the
-                // original export.
+            // ImportSettings.auto() is used in a few places. This consists of
+            // .importMode(ImportMode.IGNORE_CONFIRMATION)
+            // .enableFilters(true)
+            // We want to make sure that the import goes to the root of the
+            // gitRepoDocRef rather than where it might have been in the
+            // original export.
 
-                List<ImportState> importStates = new ArrayList<>();
-                ImportSettings importSettings = ImportSettings.builder()
-                        .importMode(ImportMode.IGNORE_CONFIRMATION)
-                        .enableFilters(false)
-                        .useImportFolders(true)
-                        .useImportNames(true)
-                        .rootDocRef(gitRepoDocRef)
-                        .build();
-                Set<DocRef> docRefs = importExportSerializer.read(gitWork, importStates, importSettings);
-                for (var docRef: docRefs) {
-                    // ImportExportSerializerImpl adds the System docref to the returned set
-                    // but we don't use that here, so ignore it
-                    if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
-                        messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
-                    }
+            List<ImportState> importStates = new ArrayList<>();
+            ImportSettings importSettings = ImportSettings.builder()
+                    .importMode(ImportMode.IGNORE_CONFIRMATION)
+                    .enableFilters(false)
+                    .useImportFolders(true)
+                    .useImportNames(true)
+                    .rootDocRef(gitRepoDocRef)
+                    .build();
+            Set<DocRef> docRefs = importExportSerializer.read(gitWork, importStates, importSettings);
+            for (var docRef : docRefs) {
+                // ImportExportSerializerImpl adds the System docref to the returned set,
+                // but we don't use that here, so ignore it
+                if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
+                    messages.add(new Message(Severity.INFO, "Imported '" + docRef.getName() + "'"));
                 }
-                messages.add(new Message(Severity.INFO, "Completed Git Pull"));
-            } catch (GitAPIException e) {
-                this.throwException("Couldn't pull from GIT", e, messages);
-            } catch (IOException e) {
-                this.throwException("Error pulling from GIT", e, messages);
             }
+            messages.add(new Message(Severity.INFO, "Completed Git Pull"));
+
         } else {
             throw new IOException("Git repository URL isn't configured; cannot pull");
         }
@@ -253,7 +249,8 @@ public class GitRepoStorageService {
     private void throwException(String errorMessage,
                                 Exception cause,
                                 List<Message> messages)
-    throws IOException {
+            throws IOException {
+
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
         var buf = new StringBuilder(errorMessage);
         if (cause != null) {
@@ -301,38 +298,34 @@ public class GitRepoStorageService {
 
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult
-            preVisitDirectory(Path dir,
-                              BasicFileAttributes attrs) {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
 
                 // Ignore any .git subtree
                 if (keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME)) {
                     return FileVisitResult.SKIP_SUBTREE;
-                }
-                else {
+                } else {
                     return FileVisitResult.CONTINUE;
                 }
             }
 
             @Override
-            public FileVisitResult
-            visitFile(Path p, BasicFileAttributes attrs)
-                   throws IOException {
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs)
+                    throws IOException {
+
                 // Don't delete README files
-                if ( !(keepGitStuff && p.endsWith(GIT_README_MD)) ) {
+                if (!(keepGitStuff && p.endsWith(GIT_README_MD))) {
                     Files.delete(p);
                 }
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult
-            postVisitDirectory(Path dir, IOException ex)
-                   throws IOException {
+            public FileVisitResult postVisitDirectory(Path dir, IOException ex)
+                    throws IOException {
 
                 // Don't delete the root dir or the .git dir
                 if (!dir.equals(root) && !(keepGitStuff && dir.endsWith(GIT_REPO_DIRNAME))) {
-                        Files.delete(dir);
+                    Files.delete(dir);
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -370,11 +363,13 @@ public class GitRepoStorageService {
                        Path exportDir) {
         final Set<DocRef> docRefs = new HashSet<>();
         this.recurseExplorerNodes(node, docRefs);
+        Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         return importExportSerializer.write(
                 gitRepoNodePath,
                 exportDir,
                 docRefs,
+                docTypesToIgnore,
                 true);
     }
 
@@ -416,12 +411,34 @@ public class GitRepoStorageService {
                     .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                     .setDepth(1)
                     .call();
-        }
-        else {
+        } else {
             git = Git.open(gitWorkDir.toFile());
         }
 
         return git;
+    }
+
+    /**
+     * Clones the GIT repository represented by gitRepoDoc
+     * into the local gitWorkDir.
+     * @param gitRepoDoc Holds the settings of the Git Repo.
+     * @param gitWorkDir Where to put the Git repo files.
+     * @throws IOException If something goes wrong.
+     */
+    private void gitClone(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+        throws IOException {
+        LOGGER.info("Cloning repository '{}' to '{}'", gitRepoDoc.getUrl(), gitWorkDir);
+        try (Git git = Git.cloneRepository()
+                .setURI(gitRepoDoc.getUrl())
+                .setDirectory(gitWorkDir.toFile())
+                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                .setDepth(1)
+                .call()) {
+            // No code - close automatically
+        } catch (GitAPIException e) {
+            throw new IOException("Git error cloning repository "
+                                  + gitRepoDoc.getUrl(), e);
+        }
     }
 
 }

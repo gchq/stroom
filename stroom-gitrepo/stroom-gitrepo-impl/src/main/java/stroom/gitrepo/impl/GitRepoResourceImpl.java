@@ -22,8 +22,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
-import stroom.gitrepo.shared.GitRepoResponse;
 import stroom.gitrepo.shared.GitRepoResource;
+import stroom.gitrepo.shared.GitRepoResponse;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
@@ -89,8 +89,7 @@ class GitRepoResourceImpl implements GitRepoResource {
                             .exportDoc(gitRepoPushDto.getGitRepoDoc(),
                                        gitRepoPushDto.getCommitMessage());
             response = this.createResponse(messages);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
@@ -112,8 +111,7 @@ class GitRepoResourceImpl implements GitRepoResource {
             List<Message> messages = gitRepoStorageServiceProvider.get()
                     .importDoc(gitRepoDoc);
             response = this.createResponse(messages);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             response = new GitRepoResponse(false, e.getMessage());
         }
         return response;
@@ -135,7 +133,7 @@ class GitRepoResourceImpl implements GitRepoResource {
     private GitRepoResponse createResponse(List<Message> messages) {
         Objects.requireNonNull(messages);
         var buf = new StringBuilder("Success:\n");
-        for (var m: messages) {
+        for (var m : messages) {
             buf.append(m);
             buf.append("\n");
         }
