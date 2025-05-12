@@ -116,6 +116,7 @@ public class StateDb implements Db<String, Val> {
         };
 
         schema = switch (stateKeyType) {
+            case BOOLEAN -> new SimpleKeySchema(env, byteBuffers, overwrite, new BooleanValSerde(byteBuffers), valSerde);
             case BYTE -> new SimpleKeySchema(env, byteBuffers, overwrite, new ByteValSerde(byteBuffers), valSerde);
             case SHORT -> new SimpleKeySchema(env, byteBuffers, overwrite, new ShortValSerde(byteBuffers), valSerde);
             case INT -> new SimpleKeySchema(env, byteBuffers, overwrite, new IntegerValSerde(byteBuffers), valSerde);
