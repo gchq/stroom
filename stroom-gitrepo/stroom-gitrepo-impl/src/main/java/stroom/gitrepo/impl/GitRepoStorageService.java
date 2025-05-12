@@ -106,6 +106,8 @@ public class GitRepoStorageService {
 
     /**
      * Called by pressing the Git Settings 'Push to Git' button.
+     * Synchronised to avoid multiple threads writing to the same
+     * directory structure.
      *
      * @param gitRepoDoc    The document that we're pushing the button on.
      *                      Must not be null.
@@ -114,7 +116,7 @@ public class GitRepoStorageService {
      *         place.
      * @throws IOException if something goes wrong
      */
-    public List<Message> exportDoc(GitRepoDoc gitRepoDoc,
+    public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
                                    final String commitMessage)
             throws IOException {
         LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
@@ -174,11 +176,14 @@ public class GitRepoStorageService {
 
     /**
      * Called when the user presses the Pull from Git button in the UI.
+     * Synchronised to avoid multiple threads writing to the same
+     * directory structure.
+     *
      * @param gitRepoDoc The document holding the Git repo settings
      * @return A list of messages about the import
      * @throws IOException if something goes wrong
      */
-    public List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
+    public synchronized List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
         List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
