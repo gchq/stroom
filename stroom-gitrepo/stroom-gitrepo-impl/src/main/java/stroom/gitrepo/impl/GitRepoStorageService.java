@@ -463,7 +463,8 @@ public class GitRepoStorageService {
      * @return The path on disk to the subdirectory.
      */
     static Path addDirectoryToPath(Path parent, Path subDirectory)
-    throws IOException {
+        throws IOException {
+
         Path realPath = parent.toRealPath();
         Path subDirPath = realPath.resolve(subDirectory);
         Path realSubDirPath = subDirPath.toRealPath();
