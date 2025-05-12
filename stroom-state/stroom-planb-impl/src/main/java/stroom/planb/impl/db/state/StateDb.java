@@ -14,6 +14,7 @@ import stroom.planb.impl.db.serde.ByteValSerde;
 import stroom.planb.impl.db.serde.DoubleValSerde;
 import stroom.planb.impl.db.serde.FloatValSerde;
 import stroom.planb.impl.db.serde.IntegerValSerde;
+import stroom.planb.impl.db.serde.LimitedStringValSerde;
 import stroom.planb.impl.db.serde.LongValSerde;
 import stroom.planb.impl.db.serde.LookupValSerde;
 import stroom.planb.impl.db.serde.ShortValSerde;
@@ -115,17 +116,54 @@ public class StateDb implements Db<String, Val> {
         };
 
         schema = switch (stateKeyType) {
-            case BYTE -> new ByteKeySchema(env, byteBuffers, overwrite, valSerde);
-            case SHORT -> new ShortKeySchema(env, byteBuffers, overwrite, valSerde);
-            case INT -> new IntegerKeySchema(env, byteBuffers, overwrite, valSerde);
-            case LONG -> new LongKeySchema(env, byteBuffers, overwrite, valSerde);
-            case FLOAT -> new FloatKeySchema(env, byteBuffers, overwrite, valSerde);
-            case DOUBLE -> new DoubleKeySchema(env, byteBuffers, overwrite, valSerde);
-            case STRING -> new StringKeySchema(env, byteBuffers, overwrite, valSerde);
-            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, valSerde);
-            case LOOKUP -> new LookupKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, valSerde);
-            case VARIABLE -> new VariableKeySchema(env, byteBuffers, settings, hashClashCommitRunnable,
+            case BYTE -> new SimpleKeySchema(env, byteBuffers, overwrite, new ByteValSerde(byteBuffers), valSerde);
+            case SHORT -> new SimpleKeySchema(env, byteBuffers, overwrite, new ShortValSerde(byteBuffers), valSerde);
+            case INT -> new SimpleKeySchema(env, byteBuffers, overwrite, new IntegerValSerde(byteBuffers), valSerde);
+            case LONG -> new SimpleKeySchema(env, byteBuffers, overwrite, new LongValSerde(byteBuffers), valSerde);
+            case FLOAT -> new SimpleKeySchema(env, byteBuffers, overwrite, new FloatValSerde(byteBuffers), valSerde);
+            case DOUBLE -> new SimpleKeySchema(env, byteBuffers, overwrite, new DoubleValSerde(byteBuffers), valSerde);
+            case STRING -> new SimpleKeySchema(env,
+                    byteBuffers,
+                    overwrite,
+                    new LimitedStringValSerde(byteBuffers, 511),
                     valSerde);
+            case HASHED -> new HashedKeySchema(env, byteBuffers, settings, hashClashCommitRunnable, valSerde);
+            case LOOKUP -> {
+                final HashFactory valueHashFactory = HashFactoryFactory.create(NullSafe.get(
+                        settings,
+                        StateSettings::getStateKeySchema,
+                        StateKeySchema::getHashLength));
+                final LookupDb lookupDb = new LookupDb(
+                        env,
+                        byteBuffers,
+                        valueHashFactory,
+                        hashClashCommitRunnable,
+                        "key",
+                        overwrite);
+                yield new SimpleKeySchema(env,
+                        byteBuffers,
+                        overwrite,
+                        new LookupValSerde(lookupDb, byteBuffers),
+                        valSerde);
+            }
+            case VARIABLE -> {
+                final HashFactory valueHashFactory = HashFactoryFactory.create(NullSafe.get(
+                        settings,
+                        StateSettings::getStateKeySchema,
+                        StateKeySchema::getHashLength));
+                final LookupDb lookupDb = new LookupDb(
+                        env,
+                        byteBuffers,
+                        valueHashFactory,
+                        hashClashCommitRunnable,
+                        "key",
+                        overwrite);
+                yield new SimpleKeySchema(env,
+                        byteBuffers,
+                        overwrite,
+                        new VariableValSerde(lookupDb, byteBuffers),
+                        valSerde);
+            }
         };
     }
 

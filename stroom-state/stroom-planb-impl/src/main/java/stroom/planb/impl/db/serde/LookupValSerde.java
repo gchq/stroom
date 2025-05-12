@@ -7,7 +7,9 @@ import stroom.query.language.functions.Val;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LookupValSerde implements ValSerde {
 
@@ -20,13 +22,13 @@ public class LookupValSerde implements ValSerde {
     }
 
     @Override
-    public Val read(final Txn<ByteBuffer> readTxn, final ByteBuffer byteBuffer) {
+    public Val toVal(final Txn<ByteBuffer> readTxn, final ByteBuffer byteBuffer) {
         final ByteBuffer valueByteBuffer = lookupDb.getValue(readTxn, byteBuffer);
         return ValSerdeUtil.read(valueByteBuffer);
     }
 
     @Override
-    public void write(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
+    public void toBuffer(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
         ValSerdeUtil.write(value, byteBuffers, valueByteBuffer -> {
             lookupDb.put(writeTxn, valueByteBuffer, idByteBuffer -> {
                 consumer.accept(idByteBuffer);
@@ -34,5 +36,13 @@ public class LookupValSerde implements ValSerde {
             });
             return null;
         });
+    }
+
+    @Override
+    public Val toBufferForGet(final Txn<ByteBuffer> writeTxn,
+                              final Val key,
+                              final Function<Optional<ByteBuffer>, Val> function) {
+        return ValSerdeUtil.write(key, byteBuffers, valueByteBuffer ->
+                lookupDb.get(writeTxn, valueByteBuffer, function));
     }
 }

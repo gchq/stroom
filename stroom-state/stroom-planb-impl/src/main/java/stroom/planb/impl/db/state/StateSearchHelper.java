@@ -67,22 +67,22 @@ public class StateSearchHelper {
     }
 
     public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
-                                                        final Function<Context, Val> keyValueConverter,
-                                                        final Function<Context, Val> valValueFunction) {
+                                                        final Function<Context, Val> keyValFunction,
+                                                        final Function<Context, Val> valueValFunction) {
         final String[] fields = fieldIndex.getFields();
         final Converter[] converters = new Converter[fields.length];
         final boolean extractValue = fieldIndex.getPos(StateFields.VALUE_TYPE) != null ||
                                      fieldIndex.getPos(StateFields.VALUE) != null;
         final Function<Context, Val> svf;
         if (extractValue) {
-            svf = valValueFunction;
+            svf = valueValFunction;
         } else {
             svf = context -> null;
         }
 
         for (int i = 0; i < fields.length; i++) {
             converters[i] = switch (fields[i]) {
-                case StateFields.KEY -> (context, val) -> keyValueConverter.apply(context);
+                case StateFields.KEY -> (context, val) -> keyValFunction.apply(context);
                 case StateFields.VALUE_TYPE -> (context, val) -> ValString.create(val.type().toString());
                 case StateFields.VALUE -> (context, val) -> val;
                 default -> (context, stateValue) -> ValNull.INSTANCE;

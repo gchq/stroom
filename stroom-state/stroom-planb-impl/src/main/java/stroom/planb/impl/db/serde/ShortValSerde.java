@@ -8,10 +8,13 @@ import stroom.query.language.functions.ValShort;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class ShortValSerde implements ValSerde {
 
+    private final ByteBuffer reusableWriteBuffer = ByteBuffer.allocateDirect(Short.BYTES);
     private final ByteBuffers byteBuffers;
 
     public ShortValSerde(final ByteBuffers byteBuffers) {
@@ -19,29 +22,47 @@ public class ShortValSerde implements ValSerde {
     }
 
     @Override
-    public Val read(final Txn<ByteBuffer> readTxn, final ByteBuffer byteBuffer) {
+    public Val toVal(final Txn<ByteBuffer> readTxn, final ByteBuffer byteBuffer) {
         final short s = byteBuffer.getShort();
         return ValShort.create(s);
     }
 
     @Override
-    public void write(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
-        byteBuffers.use(Short.BYTES, byteBuffer -> {
-            try {
-                if (Type.SHORT.equals(value.type())) {
-                    final ValShort valShort = (ValShort) value;
-                    byteBuffer.putShort(valShort.getValue());
-                } else {
-                    final short s = Short.parseShort(value.toString());
-                    byteBuffer.putShort(s);
-                }
-            } catch (final NumberFormatException | NullPointerException e) {
-                throw new RuntimeException("Expected state key to be a short but could not parse '" +
-                                           value +
-                                           "' as short");
-            }
+    public void toBuffer(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
+//        byteBuffers.use(Short.BYTES, byteBuffer -> {
+//            byteBuffer.putShort();
+//            byteBuffer.flip();
+//            consumer.accept(byteBuffer);
+//        })
+
+        // We are in a single write transaction so should be able to reuse the same buffer again and again.
+        reusableWriteBuffer.putShort(0, getShort(value));
+        consumer.accept(reusableWriteBuffer);
+    }
+
+    @Override
+    public Val toBufferForGet(final Txn<ByteBuffer> txn,
+                              final Val value,
+                              final Function<Optional<ByteBuffer>, Val> function) {
+        return byteBuffers.use(Short.BYTES, byteBuffer -> {
+            byteBuffer.putShort(getShort(value));
             byteBuffer.flip();
-            consumer.accept(byteBuffer);
+            return function.apply(Optional.of(byteBuffer));
         });
+    }
+
+    private short getShort(final Val value) {
+        try {
+            if (Type.SHORT.equals(value.type())) {
+                final ValShort valShort = (ValShort) value;
+                return valShort.getValue();
+            } else {
+                return Short.parseShort(value.toString());
+            }
+        } catch (final NumberFormatException | NullPointerException e) {
+            throw new RuntimeException("Expected state key to be a short but could not parse '" +
+                                       value +
+                                       "' as short");
+        }
     }
 }

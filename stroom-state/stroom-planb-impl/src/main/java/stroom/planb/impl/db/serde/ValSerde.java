@@ -5,12 +5,15 @@ import stroom.query.language.functions.Val;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface ValSerde {
 
-    Val read(Txn<ByteBuffer> readTxn, ByteBuffer byteBuffer);
+    Val toVal(Txn<ByteBuffer> txn, ByteBuffer byteBuffer);
 
-    void write(Txn<ByteBuffer> writeTxn, Val value,
-               Consumer<ByteBuffer> consumer);
+    void toBuffer(Txn<ByteBuffer> txn, Val value, Consumer<ByteBuffer> consumer);
+
+    Val toBufferForGet(Txn<ByteBuffer> txn, Val value, Function<Optional<ByteBuffer>, Val> function);
 }

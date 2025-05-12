@@ -13,12 +13,17 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class StringValSerde implements ValSerde {
+public class LimitedStringValSerde implements ValSerde {
 
+    private final ByteBuffer reusableWriteBuffer;
     private final ByteBuffers byteBuffers;
+    private final int limit;
 
-    public StringValSerde(final ByteBuffers byteBuffers) {
+    public LimitedStringValSerde(final ByteBuffers byteBuffers,
+                                 final int limit) {
         this.byteBuffers = byteBuffers;
+        this.limit = limit;
+        reusableWriteBuffer = ByteBuffer.allocateDirect(limit);
     }
 
     @Override
@@ -29,11 +34,20 @@ public class StringValSerde implements ValSerde {
     @Override
     public void toBuffer(final Txn<ByteBuffer> writeTxn, final Val value, final Consumer<ByteBuffer> consumer) {
         final byte[] bytes = value.toString().getBytes(StandardCharsets.UTF_8);
-        byteBuffers.use(bytes.length, byteBuffer -> {
-            byteBuffer.put(bytes);
-            byteBuffer.flip();
-            consumer.accept(byteBuffer);
-        });
+        if (bytes.length > limit) {
+            throw new RuntimeException("Key length exceeds " + limit + " bytes");
+        }
+//        byteBuffers.use(bytes.length, byteBuffer -> {
+//            byteBuffer.put(bytes);
+//            byteBuffer.flip();
+//            consumer.accept(byteBuffer);
+//        });
+
+        // We are in a single write transaction so should be able to reuse the same buffer again and again.
+        reusableWriteBuffer.clear();
+        reusableWriteBuffer.put(bytes);
+        reusableWriteBuffer.flip();
+        consumer.accept(reusableWriteBuffer);
     }
 
     @Override
@@ -41,6 +55,9 @@ public class StringValSerde implements ValSerde {
                               final Val value,
                               final Function<Optional<ByteBuffer>, Val> function) {
         final byte[] bytes = value.toString().getBytes(StandardCharsets.UTF_8);
+        if (bytes.length > limit) {
+            throw new RuntimeException("Key length exceeds " + limit + " bytes");
+        }
         return byteBuffers.use(bytes.length, byteBuffer -> {
             byteBuffer.put(bytes);
             byteBuffer.flip();

@@ -74,7 +74,7 @@ class HashedKeySupport {
             hash.write(keyByteBuffer);
             keyByteBuffer.flip();
 
-            valSerde.write(writer.getWriteTxn(), val, valueByteBuffer -> {
+            valSerde.toBuffer(writer.getWriteTxn(), val, valueByteBuffer -> {
                 byteBuffers.use(Integer.BYTES + bytes.length + valueByteBuffer.limit(), bb -> {
                     bb.putInt(bytes.length);
                     bb.put(bytes);
@@ -290,7 +290,7 @@ class HashedKeySupport {
         final int keyLength = byteBuffer.getInt(0);
         final int valueStart = Integer.BYTES + keyLength;
         final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-        return valSerde.read(readTxn, slice);
+        return valSerde.toVal(readTxn, slice);
     }
 
     public void merge(final Path source) {
@@ -368,7 +368,7 @@ class HashedKeySupport {
             final int keyLength = byteBuffer.getInt(0);
             final int valueStart = Integer.BYTES + keyLength;
             final ByteBuffer slice = byteBuffer.slice(valueStart, byteBuffer.limit() - valueStart);
-            return valSerde.read(readTxn, slice);
+            return valSerde.toVal(readTxn, slice);
         };
     }
 }

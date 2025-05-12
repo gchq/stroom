@@ -71,7 +71,7 @@ public class LookupKeySchema extends AbstractSchema<String, Val> {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         final byte[] keyBytes = parseKey(kv.key());
         keyLookup.put(writeTxn, keyBytes, keyIdBuffer -> {
-            valSerde.write(writeTxn, kv.val(), valueByteBuffer -> {
+            valSerde.toBuffer(writeTxn, kv.val(), valueByteBuffer -> {
                 if (dbi.put(writeTxn, keyIdBuffer, valueByteBuffer, putFlags)) {
                     writer.tryCommit();
                 }
@@ -134,7 +134,7 @@ public class LookupKeySchema extends AbstractSchema<String, Val> {
             if (valueByteBuffer == null) {
                 return null;
             }
-            return valSerde.read(readTxn, valueByteBuffer);
+            return valSerde.toVal(readTxn, valueByteBuffer);
         }));
     }
 
@@ -171,6 +171,6 @@ public class LookupKeySchema extends AbstractSchema<String, Val> {
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> valSerde.read(readTxn, context.kv().val());
+        return context -> valSerde.toVal(readTxn, context.kv().val());
     }
 }
