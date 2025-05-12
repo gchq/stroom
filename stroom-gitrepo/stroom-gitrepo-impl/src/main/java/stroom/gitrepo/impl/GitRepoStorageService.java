@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -138,7 +139,7 @@ public class GitRepoStorageService {
             this.deleteFileTree(gitWork, true);
 
             // Create Git object for the gitWork directory
-            try (Git git = this.gitConstruct(gitRepoDoc, gitWork)) {
+            try (Git git = this.gitConstructForPush(gitRepoDoc, gitWork)) {
 
                 // Export everything
                 ExportSummary exportSummary =
@@ -194,13 +195,8 @@ public class GitRepoStorageService {
             final Path localDir = pathCreator.toAppPath(config.getLocalDir());
             final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
 
-            // Delete everything under gitWork (including all git stuff)
-            this.ensureDirectoryExists(gitWork);
-            this.deleteFileTree(gitWork, false);
-
             // Grab everything from server - it won't be too big
-            // Create Git object for the gitWork directory
-            this.gitClone(gitRepoDoc, gitWork);
+            this.gitCloneForPull(gitRepoDoc, gitWork);
             messages.add(new Message(Severity.INFO, "Cloned from Git repository"));
 
             // ImportSettings.auto() is used in a few places. This consists of
@@ -218,7 +214,16 @@ public class GitRepoStorageService {
                     .useImportNames(true)
                     .rootDocRef(gitRepoDocRef)
                     .build();
-            Set<DocRef> docRefs = importExportSerializer.read(gitWork, importStates, importSettings);
+
+            // Set (remote) directory
+            final Path pathToImport;
+            if (gitRepoDoc.getPath() != null && !gitRepoDoc.getPath().isEmpty()) {
+                pathToImport = addDirectoryToPath(gitWork, Paths.get(gitRepoDoc.getPath()));
+            } else {
+                pathToImport = gitWork;
+            }
+
+            Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
             for (var docRef : docRefs) {
                 // ImportExportSerializerImpl adds the System docref to the returned set,
                 // but we don't use that here, so ignore it
@@ -385,37 +390,29 @@ public class GitRepoStorageService {
     }
 
     /**
-     * Creates a git object. Either opens an existing repo or inits a new one.
+     * Creates a git object by cloning the remote repository.
      * Note that the returned object is auto-closeable (try with resources).
      * @param gitWorkDir The directory that is the root of the repo.
      * @return An auto-closeable Git object to use when accessing the repo.
      * @throws IOException if something goes wrong.
      */
-    private Git gitConstruct(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+    private Git gitConstructForPush(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
             throws IOException, GitAPIException {
 
-        // This refers to the .git directory within the Work directory
-        Path gitRepoDir = gitWorkDir.resolve(GIT_REPO_DIRNAME);
+        // Wipe everything from the local git Work dir
+        this.deleteFileTree(gitWorkDir, false);
 
-        // Git root object
-        final Git git;
-
-        // Initialise the git repo if necessary
-        if (!Files.exists(gitRepoDir)) {
-            // Clone the remote repo
-            // Note depth is 1 - we only want the latest items not the history
-            LOGGER.info("Cloning repository '{}' to '{}'", gitRepoDoc.getUrl(), gitWorkDir);
-            git = Git.cloneRepository()
-                    .setURI(gitRepoDoc.getUrl())
-                    .setDirectory(gitWorkDir.toFile())
-                    .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
-                    .setDepth(1)
-                    .call();
-        } else {
-            git = Git.open(gitWorkDir.toFile());
-        }
-
-        return git;
+        // Clone the remote repo
+        // Note depth is 1 - we only want the latest items not the history
+        LOGGER.info("Cloning repository '{}' to '{}' for push", gitRepoDoc.getUrl(), gitWorkDir);
+        return Git.cloneRepository()
+                .setURI(gitRepoDoc.getUrl())
+                .setDirectory(gitWorkDir.toFile())
+                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                .setDepth(1)
+                .setBranch(gitRepoDoc.getBranch())
+                .setCloneAllBranches(false)
+                .call();
     }
 
     /**
@@ -425,20 +422,56 @@ public class GitRepoStorageService {
      * @param gitWorkDir Where to put the Git repo files.
      * @throws IOException If something goes wrong.
      */
-    private void gitClone(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+    private void gitCloneForPull(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
         throws IOException {
-        LOGGER.info("Cloning repository '{}' to '{}'", gitRepoDoc.getUrl(), gitWorkDir);
+        LOGGER.info("Cloning repository '{}' to '{}' for pull", gitRepoDoc.getUrl(), gitWorkDir);
+
+        // Delete everything under gitWork (including all git stuff)
+        this.ensureDirectoryExists(gitWorkDir);
+        this.deleteFileTree(gitWorkDir, false);
+
         try (Git git = Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())
                 .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
                 .setDepth(1)
+                .setBranch(gitRepoDoc.getBranch())
+                .setCloneAllBranches(false)
                 .call()) {
+
             // No code - close automatically
         } catch (GitAPIException e) {
             throw new IOException("Git error cloning repository "
                                   + gitRepoDoc.getUrl(), e);
         }
+    }
+
+    /**
+     * Safely adds a subdirectory to the parent path given.
+     * Ensures that the real path to the resulting 'subdirectory' starts
+     * with the real path 'parent'.
+     * Note that the path you are trying to resolve must already exist on
+     * disk, so this isn't a general purpose function.
+     * <p>
+     * Package public static to allow testing.
+     *
+     * @param parent The path that subDirectory should be under. Assumed to
+     *               be safe. Must not be null. Must exist on disk.
+     * @param subDirectory The subdirectory path that should be under path.
+     *                     Might not be safe so must be checked.
+     *                     Must not be null. Must exist on disk.
+     * @return The path on disk to the subdirectory.
+     */
+    static Path addDirectoryToPath(Path parent, Path subDirectory)
+    throws IOException {
+        Path realPath = parent.toRealPath();
+        Path subDirPath = realPath.resolve(subDirectory);
+        Path realSubDirPath = subDirPath.toRealPath();
+
+        if (!realSubDirPath.startsWith(realPath)) {
+            throw new IOException("Invalid sub directory: '" + subDirectory);
+        }
+        return realSubDirPath;
     }
 
 }
