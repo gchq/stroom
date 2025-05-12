@@ -24,7 +24,7 @@ public class GitRepoJobsModule extends AbstractModule {
                 .bindJobTo(GitRepoPush.class, builder -> builder
                         .name(GitRepoPushExecutor.TASK_NAME)
                         .description("Push changed objects to a remote Git repository")
-                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
+                        .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
                         .advanced(false));
     }
 

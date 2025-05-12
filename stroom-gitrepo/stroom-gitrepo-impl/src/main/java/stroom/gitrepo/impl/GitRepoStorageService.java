@@ -117,7 +117,7 @@ public class GitRepoStorageService {
      * @throws IOException if something goes wrong
      */
     public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
-                                   final String commitMessage)
+                                                final String commitMessage)
             throws IOException {
         LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
         List<Message> messages = new ArrayList<>();
