@@ -19,9 +19,11 @@ public enum StateValueType implements HasDisplayValue {
     DOUBLE("Double (8 bytes from 1.797,693,134,862,315,7 E+308 to 4.9 E-324)"),
     // Treat all values as strings.
     STRING("String"),
+    // Always use a UID lookup table to store all keys.
+    UID_LOOKUP("UID lookup table (max 511 bytes, deduplicated data)"),
     // Always use a lookup table to store all values. The value is a hash plus a sequence number.
     // Lookups deduplicate data and reduce storage requirements but impact performance.
-    LOOKUP("Lookup table (deduplicated data)"),
+    HASH_LOOKUP("Lookup table (unlimited bytes, deduplicated data)"),
     // Use string or lookup depending on the length of the string.
     VARIABLE("Variable");
 

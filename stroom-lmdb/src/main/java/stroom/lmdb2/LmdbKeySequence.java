@@ -34,64 +34,58 @@ public class LmdbKeySequence {
                       final Txn<ByteBuffer> writeTxn,
                       final ByteBuffer rowKey,
                       final ByteBuffer rowValue,
-                      final Predicate<BBKV> matchPredicate,
+                      final Predicate<ByteBuffer> matchPredicate,
                       final Function<Match, R> matchConsumer) {
+        long nextNo = 0;
+
         // Just try to find without a cursor.
         final ByteBuffer valueBuffer = dbi.get(writeTxn, rowKey);
-        if (valueBuffer != null && matchPredicate.test(new BBKV(rowKey, valueBuffer))) {
-            // Found our value, job done
-            LOGGER.debug("Found row directly {}", rowValue);
-            return matchConsumer.apply(new Match(rowKey, null));
-
-        } else {
-            // Look forward from the provided row key across all subsequent sequence numbers.
-            final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, rowKey, null);
-            // Iterate over all entries with the same hash. Will only be one unless
-            // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
-            // gaps in the seq numbers.
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                Long lastSeqNo = null;
-                while (iterator.hasNext()) {
-                    final BBKV kv = BBKV.create(iterator.next());
-                    final ByteBuffer key = kv.key();
-
-                    // Stop iterating if we go beyond the prefix.
-                    if (!ByteBufferUtils.containsPrefix(key, rowKey)) {
-                        break;
-                    }
-
-                    final long seqNo = extractSequenceNumber(key, rowKey.limit());
-
-                    // See if the value is the same as ours
-                    if (matchPredicate.test(kv)) {
-                        // Found our value, job done
-                        LOGGER.debug("Found row with cursor {}", kv.val());
-                        return matchConsumer.apply(new Match(key, null));
-                    } else {
-                        LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
-                                seqNo,
-                                ByteBufferUtils.byteBufferInfo(kv.key()),
-                                ByteBufferUtils.byteBufferInfo(kv.val())));
-                    }
-
-                    // Remember the last sequence number.
-                    if (lastSeqNo == null) {
-                        lastSeqNo = seqNo;
-                    } else if (seqNo > lastSeqNo) {
-                        lastSeqNo = seqNo;
-                    }
-                }
-
-                final long nextNo;
-                if (lastSeqNo == null) {
-                    nextNo = 1L;
-                } else {
-                    nextNo = lastSeqNo + 1;
-                }
-
-                return matchConsumer.apply(new Match(null, nextNo));
+        if (valueBuffer != null) {
+            nextNo = 1;
+            if (valueBuffer.equals(rowValue)) {
+                // Found our value, job done
+                LOGGER.debug("Found row directly {}", rowValue);
+                return matchConsumer.apply(new Match(rowKey, null));
             }
+        }
+
+        // Look forward from the provided row key across all subsequent sequence numbers.
+        final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, rowKey, null);
+        // Iterate over all entries with the same hash. Will only be one unless
+        // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
+        // gaps in the seq numbers.
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn, keyRange)) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            while (iterator.hasNext()) {
+                final KeyVal<ByteBuffer> kv = iterator.next();
+                final ByteBuffer key = kv.key();
+                final ByteBuffer val = kv.val();
+
+                // Stop iterating if we go beyond the prefix.
+                if (!ByteBufferUtils.containsPrefix(key, rowKey)) {
+                    break;
+                }
+
+                // See if the value is the same as ours
+                if (val.equals(rowValue)) {
+                    // Found our value, job done
+                    LOGGER.debug("Found row with cursor {}", val);
+                    return matchConsumer.apply(new Match(key, null));
+                }
+
+                final long seqNo = extractSequenceNumber(key, rowKey.limit());
+                LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
+                        seqNo,
+                        ByteBufferUtils.byteBufferInfo(key),
+                        ByteBufferUtils.byteBufferInfo(val)));
+
+                // Figure out the next sequence number.
+                if (seqNo >= nextNo) {
+                    nextNo = seqNo + 1;
+                }
+            }
+
+            return matchConsumer.apply(new Match(null, nextNo));
         }
     }
 

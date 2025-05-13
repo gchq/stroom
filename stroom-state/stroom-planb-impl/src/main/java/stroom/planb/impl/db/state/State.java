@@ -12,10 +12,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-public class State extends KV<String, Val> implements PlanBValue {
+public class State extends KV<Val, Val> implements PlanBValue {
 
     @JsonCreator
-    public State(@JsonProperty("key") final String key,
+    public State(@JsonProperty("key") final Val key,
                  @JsonProperty("value") final Val value) {
         super(key, value);
     }
@@ -28,7 +28,7 @@ public class State extends KV<String, Val> implements PlanBValue {
         return new Builder();
     }
 
-    public static class Builder extends AbstractKVBuilder<State, Builder, String, Val> {
+    public static class Builder extends AbstractKVBuilder<State, Builder, Val, Val> {
 
         private Builder() {
         }

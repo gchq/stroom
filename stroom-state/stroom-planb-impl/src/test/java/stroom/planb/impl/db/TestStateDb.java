@@ -41,8 +41,12 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValByte;
 import stroom.query.language.functions.ValDouble;
 import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -82,40 +86,40 @@ class TestStateDb {
             .build();
     private static final String MAP_UUID = "map-uuid";
     private static final String MAP_NAME = "map-name";
-    private static final String MIN_FLOAT = ValFloat.create(Float.MIN_VALUE).toString();
-    private static final String MAX_FLOAT = ValFloat.create(Float.MAX_VALUE).toString();
-    private static final String MIN_DOUBLE = ValDouble.create(Double.MIN_VALUE).toString();
-    private static final String MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE).toString();
+    private static final Val MIN_FLOAT = ValFloat.create(Float.MIN_VALUE);
+    private static final Val MAX_FLOAT = ValFloat.create(Float.MAX_VALUE);
+    private static final Val MIN_DOUBLE = ValDouble.create(Double.MIN_VALUE);
+    private static final Val MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE);
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
-        final Function<Integer, String> keyFunction = i -> "TEST_KEY";
+        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWriteRead(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
     }
 
     @Test
     void testReadWriteIntegerMax(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.INT, String.valueOf(Integer.MAX_VALUE));
+        testReadWriteKeyType(tempDir, StateKeyType.INT, ValInteger.create(Integer.MAX_VALUE));
     }
 
     @Test
     void testReadWriteIntegerMin(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.INT, String.valueOf(Integer.MIN_VALUE));
+        testReadWriteKeyType(tempDir, StateKeyType.INT, ValInteger.create(Integer.MIN_VALUE));
     }
 
     @Test
     void testReadWriteLongMax(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.LONG, String.valueOf(Long.MAX_VALUE));
+        testReadWriteKeyType(tempDir, StateKeyType.LONG, ValLong.create(Long.MAX_VALUE));
     }
 
     @Test
     void testReadWriteLongMin(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.LONG, String.valueOf(Long.MIN_VALUE));
+        testReadWriteKeyType(tempDir, StateKeyType.LONG, ValLong.create(Long.MIN_VALUE));
     }
 
-    void testReadWriteKeyType(@TempDir final Path tempDir, final StateKeyType stateKeyType, final String key) {
-        final Function<Integer, String> keyFunction = i -> key;
+    void testReadWriteKeyType(@TempDir final Path tempDir, final StateKeyType stateKeyType, final Val key) {
+        final Function<Integer, Val> keyFunction = i -> key;
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         final StateSettings settings = StateSettings
                 .builder()
@@ -131,15 +135,15 @@ class TestStateDb {
         Files.createDirectory(dbPath1);
         Files.createDirectory(dbPath2);
 
-        final Function<Integer, String> keyFunction = i -> "TEST_KEY1";
+        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY1");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
         testWrite(dbPath1, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
-        final Function<Integer, String> keyFunction2 = i -> "TEST_KEY2";
+        final Function<Integer, Val> keyFunction2 = i -> ValString.create("TEST_KEY2");
         final Function<Integer, Val> valueFunction2 = i -> ValString.create("test2" + i);
         testWrite(dbPath2, BASIC_SETTINGS, 100, keyFunction2, valueFunction2);
 
-        try (final StateDb db = new StateDb(dbPath1, BYTE_BUFFERS)) {
+        try (final StateDb db = StateDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.merge(dbPath2);
         }
     }
@@ -179,25 +183,23 @@ class TestStateDb {
                 new SimpleTaskContextFactory(),
                 shardManager);
 
-        final int parts = 10;
+        final int threads = 10;
 
         // Write parts.
         final List<CompletableFuture<Void>> list = new ArrayList<>();
-        for (int thread = 0; thread < parts; thread++) {
+        for (int thread = 0; thread < threads; thread++) {
             list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, "TEST_KEY_1")));
+                    writePart(mergeProcessor, ValString.create("TEST_KEY_1"))));
             list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, "TEST_KEY_2")));
+                    writePart(mergeProcessor, ValString.create("TEST_KEY_2"))));
         }
         CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
 
         // Consume and merge parts.
-        for (int i = 0; i < parts; i++) {
-            mergeProcessor.merge(i);
-        }
+        mergeProcessor.mergeCurrent();
 
         // Read merged
-        try (final StateDb db = new StateDb(
+        try (final StateDb db = StateDb.create(
                 statePaths.getShardDir().resolve(MAP_UUID),
                 new ByteBuffers(new ByteBufferFactoryImpl()),
                 BASIC_SETTINGS,
@@ -209,7 +211,7 @@ class TestStateDb {
     @Test
     void testZipUnzip(@TempDir final Path rootDir) throws IOException {
         // Simulate constant writing to shard.
-        final Function<Integer, String> keyFunction = i -> "TEST_KEY1";
+        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY1");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
 
         final Path source = rootDir.resolve("source");
@@ -221,7 +223,7 @@ class TestStateDb {
         final AtomicBoolean writeComplete = new AtomicBoolean();
         final List<CompletableFuture<?>> list = new ArrayList<>();
 
-        try (final StateDb db1 = new StateDb(source, BYTE_BUFFERS)) {
+        try (final StateDb db1 = StateDb.create(source, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             list.add(CompletableFuture.runAsync(() -> {
                 insertData(db1, 1000000, keyFunction, valueFunction);
                 writeComplete.set(true);
@@ -247,7 +249,7 @@ class TestStateDb {
                             ZipUtil.unzip(zipFile, target);
                             Files.delete(zipFile);
                             // Read.
-                            try (final StateDb db2 = new StateDb(
+                            try (final StateDb db2 = StateDb.create(
                                     target,
                                     BYTE_BUFFERS,
                                     BASIC_SETTINGS,
@@ -269,17 +271,17 @@ class TestStateDb {
 
     @Test
     void testDeleteWhileRead(@TempDir final Path tempDir) {
-        final Function<Integer, String> keyFunction = i -> "TEST_KEY";
+        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWrite(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
-        try (final StateDb db = new StateDb(
+        try (final StateDb db = StateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
                 BASIC_SETTINGS,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
-            final String key = "TEST_KEY";
+            final Val key = ValString.create("TEST_KEY");
 
             // Read the data.
             Val value = db.get(key);
@@ -298,9 +300,9 @@ class TestStateDb {
         }
     }
 
-    private void writePart(final MergeProcessor mergeProcessor, final String keyName) {
+    private void writePart(final MergeProcessor mergeProcessor, final Val keyName) {
         try {
-            final Function<Integer, String> keyFunction = i -> keyName;
+            final Function<Integer, Val> keyFunction = i -> keyName;
             final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
             final Path partPath = Files.createTempDirectory("part");
             final Path mapPath = partPath.resolve(MAP_UUID);
@@ -316,7 +318,7 @@ class TestStateDb {
         }
     }
 
-    private record TestRun(StateSettings settings, String key, int iterations) {
+    private record TestRun(StateSettings settings, Val key, int iterations) {
 
     }
 
@@ -379,34 +381,35 @@ class TestStateDb {
 
                 // Byte keys.
                 .addNamedCase("Byte key min",
-                        new TestRun(getSettings(StateKeyType.BYTE), String.valueOf(Byte.MIN_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.BYTE), ValByte.create(Byte.MIN_VALUE), iterations),
                         true)
                 .addNamedCase("Byte key max",
-                        new TestRun(getSettings(StateKeyType.BYTE), String.valueOf(Byte.MAX_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.BYTE), ValByte.create(Byte.MAX_VALUE), iterations),
                         true)
 
                 // Short keys.
                 .addNamedCase("Short key min",
-                        new TestRun(getSettings(StateKeyType.SHORT), String.valueOf(Short.MIN_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.SHORT),
+                                ValShort.create(Short.MIN_VALUE), iterations),
                         true)
                 .addNamedCase("Short key max",
-                        new TestRun(getSettings(StateKeyType.SHORT), String.valueOf(Short.MAX_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.SHORT), ValShort.create(Short.MAX_VALUE), iterations),
                         true)
 
                 // Integer keys.
                 .addNamedCase("Integer key min",
-                        new TestRun(getSettings(StateKeyType.INT), String.valueOf(Integer.MIN_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.INT), ValInteger.create(Integer.MIN_VALUE), iterations),
                         true)
                 .addNamedCase("Integer key max",
-                        new TestRun(getSettings(StateKeyType.INT), String.valueOf(Integer.MAX_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.INT), ValInteger.create(Integer.MAX_VALUE), iterations),
                         true)
 
                 // Long keys.
                 .addNamedCase("Long key min",
-                        new TestRun(getSettings(StateKeyType.LONG), String.valueOf(Long.MIN_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.LONG), ValLong.create(Long.MIN_VALUE), iterations),
                         true)
                 .addNamedCase("Long key max",
-                        new TestRun(getSettings(StateKeyType.LONG), String.valueOf(Long.MAX_VALUE), iterations),
+                        new TestRun(getSettings(StateKeyType.LONG), ValLong.create(Long.MAX_VALUE), iterations),
                         true)
                 // Float keys.
                 .addNamedCase("Float key min",
@@ -426,17 +429,20 @@ class TestStateDb {
 
                 // String keys.
                 .addNamedCase("String key",
-                        new TestRun(getSettings(StateKeyType.STRING), "TEST_KEY", iterations),
-                        true)
-
-                // Long string keys - hashes.
-                .addNamedCase("Long string key (hash)",
-                        new TestRun(getSettings(StateKeyType.HASHED), "TEST_KEY", iterations),
+                        new TestRun(getSettings(StateKeyType.STRING), ValString.create("TEST_KEY"), iterations),
                         true)
 
                 // Lookup keys.
-                .addNamedCase("Lookup key",
-                        new TestRun(getSettings(StateKeyType.LOOKUP), "TEST_KEY", iterations),
+                .addNamedCase("Uid lookup key",
+                        new TestRun(getSettings(StateKeyType.UID_LOOKUP), ValString.create("TEST_KEY"), iterations),
+                        true)
+
+                .addNamedCase("Hash lookup key",
+                        new TestRun(getSettings(StateKeyType.HASH_LOOKUP), ValString.create("TEST_KEY"), iterations),
+                        true)
+
+                .addNamedCase("Hash lookup key (long)",
+                        new TestRun(getSettings(StateKeyType.HASH_LOOKUP), ValString.create(makeKey(800)), iterations),
                         true)
 
 
@@ -486,10 +492,13 @@ class TestStateDb {
 //                        true)
 
                 .addNamedCase("Variable string key",
-                        new TestRun(getSettings(StateKeyType.VARIABLE), "TEST_KEY", iterations),
+                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create("TEST_KEY"), iterations),
                         true)
-                .addNamedCase("Variable string lookup key",
-                        new TestRun(getSettings(StateKeyType.VARIABLE), makeKey(800), iterations),
+                .addNamedCase("Variable string uid lookup key",
+                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create(makeKey(200)), iterations),
+                        true)
+                .addNamedCase("Variable string hash lookup key",
+                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create(makeKey(800)), iterations),
                         true)
                 .build();
     }
@@ -537,10 +546,10 @@ class TestStateDb {
 
     void testSameKey(final Path tempDir,
                      final StateSettings settings,
-                     final String key,
+                     final Val key,
                      final int rows,
                      final boolean read) {
-        final Function<Integer, String> keyFunction = i -> key;
+        final Function<Integer, Val> keyFunction = i -> key;
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWrite(tempDir, settings, rows, keyFunction, valueFunction);
         if (read) {
@@ -551,7 +560,7 @@ class TestStateDb {
     private void testWriteRead(final Path tempDir,
                                final StateSettings settings,
                                final int insertRows,
-                               final Function<Integer, String> keyFunction,
+                               final Function<Integer, Val> keyFunction,
                                final Function<Integer, Val> valueFunction) {
         testWrite(tempDir, settings, insertRows, keyFunction, valueFunction);
         testRead(tempDir, settings, insertRows, keyFunction);
@@ -560,9 +569,9 @@ class TestStateDb {
     private void testWrite(final Path dbDir,
                            final StateSettings settings,
                            final int insertRows,
-                           final Function<Integer, String> keyFunction,
+                           final Function<Integer, Val> keyFunction,
                            final Function<Integer, Val> valueFunction) {
-        try (final StateDb db = new StateDb(dbDir, BYTE_BUFFERS, settings, false)) {
+        try (final StateDb db = StateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
         }
     }
@@ -570,10 +579,10 @@ class TestStateDb {
     private void testRead(final Path tempDir,
                           final StateSettings settings,
                           final int expectedRows,
-                          final Function<Integer, String> keyFunction) {
-        try (final StateDb db = new StateDb(tempDir, BYTE_BUFFERS, settings, true)) {
+                          final Function<Integer, Val> keyFunction) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, true)) {
             assertThat(db.count()).isEqualTo(1);
-            final String key = keyFunction.apply(0);
+            final Val key = keyFunction.apply(0);
             final Val value = db.get(key);
             assertThat(value).isNotNull();
             assertThat(value.type()).isEqualTo(Type.STRING);
@@ -592,7 +601,7 @@ class TestStateDb {
                     expressionPredicateFactory,
                     results::add);
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst()[0].toString()).isEqualTo(key);
+            assertThat(results.getFirst()[0]).isEqualTo(key);
             assertThat(results.getFirst()[1].toString()).isEqualTo("string");
             assertThat(results.getFirst()[2].toString()).isEqualTo("test" + (expectedRows - 1));
         }
@@ -618,14 +627,14 @@ class TestStateDb {
 
     private void insertData(final StateDb db,
                             final int rows,
-                            final Function<Integer, String> keyFunction,
+                            final Function<Integer, Val> keyFunction,
                             final Function<Integer, Val> valueFunction) {
-        try (final LmdbWriter writer = db.createWriter()) {
+        db.write(writer -> {
             for (int i = 0; i < rows; i++) {
-                final String k = keyFunction.apply(i);
+                final Val k = keyFunction.apply(i);
                 final Val v = valueFunction.apply(i);
                 db.insert(writer, new State(k, v));
             }
-        }
+        });
     }
 }

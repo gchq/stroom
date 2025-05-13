@@ -2,6 +2,7 @@ package stroom.planb.impl.db.state;
 
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnvDir;
+import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -34,13 +35,13 @@ public class PlanBEnv implements AutoCloseable {
     private final ReentrantLock writeTxnLock = new ReentrantLock();
     private final ReentrantLock dbCommitLock = new ReentrantLock();
     private final boolean readOnly;
-    private final Runnable commitRunnable;
+    private final HashClashCommitRunnable commitRunnable;
 
     public PlanBEnv(final Path path,
                     final Long mapSize,
                     final int maxDbs,
                     final boolean readOnly,
-                    final Runnable commitRunnable) {
+                    final HashClashCommitRunnable commitRunnable) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
         this.readOnly = readOnly;
         this.commitRunnable = commitRunnable;
@@ -126,13 +127,17 @@ public class PlanBEnv implements AutoCloseable {
     }
 
     public EnvInf getInfo() {
-        final List<String> dbNames = env
+        final List<String> dbNames = getDbNames();
+        return new EnvInf(env.stat(), env.info(), env.getMaxKeySize(), dbNames);
+    }
+
+    public List<String> getDbNames() {
+        return env
                 .getDbiNames()
                 .stream()
                 .map(String::new)
                 .sorted()
                 .toList();
-        return new EnvInf(env.stat(), env.info(), env.getMaxKeySize(), dbNames);
     }
 
     public record EnvInf(Stat stat, EnvInfo envInfo, int maxKeySize, List<String> dbNames) {

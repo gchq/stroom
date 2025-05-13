@@ -5,19 +5,20 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 public class LmdbWriter implements AutoCloseable {
 
     private final Env<ByteBuffer> env;
     private final ReentrantLock dbCommitLock;
-    private final Runnable commitListener;
+    private final Consumer<Txn<ByteBuffer>> commitListener;
     private final ReentrantLock writeTxnLock;
     private Txn<ByteBuffer> writeTxn;
     private int commitCount = 0;
 
     public LmdbWriter(final Env<ByteBuffer> env,
                       final ReentrantLock dbCommitLock,
-                      final Runnable commitListener,
+                      final Consumer<Txn<ByteBuffer>> commitListener,
                       final ReentrantLock writeTxnLock) {
         this.env = env;
         this.dbCommitLock = dbCommitLock;
@@ -48,6 +49,7 @@ public class LmdbWriter implements AutoCloseable {
         try {
             if (writeTxn != null) {
                 try {
+                    commitListener.accept(writeTxn);
                     writeTxn.commit();
                 } finally {
                     try {
@@ -59,7 +61,6 @@ public class LmdbWriter implements AutoCloseable {
             }
 
             commitCount = 0;
-            commitListener.run();
         } finally {
             dbCommitLock.unlock();
         }

@@ -1,5 +1,7 @@
 package stroom.planb.impl.db.state;
 
-public record StateRequest(String key) {
+import stroom.query.language.functions.Val;
+
+public record StateRequest(Val key) {
 
 }

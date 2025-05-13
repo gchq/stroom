@@ -10,8 +10,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValNull;
-import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 
 import org.lmdbjava.CursorIterable;
@@ -66,45 +64,42 @@ public class StateSearchHelper {
         };
     }
 
-    public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
-                                                        final Function<Context, Val> keyValFunction,
-                                                        final Function<Context, Val> valueValFunction) {
-        final String[] fields = fieldIndex.getFields();
-        final Converter[] converters = new Converter[fields.length];
-        final boolean extractValue = fieldIndex.getPos(StateFields.VALUE_TYPE) != null ||
-                                     fieldIndex.getPos(StateFields.VALUE) != null;
-        final Function<Context, Val> svf;
-        if (extractValue) {
-            svf = valueValFunction;
-        } else {
-            svf = context -> null;
-        }
-
-        for (int i = 0; i < fields.length; i++) {
-            converters[i] = switch (fields[i]) {
-                case StateFields.KEY -> (context, val) -> keyValFunction.apply(context);
-                case StateFields.VALUE_TYPE -> (context, val) -> ValString.create(val.type().toString());
-                case StateFields.VALUE -> (context, val) -> val;
-                default -> (context, stateValue) -> ValNull.INSTANCE;
-            };
-        }
-        return (readTxn, kv) -> {
-            final Context context = new Context(readTxn, kv);
-            final Val[] values = new Val[fields.length];
-            final Val val = svf.apply(context);
-            for (int i = 0; i < fields.length; i++) {
-                values[i] = converters[i].convert(context, val);
-            }
-            return values;
-        };
-    }
-
     public record Context(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv) {
 
     }
 
-    public interface Converter {
+    public static class LazyKV<K, V> {
+        private final Context context;
+        private final Function<Context, K> keyFunction;
+        private final Function<Context, V> valFunction;
+        private K key;
+        private V val;
 
-        Val convert(Context context, Val val);
+        public LazyKV(final Context context,
+                      final Function<Context, K> keyFunction,
+                      final Function<Context, V> valFunction) {
+            this.context = context;
+            this.keyFunction = keyFunction;
+            this.valFunction = valFunction;
+        }
+
+        public K getKey() {
+            if (key == null) {
+                key = keyFunction.apply(context);
+            }
+            return key;
+        }
+
+        public V getValue() {
+            if (val == null) {
+                val = valFunction.apply(context);
+            }
+            return val;
+        }
+    }
+
+    public interface Converter<K, V> {
+
+        Val convert(LazyKV<K, V> lazyKV);
     }
 }

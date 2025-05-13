@@ -20,6 +20,11 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.db.temporalstate.TemporalState.Key;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.impl.db.temporalstate.TemporalStateFields;
+import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -27,12 +32,12 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -44,26 +49,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTemporalStateDb {
 
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+    private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
+            .builder()
+            .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
+            .build();
 
     @Test
     void test(@TempDir Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = new TemporalStateDb(
+        try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                TemporalStateSettings.builder().build(),
+                BASIC_SETTINGS,
                 true)) {
             assertThat(db.count()).isEqualTo(100);
 
-            final byte[] byteKey = "TEST_KEY".getBytes(StandardCharsets.UTF_8);
+            final Val byteKey = ValString.create("TEST_KEY");
             // Check exact time states.
-            checkState(db, byteKey, refTime.toEpochMilli(), true);
+            checkState(db, byteKey, refTime, true);
             // Check before time states.
-            checkState(db, byteKey, refTime.toEpochMilli() - 1, false);
+            checkState(db, byteKey, refTime.minusMillis(1), false);
             // Check after time states.
-            checkState(db, byteKey, refTime.toEpochMilli() + 1, true);
+            checkState(db, byteKey, refTime.plusMillis(1), true);
 
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
@@ -91,7 +100,7 @@ class TestTemporalStateDb {
             assertThat(results.size()).isEqualTo(100);
             assertThat(results.getFirst()[0].toString()).isEqualTo("TEST_KEY");
             assertThat(results.getFirst()[1].toString()).isEqualTo("2000-01-01T00:00:00.000Z");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("String");
+            assertThat(results.getFirst()[2].toString()).isEqualTo("string");
             assertThat(results.getFirst()[3].toString()).isEqualTo("test");
 
 
@@ -112,7 +121,7 @@ class TestTemporalStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath1, BYTE_BUFFERS)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.merge(dbPath2);
         }
     }
@@ -124,7 +133,7 @@ class TestTemporalStateDb {
 
         testWrite(dbPath);
 
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath, BYTE_BUFFERS)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
@@ -139,7 +148,7 @@ class TestTemporalStateDb {
         Files.createDirectory(dbPath);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = new TemporalStateDb(dbPath, BYTE_BUFFERS)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             insertData(db, refTime, "TEST_KEY", "test", 100, 60 * 60 * 24);
             insertData(db, refTime, "TEST_KEY2", "test2", 100, 60 * 60 * 24);
             insertData(db, refTime, "TEST_KEY", "test", 10, -60 * 60 * 24);
@@ -147,17 +156,17 @@ class TestTemporalStateDb {
 
             assertThat(db.count()).isEqualTo(218);
 
-            db.condense(refTime.toEpochMilli(), 0);
+            db.condense(refTime.plusMillis(1), Instant.MIN);
             assertThat(db.count()).isEqualTo(200);
 
-            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").toEpochMilli(), 0);
+            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1), Instant.MIN);
             assertThat(db.count()).isEqualTo(182);
         }
     }
 
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalStateDb db = new TemporalStateDb(dbDir, BYTE_BUFFERS)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             insertData(db, refTime, "TEST_KEY", "test", 100, 10);
         }
     }
@@ -217,17 +226,17 @@ class TestTemporalStateDb {
                         .effectiveTime(effectiveTime)
                         .build();
                 final Val v = ValString.create(value);
-                db.insert(writer, k, v);
+                db.insert(writer, new TemporalState(k, v));
             }
         });
     }
 
     private void checkState(final TemporalStateDb db,
-                            final byte[] key,
-                            final long effectiveTime,
+                            final Val key,
+                            final Instant effectiveTime,
                             final boolean expected) {
         final TemporalStateRequest request =
-                new TemporalStateRequest(key, effectiveTime);
+                new TemporalStateRequest(new Key(key, effectiveTime));
         final TemporalState state = db.getState(request);
         assertThat(state != null).isEqualTo(expected);
     }

@@ -1,0 +1,29 @@
+package stroom.planb.shared;
+
+import stroom.docref.HasDisplayValue;
+
+public enum RangeType implements HasDisplayValue {
+    // Treat all ranges as bytes.
+    BYTE("Byte (1 byte from +127 to -128)"),
+    // Treat all ranges as shorts.
+    SHORT("Short (2 bytes from +32,767 to -32,768)"),
+    // Treat all ranges as integers.
+    INT("Integer (4 bytes from +2,147,483,647 to -2,147,483,648)"),
+    // Treat all ranges as longs.
+    LONG("Long (8 bytes from +9,223,372,036,854,775,807 to -9,223,372,036,854,775,808)"),
+    // Treat all ranges as floats.
+    FLOAT("Float (4 bytes from 3.402,823,5 E+38 to 1.4 E-45)"),
+    // Treat all ranges as doubles.
+    DOUBLE("Double (8 bytes from 1.797,693,134,862,315,7 E+308 to 4.9 E-324)");
+
+    private final String displayValue;
+
+    RangeType(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
+}

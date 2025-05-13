@@ -14,7 +14,10 @@ import java.util.Objects;
         "maxStoreSize",
         "synchroniseMerge",
         "snapshotSettings",
-        "overwrite"
+        "overwrite",
+        "rangeType",
+        "stateValueSchema",
+        "timePrecision"
 })
 @JsonInclude(Include.NON_NULL)
 public class TemporalRangedStateSettings extends AbstractPlanBSettings {
@@ -25,6 +28,12 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
     private final DurationSetting retention;
     @JsonProperty
     private final Boolean overwrite;
+    @JsonProperty
+    private final RangeType rangeType;
+    @JsonProperty
+    private final StateValueSchema stateValueSchema;
+    @JsonProperty
+    private final TimePrecision timePrecision;
 
     @JsonCreator
     public TemporalRangedStateSettings(@JsonProperty("condense") final DurationSetting condense,
@@ -32,11 +41,17 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
                                        @JsonProperty("maxStoreSize") final Long maxStoreSize,
                                        @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                                        @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
-                                       @JsonProperty("overwrite") final Boolean overwrite) {
+                                       @JsonProperty("overwrite") final Boolean overwrite,
+                                       @JsonProperty("rangeType") final RangeType rangeType,
+                                       @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema,
+                                       @JsonProperty("timePrecision") final TimePrecision timePrecision) {
         super(maxStoreSize, synchroniseMerge, snapshotSettings);
         this.condense = condense;
         this.retention = retention;
         this.overwrite = overwrite;
+        this.rangeType = rangeType;
+        this.stateValueSchema = stateValueSchema;
+        this.timePrecision = timePrecision;
     }
 
     public DurationSetting getCondense() {
@@ -49,6 +64,22 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
 
     public Boolean getOverwrite() {
         return overwrite;
+    }
+
+    public RangeType getRangeType() {
+        return rangeType;
+    }
+
+    public StateValueSchema getStateValueSchema() {
+        return stateValueSchema;
+    }
+
+    public TimePrecision getTimePrecision() {
+        return timePrecision;
+    }
+
+    public boolean overwrite() {
+        return overwrite == null || overwrite;
     }
 
     @Override
@@ -65,12 +96,21 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
         final TemporalRangedStateSettings that = (TemporalRangedStateSettings) o;
         return Objects.equals(condense, that.condense) &&
                Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite);
+               Objects.equals(overwrite, that.overwrite) &&
+               rangeType == that.rangeType &&
+               Objects.equals(stateValueSchema, that.stateValueSchema) &&
+               timePrecision == that.timePrecision;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite);
+        return Objects.hash(super.hashCode(),
+                condense,
+                retention,
+                overwrite,
+                rangeType,
+                stateValueSchema,
+                timePrecision);
     }
 
     @Override
@@ -79,6 +119,9 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
                "condense=" + condense +
                ", retention=" + retention +
                ", overwrite=" + overwrite +
+               ", rangeType=" + rangeType +
+               ", stateValueSchema=" + stateValueSchema +
+               ", timePrecision=" + timePrecision +
                '}';
     }
 
@@ -92,9 +135,12 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
 
     public static class Builder extends AbstractBuilder<TemporalRangedStateSettings, Builder> {
 
-        protected DurationSetting condense;
-        protected DurationSetting retention;
-        protected Boolean overwrite;
+        private DurationSetting condense;
+        private DurationSetting retention;
+        private Boolean overwrite;
+        private RangeType rangeType;
+        private StateValueSchema stateValueSchema;
+        private TimePrecision timePrecision;
 
         public Builder() {
         }
@@ -104,6 +150,9 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
             this.condense = settings.condense;
             this.retention = settings.retention;
             this.overwrite = settings.overwrite;
+            this.rangeType = settings.rangeType;
+            this.stateValueSchema = settings.stateValueSchema;
+            this.timePrecision = settings.timePrecision;
         }
 
         public Builder condense(final DurationSetting condense) {
@@ -121,6 +170,21 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
             return self();
         }
 
+        public Builder rangeType(final RangeType rangeType) {
+            this.rangeType = rangeType;
+            return self();
+        }
+
+        public Builder stateValueSchema(final StateValueSchema stateValueSchema) {
+            this.stateValueSchema = stateValueSchema;
+            return self();
+        }
+
+        public Builder timePrecision(final TimePrecision timePrecision) {
+            this.timePrecision = timePrecision;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -134,7 +198,10 @@ public class TemporalRangedStateSettings extends AbstractPlanBSettings {
                     maxStoreSize,
                     synchroniseMerge,
                     snapshotSettings,
-                    overwrite);
+                    overwrite,
+                    rangeType,
+                    stateValueSchema,
+                    timePrecision);
         }
     }
 }

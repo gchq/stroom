@@ -30,7 +30,7 @@ import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
 import stroom.planb.impl.db.TemporalRangedState;
-import stroom.planb.impl.db.TemporalState;
+import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.Type;
@@ -557,7 +557,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         } else {
             LOGGER.trace("Putting key {} into table {}", key, mapName);
             final Val v = getVal();
-            writer.addState(doc, new State(key, v));
+            writer.addState(doc, new State(ValString.create(key), v));
         }
     }
 

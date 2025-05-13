@@ -24,6 +24,7 @@ public class IntegerHashFactory implements HashFactory {
     }
 
     private static class IntegerHash implements Hash {
+
         private final int hash;
 
         public IntegerHash(final int hash) {

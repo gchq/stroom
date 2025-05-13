@@ -164,37 +164,46 @@ class DuplicateCheckStore {
                               final WriteTxn writeTxn,
                               final LmdbKV lmdbKV) {
         // try immediate insert first.
-        boolean didPut = db.put(writeTxn, lmdbKV.key(), lmdbKV.val(), PutFlags.MDB_NOOVERWRITE);
-        if (!didPut) {
-            // If we didn't put then check to see if this was because this is an exact duplicate.
-            didPut = lmdbKeySequence.find(
-                    db.getDbi(),
-                    writeTxn.get(),
-                    lmdbKV.key(),
-                    lmdbKV.val(),
-                    kv -> kv.val().equals(lmdbKV.val()),
-                    match -> {
-                        if (match.foundKey() == null) {
-                            LOGGER.debug("Didn't find row {}", duplicateCheckRow);
-                            return lmdbKeySequence.addSequenceNumber(
+        final boolean didPut = lmdbKeySequence.find(
+                db.getDbi(),
+                writeTxn.get(),
+                lmdbKV.key(),
+                lmdbKV.val(),
+                val -> val.equals(lmdbKV.val()),
+                match -> {
+                    if (match.foundKey() == null) {
+                        // If there is 0 sequence number then just put.
+                        if (match.nextSequenceNumber() == 0) {
+                            final boolean success = db.put(writeTxn,
                                     lmdbKV.key(),
-                                    duplicateCheckRowSerde.getKeyLength(),
-                                    match.nextSequenceNumber(),
-                                    sequenceKeyBuffer -> {
-                                        final boolean success = db.put(writeTxn,
-                                                sequenceKeyBuffer,
-                                                lmdbKV.val(),
-                                                PutFlags.MDB_NOOVERWRITE);
-                                        if (!success) {
-                                            throw new RuntimeException("Expected to put value but failed");
-                                        }
-                                        uncommittedCount++;
-                                        return true;
-                                    });
+                                    lmdbKV.val(),
+                                    PutFlags.MDB_NOOVERWRITE);
+                            if (!success) {
+                                throw new RuntimeException("Expected to put value but failed");
+                            }
+                            return true;
                         }
-                        return false;
-                    });
-        }
+
+                        LOGGER.debug("Didn't find row {}", duplicateCheckRow);
+                        return lmdbKeySequence.addSequenceNumber(
+                                lmdbKV.key(),
+                                duplicateCheckRowSerde.getKeyLength(),
+                                match.nextSequenceNumber(),
+                                sequenceKeyBuffer -> {
+                                    final boolean success = db.put(writeTxn,
+                                            sequenceKeyBuffer,
+                                            lmdbKV.val(),
+                                            PutFlags.MDB_NOOVERWRITE);
+                                    if (!success) {
+                                        throw new RuntimeException("Expected to put value but failed");
+                                    }
+                                    uncommittedCount++;
+                                    return true;
+                                });
+                    }
+
+                    return false;
+                });
 
         if (LOGGER.isDebugEnabled()) {
             if (didPut) {

@@ -2,10 +2,14 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.TemporalState.Key;
+import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.db.temporalstate.TemporalState.Key;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -15,7 +19,6 @@ import stroom.util.shared.ModelStringUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -34,6 +37,10 @@ class TestStateLookupImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateLookupImpl.class);
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+    private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
+            .builder()
+            .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
+            .build();
 
     private static final String KV_TYPE = "KV";
     private static final String PADDING = IntStream.rangeClosed(1, 300)
@@ -58,7 +65,7 @@ class TestStateLookupImpl {
         final Map<Integer, List<String>> mapNamesMap = new HashMap<>(refStreamDefCount);
         final List<Instant> lookupTimes = new ArrayList<>(refStreamDefCount);
 
-        try (final TemporalStateDb db = new TemporalStateDb(tempDir, BYTE_BUFFERS)) {
+        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.write(writer -> {
                 for (int refStrmIdx = 0; refStrmIdx < refStreamDefCount; refStrmIdx++) {
                     final List<String> mapNames = mapNamesMap.computeIfAbsent(refStrmIdx,
@@ -74,20 +81,20 @@ class TestStateLookupImpl {
                         final String mapName = buildMapName(KV_TYPE, mapIdx);
                         mapNames.add(mapName);
                         for (int keyIdx = 0; keyIdx < entryCount; keyIdx++) {
-                            final String key = buildKey(keyIdx);
+                            final Val key = buildKey(keyIdx);
                             final String val = buildKeyStoreValue(mapName, keyIdx, key);
 
                             final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
                             final Val v = ValString.create(val);
 
-                            db.insert(writer, k, v);
+                            db.insert(writer, new TemporalState(k, v));
                         }
                     }
                 }
             });
         }
 
-        try (final TemporalStateDb db = new TemporalStateDb(
+        try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
                 TemporalStateSettings.builder().build(),
@@ -98,12 +105,11 @@ class TestStateLookupImpl {
                 final int mapIdx = random.nextInt(keyValueMapCount);
                 final int keyIdx = random.nextInt(entryCount);
                 final String mapName = mapNamesMap.get(refStrmIdx).get(mapIdx);
-                final String key = buildKey(keyIdx);
+                final Val key = buildKey(keyIdx);
                 final Instant time = lookupTimes.get(refStrmIdx);
 
                 final TemporalStateRequest request = new TemporalStateRequest(
-                        key.getBytes(StandardCharsets.UTF_8),
-                        time.toEpochMilli());
+                        new Key(key, time));
 
                 final TemporalState state = db.getState(request);
                 assertThat(state).isNotNull();
@@ -137,13 +143,13 @@ class TestStateLookupImpl {
         }
     }
 
-    private String buildKey(final int k) {
-        return "key" + k;
+    private Val buildKey(final int k) {
+        return ValString.create("key" + k);
     }
 
     private String buildKeyStoreValue(final String mapName,
                                       final int i,
-                                      final String key) {
+                                      final Val key) {
         // pad the values out to make them more realistic in length to see impact on writes
         return LogUtil.message("{}-{}-value{}{}", mapName, key, i, PADDING);
     }

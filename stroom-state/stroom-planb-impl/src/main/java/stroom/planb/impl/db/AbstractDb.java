@@ -75,7 +75,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     private final ReentrantLock dbCommitLock = new ReentrantLock();
     private final boolean readOnly;
 
-    private final Runnable commitRunnable;
+    private final HashClashCommitRunnable commitRunnable = new HashClashCommitRunnable();
 
     public AbstractDb(final Path path,
                       final ByteBuffers byteBuffers,
@@ -116,7 +116,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
         if (readOnly) {
             dbWriter = null;
-            this.commitRunnable = null;
 
             // Read schema version.
             infoDbi = env.openDbi(INFO_NAME, DbiFlags.MDB_CREATE);
@@ -136,10 +135,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
             // If we do not prefix values then we can simply put rows.
             if (!serde.hasPrefix()) {
-                // Do nothing special on commit.
-                this.commitRunnable = () -> {
-                };
-
                 // If the value has no key prefix, i.e. we are not using key hashes then just try to put.
                 if (overwrite == null || overwrite) {
                     // Put and overwrite any existing key/value.
@@ -150,10 +145,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                             dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, PutFlags.MDB_NOOVERWRITE);
                 }
             } else {
-                // Warn on hash clashes.
-                final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-                this.commitRunnable = hashClashCommitRunnable;
-
                 if (overwrite == null || overwrite) {
                     dbWriter = (writeTxn, keyByteBuffer, valueByteBuffer) -> {
                         // First try to put without overwriting existing values.
@@ -165,7 +156,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                                             writeTxn,
                                             keyByteBuffer,
                                             valueByteBuffer,
-                                            predicate,
+                                            null,
                                             match -> {
                                                 final ByteBuffer foundKey = match.foundKey();
                                                 if (foundKey != null) {
@@ -187,7 +178,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                                                             writeTxn,
                                                             keyByteBuffer,
                                                             valueByteBuffer,
-                                                            hashClashCommitRunnable,
+                                                            commitRunnable,
                                                             match.nextSequenceNumber());
                                                 }
                                                 return null;
@@ -206,7 +197,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                                             writeTxn,
                                             keyByteBuffer,
                                             valueByteBuffer,
-                                            predicate,
+                                            null,
                                             match -> {
                                                 // If we didn't find the item then insert it with a new sequence number.
                                                 if (match.foundKey() == null) {
@@ -214,7 +205,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                                                             writeTxn,
                                                             keyByteBuffer,
                                                             valueByteBuffer,
-                                                            hashClashCommitRunnable,
+                                                            commitRunnable,
                                                             match.nextSequenceNumber());
                                                 }
                                                 return null;
@@ -241,26 +232,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
             }
             return null;
         });
-    }
-
-    private static class HashClashCommitRunnable implements Runnable {
-
-        private int hashClashes;
-
-        public void increment() {
-            // We must have had a hash clash here because we didn't find a row for the key even
-            // though the db contains the key hash.
-            hashClashes++;
-        }
-
-        @Override
-        public void run() {
-            if (hashClashes > 0) {
-                // We prob don't want to warn but will keep for now until we know how big the issue is.
-                LOGGER.warn(() -> "We had " + hashClashes + " hash clashes since last commit");
-                hashClashes = 0;
-            }
-        }
     }
 
     @Override

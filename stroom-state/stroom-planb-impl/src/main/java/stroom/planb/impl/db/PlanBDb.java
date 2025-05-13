@@ -2,7 +2,11 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.TemporalStateSettings;
+import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
@@ -17,14 +21,18 @@ public class PlanBDb {
                 return StateDb.create(
                         targetPath,
                         byteBuffers,
-                        doc,
+                        NullSafe.getOrElse(doc,
+                                d -> (StateSettings) doc.getSettings(),
+                                StateSettings.builder().build()),
                         readOnly);
             }
             case TEMPORAL_STATE -> {
                 return TemporalStateDb.create(
                         targetPath,
                         byteBuffers,
-                        doc,
+                        NullSafe.getOrElse(doc,
+                                d -> (TemporalStateSettings) doc.getSettings(),
+                                TemporalStateSettings.builder().build()),
                         readOnly);
             }
             case RANGED_STATE -> {

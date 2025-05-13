@@ -9,6 +9,8 @@ import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
