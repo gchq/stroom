@@ -30,6 +30,7 @@ import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalStateSettings;
+import stroom.planb.shared.TimePrecision;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -179,38 +180,43 @@ class TestTemporalStateDb {
         final List<DynamicTest> tests = new ArrayList<>();
         for (final StateKeyType keyType : StateKeyType.values()) {
             for (final StateValueType valueType : StateValueType.values()) {
-                tests.add(DynamicTest.dynamicTest("key type = " + keyType + ", value type = " + valueType,
-                        () -> {
-                            final TemporalStateSettings settings = TemporalStateSettings
-                                    .builder()
-                                    .stateKeySchema(StateKeySchema.builder()
-                                            .stateKeyType(keyType)
-                                            .build())
-                                    .stateValueSchema(StateValueSchema.builder()
-                                            .stateValueType(valueType)
-                                            .build())
-                                    .build();
+                for (final TimePrecision timePrecision : TimePrecision.values()) {
+                    tests.add(DynamicTest.dynamicTest("key type = " + keyType +
+                                                      ", Value type = " + valueType +
+                                                      ", Time precision = " + timePrecision,
+                            () -> {
+                                final TemporalStateSettings settings = TemporalStateSettings
+                                        .builder()
+                                        .stateKeySchema(StateKeySchema.builder()
+                                                .stateKeyType(keyType)
+                                                .build())
+                                        .stateValueSchema(StateValueSchema.builder()
+                                                .stateValueType(valueType)
+                                                .build())
+                                        .timePrecision(timePrecision)
+                                        .build();
 
-                            final Function<Integer, Key> keyFunction = createKeyFunction(keyType);
-                            final Function<Integer, Val> valueFunction = createValueFunction(valueType);
+                                final Function<Integer, Key> keyFunction = createKeyFunction(keyType);
+                                final Function<Integer, Val> valueFunction = createValueFunction(valueType);
 
-                            Path path = null;
-                            try {
-                                path = Files.createTempDirectory("stroom");
+                                Path path = null;
+                                try {
+                                    path = Files.createTempDirectory("stroom");
 
-                                testWrite(path, settings, iterations, keyFunction, valueFunction);
-                                if (read) {
-                                    testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                    testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                    if (read) {
+                                        testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                    }
+
+                                } catch (final IOException e) {
+                                    throw new UncheckedIOException(e);
+                                } finally {
+                                    if (path != null) {
+                                        FileUtil.deleteDir(path);
+                                    }
                                 }
-
-                            } catch (final IOException e) {
-                                throw new UncheckedIOException(e);
-                            } finally {
-                                if (path != null) {
-                                    FileUtil.deleteDir(path);
-                                }
-                            }
-                        }));
+                            }));
+                }
             }
         }
         return tests;

@@ -72,7 +72,7 @@ public class IntegerRangeKeySerde implements RangeKeySerde {
     public <R> R toKeyStart(final long key, final Function<ByteBuffer, R> function) {
         return byteBuffers.use(length, byteBuffer -> {
             writeInteger(key, byteBuffer);
-            for (int i = Integer.BYTES + 1; i < length; i++) {
+            for (int i = Integer.BYTES; i < length; i++) {
                 byteBuffer.put(Byte.MAX_VALUE);
             }
             byteBuffer.flip();

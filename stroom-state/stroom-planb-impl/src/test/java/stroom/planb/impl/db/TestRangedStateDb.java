@@ -25,28 +25,45 @@ import stroom.planb.impl.db.rangedstate.RangedState.Key;
 import stroom.planb.impl.db.rangedstate.RangedStateDb;
 import stroom.planb.impl.db.rangedstate.RangedStateFields;
 import stroom.planb.impl.db.rangedstate.RangedStateRequest;
+import stroom.planb.shared.RangeType;
 import stroom.planb.shared.RangedStateSettings;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValByte;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRangedStateDb {
 
+    private static final int ITERATIONS = 100;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final RangedStateSettings BASIC_SETTINGS = RangedStateSettings
             .builder()
@@ -121,6 +138,108 @@ class TestRangedStateDb {
         assertThat(actual).isEqualTo(expected);
     }
 
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWrite() {
+        return createMultiKeyTest(1, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWritePerformance() {
+        return createMultiKeyTest(ITERATIONS, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteRead() {
+        return createMultiKeyTest(1, true);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteReadPerformance() {
+        return createMultiKeyTest(ITERATIONS, true);
+    }
+
+    Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
+        final List<DynamicTest> tests = new ArrayList<>();
+        for (final RangeType rangeType : RangeType.values()) {
+            for (final StateValueType valueType : StateValueType.values()) {
+                tests.add(DynamicTest.dynamicTest("Range type = " + rangeType +
+                                                  ", Value type = " + valueType,
+                        () -> {
+                            final RangedStateSettings settings = RangedStateSettings
+                                    .builder()
+                                    .rangeType(rangeType)
+                                    .stateValueSchema(StateValueSchema.builder()
+                                            .stateValueType(valueType)
+                                            .build())
+                                    .build();
+
+                            final Function<Integer, Key> keyFunction = i -> new Key(i, i + 1);
+                            final Function<Integer, Val> valueFunction = createValueFunction(valueType);
+
+                            Path path = null;
+                            try {
+                                path = Files.createTempDirectory("stroom");
+
+                                testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                if (read) {
+                                    testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                }
+
+                            } catch (final IOException e) {
+                                throw new UncheckedIOException(e);
+                            } finally {
+                                if (path != null) {
+                                    FileUtil.deleteDir(path);
+                                }
+                            }
+                        }));
+            }
+        }
+        return tests;
+    }
+
+
+    private void testWrite(final Path dbDir,
+                           final RangedStateSettings settings,
+                           final int insertRows,
+                           final Function<Integer, Key> keyFunction,
+                           final Function<Integer, Val> valueFunction) {
+        try (final RangedStateDb db = RangedStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+            insertData(db, insertRows, keyFunction, valueFunction);
+        }
+    }
+
+    private void insertData(final RangedStateDb db,
+                            final int rows,
+                            final Function<Integer, Key> keyFunction,
+                            final Function<Integer, Val> valueFunction) {
+        db.write(writer -> {
+            for (int i = 0; i < rows; i++) {
+                final Key k = keyFunction.apply(i);
+                final Val v = valueFunction.apply(i);
+                db.insert(writer, new RangedState(k, v));
+            }
+        });
+    }
+
+    private void testSimpleRead(final Path dbDir,
+                                final RangedStateSettings settings,
+                                final int rows,
+                                final Function<Integer, Key> keyFunction,
+                                final Function<Integer, Val> valueFunction) {
+        try (final RangedStateDb db = RangedStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+            for (int i = 0; i < rows; i++) {
+                final Key key = keyFunction.apply(i);
+                final RangedState state = db.getState(new RangedStateRequest(key.getKeyStart()));
+                assertThat(state).isNotNull();
+                assertThat(state.val().type()).isEqualTo(valueFunction.apply(i).type());
+//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+            }
+        }
+    }
+
+
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
         final Path dbPath1 = rootDir.resolve("db1");
@@ -177,5 +296,18 @@ class TestRangedStateDb {
                 db.insert(writer, new RangedState(k, v));
             }
         });
+    }
+
+    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
+        return switch (stateValueType) {
+            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+            case BYTE -> i -> ValByte.create(i.byteValue());
+            case SHORT -> i -> ValShort.create(i.shortValue());
+            case INT -> ValInteger::create;
+            case LONG -> i -> ValLong.create(i.longValue());
+            case FLOAT -> i -> ValFloat.create(i.floatValue());
+            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+            case STRING, UID_LOOKUP, HASH_LOOKUP, VARIABLE -> i -> ValString.create("test-" + i);
+        };
     }
 }
