@@ -25,29 +25,47 @@ import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateFields;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
+import stroom.planb.shared.StateKeySchema;
+import stroom.planb.shared.StateKeyType;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValByte;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTemporalStateDb {
 
+    private static final int ITERATIONS = 10000;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
             .builder()
@@ -111,6 +129,67 @@ class TestTemporalStateDb {
         }
     }
 
+    @TestFactory
+    Collection<DynamicTest> testMultiWrite() {
+        return createMultiKeyTest(1, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWritePerformance() {
+        return createMultiKeyTest(ITERATIONS, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteRead() {
+        return createMultiKeyTest(1, true);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteReadPerformance() {
+        return createMultiKeyTest(ITERATIONS, true);
+    }
+
+    Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
+        final List<DynamicTest> tests = new ArrayList<>();
+        for (final StateKeyType keyType : StateKeyType.values()) {
+            for (final StateValueType valueType : StateValueType.values()) {
+                tests.add(DynamicTest.dynamicTest("key type = " + keyType + ", value type = " + valueType,
+                        () -> {
+                            final TemporalStateSettings settings = TemporalStateSettings
+                                    .builder()
+                                    .stateKeySchema(StateKeySchema.builder()
+                                            .stateKeyType(keyType)
+                                            .build())
+                                    .stateValueSchema(StateValueSchema.builder()
+                                            .stateValueType(valueType)
+                                            .build())
+                                    .build();
+
+                            final Function<Integer, Key> keyFunction = createKeyFunction(keyType);
+                            final Function<Integer, Val> valueFunction = createValueFunction(valueType);
+
+                            Path path = null;
+                            try {
+                                path = Files.createTempDirectory("stroom");
+
+                                testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                if (read) {
+                                    testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                }
+
+                            } catch (final IOException e) {
+                                throw new UncheckedIOException(e);
+                            } finally {
+                                if (path != null) {
+                                    FileUtil.deleteDir(path);
+                                }
+                            }
+                        }));
+            }
+        }
+        return tests;
+    }
+
     @Test
     void testMerge(@TempDir final Path rootDir) throws IOException {
         final Path dbPath1 = rootDir.resolve("db1");
@@ -171,45 +250,44 @@ class TestTemporalStateDb {
         }
     }
 
-//
-//    @Test
-//    void testRemoveOldData() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.removeOldData(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.removeOldData(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(0);
-//        });
-//    }
-//
-//    @Test
-//    void testCondense() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final TemporalStateDao stateDao = new TemporalStateDao(sessionProvider, tableName);
-//
-//            Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-//            insertData(stateDao, refTime, "test", 100, 10);
-//            insertData(stateDao, refTime, "test", 10, -10);
-//
-//            assertThat(stateDao.count()).isEqualTo(109);
-//
-//            stateDao.condense(refTime);
-//            assertThat(stateDao.count()).isEqualTo(100);
-//
-//            stateDao.condense(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(1);
-//        });
-//    }
-//
+    private void testWrite(final Path dbDir,
+                           final TemporalStateSettings settings,
+                           final int insertRows,
+                           final Function<Integer, Key> keyFunction,
+                           final Function<Integer, Val> valueFunction) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+            insertData(db, insertRows, keyFunction, valueFunction);
+        }
+    }
+
+    private void insertData(final TemporalStateDb db,
+                            final int rows,
+                            final Function<Integer, Key> keyFunction,
+                            final Function<Integer, Val> valueFunction) {
+        db.write(writer -> {
+            for (int i = 0; i < rows; i++) {
+                final Key k = keyFunction.apply(i);
+                final Val v = valueFunction.apply(i);
+                db.insert(writer, new TemporalState(k, v));
+            }
+        });
+    }
+
+    private void testSimpleRead(final Path dbDir,
+                                final TemporalStateSettings settings,
+                                final int rows,
+                                final Function<Integer, Key> keyFunction,
+                                final Function<Integer, Val> valueFunction) {
+        try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+            for (int i = 0; i < rows; i++) {
+                final Key key = keyFunction.apply(i);
+                final TemporalState temporalState = db.getState(new TemporalStateRequest(key));
+                assertThat(temporalState).isNotNull();
+                assertThat(temporalState.val().type()).isEqualTo(valueFunction.apply(i).type());
+//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+            }
+        }
+    }
 
     private void insertData(final TemporalStateDb db,
                             final Instant refTime,
@@ -239,5 +317,37 @@ class TestTemporalStateDb {
                 new TemporalStateRequest(new Key(key, effectiveTime));
         final TemporalState state = db.getState(request);
         assertThat(state != null).isEqualTo(expected);
+    }
+
+    private Function<Integer, Key> createKeyFunction(final StateKeyType stateKeyType) {
+        return switch (stateKeyType) {
+            case BOOLEAN -> i -> new Key(ValBoolean.create(i > 0), Instant.now());
+            case BYTE -> i -> new Key(ValByte.create(i.byteValue()), Instant.now());
+            case SHORT -> i -> new Key(ValShort.create(i.shortValue()), Instant.now());
+            case INT -> i -> new Key(ValInteger.create(i), Instant.now());
+            case LONG -> i -> new Key(ValLong.create(i.longValue()), Instant.now());
+            case FLOAT -> i -> new Key(ValFloat.create(i.floatValue()), Instant.now());
+            case DOUBLE -> i -> new Key(ValDouble.create(i.doubleValue()), Instant.now());
+            case STRING -> i -> new Key(ValString.create("test-" + i), Instant.now());
+            case UID_LOOKUP -> i -> new Key(ValString.create("test-" + i), Instant.now());
+            case HASH_LOOKUP -> i -> new Key(ValString.create("test-" + i), Instant.now());
+            case VARIABLE -> i -> new Key(ValString.create("test-" + i), Instant.now());
+        };
+    }
+
+    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
+        return switch (stateValueType) {
+            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+            case BYTE -> i -> ValByte.create(i.byteValue());
+            case SHORT -> i -> ValShort.create(i.shortValue());
+            case INT -> ValInteger::create;
+            case LONG -> i -> ValLong.create(i.longValue());
+            case FLOAT -> i -> ValFloat.create(i.floatValue());
+            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+            case STRING -> i -> ValString.create("test-" + i);
+            case UID_LOOKUP -> i -> ValString.create("test-" + i);
+            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
+            case VARIABLE -> i -> ValString.create("test-" + i);
+        };
     }
 }

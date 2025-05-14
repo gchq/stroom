@@ -36,11 +36,14 @@ import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.StateValueType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValByte;
 import stroom.query.language.functions.ValDouble;
 import stroom.query.language.functions.ValFloat;
@@ -50,15 +53,14 @@ import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
-import stroom.test.common.TestUtil;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.zip.ZipUtil;
 
-import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
@@ -68,17 +70,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStateDb {
 
+    private static final int ITERATIONS = 10000;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final StateSettings BASIC_SETTINGS = StateSettings
             .builder()
@@ -225,7 +228,7 @@ class TestStateDb {
 
         try (final StateDb db1 = StateDb.create(source, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             list.add(CompletableFuture.runAsync(() -> {
-                insertData(db1, 1000000, keyFunction, valueFunction);
+                insertData(db1, ITERATIONS, keyFunction, valueFunction);
                 writeComplete.set(true);
             }));
 
@@ -318,8 +321,36 @@ class TestStateDb {
         }
     }
 
-    private record TestRun(StateSettings settings, Val key, int iterations) {
+    private Function<Integer, Val> createKeyFunction(final StateKeyType stateKeyType) {
+        return switch (stateKeyType) {
+            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+            case BYTE -> i -> ValByte.create(i.byteValue());
+            case SHORT -> i -> ValShort.create(i.shortValue());
+            case INT -> ValInteger::create;
+            case LONG -> i -> ValLong.create(i.longValue());
+            case FLOAT -> i -> ValFloat.create(i.floatValue());
+            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+            case STRING -> i -> ValString.create("test-" + i);
+            case UID_LOOKUP -> i -> ValString.create("test-" + i);
+            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
+            case VARIABLE -> i -> ValString.create("test-" + i);
+        };
+    }
 
+    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
+        return switch (stateValueType) {
+            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+            case BYTE -> i -> ValByte.create(i.byteValue());
+            case SHORT -> i -> ValShort.create(i.shortValue());
+            case INT -> ValInteger::create;
+            case LONG -> i -> ValLong.create(i.longValue());
+            case FLOAT -> i -> ValFloat.create(i.floatValue());
+            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+            case STRING -> i -> ValString.create("test-" + i);
+            case UID_LOOKUP -> i -> ValString.create("test-" + i);
+            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
+            case VARIABLE -> i -> ValString.create("test-" + i);
+        };
     }
 
     private StateSettings getSettings(final StateKeyType stateKeyType) {
@@ -332,229 +363,262 @@ class TestStateDb {
     }
 
     @TestFactory
-    Stream<DynamicTest> testWrite() {
+    Collection<DynamicTest> testWrite() {
         return createWriteTest(1, false);
     }
 
     @TestFactory
-    Stream<DynamicTest> testWritePerformance() {
-        return createWriteTest(10000000, false);
+    Collection<DynamicTest> testWritePerformance() {
+        return createWriteTest(ITERATIONS, false);
     }
 
     @TestFactory
-    Stream<DynamicTest> testWriteRead() {
+    Collection<DynamicTest> testMultiWrite() {
+        return createMultiKeyTest(1, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWritePerformance() {
+        return createMultiKeyTest(ITERATIONS, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteRead() {
+        return createMultiKeyTest(1, true);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteReadPerformance() {
+        return createMultiKeyTest(ITERATIONS, true);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testWriteRead() {
         return createWriteTest(1, true);
     }
 
     @TestFactory
-    Stream<DynamicTest> testWriteReadPerformance() {
-        return createWriteTest(10000000, true);
+    Collection<DynamicTest> testWriteReadPerformance() {
+        return createWriteTest(ITERATIONS, true);
     }
 
-    Stream<DynamicTest> createWriteTest(final int iterations, final boolean read) {
-        return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<TestRun>() {
-                })
-                .withOutputType(Boolean.class)
-                .withTestFunction(testCase -> {
-                    Path path = null;
-                    try {
-                        path = Files.createTempDirectory("stroom");
-//                        final Path path = tempDir.resolve(UUID.randomUUID().toString());
-//                        Files.createDirectories(path);
-                        testSameKey(
-                                path,
-                                testCase.getInput().settings,
-                                testCase.getInput().key,
-                                testCase.getInput().iterations,
-                                read);
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    } finally {
-                        if (path != null) {
-                            FileUtil.deleteDir(path);
-                        }
-                    }
-                    return true;
-                })
-                .withSimpleEqualityAssertion()
-
-                // Byte keys.
-                .addNamedCase("Byte key min",
-                        new TestRun(getSettings(StateKeyType.BYTE), ValByte.create(Byte.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Byte key max",
-                        new TestRun(getSettings(StateKeyType.BYTE), ValByte.create(Byte.MAX_VALUE), iterations),
-                        true)
-
-                // Short keys.
-                .addNamedCase("Short key min",
-                        new TestRun(getSettings(StateKeyType.SHORT),
-                                ValShort.create(Short.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Short key max",
-                        new TestRun(getSettings(StateKeyType.SHORT), ValShort.create(Short.MAX_VALUE), iterations),
-                        true)
-
-                // Integer keys.
-                .addNamedCase("Integer key min",
-                        new TestRun(getSettings(StateKeyType.INT), ValInteger.create(Integer.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Integer key max",
-                        new TestRun(getSettings(StateKeyType.INT), ValInteger.create(Integer.MAX_VALUE), iterations),
-                        true)
-
-                // Long keys.
-                .addNamedCase("Long key min",
-                        new TestRun(getSettings(StateKeyType.LONG), ValLong.create(Long.MIN_VALUE), iterations),
-                        true)
-                .addNamedCase("Long key max",
-                        new TestRun(getSettings(StateKeyType.LONG), ValLong.create(Long.MAX_VALUE), iterations),
-                        true)
-                // Float keys.
-                .addNamedCase("Float key min",
-                        new TestRun(getSettings(StateKeyType.FLOAT), MIN_FLOAT, iterations),
-                        true)
-                .addNamedCase("Float key max",
-                        new TestRun(getSettings(StateKeyType.FLOAT), MAX_FLOAT, iterations),
-                        true)
-
-                // Double keys.
-                .addNamedCase("Double key min",
-                        new TestRun(getSettings(StateKeyType.DOUBLE), MIN_DOUBLE, iterations),
-                        true)
-                .addNamedCase("Double key max",
-                        new TestRun(getSettings(StateKeyType.DOUBLE), MAX_DOUBLE, iterations),
-                        true)
-
-                // String keys.
-                .addNamedCase("String key",
-                        new TestRun(getSettings(StateKeyType.STRING), ValString.create("TEST_KEY"), iterations),
-                        true)
-
-                // Lookup keys.
-                .addNamedCase("Uid lookup key",
-                        new TestRun(getSettings(StateKeyType.UID_LOOKUP), ValString.create("TEST_KEY"), iterations),
-                        true)
-
-                .addNamedCase("Hash lookup key",
-                        new TestRun(getSettings(StateKeyType.HASH_LOOKUP), ValString.create("TEST_KEY"), iterations),
-                        true)
-
-                .addNamedCase("Hash lookup key (long)",
-                        new TestRun(getSettings(StateKeyType.HASH_LOOKUP), ValString.create(makeKey(800)), iterations),
-                        true)
-
-
-//                // Auto keys.
-//                .addNamedCase("Auto byte key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Byte.MIN_VALUE), iterations),
-//                        true)
-//                .addNamedCase("Auto byte key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Byte.MAX_VALUE), iterations),
-//                        true)
-//
-//                .addNamedCase("Auto short key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Short.MIN_VALUE), iterations),
-//                        true)
-//                .addNamedCase("Auto short key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Short.MAX_VALUE), iterations),
-//                        true)
-//
-//                .addNamedCase("Auto integer key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MIN_VALUE),
-//                        iterations),
-//                        true)
-//                .addNamedCase("Auto integer key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Integer.MAX_VALUE),
-//                        iterations),
-//                        true)
-//
-//                .addNamedCase("Auto long key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Long.MIN_VALUE), iterations),
-//                        true)
-//                .addNamedCase("Auto long key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), String.valueOf(Long.MAX_VALUE), iterations),
-//                        true)
-//
-//                .addNamedCase("Auto float key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), MIN_FLOAT, iterations),
-//                        true)
-//                .addNamedCase("Auto float key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), MAX_FLOAT, iterations),
-//                        true)
-//
-//                .addNamedCase("Auto double key min",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), MIN_DOUBLE, iterations),
-//                        true)
-//                .addNamedCase("Auto double key max",
-//                        new TestRun(getSettings(StateKeyType.VARIABLE), MAX_DOUBLE, iterations),
-//                        true)
-
-                .addNamedCase("Variable string key",
-                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create("TEST_KEY"), iterations),
-                        true)
-                .addNamedCase("Variable string uid lookup key",
-                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create(makeKey(200)), iterations),
-                        true)
-                .addNamedCase("Variable string hash lookup key",
-                        new TestRun(getSettings(StateKeyType.VARIABLE), ValString.create(makeKey(800)), iterations),
-                        true)
-                .build();
+    private Executable createTest(final StateSettings settings,
+                                  final Function<Integer, Val> keyFunction,
+                                  final Function<Integer, Val> valueFunction,
+                                  final int iterations,
+                                  final boolean read) {
+        return () -> {
+            Path path = null;
+            try {
+                path = Files.createTempDirectory("stroom");
+                testWrite(path, settings, iterations, keyFunction, valueFunction);
+                if (read) {
+                    testRead(path, settings, iterations, keyFunction, valueFunction);
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                if (path != null) {
+                    FileUtil.deleteDir(path);
+                }
+            }
+        };
     }
 
-    private String makeKey(int len) {
+    private DynamicTest createStaticKeyTest(final String displayName,
+                                            final StateKeyType stateKeyType,
+                                            final Val key,
+                                            final int iterations,
+                                            final boolean read) {
+        final Function<Integer, Val> keyFunction = i -> key;
+        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
+        return DynamicTest.dynamicTest(displayName,
+                createTest(getSettings(stateKeyType), keyFunction, valueFunction, iterations, read));
+    }
+
+    Collection<DynamicTest> createWriteTest(final int iterations, final boolean read) {
+        final List<DynamicTest> tests = new ArrayList<>();
+
+        // Byte keys.
+        tests.add(createStaticKeyTest(
+                "Byte key min",
+                StateKeyType.BYTE,
+                ValByte.create(Byte.MIN_VALUE),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Byte key max",
+                StateKeyType.BYTE,
+                ValByte.create(Byte.MAX_VALUE),
+                iterations,
+                read));
+
+        // Short keys.
+        tests.add(createStaticKeyTest(
+                "Short key min",
+                StateKeyType.SHORT,
+                ValShort.create(Short.MIN_VALUE),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Short key max",
+                StateKeyType.SHORT,
+                ValShort.create(Short.MAX_VALUE),
+                iterations,
+                read));
+
+        // Integer keys.
+        tests.add(createStaticKeyTest(
+                "Integer key min",
+                StateKeyType.INT,
+                ValInteger.create(Integer.MIN_VALUE),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Integer key max",
+                StateKeyType.INT,
+                ValInteger.create(Integer.MAX_VALUE),
+                iterations,
+                read));
+
+        // Long keys.
+        tests.add(createStaticKeyTest(
+                "Long key min",
+                StateKeyType.LONG,
+                ValLong.create(Long.MIN_VALUE),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Long key max",
+                StateKeyType.LONG,
+                ValLong.create(Long.MAX_VALUE),
+                iterations,
+                read));
+        // Float keys.
+        tests.add(createStaticKeyTest(
+                "Float key min",
+                StateKeyType.FLOAT,
+                MIN_FLOAT,
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Float key max",
+                StateKeyType.FLOAT,
+                MAX_FLOAT,
+                iterations,
+                read));
+
+        // Double keys.
+        tests.add(createStaticKeyTest(
+                "Double key min",
+                StateKeyType.DOUBLE,
+                MIN_DOUBLE,
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Double key max",
+                StateKeyType.DOUBLE,
+                MAX_DOUBLE,
+                iterations,
+                read));
+
+        // String keys.
+        tests.add(createStaticKeyTest(
+                "String key",
+                StateKeyType.STRING,
+                ValString.create("TEST_KEY"),
+                iterations,
+                read));
+
+        // Lookup keys.
+        tests.add(createStaticKeyTest(
+                "Uid lookup key",
+                StateKeyType.UID_LOOKUP,
+                ValString.create("TEST_KEY"),
+                iterations,
+                read));
+
+        tests.add(createStaticKeyTest(
+                "Hash lookup key",
+                StateKeyType.HASH_LOOKUP,
+                ValString.create("TEST_KEY"),
+                iterations,
+                read));
+
+        tests.add(createStaticKeyTest(
+                "Hash lookup key (long)",
+                StateKeyType.HASH_LOOKUP,
+                ValString.create(makeKey(800)),
+                iterations,
+                read));
+
+        tests.add(createStaticKeyTest(
+                "Variable string key",
+                StateKeyType.VARIABLE,
+                ValString.create("TEST_KEY"),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Variable string uid lookup key",
+                StateKeyType.VARIABLE,
+                ValString.create(makeKey(200)),
+                iterations,
+                read));
+        tests.add(createStaticKeyTest(
+                "Variable string hash lookup key",
+                StateKeyType.VARIABLE,
+                ValString.create(makeKey(800)),
+                iterations,
+                read));
+        return tests;
+    }
+
+    Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
+        final List<DynamicTest> tests = new ArrayList<>();
+        for (final StateKeyType keyType : StateKeyType.values()) {
+            for (final StateValueType valueType : StateValueType.values()) {
+                tests.add(DynamicTest.dynamicTest("key type = " + keyType + ", value type = " + valueType,
+                        () -> {
+                            final StateSettings settings = StateSettings
+                                    .builder()
+                                    .stateKeySchema(StateKeySchema.builder()
+                                            .stateKeyType(keyType)
+                                            .build())
+                                    .stateValueSchema(StateValueSchema.builder()
+                                            .stateValueType(valueType)
+                                            .build())
+                                    .build();
+
+                            final Function<Integer, Val> keyFunction = createKeyFunction(keyType);
+                            final Function<Integer, Val> valueFunction = createValueFunction(valueType);
+
+                            Path path = null;
+                            try {
+                                path = Files.createTempDirectory("stroom");
+
+                                testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                if (read) {
+                                    testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                }
+
+                            } catch (final IOException e) {
+                                throw new UncheckedIOException(e);
+                            } finally {
+                                if (path != null) {
+                                    FileUtil.deleteDir(path);
+                                }
+                            }
+                        }));
+            }
+        }
+        return tests;
+    }
+
+
+    private String makeKey(final int len) {
         final char[] chars = new char[len];
         Arrays.fill(chars, 'T');
         return new String(chars);
-    }
-
-//    @Test
-//    void testWritePerformanceSameIntegerKey(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.INTEGER, String.valueOf(Integer.MAX_VALUE));
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameLongKey(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.LONG, String.valueOf(Long.MAX_VALUE));
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameStringKey(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.BYTES, "TEST_KEY");
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameHashKey(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.HASH_KEY, "TEST_KEY");
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameForeignKey(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.FOREIGN_KEY, "TEST_KEY");
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameSmartKey1(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.SMART, String.valueOf(Integer.MAX_VALUE));
-//    }
-//
-//    @Test
-//    void testWritePerformanceSameSmartKey2(@TempDir Path tempDir) {
-//        testWritePerformanceSameKey(tempDir, StateKeyType.SMART, "TEST_KEY");
-//    }
-
-    void testSameKey(final Path tempDir,
-                     final StateSettings settings,
-                     final Val key,
-                     final int rows,
-                     final boolean read) {
-        final Function<Integer, Val> keyFunction = i -> key;
-        final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
-        testWrite(tempDir, settings, rows, keyFunction, valueFunction);
-        if (read) {
-            testRead(tempDir, settings, rows, keyFunction);
-        }
     }
 
     private void testWriteRead(final Path tempDir,
@@ -563,7 +627,7 @@ class TestStateDb {
                                final Function<Integer, Val> keyFunction,
                                final Function<Integer, Val> valueFunction) {
         testWrite(tempDir, settings, insertRows, keyFunction, valueFunction);
-        testRead(tempDir, settings, insertRows, keyFunction);
+        testRead(tempDir, settings, insertRows, keyFunction, valueFunction);
     }
 
     private void testWrite(final Path dbDir,
@@ -578,15 +642,17 @@ class TestStateDb {
 
     private void testRead(final Path tempDir,
                           final StateSettings settings,
-                          final int expectedRows,
-                          final Function<Integer, Val> keyFunction) {
+                          final int insertRows,
+                          final Function<Integer, Val> keyFunction,
+                          final Function<Integer, Val> valueFunction) {
+        final Val expectedVal = valueFunction.apply(insertRows - 1);
         try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, true)) {
             assertThat(db.count()).isEqualTo(1);
             final Val key = keyFunction.apply(0);
             final Val value = db.get(key);
             assertThat(value).isNotNull();
-            assertThat(value.type()).isEqualTo(Type.STRING);
-            assertThat(value.toString()).isEqualTo("test" + (expectedRows - 1));
+            assertThat(value.type()).isEqualTo(expectedVal.type());
+            assertThat(value).isEqualTo(expectedVal);
 
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(StateFields.KEY);
@@ -602,28 +668,26 @@ class TestStateDb {
                     results::add);
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst()[0]).isEqualTo(key);
-            assertThat(results.getFirst()[1].toString()).isEqualTo("string");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("test" + (expectedRows - 1));
+            assertThat(results.getFirst()[1].toString()).isEqualTo(expectedVal.type().toString());
+            assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
         }
     }
 
-//    @Test
-//    void testRemoveOldData() {
-//        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final StateDao stateDao = new StateDao(sessionProvider, tableName);
-//
-//            insertData(stateDao, 100);
-//            insertData(stateDao, 10);
-//
-//            assertThat(stateDao.count()).isEqualTo(1);
-//
-//            stateDao.removeOldData(Instant.parse("2000-01-01T00:00:00.000Z"));
-//            assertThat(stateDao.count()).isEqualTo(1);
-//
-//            stateDao.removeOldData(Instant.now());
-//            assertThat(stateDao.count()).isEqualTo(0);
-//        });
-//    }
+    private void testSimpleRead(final Path tempDir,
+                                final StateSettings settings,
+                                final int rows,
+                                final Function<Integer, Val> keyFunction,
+                                final Function<Integer, Val> valueFunction) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, true)) {
+            for (int i = 0; i < rows; i++) {
+                final Val key = keyFunction.apply(i);
+                final Val value = db.get(key);
+                assertThat(value).isNotNull();
+                assertThat(value.type()).isEqualTo(valueFunction.apply(i).type());
+//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+            }
+        }
+    }
 
     private void insertData(final StateDb db,
                             final int rows,

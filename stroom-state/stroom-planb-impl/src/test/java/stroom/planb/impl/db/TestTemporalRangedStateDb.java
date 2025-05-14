@@ -123,7 +123,7 @@ class TestTemporalRangedStateDb {
             assertThat(results.getFirst()[0].toString()).isEqualTo("10");
             assertThat(results.getFirst()[1].toString()).isEqualTo("30");
             assertThat(results.getFirst()[2].toString()).isEqualTo("2000-01-01T00:00:00.000Z");
-            assertThat(results.getFirst()[3].toString()).isEqualTo("String");
+            assertThat(results.getFirst()[3].toString()).isEqualTo("string");
             assertThat(results.getFirst()[4].toString()).isEqualTo("test");
         }
     }

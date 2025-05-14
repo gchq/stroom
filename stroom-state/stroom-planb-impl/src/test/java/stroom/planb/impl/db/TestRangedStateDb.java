@@ -93,7 +93,7 @@ class TestRangedStateDb {
             assertThat(results.size()).isEqualTo(1);
             assertThat(results.getFirst()[0].toString()).isEqualTo("10");
             assertThat(results.getFirst()[1].toString()).isEqualTo("30");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("String");
+            assertThat(results.getFirst()[2].toString()).isEqualTo("string");
             assertThat(results.getFirst()[3].toString()).isEqualTo("test99");
         }
     }
