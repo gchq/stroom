@@ -14,4 +14,8 @@ public interface Serde<T> {
     T read(Txn<ByteBuffer> txn, ByteBuffer byteBuffer);
 
     <R> R toBufferForGet(Txn<ByteBuffer> txn, T value, Function<Optional<ByteBuffer>, R> function);
+
+    default boolean usesLookup(ByteBuffer byteBuffer) {
+        return false;
+    }
 }

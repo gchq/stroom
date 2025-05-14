@@ -3,10 +3,10 @@ package stroom.planb.impl.db.temporalstate;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.serde.Serde;
+import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
-import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.Txn;
@@ -19,12 +19,14 @@ import java.util.function.Function;
 
 public class HashLookupKeySerde implements Serde<Key> {
 
-    private final HashLookupDb lookupDb;
+    private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
 
-    public HashLookupKeySerde(final HashLookupDb lookupDb, final ByteBuffers byteBuffers, final TimeSerde timeSerde) {
-        this.lookupDb = lookupDb;
+    public HashLookupKeySerde(final HashLookupDb hashLookupDb,
+                              final ByteBuffers byteBuffers,
+                              final TimeSerde timeSerde) {
+        this.hashLookupDb = hashLookupDb;
         this.byteBuffers = byteBuffers;
         this.timeSerde = timeSerde;
     }
@@ -41,7 +43,7 @@ public class HashLookupKeySerde implements Serde<Key> {
                 byteBuffer.remaining() - timeSerde.getSize());
 
         // Read via lookup.
-        final ByteBuffer valueByteBuffer = lookupDb.getValue(txn, nameSlice);
+        final ByteBuffer valueByteBuffer = hashLookupDb.getValue(txn, nameSlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
         return new Key(val, effectiveTime);
     }
@@ -53,7 +55,7 @@ public class HashLookupKeySerde implements Serde<Key> {
 
         ValSerdeUtil.write(key.getName(), byteBuffers, valueByteBuffer -> {
             final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeSerde.getSize());
-            lookupDb.put(txn, slice, idByteBuffer -> {
+            hashLookupDb.put(txn, slice, idByteBuffer -> {
                 byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                     prefixedBuffer.put(idByteBuffer);
                     timeSerde.write(prefixedBuffer, key.getEffectiveTime());
@@ -76,7 +78,7 @@ public class HashLookupKeySerde implements Serde<Key> {
         return ValSerdeUtil.write(key.getName(), byteBuffers, valueByteBuffer -> {
             // We are going to store as a lookup so take off the variable type prefix.
             final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeSerde.getSize());
-            return lookupDb.get(txn, slice, optionalIdByteBuffer ->
+            return hashLookupDb.get(txn, slice, optionalIdByteBuffer ->
                     optionalIdByteBuffer
                             .map(idByteBuffer ->
                                     byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
@@ -87,5 +89,10 @@ public class HashLookupKeySerde implements Serde<Key> {
                                     }))
                             .orElse(null));
         }, prefix, suffix);
+    }
+
+    @Override
+    public boolean usesLookup(final ByteBuffer byteBuffer) {
+        return true;
     }
 }

@@ -1,7 +1,8 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.rangedstate;
 
 import stroom.lmdb2.KV;
-import stroom.planb.impl.db.RangedState.Key;
+import stroom.planb.impl.db.PlanBValue;
+import stroom.planb.impl.db.rangedstate.RangedState.Key;
 import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

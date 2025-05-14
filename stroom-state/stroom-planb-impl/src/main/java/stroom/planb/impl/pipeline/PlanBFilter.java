@@ -25,11 +25,11 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.planb.impl.db.RangedState;
 import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.TemporalRangedState;
+import stroom.planb.impl.db.rangedstate.RangedState;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
 import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.shared.PlanBDoc;
@@ -668,7 +668,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                             final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
                                     .keyStart(longKey)
                                     .keyEnd(longKey)
-                                    .effectiveTime(time.toEpochMilli())
+                                    .effectiveTime(time)
                                     .build();
                             final Val v = getVal();
                             writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
@@ -702,7 +702,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
                             .keyStart(rangeFrom)
                             .keyEnd(rangeTo)
-                            .effectiveTime(time.toEpochMilli())
+                            .effectiveTime(time)
                             .build();
                     final Val v = getVal();
                     writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));

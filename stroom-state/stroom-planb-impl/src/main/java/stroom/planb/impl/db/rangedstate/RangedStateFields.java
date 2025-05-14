@@ -1,4 +1,4 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.rangedstate;
 
 import stroom.query.api.datasource.QueryField;
 
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface RangedStateFields {
+
     String KEY_START = "KeyStart";
     String KEY_END = "KeyEnd";
     String VALUE_TYPE = "ValueType";

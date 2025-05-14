@@ -7,6 +7,7 @@ import stroom.lmdb2.KV;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.StateSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
@@ -32,11 +33,10 @@ import stroom.planb.impl.db.serde.val.ValSerde;
 import stroom.planb.impl.db.serde.val.VariableValSerde;
 import stroom.planb.impl.db.state.AbstractDb;
 import stroom.planb.impl.db.state.PlanBEnv;
-import stroom.planb.impl.db.state.StateSearchHelper;
-import stroom.planb.impl.db.state.StateSearchHelper.Context;
-import stroom.planb.impl.db.state.StateSearchHelper.Converter;
-import stroom.planb.impl.db.state.StateSearchHelper.LazyKV;
-import stroom.planb.impl.db.state.ValuesExtractor;
+import stroom.planb.impl.db.StateSearchHelper;
+import stroom.planb.impl.db.StateSearchHelper.Context;
+import stroom.planb.impl.db.StateSearchHelper.Converter;
+import stroom.planb.impl.db.StateSearchHelper.LazyKV;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.StateKeySchema;
@@ -65,7 +65,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -270,51 +269,35 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
         writer.tryCommit();
     }
 
-    private boolean hasLookup() {
-        final List<String> dbNames = env.getDbNames();
-        return dbNames.contains(KEY_LOOKUP_DB_NAME) || dbNames.contains(VALUE_LOOKUP_DB_NAME);
-    }
-
-    private void iterate(final Consumer<KeyVal<ByteBuffer>> consumer) {
-        env.read(readTxn -> {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    consumer.accept(keyVal);
-                }
+    private void iterate(final Txn<ByteBuffer> txn,
+                         final Consumer<KeyVal<ByteBuffer>> consumer) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
+            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
+                consumer.accept(keyVal);
             }
-            return null;
-        });
-    }
-
-    private void readAll(final Consumer<TemporalState> consumer) {
-        env.read(readTxn -> {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final Key key = keySerde.read(readTxn, keyVal.key());
-                    final Val value = valueSerde.read(readTxn, keyVal.val());
-                    consumer.accept(new TemporalState(key, value));
-                }
-            }
-            return null;
-        });
+        }
     }
 
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
             try (final TemporalStateDb sourceDb = TemporalStateDb.create(source, byteBuffers, settings, true)) {
-                if (sourceDb.hasLookup()) {
-                    // We need to do a full read and merge.
-                    sourceDb.readAll(state -> insert(writer, state));
-
-                } else {
-                    // Quick merge.
-                    sourceDb.iterate(kv -> {
-                        if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
-                            writer.tryCommit();
+                sourceDb.env.read(readTxn -> {
+                    sourceDb.iterate(readTxn, kv -> {
+                        if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
+                            // We need to do a full read and merge.
+                            final Key key = keySerde.read(readTxn, kv.key());
+                            final Val value = valueSerde.read(readTxn, kv.val());
+                            insert(writer, new TemporalState(key, value));
+                        } else {
+                            // Quick merge.
+                            if (dbi.put(writer.getWriteTxn(), kv.key(), kv.val(), putFlags)) {
+                                writer.tryCommit();
+                            }
                         }
                     });
-                }
+                    return null;
+                });
             }
         });
 
@@ -410,12 +393,12 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                     while (iterator.hasNext()
                            && !Thread.currentThread().isInterrupted()) {
                         final KeyVal<ByteBuffer> kv = iterator.next();
-                        final Key key = keySerde.read(readTxn, kv.key());
-                        final Val value = valueSerde.read(readTxn, kv.val());
+                        final Key key = keySerde.read(readTxn, kv.key().duplicate());
+                        final Val value = valueSerde.read(readTxn, kv.val().duplicate());
 
                         if (key.getEffectiveTime().isBefore(deleteBefore)) {
                             // If this is data we no longer want to retain then delete it.
-                            dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                            dbi.delete(writer.getWriteTxn(), kv.key());
                             writer.tryCommit();
 
                         } else {
@@ -424,7 +407,7 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                                 lastValue.equals(value)) {
                                 if (key.getEffectiveTime().isBefore(condenseBefore)) {
                                     // If the key and value are the same then delete the duplicate entry.
-                                    dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                                    dbi.delete(writer.getWriteTxn(), kv.key());
                                     writer.tryCommit();
                                 }
                             }

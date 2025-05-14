@@ -1,7 +1,8 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.temporalrangedstate;
 
 import stroom.lmdb2.KV;
-import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.PlanBValue;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
 import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -58,12 +59,12 @@ public class TemporalRangedState extends KV<Key, Val> implements PlanBValue {
         @JsonProperty
         private final long keyEnd;
         @JsonProperty
-        private final long effectiveTime;
+        private final Instant effectiveTime;
 
         @JsonCreator
         public Key(@JsonProperty("keyStart") final long keyStart,
                    @JsonProperty("keyEnd") final long keyEnd,
-                   @JsonProperty("effectiveTime") final long effectiveTime) {
+                   @JsonProperty("effectiveTime") final Instant effectiveTime) {
             this.keyStart = keyStart;
             this.keyEnd = keyEnd;
             this.effectiveTime = effectiveTime;
@@ -77,7 +78,7 @@ public class TemporalRangedState extends KV<Key, Val> implements PlanBValue {
             return keyEnd;
         }
 
-        public long getEffectiveTime() {
+        public Instant getEffectiveTime() {
             return effectiveTime;
         }
 
@@ -93,7 +94,7 @@ public class TemporalRangedState extends KV<Key, Val> implements PlanBValue {
 
             private long keyStart;
             private long keyEnd;
-            private long effectiveTime;
+            private Instant effectiveTime;
 
             private Builder() {
             }
@@ -113,13 +114,8 @@ public class TemporalRangedState extends KV<Key, Val> implements PlanBValue {
                 return this;
             }
 
-            public Builder effectiveTime(final long effectiveTime) {
-                this.effectiveTime = effectiveTime;
-                return this;
-            }
-
             public Builder effectiveTime(final Instant effectiveTime) {
-                this.effectiveTime = effectiveTime.toEpochMilli();
+                this.effectiveTime = effectiveTime;
                 return this;
             }
 

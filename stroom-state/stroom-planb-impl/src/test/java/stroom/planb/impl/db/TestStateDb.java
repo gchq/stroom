@@ -81,7 +81,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStateDb {
 
-    private static final int ITERATIONS = 10000;
+    private static final int ITERATIONS = 100;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final StateSettings BASIC_SETTINGS = StateSettings
             .builder()

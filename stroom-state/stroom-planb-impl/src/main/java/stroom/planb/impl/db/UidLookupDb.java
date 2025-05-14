@@ -113,4 +113,8 @@ public class UidLookupDb {
             });
         }
     }
+
+    public long count() {
+        return maxId;
+    }
 }

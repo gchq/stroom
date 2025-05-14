@@ -1,6 +1,7 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.db.state.PlanBEnv;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -101,5 +102,10 @@ public class StateSearchHelper {
     public interface Converter<K, V> {
 
         Val convert(LazyKV<K, V> lazyKV);
+    }
+
+    public interface ValuesExtractor {
+
+        Val[] apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
     }
 }

@@ -6,15 +6,15 @@ import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.PlanBValue;
-import stroom.planb.impl.db.RangedState;
-import stroom.planb.impl.db.RangedStateDb;
-import stroom.planb.impl.db.RangedStateRequest;
 import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.SessionDb;
 import stroom.planb.impl.db.SessionRequest;
-import stroom.planb.impl.db.TemporalRangedState;
-import stroom.planb.impl.db.TemporalRangedStateDb;
-import stroom.planb.impl.db.TemporalRangedStateRequest;
+import stroom.planb.impl.db.rangedstate.RangedState;
+import stroom.planb.impl.db.rangedstate.RangedStateDb;
+import stroom.planb.impl.db.rangedstate.RangedStateRequest;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateRequest;
 import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
@@ -169,7 +169,7 @@ public class PlanBQueryService {
                     db.getState(new TemporalStateRequest(new Key(ValString.create(keyName), eventTime)));
             case final RangedStateDb db -> db.getState(new RangedStateRequest(Long.parseLong(keyName)));
             case final TemporalRangedStateDb db ->
-                    db.getState(new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime.toEpochMilli()));
+                    db.getState(new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime));
             case final SessionDb db ->
                     db.getState(new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli()));
             default -> throw new IllegalStateException("Unexpected value: " + reader);

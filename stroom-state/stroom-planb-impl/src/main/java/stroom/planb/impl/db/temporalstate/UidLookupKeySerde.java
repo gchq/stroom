@@ -1,7 +1,6 @@
 package stroom.planb.impl.db.temporalstate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.serde.Serde;
 import stroom.planb.impl.db.serde.time.TimeSerde;
@@ -20,12 +19,12 @@ import java.util.function.Function;
 
 public class UidLookupKeySerde implements Serde<Key> {
 
-    private final UidLookupDb lookupDb;
+    private final UidLookupDb uidLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
 
-    public UidLookupKeySerde(final UidLookupDb lookupDb, final ByteBuffers byteBuffers, final TimeSerde timeSerde) {
-        this.lookupDb = lookupDb;
+    public UidLookupKeySerde(final UidLookupDb uidLookupDb, final ByteBuffers byteBuffers, final TimeSerde timeSerde) {
+        this.uidLookupDb = uidLookupDb;
         this.byteBuffers = byteBuffers;
         this.timeSerde = timeSerde;
     }
@@ -42,7 +41,7 @@ public class UidLookupKeySerde implements Serde<Key> {
                 byteBuffer.remaining() - timeSerde.getSize());
 
         // Read via lookup.
-        final ByteBuffer valueByteBuffer = lookupDb.getValue(txn, nameSlice);
+        final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, nameSlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
         return new Key(val, effectiveTime);
     }
@@ -58,7 +57,7 @@ public class UidLookupKeySerde implements Serde<Key> {
                 throw new RuntimeException("Key length exceeds 511 bytes");
             }
 
-            lookupDb.put(txn, slice, idByteBuffer -> {
+            uidLookupDb.put(txn, slice, idByteBuffer -> {
                 byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
                     prefixedBuffer.put(idByteBuffer);
                     timeSerde.write(prefixedBuffer, key.getEffectiveTime());
@@ -85,7 +84,7 @@ public class UidLookupKeySerde implements Serde<Key> {
                 throw new RuntimeException("Key length exceeds 511 bytes");
             }
 
-            return lookupDb.get(txn, slice, optionalIdByteBuffer ->
+            return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
                     optionalIdByteBuffer
                             .map(idByteBuffer ->
                                     byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
@@ -96,5 +95,10 @@ public class UidLookupKeySerde implements Serde<Key> {
                                     }))
                             .orElse(null));
         }, prefix, suffix);
+    }
+
+    @Override
+    public boolean usesLookup(final ByteBuffer byteBuffer) {
+        return true;
     }
 }

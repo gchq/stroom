@@ -20,7 +20,11 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.planb.impl.db.TemporalRangedState.Key;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateFields;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateRequest;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -28,6 +32,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -44,13 +49,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTemporalRangedStateDb {
 
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
+    private static final TemporalRangedStateSettings BASIC_SETTINGS = TemporalRangedStateSettings
+            .builder()
+            .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
+            .build();
 
     @Test
     void test(@TempDir Path tempDir) {
         testWrite(tempDir);
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(
+        try (final TemporalRangedStateDb db = TemporalRangedStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
                 TemporalRangedStateSettings.builder().build(),
@@ -59,31 +68,31 @@ class TestTemporalRangedStateDb {
             testGet(db);
 
             // Check exact time states.
-            checkState(db, 9, refTime.toEpochMilli(), false);
+            checkState(db, 9, refTime, false);
             for (int i = 10; i <= 30; i++) {
-                checkState(db, i, refTime.toEpochMilli(), true);
+                checkState(db, i, refTime, true);
             }
-            checkState(db, 31, refTime.toEpochMilli(), false);
+            checkState(db, 31, refTime, false);
 
             // Check before time states.
             for (int i = 9; i <= 31; i++) {
-                checkState(db, i, refTime.toEpochMilli() - 1, false);
+                checkState(db, i, refTime.minusMillis(1), false);
             }
 
             // Check after time states.
-            checkState(db, 9, refTime.toEpochMilli() + 1, false);
+            checkState(db, 9, refTime.plusMillis(1), false);
             for (int i = 10; i <= 30; i++) {
-                checkState(db, i, refTime.toEpochMilli() + 1, true);
+                checkState(db, i, refTime.plusMillis(1), true);
             }
-            checkState(db, 31, refTime.toEpochMilli() + 1, false);
+            checkState(db, 31, refTime.plusMillis(1), false);
 
             final TemporalRangedStateRequest stateRequest =
-                    new TemporalRangedStateRequest(11, refTime.toEpochMilli());
+                    new TemporalRangedStateRequest(11, refTime);
             final TemporalRangedState state = db.getState(stateRequest);
             assertThat(state).isNotNull();
             assertThat(state.key().getKeyStart()).isEqualTo(10);
             assertThat(state.key().getKeyEnd()).isEqualTo(30);
-            assertThat(state.key().getEffectiveTime()).isEqualTo(refTime.toEpochMilli());
+            assertThat(state.key().getEffectiveTime()).isEqualTo(refTime);
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test");
 
@@ -138,7 +147,8 @@ class TestTemporalRangedStateDb {
         testWrite(dbPath1);
         testWrite(dbPath2);
 
-        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath1, BYTE_BUFFERS)) {
+        try (final TemporalRangedStateDb db = TemporalRangedStateDb
+                .create(dbPath1, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.merge(dbPath2);
         }
     }
@@ -150,7 +160,8 @@ class TestTemporalRangedStateDb {
 
         testWrite(dbPath);
 
-        try (final TemporalRangedStateDb db = new TemporalRangedStateDb(dbPath, BYTE_BUFFERS)) {
+        try (final TemporalRangedStateDb db = TemporalRangedStateDb
+                .create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(System.currentTimeMillis(), 0);
             assertThat(db.count()).isEqualTo(1);
@@ -162,8 +173,8 @@ class TestTemporalRangedStateDb {
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
 
-        try (final TemporalRangedStateDb db =
-                new TemporalRangedStateDb(dbDir, BYTE_BUFFERS)) {
+        try (final TemporalRangedStateDb db = TemporalRangedStateDb
+                .create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             insertData(db, refTime, "test", 100, 10);
         }
     }
@@ -179,7 +190,7 @@ class TestTemporalRangedStateDb {
 
     private void checkState(final TemporalRangedStateDb db,
                             final long key,
-                            final long effectiveTime,
+                            final Instant effectiveTime,
                             final boolean expected) {
         final TemporalRangedStateRequest request =
                 new TemporalRangedStateRequest(key, effectiveTime);
@@ -236,7 +247,7 @@ class TestTemporalRangedStateDb {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
                 final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
                 final Val v = ValString.create(value);
-                db.insert(writer, k, v);
+                db.insert(writer, new TemporalRangedState(k, v));
             }
         });
     }

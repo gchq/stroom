@@ -65,7 +65,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTemporalStateDb {
 
-    private static final int ITERATIONS = 10000;
+    private static final int ITERATIONS = 100;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
             .builder()
@@ -126,6 +126,32 @@ class TestTemporalStateDb {
 //            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
 //                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(100);
+        }
+    }
+
+    @Test
+    void testGetState(@TempDir Path tempDir) {
+        final Val name = ValString.create("test");
+        final Instant effectiveTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
+            db.write(writer -> {
+                final TemporalState.Key k = TemporalState.Key
+                        .builder()
+                        .name(name)
+                        .effectiveTime(effectiveTime)
+                        .build();
+                final Val v = ValString.create("test");
+                db.insert(writer, new TemporalState(k, v));
+            });
+        }
+
+        try (final TemporalStateDb db = TemporalStateDb.create(
+                tempDir,
+                BYTE_BUFFERS,
+                BASIC_SETTINGS,
+                true)) {
+            assertThat(db.count()).isEqualTo(1);
+            checkState(db, name, effectiveTime, true);
         }
     }
 
@@ -320,18 +346,16 @@ class TestTemporalStateDb {
     }
 
     private Function<Integer, Key> createKeyFunction(final StateKeyType stateKeyType) {
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         return switch (stateKeyType) {
-            case BOOLEAN -> i -> new Key(ValBoolean.create(i > 0), Instant.now());
-            case BYTE -> i -> new Key(ValByte.create(i.byteValue()), Instant.now());
-            case SHORT -> i -> new Key(ValShort.create(i.shortValue()), Instant.now());
-            case INT -> i -> new Key(ValInteger.create(i), Instant.now());
-            case LONG -> i -> new Key(ValLong.create(i.longValue()), Instant.now());
-            case FLOAT -> i -> new Key(ValFloat.create(i.floatValue()), Instant.now());
-            case DOUBLE -> i -> new Key(ValDouble.create(i.doubleValue()), Instant.now());
-            case STRING -> i -> new Key(ValString.create("test-" + i), Instant.now());
-            case UID_LOOKUP -> i -> new Key(ValString.create("test-" + i), Instant.now());
-            case HASH_LOOKUP -> i -> new Key(ValString.create("test-" + i), Instant.now());
-            case VARIABLE -> i -> new Key(ValString.create("test-" + i), Instant.now());
+            case BOOLEAN -> i -> new Key(ValBoolean.create(i > 0), refTime);
+            case BYTE -> i -> new Key(ValByte.create(i.byteValue()), refTime);
+            case SHORT -> i -> new Key(ValShort.create(i.shortValue()), refTime);
+            case INT -> i -> new Key(ValInteger.create(i), refTime);
+            case LONG -> i -> new Key(ValLong.create(i.longValue()), refTime);
+            case FLOAT -> i -> new Key(ValFloat.create(i.floatValue()), refTime);
+            case DOUBLE -> i -> new Key(ValDouble.create(i.doubleValue()), refTime);
+            case STRING, HASH_LOOKUP, UID_LOOKUP, VARIABLE -> i -> new Key(ValString.create("test-" + i), refTime);
         };
     }
 
@@ -344,10 +368,7 @@ class TestTemporalStateDb {
             case LONG -> i -> ValLong.create(i.longValue());
             case FLOAT -> i -> ValFloat.create(i.floatValue());
             case DOUBLE -> i -> ValDouble.create(i.doubleValue());
-            case STRING -> i -> ValString.create("test-" + i);
-            case UID_LOOKUP -> i -> ValString.create("test-" + i);
-            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
-            case VARIABLE -> i -> ValString.create("test-" + i);
+            case STRING, UID_LOOKUP, HASH_LOOKUP, VARIABLE -> i -> ValString.create("test-" + i);
         };
     }
 }

@@ -173,4 +173,8 @@ public class HashLookupDb {
                     return idConsumer.apply(sequenceKeyBuffer);
                 });
     }
+
+    public long count(final Txn<ByteBuffer> readTxn) {
+        return dbi.stat(readTxn).entries;
+    }
 }

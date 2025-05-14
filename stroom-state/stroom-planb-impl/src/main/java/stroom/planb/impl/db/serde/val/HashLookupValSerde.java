@@ -13,24 +13,24 @@ import java.util.function.Function;
 
 public class HashLookupValSerde implements ValSerde {
 
-    private final HashLookupDb lookupDb;
+    private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;
 
-    public HashLookupValSerde(final HashLookupDb lookupDb, final ByteBuffers byteBuffers) {
-        this.lookupDb = lookupDb;
+    public HashLookupValSerde(final HashLookupDb hashLookupDb, final ByteBuffers byteBuffers) {
+        this.hashLookupDb = hashLookupDb;
         this.byteBuffers = byteBuffers;
     }
 
     @Override
     public Val read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
-        final ByteBuffer valueByteBuffer = lookupDb.getValue(txn, byteBuffer);
+        final ByteBuffer valueByteBuffer = hashLookupDb.getValue(txn, byteBuffer);
         return ValSerdeUtil.read(valueByteBuffer);
     }
 
     @Override
     public void write(final Txn<ByteBuffer> txn, final Val value, final Consumer<ByteBuffer> consumer) {
         ValSerdeUtil.write(value, byteBuffers, valueByteBuffer -> {
-            lookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
+            hashLookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
                 consumer.accept(idByteBuffer);
                 return null;
             });
@@ -43,6 +43,11 @@ public class HashLookupValSerde implements ValSerde {
                                 final Val value,
                                 final Function<Optional<ByteBuffer>, R> function) {
         return ValSerdeUtil.write(value, byteBuffers, valueByteBuffer ->
-                lookupDb.get(txn, valueByteBuffer, function));
+                hashLookupDb.get(txn, valueByteBuffer, function));
+    }
+
+    @Override
+    public boolean usesLookup(final ByteBuffer byteBuffer) {
+        return true;
     }
 }

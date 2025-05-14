@@ -163,4 +163,11 @@ public class VariableKeySerde implements Serde<Key> {
     private ByteBuffer getName(final ByteBuffer byteBuffer) {
         return byteBuffer.slice(1, byteBuffer.remaining() - timeSerde.getSize());
     }
+
+    @Override
+    public boolean usesLookup(final ByteBuffer byteBuffer) {
+        // Read the variable type.
+        final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get(0));
+        return !VariableValType.DIRECT.equals(valType);
+    }
 }

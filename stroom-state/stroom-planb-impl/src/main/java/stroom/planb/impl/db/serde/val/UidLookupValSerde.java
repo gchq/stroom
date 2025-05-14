@@ -13,17 +13,17 @@ import java.util.function.Function;
 
 public class UidLookupValSerde implements ValSerde {
 
-    private final UidLookupDb lookupDb;
+    private final UidLookupDb uidLookupDb;
     private final ByteBuffers byteBuffers;
 
-    public UidLookupValSerde(final UidLookupDb lookupDb, final ByteBuffers byteBuffers) {
-        this.lookupDb = lookupDb;
+    public UidLookupValSerde(final UidLookupDb uidLookupDb, final ByteBuffers byteBuffers) {
+        this.uidLookupDb = uidLookupDb;
         this.byteBuffers = byteBuffers;
     }
 
     @Override
     public Val read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
-        final ByteBuffer valueByteBuffer = lookupDb.getValue(txn, byteBuffer);
+        final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, byteBuffer);
         return ValSerdeUtil.read(valueByteBuffer);
     }
 
@@ -34,7 +34,7 @@ public class UidLookupValSerde implements ValSerde {
                 throw new RuntimeException("Key length exceeds 511 bytes");
             }
 
-            lookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
+            uidLookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
                 consumer.accept(idByteBuffer);
                 return null;
             });
@@ -50,7 +50,12 @@ public class UidLookupValSerde implements ValSerde {
             if (valueByteBuffer.remaining() > 511) {
                 throw new RuntimeException("Key length exceeds 511 bytes");
             }
-            return lookupDb.get(txn, valueByteBuffer, function);
+            return uidLookupDb.get(txn, valueByteBuffer, function);
         });
+    }
+
+    @Override
+    public boolean usesLookup(final ByteBuffer byteBuffer) {
+        return true;
     }
 }

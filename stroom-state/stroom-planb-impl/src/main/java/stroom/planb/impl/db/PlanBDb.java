@@ -1,10 +1,14 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.rangedstate.RangedStateDb;
 import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.RangedStateSettings;
 import stroom.planb.shared.StateSettings;
+import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.NullSafe;
 
@@ -39,14 +43,18 @@ public class PlanBDb {
                 return RangedStateDb.create(
                         targetPath,
                         byteBuffers,
-                        doc,
+                        NullSafe.getOrElse(doc,
+                                d -> (RangedStateSettings) doc.getSettings(),
+                                RangedStateSettings.builder().build()),
                         readOnly);
             }
             case TEMPORAL_RANGED_STATE -> {
                 return TemporalRangedStateDb.create(
                         targetPath,
                         byteBuffers,
-                        doc,
+                        NullSafe.getOrElse(doc,
+                                d -> (TemporalRangedStateSettings) doc.getSettings(),
+                                TemporalRangedStateSettings.builder().build()),
                         readOnly);
             }
             case SESSION -> {
