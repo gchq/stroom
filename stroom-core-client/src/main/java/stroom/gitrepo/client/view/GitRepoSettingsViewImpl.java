@@ -26,6 +26,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -56,6 +57,9 @@ public class GitRepoSettingsViewImpl
 
     @UiField
     TextBox path;
+
+    @UiField
+    CheckBox autoPush;
 
     @UiField
     TextArea commitMessage;
@@ -132,6 +136,21 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
+    public Boolean isAutoPush() {
+        return this.autoPush.getValue();
+    }
+
+    @Override
+    public void setAutoPush(Boolean autoPush) {
+        // Objects.requireNonNullElse() not defined for GWT
+        if (autoPush == null) {
+            this.autoPush.setValue(Boolean.FALSE);
+        } else {
+            this.autoPush.setValue(autoPush);
+        }
+    }
+
+    @Override
     public String getCommitMessage() {
         return this.commitMessage.getText();
     }
@@ -149,11 +168,12 @@ public class GitRepoSettingsViewImpl
         password.setEnabled(!readOnly);
         branch.setEnabled(!readOnly);
         path.setEnabled(!readOnly);
+        autoPush.setEnabled(!readOnly);
     }
 
     /**
      * Sets the Dirty flag if any of the UI widget's content changes.
-     * @param e Event from the UI widget
+     * @param e Event from the UI widget. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
     @UiHandler({"url", "username", "password", "branch", "path"})
@@ -164,8 +184,21 @@ public class GitRepoSettingsViewImpl
     }
 
     /**
+     * Sets the dirty flag when the autoPush checkbox is changed.
+     * @param event Event from the UI widget. Ignored. Can be null.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler({"autoPush"})
+    public void onAutoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDirty();
+        }
+    }
+
+    /**
      * Enables/disables the Push button depending on whether there is anything
      * in the Commit Message text box.
+     * @param e Event. Ignored. Can be null.
      */
     @UiHandler({"commitMessage"})
     public void onCommitMessageValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
@@ -188,7 +221,7 @@ public class GitRepoSettingsViewImpl
     /**
      * Handles 'Pull from Git' button clicks.
      * Passes the button to display the wait icon.
-     * @param event The button push event.
+     * @param event The button push event. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
     @UiHandler("gitRepoPull")

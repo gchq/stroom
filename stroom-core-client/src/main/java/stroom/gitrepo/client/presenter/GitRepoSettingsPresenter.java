@@ -74,6 +74,7 @@ public class GitRepoSettingsPresenter
         this.getView().setPassword(doc.getPassword());
         this.getView().setBranch(doc.getBranch());
         this.getView().setPath(doc.getPath());
+        this.getView().setAutoPush(doc.isAutoPush());
     }
 
     @Override
@@ -83,6 +84,7 @@ public class GitRepoSettingsPresenter
         doc.setPassword(this.getView().getPassword());
         doc.setBranch(this.getView().getBranch());
         doc.setPath(this.getView().getPath());
+        doc.setAutoPush(this.getView().isAutoPush());
         return doc;
     }
 
@@ -187,5 +189,8 @@ public class GitRepoSettingsPresenter
 
         void setCommitMessage(final String commitMessage);
 
+        Boolean isAutoPush();
+
+        void setAutoPush(Boolean autoPush);
     }
 }

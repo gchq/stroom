@@ -29,6 +29,11 @@
                        title="The path within the GIT repository"
                        ui:field="path" />
         </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
+            <g:CheckBox name="AutoPush"
+                        title="Automatically push changes to the Git repository"
+                        ui:field="autoPush" />
+        </form:FormGroup>
         <form:FormGroup identity="gitRepoCommitMessage" label="Commit Message">
             <g:TextArea name="CommitMessage"
                         title="Commit Message"

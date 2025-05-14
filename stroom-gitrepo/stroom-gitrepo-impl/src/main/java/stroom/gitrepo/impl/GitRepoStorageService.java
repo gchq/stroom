@@ -21,6 +21,7 @@ import stroom.util.shared.Severity;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -136,12 +137,13 @@ public class GitRepoStorageService {
             final Path localDir = pathCreator.toAppPath(config.getLocalDir());
             final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
 
-            // Delete everything under gitWork (but not the .git directory)
-            this.ensureDirectoryExists(gitWork);
-            this.deleteFileTree(gitWork, true);
-
             // Create Git object for the gitWork directory
             try (Git git = this.gitConstructForPush(gitRepoDoc, gitWork)) {
+
+                // Delete all the files that are currently in the repo
+                // so we can overwrite any changes and detect deletions.
+                // We keep the README.md and the .git/ directory.
+                this.deleteFileTree(gitWork, true);
 
                 // Export everything
                 ExportSummary exportSummary =
@@ -149,22 +151,33 @@ public class GitRepoStorageService {
                 messages.addAll(exportSummary.getMessages());
                 messages.add(new Message(Severity.INFO, "Export to disk successful"));
 
-                // Add everything to commit & commit locally
-                // We add as 'update' and 'not as update' to catch deleted files.
-                git.add().setUpdate(false).addFilepattern(".").call();
-                git.add().setUpdate(true).addFilepattern(".").call();
-                git.commit()
-                        .setCommitter("Anonymous", gitRepoDoc.getUsername())
-                        .setMessage(commitMessage)
-                        .call();
-                messages.add(new Message(Severity.INFO, "Local commit successful"));
+                // Has anything changed against the remote?
+                Status gitStatus = git.status().call();
+                if (!gitStatus.isClean()) {
 
-                // Push to remote
-                git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
-                messages.add(new Message(Severity.INFO, "Pushed to Git"));
-            } catch (GitAPIException e) {
+                    this.gitStatusToMessages(gitStatus, messages);
+
+                    // Add everything to commit & commit locally
+                    // Match already tracked files - detects deletions
+                    git.add().setUpdate(true).addFilepattern(".").call();
+                    // Match new files
+                    git.add().setUpdate(false).addFilepattern(".").call();
+
+                    git.commit()
+                            .setCommitter("Anonymous", gitRepoDoc.getUsername())
+                            .setMessage(commitMessage)
+                            .call();
+                    messages.add(new Message(Severity.INFO, "Local commit successful"));
+
+                    // Push to remote
+                    git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
+                    messages.add(new Message(Severity.INFO, "Pushed to Git"));
+                } else {
+                    throw new IOException("No local changes; therefore not pushing to Git");
+                }
+            } catch(GitAPIException e){
                 this.throwException("Couldn't commit and push GIT", e, messages);
-            } catch (IOException e) {
+            } catch(IOException e){
                 this.throwException("Error pushing to GIT", e, messages);
             }
         } else {
@@ -172,6 +185,30 @@ public class GitRepoStorageService {
         }
 
         return messages;
+    }
+
+    /**
+     * Puts the git status into the messages to send back to the user.
+     * @param gitStatus The status of the repo after export.
+     * @param messages The list of messages to return to the user.
+     */
+    private void gitStatusToMessages(final Status gitStatus,
+                                final List<Message> messages) {
+        for (var filename : gitStatus.getUncommittedChanges()) {
+            messages.add(new Message(Severity.INFO, "Changed: " + filename));
+        }
+        for (var dirname : gitStatus.getUntrackedFolders()) {
+            messages.add(new Message(Severity.INFO, "New folder: " + dirname));
+        }
+        for (var filename : gitStatus.getUntracked()) {
+            messages.add(new Message(Severity.INFO, "New file: " + filename));
+        }
+        for (var filename : gitStatus.getMissing()) {
+            messages.add(new Message(Severity.INFO, "Deleted: " + filename));
+        }
+        for (var filename : gitStatus.getModified()) {
+            messages.add(new Message(Severity.INFO, "Modified: " + filename));
+        }
     }
 
     /**
@@ -403,6 +440,8 @@ public class GitRepoStorageService {
      */
     private Git gitConstructForPush(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
             throws IOException, GitAPIException {
+
+        this.ensureDirectoryExists(gitWorkDir);
 
         // Wipe everything from the local git Work dir
         this.deleteFileTree(gitWorkDir, false);

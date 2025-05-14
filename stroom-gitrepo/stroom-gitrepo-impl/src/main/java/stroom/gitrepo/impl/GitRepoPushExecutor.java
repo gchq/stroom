@@ -65,14 +65,12 @@ public class GitRepoPushExecutor {
         var docRefs = gitRepoStore.list();
         for (var docRef : docRefs) {
             GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
-            LOGGER.info("@@@@ Found doc {}", gitRepoDoc);
-            if (!gitRepoDoc.getUrl().isEmpty()) {
-                LOGGER.info("@@@@ Pushing to git repo {}", gitRepoDoc.getUrl());
+
+            if (gitRepoDoc.isAutoPush()) {
                 try {
                     gitRepoStorageService.exportDoc(gitRepoDoc, JOB_COMMIT_MESSAGE);
-                }
-                catch (IOException | EntityServiceException e) {
-                    LOGGER.error(TASK_NAME + " error: {}: {} ",e.getClass().getSimpleName(), e.getMessage());
+                } catch (IOException | EntityServiceException e) {
+                    LOGGER.error(TASK_NAME + " error: {}: {} ", e.getClass().getSimpleName(), e.getMessage());
                 }
             }
         }
