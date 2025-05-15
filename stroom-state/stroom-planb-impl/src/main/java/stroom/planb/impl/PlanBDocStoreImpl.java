@@ -27,8 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
@@ -42,8 +40,6 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class PlanBDocStoreImpl implements PlanBDocStore {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBDocStoreImpl.class);
 
     private final Store<PlanBDoc> store;
     private final SecurityContext securityContext;
@@ -182,23 +178,11 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
 
     @Override
     public void deleteDocument(final DocRef docRef) {
-        // Drop the associated ScyllaDB table before deleting the document.
-        final PlanBDoc doc = readDocument(docRef);
-        if (doc != null) {
-//            try {
-//                final CqlSessionCache sessionCache = cqlSessionCacheProvider.get();
-//                final CqlSession session = sessionCache.get(doc.getScyllaDbRef());
-//                ScyllaDbUtil.dropTable(session, doc.getName());
-//            } catch (final RuntimeException e) {
-//                LOGGER.error(e::getMessage, e);
-//            }
-        }
-
         store.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(DocRef docRef) {
+    public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
     }
 
@@ -282,7 +266,7 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
 

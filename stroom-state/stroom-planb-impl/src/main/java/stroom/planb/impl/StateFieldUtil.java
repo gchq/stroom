@@ -35,9 +35,8 @@ public class StateFieldUtil {
 
     public static QueryField getTimeField(final StateType stateType) {
         return switch (stateType) {
-            case STATE -> null;
+            case STATE, RANGED_STATE -> null;
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;
-            case RANGED_STATE -> null;
             case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
         };

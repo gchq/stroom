@@ -301,7 +301,6 @@ public class StateDb extends AbstractDb<Val, Val> {
                     expressionPredicateFactory,
                     consumer,
                     valuesExtractor,
-                    env,
                     dbi);
             return null;
         });

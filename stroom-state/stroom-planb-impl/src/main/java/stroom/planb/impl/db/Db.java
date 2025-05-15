@@ -8,6 +8,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.Consumer;
 
 public interface Db<K, V> extends AutoCloseable {
@@ -27,8 +28,8 @@ public interface Db<K, V> extends AutoCloseable {
 
     void merge(Path source);
 
-    void condense(long condenseBeforeMs,
-                  long deleteBeforeMs);
+    void condense(Instant condenseBefore,
+                  Instant deleteBefore);
 
     LmdbWriter createWriter();
 
@@ -39,8 +40,6 @@ public interface Db<K, V> extends AutoCloseable {
     void close();
 
     long count();
-
-    boolean isReadOnly();
 
     String getInfo();
 }

@@ -562,7 +562,9 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addTemporalState(final PlanBDoc doc) {
-        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+        final Instant time = this.time != null
+                ? this.time
+                : this.effectiveTime;
         if (time == null) {
             error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
 
@@ -639,7 +641,9 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addTemporalRangedState(final PlanBDoc doc) {
-        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+        final Instant time = this.time != null
+                ? this.time
+                : this.effectiveTime;
         if (time == null) {
             error(LogUtil.message("Temporal range range 'time' is null for {}", mapName));
 

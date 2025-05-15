@@ -283,9 +283,9 @@ class TestTemporalRangedStateDb {
         try (final TemporalRangedStateDb db = TemporalRangedStateDb
                 .create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             assertThat(db.count()).isEqualTo(100);
-            db.condense(System.currentTimeMillis(), 0);
+            db.condense(Instant.now(), Instant.MIN);
             assertThat(db.count()).isEqualTo(1);
-            db.condense(System.currentTimeMillis(), System.currentTimeMillis());
+            db.condense(Instant.now(), Instant.now());
             assertThat(db.count()).isEqualTo(0);
         }
     }

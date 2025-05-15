@@ -201,7 +201,7 @@ public class FileTransferClientImpl implements FileTransferClient {
     Instant fetchSnapshot(final WebTarget webTarget,
                           final SnapshotRequest request,
                           final Path snapshotDir) throws IOException {
-        try (Response response = webTarget
+        try (final Response response = webTarget
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .post(Entity.json(request))) {
             if (response.getStatus() == Status.NOT_MODIFIED.getStatusCode()) {

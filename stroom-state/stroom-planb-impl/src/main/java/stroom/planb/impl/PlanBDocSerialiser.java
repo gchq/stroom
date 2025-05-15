@@ -15,9 +15,7 @@ public class PlanBDocSerialiser implements DocumentSerialiser2<PlanBDoc> {
     private final Serialiser2<PlanBDoc> delegate;
 
     @Inject
-    PlanBDocSerialiser(
-            final Serialiser2Factory serialiser2Factory
-    ) {
+    PlanBDocSerialiser(final Serialiser2Factory serialiser2Factory) {
         this.delegate = serialiser2Factory.createSerialiser(PlanBDoc.class);
     }
 

@@ -258,7 +258,6 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                     expressionPredicateFactory,
                     consumer,
                     valuesExtractor,
-                    env,
                     dbi);
             return null;
         });
@@ -294,54 +293,6 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                     return result;
                 }));
     }
-
-//    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
-//    //  reuse. We might want to create a new compacted instance instead of deleting in place.
-//    @Override
-//    public void condense(final long condenseBeforeMs, final long deleteBeforeMs) {
-//        condense(Instant.ofEpochMilli(condenseBeforeMs), Instant.ofEpochMilli(deleteBeforeMs));
-//    }
-
-//    public void condense(final Instant condenseBefore,
-//                         final Instant deleteBefore) {
-//        env.read(readTxn -> {
-//            env.write(writer -> {
-//                Key lastKey = null;
-//                Val lastValue = null;
-//                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-//                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-//                    while (iterator.hasNext()
-//                           && !Thread.currentThread().isInterrupted()) {
-//                        final KeyVal<ByteBuffer> kv = iterator.next();
-//                        final Key key = keySerde.read(readTxn, kv.key().duplicate());
-//                        final Val value = valueSerde.read(readTxn, kv.val().duplicate());
-//
-//                        if (key.getEffectiveTime().isBefore(deleteBefore)) {
-//                            // If this is data we no longer want to retain then delete it.
-//                            dbi.delete(writer.getWriteTxn(), kv.key());
-//                            writer.tryCommit();
-//
-//                        } else {
-//                            if (lastKey != null &&
-//                                lastKey.getKeyStart() == key.getKeyStart() &&
-//                                lastKey.getKeyEnd() == key.getKeyEnd() &&
-//                                lastValue.equals(value)) {
-//                                if (key.getEffectiveTime().isBefore(condenseBefore)) {
-//                                    // If the key and value are the same then delete the duplicate entry.
-//                                    dbi.delete(writer.getWriteTxn(), kv.key());
-//                                    writer.tryCommit();
-//                                }
-//                            }
-//
-//                            lastKey = key;
-//                            lastValue = value;
-//                        }
-//                    }
-//                }
-//            });
-//            return null;
-//        });
-//    }
 
     public static ValuesExtractor createValuesExtractor(final FieldIndex fieldIndex,
                                                         final Function<Context, Key> keyFunction,

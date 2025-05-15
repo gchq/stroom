@@ -336,7 +336,6 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                     expressionPredicateFactory,
                     consumer,
                     valuesExtractor,
-                    env,
                     dbi);
             return null;
         });
@@ -378,10 +377,6 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
     //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final long condenseBeforeMs, final long deleteBeforeMs) {
-        condense(Instant.ofEpochMilli(condenseBeforeMs), Instant.ofEpochMilli(deleteBeforeMs));
-    }
-
     public void condense(final Instant condenseBefore,
                          final Instant deleteBefore) {
         env.read(readTxn -> {

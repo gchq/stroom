@@ -171,29 +171,6 @@ public class ValSerdeUtil {
         };
     }
 
-//    public static void write(final Val val, final ByteBuffer byteBuffer) {
-//        final Type type = val.type();
-//        byteBuffer.put(type.getId());
-//        switch (type) {
-//            case NULL -> {
-//            }
-//            case BOOLEAN -> byteBuffer.put(val.toBoolean()
-//                    ? (byte) 1
-//                    : (byte) 0);
-//            case BYTE -> byteBuffer.put(((ValByte) val).getValue());
-//            case SHORT -> byteBuffer.putShort(((ValShort) val).getValue());
-//            case INTEGER -> byteBuffer.putInt(val.toInteger());
-//            case LONG -> byteBuffer.putLong(val.toLong());
-//            case FLOAT -> byteBuffer.putFloat(val.toFloat());
-//            case DOUBLE -> byteBuffer.putDouble(val.toDouble());
-//            case DATE -> byteBuffer.putLong(val.toLong());
-//            case DURATION -> byteBuffer.putLong(val.toLong());
-//            case STRING -> byteBuffer.put(val.toString().getBytes(StandardCharsets.UTF_8));
-//            case XML -> byteBuffer.put(((ValXml) val).getByteBuffer());
-//            case ERR -> byteBuffer.put(val.toString().getBytes(StandardCharsets.UTF_8));
-//        }
-//    }
-
     public static Val read(final ByteBuffer byteBuffer) {
         final byte b = byteBuffer.get();
         final Type type = Type.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(b);

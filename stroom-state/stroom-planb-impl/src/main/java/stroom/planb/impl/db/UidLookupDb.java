@@ -66,27 +66,10 @@ public class UidLookupDb {
     }
 
     public <R> R get(final Txn<ByteBuffer> readTxn,
-                     final byte[] bytes,
-                     final Function<Optional<ByteBuffer>, R> idConsumer) {
-        return byteBuffers.useBytes(bytes, keyByteBuffer -> {
-            final ByteBuffer uidByteBuffer = keyToUidDbi.get(readTxn, keyByteBuffer);
-            return idConsumer.apply(Optional.ofNullable(uidByteBuffer));
-        });
-    }
-
-    public <R> R get(final Txn<ByteBuffer> readTxn,
                      final ByteBuffer byteBuffer,
                      final Function<Optional<ByteBuffer>, R> idConsumer) {
         final ByteBuffer uidByteBuffer = keyToUidDbi.get(readTxn, byteBuffer.duplicate());
         return idConsumer.apply(Optional.ofNullable(uidByteBuffer));
-    }
-
-    public <R> R put(final Txn<ByteBuffer> writeTxn,
-                     final byte[] bytes,
-                     final Function<ByteBuffer, R> idConsumer) {
-        return byteBuffers.useBytes(bytes, keyByteBuffer -> {
-            return put(writeTxn, keyByteBuffer, idConsumer);
-        });
     }
 
     public <R> R put(final Txn<ByteBuffer> writeTxn,

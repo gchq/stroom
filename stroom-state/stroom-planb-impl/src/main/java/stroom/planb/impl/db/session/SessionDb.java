@@ -275,7 +275,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
                     if (predicate.test(vals)) {
-                        Session session = keySerde.read(readTxn, keyVal.key());
+                        final Session session = keySerde.read(readTxn, keyVal.key());
 
 
                         // We have a matching row so extend the current session if we have one.
@@ -363,32 +363,6 @@ public class SessionDb extends AbstractDb<Session, Session> {
         return vals;
     }
 
-
-//    @Override
-//    public void search(final ExpressionCriteria criteria,
-//                       final FieldIndex fieldIndex,
-//                       final DateTimeSettings dateTimeSettings,
-//                       final ExpressionPredicateFactory expressionPredicateFactory,
-//                       final ValuesConsumer consumer) {
-//        env.read(readTxn -> {
-//            final ValuesExtractor valuesExtractor = createValuesExtractor(
-//                    fieldIndex,
-//                    getKeyExtractionFunction(readTxn),
-//                    getValExtractionFunction(readTxn));
-//            PlanBSearchHelper.search(
-//                    readTxn,
-//                    criteria,
-//                    fieldIndex,
-//                    dateTimeSettings,
-//                    expressionPredicateFactory,
-//                    consumer,
-//                    valuesExtractor,
-//                    env,
-//                    dbi);
-//            return null;
-//        });
-//    }
-
     private Function<Context, Session> getKeyExtractionFunction(final Txn<ByteBuffer> readTxn) {
         return context -> keySerde.read(readTxn, context.kv().key().duplicate());
     }
@@ -435,51 +409,6 @@ public class SessionDb extends AbstractDb<Session, Session> {
     // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
     //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final long condenseBeforeMs, final long deleteBeforeMs) {
-        condense(Instant.ofEpochMilli(condenseBeforeMs), Instant.ofEpochMilli(deleteBeforeMs));
-    }
-//
-//    public void condense(final Instant condenseBefore,
-//                         final Instant deleteBefore) {
-//        env.read(readTxn -> {
-//            env.write(writer -> {
-//                Key lastKey = null;
-//                Val lastValue = null;
-//                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-//                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-//                    while (iterator.hasNext()
-//                           && !Thread.currentThread().isInterrupted()) {
-//                        final KeyVal<ByteBuffer> kv = iterator.next();
-//                        final Key key = keySerde.read(readTxn, kv.key().duplicate());
-//                        final Val value = valueSerde.read(readTxn, kv.val().duplicate());
-//
-//                        if (key.getEffectiveTime().isBefore(deleteBefore)) {
-//                            // If this is data we no longer want to retain then delete it.
-//                            dbi.delete(writer.getWriteTxn(), kv.key());
-//                            writer.tryCommit();
-//
-//                        } else {
-//                            if (lastKey != null &&
-//                                Objects.equals(lastKey.getName(), key.getName()) &&
-//                                lastValue.equals(value)) {
-//                                if (key.getEffectiveTime().isBefore(condenseBefore)) {
-//                                    // If the key and value are the same then delete the duplicate entry.
-//                                    dbi.delete(writer.getWriteTxn(), kv.key());
-//                                    writer.tryCommit();
-//                                }
-//                            }
-//
-//                            lastKey = key;
-//                            lastValue = value;
-//                        }
-//                    }
-//                }
-//            });
-//            return null;
-//        });
-//    }
-
-
     public void condense(final Instant condenseBefore,
                          final Instant deleteBefore) {
         env.read(readTxn -> {

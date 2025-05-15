@@ -142,7 +142,7 @@ public class PlanBQueryService {
                     PlanBRemoteQueryResource.BASE_PATH, PlanBRemoteQueryResource.GET_VALUE_PATH);
             try {
                 // A different node to make a rest call to the required node
-                WebTarget webTarget = webTargetFactoryProvider.get().create(url);
+                final WebTarget webTarget = webTargetFactoryProvider.get().create(url);
                 final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .post(Entity.json(request));

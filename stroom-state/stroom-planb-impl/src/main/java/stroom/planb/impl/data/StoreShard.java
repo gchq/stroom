@@ -168,11 +168,11 @@ class StoreShard implements Shard {
                 condense = sessionSettings.getCondense();
             }
 
-            final long condenseBeforeMs;
+            final Instant condenseBefore;
             if (condense != null && condense.isEnabled()) {
-                condenseBeforeMs = SimpleDurationUtil.minus(Instant.now(), condense.getDuration()).toEpochMilli();
+                condenseBefore = SimpleDurationUtil.minus(Instant.now(), condense.getDuration());
             } else {
-                condenseBeforeMs = 0;
+                condenseBefore = Instant.MIN;
             }
 
             // Find out how old data needs to be before we delete it.
@@ -185,18 +185,18 @@ class StoreShard implements Shard {
                 retention = sessionSettings.getRetention();
             }
 
-            final long deleteBeforeMs;
+            final Instant deleteBefore;
             if (retention != null && retention.isEnabled()) {
-                deleteBeforeMs = SimpleDurationUtil.minus(Instant.now(), retention.getDuration()).toEpochMilli();
+                deleteBefore = SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
             } else {
-                deleteBeforeMs = 0;
+                deleteBefore = Instant.MIN;
             }
 
             // If we are condensing or deleting data then do so.
-            if (condenseBeforeMs > 0 || deleteBeforeMs > 0) {
+            if (condenseBefore.isAfter(Instant.MIN) || deleteBefore.isAfter(Instant.MIN)) {
                 incrementUseCount();
                 try {
-                    db.condense(condenseBeforeMs, deleteBeforeMs);
+                    db.condense(condenseBefore, deleteBefore);
                     lastWriteTime = Instant.now();
                 } finally {
                     decrementUseCount();

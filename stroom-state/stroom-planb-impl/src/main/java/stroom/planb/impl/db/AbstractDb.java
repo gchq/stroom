@@ -14,6 +14,7 @@ import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -69,8 +70,8 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     }
 
-    public void condense(final long condenseBeforeMs,
-                         final long deleteBeforeMs) {
+    public void condense(final Instant condenseBefore,
+                         final Instant deleteBefore) {
         // Don't condense by default.
     }
 
@@ -163,11 +164,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
     @Override
     public void close() {
         env.close();
-    }
-
-    @Override
-    public boolean isReadOnly() {
-        return env.isReadOnly();
     }
 
     public final String getInfo() {

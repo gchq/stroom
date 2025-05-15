@@ -32,7 +32,6 @@ public class PlanBSearchHelper {
                               final ExpressionPredicateFactory expressionPredicateFactory,
                               final ValuesConsumer consumer,
                               final ValuesExtractor valuesExtractor,
-                              final PlanBEnv env,
                               final Dbi<ByteBuffer> dbi) {
         // Ensure we have fields for all expression criteria.
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
@@ -69,6 +68,7 @@ public class PlanBSearchHelper {
     }
 
     public static class LazyKV<K, V> {
+
         private final Context context;
         private final Function<Context, K> keyFunction;
         private final Function<Context, V> valFunction;
