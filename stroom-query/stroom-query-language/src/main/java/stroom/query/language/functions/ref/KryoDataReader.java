@@ -2,6 +2,8 @@ package stroom.query.language.functions.ref;
 
 import com.esotericsoftware.kryo.io.Input;
 
+import java.nio.ByteBuffer;
+
 public class KryoDataReader implements DataReader, AutoCloseable {
 
     private final Input input;
@@ -23,6 +25,11 @@ public class KryoDataReader implements DataReader, AutoCloseable {
     @Override
     public boolean readBoolean() {
         return input.readBoolean();
+    }
+
+    @Override
+    public short readShort() {
+        return input.readShort();
     }
 
     @Override
@@ -48,6 +55,11 @@ public class KryoDataReader implements DataReader, AutoCloseable {
     @Override
     public String readString() {
         return input.readString();
+    }
+
+    @Override
+    public ByteBuffer read() {
+        return ByteBuffer.wrap(input.getBuffer());
     }
 
     @Override
