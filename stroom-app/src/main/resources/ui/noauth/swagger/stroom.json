@@ -17450,8 +17450,8 @@
         "type" : "object",
         "properties" : {
           "effectiveTime" : {
-            "type" : "integer",
-            "format" : "int64"
+            "type" : "string",
+            "format" : "date-time"
           },
           "keyEnd" : {
             "type" : "integer",
@@ -19618,7 +19618,7 @@
               "$ref" : "#/components/schemas/Key"
             },
             "value" : {
-              "$ref" : "#/components/schemas/StateValue"
+              "$ref" : "#/components/schemas/Val"
             }
           }
         } ]
@@ -19632,6 +19632,13 @@
           "properties" : {
             "overwrite" : {
               "type" : "boolean"
+            },
+            "rangeType" : {
+              "type" : "string",
+              "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+            },
+            "stateValueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
@@ -21348,19 +21355,15 @@
           "type" : "object",
           "properties" : {
             "end" : {
-              "type" : "integer",
-              "format" : "int64"
+              "type" : "string",
+              "format" : "date-time"
             },
             "key" : {
-              "type" : "array",
-              "items" : {
-                "type" : "string",
-                "format" : "byte"
-              }
+              "$ref" : "#/components/schemas/Val"
             },
             "start" : {
-              "type" : "integer",
-              "format" : "int64"
+              "type" : "string",
+              "format" : "date-time"
             }
           }
         } ]
@@ -21430,6 +21433,13 @@
             },
             "retention" : {
               "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "stateValueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
+            },
+            "timePrecision" : {
+              "type" : "string",
+              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
             }
           }
         } ]
@@ -21929,10 +21939,10 @@
           "type" : "object",
           "properties" : {
             "key" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/Val"
             },
             "value" : {
-              "$ref" : "#/components/schemas/StateValue"
+              "$ref" : "#/components/schemas/Val"
             }
           }
         } ]
@@ -22009,7 +22019,7 @@
           },
           "stateKeyType" : {
             "type" : "string",
-            "enum" : [ "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "HASHED", "LOOKUP", "VARIABLE" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
           }
         }
       },
@@ -22032,49 +22042,6 @@
           }
         } ]
       },
-      "StateValue" : {
-        "type" : "object",
-        "properties" : {
-          "byteBuffer" : {
-            "type" : "object",
-            "properties" : {
-              "char" : {
-                "type" : "string"
-              },
-              "direct" : {
-                "type" : "boolean"
-              },
-              "double" : {
-                "type" : "number",
-                "format" : "double"
-              },
-              "float" : {
-                "type" : "number",
-                "format" : "float"
-              },
-              "int" : {
-                "type" : "integer",
-                "format" : "int32"
-              },
-              "long" : {
-                "type" : "integer",
-                "format" : "int64"
-              },
-              "readOnly" : {
-                "type" : "boolean"
-              },
-              "short" : {
-                "type" : "integer",
-                "format" : "int32"
-              }
-            }
-          },
-          "typeId" : {
-            "type" : "string",
-            "format" : "byte"
-          }
-        }
-      },
       "StateValueSchema" : {
         "type" : "object",
         "properties" : {
@@ -22084,7 +22051,7 @@
           },
           "stateValueType" : {
             "type" : "string",
-            "enum" : [ "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "LOOKUP", "VARIABLE" ]
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
           }
         }
       },
@@ -22989,7 +22956,7 @@
               "$ref" : "#/components/schemas/Key"
             },
             "value" : {
-              "$ref" : "#/components/schemas/StateValue"
+              "$ref" : "#/components/schemas/Val"
             }
           }
         } ]
@@ -23007,8 +22974,19 @@
             "overwrite" : {
               "type" : "boolean"
             },
+            "rangeType" : {
+              "type" : "string",
+              "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+            },
             "retention" : {
               "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "stateValueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
+            },
+            "timePrecision" : {
+              "type" : "string",
+              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
             }
           }
         } ]
@@ -23024,7 +23002,7 @@
               "$ref" : "#/components/schemas/Key"
             },
             "value" : {
-              "$ref" : "#/components/schemas/StateValue"
+              "$ref" : "#/components/schemas/Val"
             }
           }
         } ]
@@ -23044,6 +23022,16 @@
             },
             "retention" : {
               "$ref" : "#/components/schemas/DurationSetting"
+            },
+            "stateKeySchema" : {
+              "$ref" : "#/components/schemas/StateKeySchema"
+            },
+            "stateValueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
+            },
+            "timePrecision" : {
+              "type" : "string",
+              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
             }
           }
         } ]
@@ -23662,6 +23650,9 @@
           }
         },
         "required" : [ "use" ]
+      },
+      "Val" : {
+        "type" : "object"
       },
       "ValidateExpressionRequest" : {
         "type" : "object",

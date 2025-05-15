@@ -21,11 +21,14 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
+import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.session.SessionRequest;
 import stroom.planb.shared.SessionSettings;
+import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.TimePrecision;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -34,22 +37,29 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
 
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSessionDb {
 
+    private static final int ITERATIONS = 100;
     private static final SessionSettings BASIC_SETTINGS = SessionSettings
             .builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
@@ -73,12 +83,12 @@ class TestSessionDb {
             assertThat(db.count()).isEqualTo(109);
             testGet(db, key, refTime, 10);
 
-            checkState(db, key, highRange.max(), true);
-            checkState(db, key, highRange.min(), true);
-            checkState(db, key, lowRange.max(), true);
-            checkState(db, key, lowRange.min(), true);
-            checkState(db, key, highRange.max().plusMillis(1), false);
-            checkState(db, key, lowRange.min().minusMillis(1), false);
+            checkState(db, i -> key, highRange.max(), true);
+            checkState(db, i -> key, highRange.min(), true);
+            checkState(db, i -> key, lowRange.max(), true);
+            checkState(db, i -> key, lowRange.min(), true);
+            checkState(db, i -> key, highRange.max().plusMillis(1), false);
+            checkState(db, i -> key, lowRange.min().minusMillis(1), false);
 
             final ExpressionOperator expression = ExpressionOperator.builder()
                     .addTextTerm(SessionFields.KEY_FIELD, Condition.EQUALS, "TEST")
@@ -105,6 +115,93 @@ class TestSessionDb {
             assertThat(results.getFirst()[0].toString()).isEqualTo("TEST");
             assertThat(results.getFirst()[1]).isEqualTo(minTime);
             assertThat(results.getFirst()[2]).isEqualTo(maxTime);
+        }
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWrite() {
+        return createMultiKeyTest(1, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWritePerformance() {
+        return createMultiKeyTest(ITERATIONS, false);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteRead() {
+        return createMultiKeyTest(1, true);
+    }
+
+    @TestFactory
+    Collection<DynamicTest> testMultiWriteReadPerformance() {
+        return createMultiKeyTest(ITERATIONS, true);
+    }
+
+    Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        final List<DynamicTest> tests = new ArrayList<>();
+        for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
+            for (final TimePrecision timePrecision : TimePrecision.values()) {
+
+                tests.add(DynamicTest.dynamicTest("Value type = " + valueFunction +
+                                                  ", Time precision = " + timePrecision,
+                        () -> {
+                            final SessionSettings settings = SessionSettings
+                                    .builder()
+                                    .stateValueSchema(StateValueSchema.builder()
+                                            .stateValueType(valueFunction.stateValueType())
+                                            .build())
+                                    .timePrecision(timePrecision)
+                                    .build();
+
+                            Path path = null;
+                            try {
+                                path = Files.createTempDirectory("stroom");
+
+                                testWrite(path, settings, iterations,
+                                        valueFunction.function(), refTime);
+                                if (read) {
+                                    testSimpleRead(path, settings, iterations,
+                                            valueFunction.function(), refTime);
+                                }
+
+                            } catch (final IOException e) {
+                                throw new UncheckedIOException(e);
+                            } finally {
+                                if (path != null) {
+                                    FileUtil.deleteDir(path);
+                                }
+                            }
+                        }));
+            }
+        }
+        return tests;
+    }
+
+    private void testWrite(final Path dbDir,
+                           final SessionSettings settings,
+                           final int insertRows,
+                           final Function<Integer, Val> valueFunction,
+                           final Instant refTime) {
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
+            insertData(db, valueFunction, refTime, insertRows, 0);
+        }
+    }
+
+    private void testSimpleRead(final Path dbDir,
+                                final SessionSettings settings,
+                                final int rows,
+                                final Function<Integer, Val> valueFunction,
+                                final Instant time) {
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
+            for (int i = 0; i < rows; i++) {
+                final Val key = valueFunction.apply(i);
+                final Session session = db.getState(new SessionRequest(key, time));
+                assertThat(session).isNotNull();
+                assertThat(session.getKey().type()).isEqualTo(valueFunction.apply(i).type());
+//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+            }
         }
     }
 
@@ -145,8 +242,8 @@ class TestSessionDb {
         final InstantRange highRange;
         final InstantRange lowRange;
         try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
-            highRange = insertData(db, key, refTime, 100, 10);
-            lowRange = insertData(db, key, refTime, 10, -10);
+            highRange = insertData(db, i -> key, refTime, 100, 10);
+            lowRange = insertData(db, i -> key, refTime, 10, -10);
         }
         return new Ranges(highRange, lowRange);
     }
@@ -167,16 +264,16 @@ class TestSessionDb {
     }
 
     private void checkState(final SessionDb db,
-                            final Val key,
+                            final Function<Integer, Val> valueFunction,
                             final Instant time,
                             final boolean expected) {
-        final SessionRequest request = new SessionRequest(key, time);
+        final SessionRequest request = new SessionRequest(valueFunction.apply(0), time);
         final Session session = db.getState(request);
         assertThat(session != null).isEqualTo(expected);
     }
 
     private InstantRange insertData(final SessionDb db,
-                                    final Val key,
+                                    final Function<Integer, Val> valueFunction,
                                     final Instant refTime,
                                     final int rows,
                                     final long deltaSeconds) {
@@ -194,7 +291,7 @@ class TestSessionDb {
                     max = end;
                 }
 
-                final Session session = Session.builder().key(key).start(start).end(end).build();
+                final Session session = Session.builder().key(valueFunction.apply(i)).start(start).end(end).build();
                 db.insert(writer, session);
             }
             reference.set(new InstantRange(min, max));

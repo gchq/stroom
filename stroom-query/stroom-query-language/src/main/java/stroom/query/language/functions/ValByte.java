@@ -121,8 +121,8 @@ public final class ValByte implements ValNumber {
         static final ValByte[] cache = new ValByte[-(-128) + 127 + 1];
 
         static {
-            byte value = (byte)-128;
-            for(int i = 0; i < cache.length; i++) {
+            byte value = (byte) -128;
+            for (int i = 0; i < cache.length; i++) {
                 cache[i] = new ValByte(value++);
             }
         }

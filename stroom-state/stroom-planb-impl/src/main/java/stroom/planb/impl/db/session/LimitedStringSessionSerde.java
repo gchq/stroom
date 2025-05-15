@@ -81,7 +81,7 @@ public class LimitedStringSessionSerde implements SessionSerde {
         if (bytes.length > limit) {
             throw new RuntimeException("Key length exceeds " + limit + " bytes");
         }
-        return byteBuffers.use(bytes.length + timeSerde.getSize(), byteBuffer -> {
+        return byteBuffers.use(bytes.length + timeLength, byteBuffer -> {
             byteBuffer.put(bytes);
             timeSerde.write(byteBuffer, session.getStart());
             timeSerde.write(byteBuffer, session.getEnd());

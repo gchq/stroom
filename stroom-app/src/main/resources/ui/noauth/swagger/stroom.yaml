@@ -12636,8 +12636,8 @@ components:
       type: object
       properties:
         effectiveTime:
-          type: integer
-          format: int64
+          type: string
+          format: date-time
         keyEnd:
           type: integer
           format: int64
@@ -14503,7 +14503,7 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
     RangedStateSettings:
       type: object
       allOf:
@@ -14512,6 +14512,15 @@ components:
         properties:
           overwrite:
             type: boolean
+          rangeType:
+            type: string
+            enum:
+            - BYTE
+            - SHORT
+            - INT
+            - LONG
+          stateValueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     Rec:
       type: object
       properties:
@@ -15766,16 +15775,13 @@ components:
       - type: object
         properties:
           end:
-            type: integer
-            format: int64
+            type: string
+            format: date-time
           key:
-            type: array
-            items:
-              type: string
-              format: byte
+            $ref: "#/components/schemas/Val"
           start:
-            type: integer
-            format: int64
+            type: string
+            format: date-time
     SessionDetails:
       type: object
       properties:
@@ -15821,6 +15827,17 @@ components:
             type: boolean
           retention:
             $ref: "#/components/schemas/DurationSetting"
+          stateValueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+          timePrecision:
+            type: string
+            enum:
+            - DAY
+            - HOUR
+            - MINUTE
+            - SECOND
+            - MILLISECOND
+            - NANOSECOND
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -16197,9 +16214,9 @@ components:
       - type: object
         properties:
           key:
-            type: string
+            $ref: "#/components/schemas/Val"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
     StateDoc:
       type: object
       properties:
@@ -16278,6 +16295,7 @@ components:
         stateKeyType:
           type: string
           enum:
+          - BOOLEAN
           - BYTE
           - SHORT
           - INT
@@ -16285,8 +16303,8 @@ components:
           - FLOAT
           - DOUBLE
           - STRING
-          - HASHED
-          - LOOKUP
+          - UID_LOOKUP
+          - HASH_LOOKUP
           - VARIABLE
     StateSettings:
       type: object
@@ -16300,36 +16318,6 @@ components:
             $ref: "#/components/schemas/StateKeySchema"
           stateValueSchema:
             $ref: "#/components/schemas/StateValueSchema"
-    StateValue:
-      type: object
-      properties:
-        byteBuffer:
-          type: object
-          properties:
-            char:
-              type: string
-            direct:
-              type: boolean
-            double:
-              type: number
-              format: double
-            float:
-              type: number
-              format: float
-            int:
-              type: integer
-              format: int32
-            long:
-              type: integer
-              format: int64
-            readOnly:
-              type: boolean
-            short:
-              type: integer
-              format: int32
-        typeId:
-          type: string
-          format: byte
     StateValueSchema:
       type: object
       properties:
@@ -16341,6 +16329,7 @@ components:
         stateValueType:
           type: string
           enum:
+          - BOOLEAN
           - BYTE
           - SHORT
           - INT
@@ -16348,7 +16337,8 @@ components:
           - FLOAT
           - DOUBLE
           - STRING
-          - LOOKUP
+          - UID_LOOKUP
+          - HASH_LOOKUP
           - VARIABLE
     StatisticField:
       type: object
@@ -17038,7 +17028,7 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
     TemporalRangedStateSettings:
       type: object
       allOf:
@@ -17049,8 +17039,26 @@ components:
             $ref: "#/components/schemas/DurationSetting"
           overwrite:
             type: boolean
+          rangeType:
+            type: string
+            enum:
+            - BYTE
+            - SHORT
+            - INT
+            - LONG
           retention:
             $ref: "#/components/schemas/DurationSetting"
+          stateValueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+          timePrecision:
+            type: string
+            enum:
+            - DAY
+            - HOUR
+            - MINUTE
+            - SECOND
+            - MILLISECOND
+            - NANOSECOND
     TemporalState:
       type: object
       allOf:
@@ -17060,7 +17068,7 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
     TemporalStateSettings:
       type: object
       allOf:
@@ -17073,6 +17081,19 @@ components:
             type: boolean
           retention:
             $ref: "#/components/schemas/DurationSetting"
+          stateKeySchema:
+            $ref: "#/components/schemas/StateKeySchema"
+          stateValueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+          timePrecision:
+            type: string
+            enum:
+            - DAY
+            - HOUR
+            - MINUTE
+            - SECOND
+            - MILLISECOND
+            - NANOSECOND
     TerminateTaskProgressRequest:
       type: object
       properties:
@@ -17542,6 +17563,8 @@ components:
           - Offset
       required:
       - use
+    Val:
+      type: object
     ValidateExpressionRequest:
       type: object
       properties:

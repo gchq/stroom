@@ -62,7 +62,7 @@ import java.util.function.Predicate;
 public class SessionDb extends AbstractDb<Session, Session> {
 
     private static final String KEY_LOOKUP_DB_NAME = "key";
-    private static final ByteBuffer VALUE = ByteBuffer.allocateDirect(1);
+    private static final ByteBuffer VALUE = ByteBuffer.allocateDirect(0);
 
     private final SessionSettings settings;
     private final SessionSerde keySerde;

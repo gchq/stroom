@@ -3,9 +3,15 @@ package stroom.planb.impl.db.temporalrangedstate;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
+import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.PlanBSearchHelper;
+import stroom.planb.impl.db.PlanBSearchHelper.Context;
+import stroom.planb.impl.db.PlanBSearchHelper.Converter;
+import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.hash.HashFactory;
@@ -30,12 +36,6 @@ import stroom.planb.impl.db.serde.val.StringValSerde;
 import stroom.planb.impl.db.serde.val.UidLookupValSerde;
 import stroom.planb.impl.db.serde.val.ValSerde;
 import stroom.planb.impl.db.serde.val.VariableValSerde;
-import stroom.planb.impl.db.AbstractDb;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.PlanBSearchHelper;
-import stroom.planb.impl.db.PlanBSearchHelper.Context;
-import stroom.planb.impl.db.PlanBSearchHelper.Converter;
-import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeType;
@@ -376,7 +376,8 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                                                         final Function<Context, Key> keyFunction,
                                                         final Function<Context, Val> valFunction) {
         final String[] fields = fieldIndex.getFields();
-        final TemporalRangedStateDb.TemporalRangedStateConverter[] converters = new TemporalRangedStateDb.TemporalRangedStateConverter[fields.length];
+        final TemporalRangedStateDb.TemporalRangedStateConverter[] converters =
+                new TemporalRangedStateDb.TemporalRangedStateConverter[fields.length];
         for (int i = 0; i < fields.length; i++) {
             converters[i] = switch (fields[i]) {
                 case TemporalRangedStateFields.KEY_START -> kv -> ValLong.create(kv.getKey().getKeyStart());

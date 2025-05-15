@@ -1,7 +1,6 @@
 package stroom.planb.impl.db.serde.val;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.lmdb2.LmdbDb;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.query.language.functions.Val;

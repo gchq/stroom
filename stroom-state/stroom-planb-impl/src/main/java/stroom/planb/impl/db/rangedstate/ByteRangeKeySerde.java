@@ -9,7 +9,6 @@ import stroom.planb.impl.db.rangedstate.RangedState.Key;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
