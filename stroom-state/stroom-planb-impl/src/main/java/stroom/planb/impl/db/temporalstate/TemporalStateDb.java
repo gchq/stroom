@@ -7,7 +7,7 @@ import stroom.lmdb2.KV;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.StateSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
@@ -31,12 +31,12 @@ import stroom.planb.impl.db.serde.val.StringValSerde;
 import stroom.planb.impl.db.serde.val.UidLookupValSerde;
 import stroom.planb.impl.db.serde.val.ValSerde;
 import stroom.planb.impl.db.serde.val.VariableValSerde;
-import stroom.planb.impl.db.state.AbstractDb;
-import stroom.planb.impl.db.state.PlanBEnv;
-import stroom.planb.impl.db.StateSearchHelper;
-import stroom.planb.impl.db.StateSearchHelper.Context;
-import stroom.planb.impl.db.StateSearchHelper.Converter;
-import stroom.planb.impl.db.StateSearchHelper.LazyKV;
+import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.PlanBSearchHelper;
+import stroom.planb.impl.db.PlanBSearchHelper.Context;
+import stroom.planb.impl.db.PlanBSearchHelper.Converter;
+import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.StateKeySchema;
@@ -177,7 +177,7 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
             case LONG -> new LongKeySerde(byteBuffers, timeSerde);
             case FLOAT -> new FloatKeySerde(byteBuffers, timeSerde);
             case DOUBLE -> new DoubleKeySerde(byteBuffers, timeSerde);
-            case STRING -> new LimitedStringKeySerde(byteBuffers, 511 - timeSerde.getSize(), timeSerde);
+            case STRING -> new LimitedStringKeySerde(byteBuffers, timeSerde);
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,
@@ -328,7 +328,7 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                     fieldIndex,
                     getKeyExtractionFunction(readTxn),
                     getValExtractionFunction(readTxn));
-            StateSearchHelper.search(
+            PlanBSearchHelper.search(
                     readTxn,
                     criteria,
                     fieldIndex,

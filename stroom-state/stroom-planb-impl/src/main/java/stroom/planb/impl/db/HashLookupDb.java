@@ -5,7 +5,6 @@ import stroom.lmdb2.LmdbKeySequence;
 import stroom.planb.impl.db.hash.Hash;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
-import stroom.planb.impl.db.state.PlanBEnv;
 
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -35,7 +34,7 @@ public class HashLookupDb {
         this.hashFactory = hashFactory;
         this.hashClashCount = hashClashCount;
         lmdbKeySequence = new LmdbKeySequence(byteBuffers);
-        dbi = env.openDbi(name, DbiFlags.MDB_CREATE);
+        dbi = env.openDbi(name + "-hash", DbiFlags.MDB_CREATE);
     }
 
     public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,

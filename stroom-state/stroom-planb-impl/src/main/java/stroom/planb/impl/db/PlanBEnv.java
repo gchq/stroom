@@ -1,9 +1,7 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.db;
 
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnvDir;
-import stroom.planb.impl.db.HashClashCommitRunnable;
-import stroom.planb.impl.db.LmdbWriter;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

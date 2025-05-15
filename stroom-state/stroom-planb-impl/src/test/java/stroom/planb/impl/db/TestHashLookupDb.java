@@ -25,7 +25,6 @@ import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.IntegerHashFactory;
 import stroom.planb.impl.db.hash.LongHashFactory;
-import stroom.planb.impl.db.state.PlanBEnv;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

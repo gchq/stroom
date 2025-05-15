@@ -3,7 +3,6 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
-import stroom.planb.impl.db.state.PlanBEnv;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

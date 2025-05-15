@@ -1,7 +1,6 @@
 package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.planb.impl.db.state.PlanBEnv;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -24,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class StateSearchHelper {
+public class PlanBSearchHelper {
 
     public static void search(final Txn<ByteBuffer> readTxn,
                               final ExpressionCriteria criteria,
@@ -55,7 +54,7 @@ public class StateSearchHelper {
         }
     }
 
-    private static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {

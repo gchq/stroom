@@ -1,10 +1,9 @@
 package stroom.planb.impl.db.temporalstate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.serde.Serde;
+import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
-import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDouble;
 
@@ -16,7 +15,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DoubleKeySerde implements Serde<Key> {
+public class DoubleKeySerde implements TemporalStateKeySerde {
 
     private final ByteBuffer reusableWriteBuffer;
     private final ByteBuffers byteBuffers;

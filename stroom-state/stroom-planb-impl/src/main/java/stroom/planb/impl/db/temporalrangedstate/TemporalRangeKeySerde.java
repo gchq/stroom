@@ -6,7 +6,7 @@ import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
 import java.nio.ByteBuffer;
 import java.util.function.Function;
 
-public interface RangeKeySerde extends Serde<Key> {
+public interface TemporalRangeKeySerde extends Serde<Key> {
 
     <R> R toKeyStart(final long key,
                      final Function<ByteBuffer, R> function);

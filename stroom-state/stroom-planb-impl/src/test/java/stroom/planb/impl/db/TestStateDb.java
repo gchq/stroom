@@ -28,6 +28,7 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateFields;
@@ -37,7 +38,6 @@ import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -69,7 +69,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -78,6 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.planb.impl.db.StateValueTestUtil.makeString;
 
 class TestStateDb {
 
@@ -93,6 +93,34 @@ class TestStateDb {
     private static final Val MAX_FLOAT = ValFloat.create(Float.MAX_VALUE);
     private static final Val MIN_DOUBLE = ValDouble.create(Double.MIN_VALUE);
     private static final Val MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE);
+
+    private final List<KeyFunction> keyFunctions = List.of(
+            new KeyFunction(StateKeyType.BOOLEAN.name(), StateKeyType.BOOLEAN,
+                    i -> ValBoolean.create(i > 0)),
+            new KeyFunction(StateKeyType.BYTE.name(), StateKeyType.BYTE,
+                    i -> ValByte.create(i.byteValue())),
+            new KeyFunction(StateKeyType.SHORT.name(), StateKeyType.SHORT,
+                    i -> ValShort.create(i.shortValue())),
+            new KeyFunction(StateKeyType.INT.name(), StateKeyType.INT,
+                    i -> ValInteger.create(i)),
+            new KeyFunction(StateKeyType.LONG.name(), StateKeyType.LONG,
+                    i -> ValLong.create(i.longValue())),
+            new KeyFunction(StateKeyType.FLOAT.name(), StateKeyType.FLOAT,
+                    i -> ValFloat.create(i.floatValue())),
+            new KeyFunction(StateKeyType.DOUBLE.name(), StateKeyType.DOUBLE,
+                    i -> ValDouble.create(i.doubleValue())),
+            new KeyFunction(StateKeyType.STRING.name(), StateKeyType.STRING,
+                    i -> ValString.create("test-" + i)),
+            new KeyFunction(StateKeyType.UID_LOOKUP.name(), StateKeyType.UID_LOOKUP,
+                    i -> ValString.create("test-" + i)),
+            new KeyFunction(StateKeyType.HASH_LOOKUP.name(), StateKeyType.HASH_LOOKUP,
+                    i -> ValString.create("test-" + i)),
+            new KeyFunction(StateKeyType.VARIABLE.name(), StateKeyType.VARIABLE,
+                    i -> ValString.create("test-" + i)),
+            new KeyFunction("Variable mid", StateKeyType.VARIABLE,
+                    i -> ValString.create(makeString(400))),
+            new KeyFunction("Variable long", StateKeyType.VARIABLE,
+                    i -> ValString.create(makeString(1000))));
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
@@ -321,37 +349,37 @@ class TestStateDb {
         }
     }
 
-    private Function<Integer, Val> createKeyFunction(final StateKeyType stateKeyType) {
-        return switch (stateKeyType) {
-            case BOOLEAN -> i -> ValBoolean.create(i > 0);
-            case BYTE -> i -> ValByte.create(i.byteValue());
-            case SHORT -> i -> ValShort.create(i.shortValue());
-            case INT -> ValInteger::create;
-            case LONG -> i -> ValLong.create(i.longValue());
-            case FLOAT -> i -> ValFloat.create(i.floatValue());
-            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
-            case STRING -> i -> ValString.create("test-" + i);
-            case UID_LOOKUP -> i -> ValString.create("test-" + i);
-            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
-            case VARIABLE -> i -> ValString.create("test-" + i);
-        };
-    }
-
-    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
-        return switch (stateValueType) {
-            case BOOLEAN -> i -> ValBoolean.create(i > 0);
-            case BYTE -> i -> ValByte.create(i.byteValue());
-            case SHORT -> i -> ValShort.create(i.shortValue());
-            case INT -> ValInteger::create;
-            case LONG -> i -> ValLong.create(i.longValue());
-            case FLOAT -> i -> ValFloat.create(i.floatValue());
-            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
-            case STRING -> i -> ValString.create("test-" + i);
-            case UID_LOOKUP -> i -> ValString.create("test-" + i);
-            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
-            case VARIABLE -> i -> ValString.create("test-" + i);
-        };
-    }
+//    private Function<Integer, Val> createKeyFunction(final StateKeyType stateKeyType) {
+//        return switch (stateKeyType) {
+//            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+//            case BYTE -> i -> ValByte.create(i.byteValue());
+//            case SHORT -> i -> ValShort.create(i.shortValue());
+//            case INT -> ValInteger::create;
+//            case LONG -> i -> ValLong.create(i.longValue());
+//            case FLOAT -> i -> ValFloat.create(i.floatValue());
+//            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+//            case STRING -> i -> ValString.create("test-" + i);
+//            case UID_LOOKUP -> i -> ValString.create("test-" + i);
+//            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
+//            case VARIABLE -> i -> ValString.create("test-" + i);
+//        };
+//    }
+//
+//    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
+//        return switch (stateValueType) {
+//            case BOOLEAN -> i -> ValBoolean.create(i > 0);
+//            case BYTE -> i -> ValByte.create(i.byteValue());
+//            case SHORT -> i -> ValShort.create(i.shortValue());
+//            case INT -> ValInteger::create;
+//            case LONG -> i -> ValLong.create(i.longValue());
+//            case FLOAT -> i -> ValFloat.create(i.floatValue());
+//            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
+//            case STRING -> i -> ValString.create("test-" + i);
+//            case UID_LOOKUP -> i -> ValString.create("test-" + i);
+//            case HASH_LOOKUP -> i -> ValString.create("test-" + i);
+//            case VARIABLE -> i -> ValString.create("test-" + i);
+//        };
+//    }
 
     private StateSettings getSettings(final StateKeyType stateKeyType) {
         return StateSettings
@@ -548,7 +576,7 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Hash lookup key (long)",
                 StateKeyType.HASH_LOOKUP,
-                ValString.create(makeKey(800)),
+                ValString.create(makeString(800)),
                 iterations,
                 read));
 
@@ -561,13 +589,13 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Variable string uid lookup key",
                 StateKeyType.VARIABLE,
-                ValString.create(makeKey(200)),
+                ValString.create(makeString(200)),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Variable string hash lookup key",
                 StateKeyType.VARIABLE,
-                ValString.create(makeKey(800)),
+                ValString.create(makeString(800)),
                 iterations,
                 read));
         return tests;
@@ -575,30 +603,32 @@ class TestStateDb {
 
     Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
         final List<DynamicTest> tests = new ArrayList<>();
-        for (final StateKeyType keyType : StateKeyType.values()) {
-            for (final StateValueType valueType : StateValueType.values()) {
-                tests.add(DynamicTest.dynamicTest("key type = " + keyType + ", value type = " + valueType,
+        for (final KeyFunction keyFunction : keyFunctions) {
+            for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
+                tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
+                                                  ", value type = " + valueFunction,
                         () -> {
                             final StateSettings settings = StateSettings
                                     .builder()
                                     .stateKeySchema(StateKeySchema.builder()
-                                            .stateKeyType(keyType)
+                                            .stateKeyType(keyFunction.stateKeyType)
                                             .build())
                                     .stateValueSchema(StateValueSchema.builder()
-                                            .stateValueType(valueType)
+                                            .stateValueType(valueFunction.stateValueType())
                                             .build())
                                     .build();
-
-                            final Function<Integer, Val> keyFunction = createKeyFunction(keyType);
-                            final Function<Integer, Val> valueFunction = createValueFunction(valueType);
 
                             Path path = null;
                             try {
                                 path = Files.createTempDirectory("stroom");
 
-                                testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                testWrite(path, settings, iterations,
+                                        keyFunction.function,
+                                        valueFunction.function());
                                 if (read) {
-                                    testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                    testSimpleRead(path, settings, iterations,
+                                            keyFunction.function,
+                                            valueFunction.function());
                                 }
 
                             } catch (final IOException e) {
@@ -612,13 +642,6 @@ class TestStateDb {
             }
         }
         return tests;
-    }
-
-
-    private String makeKey(final int len) {
-        final char[] chars = new char[len];
-        Arrays.fill(chars, 'T');
-        return new String(chars);
     }
 
     private void testWriteRead(final Path tempDir,
@@ -700,5 +723,15 @@ class TestStateDb {
                 db.insert(writer, new State(k, v));
             }
         });
+    }
+
+    private record KeyFunction(String description,
+                               StateKeyType stateKeyType,
+                               Function<Integer, Val> function) {
+
+        @Override
+        public String toString() {
+            return description;
+        }
     }
 }

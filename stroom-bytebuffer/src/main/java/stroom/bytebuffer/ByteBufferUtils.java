@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 public class ByteBufferUtils {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferUtils.class);
+    private static final byte MAX_BYTE_UNSIGNED = (byte) -1;
 
     private ByteBufferUtils() {
         // static util methods only
@@ -451,4 +452,29 @@ public class ByteBufferUtils {
 //    public static void debugCurrent(final UnsafeByteBufferOutput output) {
 //        debugCurrent(output.getByteBuffer());
 //    }
+
+    /**
+     * Add max unsigned byte padding to the supplied buffer.
+     *
+     * @param byteBuffer The buffer to write to.
+     * @param length     The number of bytes to write.
+     */
+    public static void padMax(final ByteBuffer byteBuffer, final int length) {
+        for (int i = 0; i < length; i++) {
+            byteBuffer.put(MAX_BYTE_UNSIGNED);
+        }
+    }
+
+    /**
+     * Add max unsigned byte padding to the supplied buffer.
+     *
+     * @param byteBuffer The buffer to write to.
+     * @param offset     The offset to start writing at.
+     * @param length     The number of bytes to write.
+     */
+    public static void padMax(final ByteBuffer byteBuffer, final int offset, final int length) {
+        for (int i = offset; i < offset + length; i++) {
+            byteBuffer.put(i, MAX_BYTE_UNSIGNED);
+        }
+    }
 }

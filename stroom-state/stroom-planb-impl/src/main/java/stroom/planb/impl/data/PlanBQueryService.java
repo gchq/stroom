@@ -6,12 +6,15 @@ import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.db.PlanBValue;
-import stroom.planb.impl.db.Session;
-import stroom.planb.impl.db.SessionDb;
-import stroom.planb.impl.db.SessionRequest;
 import stroom.planb.impl.db.rangedstate.RangedState;
 import stroom.planb.impl.db.rangedstate.RangedStateDb;
 import stroom.planb.impl.db.rangedstate.RangedStateRequest;
+import stroom.planb.impl.db.session.Session;
+import stroom.planb.impl.db.session.SessionDb;
+import stroom.planb.impl.db.session.SessionRequest;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.state.StateRequest;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateRequest;
@@ -19,9 +22,6 @@ import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
-import stroom.planb.impl.db.state.State;
-import stroom.planb.impl.db.state.StateDb;
-import stroom.planb.impl.db.state.StateRequest;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SnapshotSettings;
@@ -47,7 +47,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Supplier;
@@ -170,8 +169,7 @@ public class PlanBQueryService {
             case final RangedStateDb db -> db.getState(new RangedStateRequest(Long.parseLong(keyName)));
             case final TemporalRangedStateDb db ->
                     db.getState(new TemporalRangedStateRequest(Long.parseLong(keyName), eventTime));
-            case final SessionDb db ->
-                    db.getState(new SessionRequest(keyName.getBytes(StandardCharsets.UTF_8), eventTime.toEpochMilli()));
+            case final SessionDb db -> db.getState(new SessionRequest(ValString.create(keyName), eventTime));
             default -> throw new IllegalStateException("Unexpected value: " + reader);
         });
     }
@@ -203,7 +201,7 @@ public class PlanBQueryService {
                     .name(keyName)
                     .effectiveTime(Instant.MIN)
                     .build(),
-                    ValString.create(new String(session.getKey(), StandardCharsets.UTF_8)));
+                    session.getKey());
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };
     }

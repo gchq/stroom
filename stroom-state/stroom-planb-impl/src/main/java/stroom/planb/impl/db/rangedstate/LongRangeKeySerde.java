@@ -1,5 +1,6 @@
 package stroom.planb.impl.db.rangedstate;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
@@ -65,9 +66,7 @@ public class LongRangeKeySerde implements RangeKeySerde {
     public <R> R toKeyStart(final long key, final Function<ByteBuffer, R> function) {
         return byteBuffers.use(length, byteBuffer -> {
             writeLong(key, byteBuffer);
-            for (int i = Long.BYTES; i < length; i++) {
-                byteBuffer.put(Byte.MAX_VALUE);
-            }
+            ByteBufferUtils.padMax(byteBuffer, Long.BYTES);
             byteBuffer.flip();
             return function.apply(byteBuffer);
         });

@@ -20,6 +20,7 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
@@ -28,7 +29,6 @@ import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.planb.shared.TimePrecision;
 import stroom.query.api.ExpressionOperator;
@@ -72,6 +72,35 @@ class TestTemporalStateDb {
             .builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
+
+    private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+    private final List<KeyFunction> keyFunctions = List.of(
+            new KeyFunction(StateKeyType.BOOLEAN.name(), StateKeyType.BOOLEAN,
+                    i -> new Key(ValBoolean.create(i > 0), refTime)),
+            new KeyFunction(StateKeyType.BYTE.name(), StateKeyType.BYTE,
+                    i -> new Key(ValByte.create(i.byteValue()), refTime)),
+            new KeyFunction(StateKeyType.SHORT.name(), StateKeyType.SHORT,
+                    i -> new Key(ValShort.create(i.shortValue()), refTime)),
+            new KeyFunction(StateKeyType.INT.name(), StateKeyType.INT,
+                    i -> new Key(ValInteger.create(i), refTime)),
+            new KeyFunction(StateKeyType.LONG.name(), StateKeyType.LONG,
+                    i -> new Key(ValLong.create(i.longValue()), refTime)),
+            new KeyFunction(StateKeyType.FLOAT.name(), StateKeyType.FLOAT,
+                    i -> new Key(ValFloat.create(i.floatValue()), refTime)),
+            new KeyFunction(StateKeyType.DOUBLE.name(), StateKeyType.DOUBLE,
+                    i -> new Key(ValDouble.create(i.doubleValue()), refTime)),
+            new KeyFunction(StateKeyType.STRING.name(), StateKeyType.STRING,
+                    i -> new Key(ValString.create("test-" + i), refTime)),
+            new KeyFunction(StateKeyType.UID_LOOKUP.name(), StateKeyType.UID_LOOKUP,
+                    i -> new Key(ValString.create("test-" + i), refTime)),
+            new KeyFunction(StateKeyType.HASH_LOOKUP.name(), StateKeyType.HASH_LOOKUP,
+                    i -> new Key(ValString.create("test-" + i), refTime)),
+            new KeyFunction(StateKeyType.VARIABLE.name(), StateKeyType.VARIABLE,
+                    i -> new Key(ValString.create("test-" + i), refTime)),
+            new KeyFunction("Variable mid", StateKeyType.VARIABLE,
+                    i -> new Key(ValString.create(StateValueTestUtil.makeString(400)), refTime)),
+            new KeyFunction("Variable long", StateKeyType.VARIABLE,
+                    i -> new Key(ValString.create(StateValueTestUtil.makeString(1000)), refTime)));
 
     @Test
     void test(@TempDir Path tempDir) {
@@ -178,34 +207,35 @@ class TestTemporalStateDb {
 
     Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
         final List<DynamicTest> tests = new ArrayList<>();
-        for (final StateKeyType keyType : StateKeyType.values()) {
-            for (final StateValueType valueType : StateValueType.values()) {
+        for (final KeyFunction keyFunction : keyFunctions) {
+            for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
                 for (final TimePrecision timePrecision : TimePrecision.values()) {
-                    tests.add(DynamicTest.dynamicTest("key type = " + keyType +
-                                                      ", Value type = " + valueType +
+                    tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
+                                                      ", Value type = " + valueFunction +
                                                       ", Time precision = " + timePrecision,
                             () -> {
                                 final TemporalStateSettings settings = TemporalStateSettings
                                         .builder()
                                         .stateKeySchema(StateKeySchema.builder()
-                                                .stateKeyType(keyType)
+                                                .stateKeyType(keyFunction.stateKeyType)
                                                 .build())
                                         .stateValueSchema(StateValueSchema.builder()
-                                                .stateValueType(valueType)
+                                                .stateValueType(valueFunction.stateValueType())
                                                 .build())
                                         .timePrecision(timePrecision)
                                         .build();
-
-                                final Function<Integer, Key> keyFunction = createKeyFunction(keyType);
-                                final Function<Integer, Val> valueFunction = createValueFunction(valueType);
 
                                 Path path = null;
                                 try {
                                     path = Files.createTempDirectory("stroom");
 
-                                    testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                    testWrite(path, settings, iterations,
+                                            keyFunction.function,
+                                            valueFunction.function());
                                     if (read) {
-                                        testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                        testSimpleRead(path, settings, iterations,
+                                                keyFunction.function,
+                                                valueFunction.function());
                                     }
 
                                 } catch (final IOException e) {
@@ -351,30 +381,13 @@ class TestTemporalStateDb {
         assertThat(state != null).isEqualTo(expected);
     }
 
-    private Function<Integer, Key> createKeyFunction(final StateKeyType stateKeyType) {
-        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        return switch (stateKeyType) {
-            case BOOLEAN -> i -> new Key(ValBoolean.create(i > 0), refTime);
-            case BYTE -> i -> new Key(ValByte.create(i.byteValue()), refTime);
-            case SHORT -> i -> new Key(ValShort.create(i.shortValue()), refTime);
-            case INT -> i -> new Key(ValInteger.create(i), refTime);
-            case LONG -> i -> new Key(ValLong.create(i.longValue()), refTime);
-            case FLOAT -> i -> new Key(ValFloat.create(i.floatValue()), refTime);
-            case DOUBLE -> i -> new Key(ValDouble.create(i.doubleValue()), refTime);
-            case STRING, HASH_LOOKUP, UID_LOOKUP, VARIABLE -> i -> new Key(ValString.create("test-" + i), refTime);
-        };
-    }
+    private record KeyFunction(String description,
+                               StateKeyType stateKeyType,
+                               Function<Integer, Key> function) {
 
-    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
-        return switch (stateValueType) {
-            case BOOLEAN -> i -> ValBoolean.create(i > 0);
-            case BYTE -> i -> ValByte.create(i.byteValue());
-            case SHORT -> i -> ValShort.create(i.shortValue());
-            case INT -> ValInteger::create;
-            case LONG -> i -> ValLong.create(i.longValue());
-            case FLOAT -> i -> ValFloat.create(i.floatValue());
-            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
-            case STRING, UID_LOOKUP, HASH_LOOKUP, VARIABLE -> i -> ValString.create("test-" + i);
-        };
+        @Override
+        public String toString() {
+            return description;
+        }
     }
 }

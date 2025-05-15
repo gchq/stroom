@@ -1,6 +1,7 @@
 package stroom.planb.impl.db;
 
 import stroom.planb.impl.db.rangedstate.RangedState;
+import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
 import stroom.planb.impl.db.temporalstate.TemporalState;

@@ -1,9 +1,9 @@
 package stroom.planb.impl.db.temporalstate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.UidLookupDb;
-import stroom.planb.impl.db.serde.Serde;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -19,9 +19,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class VariableKeySerde implements Serde<Key> {
+public class VariableKeySerde implements TemporalStateKeySerde {
 
-    private static final int USE_HASH_LOOKUP_THRESHOLD = 511;
+    private static final int USE_HASH_LOOKUP_THRESHOLD = Db.MAX_KEY_LENGTH;
 
     private final int uidLookupThreshold;
     private final UidLookupDb uidLookupDb;
@@ -129,14 +129,15 @@ public class VariableKeySerde implements Serde<Key> {
                 return hashLookupDb.get(txn, slice, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
-                                        byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
-                                            // Add the variable type prefix to the lookup id.
-                                            prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
-                                            prefixedBuffer.put(idByteBuffer);
-                                            timeSerde.write(prefixedBuffer, key.getEffectiveTime());
-                                            prefixedBuffer.flip();
-                                            return function.apply(Optional.of(prefixedBuffer));
-                                        }))
+                                        byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(),
+                                                prefixedBuffer -> {
+                                                    // Add the variable type prefix to the lookup id.
+                                                    prefixedBuffer.put(VariableValType.HASH_LOOKUP.getPrimitiveValue());
+                                                    prefixedBuffer.put(idByteBuffer);
+                                                    timeSerde.write(prefixedBuffer, key.getEffectiveTime());
+                                                    prefixedBuffer.flip();
+                                                    return function.apply(Optional.of(prefixedBuffer));
+                                                }))
                                 .orElse(null));
             } else if (valueByteBuffer.remaining() > uidLookupThreshold) {
                 // We are going to store as a lookup so take off the variable type prefix.
@@ -144,14 +145,15 @@ public class VariableKeySerde implements Serde<Key> {
                 return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
                         optionalIdByteBuffer
                                 .map(idByteBuffer ->
-                                        byteBuffers.use(idByteBuffer.remaining() + 1, prefixedBuffer -> {
-                                            // Add the variable type prefix to the lookup id.
-                                            prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
-                                            prefixedBuffer.put(idByteBuffer);
-                                            timeSerde.write(prefixedBuffer, key.getEffectiveTime());
-                                            prefixedBuffer.flip();
-                                            return function.apply(Optional.of(prefixedBuffer));
-                                        }))
+                                        byteBuffers.use(idByteBuffer.remaining() + 1 + timeSerde.getSize(),
+                                                prefixedBuffer -> {
+                                                    // Add the variable type prefix to the lookup id.
+                                                    prefixedBuffer.put(VariableValType.UID_LOOKUP.getPrimitiveValue());
+                                                    prefixedBuffer.put(idByteBuffer);
+                                                    timeSerde.write(prefixedBuffer, key.getEffectiveTime());
+                                                    prefixedBuffer.flip();
+                                                    return function.apply(Optional.of(prefixedBuffer));
+                                                }))
                                 .orElse(null));
             } else {
                 // We have already added the direct variable prefix so just use the byte buffer.

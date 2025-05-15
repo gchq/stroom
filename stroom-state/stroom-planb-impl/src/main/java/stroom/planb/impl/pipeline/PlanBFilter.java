@@ -25,7 +25,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.planb.impl.db.Session;
+import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
 import stroom.planb.impl.db.rangedstate.RangedState;
@@ -719,7 +719,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         } else {
             final Session.Builder sessionBuilder = Session
                     .builder()
-                    .key(key)
+                    .key(ValString.create(key))
                     .start(time)
                     .end(time);
             if (timeout != null) {

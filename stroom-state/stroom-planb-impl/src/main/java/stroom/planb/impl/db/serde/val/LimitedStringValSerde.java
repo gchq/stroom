@@ -2,6 +2,7 @@ package stroom.planb.impl.db.serde.val;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.Db;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
@@ -19,10 +20,9 @@ public class LimitedStringValSerde implements ValSerde {
     private final ByteBuffers byteBuffers;
     private final int limit;
 
-    public LimitedStringValSerde(final ByteBuffers byteBuffers,
-                                 final int limit) {
+    public LimitedStringValSerde(final ByteBuffers byteBuffers) {
         this.byteBuffers = byteBuffers;
-        this.limit = limit;
+        this.limit = Db.MAX_KEY_LENGTH;
         reusableWriteBuffer = ByteBuffer.allocateDirect(limit);
     }
 

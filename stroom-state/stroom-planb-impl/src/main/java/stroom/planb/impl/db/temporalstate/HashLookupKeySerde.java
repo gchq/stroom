@@ -2,7 +2,6 @@ package stroom.planb.impl.db.temporalstate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.HashLookupDb;
-import stroom.planb.impl.db.serde.Serde;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -17,7 +16,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class HashLookupKeySerde implements Serde<Key> {
+public class HashLookupKeySerde implements TemporalStateKeySerde {
 
     private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;

@@ -20,6 +20,7 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
@@ -27,7 +28,6 @@ import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateFields;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateRequest;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.planb.shared.TimePrecision;
 import stroom.query.api.ExpressionOperator;
@@ -35,13 +35,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValBoolean;
-import stroom.query.language.functions.ValByte;
-import stroom.query.language.functions.ValDouble;
-import stroom.query.language.functions.ValFloat;
-import stroom.query.language.functions.ValInteger;
-import stroom.query.language.functions.ValLong;
-import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
@@ -179,32 +172,33 @@ class TestTemporalRangedStateDb {
     Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
         final List<DynamicTest> tests = new ArrayList<>();
         for (final RangeType rangeType : RangeType.values()) {
-            for (final StateValueType valueType : StateValueType.values()) {
+            for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
                 for (final TimePrecision timePrecision : TimePrecision.values()) {
                     tests.add(DynamicTest.dynamicTest("Range type = " + rangeType +
-                                                      ", Value type = " + valueType +
+                                                      ", Value type = " + valueFunction +
                                                       ", Time precision = " + timePrecision,
                             () -> {
                                 final TemporalRangedStateSettings settings = TemporalRangedStateSettings
                                         .builder()
                                         .rangeType(rangeType)
                                         .stateValueSchema(StateValueSchema.builder()
-                                                .stateValueType(valueType)
+                                                .stateValueType(valueFunction.stateValueType())
                                                 .build())
                                         .timePrecision(timePrecision)
                                         .build();
 
                                 final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
                                 final Function<Integer, Key> keyFunction = i -> new Key(i, i + 1, refTime);
-                                final Function<Integer, Val> valueFunction = createValueFunction(valueType);
 
                                 Path path = null;
                                 try {
                                     path = Files.createTempDirectory("stroom");
 
-                                    testWrite(path, settings, iterations, keyFunction, valueFunction);
+                                    testWrite(path, settings, iterations, keyFunction,
+                                            valueFunction.function());
                                     if (read) {
-                                        testSimpleRead(path, settings, iterations, keyFunction, valueFunction);
+                                        testSimpleRead(path, settings, iterations, keyFunction,
+                                                valueFunction.function());
                                     }
 
                                 } catch (final IOException e) {
@@ -376,18 +370,5 @@ class TestTemporalRangedStateDb {
                 db.insert(writer, new TemporalRangedState(k, v));
             }
         });
-    }
-
-    private Function<Integer, Val> createValueFunction(final StateValueType stateValueType) {
-        return switch (stateValueType) {
-            case BOOLEAN -> i -> ValBoolean.create(i > 0);
-            case BYTE -> i -> ValByte.create(i.byteValue());
-            case SHORT -> i -> ValShort.create(i.shortValue());
-            case INT -> ValInteger::create;
-            case LONG -> i -> ValLong.create(i.longValue());
-            case FLOAT -> i -> ValFloat.create(i.floatValue());
-            case DOUBLE -> i -> ValDouble.create(i.doubleValue());
-            case STRING, UID_LOOKUP, HASH_LOOKUP, VARIABLE -> i -> ValString.create("test-" + i);
-        };
     }
 }

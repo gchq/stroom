@@ -1,6 +1,8 @@
 package stroom.planb.impl.db.serde.val;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.lmdb2.LmdbDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.query.language.functions.Val;
 
@@ -30,8 +32,8 @@ public class UidLookupValSerde implements ValSerde {
     @Override
     public void write(final Txn<ByteBuffer> txn, final Val value, final Consumer<ByteBuffer> consumer) {
         ValSerdeUtil.write(value, byteBuffers, valueByteBuffer -> {
-            if (valueByteBuffer.remaining() > 511) {
-                throw new RuntimeException("Key length exceeds 511 bytes");
+            if (valueByteBuffer.remaining() > Db.MAX_KEY_LENGTH) {
+                throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
             }
 
             uidLookupDb.put(txn, valueByteBuffer, idByteBuffer -> {
@@ -47,8 +49,8 @@ public class UidLookupValSerde implements ValSerde {
                                 final Val value,
                                 final Function<Optional<ByteBuffer>, R> function) {
         return ValSerdeUtil.write(value, byteBuffers, valueByteBuffer -> {
-            if (valueByteBuffer.remaining() > 511) {
-                throw new RuntimeException("Key length exceeds 511 bytes");
+            if (valueByteBuffer.remaining() > Db.MAX_KEY_LENGTH) {
+                throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
             }
             return uidLookupDb.get(txn, valueByteBuffer, function);
         });

@@ -1,4 +1,4 @@
-package stroom.planb.impl.db.temporalstate;
+package stroom.planb.impl.db.session;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
@@ -6,7 +6,6 @@ import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
-import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.Txn;
@@ -17,50 +16,60 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class UidLookupKeySerde implements TemporalStateKeySerde {
+public class UidLookupSessionSerde implements SessionSerde {
 
     private final UidLookupDb uidLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
+    private final int timeLength;
 
-    public UidLookupKeySerde(final UidLookupDb uidLookupDb, final ByteBuffers byteBuffers, final TimeSerde timeSerde) {
+    public UidLookupSessionSerde(final UidLookupDb uidLookupDb,
+                                 final ByteBuffers byteBuffers,
+                                 final TimeSerde timeSerde) {
         this.uidLookupDb = uidLookupDb;
         this.byteBuffers = byteBuffers;
         this.timeSerde = timeSerde;
+        this.timeLength = timeSerde.getSize() + timeSerde.getSize();
     }
 
     @Override
-    public Key read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
-        // Slice off the end to get the effective time.
-        final ByteBuffer timeSlice = byteBuffer.slice(byteBuffer.remaining() - timeSerde.getSize(),
+    public Session read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
+        final ByteBuffer startSlice = byteBuffer.slice(byteBuffer.remaining() - timeLength,
                 timeSerde.getSize());
-        final Instant effectiveTime = timeSerde.read(timeSlice);
+        final ByteBuffer endSlice = byteBuffer.slice(byteBuffer.remaining() - timeSerde.getSize(),
+                timeSerde.getSize());
+        final Instant start = timeSerde.read(startSlice);
+        final Instant end = timeSerde.read(endSlice);
 
-        // Slice off the name.
-        final ByteBuffer nameSlice = byteBuffer.slice(0,
-                byteBuffer.remaining() - timeSerde.getSize());
+        // Slice off the key.
+        final ByteBuffer keySlice = byteBuffer.slice(0,
+                byteBuffer.remaining() - timeLength);
 
         // Read via lookup.
-        final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, nameSlice);
+        final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, keySlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
-        return new Key(val, effectiveTime);
+        return new Session(val, start, end);
     }
 
     @Override
-    public void write(final Txn<ByteBuffer> txn, final Key key, final Consumer<ByteBuffer> consumer) {
+    public void write(final Txn<ByteBuffer> txn, final Session session, final Consumer<ByteBuffer> consumer) {
         final Addition prefix = Addition.NONE;
-        final Addition suffix = new Addition(timeSerde.getSize(), bb -> timeSerde.write(bb, key.getEffectiveTime()));
+        final Addition suffix = new Addition(timeLength, bb -> {
+            timeSerde.write(bb, session.getStart());
+            timeSerde.write(bb, session.getEnd());
+        });
 
-        ValSerdeUtil.write(key.getName(), byteBuffers, valueByteBuffer -> {
-            final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeSerde.getSize());
+        ValSerdeUtil.write(session.getKey(), byteBuffers, valueByteBuffer -> {
+            final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeLength);
             if (slice.remaining() > Db.MAX_KEY_LENGTH) {
                 throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
             }
 
             uidLookupDb.put(txn, slice, idByteBuffer -> {
-                byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
+                byteBuffers.use(idByteBuffer.remaining() + timeLength, prefixedBuffer -> {
                     prefixedBuffer.put(idByteBuffer);
-                    timeSerde.write(prefixedBuffer, key.getEffectiveTime());
+                    timeSerde.write(prefixedBuffer, session.getStart());
+                    timeSerde.write(prefixedBuffer, session.getEnd());
                     prefixedBuffer.flip();
                     consumer.accept(prefixedBuffer);
                 });
@@ -72,14 +81,17 @@ public class UidLookupKeySerde implements TemporalStateKeySerde {
 
     @Override
     public <R> R toBufferForGet(final Txn<ByteBuffer> txn,
-                                final Key key,
+                                final Session session,
                                 final Function<Optional<ByteBuffer>, R> function) {
         final Addition prefix = Addition.NONE;
-        final Addition suffix = new Addition(timeSerde.getSize(), bb -> timeSerde.write(bb, key.getEffectiveTime()));
+        final Addition suffix = new Addition(timeLength, bb -> {
+            timeSerde.write(bb, session.getStart());
+            timeSerde.write(bb, session.getEnd());
+        });
 
-        return ValSerdeUtil.write(key.getName(), byteBuffers, valueByteBuffer -> {
+        return ValSerdeUtil.write(session.getKey(), byteBuffers, valueByteBuffer -> {
             // We are going to store as a lookup so take off the variable type prefix.
-            final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeSerde.getSize());
+            final ByteBuffer slice = valueByteBuffer.slice(0, valueByteBuffer.remaining() - timeLength);
             if (slice.remaining() > Db.MAX_KEY_LENGTH) {
                 throw new RuntimeException("Key length exceeds " + Db.MAX_KEY_LENGTH + " bytes");
             }
@@ -87,9 +99,10 @@ public class UidLookupKeySerde implements TemporalStateKeySerde {
             return uidLookupDb.get(txn, slice, optionalIdByteBuffer ->
                     optionalIdByteBuffer
                             .map(idByteBuffer ->
-                                    byteBuffers.use(idByteBuffer.remaining() + timeSerde.getSize(), prefixedBuffer -> {
+                                    byteBuffers.use(idByteBuffer.remaining() + timeLength, prefixedBuffer -> {
                                         prefixedBuffer.put(idByteBuffer);
-                                        timeSerde.write(prefixedBuffer, key.getEffectiveTime());
+                                        timeSerde.write(prefixedBuffer, session.getStart());
+                                        timeSerde.write(prefixedBuffer, session.getEnd());
                                         prefixedBuffer.flip();
                                         return function.apply(Optional.of(prefixedBuffer));
                                     }))

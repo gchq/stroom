@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 
 public interface Db<K, V> extends AutoCloseable {
 
+    int MAX_KEY_LENGTH = 511;
+
     void insert(LmdbWriter writer,
                 KV<K, V> kv);
 

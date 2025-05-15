@@ -2,11 +2,13 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.rangedstate.RangedStateDb;
+import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangedStateSettings;
+import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
@@ -61,7 +63,9 @@ public class PlanBDb {
                 return SessionDb.create(
                         targetPath,
                         byteBuffers,
-                        doc,
+                        NullSafe.getOrElse(doc,
+                                d -> (SessionSettings) doc.getSettings(),
+                                SessionSettings.builder().build()),
                         readOnly);
             }
             default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());

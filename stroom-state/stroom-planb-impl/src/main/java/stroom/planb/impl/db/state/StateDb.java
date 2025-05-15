@@ -3,11 +3,13 @@ package stroom.planb.impl.db.state;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.StateSearchHelper;
-import stroom.planb.impl.db.StateSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.PlanBSearchHelper;
+import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.hash.HashFactory;
 import stroom.planb.impl.db.hash.HashFactoryFactory;
@@ -25,9 +27,9 @@ import stroom.planb.impl.db.serde.val.StringValSerde;
 import stroom.planb.impl.db.serde.val.UidLookupValSerde;
 import stroom.planb.impl.db.serde.val.ValSerde;
 import stroom.planb.impl.db.serde.val.VariableValSerde;
-import stroom.planb.impl.db.StateSearchHelper.Context;
-import stroom.planb.impl.db.StateSearchHelper.Converter;
-import stroom.planb.impl.db.StateSearchHelper.LazyKV;
+import stroom.planb.impl.db.PlanBSearchHelper.Context;
+import stroom.planb.impl.db.PlanBSearchHelper.Converter;
+import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
@@ -140,7 +142,7 @@ public class StateDb extends AbstractDb<Val, Val> {
             case LONG -> new LongValSerde(byteBuffers);
             case FLOAT -> new FloatValSerde(byteBuffers);
             case DOUBLE -> new DoubleValSerde(byteBuffers);
-            case STRING -> new LimitedStringValSerde(byteBuffers, 511);
+            case STRING -> new LimitedStringValSerde(byteBuffers);
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,
@@ -291,7 +293,7 @@ public class StateDb extends AbstractDb<Val, Val> {
                     fieldIndex,
                     getKeyExtractionFunction(readTxn),
                     getValExtractionFunction(readTxn));
-            StateSearchHelper.search(
+            PlanBSearchHelper.search(
                     readTxn,
                     criteria,
                     fieldIndex,

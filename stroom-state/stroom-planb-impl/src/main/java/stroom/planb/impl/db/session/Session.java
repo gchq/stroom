@@ -1,4 +1,7 @@
-package stroom.planb.impl.db;
+package stroom.planb.impl.db.session;
+
+import stroom.planb.impl.db.PlanBValue;
+import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -6,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 @JsonPropertyOrder({"key", "start", "end"})
@@ -14,30 +16,30 @@ import java.time.Instant;
 public class Session implements PlanBValue {
 
     @JsonProperty
-    private final byte[] key;
+    private final Val key;
     @JsonProperty
-    private final long start;
+    private final Instant start;
     @JsonProperty
-    private final long end;
+    private final Instant end;
 
     @JsonCreator
-    public Session(@JsonProperty("key") final byte[] key,
-                   @JsonProperty("start") final long start,
-                   @JsonProperty("end") final long end) {
+    public Session(@JsonProperty("key") final Val key,
+                   @JsonProperty("start") final Instant start,
+                   @JsonProperty("end") final Instant end) {
         this.key = key;
         this.start = start;
         this.end = end;
     }
 
-    public byte[] getKey() {
+    public Val getKey() {
         return key;
     }
 
-    public long getStart() {
+    public Instant getStart() {
         return start;
     }
 
-    public long getEnd() {
+    public Instant getEnd() {
         return end;
     }
 
@@ -51,9 +53,9 @@ public class Session implements PlanBValue {
 
     public static class Builder {
 
-        private byte[] key;
-        private long start;
-        private long end;
+        private Val key;
+        private Instant start;
+        private Instant end;
 
         private Builder() {
         }
@@ -64,33 +66,18 @@ public class Session implements PlanBValue {
             this.end = session.end;
         }
 
-        public Builder key(final byte[] key) {
+        public Builder key(final Val key) {
             this.key = key;
             return this;
         }
 
-        public Builder key(final String key) {
-            this.key = key.getBytes(StandardCharsets.UTF_8);
-            return this;
-        }
-
-        public Builder start(final long start) {
+        public Builder start(final Instant start) {
             this.start = start;
             return this;
         }
 
-        public Builder start(final Instant start) {
-            this.start = start.toEpochMilli();
-            return this;
-        }
-
-        public Builder end(final long end) {
-            this.end = end;
-            return this;
-        }
-
         public Builder end(final Instant end) {
-            this.end = end.toEpochMilli();
+            this.end = end;
             return this;
         }
 

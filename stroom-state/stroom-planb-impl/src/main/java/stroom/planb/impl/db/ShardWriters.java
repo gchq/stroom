@@ -9,6 +9,8 @@ import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.db.rangedstate.RangedState;
 import stroom.planb.impl.db.rangedstate.RangedStateDb;
+import stroom.planb.impl.db.session.Session;
+import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
@@ -158,7 +160,7 @@ public class ShardWriters {
 
             public void addSession(final Session session) {
                 final SessionDb db = (SessionDb) lmdb;
-                db.insert(writer, session, session);
+                db.insert(writer, session);
             }
 
             public boolean isSynchroniseMerge() {
