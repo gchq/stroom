@@ -87,7 +87,8 @@ class GitRepoResourceImpl implements GitRepoResource {
             LOGGER.info("Pushing to Git repo: '{}'", gitRepoPushDto.getGitRepoDoc().getUrl());
             List<Message> messages = gitRepoStorageServiceProvider.get()
                             .exportDoc(gitRepoPushDto.getGitRepoDoc(),
-                                       gitRepoPushDto.getCommitMessage());
+                                       gitRepoPushDto.getCommitMessage(),
+                                       true);
             response = this.createResponse(messages);
         } catch (Exception e) {
             response = new GitRepoResponse(false, e.getMessage());

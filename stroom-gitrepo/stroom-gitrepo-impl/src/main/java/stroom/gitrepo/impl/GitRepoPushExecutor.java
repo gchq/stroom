@@ -68,7 +68,10 @@ public class GitRepoPushExecutor {
 
             if (gitRepoDoc.isAutoPush()) {
                 try {
-                    gitRepoStorageService.exportDoc(gitRepoDoc, JOB_COMMIT_MESSAGE);
+                    gitRepoStorageService.exportDoc(
+                            gitRepoDoc,
+                            JOB_COMMIT_MESSAGE,
+                            false);
                 } catch (IOException | EntityServiceException e) {
                     LOGGER.error(TASK_NAME + " error: {}: {} ", e.getClass().getSimpleName(), e.getMessage());
                 }

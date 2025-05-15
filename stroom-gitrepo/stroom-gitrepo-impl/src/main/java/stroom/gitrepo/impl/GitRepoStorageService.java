@@ -119,14 +119,18 @@ public class GitRepoStorageService {
      * @param gitRepoDoc    The document that we're pushing the button on.
      *                      Must not be null.
      * @param commitMessage The Git commit message. Must not be null.
+     * @param calledFromUi True if the method is being called from the UI over
+     *                     REST, false if being called from a Job.
+     *                     Affects how some errors are handled.
      * @return The export summary. Might return if the export hasn't yet taken
      * place.
      * @throws IOException if something goes wrong
      */
     public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
-                                                final String commitMessage)
+                                                final String commitMessage,
+                                                boolean calledFromUi)
             throws IOException {
-        LOGGER.info("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
+        LOGGER.debug("Exporting document '{}' to GIT; UUID is '{}'", gitRepoDoc.getUrl(), gitRepoDoc.getUuid());
         List<Message> messages = new ArrayList<>();
 
         DocRef gitRepoDocRef = GitRepoDoc.getDocRef(gitRepoDoc.getUuid());
@@ -186,8 +190,12 @@ public class GitRepoStorageService {
                     git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
                     messages.add(new Message(Severity.INFO, "Pushed to Git"));
                 } else {
-                    // TODO Throw specific exception for detection in job
-                    throw new IOException("No local changes; therefore not pushing to Git");
+                    // Jobs don't need to know that this didn't do anything
+                    if (calledFromUi) {
+                        throw new IOException("No local changes; therefore not pushing to Git");
+                    } else {
+                        LOGGER.info("{}: No local changes; not pushing to Git", gitRepoDoc.getName());
+                    }
                 }
             } catch (GitAPIException e) {
                 this.throwException("Couldn't commit and push GIT", e, messages);
@@ -195,7 +203,11 @@ public class GitRepoStorageService {
                 this.throwException("Error pushing to GIT", e, messages);
             }
         } else {
-            throw new IOException("Git repository URL isn't configured; cannot push");
+            if (calledFromUi) {
+                throw new IOException("Git repository URL isn't configured; cannot push");
+            } else {
+                LOGGER.warn("{}: Git URL isn't configured; not pushing", gitRepoDoc.getName());
+            }
         }
 
         return messages;
@@ -469,7 +481,7 @@ public class GitRepoStorageService {
 
         // Clone the remote repo
         // Note depth is 1 - we only want the latest items not the history
-        LOGGER.info("Cloning repository '{}' to '{}' for push", gitRepoDoc.getUrl(), gitWorkDir);
+        LOGGER.debug("Cloning repository '{}' to '{}' for push", gitRepoDoc.getUrl(), gitWorkDir);
         return Git.cloneRepository()
                 .setURI(gitRepoDoc.getUrl())
                 .setDirectory(gitWorkDir.toFile())

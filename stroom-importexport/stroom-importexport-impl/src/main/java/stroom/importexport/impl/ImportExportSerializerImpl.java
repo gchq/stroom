@@ -556,7 +556,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final List<Message> messageList = new ArrayList<>();
         for (final DocRef docRef : expandedDocRefs) {
             try {
-                LOGGER.info("Exporting '{}' to '{}', omitAuditFields: '{}'", docRef, dir, omitAuditFields);
+                LOGGER.debug("Exporting '{}' to '{}', omitAuditFields: '{}'", docRef, dir, omitAuditFields);
                 performExport(rootNodePath, dir, docRef, omitAuditFields, messageList);
                 exportSummary.addSuccess(docRef.getType());
             } catch (final IOException | RuntimeException e) {
