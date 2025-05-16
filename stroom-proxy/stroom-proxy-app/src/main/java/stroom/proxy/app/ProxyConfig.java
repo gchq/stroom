@@ -120,7 +120,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.proxyId = proxyId;
-        this.contentDir = contentDir;
+        this.contentDir = NullSafe.nonBlankStringElse(contentDir, DEFAULT_CONTENT_DIR);
         this.pathConfig = pathConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.eventStoreConfig = eventStoreConfig;

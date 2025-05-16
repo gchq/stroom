@@ -22,10 +22,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ColumnBuilder<
-        T_ROW,
-        T_CELL_VAL,
-        T_CELL extends Cell<T_CELL_VAL>> {
+public class ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
 
     private final Function<T_ROW, T_CELL_VAL> valueExtractor;
     private final Supplier<T_CELL> cellSupplier;
@@ -50,30 +47,21 @@ public class ColumnBuilder<
         this.cellSupplier = cellSupplier;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withSorting(final String fieldName) {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(final String fieldName) {
         this.isSorted = true;
         this.isSortableSupplier = () -> true;
         this.fieldName = Objects.requireNonNull(fieldName);
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withSorting(final HasDisplayValue field) {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(final HasDisplayValue field) {
         this.isSorted = true;
         this.isSortableSupplier = () -> true;
         this.fieldName = Objects.requireNonNull(field).getDisplayValue();
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withSorting(
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(
             final String fieldName,
             final boolean isIgnoreCase) {
         this.isSorted = true;
@@ -83,10 +71,7 @@ public class ColumnBuilder<
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withSorting(
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(
             final String fieldName,
             final boolean isIgnoreCase,
             final boolean isSorted) {
@@ -97,18 +82,12 @@ public class ColumnBuilder<
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> rightAligned() {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> rightAligned() {
         horizontalAlignment = HasHorizontalAlignment.ALIGN_RIGHT;
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> centerAligned() {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> centerAligned() {
         horizontalAlignment = HasHorizontalAlignment.ALIGN_CENTER;
         return this;
     }
@@ -116,10 +95,7 @@ public class ColumnBuilder<
     /**
      * Add a style that will be applied to all rows in this column
      */
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withStyleName(final String styleName) {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withStyleName(final String styleName) {
         if (styleNames == null) {
             styleNames = new ArrayList<>();
         }
@@ -132,10 +108,7 @@ public class ColumnBuilder<
      *
      * @param styleFunction A function to return the style name, an empty string or null
      */
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withConditionalStyleName(
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withConditionalStyleName(
             final Function<T_ROW, String> styleFunction) {
         if (styleFunctions == null) {
             styleFunctions = new ArrayList<>();
@@ -150,11 +123,7 @@ public class ColumnBuilder<
      *
      * @param enabledFunction A function to return true if the row is enabled.
      */
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> enabledWhen(
-            final Function<T_ROW, Boolean> enabledFunction) {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> enabledWhen(final Function<T_ROW, Boolean> enabledFunction) {
         if (styleFunctions == null) {
             styleFunctions = new ArrayList<>();
         }
@@ -168,28 +137,19 @@ public class ColumnBuilder<
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withFieldUpdater(
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withFieldUpdater(
             final FieldUpdater<T_ROW, T_CELL_VAL> fieldUpdater) {
         this.fieldUpdater = fieldUpdater;
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> withBrowserEventHandler(
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withBrowserEventHandler(
             final BrowserEventHandler<T_ROW> browserEventHandler) {
         this.browserEventHandler = browserEventHandler;
         return this;
     }
 
-    public ColumnBuilder<
-            T_ROW,
-            T_CELL_VAL,
-            T_CELL> defaultSortAscending(final boolean defaultSortAscending) {
+    public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> defaultSortAscending(final boolean defaultSortAscending) {
         isDefaultSortAscending = defaultSortAscending;
         return this;
     }

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -58,12 +59,18 @@ public class ExtendedUiConfig {
     @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
     private final long maxApiKeyExpiryAgeMs;
 
+    @JsonProperty
+    @JsonPropertyDescription("The set of fields used in data receipt policy checking whose values are obfuscated " +
+                             "when sent to a proxy.")
+    private final Set<String> obfuscatedFields;
+
 
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
+        this.obfuscatedFields = Collections.emptySet();
     }
 
     @JsonCreator
@@ -71,12 +78,14 @@ public class ExtendedUiConfig {
             @JsonProperty("uiConfig") final UiConfig uiConfig,
             @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
             @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
-            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs) {
+            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs,
+            @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
+        this.obfuscatedFields = obfuscatedFields;
     }
 
     public UiConfig getUiConfig() {
@@ -257,6 +266,10 @@ public class ExtendedUiConfig {
         return maxApiKeyExpiryAgeMs;
     }
 
+    public Set<String> getObfuscatedFields() {
+        return obfuscatedFields;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -266,13 +279,20 @@ public class ExtendedUiConfig {
             return false;
         }
         final ExtendedUiConfig that = (ExtendedUiConfig) o;
-        return externalIdentityProvider == that.externalIdentityProvider && Objects.equals(uiConfig,
-                that.uiConfig);
+        return externalIdentityProvider == that.externalIdentityProvider
+               && dependencyWarningsEnabled == that.dependencyWarningsEnabled
+               && maxApiKeyExpiryAgeMs == that.maxApiKeyExpiryAgeMs
+               && Objects.equals(uiConfig, that.uiConfig)
+               && Objects.equals(obfuscatedFields, that.obfuscatedFields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uiConfig, externalIdentityProvider);
+        return Objects.hash(uiConfig,
+                externalIdentityProvider,
+                dependencyWarningsEnabled,
+                maxApiKeyExpiryAgeMs,
+                obfuscatedFields);
     }
 
     @Override
@@ -280,6 +300,9 @@ public class ExtendedUiConfig {
         return "ExtendedUiConfig{" +
                "uiConfig=" + uiConfig +
                ", externalIdentityProvider=" + externalIdentityProvider +
+               ", dependencyWarningsEnabled=" + dependencyWarningsEnabled +
+               ", maxApiKeyExpiryAgeMs=" + maxApiKeyExpiryAgeMs +
+               ", obfuscatedFields=" + obfuscatedFields +
                '}';
     }
 }

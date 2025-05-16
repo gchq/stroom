@@ -24,7 +24,6 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.proxy.app.Config;
-import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
@@ -40,7 +39,6 @@ import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusResourceV2Impl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
@@ -94,7 +92,6 @@ public class ProxyModule extends AbstractModule {
         install(new ForwarderModule());
 
         HasHealthCheckBinder.create(binder())
-                .bind(ContentSyncService.class)
                 .bind(FeedStatusResourceV2Impl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
@@ -121,7 +118,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(EventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class)
                 .addBinding(RemoteFeedStatusService.class)
                 .addBinding(RefreshManager.class);
@@ -131,7 +127,6 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(TokenExceptionMapper.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ReceiveDataRuleSetService.class)
                 .addBinding(DictionaryStore.class);
     }
 }

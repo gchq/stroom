@@ -16,7 +16,23 @@ import java.util.stream.Collectors;
  */
 class CIStringHashMap implements Map<String, String> {
 
-    private final HashMap<CIString, String> map = new HashMap<>();
+    private final HashMap<CIString, String> map;
+
+    public CIStringHashMap() {
+        map = new HashMap<>();
+    }
+
+    public CIStringHashMap(final int initialCapacity) {
+        map = new HashMap<>(initialCapacity);
+    }
+
+    public CIStringHashMap(CIStringHashMap ciStringHashMap) {
+        if (ciStringHashMap == null || ciStringHashMap.isEmpty()) {
+            map = new HashMap<>();
+        } else {
+            map = new HashMap<>(ciStringHashMap.map);
+        }
+    }
 
     @Override
     public void clear() {

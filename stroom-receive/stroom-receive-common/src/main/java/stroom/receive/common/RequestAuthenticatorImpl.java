@@ -202,14 +202,12 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
 
     private record ConfigState(
-            String receiptPolicyUuid,
             boolean isAuthenticationRequired,
             Set<AuthenticationType> enabledAuthenticationTypes) {
 
         public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
 
             return new ConfigState(
-                    receiveDataConfig.getReceiptPolicyUuid(),
                     receiveDataConfig.isAuthenticationRequired(),
                     NullSafe.enumSet(AuthenticationType.class, receiveDataConfig.getEnabledAuthenticationTypes()));
         }

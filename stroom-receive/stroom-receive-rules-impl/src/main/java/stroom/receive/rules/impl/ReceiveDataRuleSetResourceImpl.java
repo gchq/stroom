@@ -16,84 +16,49 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.importexport.api.DocumentData;
-import stroom.importexport.shared.Base64EncodedDocumentData;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
+import stroom.receive.common.ReceiveDataRuleSetService;
+import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.shared.EntityServiceException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
 @AutoLogged
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetResourceImpl.class);
+
     private final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider;
-    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    ReceiveDataRuleSetResourceImpl(final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider,
-                                   final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+    ReceiveDataRuleSetResourceImpl(final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider) {
         this.ruleSetServiceProvider = ruleSetServiceProvider;
-        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
-    public ReceiveDataRules fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), getDocRef(uuid));
-    }
-
-    @Override
-    public ReceiveDataRules update(final String uuid, final ReceiveDataRules doc) {
-        if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
-            throw new EntityServiceException("The document UUID must match the update UUID");
+    public ReceiveDataRules fetch() {
+        try {
+            return ruleSetServiceProvider.get().getReceiveDataRules();
+        } catch (Exception e) {
+            LOGGER.error("Error fetching receive data rules", e);
+            throw e;
         }
-        return documentResourceHelperProvider.get().update(ruleSetServiceProvider.get(), doc);
-    }
-
-    private DocRef getDocRef(final String uuid) {
-        return DocRef.builder()
-                .uuid(uuid)
-                .type(ReceiveDataRules.TYPE)
-                .build();
     }
 
     @Override
-    @AutoLogged(OperationType.VIEW)
-    public Set<DocRef> listDocuments() {
-        return ruleSetServiceProvider.get().listDocuments();
+    public HashedReceiveDataRules fetchHashedRules() {
+        return ruleSetServiceProvider.get().getHashedReceiveDataRules();
     }
 
     @Override
-    @AutoLogged(value = OperationType.IMPORT, verb = "Importing data for ruleset")
-    public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
-        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState(documentData.getDocRef(),
-                documentData.getDocRef().getName());
-        return ruleSetServiceProvider.get().importDocument(
-                documentData.getDocRef(),
-                documentData.getDataMap(),
-                importState,
-                ImportSettings.auto());
-    }
-
-    @Override
-    @AutoLogged(value = OperationType.EXPORT, verb = "Exporting data for ruleset")
-    public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
-        final Map<String, byte[]> map = ruleSetServiceProvider.get().exportDocument(
-                docRef,
-                true,
-                new ArrayList<>());
-        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
+    public ReceiveDataRules update(final ReceiveDataRules doc) {
+        Objects.requireNonNull(doc);
+        return ruleSetServiceProvider.get().updateReceiveDataRules(doc);
     }
 }

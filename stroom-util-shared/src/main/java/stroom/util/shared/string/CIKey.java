@@ -258,10 +258,22 @@ public class CIKey implements Comparable<CIKey> {
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
-            final String lowerKey = toLowerCase(key);
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKeyByLowerCase(lowerKey),
-                    () -> CIKey.ofLowerCase(lowerKey));
+            // This assumes that doing the optimistic hashmap lookups is
+            // faster than lower-casing the key.
+            // First assume it matches the case exactly
+            CIKey ciKey = CIKeys.getCommonKey(key);
+            if (ciKey == null) {
+                // Now assume it is already lower-case
+                ciKey = CIKeys.getCommonKeyByLowerCase(key);
+                if (ciKey == null) {
+                    final String lowerKey = toLowerCase(key);
+                    ciKey = CIKeys.getCommonKeyByLowerCase(lowerKey);
+                    if (ciKey == null) {
+                        CIKey.ofLowerCase(lowerKey);
+                    }
+                }
+            }
+            return ciKey;
         }
     }
 
@@ -323,7 +335,6 @@ public class CIKey implements Comparable<CIKey> {
 
     @Override
     public int compareTo(final CIKey o) {
-//        Objects.requireNonNull(o);
         return COMPARATOR.compare(this, o);
     }
 
@@ -420,6 +431,12 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     public static Set<CIKey> setOf(final String... keys) {
+        return NullSafe.stream(keys)
+                .map(CIKey::of)
+                .collect(Collectors.toSet());
+    }
+
+    public static Set<CIKey> setOf(final Set<String> keys) {
         return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toSet());

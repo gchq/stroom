@@ -1,12 +1,18 @@
 package stroom.util.collections;
 
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,6 +70,11 @@ public class CollectionUtil {
         }
     }
 
+    public static <K, V> LinkedHashMapBuilder<K, V> linkedHashMapBuilder(final Class<K> keyType,
+                                                                         final Class<V> valueType) {
+        return new LinkedHashMapBuilder<>(keyType, valueType);
+    }
+
     /**
      * Removes null items, applies formatter on each item, then removes any empty items.
      */
@@ -90,4 +101,142 @@ public class CollectionUtil {
         }
     }
 
+    private static <V> BinaryOperator<V> createMergeFunction(final DuplicateMode duplicateMode) {
+        return switch (Objects.requireNonNull(duplicateMode)) {
+            case THROW -> (v1, v2) -> {
+                throw new IllegalStateException(LogUtil.message(
+                        "Duplicate values found for the same key, v1: {}, v2: {}", v1, v2));
+            };
+            case USE_FIRST -> (v1, v2) -> v1;
+            case USE_LAST -> (v1, v2) -> v2;
+        };
+    }
+
+    /**
+     * Convert a {@link Collection} of values into a {@link Map} of those values
+     * keyed using keyExtractor.
+     * <p>
+     * If duplicate values are found, the first value encountered is put in the map.
+     * </p>
+     *
+     * @param duplicateMode How to handle multiple values for the same key.
+     */
+    public static <K, V> Map<K, V> mapBy(final Function<V, K> keyExtractor,
+                                         final DuplicateMode duplicateMode,
+                                         final Collection<V> values) {
+        return NullSafe.stream(values)
+                .collect(Collectors.toMap(
+                        keyExtractor,
+                        Function.identity(),
+                        createMergeFunction(duplicateMode)));
+    }
+
+    /**
+     * Convert an array of values into a {@link EnumMap} of those values
+     * keyed using keyExtractor.
+     * <p>
+     * If duplicate values are found, the first value encountered is put in the map.
+     * </p>
+     *
+     * @param duplicateMode How to handle multiple values for the same key.
+     */
+    public static <K, V> Map<K, V> mapBy(final Function<V, K> keyExtractor,
+                                         final DuplicateMode duplicateMode,
+                                         final V... values) {
+        return NullSafe.stream(values)
+                .collect(Collectors.toMap(
+                        keyExtractor,
+                        Function.identity(),
+                        createMergeFunction(duplicateMode)));
+    }
+
+    /**
+     * Convert a {@link Collection} of values into a {@link EnumMap} of those values
+     * keyed using keyExtractor.
+     * <p>
+     * If duplicate values are found, the first value encountered is put in the map.
+     * </p>
+     *
+     * @param duplicateMode How to handle multiple values for the same key.
+     */
+    public static <K extends Enum<K>, V> Map<K, V> enumMapBy(final Class<K> enumType,
+                                                             final Function<V, K> keyExtractor,
+                                                             final DuplicateMode duplicateMode,
+                                                             final Collection<V> values) {
+        return NullSafe.stream(values)
+                .collect(Collectors.toMap(
+                        keyExtractor,
+                        Function.identity(),
+                        createMergeFunction(duplicateMode),
+                        () -> new EnumMap<>(enumType)));
+    }
+
+    /**
+     * Convert a {@link Collection} of values into a {@link Map} of those values
+     * keyed using keyExtractor.
+     * <p>
+     * If duplicate values are found, the first value encountered is put in the map.
+     * </p>
+     *
+     * @param duplicateMode How to handle multiple values for the same key.
+     */
+    public static <K extends Enum<K>, V> Map<K, V> enumMapBy(final Class<K> enumType,
+                                                             final Function<V, K> keyExtractor,
+                                                             final DuplicateMode duplicateMode,
+                                                             final V... values) {
+        return NullSafe.stream(values)
+                .collect(Collectors.toMap(
+                        keyExtractor,
+                        Function.identity(),
+                        createMergeFunction(duplicateMode),
+                        () -> new EnumMap<>(enumType)));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum DuplicateMode {
+        /**
+         * Throw an exception if multiple values exist for the same key.
+         */
+        THROW,
+        /**
+         * If multiple values exist for the same key, use the first value encountered.
+         */
+        USE_FIRST,
+        /**
+         * If multiple values exist for the same key, use the last value encountered.
+         */
+        USE_LAST,
+        ;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class LinkedHashMapBuilder<K, V> {
+
+        private LinkedHashMap<K, V> map = null;
+
+        private LinkedHashMapBuilder() {
+        }
+
+        private LinkedHashMapBuilder(final Class<K> ignoredKeyType, final Class<V> ignoredValueType) {
+            // types to aid generics
+        }
+
+        public LinkedHashMapBuilder<K, V> add(final K key, final V val) {
+            if (map == null) {
+                map = new LinkedHashMap<>();
+            }
+            map.put(key, val);
+            return this;
+        }
+
+        public LinkedHashMap<K, V> build() {
+            return map;
+        }
+    }
 }

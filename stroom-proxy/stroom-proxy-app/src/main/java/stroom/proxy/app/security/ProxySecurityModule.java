@@ -2,11 +2,13 @@ package stroom.proxy.app.security;
 
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestAuthenticatorImpl;
+import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalServiceUserFactory;
+import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.NoIdpServiceUserFactory;
@@ -29,6 +31,7 @@ public class ProxySecurityModule extends AbstractModule {
         bind(IdpConfigurationProvider.class).to(ExternalIdpConfigurationProvider.class);
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
+        bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
