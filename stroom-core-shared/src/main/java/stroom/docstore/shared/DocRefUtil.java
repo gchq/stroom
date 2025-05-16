@@ -17,9 +17,15 @@
 package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.Document;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class DocRefUtil {
 
@@ -31,6 +37,38 @@ public final class DocRefUtil {
         return doc != null
                 ? new DocRef(doc.getType(), doc.getUuid(), doc.getName())
                 : null;
+    }
+
+    public static <T extends Document> Map<DocRef, T> toMapByDocRef(final Collection<T> documents) {
+        return NullSafe.stream(documents)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        Document::asDocRef,
+                        Function.identity()));
+    }
+
+    public static <T extends Document> Map<DocRef, T> toMapByDocRef(final T... documents) {
+        return NullSafe.stream(documents)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        Document::asDocRef,
+                        Function.identity()));
+    }
+
+    public static <T extends Document> Map<String, T> toMapByUuid(final Collection<T> documents) {
+        return NullSafe.stream(documents)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        (Document document) -> document.asDocRef().getUuid(),
+                        Function.identity()));
+    }
+
+    public static <T extends Document> Map<String, T> toMapByUuid(final T... documents) {
+        return NullSafe.stream(documents)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        (Document document) -> document.asDocRef().getUuid(),
+                        Function.identity()));
     }
 
     /**
@@ -50,7 +88,7 @@ public final class DocRefUtil {
             return false;
         } else {
             return Objects.equals(docRef.getUuid(), doc.getUuid())
-                    && Objects.equals(docRef.getType(), doc.getType());
+                   && Objects.equals(docRef.getType(), doc.getType());
         }
     }
 

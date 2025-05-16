@@ -67,33 +67,42 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
         // Rule.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
+                                getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
                         .rightAligned()
                         .build(),
-                DataGridUtil.createRightAlignedHeader("Rule"),
+                DataGridUtil.headingBuilder("Rule")
+                        .withToolTip("The number of the rule. Rules are evaluated in ascending order of rule number.")
+                        .rightAligned()
+                        .build(),
                 40);
 
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, ReceiveDataRule::getName))
+                                getSafeHtml(row, ReceiveDataRule::getName))
                         .build(),
-                "Name",
-                ColumnSizeConstants.MEDIUM_COL);
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The optional name of the rule. The name is only an aid in distinguishing rules.")
+                        .build(),
+                ColumnSizeConstants.BIG_COL);
 
         // Expression.
         dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
-                        getSafeHtml(row, row2 -> row2.getExpression().toString()))
+                                getSafeHtml(row, row2 -> row2.getExpression().toString()))
                         .build(),
-                "Expression",
+                DataGridUtil.headingBuilder("Expression")
+                        .withToolTip("The expression to evaluate against the received meta entries.")
+                        .build(),
                 500);
 
         // Action.
         dataGrid.addResizableColumn(
                 DataGridUtil.safeHtmlColumn((ReceiveDataRule row) ->
                         getSafeHtml(row, row2 -> row2.getAction().getDisplayValue())),
-                "Action",
+                DataGridUtil.headingBuilder("Action")
+                        .withToolTip("The action to perform if the rule matches against the received meta entries.")
+                        .build(),
                 ColumnSizeConstants.SMALL_COL);
 
         DataGridUtil.addEndColumn(dataGrid);

@@ -19,6 +19,7 @@ package stroom.query.api.v2;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -79,6 +80,10 @@ public final class ExpressionTerm extends ExpressionItem {
 
     public ExpressionTerm() {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
+    }
+
+    public static ExpressionTerm equals(final String field, final String value) {
+        return new ExpressionTerm(true, field, Condition.EQUALS, value, null);
     }
 
     @Override
@@ -168,6 +173,7 @@ public final class ExpressionTerm extends ExpressionItem {
     @Override
     void append(final StringBuilder sb, final String pad, final boolean singleLine) {
         if (enabled()) {
+            //noinspection SizeReplaceableByIsEmpty // Cos GWT
             if (!singleLine && sb.length() > 0) {
                 sb.append("\n");
                 sb.append(pad);
@@ -197,9 +203,9 @@ public final class ExpressionTerm extends ExpressionItem {
 
     private void appendDocRef(final StringBuilder sb, final DocRef docRef) {
         if (docRef != null) {
-            if (docRef.getName() != null && docRef.getName().trim().length() > 0) {
+            if (NullSafe.isNonBlankString(docRef.getName())) {
                 sb.append(docRef.getName());
-            } else if (docRef.getUuid() != null && docRef.getUuid().trim().length() > 0) {
+            } else if (NullSafe.isNonBlankString(docRef.getUuid())) {
                 sb.append(docRef.getUuid());
             }
         }
@@ -353,6 +359,14 @@ public final class ExpressionTerm extends ExpressionItem {
 
         public Builder field(final QueryField value) {
             this.field = value.getFldName();
+            return this;
+        }
+
+        /**
+         * Equivalent to passing {@link Condition#EQUALS} to {@link Builder#condition(Condition)}.
+         */
+        public Builder equals() {
+            this.condition = Condition.EQUALS;
             return this;
         }
 

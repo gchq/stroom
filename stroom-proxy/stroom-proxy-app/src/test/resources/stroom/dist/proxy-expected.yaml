@@ -10,8 +10,8 @@ proxyConfig:
   contentSync:
     apiKey: null
     contentSyncEnabled: false
+    receiveDataRulesUrl: null
     syncFrequency: "PT1M"
-    upstreamUrl: null
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
@@ -143,7 +143,39 @@ proxyConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptPolicyUuid: null
+    obfuscatedFields:
+    - "Feed"
+    obfuscationHashAlgorithm: "SHA2_512"
+    receiptCheckMode: "FEED_STATUS_CHECK"
+    receiptRulesInitialFields:
+      AccountId: "Text"
+      Component: "Text"
+      Compression: "Text"
+      content-length: "Text"
+      ContextEncoding: "Text"
+      ContextFormat: "Text"
+      EffectiveTime: "Date"
+      Encoding: "Text"
+      Environment: "Text"
+      Feed: "Text"
+      Format: "Text"
+      ReceiptId: "Text"
+      ReceiptIdPath: "Text"
+      ReceivedPath: "Text"
+      ReceivedTime: "Date"
+      ReceivedTimeHistory: "Text"
+      RemoteCertExpiry: "Date"
+      RemoteDN: "Text"
+      RemoteHost: "Text"
+      RemoteAddress: "Text"
+      Schema: "Text"
+      SchemaVersion: "Text"
+      System: "Text"
+      Type: "Text"
+      UploadUsername: "Text"
+      UploadUserId: "Text"
+      user-agent: "Text"
+      X-Forwarded-For: "Text"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   security:

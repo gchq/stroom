@@ -17,7 +17,9 @@
 
 package stroom.receive.rules.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v2.ExpressionOperator;
@@ -28,12 +30,14 @@ import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.receive.rules.shared.RuleAction;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
@@ -51,6 +55,7 @@ public class RuleSetSettingsPresenter
     private final Provider<RulePresenter> editRulePresenterProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
     private List<ReceiveDataRule> rules;
+    private List<QueryField> fields;
 
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -105,9 +110,32 @@ public class RuleSetSettingsPresenter
         super.onBind();
     }
 
+//    private void saveRuleButtonClickHandler(final ClickEvent event) {
+//        if (!isReadOnly() && rules != null) {
+//            SaveDocumentEvent.fire(RuleSetSettingsPresenter.this, this);
+//            if (NullSafe.isEmptyCollection(fields)) {
+//                AlertEvent.fireError(
+//                        RuleSetSettingsPresenter.this,
+//                        "You need to create one or more fields before you can add a rule.",
+//                        null,
+//                        null);
+//            } else {
+//                add();
+//            }
+//        }
+//    }
+
     private void addRuleButtonClickHandler(final ClickEvent event) {
         if (!isReadOnly() && rules != null) {
-            add();
+            if (NullSafe.isEmptyCollection(fields)) {
+                AlertEvent.fireError(
+                        RuleSetSettingsPresenter.this,
+                        "You need to create one or more fields before you can add a rule.",
+                        null,
+                        null);
+            } else {
+                add();
+            }
         }
     }
 
@@ -298,8 +326,10 @@ public class RuleSetSettingsPresenter
         if (document != null) {
             fieldSelectionBoxModel.clear();
             fieldSelectionBoxModel.addItems(document.getFields());
-            this.rules = document.getRules();
-            listPresenter.getSelectionModel().clear();
+            rules = document.getRules();
+            fields = document.getFields();
+            listPresenter.getSelectionModel()
+                    .clear();
             setDirty(false);
             update();
         }
@@ -307,6 +337,7 @@ public class RuleSetSettingsPresenter
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
+        document.setRules(this.rules);
         return document;
     }
 
@@ -330,6 +361,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void updateButtons() {
+        GWT.log("isReadOnly: " + isReadOnly());
         final boolean loadedPolicy = rules != null;
         final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
@@ -352,6 +384,15 @@ public class RuleSetSettingsPresenter
         moveUpButton.setEnabled(!isReadOnly() && selected && index > 0);
         moveDownButton.setEnabled(!isReadOnly() && selected && index >= 0 && index < rules.size() - 1);
     }
+
+    @Override
+    public void setDirty(final boolean dirty) {
+        super.setDirty(dirty);
+        updateButtons();
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RuleSetSettingsView extends View {
 

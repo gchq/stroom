@@ -1,7 +1,6 @@
 package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
-import stroom.dictionary.impl.DictionaryModule;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
@@ -16,6 +15,7 @@ import stroom.importexport.api.ImportConverter;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.DataDirProviderImpl;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.RemoteReceiveDataRuleSetServiceImpl;
 import stroom.proxy.app.cache.ProxyCacheServiceModule;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
@@ -31,13 +31,12 @@ import stroom.proxy.repo.queue.QueueModule;
 import stroom.proxy.repo.store.StoreModule;
 import stroom.receive.common.CertificateExtractorImpl;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
+import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
+import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
-import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetService;
-import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
@@ -57,7 +56,7 @@ public class ProxyCoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new DictionaryModule());
+//        install(new DictionaryModule());
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
 
@@ -77,7 +76,8 @@ public class ProxyCoreModule extends AbstractModule {
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(CertificateExtractor.class).to(CertificateExtractorImpl.class);
-        bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
+        // Proxy binds to the remote impl
+        bind(ReceiveDataRuleSetService.class).to(RemoteReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);

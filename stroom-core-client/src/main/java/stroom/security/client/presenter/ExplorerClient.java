@@ -30,7 +30,7 @@ public class ExplorerClient extends AbstractRestClient {
     }
 
     public void changeDocumentPermissions(final BulkDocumentPermissionChangeRequest request,
-                                         final Consumer<Boolean> consumer,
+                                          final Consumer<Boolean> consumer,
                                           final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(EXPLORER_RESOURCE)

@@ -15,15 +15,22 @@
  *
  */
 
-package stroom.receive.rules.impl;
+package stroom.query.common.v2;
 
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentStore;
-import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.dictionary.api.WordListProvider;
 
-import java.util.List;
+import java.util.Objects;
 
-public interface ReceiveDataRuleSetService extends DocumentStore<ReceiveDataRules> {
+/**
+ * Allows us to use a different {@link WordListProvider} to the one that would be injected by guice.
+ */
+public class ExpressionPredicateFactoryFactory {
 
-    List<DocRef> list();
+    /**
+     * Create an {@link ExpressionPredicateFactory} for the supplied {@link WordListProvider}.
+     */
+    public ExpressionPredicateFactory createFactory(final WordListProvider wordListProvider) {
+        Objects.requireNonNull(wordListProvider);
+        return new ExpressionPredicateFactory(wordListProvider);
+    }
 }

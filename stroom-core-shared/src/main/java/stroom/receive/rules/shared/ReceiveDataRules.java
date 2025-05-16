@@ -19,6 +19,7 @@ package stroom.receive.rules.shared;
 
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -78,6 +80,20 @@ public class ReceiveDataRules extends Doc {
         this.rules = rules;
     }
 
+    private ReceiveDataRules(final Builder builder) {
+        setType(builder.type);
+        setUuid(builder.uuid);
+        setName(builder.name);
+        setVersion(builder.version);
+        setCreateTimeMs(builder.createTimeMs);
+        setUpdateTimeMs(builder.updateTimeMs);
+        setCreateUser(builder.createUser);
+        setUpdateUser(builder.updateUser);
+        setDescription(builder.description);
+        setFields(builder.fields);
+        setRules(builder.rules);
+    }
+
     /**
      * @return A new {@link DocRef} for this document's type with the supplied uuid.
      */
@@ -90,7 +106,7 @@ public class ReceiveDataRules extends Doc {
     /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
-    public static DocRef.TypedBuilder buildDocRef() {
+    public static TypedBuilder buildDocRef() {
         return DocRef.builder(TYPE);
     }
 
@@ -138,5 +154,130 @@ public class ReceiveDataRules extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, fields, rules);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder copy(final ReceiveDataRules source) {
+        Builder builder = new Builder();
+        builder.type = source.getType();
+        builder.uuid = source.getUuid();
+        builder.name = source.getName();
+        builder.version = source.getVersion();
+        builder.createTimeMs = source.getCreateTimeMs();
+        builder.updateTimeMs = source.getUpdateTimeMs();
+        builder.createUser = source.getCreateUser();
+        builder.updateUser = source.getUpdateUser();
+        builder.description = source.getDescription();
+        builder.fields = source.getFields();
+        builder.rules = source.getRules();
+        return builder;
+    }
+
+    @Override
+    public String toString() {
+        return "ReceiveDataRules{" +
+               "description='" + description + '\'' +
+               ", fields=" + fields +
+               ", rules=" + rules +
+               '}';
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private String type;
+        private String uuid;
+        private String name;
+        private String version;
+        private Long createTimeMs;
+        private Long updateTimeMs;
+        private String createUser;
+        private String updateUser;
+        private String description;
+        private List<QueryField> fields;
+        private List<ReceiveDataRule> rules;
+
+        private Builder() {
+        }
+
+        public Builder withType(final String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder withUuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
+        }
+
+        public Builder withName(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder withVersion(final String version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder withCreateTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return this;
+        }
+
+        public Builder withUpdateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return this;
+        }
+
+        public Builder withCreateUser(final String createUser) {
+            this.createUser = createUser;
+            return this;
+        }
+
+        public Builder withUpdateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return this;
+        }
+
+        public Builder withDescription(final String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder withFields(final List<QueryField> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        public Builder addField(final QueryField field) {
+            if (this.fields == null) {
+                this.fields = new ArrayList<>();
+            }
+            this.fields.add(field);
+            return this;
+        }
+
+        public Builder withRules(final List<ReceiveDataRule> rules) {
+            this.rules = rules;
+            return this;
+        }
+
+        public Builder addRule(final ReceiveDataRule rule) {
+            if (this.rules == null) {
+                this.rules = new ArrayList<>();
+            }
+            this.rules.add(rule);
+            return this;
+        }
+
+        public ReceiveDataRules build() {
+            return new ReceiveDataRules(this);
+        }
     }
 }

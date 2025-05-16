@@ -3,7 +3,7 @@ package stroom.datasource.api.v2;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -60,6 +60,16 @@ public enum ConditionSet {
             Condition.IN,
             Condition.IN_DICTIONARY),
     DEFAULT_TEXT(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
+    /**
+     * The condition set for a field used in receipt policy rules that
+     * has had its value obfuscated.
+     */
+    OBFUSCATED_FIELD(
             Condition.EQUALS,
             Condition.NOT_EQUALS,
             Condition.IN,
@@ -272,10 +282,10 @@ public enum ConditionSet {
 
     public static ConditionSet getElastic(final FieldType elasticIndexFieldType) {
         if (FieldType.DATE.equals(elasticIndexFieldType) ||
-                FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
-                FieldType.ID.equals(elasticIndexFieldType) ||
-                FieldType.LONG.equals(elasticIndexFieldType) ||
-                FieldType.INTEGER.equals(elasticIndexFieldType)) {
+            FieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
+            FieldType.ID.equals(elasticIndexFieldType) ||
+            FieldType.LONG.equals(elasticIndexFieldType) ||
+            FieldType.INTEGER.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
         }
         return ConditionSet.ELASTIC_TEXT;
@@ -297,7 +307,7 @@ public enum ConditionSet {
 
     ConditionSet(Condition... arr) {
         conditionList = Arrays.asList(arr);
-        conditionSet = new HashSet<>(conditionList);
+        conditionSet = EnumSet.copyOf(conditionList);
     }
 
     public boolean supportsCondition(final Condition condition) {

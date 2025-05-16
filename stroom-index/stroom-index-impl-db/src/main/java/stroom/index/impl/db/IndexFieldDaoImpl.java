@@ -86,13 +86,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         this.queryDatasourceDbConnProvider = queryDatasourceDbConnProvider;
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(IndexFieldFields.NAME_FIELD, INDEX_FIELD.NAME, string -> string);
-        expressionMapper.map(IndexFieldFields.TYPE_FIELD, INDEX_FIELD.TYPE, string -> {
-            final FieldType fieldType = FieldType.fromDisplayValue(string);
-            if (fieldType == null) {
-                return null;
-            }
-            return (byte) fieldType.getIndex();
-        });
+        expressionMapper.map(IndexFieldFields.TYPE_FIELD, INDEX_FIELD.TYPE, string ->
+                NullSafe.get(FieldType.fromDisplayValue(string), FieldType::getPrimitiveValue));
         expressionMapper.map(IndexFieldFields.STORE_FIELD, INDEX_FIELD.STORED, Boolean::valueOf);
         expressionMapper.map(IndexFieldFields.INDEX_FIELD, INDEX_FIELD.INDEXED, Boolean::valueOf);
         expressionMapper.map(IndexFieldFields.POSITIONS_FIELD, INDEX_FIELD.TERM_POSITIONS, Boolean::valueOf);
@@ -190,7 +185,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             if (!existingFieldNames.contains(field.getFldName())) {
                                 c = c.values(
                                         fieldSourceId,
-                                        (byte) field.getFldType().getIndex(),
+                                        (byte) field.getFldType().getTypeId(),
                                         field.getFldName(),
                                         field.getAnalyzerType().getDisplayValue(),
                                         field.isIndexed(),
@@ -292,7 +287,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     final boolean termPositions = r.get(INDEX_FIELD.TERM_POSITIONS);
                     final boolean caseSensitive = r.get(INDEX_FIELD.CASE_SENSITIVE);
 
-                    final FieldType fieldType = FieldType.get(typeId);
+                    final FieldType fieldType = FieldType.fromTypeId(typeId);
                     final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(analyzer);
                     return IndexFieldImpl
                             .builder()
@@ -346,7 +341,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             INDEX_FIELD.TERM_POSITIONS,
                             INDEX_FIELD.CASE_SENSITIVE)
                     .values(fieldSourceId,
-                            (byte) field.getFldType().getIndex(),
+                            field.getFldType().getPrimitiveValue(),
                             field.getFldName(),
                             field.getAnalyzerType().getDisplayValue(),
                             field.isIndexed(),
@@ -372,7 +367,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
             txnContext
                     .update(INDEX_FIELD)
-                    .set(INDEX_FIELD.TYPE, (byte) field.getFldType().getIndex())
+                    .set(INDEX_FIELD.TYPE, field.getFldType().getPrimitiveValue())
                     .set(INDEX_FIELD.NAME, field.getFldName())
                     .set(INDEX_FIELD.ANALYZER, field.getAnalyzerType().getDisplayValue())
                     .set(INDEX_FIELD.INDEXED, field.isIndexed())

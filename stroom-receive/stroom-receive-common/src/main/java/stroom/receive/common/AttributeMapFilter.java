@@ -23,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import java.util.List;
+import java.util.Objects;
 
 public interface AttributeMapFilter {
 
@@ -54,21 +55,26 @@ public interface AttributeMapFilter {
      */
     static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-            LOGGER.debug("Returning permissive instance");
+            LOGGER.debug("Empty attributeMapFilters, returning permissive instance");
             return PermissiveAttributeMapFilter.getInstance();
-        } else if (attributeMapFilters.size() == 1) {
-            final AttributeMapFilter first = NullSafe.first(attributeMapFilters);
-            if (first != null) {
-                LOGGER.debug(() -> "Returning " + first.getClass().getSimpleName());
-                return first;
-            } else {
-                LOGGER.debug("Returning permissive instance");
-                return PermissiveAttributeMapFilter.getInstance();
-            }
         } else {
-            final MultiAttributeMapFilter filter = new MultiAttributeMapFilter(attributeMapFilters);
-            LOGGER.debug("Returning {}", filter);
-            return filter;
+            final List<AttributeMapFilter> filteredFilters = attributeMapFilters.stream()
+                    .filter(Objects::nonNull)
+                    .filter(filter ->
+                            !(filter instanceof PermissiveAttributeMapFilter))
+                    .toList();
+            if (filteredFilters.isEmpty()) {
+                LOGGER.debug("No non-null attributeMapFilters, returning permissive instance");
+                return PermissiveAttributeMapFilter.getInstance();
+            } else if (filteredFilters.size() == 1) {
+                final AttributeMapFilter filter = NullSafe.first(filteredFilters);
+                LOGGER.debug(() -> "Returning single filter: " + filter.getClass().getSimpleName());
+                return filter;
+            } else {
+                final MultiAttributeMapFilter filter = new MultiAttributeMapFilter(filteredFilters);
+                LOGGER.debug("Returning filter chain: {}", filter);
+                return filter;
+            }
         }
     }
 }

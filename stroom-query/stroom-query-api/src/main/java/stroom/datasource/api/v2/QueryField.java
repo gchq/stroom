@@ -66,15 +66,12 @@ public class QueryField implements Field, HasDisplayValue {
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
                       @Deprecated @JsonProperty("name") final String name,
-
                       @JsonProperty("fldName") final String fldName,
                       @JsonProperty("fldType") final FieldType fldType,
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
-        this.fldName = fldName != null
-                ? fldName
-                : name;
+        this.fldName = NullSafe.requireNonNullElse(fldName, name);
         this.fldType = convertLegacyType(fldType, type);
         this.conditionSet = conditionSet;
         this.docRefType = docRefType;

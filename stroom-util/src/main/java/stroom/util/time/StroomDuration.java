@@ -85,6 +85,11 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         return new StroomDuration(value, parseToDuration(value));
     }
 
+    @JsonCreator
+    public static StroomDuration parse(final long value) {
+        return StroomDuration.ofMillis(value);
+    }
+
     public static StroomDuration of(final TemporalAmount temporalAmount) {
         return new StroomDuration(temporalAmount);
     }

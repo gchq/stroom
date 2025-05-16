@@ -17,192 +17,303 @@
 
 package stroom.receive.rules.impl;
 
+import stroom.dictionary.api.WordListProvider;
+import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
-import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Serialiser2Factory;
-import stroom.docstore.api.Store;
-import stroom.docstore.api.StoreFactory;
-import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
+import stroom.meta.api.AttributeMapper;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Builder;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataRuleSetService;
+import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.shared.Message;
+import stroom.security.api.HashFunction;
+import stroom.security.api.HashFunctionFactory;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.HashAlgorithm;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
 public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
 
-    private final Store<ReceiveDataRules> store;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetServiceImpl.class);
+
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final WordListProvider wordListProvider;
+    private final HashFunctionFactory hashFunctionFactory;
+    private final ReceiveDataRuleSetStore receiveDataRuleSetStore;
+    private final SecurityContext securityContext;
 
     @Inject
-    public ReceiveDataRuleSetServiceImpl(final StoreFactory storeFactory,
-                                         final Serialiser2Factory serialiser2Factory) {
-        final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
-                ReceiveDataRules.class);
-        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules.class);
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+    public ReceiveDataRuleSetServiceImpl(final WordListProvider wordListProvider,
+                                         final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                         final HashFunctionFactory hashFunctionFactory,
+                                         final ReceiveDataRuleSetStore receiveDataRuleSetStore,
+                                         final SecurityContext securityContext) {
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.wordListProvider = wordListProvider;
+        this.hashFunctionFactory = hashFunctionFactory;
+        this.receiveDataRuleSetStore = receiveDataRuleSetStore;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef,
-                               final String name,
-                               final boolean makeNameUnique,
-                               final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+    public ReceiveDataRules getReceiveDataRules() {
+        return securityContext.secureResult(
+                AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION,
+                receiveDataRuleSetStore::getOrCreate);
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
+    public ReceiveDataRules updateReceiveDataRules(final ReceiveDataRules receiveDataRules) {
+        return securityContext.secureResult(
+                AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION,
+                () -> receiveDataRuleSetStore.writeDocument(receiveDataRules));
     }
 
     @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private BiConsumer<ReceiveDataRules, DependencyRemapper> createMapper() {
-        return (doc, dependencyRemapper) -> {
-            final List<ReceiveDataRule> rules = doc.getRules();
-            if (rules != null && rules.size() > 0) {
-                rules.forEach(receiveDataRule -> {
-                    if (receiveDataRule.getExpression() != null) {
-                        dependencyRemapper.remapExpression(receiveDataRule.getExpression());
-                    }
-                });
+    public HashedReceiveDataRules getHashedReceiveDataRules() {
+        return securityContext.secureResult(AppPermission.FETCH_HASHED_RECEIPT_POLICY_RULES, () -> {
+            final ReceiveDataRules receiveDataRules = receiveDataRuleSetStore.getOrCreate();
+            final List<ReceiveDataRule> rules = receiveDataRules.getRules();
+            if (NullSafe.hasItems(rules)) {
+                return buildHashedReceiveDataRules(receiveDataRules);
+            } else {
+                return new HashedReceiveDataRules(
+                        receiveDataRules,
+                        Collections.emptyMap(),
+                        Collections.emptyMap(),
+                        null);
             }
-        };
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public ReceiveDataRules readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        });
     }
 
     @Override
-    public ReceiveDataRules writeDocument(final ReceiveDataRules document) {
-        return store.writeDocument(document);
+    public BundledRules getBundledRules() {
+        return new BundledRules(
+                getReceiveDataRules(),
+                wordListProvider,
+                AttributeMapper.identity());
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    private HashedReceiveDataRules buildHashedReceiveDataRules(final ReceiveDataRules receiveDataRules) {
+        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+        final Set<CIKey> obfuscatedFields = CIKey.setOf(receiveDataConfig.getObfuscatedFields());
+        final HashAlgorithm obfuscationHashAlgorithm = receiveDataConfig.getObfuscationHashAlgorithm();
+        final HashFunction hashFunction = hashFunctionFactory.getHashFunction(obfuscationHashAlgorithm);
+        final List<ReceiveDataRule> rules = NullSafe.list(receiveDataRules.getRules());
 
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+        final Map<String, DictionaryDoc> uuidToFlattenedDictMap = new HashMap<>();
+        final Map<String, String> fieldNameToSaltMap = new HashMap<>();
+        final List<ReceiveDataRule> ruleCopies = new ArrayList<>(rules.size());
 
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
+        for (final ReceiveDataRule rule : rules) {
+            ExpressionOperator expressionCopy = copyAndObfuscateOperator(
+                    rule.getExpression(),
+                    fieldNameToSaltMap,
+                    hashFunction,
+                    obfuscatedFields,
+                    uuidToFlattenedDictMap);
+            // If all are disabled result will be null
+            if (expressionCopy == null) {
+                expressionCopy = ExpressionOperator.builder().build();
+            }
 
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
-    }
-
-    @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+            final ReceiveDataRule ruleCopy = ReceiveDataRule.copy(rule)
+                    .withExpression(expressionCopy)
+                    .build();
+            ruleCopies.add(ruleCopy);
         }
-        return store.exportDocument(docRef, messageList, d -> d);
+
+        final ReceiveDataRules receiveDataRulesCopy = ReceiveDataRules.copy(receiveDataRules)
+                .withRules(ruleCopies)
+                .build();
+
+        return new HashedReceiveDataRules(
+                receiveDataRulesCopy,
+                uuidToFlattenedDictMap,
+                fieldNameToSaltMap,
+                obfuscationHashAlgorithm);
     }
 
-    @Override
-    public String getType() {
-        return store.getType();
+    private ExpressionOperator copyAndObfuscateOperator(final ExpressionOperator expressionOperator,
+                                                        final Map<String, String> fieldNameToSaltMap,
+                                                        final HashFunction hashFunction,
+                                                        final Set<CIKey> obfuscatedFields,
+                                                        final Map<String, DictionaryDoc> uuidToFlattenedDictMap) {
+        if (expressionOperator.enabled() && expressionOperator.hasChildren()) {
+            final List<ExpressionItem> childrenCopy = new ArrayList<>();
+            for (final ExpressionItem child : expressionOperator.getChildren()) {
+                final ExpressionItem copy;
+                if (child instanceof ExpressionTerm childTerm) {
+                    copy = copyAndObfuscateTerm(childTerm,
+                            fieldNameToSaltMap,
+                            hashFunction,
+                            obfuscatedFields,
+                            uuidToFlattenedDictMap);
+                } else if (child instanceof ExpressionOperator childOperator) {
+                    copy = copyAndObfuscateOperator(childOperator,
+                            fieldNameToSaltMap,
+                            hashFunction,
+                            obfuscatedFields,
+                            uuidToFlattenedDictMap);
+                } else {
+                    throw new IllegalStateException("Unexpected type " + child.getClass());
+                }
+                if (copy != null) {
+                    childrenCopy.add(copy);
+                }
+            }
+
+            if (childrenCopy.isEmpty()) {
+                return null;
+            } else {
+                return expressionOperator.copy()
+                        .children(childrenCopy)
+                        .build();
+            }
+        } else {
+            return null;
+        }
     }
 
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
-        return null;
+    private ExpressionTerm copyAndObfuscateTerm(final ExpressionTerm term,
+                                                final Map<String, String> fieldNameToSaltMap,
+                                                final HashFunction hashFunction,
+                                                final Set<CIKey> obfuscatedFields,
+                                                final Map<String, DictionaryDoc> flattenedDictsMap) {
+        if (term.enabled()) {
+            final Builder builder = term.copy();
+            final CIKey fieldCIKey = CIKey.of(term.getField());
+            if (term.hasCondition(Condition.IN_DICTIONARY)) {
+                // We don't have to change the term, just the dict that it links to
+                final boolean isObfuscatedField = obfuscatedFields.contains(fieldCIKey);
+                flattenedDictsMap.computeIfAbsent(term.getDocRef().getUuid(), k ->
+                        getFlattenedDictionary(
+                                term.getDocRef(),
+                                fieldCIKey,
+                                hashFunction,
+                                fieldNameToSaltMap,
+                                isObfuscatedField));
+            } else if (obfuscatedFields.contains(fieldCIKey) && term.getValue() != null) {
+                if (term.hasCondition(Condition.IN)) {
+                    final String[] parts = term.getValue()
+                            .split(",");
+                    final String obfuscatedValue = Arrays.stream(parts)
+                            .map(part ->
+                                    hashValue(part, fieldCIKey, fieldNameToSaltMap, hashFunction))
+                            .collect(Collectors.joining(","));
+                    builder.value(obfuscatedValue);
+                } else if (term.hasCondition(Condition.EQUALS, Condition.NOT_EQUALS)) {
+                    final String obfuscatedValue = hashValue(
+                            term.getValue(),
+                            fieldCIKey,
+                            fieldNameToSaltMap,
+                            hashFunction);
+                    builder.value(obfuscatedValue);
+                } else {
+                    throw new IllegalStateException(LogUtil.message(
+                            "Condition {} is not supported with obfuscated fields", term.getCondition()));
+                }
+            }
+            return builder.build();
+        } else {
+            return null;
+        }
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
+    private String hashValue(final String value,
+                             final CIKey fieldName,
+                             final Map<String, String> fieldNameToSaltMap,
+                             final HashFunction hashFunction) {
+        final String salt = fieldNameToSaltMap.computeIfAbsent(
+                fieldName.getAsLowerCase(),
+                k -> hashFunction.generateSalt());
+        return hashFunction.hash(value, salt);
     }
 
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
+    private DictionaryDoc getFlattenedDictionary(final DocRef docRef,
+                                                 final CIKey fieldName,
+                                                 final HashFunction hashFunction,
+                                                 final Map<String, String> fieldNameToSaltMap,
+                                                 boolean obfuscateContent) {
+        // combinedData includes all the words from the imports
+        String combinedData = wordListProvider.getCombinedData(docRef);
+
+        if (obfuscateContent) {
+            // hash each line. We have no choice but to use the same salt
+            combinedData = combinedData.lines()
+                    .map(line ->
+                            hashDictLine(line, fieldName, fieldNameToSaltMap, hashFunction))
+                    .collect(Collectors.joining("\n"));
+        }
+
+        final Long timeMs = System.currentTimeMillis();
+        return new DictionaryDoc(
+                DictionaryDoc.TYPE,
+                docRef.getUuid(),
+                docRef.getName(),
+                UUID.randomUUID().toString(), // The version doesn't matter
+                timeMs,
+                timeMs,
+                "",
+                "",
+                null,
+                combinedData,
+                Collections.emptyList());
     }
 
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+    /**
+     * A dictionary line can contain parts that are separated by a space. In lucene search, parts
+     * on a line are AND'd, while lines are OR'd. In ExpressionMatcher parts are OR'd. Either way
+     * we need to hash each part separately.
+     */
+    private String hashDictLine(final String line,
+                                final CIKey fieldName,
+                                final Map<String, String> fieldNameToSaltMap,
+                                final HashFunction hashFunction) {
+        if (NullSafe.isBlankString(line)) {
+            return line;
+        } else {
+            if (line.contains(" ")) {
+                return Arrays.stream(line.split(" "))
+                        .map(part ->
+                                hashValue(part, fieldName, fieldNameToSaltMap, hashFunction))
+                        .collect(Collectors.joining(" "));
+            } else {
+                return hashValue(line, fieldName, fieldNameToSaltMap, hashFunction);
+            }
+        }
     }
+
+//    private Set<DocRef> getDictionaryDocRefsFromRule(final ReceiveDataRule receiveDataRule) {
+//        return ExpressionUtil.terms(receiveDataRule.getExpression(), null)
+//                .stream()
+//                .filter(term -> term.hasCondition(Condition.IN_DICTIONARY))
+//                .map(ExpressionTerm::getDocRef)
+//                .collect(Collectors.toSet());
+//    }
 }

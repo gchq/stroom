@@ -161,9 +161,9 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
 
             for (final LuceneIndexField field : fields) {
                 ps.setInt(1, fieldSourceId);
-                ps.setByte(2, (byte) (field.getFldType() == null
+                ps.setByte(2, field.getFldType() == null
                         ? 0
-                        : field.getFldType().getIndex()));
+                        : field.getFldType().getPrimitiveValue());
                 ps.setString(3, field.getFldName());
                 ps.setString(4, field.getAnalyzerType() == null
                         ? null
