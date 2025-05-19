@@ -196,10 +196,11 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                         .build(),
                 150);
 
-        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((QueryField queryField) -> {
-                            final CIKey ciFieldName = CIKey.of(queryField.getFldName());
-                            return DataGridUtil.formatAsYesNo(obfuscatedFields.contains(ciFieldName));
-                        })
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder(
+                                (QueryField queryField) -> {
+                                    final CIKey ciFieldName = CIKey.of(queryField.getFldName());
+                                    return DataGridUtil.formatAsYesNo(obfuscatedFields.contains(ciFieldName));
+                                })
                         .withSorting(OBFUSCATED_FIELD, true)
                         .build(),
                 DataGridUtil.headingBuilder("Obfuscated?")
@@ -353,7 +354,8 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
 //                                qryField.getFldType().getTypeName());
 //                    } else if (OBFUSCATED_FIELD.equals(sortField)) {
 //                        comparator = Comparator.comparing(qryField ->
-//                                DataGridUtil.formatAsYesNo(obfuscatedFields.contains(CIKey.of(qryField.getFldName()))));
+//                                DataGridUtil.formatAsYesNo(obfuscatedFields.contains(
+//                                CIKey.of(qryField.getFldName()))));
 //                    }
 //                    comparator = CompareUtil.reverseIf(comparator, !isAscending);
 //                    combinedComparator = CompareUtil.combine(combinedComparator, comparator);
