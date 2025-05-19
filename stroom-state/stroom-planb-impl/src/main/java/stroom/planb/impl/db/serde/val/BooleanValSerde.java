@@ -3,14 +3,8 @@ package stroom.planb.impl.db.serde.val;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
-import stroom.query.language.functions.ValShort;
-
-import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class BooleanValSerde extends SimpleValSerde {
 

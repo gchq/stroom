@@ -19637,6 +19637,9 @@
               "type" : "string",
               "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
             },
+            "retention" : {
+              "$ref" : "#/components/schemas/DurationSetting"
+            },
             "stateValueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
             }
@@ -21440,6 +21443,9 @@
             "timePrecision" : {
               "type" : "string",
               "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+            },
+            "useStateTimeForRetention" : {
+              "type" : "boolean"
             }
           }
         } ]
@@ -22032,6 +22038,9 @@
           "properties" : {
             "overwrite" : {
               "type" : "boolean"
+            },
+            "retention" : {
+              "$ref" : "#/components/schemas/DurationSetting"
             },
             "stateKeySchema" : {
               "$ref" : "#/components/schemas/StateKeySchema"
@@ -22987,6 +22996,9 @@
             "timePrecision" : {
               "type" : "string",
               "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+            },
+            "useStateTimeForRetention" : {
+              "type" : "boolean"
             }
           }
         } ]
@@ -23032,6 +23044,9 @@
             "timePrecision" : {
               "type" : "string",
               "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+            },
+            "useStateTimeForRetention" : {
+              "type" : "boolean"
             }
           }
         } ]

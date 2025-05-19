@@ -14519,6 +14519,8 @@ components:
             - SHORT
             - INT
             - LONG
+          retention:
+            $ref: "#/components/schemas/DurationSetting"
           stateValueSchema:
             $ref: "#/components/schemas/StateValueSchema"
     Rec:
@@ -15838,6 +15840,8 @@ components:
             - SECOND
             - MILLISECOND
             - NANOSECOND
+          useStateTimeForRetention:
+            type: boolean
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -16314,6 +16318,8 @@ components:
         properties:
           overwrite:
             type: boolean
+          retention:
+            $ref: "#/components/schemas/DurationSetting"
           stateKeySchema:
             $ref: "#/components/schemas/StateKeySchema"
           stateValueSchema:
@@ -17059,6 +17065,8 @@ components:
             - SECOND
             - MILLISECOND
             - NANOSECOND
+          useStateTimeForRetention:
+            type: boolean
     TemporalState:
       type: object
       allOf:
@@ -17094,6 +17102,8 @@ components:
             - SECOND
             - MILLISECOND
             - NANOSECOND
+          useStateTimeForRetention:
+            type: boolean
     TerminateTaskProgressRequest:
       type: object
       properties:
