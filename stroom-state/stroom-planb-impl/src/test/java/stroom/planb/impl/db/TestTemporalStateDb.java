@@ -276,9 +276,11 @@ class TestTemporalStateDb {
 
         try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             assertThat(db.count()).isEqualTo(100);
-            db.condense(Instant.now(), Instant.MIN);
+            db.condense(Instant.now());
+            db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
-            db.condense(Instant.now(), Instant.now());
+            db.condense(Instant.now());
+            db.deleteOldData(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }
@@ -297,10 +299,12 @@ class TestTemporalStateDb {
 
             assertThat(db.count()).isEqualTo(218);
 
-            db.condense(refTime.plusMillis(1), Instant.MIN);
+            db.condense(refTime.plusMillis(1));
+            db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(200);
 
-            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1), Instant.MIN);
+            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1));
+            db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(182);
         }
     }

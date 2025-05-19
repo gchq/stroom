@@ -70,11 +70,6 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 : new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     }
 
-    public void condense(final Instant condenseBefore,
-                         final Instant deleteBefore) {
-        // Don't condense by default.
-    }
-
     @Override
     public final long count() {
         return env.read(readTxn -> dbi.stat(readTxn).entries);

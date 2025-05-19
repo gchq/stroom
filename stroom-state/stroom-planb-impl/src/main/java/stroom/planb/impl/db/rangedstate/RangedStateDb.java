@@ -5,7 +5,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
-import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.PlanBSearchHelper;
@@ -13,23 +12,10 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
-import stroom.planb.impl.db.UidLookupDb;
-import stroom.planb.impl.db.hash.HashFactory;
-import stroom.planb.impl.db.hash.HashFactoryFactory;
 import stroom.planb.impl.db.rangedstate.RangedState.Key;
-import stroom.planb.impl.db.serde.Serde;
-import stroom.planb.impl.db.serde.val.BooleanValSerde;
-import stroom.planb.impl.db.serde.val.ByteValSerde;
-import stroom.planb.impl.db.serde.val.DoubleValSerde;
-import stroom.planb.impl.db.serde.val.FloatValSerde;
-import stroom.planb.impl.db.serde.val.HashLookupValSerde;
-import stroom.planb.impl.db.serde.val.IntegerValSerde;
-import stroom.planb.impl.db.serde.val.LongValSerde;
-import stroom.planb.impl.db.serde.val.ShortValSerde;
-import stroom.planb.impl.db.serde.val.StringValSerde;
-import stroom.planb.impl.db.serde.val.UidLookupValSerde;
-import stroom.planb.impl.db.serde.val.ValSerde;
-import stroom.planb.impl.db.serde.val.VariableValSerde;
+import stroom.planb.impl.db.serde.valtime.ValTime;
+import stroom.planb.impl.db.serde.valtime.ValTimeSerde;
+import stroom.planb.impl.db.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.RangedStateSettings;
@@ -53,25 +39,24 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class RangedStateDb extends AbstractDb<Key, Val> {
 
-    private static final String VALUE_LOOKUP_DB_NAME = "value";
-
     private final RangedStateSettings settings;
     private final RangeKeySerde keySerde;
-    private final Serde<Val> valueSerde;
+    private final ValTimeSerde valueSerde;
 
     private RangedStateDb(final PlanBEnv env,
-                                  final ByteBuffers byteBuffers,
-                                  final Boolean overwrite,
-                                  final RangedStateSettings settings,
-                                  final RangeKeySerde keySerde,
-                                  final Serde<Val> valueSerde,
-                                  final HashClashCommitRunnable hashClashCommitRunnable) {
+                          final ByteBuffers byteBuffers,
+                          final Boolean overwrite,
+                          final RangedStateSettings settings,
+                          final RangeKeySerde keySerde,
+                          final ValTimeSerde valueSerde,
+                          final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env, byteBuffers, overwrite, hashClashCommitRunnable);
         this.settings = settings;
         this.keySerde = keySerde;
@@ -79,9 +64,9 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
     }
 
     public static RangedStateDb create(final Path path,
-                                               final ByteBuffers byteBuffers,
-                                               final RangedStateSettings settings,
-                                               final boolean readOnly) {
+                                       final ByteBuffers byteBuffers,
+                                       final RangedStateSettings settings,
+                                       final boolean readOnly) {
         final RangeType rangeType = NullSafe.getOrElse(
                 settings,
                 RangedStateSettings::getRangeType,
@@ -105,7 +90,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
         final RangeKeySerde keySerde = createKeySerde(
                 rangeType,
                 byteBuffers);
-        final Serde<Val> valueSerde = createValueSerde(
+        final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
                 stateValueType,
                 valueHashLength,
                 env,
@@ -131,59 +116,11 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
         };
     }
 
-    private static ValSerde createValueSerde(final StateValueType stateValueType,
-                                             final HashLength hashLength,
-                                             final PlanBEnv env,
-                                             final ByteBuffers byteBuffers,
-                                             final HashClashCommitRunnable hashClashCommitRunnable) {
-        return switch (stateValueType) {
-            case BOOLEAN -> new BooleanValSerde(byteBuffers);
-            case BYTE -> new ByteValSerde(byteBuffers);
-            case SHORT -> new ShortValSerde(byteBuffers);
-            case INT -> new IntegerValSerde(byteBuffers);
-            case LONG -> new LongValSerde(byteBuffers);
-            case FLOAT -> new FloatValSerde(byteBuffers);
-            case DOUBLE -> new DoubleValSerde(byteBuffers);
-            case STRING -> new StringValSerde(byteBuffers);
-            case UID_LOOKUP -> {
-                final UidLookupDb uidLookupDb = new UidLookupDb(
-                        env,
-                        byteBuffers,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new UidLookupValSerde(uidLookupDb, byteBuffers);
-            }
-            case HASH_LOOKUP -> {
-                final HashFactory valueHashFactory = HashFactoryFactory.create(hashLength);
-                final HashLookupDb hashLookupDb = new HashLookupDb(
-                        env,
-                        byteBuffers,
-                        valueHashFactory,
-                        hashClashCommitRunnable,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new HashLookupValSerde(hashLookupDb, byteBuffers);
-            }
-            case VARIABLE -> {
-                final HashFactory valueHashFactory = HashFactoryFactory.create(hashLength);
-                final UidLookupDb uidLookupDb = new UidLookupDb(
-                        env,
-                        byteBuffers,
-                        VALUE_LOOKUP_DB_NAME);
-                final HashLookupDb hashLookupDb = new HashLookupDb(
-                        env,
-                        byteBuffers,
-                        valueHashFactory,
-                        hashClashCommitRunnable,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new VariableValSerde(uidLookupDb, hashLookupDb, byteBuffers);
-            }
-        };
-    }
-
     @Override
     public void insert(final LmdbWriter writer, final KV<Key, Val> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         keySerde.write(writeTxn, kv.key(), keyByteBuffer ->
-                valueSerde.write(writeTxn, kv.val(), valueByteBuffer ->
+                valueSerde.write(writeTxn, new ValTime(kv.val(), Instant.now()), valueByteBuffer ->
                         dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, putFlags)));
         writer.tryCommit();
     }
@@ -209,7 +146,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                         if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
                             final Key key = keySerde.read(readTxn, kv.key());
-                            final Val value = valueSerde.read(readTxn, kv.val());
+                            final Val value = valueSerde.read(readTxn, kv.val()).val();
                             insert(writer, new RangedState(key, value));
                         } else {
                             // Quick merge.
@@ -235,7 +172,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                     if (valueByteBuffer == null) {
                         return null;
                     }
-                    return valueSerde.read(readTxn, valueByteBuffer);
+                    return NullSafe.get(valueSerde.read(readTxn, valueByteBuffer), ValTime::val);
                 }).orElse(null)));
     }
 
@@ -268,7 +205,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> valueSerde.read(readTxn, context.kv().val().duplicate());
+        return context -> NullSafe.get(valueSerde.read(readTxn, context.kv().val().duplicate()), ValTime::val);
     }
 
     public RangedState getState(final RangedStateRequest request) {
@@ -285,7 +222,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                             if (key.getKeyEnd() < request.key()) {
                                 return result;
                             } else if (key.getKeyStart() <= request.key()) {
-                                final Val value = valueSerde.read(readTxn, kv.val());
+                                final Val value = valueSerde.read(readTxn, kv.val()).val();
                                 result = new RangedState(key, value);
                             }
                         }
@@ -317,6 +254,34 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
             }
             return values;
         };
+    }
+
+    @Override
+    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+        return env.read(readTxn -> env.write(writer -> {
+            long changeCount = 0;
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext()
+                       && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    final ValTime value = valueSerde.read(readTxn, kv.val().duplicate());
+
+                    if (value.insertTime().isBefore(deleteBefore)) {
+                        // If this is data we no longer want to retain then delete it.
+                        dbi.delete(writer.getWriteTxn(), kv.key());
+                        writer.tryCommit();
+                        changeCount++;
+                    }
+                }
+            }
+            return changeCount;
+        }));
+    }
+
+    @Override
+    public long condense(final Instant condenseBefore) {
+        return 0;
     }
 
     public interface RangedStateConverter extends Converter<Key, Val> {

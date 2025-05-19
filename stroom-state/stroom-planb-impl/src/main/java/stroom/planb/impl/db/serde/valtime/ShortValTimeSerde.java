@@ -1,20 +1,16 @@
-package stroom.planb.impl.db.serde.val;
+package stroom.planb.impl.db.serde.valtime;
 
-import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.serde.time.TimeSerde;
+import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValShort;
 
-import org.lmdbjava.Txn;
-
 import java.nio.ByteBuffer;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class ShortValSerde extends SimpleValSerde {
+public class ShortValTimeSerde extends SimpleValTimeSerde {
 
-    public ShortValSerde(final ByteBuffers byteBuffers) {
-        super(byteBuffers);
+    public ShortValTimeSerde(final TimeSerde timeSerde) {
+        super(timeSerde);
     }
 
     @Override

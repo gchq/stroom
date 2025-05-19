@@ -1,15 +1,16 @@
-package stroom.planb.impl.db.serde.val;
+package stroom.planb.impl.db.serde.valtime;
 
-import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.serde.time.TimeSerde;
+import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 
 import java.nio.ByteBuffer;
 
-public class DateValSerde extends SimpleValSerde {
+public class DateValTimeSerde extends SimpleValTimeSerde {
 
-    public DateValSerde(final ByteBuffers byteBuffers) {
-        super(byteBuffers);
+    public DateValTimeSerde(final TimeSerde timeSerde) {
+        super(timeSerde);
     }
 
     @Override

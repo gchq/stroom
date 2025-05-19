@@ -12,6 +12,7 @@ import java.util.Objects;
         "maxStoreSize",
         "synchroniseMerge",
         "snapshotSettings",
+        "retention",
         "overwrite",
         "stateKeySchema",
         "stateValueSchema"
@@ -19,6 +20,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateSettings extends AbstractPlanBSettings {
 
+    @JsonProperty
+    private final DurationSetting retention;
     @JsonProperty
     private final Boolean overwrite;
     @JsonProperty
@@ -30,13 +33,19 @@ public class StateSettings extends AbstractPlanBSettings {
     public StateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                          @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                          @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                         @JsonProperty("retention") final DurationSetting retention,
                          @JsonProperty("overwrite") final Boolean overwrite,
                          @JsonProperty("stateKeySchema") final StateKeySchema stateKeySchema,
                          @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema) {
         super(maxStoreSize, synchroniseMerge, snapshotSettings);
+        this.retention = retention;
         this.overwrite = overwrite;
         this.stateKeySchema = stateKeySchema;
         this.stateValueSchema = stateValueSchema;
+    }
+
+    public DurationSetting getRetention() {
+        return retention;
     }
 
     public Boolean getOverwrite() {
@@ -67,20 +76,22 @@ public class StateSettings extends AbstractPlanBSettings {
             return false;
         }
         final StateSettings that = (StateSettings) o;
-        return Objects.equals(overwrite, that.overwrite) &&
+        return Objects.equals(retention, that.retention) &&
+               Objects.equals(overwrite, that.overwrite) &&
                Objects.equals(stateKeySchema, that.stateKeySchema) &&
                Objects.equals(stateValueSchema, that.stateValueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), overwrite, stateKeySchema, stateValueSchema);
+        return Objects.hash(super.hashCode(), retention, overwrite, stateKeySchema, stateValueSchema);
     }
 
     @Override
     public String toString() {
         return "StateSettings{" +
-               "overwrite=" + overwrite +
+               "retention=" + retention +
+               ", overwrite=" + overwrite +
                ", stateKeySchema=" + stateKeySchema +
                ", stateValueSchema=" + stateValueSchema +
                '}';
@@ -96,6 +107,7 @@ public class StateSettings extends AbstractPlanBSettings {
 
     public static class Builder extends AbstractBuilder<StateSettings, Builder> {
 
+        private DurationSetting retention;
         private Boolean overwrite;
         private StateKeySchema stateKeySchema;
         private StateValueSchema stateValueSchema;
@@ -105,9 +117,15 @@ public class StateSettings extends AbstractPlanBSettings {
 
         public Builder(final StateSettings settings) {
             super(settings);
+            this.retention = settings.retention;
             this.overwrite = settings.overwrite;
             this.stateKeySchema = settings.stateKeySchema;
             this.stateValueSchema = settings.stateValueSchema;
+        }
+
+        public Builder retention(final DurationSetting retention) {
+            this.retention = retention;
+            return self();
         }
 
         public Builder overwrite(final Boolean overwrite) {
@@ -136,6 +154,7 @@ public class StateSettings extends AbstractPlanBSettings {
                     maxStoreSize,
                     synchroniseMerge,
                     snapshotSettings,
+                    retention,
                     overwrite,
                     stateKeySchema,
                     stateValueSchema);

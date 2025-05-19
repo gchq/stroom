@@ -8,7 +8,9 @@ import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.RangedStateSettings;
 import stroom.planb.shared.SessionSettings;
+import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.io.FileUtil;
@@ -155,6 +157,59 @@ class StoreShard implements Shard {
     }
 
     @Override
+    public void deleteOldData(final PlanBDoc doc) {
+        lock.lock();
+        try {
+            // Find out how old data needs to be before we delete it.
+            boolean useStateTime = false;
+            DurationSetting retention = null;
+            if (doc.getSettings() instanceof final StateSettings stateSettings) {
+                retention = stateSettings.getRetention();
+            } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+                retention = temporalStateSettings.getRetention();
+                useStateTime = temporalStateSettings.getUseStateTimeForRetention() != null &&
+                               temporalStateSettings.getUseStateTimeForRetention();
+            } else if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
+                retention = rangedStateSettings.getRetention();
+            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+                retention = temporalRangedStateSettings.getRetention();
+                useStateTime = temporalRangedStateSettings.getUseStateTimeForRetention() != null &&
+                               temporalRangedStateSettings.getUseStateTimeForRetention();
+            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+                retention = sessionSettings.getRetention();
+                useStateTime = sessionSettings.getUseStateTimeForRetention() != null &&
+                               sessionSettings.getUseStateTimeForRetention();
+            }
+
+            final Instant deleteBefore;
+            if (retention != null && retention.isEnabled()) {
+                deleteBefore = SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
+            } else {
+                deleteBefore = Instant.MIN;
+            }
+
+            // If we are condensing or deleting data then do so.
+            if (deleteBefore.isAfter(Instant.MIN)) {
+                incrementUseCount();
+                try {
+                    db.deleteOldData(deleteBefore, useStateTime);
+                    lastWriteTime = Instant.now();
+                } finally {
+                    decrementUseCount();
+                }
+            }
+
+            // Create a new snapshot periodically.
+            createSnapshot();
+
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public void condense(final PlanBDoc doc) {
         lock.lock();
         try {
@@ -175,28 +230,12 @@ class StoreShard implements Shard {
                 condenseBefore = Instant.MIN;
             }
 
-            // Find out how old data needs to be before we delete it.
-            DurationSetting retention = null;
-            if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-                retention = temporalStateSettings.getRetention();
-            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-                retention = temporalRangedStateSettings.getRetention();
-            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-                retention = sessionSettings.getRetention();
-            }
-
-            final Instant deleteBefore;
-            if (retention != null && retention.isEnabled()) {
-                deleteBefore = SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
-            } else {
-                deleteBefore = Instant.MIN;
-            }
 
             // If we are condensing or deleting data then do so.
-            if (condenseBefore.isAfter(Instant.MIN) || deleteBefore.isAfter(Instant.MIN)) {
+            if (condenseBefore.isAfter(Instant.MIN)) {
                 incrementUseCount();
                 try {
-                    db.condense(condenseBefore, deleteBefore);
+                    db.condense(condenseBefore);
                     lastWriteTime = Instant.now();
                 } finally {
                     decrementUseCount();

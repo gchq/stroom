@@ -9,11 +9,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
         "synchroniseMerge",
         "snapshotSettings",
+        "condense",
+        "retention",
+        "useStateTimeForRetention",
         "overwrite",
         "stateValueSchema",
         "timePrecision"
@@ -26,6 +27,8 @@ public class SessionSettings extends AbstractPlanBSettings {
     @JsonProperty
     private final DurationSetting retention;
     @JsonProperty
+    private final Boolean useStateTimeForRetention;
+    @JsonProperty
     private final Boolean overwrite;
     @JsonProperty
     private final StateValueSchema stateValueSchema;
@@ -33,17 +36,19 @@ public class SessionSettings extends AbstractPlanBSettings {
     private final TimePrecision timePrecision;
 
     @JsonCreator
-    public SessionSettings(@JsonProperty("condense") final DurationSetting condense,
-                           @JsonProperty("retention") final DurationSetting retention,
-                           @JsonProperty("maxStoreSize") final Long maxStoreSize,
+    public SessionSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                            @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                            @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                           @JsonProperty("condense") final DurationSetting condense,
+                           @JsonProperty("retention") final DurationSetting retention,
+                           @JsonProperty("useStateTimeForRetention") final Boolean useStateTimeForRetention,
                            @JsonProperty("overwrite") final Boolean overwrite,
                            @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema,
                            @JsonProperty("timePrecision") final TimePrecision timePrecision) {
         super(maxStoreSize, synchroniseMerge, snapshotSettings);
         this.condense = condense;
         this.retention = retention;
+        this.useStateTimeForRetention = useStateTimeForRetention;
         this.overwrite = overwrite;
         this.stateValueSchema = stateValueSchema;
         this.timePrecision = timePrecision;
@@ -55,6 +60,10 @@ public class SessionSettings extends AbstractPlanBSettings {
 
     public DurationSetting getRetention() {
         return retention;
+    }
+
+    public Boolean getUseStateTimeForRetention() {
+        return useStateTimeForRetention;
     }
 
     public Boolean getOverwrite() {
@@ -87,6 +96,7 @@ public class SessionSettings extends AbstractPlanBSettings {
         final SessionSettings that = (SessionSettings) o;
         return Objects.equals(condense, that.condense) &&
                Objects.equals(retention, that.retention) &&
+               Objects.equals(useStateTimeForRetention, that.useStateTimeForRetention) &&
                Objects.equals(overwrite, that.overwrite) &&
                Objects.equals(stateValueSchema, that.stateValueSchema) &&
                timePrecision == that.timePrecision;
@@ -94,7 +104,25 @@ public class SessionSettings extends AbstractPlanBSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite, stateValueSchema, timePrecision);
+        return Objects.hash(super.hashCode(),
+                condense,
+                retention,
+                useStateTimeForRetention,
+                overwrite,
+                stateValueSchema,
+                timePrecision);
+    }
+
+    @Override
+    public String toString() {
+        return "SessionSettings{" +
+               "condense=" + condense +
+               ", retention=" + retention +
+               ", useStateTimeForRetention=" + useStateTimeForRetention +
+               ", overwrite=" + overwrite +
+               ", stateValueSchema=" + stateValueSchema +
+               ", timePrecision=" + timePrecision +
+               '}';
     }
 
     public static Builder builder() {
@@ -109,6 +137,7 @@ public class SessionSettings extends AbstractPlanBSettings {
 
         private DurationSetting condense;
         private DurationSetting retention;
+        private Boolean useStateTimeForRetention;
         private Boolean overwrite;
         private StateValueSchema stateValueSchema;
         private TimePrecision timePrecision;
@@ -120,6 +149,7 @@ public class SessionSettings extends AbstractPlanBSettings {
             super(settings);
             this.condense = settings.condense;
             this.retention = settings.retention;
+            this.useStateTimeForRetention = settings.useStateTimeForRetention;
             this.overwrite = settings.overwrite;
             this.stateValueSchema = settings.stateValueSchema;
             this.timePrecision = settings.timePrecision;
@@ -132,6 +162,11 @@ public class SessionSettings extends AbstractPlanBSettings {
 
         public Builder retention(final DurationSetting retention) {
             this.retention = retention;
+            return self();
+        }
+
+        public Builder useStateTimeForRetention(final Boolean useStateTimeForRetention) {
+            this.useStateTimeForRetention = useStateTimeForRetention;
             return self();
         }
 
@@ -158,11 +193,12 @@ public class SessionSettings extends AbstractPlanBSettings {
         @Override
         public SessionSettings build() {
             return new SessionSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
                     synchroniseMerge,
                     snapshotSettings,
+                    condense,
+                    retention,
+                    useStateTimeForRetention,
                     overwrite,
                     stateValueSchema,
                     timePrecision);

@@ -14,7 +14,7 @@ public class LmdbWriter implements AutoCloseable {
     private final Consumer<Txn<ByteBuffer>> commitListener;
     private final ReentrantLock writeTxnLock;
     private Txn<ByteBuffer> writeTxn;
-    private int commitCount = 0;
+    private int changeCount = 0;
 
     public LmdbWriter(final Env<ByteBuffer> env,
                       final ReentrantLock dbCommitLock,
@@ -38,10 +38,18 @@ public class LmdbWriter implements AutoCloseable {
     }
 
     public void tryCommit() {
-        commitCount++;
-        if (commitCount > 10000) {
+        incrementChangeCount();
+        if (shouldCommit()) {
             commit();
         }
+    }
+
+    public void incrementChangeCount() {
+        changeCount++;
+    }
+
+    public boolean shouldCommit() {
+        return changeCount > 10000;
     }
 
     public void commit() {
@@ -60,7 +68,7 @@ public class LmdbWriter implements AutoCloseable {
                 }
             }
 
-            commitCount = 0;
+            changeCount = 0;
         } finally {
             dbCommitLock.unlock();
         }

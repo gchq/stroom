@@ -108,6 +108,11 @@ class SnapshotShard implements Shard {
     }
 
     @Override
+    public void deleteOldData(final PlanBDoc doc) {
+        // Deletion of old data is not supported on snapshots
+    }
+
+    @Override
     public void condense(final PlanBDoc doc) {
         // Condense is not supported on snapshots
     }

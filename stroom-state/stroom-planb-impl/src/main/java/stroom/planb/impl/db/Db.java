@@ -28,8 +28,10 @@ public interface Db<K, V> extends AutoCloseable {
 
     void merge(Path source);
 
-    void condense(Instant condenseBefore,
-                  Instant deleteBefore);
+    long deleteOldData(Instant deleteBefore,
+                       boolean useStateTime);
+
+    long condense(Instant condenseBefore);
 
     LmdbWriter createWriter();
 

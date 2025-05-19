@@ -86,6 +86,7 @@ public class ShardManager {
                         shardMap.remove(shard.getDoc().getUuid());
                     } else {
                         shard.condense(loaded);
+                        shard.deleteOldData(loaded);
                     }
                 } catch (final DocumentNotFoundException e) {
                     LOGGER.debug(e::getMessage, e);

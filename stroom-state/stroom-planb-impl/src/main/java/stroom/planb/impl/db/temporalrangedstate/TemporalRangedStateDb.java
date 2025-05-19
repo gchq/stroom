@@ -5,7 +5,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
-import stroom.planb.impl.db.HashLookupDb;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.PlanBSearchHelper;
@@ -13,10 +12,6 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
-import stroom.planb.impl.db.UidLookupDb;
-import stroom.planb.impl.db.hash.HashFactory;
-import stroom.planb.impl.db.hash.HashFactoryFactory;
-import stroom.planb.impl.db.serde.Serde;
 import stroom.planb.impl.db.serde.time.DayTimeSerde;
 import stroom.planb.impl.db.serde.time.HourTimeSerde;
 import stroom.planb.impl.db.serde.time.MillisecondTimeSerde;
@@ -24,18 +19,9 @@ import stroom.planb.impl.db.serde.time.MinuteTimeSerde;
 import stroom.planb.impl.db.serde.time.NanoTimeSerde;
 import stroom.planb.impl.db.serde.time.SecondTimeSerde;
 import stroom.planb.impl.db.serde.time.TimeSerde;
-import stroom.planb.impl.db.serde.val.BooleanValSerde;
-import stroom.planb.impl.db.serde.val.ByteValSerde;
-import stroom.planb.impl.db.serde.val.DoubleValSerde;
-import stroom.planb.impl.db.serde.val.FloatValSerde;
-import stroom.planb.impl.db.serde.val.HashLookupValSerde;
-import stroom.planb.impl.db.serde.val.IntegerValSerde;
-import stroom.planb.impl.db.serde.val.LongValSerde;
-import stroom.planb.impl.db.serde.val.ShortValSerde;
-import stroom.planb.impl.db.serde.val.StringValSerde;
-import stroom.planb.impl.db.serde.val.UidLookupValSerde;
-import stroom.planb.impl.db.serde.val.ValSerde;
-import stroom.planb.impl.db.serde.val.VariableValSerde;
+import stroom.planb.impl.db.serde.valtime.ValTime;
+import stroom.planb.impl.db.serde.valtime.ValTimeSerde;
+import stroom.planb.impl.db.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState.Key;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeType;
@@ -64,6 +50,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -73,14 +60,14 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
 
     private final TemporalRangedStateSettings settings;
     private final TemporalRangeKeySerde keySerde;
-    private final Serde<Val> valueSerde;
+    private final ValTimeSerde valueSerde;
 
     private TemporalRangedStateDb(final PlanBEnv env,
                                   final ByteBuffers byteBuffers,
                                   final Boolean overwrite,
                                   final TemporalRangedStateSettings settings,
                                   final TemporalRangeKeySerde keySerde,
-                                  final Serde<Val> valueSerde,
+                                  final ValTimeSerde valueSerde,
                                   final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env, byteBuffers, overwrite, hashClashCommitRunnable);
         this.settings = settings;
@@ -120,7 +107,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                 rangeType,
                 byteBuffers,
                 timeSerde);
-        final Serde<Val> valueSerde = createValueSerde(
+        final ValTimeSerde valueSerde = ValTimeSerdeFactory.createValueSerde(
                 stateValueType,
                 valueHashLength,
                 env,
@@ -158,59 +145,11 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
         };
     }
 
-    private static ValSerde createValueSerde(final StateValueType stateValueType,
-                                             final HashLength hashLength,
-                                             final PlanBEnv env,
-                                             final ByteBuffers byteBuffers,
-                                             final HashClashCommitRunnable hashClashCommitRunnable) {
-        return switch (stateValueType) {
-            case BOOLEAN -> new BooleanValSerde(byteBuffers);
-            case BYTE -> new ByteValSerde(byteBuffers);
-            case SHORT -> new ShortValSerde(byteBuffers);
-            case INT -> new IntegerValSerde(byteBuffers);
-            case LONG -> new LongValSerde(byteBuffers);
-            case FLOAT -> new FloatValSerde(byteBuffers);
-            case DOUBLE -> new DoubleValSerde(byteBuffers);
-            case STRING -> new StringValSerde(byteBuffers);
-            case UID_LOOKUP -> {
-                final UidLookupDb uidLookupDb = new UidLookupDb(
-                        env,
-                        byteBuffers,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new UidLookupValSerde(uidLookupDb, byteBuffers);
-            }
-            case HASH_LOOKUP -> {
-                final HashFactory valueHashFactory = HashFactoryFactory.create(hashLength);
-                final HashLookupDb hashLookupDb = new HashLookupDb(
-                        env,
-                        byteBuffers,
-                        valueHashFactory,
-                        hashClashCommitRunnable,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new HashLookupValSerde(hashLookupDb, byteBuffers);
-            }
-            case VARIABLE -> {
-                final HashFactory valueHashFactory = HashFactoryFactory.create(hashLength);
-                final UidLookupDb uidLookupDb = new UidLookupDb(
-                        env,
-                        byteBuffers,
-                        VALUE_LOOKUP_DB_NAME);
-                final HashLookupDb hashLookupDb = new HashLookupDb(
-                        env,
-                        byteBuffers,
-                        valueHashFactory,
-                        hashClashCommitRunnable,
-                        VALUE_LOOKUP_DB_NAME);
-                yield new VariableValSerde(uidLookupDb, hashLookupDb, byteBuffers);
-            }
-        };
-    }
-
     @Override
     public void insert(final LmdbWriter writer, final KV<Key, Val> kv) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         keySerde.write(writeTxn, kv.key(), keyByteBuffer ->
-                valueSerde.write(writeTxn, kv.val(), valueByteBuffer ->
+                valueSerde.write(writeTxn, new ValTime(kv.val(), Instant.now()), valueByteBuffer ->
                         dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, putFlags)));
         writer.tryCommit();
     }
@@ -236,7 +175,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                         if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
                             final Key key = keySerde.read(readTxn, kv.key());
-                            final Val value = valueSerde.read(readTxn, kv.val());
+                            final Val value = valueSerde.read(readTxn, kv.val()).val();
                             insert(writer, new TemporalRangedState(key, value));
                         } else {
                             // Quick merge.
@@ -262,7 +201,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                     if (valueByteBuffer == null) {
                         return null;
                     }
-                    return valueSerde.read(readTxn, valueByteBuffer);
+                    return NullSafe.get(valueSerde.read(readTxn, valueByteBuffer), ValTime::val);
                 }).orElse(null)));
     }
 
@@ -295,7 +234,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
     }
 
     private Function<Context, Val> getValExtractionFunction(final Txn<ByteBuffer> readTxn) {
-        return context -> valueSerde.read(readTxn, context.kv().val().duplicate());
+        return context -> NullSafe.get(valueSerde.read(readTxn, context.kv().val().duplicate()), ValTime::val);
     }
 
     public TemporalRangedState getState(final TemporalRangedStateRequest request) {
@@ -314,7 +253,7 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                             } else if ((key.getEffectiveTime().isBefore(request.effectiveTime()) ||
                                         key.getEffectiveTime().equals(request.effectiveTime())) &&
                                        key.getKeyStart() <= request.key()) {
-                                final Val value = valueSerde.read(readTxn, kv.val());
+                                final Val value = valueSerde.read(readTxn, kv.val()).val();
                                 result = new TemporalRangedState(key, value);
                             }
                         }
@@ -323,47 +262,110 @@ public class TemporalRangedStateDb extends AbstractDb<Key, Val> {
                 }));
     }
 
-    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
-    //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final Instant condenseBefore,
-                         final Instant deleteBefore) {
-        env.read(readTxn -> {
-            env.write(writer -> {
-                Key lastKey = null;
-                Val lastValue = null;
-                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                    while (iterator.hasNext()
-                           && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> kv = iterator.next();
-                        final Key key = keySerde.read(readTxn, kv.key().duplicate());
-                        final Val value = valueSerde.read(readTxn, kv.val().duplicate());
+    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+        return env.read(readTxn -> env.write(writer -> {
+            long changeCount = 0;
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext()
+                       && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    final Key key = keySerde.read(readTxn, kv.key().duplicate());
+                    final Instant time;
+                    if (useStateTime) {
+                        time = key.getEffectiveTime();
+                    } else {
+                        final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
+                        time = valTime.insertTime();
+                    }
 
-                        if (key.getEffectiveTime().isBefore(deleteBefore)) {
-                            // If this is data we no longer want to retain then delete it.
-                            dbi.delete(writer.getWriteTxn(), kv.key());
-                            writer.tryCommit();
-
-                        } else {
-                            if (lastKey != null &&
-                                lastKey.getKeyStart() == key.getKeyStart() &&
-                                lastKey.getKeyEnd() == key.getKeyEnd() &&
-                                lastValue.equals(value)) {
-                                if (key.getEffectiveTime().isBefore(condenseBefore)) {
-                                    // If the key and value are the same then delete the duplicate entry.
-                                    dbi.delete(writer.getWriteTxn(), kv.key());
-                                    writer.tryCommit();
-                                }
-                            }
-
-                            lastKey = key;
-                            lastValue = value;
-                        }
+                    if (time.isBefore(deleteBefore)) {
+                        // If this is data we no longer want to retain then delete it.
+                        dbi.delete(writer.getWriteTxn(), kv.key());
+                        writer.tryCommit();
+                        changeCount++;
                     }
                 }
-            });
-            return null;
+            }
+            return changeCount;
+        }));
+    }
+
+    @Override
+    public long condense(final Instant condenseBefore) {
+        return env.read(readTxn -> env.write(writer -> {
+            long changeCount = 0;
+            TemporalRangedState lastState = null;
+            TemporalRangedState newState = null;
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext()
+                       && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    final Key key = keySerde.read(readTxn, kv.key().duplicate());
+                    final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
+                    TemporalRangedState state = new TemporalRangedState(key, valTime.val());
+                    final Instant time = key.getEffectiveTime();
+
+                    if (lastState != null &&
+                        Objects.equals(lastState.key().getKeyStart(), key.getKeyStart()) &&
+                        Objects.equals(lastState.key().getKeyEnd(), key.getKeyEnd()) &&
+                        Objects.equals(lastState.val(), state.val()) &&
+                        time.isBefore(condenseBefore)) {
+
+                        // Remember the last state to insert it again later.
+                        if (newState == null) {
+                            newState = lastState;
+                        }
+
+                        // Delete the last state.
+                        deleteState(writer, lastState);
+                        changeCount++;
+
+                        // We might be forced to insert if we have reached the commit limit.
+                        if (writer.shouldCommit()) {
+                            deleteState(writer, state);
+                            changeCount++;
+
+                            // Insert new state.
+                            insert(writer, newState);
+                            newState = null;
+                            state = null;
+                        }
+
+                    } else if (newState != null) {
+                        // Delete the last state.
+                        deleteState(writer, lastState);
+                        changeCount++;
+
+                        // Insert new state.
+                        insert(writer, newState);
+                        newState = null;
+                    }
+
+                    lastState = state;
+                }
+            }
+
+            // Insert new state.
+            if (newState != null) {
+                // Delete the previous state as we are extending it.
+                deleteState(writer, lastState);
+                changeCount++;
+
+                // Insert the new session.
+                insert(writer, newState);
+            }
+
+            return changeCount;
+        }));
+    }
+
+    private void deleteState(final LmdbWriter writer, final TemporalRangedState state) {
+        keySerde.write(writer.getWriteTxn(), state.key(), keyByteBuffer -> {
+            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+            writer.incrementChangeCount();
         });
     }
 

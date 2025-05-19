@@ -12,6 +12,7 @@ import java.util.Objects;
         "maxStoreSize",
         "synchroniseMerge",
         "snapshotSettings",
+        "retention",
         "overwrite",
         "rangeType",
         "stateValueSchema"
@@ -19,6 +20,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RangedStateSettings extends AbstractPlanBSettings {
 
+    @JsonProperty
+    private final DurationSetting retention;
     @JsonProperty
     private final Boolean overwrite;
     @JsonProperty
@@ -30,13 +33,19 @@ public class RangedStateSettings extends AbstractPlanBSettings {
     public RangedStateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                                @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                                @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                               @JsonProperty("retention") final DurationSetting retention,
                                @JsonProperty("overwrite") final Boolean overwrite,
                                @JsonProperty("rangeType") final RangeType rangeType,
                                @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema) {
         super(maxStoreSize, synchroniseMerge, snapshotSettings);
+        this.retention = retention;
         this.overwrite = overwrite;
         this.rangeType = rangeType;
         this.stateValueSchema = stateValueSchema;
+    }
+
+    public DurationSetting getRetention() {
+        return retention;
     }
 
     public Boolean getOverwrite() {
@@ -67,20 +76,22 @@ public class RangedStateSettings extends AbstractPlanBSettings {
             return false;
         }
         final RangedStateSettings that = (RangedStateSettings) o;
-        return Objects.equals(overwrite, that.overwrite) &&
+        return Objects.equals(retention, that.retention) &&
+               Objects.equals(overwrite, that.overwrite) &&
                rangeType == that.rangeType &&
                Objects.equals(stateValueSchema, that.stateValueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), overwrite, rangeType, stateValueSchema);
+        return Objects.hash(super.hashCode(), retention, overwrite, rangeType, stateValueSchema);
     }
 
     @Override
     public String toString() {
         return "RangedStateSettings{" +
-               "overwrite=" + overwrite +
+               "retention=" + retention +
+               ", overwrite=" + overwrite +
                ", rangeType=" + rangeType +
                ", stateValueSchema=" + stateValueSchema +
                '}';
@@ -96,6 +107,7 @@ public class RangedStateSettings extends AbstractPlanBSettings {
 
     public static class Builder extends AbstractBuilder<RangedStateSettings, Builder> {
 
+        private DurationSetting retention;
         private Boolean overwrite;
         private RangeType rangeType;
         private StateValueSchema stateValueSchema;
@@ -105,9 +117,15 @@ public class RangedStateSettings extends AbstractPlanBSettings {
 
         public Builder(final RangedStateSettings settings) {
             super(settings);
+            this.retention = settings.retention;
             this.overwrite = settings.overwrite;
             this.rangeType = settings.rangeType;
             this.stateValueSchema = settings.stateValueSchema;
+        }
+
+        public Builder retention(final DurationSetting retention) {
+            this.retention = retention;
+            return self();
         }
 
         public Builder overwrite(final Boolean overwrite) {
@@ -136,6 +154,7 @@ public class RangedStateSettings extends AbstractPlanBSettings {
                     maxStoreSize,
                     synchroniseMerge,
                     snapshotSettings,
+                    retention,
                     overwrite,
                     rangeType,
                     stateValueSchema);

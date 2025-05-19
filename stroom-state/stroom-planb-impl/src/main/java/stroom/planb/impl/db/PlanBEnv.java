@@ -6,6 +6,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.lmdbjava.CopyFlags;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -14,6 +15,7 @@ import org.lmdbjava.EnvInfo;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -113,6 +115,10 @@ public class PlanBEnv implements AutoCloseable {
             Thread.currentThread().interrupt();
             throw new UncheckedInterruptedException(e);
         }
+    }
+
+    public void copy(File dest, CopyFlags... flags) {
+        env.copy(dest, flags);
     }
 
     public final boolean isReadOnly() {

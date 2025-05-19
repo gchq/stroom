@@ -25,6 +25,8 @@ import stroom.planb.impl.db.serde.time.MinuteTimeSerde;
 import stroom.planb.impl.db.serde.time.NanoTimeSerde;
 import stroom.planb.impl.db.serde.time.SecondTimeSerde;
 import stroom.planb.impl.db.serde.time.TimeSerde;
+import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
+import stroom.planb.impl.db.serde.valtime.InstantSerde;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateValueSchema;
@@ -50,10 +52,8 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -62,10 +62,10 @@ import java.util.function.Predicate;
 public class SessionDb extends AbstractDb<Session, Session> {
 
     private static final String KEY_LOOKUP_DB_NAME = "key";
-    private static final ByteBuffer VALUE = ByteBuffer.allocateDirect(0);
 
     private final SessionSettings settings;
     private final SessionSerde keySerde;
+    private final InstantSerde valueSerde;
     private final TimeSerde timeSerde;
 
     private SessionDb(final PlanBEnv env,
@@ -73,11 +73,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
                       final Boolean overwrite,
                       final SessionSettings settings,
                       final SessionSerde keySerde,
+                      final InstantSerde valueSerde,
                       final TimeSerde timeSerde,
                       final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env, byteBuffers, overwrite, hashClashCommitRunnable);
         this.settings = settings;
         this.keySerde = keySerde;
+        this.valueSerde = valueSerde;
         this.timeSerde = timeSerde;
     }
 
@@ -105,19 +107,21 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 settings,
                 SessionSettings::getTimePrecision,
                 TimePrecision.MILLISECOND));
-        final SessionSerde serde = createKeySerde(
+        final SessionSerde keySerde = createKeySerde(
                 stateValueType,
                 valueHashLength,
                 env,
                 byteBuffers,
                 timeSerde,
                 hashClashCommitRunnable);
+        final InstantSerde valueSerde = new InstantSerde(new InsertTimeSerde());
         return new SessionDb(
                 env,
                 byteBuffers,
                 settings.overwrite(),
                 settings,
-                serde,
+                keySerde,
+                valueSerde,
                 timeSerde,
                 hashClashCommitRunnable);
     }
@@ -191,7 +195,8 @@ public class SessionDb extends AbstractDb<Session, Session> {
     public void insert(final LmdbWriter writer, final Session session) {
         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
         keySerde.write(writeTxn, session, keyByteBuffer ->
-                dbi.put(writeTxn, keyByteBuffer, VALUE, putFlags));
+                valueSerde.write(writeTxn, Instant.now(), valueByteBuffer ->
+                        dbi.put(writeTxn, keyByteBuffer, valueByteBuffer, putFlags)));
         writer.tryCommit();
     }
 
@@ -253,110 +258,84 @@ public class SessionDb extends AbstractDb<Session, Session> {
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
         fields.forEach(fieldIndex::create);
 
+        final Integer startIndex = fieldIndex.getPos(SessionFields.START);
+        final Integer endIndex = fieldIndex.getPos(SessionFields.END);
         final ValueFunctionFactories<Val[]> valueFunctionFactories =
                 PlanBSearchHelper.createValueFunctionFactories(fieldIndex);
         final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
         final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
 
-        // We keep a map of sessions to cope with key hash clashes.
-        final Map<Val, CurrentSession> currentSessionMap = new HashMap<>();
-
         env.read(readTxn -> {
             final ValuesExtractor valuesExtractor = createValuesExtractor(fieldIndex,
                     getKeyExtractionFunction(readTxn));
 
-
-            Val lastKey = null;
-
+            CurrentSession lastSession = null;
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    final Val[] vals = valuesExtractor.apply(readTxn, kv);
                     if (predicate.test(vals)) {
-                        final Session session = keySerde.read(readTxn, keyVal.key());
 
+                        final Session session = keySerde.read(readTxn, kv.key());
 
-                        // We have a matching row so extend the current session if we have one.
+                        if (lastSession != null &&
+                            lastSession.key.equals(session.getKey()) &&
+                            (lastSession.sessionEnd.isAfter(session.getStart()) ||
+                             lastSession.sessionEnd.equals(session.getStart()))) {
 
-                        // If the key hash changes then we want to dump out all current sessions.
-                        if (lastKey != null && !lastKey.equals(session.getKey())) {
-                            currentSessionMap.values().forEach(currentSession -> consumer.accept(extendSession(
-                                    currentSession.vals,
-                                    fieldIndex,
-                                    currentSession.sessionStart,
-                                    currentSession.sessionEnd)));
-                            currentSessionMap.clear();
-                        }
+                            // Extend the session.
+                            lastSession = new CurrentSession(
+                                    lastSession.key,
+                                    lastSession.sessionStart,
+                                    session.getEnd(),
+                                    vals);
 
-                        // See if we currently have a session for the value.
-                        final CurrentSession currentSession = currentSessionMap.get(session.getKey());
-
-                        if (currentSession != null) {
-                            if (currentSession.sessionEnd.isBefore(session.getStart())) {
-
-                                // We are entering a new session so deliver the current one.
-                                consumer.accept(extendSession(
-                                        currentSession.vals,
-                                        fieldIndex,
-                                        currentSession.sessionStart,
-                                        currentSession.sessionEnd));
-
-                                // Add a new session to the current session map.
-                                currentSessionMap.put(session.getKey(),
-                                        new CurrentSession(session.getStart(), session.getEnd(), vals));
-
-                            } else {
-                                // Update the session
-                                currentSessionMap.put(session.getKey(), new CurrentSession(
-                                        currentSession.sessionStart,
-                                        session.getEnd(),
-                                        currentSession.vals));
-                            }
                         } else {
-                            // Create a new session.
-                            currentSessionMap.put(session.getKey(),
-                                    new CurrentSession(session.getStart(), session.getEnd(), vals));
-
-                            // We are using a map to deal with interleaved clashing key hashes. This still represents a
-                            // risk if we have large numbers of such clashes so guard against this to prevent a
-                            // potential OOME.
-                            if (currentSessionMap.size() > 1000) {
-                                throw new RuntimeException("Too many hash clashes detected for: " + session.getKey());
+                            // Insert new session.
+                            if (lastSession != null) {
+                                consumer.accept(extendSession(
+                                        lastSession.vals,
+                                        startIndex,
+                                        lastSession.sessionStart,
+                                        endIndex,
+                                        lastSession.sessionEnd));
                             }
+
+                            lastSession = new CurrentSession(
+                                    session.getKey(),
+                                    session.getStart(),
+                                    session.getEnd(),
+                                    vals);
                         }
-
-                        lastKey = session.getKey();
-
-
                     }
                 }
             }
 
-            if (lastKey != null) {
-                // Send the final sessions.
-                currentSessionMap.values().forEach(currentSession -> consumer.accept(extendSession(
-                        currentSession.vals,
-                        fieldIndex,
-                        currentSession.sessionStart,
-                        currentSession.sessionEnd)));
-                currentSessionMap.clear();
+            if (lastSession != null) {
+                consumer.accept(extendSession(
+                        lastSession.vals,
+                        startIndex,
+                        lastSession.sessionStart,
+                        endIndex,
+                        lastSession.sessionEnd));
             }
+
             return null;
         });
     }
 
-
     public Val[] extendSession(final Val[] vals,
-                               final FieldIndex fieldIndex,
+                               final Integer startIndex,
                                final Instant sessionStart,
+                               final Integer endIndex,
                                final Instant sessionEnd) {
-        final Integer startIndex = fieldIndex.getPos(SessionFields.START);
         if (startIndex != null) {
             vals[startIndex] = ValDate.create(sessionStart);
         }
-        final Integer endIndex = fieldIndex.getPos(SessionFields.END);
         if (endIndex != null) {
             vals[endIndex] = ValDate.create(sessionEnd);
         }
@@ -406,28 +385,50 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                 }).orElse(null)));
     }
 
-    // TODO: Note that LMDB does not free disk space just because you delete entries, instead it just frees pages for
-    //  reuse. We might want to create a new compacted instance instead of deleting in place.
     @Override
-    public void condense(final Instant condenseBefore,
-                         final Instant deleteBefore) {
-        env.read(readTxn -> {
-            write(writer -> {
-                Session lastSession = null;
-                Session newSession = null;
+    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+        return env.read(readTxn ->
+                env.write(writer -> {
+                    long changeCount = 0;
+                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                        while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                            final KeyVal<ByteBuffer> kv = iterator.next();
+                            final Instant time;
+                            if (useStateTime) {
+                                final Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
+                                time = session.getEnd();
+                            } else {
+                                time = valueSerde.read(writer.getWriteTxn(), kv.val());
+                            }
 
-                try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                    while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                        final KeyVal<ByteBuffer> kv = iterator.next();
-                        final Session session = keySerde.read(writer.getWriteTxn(), kv.key());
+                            if (time.isBefore(deleteBefore)) {
+                                // If this is data we no longer want to retain then delete it.
+                                dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                                writer.tryCommit();
+                                changeCount++;
 
-                        if (session.getEnd().isBefore(deleteBefore)) {
-                            // If this is data we no longer want to retain then delete it.
-                            dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                            writer.tryCommit();
+                            }
+                        }
+                    }
+                    return changeCount;
+                }));
+    }
 
-                        } else {
+    @Override
+    public long condense(final Instant condenseBefore) {
+        return env.read(readTxn ->
+                env.write(writer -> {
+                    long changeCount = 0;
+                    Session lastSession = null;
+                    Session newSession = null;
+
+                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                        while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                            final KeyVal<ByteBuffer> kv = iterator.next();
+                            Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
+
                             if (lastSession != null &&
                                 lastSession.getKey().equals(session.getKey()) &&
                                 session.getStart().isBefore(condenseBefore) &&
@@ -440,47 +441,57 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                         session.getEnd());
 
                                 // Delete the previous session as we are extending it.
-                                keySerde.write(writer.getWriteTxn(), lastSession, keyByteBuffer -> {
-                                    dbi.delete(writer.getWriteTxn(), keyByteBuffer);
-                                    writer.tryCommit();
-                                });
-                            } else {
-                                // Insert new session.
-                                if (newSession != null) {
+                                deleteSession(writer, lastSession);
+                                changeCount++;
+
+                                // We might be forced to insert if we have reached the commit limit.
+                                if (writer.shouldCommit()) {
+                                    deleteSession(writer, session);
+                                    changeCount++;
+
+                                    // Insert new session.
                                     insert(writer, newSession);
                                     newSession = null;
+                                    session = null;
                                 }
+
+                            } else if (newSession != null) {
+                                // Delete the previous session as we are extending it.
+                                deleteSession(writer, lastSession);
+                                changeCount++;
+
+                                // Insert new session.
+                                insert(writer, newSession);
+                                newSession = null;
                             }
 
                             lastSession = session;
                         }
                     }
-                }
 
-                // Insert new session.
-                if (newSession != null) {
-                    // Delete the last session if it will be merged into the new one.
-                    if (lastSession.getKey().equals(newSession.getKey()) &&
-                        newSession.getStart().isBefore(condenseBefore) &&
-                        (lastSession.getEnd().isAfter(newSession.getStart()) ||
-                         lastSession.getEnd().equals(newSession.getStart()))) {
-
+                    // Insert new session.
+                    if (newSession != null) {
                         // Delete the previous session as we are extending it.
-                        keySerde.write(writer.getWriteTxn(), lastSession, keyByteBuffer -> {
-                            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
-                            writer.tryCommit();
-                        });
+                        deleteSession(writer, lastSession);
+                        changeCount++;
+
+                        // Insert the new session.
+                        insert(writer, newSession);
                     }
 
-                    // Insert the new session.
-                    insert(writer, newSession);
-                }
-            });
-            return null;
+                    return changeCount;
+                }));
+    }
+
+    private void deleteSession(final LmdbWriter writer, final Session session) {
+        keySerde.write(writer.getWriteTxn(), session, keyByteBuffer -> {
+            dbi.delete(writer.getWriteTxn(), keyByteBuffer);
+            writer.incrementChangeCount();
         });
     }
 
-    private record CurrentSession(Instant sessionStart,
+    private record CurrentSession(Val key,
+                                  Instant sessionStart,
                                   Instant sessionEnd,
                                   Val[] vals) {
 

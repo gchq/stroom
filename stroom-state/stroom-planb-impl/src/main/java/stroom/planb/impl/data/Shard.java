@@ -18,6 +18,11 @@ public interface Shard {
     void merge(Path sourceDir);
 
     /**
+     * Delete old data in the shard.
+     */
+    void deleteOldData(PlanBDoc doc);
+
+    /**
      * Condense data in the shard.
      */
     void condense(PlanBDoc doc);

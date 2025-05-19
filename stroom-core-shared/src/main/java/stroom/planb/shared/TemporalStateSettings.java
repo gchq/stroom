@@ -9,11 +9,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
         "synchroniseMerge",
         "snapshotSettings",
+        "condense",
+        "retention",
+        "useStateTimeForRetention",
         "overwrite",
         "stateKeySchema",
         "stateValueSchema",
@@ -27,6 +28,8 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
     @JsonProperty
     private final DurationSetting retention;
     @JsonProperty
+    private final Boolean useStateTimeForRetention;
+    @JsonProperty
     private final Boolean overwrite;
     @JsonProperty
     private final StateKeySchema stateKeySchema;
@@ -36,11 +39,12 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
     private final TimePrecision timePrecision;
 
     @JsonCreator
-    public TemporalStateSettings(@JsonProperty("condense") final DurationSetting condense,
-                                 @JsonProperty("retention") final DurationSetting retention,
-                                 @JsonProperty("maxStoreSize") final Long maxStoreSize,
+    public TemporalStateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                                  @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
                                  @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                                 @JsonProperty("condense") final DurationSetting condense,
+                                 @JsonProperty("retention") final DurationSetting retention,
+                                 @JsonProperty("useStateTimeForRetention") final Boolean useStateTimeForRetention,
                                  @JsonProperty("overwrite") final Boolean overwrite,
                                  @JsonProperty("stateKeySchema") final StateKeySchema stateKeySchema,
                                  @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema,
@@ -48,6 +52,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         super(maxStoreSize, synchroniseMerge, snapshotSettings);
         this.condense = condense;
         this.retention = retention;
+        this.useStateTimeForRetention = useStateTimeForRetention;
         this.overwrite = overwrite;
         this.stateKeySchema = stateKeySchema;
         this.stateValueSchema = stateValueSchema;
@@ -60,6 +65,10 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
 
     public DurationSetting getRetention() {
         return retention;
+    }
+
+    public Boolean getUseStateTimeForRetention() {
+        return useStateTimeForRetention;
     }
 
     public Boolean getOverwrite() {
@@ -96,6 +105,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         final TemporalStateSettings that = (TemporalStateSettings) o;
         return Objects.equals(condense, that.condense) &&
                Objects.equals(retention, that.retention) &&
+               Objects.equals(useStateTimeForRetention, that.useStateTimeForRetention) &&
                Objects.equals(overwrite, that.overwrite) &&
                Objects.equals(stateKeySchema, that.stateKeySchema) &&
                Objects.equals(stateValueSchema, that.stateValueSchema) &&
@@ -108,6 +118,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
                 super.hashCode(),
                 condense,
                 retention,
+                useStateTimeForRetention,
                 overwrite,
                 stateKeySchema,
                 stateValueSchema,
@@ -119,6 +130,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         return "TemporalStateSettings{" +
                "condense=" + condense +
                ", retention=" + retention +
+               ", useStateTimeForRetention=" + useStateTimeForRetention +
                ", overwrite=" + overwrite +
                ", stateKeySchema=" + stateKeySchema +
                ", stateValueSchema=" + stateValueSchema +
@@ -138,6 +150,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
 
         private DurationSetting condense;
         private DurationSetting retention;
+        private Boolean useStateTimeForRetention;
         private Boolean overwrite;
         private StateKeySchema stateKeySchema;
         private StateValueSchema stateValueSchema;
@@ -150,6 +163,7 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
             super(settings);
             this.condense = settings.condense;
             this.retention = settings.retention;
+            this.useStateTimeForRetention = settings.useStateTimeForRetention;
             this.overwrite = settings.overwrite;
             this.stateKeySchema = settings.stateKeySchema;
             this.stateValueSchema = settings.stateValueSchema;
@@ -163,6 +177,11 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
 
         public Builder retention(final DurationSetting retention) {
             this.retention = retention;
+            return self();
+        }
+
+        public Builder useStateTimeForRetention(final Boolean useStateTimeForRetention) {
+            this.useStateTimeForRetention = useStateTimeForRetention;
             return self();
         }
 
@@ -194,11 +213,12 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         @Override
         public TemporalStateSettings build() {
             return new TemporalStateSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
                     synchroniseMerge,
                     snapshotSettings,
+                    condense,
+                    retention,
+                    useStateTimeForRetention,
                     overwrite,
                     stateKeySchema,
                     stateValueSchema,
