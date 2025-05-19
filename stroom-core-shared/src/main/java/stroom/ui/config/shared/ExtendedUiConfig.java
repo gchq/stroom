@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -70,7 +69,7 @@ public class ExtendedUiConfig {
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
-        this.obfuscatedFields = Collections.emptySet();
+        this.obfuscatedFields = Set.of("Feed");
     }
 
     @JsonCreator

@@ -520,7 +520,13 @@ public class ReceiveDataConfig
          * the downstream stroom/proxy.
          */
         FEED_STATUS_CHECK,
+        /**
+         * The meta attributes from the headers will be checked against the receipt policy rules.
+         */
         RECEIPT_POLICY_RULES_CHECK,
+        /**
+         *
+         */
         NO_CHECK,
         ;
     }
