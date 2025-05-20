@@ -33,6 +33,8 @@ public interface Db<K, V> extends AutoCloseable {
 
     long condense(Instant condenseBefore);
 
+    void compact(Path destination);
+
     LmdbWriter createWriter();
 
     void write(Consumer<LmdbWriter> consumer);

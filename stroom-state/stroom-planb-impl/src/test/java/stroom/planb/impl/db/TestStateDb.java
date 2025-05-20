@@ -32,6 +32,7 @@ import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateFields;
+import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
@@ -55,6 +56,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.zip.ZipUtil;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -86,6 +88,7 @@ class TestStateDb {
     private static final StateSettings BASIC_SETTINGS = StateSettings
             .builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
+            .retention(DurationSetting.builder().duration(SimpleDuration.ZERO).enabled(true).build())
             .build();
     private static final String MAP_UUID = "map-uuid";
     private static final String MAP_NAME = "map-name";
@@ -237,6 +240,10 @@ class TestStateDb {
                 true)) {
             assertThat(db.count()).isEqualTo(2);
         }
+
+        // Try compaction.
+        shardManager.compactAll();
+        shardManager.compactAll();
     }
 
     @Test

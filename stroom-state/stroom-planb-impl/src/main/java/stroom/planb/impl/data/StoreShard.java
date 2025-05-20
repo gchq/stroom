@@ -13,9 +13,11 @@ import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.TemporalRangedStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.util.time.StroomDuration;
@@ -36,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -43,12 +46,18 @@ class StoreShard implements Shard {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreShard.class);
 
+    private static final String DATA_FILE_NAME = "data.mdb";
+    private static final String COMPACTED_DIR_NAME = "compacted";
+
     private final ByteBuffers byteBuffers;
     private final Provider<PlanBConfig> configProvider;
     private final Path shardDir;
     private final Path snapshotDir;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock readLock = new ReentrantLock();
+    private final ReentrantLock writeLock = new ReentrantLock();
+    private final Condition compactingCondition = readLock.newCondition();
+    private final Condition useCountCondition = readLock.newCondition();
 
     private final PlanBDoc doc;
     private final AtomicInteger useCount = new AtomicInteger();
@@ -57,6 +66,7 @@ class StoreShard implements Shard {
     private volatile Instant lastAccessTime;
     private volatile Instant lastWriteTime;
     private volatile Instant lastSnapshotTime;
+    private volatile boolean compacting;
 
     public StoreShard(final ByteBuffers byteBuffers,
                       final Provider<PlanBConfig> configProvider,
@@ -70,9 +80,14 @@ class StoreShard implements Shard {
         this.snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
     }
 
-    private void incrementUseCount() {
-        lock.lock();
+    private void incrementReadCount() {
+        readLock.lock();
         try {
+            // Don't allow a new read until we have finished compacting.
+            while (compacting) {
+                compactingCondition.await();
+            }
+
             // Open if needed.
             if (!open) {
                 open();
@@ -85,48 +100,60 @@ class StoreShard implements Shard {
             }
 
             lastAccessTime = Instant.now();
-
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
         } finally {
-            lock.unlock();
+            readLock.unlock();
         }
     }
 
-    private void decrementUseCount() {
-        lock.lock();
+    private void decrementReadCount() {
+        readLock.lock();
         try {
             final int count = useCount.decrementAndGet();
             if (count < 0) {
                 throw new RuntimeException("Unexpected count");
             }
             cleanup();
+
+            // Let anything waiting on this condition know that the use count has changed.
+            useCountCondition.signalAll();
         } finally {
-            lock.unlock();
+            readLock.unlock();
         }
     }
 
     @Override
-    public void delete() {
-        lock.lock();
+    public boolean delete() {
+        writeLock.lock();
         try {
-            if (useCount.get() == 0) {
-                LOGGER.info(() -> "Deleting data for: " + doc);
-                cleanup();
-                FileUtil.deleteDir(shardDir);
+            readLock.lock();
+            try {
+                if (useCount.get() == 0) {
+                    LOGGER.info(() -> "Deleting data for: " + doc);
+                    cleanup();
+                    FileUtil.deleteDir(shardDir);
+                    return true;
+                }
+                return false;
+            } finally {
+                readLock.unlock();
             }
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
     public void merge(final Path sourceDir) {
-        // See if we can just merge by moving the file.
-        lock.lock();
+        writeLock.lock();
         try {
+            // See if we can just merge by moving the file.
             boolean success = false;
 
             // If we don't already have the shard dir then just move the source to the target.
             if (!Files.isDirectory(shardDir)) {
+                readLock.lock();
                 try {
                     success = true;
                     Files.createDirectories(shardDir.getParent());
@@ -134,121 +161,215 @@ class StoreShard implements Shard {
                     lastWriteTime = Instant.now();
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
+                } finally {
+                    readLock.unlock();
                 }
             }
 
             // If the file already existed then we must open the DB and merge with LMDB.
             if (!success) {
-                incrementUseCount();
+                // Ensure the DB is open and won't be closed.
+                incrementReadCount();
                 try {
                     db.merge(sourceDir);
                     lastWriteTime = Instant.now();
                 } finally {
-                    decrementUseCount();
+                    decrementReadCount();
                 }
             }
 
             // Create a new snapshot periodically.
             createSnapshot();
-
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
     @Override
-    public void deleteOldData(final PlanBDoc doc) {
-        lock.lock();
-        try {
-            // Find out how old data needs to be before we delete it.
-            boolean useStateTime = false;
-            DurationSetting retention = null;
-            if (doc.getSettings() instanceof final StateSettings stateSettings) {
-                retention = stateSettings.getRetention();
-            } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-                retention = temporalStateSettings.getRetention();
-                useStateTime = temporalStateSettings.getUseStateTimeForRetention() != null &&
-                               temporalStateSettings.getUseStateTimeForRetention();
-            } else if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
-                retention = rangedStateSettings.getRetention();
-            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-                retention = temporalRangedStateSettings.getRetention();
-                useStateTime = temporalRangedStateSettings.getUseStateTimeForRetention() != null &&
-                               temporalRangedStateSettings.getUseStateTimeForRetention();
-            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-                retention = sessionSettings.getRetention();
-                useStateTime = sessionSettings.getUseStateTimeForRetention() != null &&
-                               sessionSettings.getUseStateTimeForRetention();
-            }
+    public long deleteOldData(final PlanBDoc doc) {
+        long result = 0;
 
-            final Instant deleteBefore;
-            if (retention != null && retention.isEnabled()) {
-                deleteBefore = SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
-            } else {
-                deleteBefore = Instant.MIN;
-            }
+        // Find out how old data needs to be before we delete it.
+        boolean useStateTime = false;
+        DurationSetting retention = null;
+        if (doc.getSettings() instanceof final StateSettings stateSettings) {
+            retention = stateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+            retention = temporalStateSettings.getRetention();
+            useStateTime = temporalStateSettings.getUseStateTimeForRetention() != null &&
+                           temporalStateSettings.getUseStateTimeForRetention();
+        } else if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
+            retention = rangedStateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+            retention = temporalRangedStateSettings.getRetention();
+            useStateTime = temporalRangedStateSettings.getUseStateTimeForRetention() != null &&
+                           temporalRangedStateSettings.getUseStateTimeForRetention();
+        } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+            retention = sessionSettings.getRetention();
+            useStateTime = sessionSettings.getUseStateTimeForRetention() != null &&
+                           sessionSettings.getUseStateTimeForRetention();
+        }
 
-            // If we are condensing or deleting data then do so.
-            if (deleteBefore.isAfter(Instant.MIN)) {
-                incrementUseCount();
+        final Instant deleteBefore;
+        if (retention != null && retention.isEnabled()) {
+            deleteBefore = SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
+        } else {
+            deleteBefore = Instant.MIN;
+        }
+
+        // If we are condensing or deleting data then do so.
+        if (deleteBefore.isAfter(Instant.MIN)) {
+            writeLock.lock();
+            try {
+                // Ensure the DB is open and won't be closed.
+                incrementReadCount();
                 try {
-                    db.deleteOldData(deleteBefore, useStateTime);
+                    result = db.deleteOldData(deleteBefore, useStateTime);
                     lastWriteTime = Instant.now();
                 } finally {
-                    decrementUseCount();
+                    decrementReadCount();
                 }
+            } finally {
+                writeLock.unlock();
             }
+        }
 
+        if (result > 0) {
             // Create a new snapshot periodically.
             createSnapshot();
-
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-        } finally {
-            lock.unlock();
         }
+
+        return result;
     }
 
     @Override
-    public void condense(final PlanBDoc doc) {
-        lock.lock();
-        try {
-            // Find out how old data needs to be before we condense it.
-            DurationSetting condense = null;
-            if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
-                condense = temporalStateSettings.getCondense();
-            } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-                condense = temporalRangedStateSettings.getCondense();
-            } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
-                condense = sessionSettings.getCondense();
-            }
+    public long condense(final PlanBDoc doc) {
+        long result = 0;
+        // Find out how old data needs to be before we condense it.
+        DurationSetting condense = null;
+        if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
+            condense = temporalStateSettings.getCondense();
+        } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
+            condense = temporalRangedStateSettings.getCondense();
+        } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
+            condense = sessionSettings.getCondense();
+        }
 
-            final Instant condenseBefore;
-            if (condense != null && condense.isEnabled()) {
-                condenseBefore = SimpleDurationUtil.minus(Instant.now(), condense.getDuration());
-            } else {
-                condenseBefore = Instant.MIN;
-            }
+        final Instant condenseBefore;
+        if (condense != null && condense.isEnabled()) {
+            condenseBefore = SimpleDurationUtil.minus(Instant.now(), condense.getDuration());
+        } else {
+            condenseBefore = Instant.MIN;
+        }
 
-
-            // If we are condensing or deleting data then do so.
-            if (condenseBefore.isAfter(Instant.MIN)) {
-                incrementUseCount();
+        // If we are condensing or deleting data then do so.
+        if (condenseBefore.isAfter(Instant.MIN)) {
+            writeLock.lock();
+            try {
+                // Ensure the DB is open and won't be closed.
+                incrementReadCount();
                 try {
-                    db.condense(condenseBefore);
+                    result = db.condense(condenseBefore);
                     lastWriteTime = Instant.now();
                 } finally {
-                    decrementUseCount();
+                    decrementReadCount();
                 }
+            } finally {
+                writeLock.unlock();
             }
+        }
 
+        if (result > 0) {
             // Create a new snapshot periodically.
             createSnapshot();
+        }
 
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
+        return result;
+    }
+
+    @Override
+    public void compact() {
+        final Path dataFile = shardDir.resolve(DATA_FILE_NAME);
+        final Path compactedDir = shardDir.resolve(COMPACTED_DIR_NAME);
+        final Path compactedFile = compactedDir.resolve(DATA_FILE_NAME);
+
+        // Stop all other writes during the compaction process.
+        writeLock.lock();
+        try {
+
+            // Ensure the DB is open and won't be closed.
+            incrementReadCount();
+            try {
+                // Perform compaction.
+                LOGGER.info("Running compaction");
+                LOGGER.info(() -> "Size before compaction: " + fileSize(dataFile));
+                FileUtil.deleteDir(compactedDir);
+                Files.createDirectory(compactedDir);
+                db.compact(compactedDir);
+                LOGGER.info(() -> "Size after compaction: " + fileSize(compactedFile));
+            } catch (final IOException e) {
+                LOGGER.error(e::getMessage, e);
+                throw new UncheckedIOException(e);
+            } finally {
+                decrementReadCount();
+            }
+
+            // Now we want to switch out the files atomically when nobody is reading.
+            readLock.lock();
+            try {
+                // Let readers know we are performing compaction and don't allow usage to be incremented.
+                compacting = true;
+                try {
+                    // Wait for all readers to stop reading.
+                    while (useCount.get() > 0) {
+                        useCountCondition.await();
+                    }
+
+                    // Now we have no readers we can switch the files.
+
+                    // Close the DB if open.
+                    if (open) {
+                        db.close();
+                        db = null;
+                        open = false;
+                    }
+
+                    // Switch files.
+                    try {
+                        Files.move(
+                                compactedFile,
+                                dataFile,
+                                StandardCopyOption.REPLACE_EXISTING,
+                                StandardCopyOption.ATOMIC_MOVE);
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+
+                    // Cleanup.
+                    FileUtil.deleteDir(compactedDir);
+
+                    lastWriteTime = Instant.now();
+                } finally {
+                    compacting = false;
+                    // Wake up waiting threads.
+                    compactingCondition.signalAll();
+                }
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
+            } finally {
+                readLock.unlock();
+            }
         } finally {
-            lock.unlock();
+            writeLock.unlock();
+        }
+    }
+
+    private String fileSize(final Path file) {
+        try {
+            return ModelStringUtil.formatMetricByteSizeString(Files.size(file));
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -272,7 +393,25 @@ class StoreShard implements Shard {
     @Override
     public void createSnapshot() {
         if (isNewSnapshotRequired()) {
-            lockAndCreateSnapshot();
+            incrementReadCount();
+            try {
+                // TODO : Possibly create windowed snapshots.
+                final Instant lastWriteTime = this.lastWriteTime;
+                try {
+                    // Get the snapshot file.
+                    Files.createDirectories(snapshotDir);
+                    final Path tmpFile = getSnapshotTmp();
+                    final Path zipFile = getSnapshotZip();
+                    createZip(tmpFile, lastWriteTime);
+                    Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
+                } finally {
+                    this.lastSnapshotTime = lastWriteTime;
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            } finally {
+                decrementReadCount();
+            }
         }
     }
 
@@ -301,30 +440,6 @@ class StoreShard implements Shard {
         return snapshotDir.resolve("snapshot.zip");
     }
 
-    private void lockAndCreateSnapshot() {
-        lock.lock();
-        try {
-            // TODO : Possibly create windowed snapshots.
-            if (isNewSnapshotRequired()) {
-                final Instant lastWriteTime = this.lastWriteTime;
-                try {
-                    // Get the snapshot file.
-                    Files.createDirectories(snapshotDir);
-                    final Path tmpFile = getSnapshotTmp();
-                    final Path zipFile = getSnapshotZip();
-                    createZip(tmpFile, lastWriteTime);
-                    Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
-                } finally {
-                    this.lastSnapshotTime = lastWriteTime;
-                }
-            }
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-        } finally {
-            lock.unlock();
-        }
-    }
-
     private void createZip(final Path zipFile,
                            final Instant lastWriteTime) {
         try (final ZipArchiveOutputStream zipOutputStream =
@@ -344,17 +459,17 @@ class StoreShard implements Shard {
 
     @Override
     public <R> R get(final Function<Db<?, ?>, R> function) {
-        incrementUseCount();
+        incrementReadCount();
         try {
             return function.apply(db);
         } finally {
-            decrementUseCount();
+            decrementReadCount();
         }
     }
 
     @Override
     public void cleanup() {
-        lock.lock();
+        readLock.lock();
         try {
             if (useCount.get() == 0) {
                 if (open && isIdle()) {
@@ -364,7 +479,7 @@ class StoreShard implements Shard {
                 }
             }
         } finally {
-            lock.unlock();
+            readLock.unlock();
         }
     }
 
@@ -395,24 +510,11 @@ class StoreShard implements Shard {
 
     @Override
     public String getInfo() {
+        incrementReadCount();
         try {
-            lock.lock();
-            try {
-                // Open if needed.
-                if (!open) {
-                    open();
-                    open = true;
-                }
-
-                return db.getInfo();
-
-            } finally {
-                lock.unlock();
-            }
-        } catch (final Exception e) {
-            LOGGER.debug(e::getMessage, e);
+            return db.getInfo();
+        } finally {
+            decrementReadCount();
         }
-
-        return null;
     }
 }

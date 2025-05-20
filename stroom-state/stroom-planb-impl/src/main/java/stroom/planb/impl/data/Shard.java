@@ -20,12 +20,17 @@ public interface Shard {
     /**
      * Delete old data in the shard.
      */
-    void deleteOldData(PlanBDoc doc);
+    long deleteOldData(PlanBDoc doc);
 
     /**
      * Condense data in the shard.
      */
-    void condense(PlanBDoc doc);
+    long condense(PlanBDoc doc);
+
+    /**
+     * Compact data in the shard.
+     */
+    void compact();
 
     /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
@@ -57,7 +62,7 @@ public interface Shard {
     /**
      * Delete the DB if the associated doc has been deleted.
      */
-    void delete();
+    boolean delete();
 
     /**
      * Get the Plan B doc associated with this shard.

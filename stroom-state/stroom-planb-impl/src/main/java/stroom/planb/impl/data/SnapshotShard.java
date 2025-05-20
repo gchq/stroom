@@ -108,13 +108,20 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public void deleteOldData(final PlanBDoc doc) {
+    public long deleteOldData(final PlanBDoc doc) {
         // Deletion of old data is not supported on snapshots
+        return 0L;
     }
 
     @Override
-    public void condense(final PlanBDoc doc) {
+    public long condense(final PlanBDoc doc) {
         // Condense is not supported on snapshots
+        return 0L;
+    }
+
+    @Override
+    public void compact() {
+        // Compact is not supported on snapshots
     }
 
     @Override
@@ -150,8 +157,9 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public void delete() {
+    public boolean delete() {
         getDBInstance().destroy();
+        return true;
     }
 
     private static class SnapshotInstance {

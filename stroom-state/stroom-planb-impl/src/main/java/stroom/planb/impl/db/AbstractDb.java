@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasPrimitiveValue;
 
+import org.lmdbjava.CopyFlags;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.PutFlags;
@@ -14,7 +15,7 @@ import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.time.Instant;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -149,6 +150,11 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         try (final LmdbWriter writer = createWriter()) {
             consumer.accept(writer);
         }
+    }
+
+    @Override
+    public void compact(final Path destination) {
+        env.copy(destination.toFile(), CopyFlags.MDB_CP_COMPACT);
     }
 
     @Override

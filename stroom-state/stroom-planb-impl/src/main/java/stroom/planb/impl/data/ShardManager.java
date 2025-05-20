@@ -82,17 +82,52 @@ public class ShardManager {
                     final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
                     // If we can't get the doc then we must have deleted it so delete the shard.
                     if (loaded == null) {
-                        shard.delete();
-                        shardMap.remove(shard.getDoc().getUuid());
+                        if (shard.delete()) {
+                            shardMap.remove(shard.getDoc().getUuid());
+                        }
                     } else {
-                        shard.condense(loaded);
-                        shard.deleteOldData(loaded);
+                        long total = 0;
+                        total += shard.condense(loaded);
+                        total += shard.deleteOldData(loaded);
+                        if (total > 0) {
+                            // If we removed data then compact the shard.
+                            shard.compact();
+                        }
                     }
                 } catch (final DocumentNotFoundException e) {
                     LOGGER.debug(e::getMessage, e);
                     // If we can't get the doc then we must have deleted it so delete the shard.
-                    shard.delete();
-                    shardMap.remove(shard.getDoc().getUuid());
+                    if (shard.delete()) {
+                        shardMap.remove(shard.getDoc().getUuid());
+                    }
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+    }
+
+    public void compactAll() {
+        shardMap.values().forEach(shard -> {
+            try {
+                final PlanBDoc doc = shard.getDoc();
+                try {
+                    final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
+                    // If we can't get the doc then we must have deleted it so delete the shard.
+                    if (loaded == null) {
+                        if (shard.delete()) {
+                            shardMap.remove(shard.getDoc().getUuid());
+                        }
+                    } else {
+                        // If we removed data then compact the shard.
+                        shard.compact();
+                    }
+                } catch (final DocumentNotFoundException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    // If we can't get the doc then we must have deleted it so delete the shard.
+                    if (shard.delete()) {
+                        shardMap.remove(shard.getDoc().getUuid());
+                    }
                 }
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
