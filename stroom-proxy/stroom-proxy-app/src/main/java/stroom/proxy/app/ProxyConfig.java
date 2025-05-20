@@ -11,6 +11,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.AuthenticationType;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresProxyRestart;
@@ -49,6 +50,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_RECEIPT_POLICY = "receiptPolicy";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_AGGREGATOR = "aggregator";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
@@ -70,12 +72,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final ProxyPathConfig pathConfig;
     private final ReceiveDataConfig receiveDataConfig;
+    private final ProxyReceiptPolicyConfig receiptPolicyConfig;
     private final EventStoreConfig eventStoreConfig;
     private final AggregatorConfig aggregatorConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final LogStreamConfig logStreamConfig;
-    private final ContentSyncConfig contentSyncConfig;
+    //    private final ContentSyncConfig contentSyncConfig;
     private final FeedStatusConfig feedStatusConfig;
     private final ThreadConfig threadConfig;
     private final ProxySecurityConfig proxySecurityConfig;
@@ -87,12 +90,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 DEFAULT_CONTENT_DIR,
                 new ProxyPathConfig(),
                 new ReceiveDataConfig(),
+                new ProxyReceiptPolicyConfig(),
                 new EventStoreConfig(),
                 new AggregatorConfig(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new LogStreamConfig(),
-                new ContentSyncConfig(),
+//                new ContentSyncConfig(),
                 new FeedStatusConfig(),
                 new ThreadConfig(),
                 new ProxySecurityConfig(),
@@ -102,37 +106,40 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public ProxyConfig(
-            @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+            @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final Boolean haltBootOnConfigValidationFailure,
             @JsonProperty(PROP_NAME_PROXY_ID) final String proxyId,
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+            @JsonProperty(PROP_NAME_RECEIPT_POLICY) final ProxyReceiptPolicyConfig receiptPolicyConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
-            @JsonProperty(PROP_NAME_CONTENT_SYNC) final ContentSyncConfig contentSyncConfig,
+//            @JsonProperty(PROP_NAME_CONTENT_SYNC) final ContentSyncConfig contentSyncConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
             @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(
+                haltBootOnConfigValidationFailure, DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
         this.proxyId = proxyId;
         this.contentDir = NullSafe.nonBlankStringElse(contentDir, DEFAULT_CONTENT_DIR);
-        this.pathConfig = pathConfig;
-        this.receiveDataConfig = receiveDataConfig;
-        this.eventStoreConfig = eventStoreConfig;
-        this.aggregatorConfig = aggregatorConfig;
-        this.forwardFileDestinations = forwardFileDestinations;
-        this.forwardHttpDestinations = forwardHttpDestinations;
-        this.logStreamConfig = logStreamConfig;
-        this.contentSyncConfig = contentSyncConfig;
-        this.feedStatusConfig = feedStatusConfig;
-        this.threadConfig = threadConfig;
-        this.proxySecurityConfig = proxySecurityConfig;
-        this.sqsConnectors = sqsConnectors;
+        this.pathConfig = Objects.requireNonNullElseGet(pathConfig, ProxyPathConfig::new);
+        this.receiveDataConfig = Objects.requireNonNullElseGet(receiveDataConfig, ReceiveDataConfig::new);
+        this.receiptPolicyConfig = Objects.requireNonNullElseGet(receiptPolicyConfig, ProxyReceiptPolicyConfig::new);
+        this.eventStoreConfig = Objects.requireNonNullElseGet(eventStoreConfig, EventStoreConfig::new);
+        this.aggregatorConfig = Objects.requireNonNullElseGet(aggregatorConfig, AggregatorConfig::new);
+        this.forwardFileDestinations = NullSafe.list(forwardFileDestinations);
+        this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
+        this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
+//        this.contentSyncConfig = contentSyncConfig;
+        this.feedStatusConfig = Objects.requireNonNullElseGet(feedStatusConfig, FeedStatusConfig::new);
+        this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
+        this.proxySecurityConfig = Objects.requireNonNullElseGet(proxySecurityConfig, ProxySecurityConfig::new);
+        this.sqsConnectors = NullSafe.list(sqsConnectors);
     }
 
     @AssertTrue(
@@ -174,6 +181,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return receiveDataConfig;
     }
 
+    @JsonProperty(PROP_NAME_RECEIPT_POLICY)
+    public ProxyReceiptPolicyConfig getReceiptPolicyConfig() {
+        return receiptPolicyConfig;
+    }
+
     @JsonProperty(PROP_NAME_EVENT_STORE)
     public EventStoreConfig getEventStoreConfig() {
         return eventStoreConfig;
@@ -201,10 +213,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return logStreamConfig;
     }
 
-    @JsonProperty(PROP_NAME_CONTENT_SYNC)
-    public ContentSyncConfig getContentSyncConfig() {
-        return contentSyncConfig;
-    }
+//    @JsonProperty(PROP_NAME_CONTENT_SYNC)
+//    public ContentSyncConfig getContentSyncConfig() {
+//        return contentSyncConfig;
+//    }
 
     @JsonProperty(PROP_NAME_FEED_STATUS)
     public FeedStatusConfig getFeedStatusConfig() {
@@ -295,6 +307,47 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         }
     }
 
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "If receive.receiptCheckMode is set to RECEIPT_POLICY then " +
+                                "receiptPolicy.receiveDataRulesUrl must be set.")
+    public boolean isReceiptPolicyUrlValid() {
+        final ReceiptCheckMode receiptCheckMode = NullSafe.get(
+                getReceiveDataConfig(),
+                ReceiveDataConfig::getReceiptCheckMode);
+        if (receiptCheckMode == ReceiptCheckMode.RECEIPT_POLICY) {
+            final String url = NullSafe.get(
+                    getReceiptPolicyConfig(),
+                    ProxyReceiptPolicyConfig::getReceiveDataRulesUrl);
+            return NullSafe.isNonBlankString(url);
+        }
+        return true;
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "If receive.receiptCheckMode is set to RECEIPT_POLICY and " +
+                                "security.authentication.openId.idpType is not set to EXTERNAL_IDP then " +
+                                "receiptPolicy.apiKey must be set.")
+    public boolean isReceiptPolicyApiKeyValid() {
+        final ReceiptCheckMode receiptCheckMode = NullSafe.get(
+                getReceiveDataConfig(),
+                ReceiveDataConfig::getReceiptCheckMode);
+        final IdpType idpType = NullSafe.get(
+                getProxySecurityConfig(),
+                ProxySecurityConfig::getAuthenticationConfig,
+                ProxyAuthenticationConfig::getOpenIdConfig,
+                ProxyOpenIdConfig::getIdentityProviderType);
+
+        if (receiptCheckMode == ReceiptCheckMode.RECEIPT_POLICY) {
+            final String url = NullSafe.get(
+                    getReceiptPolicyConfig(),
+                    ProxyReceiptPolicyConfig::getReceiveDataRulesUrl);
+            return NullSafe.isNonBlankString(url);
+        }
+        return true;
+    }
+
 //    @JsonIgnore
 //    @SuppressWarnings("unused")
 //    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
@@ -350,12 +403,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+        private ProxyReceiptPolicyConfig receiptPolicyConfig = new ProxyReceiptPolicyConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
-        private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
+        //        private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
@@ -387,6 +441,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder receiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
             this.receiveDataConfig = receiveDataConfig;
+            return this;
+        }
+
+        public Builder receiptPolicyConfig(final ProxyReceiptPolicyConfig receiptPolicyConfig) {
+            this.receiptPolicyConfig = receiptPolicyConfig;
             return this;
         }
 
@@ -431,10 +490,10 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder contentSyncConfig(final ContentSyncConfig contentSyncConfig) {
-            this.contentSyncConfig = contentSyncConfig;
-            return this;
-        }
+//        public Builder contentSyncConfig(final ContentSyncConfig contentSyncConfig) {
+//            this.contentSyncConfig = contentSyncConfig;
+//            return this;
+//        }
 
         public Builder feedStatusConfig(final FeedStatusConfig feedStatusConfig) {
             this.feedStatusConfig = feedStatusConfig;
@@ -463,12 +522,13 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     contentDir,
                     pathConfig,
                     receiveDataConfig,
+                    receiptPolicyConfig,
                     eventStoreConfig,
                     aggregatorConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
                     logStreamConfig,
-                    contentSyncConfig,
+//                    contentSyncConfig,
                     feedStatusConfig,
                     threadConfig,
                     proxySecurityConfig,

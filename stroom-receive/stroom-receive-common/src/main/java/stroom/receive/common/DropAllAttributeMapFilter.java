@@ -21,22 +21,22 @@ import stroom.meta.api.AttributeMap;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-public class PermissiveAttributeMapFilter implements AttributeMapFilter {
+public class DropAllAttributeMapFilter implements AttributeMapFilter {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PermissiveAttributeMapFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DropAllAttributeMapFilter.class);
 
-    public static final PermissiveAttributeMapFilter INSTANCE = new PermissiveAttributeMapFilter();
+    public static final DropAllAttributeMapFilter INSTANCE = new DropAllAttributeMapFilter();
 
-    private PermissiveAttributeMapFilter() {
+    private DropAllAttributeMapFilter() {
     }
 
-    public static PermissiveAttributeMapFilter getInstance() {
+    public static DropAllAttributeMapFilter getInstance() {
         return INSTANCE;
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        LOGGER.debug("{} returning true", PermissiveAttributeMapFilter.class);
-        return true;
+        LOGGER.debug("Drop all filter - attributeMap: {}", attributeMap);
+        return false;
     }
 }

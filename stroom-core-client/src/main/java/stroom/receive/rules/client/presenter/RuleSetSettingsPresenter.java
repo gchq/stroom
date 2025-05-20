@@ -26,9 +26,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -268,7 +268,7 @@ public class RuleSetSettingsPresenter
                 "",
                 true,
                 ExpressionOperator.builder().build(),
-                RuleAction.RECEIVE);
+                ReceiveAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fieldSelectionBoxModel);
 

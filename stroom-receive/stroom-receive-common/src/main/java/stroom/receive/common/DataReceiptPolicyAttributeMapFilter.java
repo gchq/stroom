@@ -20,7 +20,7 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl.Checker;
-import stroom.receive.rules.shared.RuleAction;
+import stroom.receive.rules.shared.ReceiveAction;
 
 import java.util.Objects;
 
@@ -39,12 +39,12 @@ class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
     public boolean filter(final AttributeMap attributeMap) {
 //        final AttributeMap effectiveAttributeMap = attributeMapConverter.apply(attributeMap);
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final RuleAction action = checker.check(attributeMap);
+        final ReceiveAction action = checker.check(attributeMap);
 
-        if (RuleAction.REJECT.equals(action)) {
-            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+        if (ReceiveAction.REJECT.equals(action)) {
+            throw new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap);
         }
 
-        return RuleAction.RECEIVE.equals(action);
+        return ReceiveAction.RECEIVE.equals(action);
     }
 }

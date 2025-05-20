@@ -231,18 +231,21 @@ public class CIKeys {
                 ciKey = existingCIKey;
             } else {
                 if (key.isEmpty()) {
-                    ciKey = addKey(CIKey.EMPTY_STRING);
+                    ciKey = addCommonKey(CIKey.EMPTY_STRING);
                 } else {
                     // Ensure we are using string pool instances for both
                     final String k = key.intern();
-                    ciKey = addKey(new CIKey(k, CIKey.toLowerCase(k).intern()));
+                    ciKey = addCommonKey(new CIKey(k, CIKey.toLowerCase(k).intern()));
                 }
             }
         }
         return ciKey;
     }
 
-    private static synchronized CIKey addKey(final CIKey ciKey) {
+    /**
+     * Package private for testing only
+     */
+    static synchronized CIKey addCommonKey(final CIKey ciKey) {
         // recheck under lock, so we can be sure the two maps contain the same instance
         CIKey commonCiKey = KEY_TO_COMMON_CIKEY_MAP.get(ciKey.get());
         if (commonCiKey == null) {
@@ -253,6 +256,14 @@ public class CIKeys {
             commonCiKey = ciKey;
         }
         return commonCiKey;
+    }
+
+    /**
+     * For testing use only
+     */
+    static synchronized void clearCommonKeys() {
+        KEY_TO_COMMON_CIKEY_MAP.clear();
+        LOWER_KEY_TO_COMMON_CIKEY_MAP.clear();
     }
 
     /**

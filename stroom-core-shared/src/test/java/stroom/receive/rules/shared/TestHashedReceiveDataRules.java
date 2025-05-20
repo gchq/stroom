@@ -31,14 +31,14 @@ class TestHashedReceiveDataRules {
                 .withRules(List.of(
                         ReceiveDataRule.builder()
                                 .withRuleNumber(1)
-                                .withAction(RuleAction.RECEIVE)
+                                .withAction(ReceiveAction.RECEIVE)
                                 .withExpression(ExpressionOperator.builder()
                                         .addTerm("field1", Condition.EQUALS, "bar")
                                         .build())
                                 .build(),
                         ReceiveDataRule.builder()
                                 .withRuleNumber(2)
-                                .withAction(RuleAction.REJECT)
+                                .withAction(ReceiveAction.REJECT)
                                 .withExpression(ExpressionOperator.builder()
                                         .addTerm("field2", Condition.EQUALS, "foo")
                                         .build())

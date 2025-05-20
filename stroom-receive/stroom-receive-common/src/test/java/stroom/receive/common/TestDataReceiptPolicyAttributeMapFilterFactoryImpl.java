@@ -15,9 +15,9 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.collections.CollectionUtil.DuplicateMode;
 
@@ -70,7 +70,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .build();
@@ -97,7 +98,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -138,13 +140,14 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withAction(RuleAction.REJECT)
+                        .withAction(ReceiveAction.REJECT)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .op(Op.OR)
@@ -186,12 +189,13 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withAction(RuleAction.DROP)
+                        .withAction(ReceiveAction.DROP)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .op(Op.OR)
@@ -234,19 +238,20 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         int ruleNo = 0;
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(++ruleNo)
-                        .withAction(RuleAction.RECEIVE)
+                        .withAction(ReceiveAction.RECEIVE)
                         .withEnabled(true)
                         .withExpression(ExpressionUtil.equals(StandardHeaderArguments.SYSTEM, SYSTEM_1))
                         .build())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(++ruleNo)
-                        .withAction(RuleAction.REJECT)
+                        .withAction(ReceiveAction.REJECT)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .op(Op.OR)
@@ -256,7 +261,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         .build())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(++ruleNo)
-                        .withAction(RuleAction.DROP)
+                        .withAction(ReceiveAction.DROP)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.equals(StandardHeaderArguments.SYSTEM, SYSTEM_2))
@@ -306,12 +311,13 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withAction(RuleAction.DROP)
+                        .withAction(ReceiveAction.DROP)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.builder()
@@ -356,12 +362,13 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withAction(RuleAction.DROP)
+                        .withAction(ReceiveAction.DROP)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.builder()
@@ -418,7 +425,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
-                        new ExpressionPredicateFactoryFactory());
+                        new ExpressionPredicateFactoryFactory(),
+                        ReceiveDataConfig::new);
 
         final DictionaryDoc feedDict = createDict(
                 "FeedDict",
@@ -430,7 +438,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withAction(RuleAction.DROP)
+                        .withAction(ReceiveAction.DROP)
                         .withEnabled(true)
                         .withExpression(ExpressionOperator.builder()
                                 .addTerm(ExpressionTerm.builder()

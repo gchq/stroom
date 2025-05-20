@@ -28,14 +28,15 @@ import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
@@ -59,15 +60,18 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
     private final ReceiveDataRuleSetService ruleSetService;
     private final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 //    private final CachedValue<AttributeMapFilter, Void> cachedFilter; // = new ReceiveAllChecker();
 
     @Inject
     public DataReceiptPolicyAttributeMapFilterFactoryImpl(
             final ReceiveDataRuleSetService ruleSetService,
-            final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory) {
+            final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
 
         this.ruleSetService = ruleSetService;
         this.expressionPredicateFactoryFactory = expressionPredicateFactoryFactory;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
 //        this.cachedFilter = CachedValue.builder()
 //                .withMaxCheckIntervalSeconds(60)
 //                .withoutStateSupplier()
@@ -89,7 +93,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
             LOGGER.error("Error reading rule set. The default receive all policy will be applied", e);
         }
         if (bundledRules == null) {
-            return PermissiveAttributeMapFilter.getInstance();
+            return ReceiveAllAttributeMapFilter.getInstance();
         } else {
             final List<ReceiveDataRule> rules = NullSafe.get(bundledRules, BundledRules::getRules);
             final List<QueryField> fields = NullSafe.get(bundledRules, BundledRules::getFields);
@@ -134,7 +138,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             expressionPredicateFactory,
                             activeRules,
                             valueFunctionFactories,
-                            attributeMapper);
+                            attributeMapper,
+                            ReceiveAction.RECEIVE);
                 }
             }
             // If no rules then fall back to a receive-all filter
@@ -143,7 +148,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                     DataReceiptPolicyAttributeMapFilter::new,
                     () -> {
                         LOGGER.debug("Falling back to a receive-all filter");
-                        return PermissiveAttributeMapFilter.getInstance();
+                        return ReceiveAllAttributeMapFilter.getInstance();
                     });
         }
     }
@@ -233,7 +238,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
     public interface Checker {
 
-        RuleAction check(AttributeMap attributeMap);
+        ReceiveAction check(AttributeMap attributeMap);
     }
 
 
@@ -261,20 +266,23 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         private final ValueFunctionFactories<AttributeMap> valueFunctionFactories;
         private final AttributeMapper attributeMapper;
         private final Map<Integer, Predicate<AttributeMap>> ruleNoToPredicateFactoryMap;
+        private final ReceiveAction fallBackReceiveAction;
 
         CheckerImpl(final ExpressionPredicateFactory expressionMatcher,
                     final List<ReceiveDataRule> activeRules,
                     final ValueFunctionFactories<AttributeMap> valueFunctionFactories,
-                    final AttributeMapper attributeMapper) {
+                    final AttributeMapper attributeMapper,
+                    final ReceiveAction fallBackReceiveAction) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.valueFunctionFactories = valueFunctionFactories;
             this.attributeMapper = attributeMapper;
             this.ruleNoToPredicateFactoryMap = new HashMap<>();
+            this.fallBackReceiveAction = fallBackReceiveAction;
         }
 
         @Override
-        public RuleAction check(final AttributeMap attributeMap) {
+        public ReceiveAction check(final AttributeMap attributeMap) {
             return LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         // First we need to hash any values for fields that need hashing.
@@ -284,10 +292,11 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
                         final ReceiveDataRule matchingRule = findMatchingRule(effectiveAttrMap);
                         // The default action is to receive data.
+                        LOGGER.debug("check() - matchingRule: {}", matchingRule);
                         return NullSafe.getOrElse(
                                 matchingRule,
                                 ReceiveDataRule::getAction,
-                                RuleAction.RECEIVE);
+                                fallBackReceiveAction);
                     },
                     ruleAction -> LogUtil.message("Checked attributeMap: {} with result: {}",
                             attributeMap, ruleAction));

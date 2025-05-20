@@ -26,7 +26,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -61,7 +60,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetServiceImpl.class);
 
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
     private final WordListProvider wordListProvider;
     private final HashFunctionFactory hashFunctionFactory;
     private final ReceiveDataRuleSetStore receiveDataRuleSetStore;
@@ -69,11 +68,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Inject
     public ReceiveDataRuleSetServiceImpl(final WordListProvider wordListProvider,
-                                         final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                         final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
                                          final HashFunctionFactory hashFunctionFactory,
                                          final ReceiveDataRuleSetStore receiveDataRuleSetStore,
                                          final SecurityContext securityContext) {
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
         this.wordListProvider = wordListProvider;
         this.hashFunctionFactory = hashFunctionFactory;
         this.receiveDataRuleSetStore = receiveDataRuleSetStore;
@@ -120,9 +119,9 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     }
 
     private HashedReceiveDataRules buildHashedReceiveDataRules(final ReceiveDataRules receiveDataRules) {
-        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-        final Set<CIKey> obfuscatedFields = CIKey.setOf(receiveDataConfig.getObfuscatedFields());
-        final HashAlgorithm obfuscationHashAlgorithm = receiveDataConfig.getObfuscationHashAlgorithm();
+        final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
+        final Set<CIKey> obfuscatedFields = CIKey.setOf(receiptPolicyConfig.getObfuscatedFields());
+        final HashAlgorithm obfuscationHashAlgorithm = receiptPolicyConfig.getObfuscationHashAlgorithm();
         final HashFunction hashFunction = hashFunctionFactory.getHashFunction(obfuscationHashAlgorithm);
         final List<ReceiveDataRule> rules = NullSafe.list(receiveDataRules.getRules());
 

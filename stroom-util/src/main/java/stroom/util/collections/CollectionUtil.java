@@ -77,6 +77,7 @@ public class CollectionUtil {
 
     /**
      * Removes null items, applies formatter on each item, then removes any empty items.
+     * Is null safe.
      */
     public static Set<String> cleanItems(final Set<String> items) {
         return cleanItems(items, null);
@@ -84,6 +85,7 @@ public class CollectionUtil {
 
     /**
      * Removes null items, applies formatter on each item, then removes any empty items.
+     * Is null safe.
      */
     public static Set<String> cleanItems(final Set<String> items,
                                          final Function<String, String> formatter) {
@@ -98,6 +100,40 @@ public class CollectionUtil {
             return stringStream
                     .filter(NullSafe::isNonEmptyString)
                     .collect(Collectors.toUnmodifiableSet());
+        }
+    }
+
+    /**
+     * Removes null items, applies formatter on each item, then removes any empty items.
+     * Also removes duplicates.
+     * Is null safe.
+     */
+    public static List<String> cleanItems(final List<String> items) {
+        return cleanItems(items, null, true);
+    }
+
+    /**
+     * Removes null items, applies formatter on each item, then removes any empty items.
+     * Is null safe.
+     */
+    public static List<String> cleanItems(final List<String> items,
+                                          final Function<String, String> formatter,
+                                          final boolean removeDuplicates) {
+        if (NullSafe.isEmptyCollection(items)) {
+            return Collections.emptyList();
+        } else {
+            Stream<String> stringStream = NullSafe.stream(items)
+                    .filter(Objects::nonNull);
+            if (formatter != null) {
+                stringStream = stringStream.map(formatter);
+            }
+            stringStream = stringStream
+                    .filter(NullSafe::isNonEmptyString);
+
+            if (removeDuplicates) {
+                stringStream = stringStream.distinct();
+            }
+            return stringStream.toList();
         }
     }
 

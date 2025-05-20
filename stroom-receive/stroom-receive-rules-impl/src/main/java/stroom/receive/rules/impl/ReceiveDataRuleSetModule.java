@@ -18,6 +18,7 @@ package stroom.receive.rules.impl;
 
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
+import stroom.receive.common.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.util.guice.RestResourcesBinder;
 

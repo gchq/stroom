@@ -468,7 +468,7 @@ public class MockHttpDestination {
 
     static FeedStatusConfig createFeedStatusConfig() {
         return new FeedStatusConfig(
-                true,
+//                true,
                 FeedStatus.Receive,
                 "http://localhost:"
                 + MockHttpDestination.DEFAULT_STROOM_PORT

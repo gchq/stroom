@@ -88,7 +88,7 @@ public class CIKey implements Comparable<CIKey> {
     CIKey(final String key, final String lowerKey) {
         this.key = Objects.requireNonNull(key);
         this.lowerKey = Objects.requireNonNull(lowerKey);
-        this.hashCode = Objects.hash(key);
+        this.hashCode = Objects.hash(this.lowerKey);
     }
 
     /**

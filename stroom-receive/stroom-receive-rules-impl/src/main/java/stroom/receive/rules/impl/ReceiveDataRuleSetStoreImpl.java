@@ -14,7 +14,6 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.SecurityContext;
@@ -46,15 +45,15 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
 
     private final Store<ReceiveDataRules> store;
     private final SecurityContext securityContext;
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
 
     @Inject
     public ReceiveDataRuleSetStoreImpl(final StoreFactory storeFactory,
                                        final Serialiser2Factory serialiser2Factory,
                                        final SecurityContext securityContext,
-                                       final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                                       final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider) {
         this.securityContext = securityContext;
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
         final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
                 ReceiveDataRules.class);
         this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules.class);
@@ -72,9 +71,9 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                 // Not there so create it
                 docRef = createDocument(DOC_NAME);
                 ReceiveDataRules receiveDataRules = store.readDocument(docRef);
-                final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-                final Set<CIKey> obfuscatedFields = CIKey.setOf(receiveDataConfig.getObfuscatedFields());
-                final List<QueryField> fields = NullSafe.map(receiveDataConfig.getReceiptRulesInitialFields())
+                final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
+                final Set<CIKey> obfuscatedFields = CIKey.setOf(receiptPolicyConfig.getObfuscatedFields());
+                final List<QueryField> fields = NullSafe.map(receiptPolicyConfig.getReceiptRulesInitialFields())
                         .entrySet()
                         .stream()
                         .sorted(Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))

@@ -11,7 +11,7 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.common.ReceiveAllAttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -233,7 +233,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final List<Path> destinationPaths = doReceive(
                 fileGroup.getZip(),
                 attributeMap,
-                PermissiveAttributeMapFilter.INSTANCE);
+                ReceiveAllAttributeMapFilter.INSTANCE);
 
         assertThat(destinationPaths)
                 .hasSize(1);

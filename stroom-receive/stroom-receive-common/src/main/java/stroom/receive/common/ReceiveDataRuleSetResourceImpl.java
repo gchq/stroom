@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.receive.rules.impl;
+package stroom.receive.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;

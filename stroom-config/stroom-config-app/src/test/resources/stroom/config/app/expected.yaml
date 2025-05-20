@@ -782,42 +782,10 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
-  receive:
-    allowedCertificateProviders: []
-    authenticatedDataFeedKeyCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT5M"
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "DROPWIZARD_METRICS"
-    authenticationRequired: true
-    dataFeedKeyOwnerMetaKey: "AccountId"
-    dataFeedKeysDir: "data_feed_keys"
-    enabledAuthenticationTypes:
-    - "CERTIFICATE"
-    feedNameGenerationEnabled: false
-    feedNameGenerationMandatoryHeaders:
-    - "AccountId"
-    - "Component"
-    - "Format"
-    - "Schema"
-    feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
-    metaTypes:
-    - "Context"
-    - "Detections"
-    - "Error"
-    - "Events"
-    - "Meta Data"
-    - "Raw Events"
-    - "Raw Reference"
-    - "Records"
-    - "Reference"
-    - "Test Events"
-    - "Test Reference"
+  receiptPolicy:
     obfuscatedFields:
     - "Feed"
     obfuscationHashAlgorithm: "SHA2_512"
-    receiptCheckMode: "FEED_STATUS_CHECK"
     receiptRulesInitialFields:
       AccountId: "Text"
       Component: "Text"
@@ -847,6 +815,40 @@ appConfig:
       UploadUserId: "Text"
       user-agent: "Text"
       X-Forwarded-For: "Text"
+  receive:
+    allowedCertificateProviders: []
+    authenticatedDataFeedKeyCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT5M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
+    authenticationRequired: true
+    dataFeedKeyOwnerMetaKey: "AccountId"
+    dataFeedKeysDir: "data_feed_keys"
+    enabledAuthenticationTypes:
+    - "CERTIFICATE"
+    fallbackReceiveAction: "RECEIVE"
+    feedNameGenerationEnabled: false
+    feedNameGenerationMandatoryHeaders:
+    - "AccountId"
+    - "Component"
+    - "Format"
+    - "Schema"
+    feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    metaTypes:
+    - "Context"
+    - "Detections"
+    - "Error"
+    - "Events"
+    - "Meta Data"
+    - "Raw Events"
+    - "Raw Reference"
+    - "Records"
+    - "Reference"
+    - "Test Events"
+    - "Test Reference"
+    receiptCheckMode: "FEED_STATUS_CHECK"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   s3:

@@ -14,9 +14,9 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
 import stroom.receive.common.WordListProviderFactory;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.security.api.HashFunction;
 import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.shared.HashAlgorithm;
@@ -112,7 +112,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     .addRule(ReceiveDataRule.builder()
                             .withRuleNumber(++ruleNo)
                             .withEnabled(true)
-                            .withAction(RuleAction.REJECT)
+                            .withAction(ReceiveAction.REJECT)
                             .withExpression(ExpressionOperator.builder()
                                     .op(Op.OR)
                                     .addTerm(ExpressionTerm.equals(
@@ -133,7 +133,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     .addRule(ReceiveDataRule.builder()
                             .withRuleNumber(++ruleNo)
                             .withEnabled(true)
-                            .withAction(RuleAction.DROP)
+                            .withAction(ReceiveAction.DROP)
                             .withExpression(ExpressionOperator.builder()
                                     .addTerm(ExpressionTerm.equals(
                                             StandardHeaderArguments.FEED,
@@ -246,7 +246,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     .addRule(ReceiveDataRule.builder()
                             .withRuleNumber(++ruleNo)
                             .withEnabled(true)
-                            .withAction(RuleAction.REJECT)
+                            .withAction(ReceiveAction.REJECT)
                             .withExpression(ExpressionOperator.builder()
                                     .op(Op.OR)
                                     .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_1))

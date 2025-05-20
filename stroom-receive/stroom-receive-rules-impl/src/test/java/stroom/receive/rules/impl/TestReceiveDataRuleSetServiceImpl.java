@@ -10,11 +10,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.security.api.HashFunction;
 import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.SecurityContext;
@@ -76,14 +75,14 @@ class TestReceiveDataRuleSetServiceImpl {
     @Mock
     private ReceiveDataRuleSetStore mockReceiveDataRuleSetStore;
     @Mock
-    private ReceiveDataConfig mockReceiveDataConfig;
+    private StroomReceiptPolicyConfig receiptPolicyConfig;
 
     @Test
     void getHashedReceiveDataRules_empty() {
 
         final ReceiveDataRuleSetServiceImpl service = new ReceiveDataRuleSetServiceImpl(
                 mockWordListProvider,
-                () -> mockReceiveDataConfig,
+                () -> receiptPolicyConfig,
                 mockHashFunctionFactory,
                 mockReceiveDataRuleSetStore,
                 allowAllSecurityContext);
@@ -109,16 +108,16 @@ class TestReceiveDataRuleSetServiceImpl {
 
         final ReceiveDataRuleSetServiceImpl service = new ReceiveDataRuleSetServiceImpl(
                 mockWordListProvider,
-                () -> mockReceiveDataConfig,
+                () -> receiptPolicyConfig,
                 mockHashFunctionFactory,
                 mockReceiveDataRuleSetStore,
                 allowAllSecurityContext);
 
         final Md5Hasher md5Hasher = new Md5Hasher();
 
-        Mockito.when(mockReceiveDataConfig.getObfuscationHashAlgorithm())
+        Mockito.when(receiptPolicyConfig.getObfuscationHashAlgorithm())
                 .thenReturn(HASH_ALGORITHM);
-        Mockito.when(mockReceiveDataConfig.getObfuscatedFields())
+        Mockito.when(receiptPolicyConfig.getObfuscatedFields())
                 .thenReturn(Set.of(
                         StandardHeaderArguments.FEED,
                         StandardHeaderArguments.ENVIRONMENT));
@@ -130,7 +129,7 @@ class TestReceiveDataRuleSetServiceImpl {
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
-                                .withAction(RuleAction.REJECT)
+                                .withAction(ReceiveAction.REJECT)
                                 .withExpression(ExpressionOperator.builder()
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_1))
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.SYSTEM, SYSTEM_1))
@@ -139,7 +138,7 @@ class TestReceiveDataRuleSetServiceImpl {
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
-                                .withAction(RuleAction.DROP)
+                                .withAction(ReceiveAction.DROP)
                                 .withExpression(ExpressionOperator.builder()
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_2))
                                         .addTerm(ExpressionTerm.equals(
@@ -207,16 +206,16 @@ class TestReceiveDataRuleSetServiceImpl {
 
         final ReceiveDataRuleSetServiceImpl service = new ReceiveDataRuleSetServiceImpl(
                 mockWordListProvider,
-                () -> mockReceiveDataConfig,
+                () -> receiptPolicyConfig,
                 mockHashFunctionFactory,
                 mockReceiveDataRuleSetStore,
                 allowAllSecurityContext);
 
         final Md5Hasher md5Hasher = new Md5Hasher();
 
-        Mockito.when(mockReceiveDataConfig.getObfuscationHashAlgorithm())
+        Mockito.when(receiptPolicyConfig.getObfuscationHashAlgorithm())
                 .thenReturn(HASH_ALGORITHM);
-        Mockito.when(mockReceiveDataConfig.getObfuscatedFields())
+        Mockito.when(receiptPolicyConfig.getObfuscatedFields())
                 .thenReturn(Set.of(
                         StandardHeaderArguments.FEED,
                         StandardHeaderArguments.ENVIRONMENT));
@@ -254,7 +253,7 @@ class TestReceiveDataRuleSetServiceImpl {
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
-                                .withAction(RuleAction.REJECT)
+                                .withAction(ReceiveAction.REJECT)
                                 .withExpression(ExpressionOperator.builder()
                                         .op(Op.OR)
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_1))
@@ -273,7 +272,7 @@ class TestReceiveDataRuleSetServiceImpl {
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
-                                .withAction(RuleAction.DROP)
+                                .withAction(ReceiveAction.DROP)
                                 .withExpression(ExpressionOperator.builder()
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_2))
                                         .addTerm(ExpressionTerm.equals(

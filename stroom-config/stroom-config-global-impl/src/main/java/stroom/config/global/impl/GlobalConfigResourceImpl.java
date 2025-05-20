@@ -14,7 +14,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -61,7 +61,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<ExplorerConfig> explorerConfigProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -73,7 +73,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final Provider<ExplorerConfig> explorerConfigProvider,
                              final Provider<AuthenticationConfig> authenticationConfigProvider,
-                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                             final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -84,7 +84,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.openIdConfigProvider = openIdConfigProvider;
         this.explorerConfigProvider = explorerConfigProvider;
         this.authenticationConfigProvider = authenticationConfigProvider;
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
     }
 
 
@@ -292,7 +292,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 isExternalIdp,
                 explorerConfigProvider.get().getDependencyWarningsEnabled(),
                 authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis(),
-                receiveDataConfigProvider.get().getObfuscatedFields());
+                stroomReceiptPolicyConfigProvider.get().getObfuscatedFields());
     }
 
     private Query buildRawQuery(final String userInput) {

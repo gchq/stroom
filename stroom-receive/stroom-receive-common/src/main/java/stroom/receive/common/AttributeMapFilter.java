@@ -56,16 +56,16 @@ public interface AttributeMapFilter {
     static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
             LOGGER.debug("Empty attributeMapFilters, returning permissive instance");
-            return PermissiveAttributeMapFilter.getInstance();
+            return ReceiveAllAttributeMapFilter.getInstance();
         } else {
             final List<AttributeMapFilter> filteredFilters = attributeMapFilters.stream()
                     .filter(Objects::nonNull)
                     .filter(filter ->
-                            !(filter instanceof PermissiveAttributeMapFilter))
+                            !(filter instanceof ReceiveAllAttributeMapFilter))
                     .toList();
             if (filteredFilters.isEmpty()) {
                 LOGGER.debug("No non-null attributeMapFilters, returning permissive instance");
-                return PermissiveAttributeMapFilter.getInstance();
+                return ReceiveAllAttributeMapFilter.getInstance();
             } else if (filteredFilters.size() == 1) {
                 final AttributeMapFilter filter = NullSafe.first(filteredFilters);
                 LOGGER.debug(() -> "Returning single filter: " + filter.getClass().getSimpleName());

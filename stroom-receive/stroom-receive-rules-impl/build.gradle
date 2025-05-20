@@ -16,6 +16,7 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    implementation libs.dropwizard.validation
     implementation libs.guice
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject

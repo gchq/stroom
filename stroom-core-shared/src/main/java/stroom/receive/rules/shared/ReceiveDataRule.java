@@ -63,7 +63,7 @@ public class ReceiveDataRule {
     private final ExpressionOperator expression;
     @XmlElement(name = "action")
     @JsonProperty
-    private final RuleAction action;
+    private final ReceiveAction action;
 
     @JsonCreator
     public ReceiveDataRule(@JsonProperty("ruleNumber") final int ruleNumber,
@@ -71,7 +71,7 @@ public class ReceiveDataRule {
                            @JsonProperty("name") final String name,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("expression") final ExpressionOperator expression,
-                           @JsonProperty("action") final RuleAction action) {
+                           @JsonProperty("action") final ReceiveAction action) {
         this.ruleNumber = ruleNumber;
         this.creationTime = creationTime;
         this.name = name;
@@ -109,7 +109,7 @@ public class ReceiveDataRule {
         return expression;
     }
 
-    public RuleAction getAction() {
+    public ReceiveAction getAction() {
         return action;
     }
 
@@ -173,7 +173,7 @@ public class ReceiveDataRule {
         private String name;
         private boolean enabled;
         private ExpressionOperator expression;
-        private RuleAction action;
+        private ReceiveAction action;
 
         private Builder() {
         }
@@ -203,7 +203,7 @@ public class ReceiveDataRule {
             return this;
         }
 
-        public Builder withAction(final RuleAction action) {
+        public Builder withAction(final ReceiveAction action) {
             this.action = action;
             return this;
         }

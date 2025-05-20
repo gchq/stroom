@@ -150,7 +150,8 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
 
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
-        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        bootstrap.getObjectMapper()
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
