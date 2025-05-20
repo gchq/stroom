@@ -129,7 +129,8 @@ public class MergeProcessor {
     }
 
     public void maintainShards() {
-        securityContext.asProcessingUser(shardManager::condenseAll);
+        securityContext.asProcessingUser(() ->
+                taskContextFactory.context(MAINTAIN_TASK_NAME, shardManager::condenseAll).run());
     }
 
     public void mergeCurrent() {

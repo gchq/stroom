@@ -10,6 +10,8 @@ import stroom.planb.impl.PlanBDocStore;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -46,6 +48,7 @@ public class ShardManager {
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public ShardManager(final ByteBuffers byteBuffers,
@@ -54,7 +57,8 @@ public class ShardManager {
                         final NodeInfo nodeInfo,
                         final Provider<PlanBConfig> configProvider,
                         final StatePaths statePaths,
-                        final FileTransferClient fileTransferClient) {
+                        final FileTransferClient fileTransferClient,
+                        final TaskContextFactory taskContextFactory) {
         this.byteBuffers = byteBuffers;
         this.planBDocCache = planBDocCache;
         this.planBDocStore = planBDocStore;
@@ -62,6 +66,7 @@ public class ShardManager {
         this.configProvider = configProvider;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
+        this.taskContextFactory = taskContextFactory;
 
         // Delete any existing snapshots that might have been left behind from the last use of Stroom.
         FileUtil.deleteDir(statePaths.getSnapshotDir());
@@ -74,37 +79,48 @@ public class ShardManager {
         return nodeInfo != null && !nodes.isEmpty() && !nodes.contains(nodeInfo.getThisNodeName());
     }
 
-    public void condenseAll() {
+    public void condenseAll(final TaskContext parentTaskContext) {
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
         shardMap.values().forEach(shard -> {
-            try {
-                final PlanBDoc doc = shard.getDoc();
-                try {
-                    final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
-                    // If we can't get the doc then we must have deleted it so delete the shard.
-                    if (loaded == null) {
-                        if (shard.delete()) {
-                            shardMap.remove(shard.getDoc().getUuid());
+            final PlanBDoc doc = shard.getDoc();
+            final Runnable runnable = taskContextFactory
+                    .childContext(parentTaskContext, "Maintain shard: " + doc.getName(), taskContext -> {
+                        try {
+                            try {
+                                final PlanBDoc loaded = planBDocStore.readDocument(doc.asDocRef());
+                                // If we can't get the doc then we must have deleted it so delete the shard.
+                                if (loaded == null) {
+                                    taskContext.info(() -> "Deleting shard");
+                                    if (shard.delete()) {
+                                        shardMap.remove(shard.getDoc().getUuid());
+                                    }
+                                } else {
+                                    long total = 0;
+                                    taskContext.info(() -> "Condensing data");
+                                    total += shard.condense(loaded);
+                                    taskContext.info(() -> "Deleting old data");
+                                    total += shard.deleteOldData(loaded);
+                                    if (total > 0) {
+                                        // If we removed data then compact the shard.
+                                        taskContext.info(() -> "Compacting shard");
+                                        shard.compact();
+                                    }
+                                }
+                            } catch (final DocumentNotFoundException e) {
+                                LOGGER.debug(e::getMessage, e);
+                                // If we can't get the doc then we must have deleted it so delete the shard.
+                                if (shard.delete()) {
+                                    shardMap.remove(shard.getDoc().getUuid());
+                                }
+                            }
+                        } catch (final Exception e) {
+                            LOGGER.error(e::getMessage, e);
                         }
-                    } else {
-                        long total = 0;
-                        total += shard.condense(loaded);
-                        total += shard.deleteOldData(loaded);
-                        if (total > 0) {
-                            // If we removed data then compact the shard.
-                            shard.compact();
-                        }
-                    }
-                } catch (final DocumentNotFoundException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    // If we can't get the doc then we must have deleted it so delete the shard.
-                    if (shard.delete()) {
-                        shardMap.remove(shard.getDoc().getUuid());
-                    }
-                }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            }
+                    });
+
+            futures.add(CompletableFuture.runAsync(runnable));
         });
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     public void compactAll() {

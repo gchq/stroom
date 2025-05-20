@@ -210,7 +210,8 @@ class TestStateDb {
                 null,
                 () -> planBConfig,
                 statePaths,
-                null);
+                null,
+                new SimpleTaskContextFactory());
         final MergeProcessor mergeProcessor = new MergeProcessor(
                 statePaths,
                 new MockSecurityContext(),
@@ -244,6 +245,15 @@ class TestStateDb {
         // Try compaction.
         shardManager.compactAll();
         shardManager.compactAll();
+
+        // Read compacted
+        try (final StateDb db = StateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                BASIC_SETTINGS,
+                true)) {
+            assertThat(db.count()).isEqualTo(2);
+        }
     }
 
     @Test
