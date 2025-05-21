@@ -3,7 +3,11 @@ package stroom.planb.impl.db.serde.valtime;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
+import stroom.planb.impl.db.VariableUsedLookupsRecorder;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -38,7 +42,7 @@ public class VariableValTimeSerde implements ValTimeSerde {
 
     @Override
     public ValTime read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
-        final ByteBuffer valSlice = byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
+        final ByteBuffer valSlice = getPrefix(byteBuffer);
         final ByteBuffer timeSlice = byteBuffer.slice(byteBuffer.remaining() - timeSerde.getSize(),
                 timeSerde.getSize());
 
@@ -63,6 +67,10 @@ public class VariableValTimeSerde implements ValTimeSerde {
 
         final Instant insertTime = timeSerde.read(timeSlice);
         return new ValTime(val, insertTime);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
     }
 
     @Override
@@ -121,5 +129,12 @@ public class VariableValTimeSerde implements ValTimeSerde {
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get(0));
         return !VariableValType.DIRECT.equals(valType);
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb),
+                this::getPrefix);
     }
 }

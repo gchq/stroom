@@ -2,7 +2,11 @@ package stroom.planb.impl.db.session;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UidLookupRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -42,13 +46,16 @@ public class UidLookupSessionSerde implements SessionSerde {
         final Instant end = timeSerde.read(endSlice);
 
         // Slice off the key.
-        final ByteBuffer keySlice = byteBuffer.slice(0,
-                byteBuffer.remaining() - timeLength);
+        final ByteBuffer keySlice = getPrefix(byteBuffer);
 
         // Read via lookup.
         final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, keySlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
         return new Session(val, start, end);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeLength);
     }
 
     @Override
@@ -113,5 +120,12 @@ public class UidLookupSessionSerde implements SessionSerde {
     @Override
     public boolean usesLookup(final ByteBuffer byteBuffer) {
         return true;
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new UidLookupRecorder(env, uidLookupDb),
+                this::getPrefix);
     }
 }

@@ -167,9 +167,17 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
         env.close();
     }
 
-    public final String getInfo() {
+    public final String getInfoString() {
+        final Inf inf = getInfo();
+        if (inf == null) {
+            return null;
+        }
+        return JsonUtil.writeValueAsString(inf);
+    }
+
+    public final Inf getInfo() {
         try {
-            final Inf inf = env.read(txn -> {
+            return env.read(txn -> {
                 try {
                     final EnvInf envInf = env.getInfo();
 
@@ -187,18 +195,17 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
                 }
                 return null;
             });
-            return JsonUtil.writeValueAsString(inf);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
         }
         return null;
     }
 
-    private record Inf(EnvInf env, List<DbInf> db, boolean readOnly, int schemaVersion, int hashClashes) {
+    public record Inf(EnvInf env, List<DbInf> db, boolean readOnly, int schemaVersion, int hashClashes) {
 
     }
 
-    private record DbInf(String name, Stat stat) {
+    public record DbInf(String name, Stat stat) {
 
     }
 }

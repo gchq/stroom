@@ -6,18 +6,23 @@ import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class UidLookupDb {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UidLookupDb.class);
 
+    private final String name;
     private final ByteBuffers byteBuffers;
     private final Dbi<ByteBuffer> keyToUidDbi;
     private final Dbi<ByteBuffer> uidToKeyDbi;
@@ -27,11 +32,16 @@ public class UidLookupDb {
     public UidLookupDb(final PlanBEnv env,
                        final ByteBuffers byteBuffers,
                        final String name) {
+        this.name = name;
         this.byteBuffers = byteBuffers;
         keyToUidDbi = env.openDbi(name + "-keyToUid", DbiFlags.MDB_CREATE);
         uidToKeyDbi = env.openDbi(name + "-uidToKey", DbiFlags.MDB_CREATE);
         infoDbi = env.openDbi(name + "-info", DbiFlags.MDB_CREATE);
         maxId = env.read(this::readMaxId);
+    }
+
+    public String getName() {
+        return name;
     }
 
     private long readMaxId(final Txn<ByteBuffer> txn) {
@@ -96,7 +106,20 @@ public class UidLookupDb {
         }
     }
 
-    public long count() {
-        return maxId;
+    public void forEachUid(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
+        try (final CursorIterable<ByteBuffer> cursor = uidToKeyDbi.iterate(readTxn)) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+            while (iterator.hasNext()
+                   && !Thread.currentThread().isInterrupted()) {
+                final KeyVal<ByteBuffer> kv = iterator.next();
+                keyConsumer.accept(kv.key());
+            }
+        }
+    }
+
+    public void deleteByUid(final Txn<ByteBuffer> writeTxn, final ByteBuffer uid) {
+        final ByteBuffer key = uidToKeyDbi.get(writeTxn, uid);
+        keyToUidDbi.delete(writeTxn, key);
+        uidToKeyDbi.delete(writeTxn, uid);
     }
 }

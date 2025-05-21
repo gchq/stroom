@@ -3,7 +3,10 @@ package stroom.planb.impl.db.serde.val;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.VariableUsedLookupsRecorder;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
 import stroom.query.language.functions.Val;
 
@@ -145,5 +148,10 @@ public class VariableValSerde implements ValSerde {
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get(0));
         return !VariableValType.DIRECT.equals(valType);
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb);
     }
 }

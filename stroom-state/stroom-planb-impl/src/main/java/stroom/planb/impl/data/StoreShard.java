@@ -555,7 +555,7 @@ class StoreShard implements Shard {
     public String getInfo() {
         incrementReadCount();
         try {
-            return db.getInfo();
+            return db.getInfoString();
         } finally {
             decrementReadCount();
         }

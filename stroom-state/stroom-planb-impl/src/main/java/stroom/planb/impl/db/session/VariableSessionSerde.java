@@ -3,7 +3,11 @@ package stroom.planb.impl.db.session;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
+import stroom.planb.impl.db.VariableUsedLookupsRecorder;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -51,8 +55,7 @@ public class VariableSessionSerde implements SessionSerde {
         final Instant end = timeSerde.read(endSlice);
 
         // Slice off the key.
-        final ByteBuffer keySlice = byteBuffer.slice(0,
-                byteBuffer.remaining() - timeLength);
+        final ByteBuffer keySlice = getPrefix(byteBuffer);
 
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(keySlice.get());
@@ -74,6 +77,11 @@ public class VariableSessionSerde implements SessionSerde {
         };
 
         return new Session(val, start, end);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        // Slice off the key.
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeLength);
     }
 
     @Override
@@ -182,5 +190,12 @@ public class VariableSessionSerde implements SessionSerde {
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get(0));
         return !VariableValType.DIRECT.equals(valType);
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb),
+                this::getPrefix);
     }
 }

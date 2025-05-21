@@ -6,19 +6,24 @@ import stroom.planb.impl.db.hash.Hash;
 import stroom.planb.impl.db.hash.HashClashCount;
 import stroom.planb.impl.db.hash.HashFactory;
 
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class HashLookupDb {
 
+    private final String name;
     private final ByteBuffers byteBuffers;
     private final Dbi<ByteBuffer> dbi;
     private final LmdbKeySequence lmdbKeySequence;
@@ -30,11 +35,16 @@ public class HashLookupDb {
                         final HashFactory hashFactory,
                         final HashClashCount hashClashCount,
                         final String name) {
+        this.name = name;
         this.byteBuffers = byteBuffers;
         this.hashFactory = hashFactory;
         this.hashClashCount = hashClashCount;
         lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         dbi = env.openDbi(name + "-hash", DbiFlags.MDB_CREATE);
+    }
+
+    public String getName() {
+        return name;
     }
 
     public ByteBuffer getValue(final Txn<ByteBuffer> readTxn,
@@ -173,7 +183,18 @@ public class HashLookupDb {
                 });
     }
 
-    public long count(final Txn<ByteBuffer> readTxn) {
-        return dbi.stat(readTxn).entries;
+    public void forEachHash(final Txn<ByteBuffer> readTxn, final Consumer<ByteBuffer> keyConsumer) {
+        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+            while (iterator.hasNext()
+                   && !Thread.currentThread().isInterrupted()) {
+                final KeyVal<ByteBuffer> kv = iterator.next();
+                keyConsumer.accept(kv.key());
+            }
+        }
+    }
+
+    public void deleteByHash(final Txn<ByteBuffer> writeTxn, final ByteBuffer key) {
+        dbi.delete(writeTxn, key);
     }
 }

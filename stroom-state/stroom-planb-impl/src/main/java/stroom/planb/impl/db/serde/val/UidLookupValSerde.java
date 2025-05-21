@@ -2,7 +2,10 @@ package stroom.planb.impl.db.serde.val;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UidLookupRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.Txn;
@@ -58,5 +61,10 @@ public class UidLookupValSerde implements ValSerde {
     @Override
     public boolean usesLookup(final ByteBuffer byteBuffer) {
         return true;
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UidLookupRecorder(env, uidLookupDb);
     }
 }

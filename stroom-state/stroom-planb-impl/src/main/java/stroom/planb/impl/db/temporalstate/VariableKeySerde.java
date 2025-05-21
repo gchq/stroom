@@ -3,7 +3,11 @@ package stroom.planb.impl.db.temporalstate;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashLookupDb;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
+import stroom.planb.impl.db.VariableUsedLookupsRecorder;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -48,8 +52,7 @@ public class VariableKeySerde implements TemporalStateKeySerde {
         final Instant effectiveTime = timeSerde.read(timeSlice);
 
         // Slice off the name.
-        final ByteBuffer nameSlice = byteBuffer.slice(0,
-                byteBuffer.remaining() - timeSerde.getSize());
+        final ByteBuffer nameSlice = getPrefix(byteBuffer);
 
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(nameSlice.get());
@@ -71,6 +74,11 @@ public class VariableKeySerde implements TemporalStateKeySerde {
         };
 
         return new Key(val, effectiveTime);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        // Slice off the name.
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
     }
 
     @Override
@@ -171,5 +179,12 @@ public class VariableKeySerde implements TemporalStateKeySerde {
         // Read the variable type.
         final VariableValType valType = VariableValType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(byteBuffer.get(0));
         return !VariableValType.DIRECT.equals(valType);
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new VariableUsedLookupsRecorder(env, uidLookupDb, hashLookupDb),
+                this::getPrefix);
     }
 }

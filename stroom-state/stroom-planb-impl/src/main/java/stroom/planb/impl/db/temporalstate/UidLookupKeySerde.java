@@ -2,7 +2,11 @@ package stroom.planb.impl.db.temporalstate;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UidLookupRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil.Addition;
@@ -37,13 +41,17 @@ public class UidLookupKeySerde implements TemporalStateKeySerde {
         final Instant effectiveTime = timeSerde.read(timeSlice);
 
         // Slice off the name.
-        final ByteBuffer nameSlice = byteBuffer.slice(0,
-                byteBuffer.remaining() - timeSerde.getSize());
+        final ByteBuffer nameSlice = getPrefix(byteBuffer);
 
         // Read via lookup.
         final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, nameSlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
         return new Key(val, effectiveTime);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        // Slice off the name.
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
     }
 
     @Override
@@ -100,5 +108,12 @@ public class UidLookupKeySerde implements TemporalStateKeySerde {
     @Override
     public boolean usesLookup(final ByteBuffer byteBuffer) {
         return true;
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new UidLookupRecorder(env, uidLookupDb),
+                this::getPrefix);
     }
 }

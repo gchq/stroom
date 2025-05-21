@@ -2,7 +2,11 @@ package stroom.planb.impl.db.serde.valtime;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
+import stroom.planb.impl.db.UidLookupRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.db.UsedLookupsRecorderProxy;
 import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
@@ -29,13 +33,17 @@ public class UidLookupValTimeSerde implements ValTimeSerde {
 
     @Override
     public ValTime read(final Txn<ByteBuffer> txn, final ByteBuffer byteBuffer) {
-        final ByteBuffer valSlice = byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
+        final ByteBuffer valSlice = getPrefix(byteBuffer);
         final ByteBuffer timeSlice = byteBuffer.slice(byteBuffer.remaining() - timeSerde.getSize(),
                 timeSerde.getSize());
         final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, valSlice);
         final Val val = ValSerdeUtil.read(valueByteBuffer);
         final Instant insertTime = timeSerde.read(timeSlice);
         return new ValTime(val, insertTime);
+    }
+
+    private ByteBuffer getPrefix(final ByteBuffer byteBuffer) {
+        return byteBuffer.slice(0, byteBuffer.remaining() - timeSerde.getSize());
     }
 
     @Override
@@ -62,5 +70,12 @@ public class UidLookupValTimeSerde implements ValTimeSerde {
     @Override
     public boolean usesLookup(final ByteBuffer byteBuffer) {
         return true;
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new UsedLookupsRecorderProxy(
+                new UidLookupRecorder(env, uidLookupDb),
+                this::getPrefix);
     }
 }

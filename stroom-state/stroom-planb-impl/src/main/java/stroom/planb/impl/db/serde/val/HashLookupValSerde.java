@@ -2,6 +2,9 @@ package stroom.planb.impl.db.serde.val;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.db.HashLookupDb;
+import stroom.planb.impl.db.HashLookupRecorder;
+import stroom.planb.impl.db.PlanBEnv;
+import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.query.language.functions.Val;
 
 import org.lmdbjava.Txn;
@@ -49,5 +52,10 @@ public class HashLookupValSerde implements ValSerde {
     @Override
     public boolean usesLookup(final ByteBuffer byteBuffer) {
         return true;
+    }
+
+    @Override
+    public UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return new HashLookupRecorder(env, hashLookupDb);
     }
 }

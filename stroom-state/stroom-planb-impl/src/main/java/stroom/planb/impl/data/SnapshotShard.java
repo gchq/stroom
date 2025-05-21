@@ -368,7 +368,7 @@ class SnapshotShard implements Shard {
                         open = true;
                     }
 
-                    return db.getInfo();
+                    return db.getInfoString();
 
                 } finally {
                     lock.unlock();

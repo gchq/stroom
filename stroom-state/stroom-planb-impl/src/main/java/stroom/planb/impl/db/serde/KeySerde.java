@@ -9,5 +9,4 @@ import java.util.function.Function;
 public interface KeySerde<T> extends Serde<T> {
 
     <R> R toBufferForGet(Txn<ByteBuffer> txn, T value, Function<Optional<ByteBuffer>, R> function);
-
 }

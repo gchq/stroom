@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 class DbInstance {
@@ -128,7 +127,7 @@ class DbInstance {
     public String getInfo() {
         incrementUseCount();
         try {
-            return db.getInfo();
+            return db.getInfoString();
         } finally {
             decrementUseCount();
         }

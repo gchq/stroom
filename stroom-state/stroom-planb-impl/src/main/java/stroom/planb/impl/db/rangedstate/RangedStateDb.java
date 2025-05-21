@@ -12,6 +12,7 @@ import stroom.planb.impl.db.PlanBSearchHelper.Context;
 import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
+import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.db.rangedstate.RangedState.Key;
 import stroom.planb.impl.db.serde.valtime.ValTime;
 import stroom.planb.impl.db.serde.valtime.ValTimeSerde;
@@ -49,6 +50,8 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
     private final RangedStateSettings settings;
     private final RangeKeySerde keySerde;
     private final ValTimeSerde valueSerde;
+    private final UsedLookupsRecorder keyRecorder;
+    private final UsedLookupsRecorder valueRecorder;
 
     private RangedStateDb(final PlanBEnv env,
                           final ByteBuffers byteBuffers,
@@ -61,6 +64,8 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
         this.settings = settings;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
+        this.valueRecorder = valueSerde.getUsedLookupsRecorder(env);
     }
 
     public static RangedStateDb create(final Path path,
@@ -84,7 +89,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final PlanBEnv env = new PlanBEnv(path,
                 settings.getMaxStoreSize(),
-                10,
+                20,
                 readOnly,
                 hashClashCommitRunnable);
         final RangeKeySerde keySerde = createKeySerde(
@@ -272,9 +277,18 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
                         dbi.delete(writer.getWriteTxn(), kv.key());
                         writer.tryCommit();
                         changeCount++;
+                    } else {
+                        // Record used lookup keys.
+                        keyRecorder.recordUsed(writer, kv.key());
+                        valueRecorder.recordUsed(writer, kv.val());
                     }
                 }
             }
+
+            // Delete unused lookup keys.
+            keyRecorder.deleteUnused(readTxn, writer);
+            valueRecorder.deleteUnused(readTxn, writer);
+
             return changeCount;
         }));
     }

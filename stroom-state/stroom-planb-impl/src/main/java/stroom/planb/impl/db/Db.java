@@ -45,5 +45,5 @@ public interface Db<K, V> extends AutoCloseable {
 
     long count();
 
-    String getInfo();
+    String getInfoString();
 }

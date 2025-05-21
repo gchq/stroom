@@ -22,7 +22,7 @@ public class InsertTimeSerde implements TimeSerde {
 
     @Override
     public Instant read(final ByteBuffer byteBuffer) {
-        return Instant.ofEpochSecond((UNSIGNED_BYTES.get(byteBuffer) + YEAR_2025_EPOCH_SECONDS) * SECONDS_IN_DAY);
+        return Instant.ofEpochSecond((UNSIGNED_BYTES.get(byteBuffer) * SECONDS_IN_DAY) + YEAR_2025_EPOCH_SECONDS);
     }
 
     @Override

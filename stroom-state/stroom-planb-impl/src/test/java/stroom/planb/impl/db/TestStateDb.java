@@ -53,6 +53,7 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
@@ -70,6 +71,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -253,6 +255,35 @@ class TestStateDb {
                 BASIC_SETTINGS,
                 true)) {
             assertThat(db.count()).isEqualTo(2);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+        }
+
+        // Try deletion.
+        shardManager.condenseAll(new SimpleTaskContext());
+
+        // Read after deletion
+        try (final StateDb db = StateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                BASIC_SETTINGS,
+                true)) {
+            assertThat(db.count()).isEqualTo(0);
+            System.err.println(db.getInfoString());
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+        }
+
+        // Try compaction.
+        shardManager.compactAll();
+        shardManager.compactAll();
+
+        // Read compacted
+        try (final StateDb db = StateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                BASIC_SETTINGS,
+                true)) {
+            assertThat(db.count()).isEqualTo(0);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(12);
         }
     }
 
@@ -686,7 +717,7 @@ class TestStateDb {
                           final Function<Integer, Val> keyFunction,
                           final Function<Integer, Val> valueFunction) {
         final Val expectedVal = valueFunction.apply(insertRows - 1);
-        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, true)) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
             assertThat(db.count()).isEqualTo(1);
             final Val key = keyFunction.apply(0);
             final Val value = db.get(key);
@@ -710,6 +741,9 @@ class TestStateDb {
             assertThat(results.getFirst()[0]).isEqualTo(key);
             assertThat(results.getFirst()[1].toString()).isEqualTo(expectedVal.type().toString());
             assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
+
+            // Test deleting data.
+            db.deleteOldData(Instant.now(), false);
         }
     }
 
@@ -718,7 +752,7 @@ class TestStateDb {
                                 final int rows,
                                 final Function<Integer, Val> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
-        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, true)) {
+        try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
             for (int i = 0; i < rows; i++) {
                 final Val key = keyFunction.apply(i);
                 final Val value = db.get(key);
@@ -726,6 +760,9 @@ class TestStateDb {
                 assertThat(value.type()).isEqualTo(valueFunction.apply(i).type());
 //                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
             }
+
+            // Test deleting data.
+            db.deleteOldData(Instant.now(), false);
         }
     }
 
