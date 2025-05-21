@@ -27,6 +27,7 @@ import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.analytics.client.gin.ReportGinjector;
 import stroom.analytics.client.gin.ReportModule;
 import stroom.annotation.client.AnnotationModule;
+import stroom.appstore.client.gin.AppStoreModule;
 import stroom.aws.s3.client.gin.S3ConfigGinjector;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheGinjector;
@@ -129,6 +130,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,
+        AppStoreModule.class,
         CacheModule.class,
         ContentTemplateModule.class,
         RestModule.class,
