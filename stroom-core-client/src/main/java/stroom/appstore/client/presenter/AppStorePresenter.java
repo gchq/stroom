@@ -5,10 +5,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 
-import com.google.gwt.event.shared.EventBus;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import javax.inject.Inject;
 
 /**
  * Represents the RHS of the UI when displaying the App Store.
@@ -83,6 +82,9 @@ implements Refreshable {
         // TODO
     }
 
+    /**
+     * GWT view managed by this presenter.
+     */
     public interface AppStoreView extends View {
 
     }
