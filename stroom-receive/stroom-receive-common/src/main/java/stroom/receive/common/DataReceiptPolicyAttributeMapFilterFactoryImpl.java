@@ -139,16 +139,16 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             activeRules,
                             valueFunctionFactories,
                             attributeMapper,
-                            ReceiveAction.RECEIVE);
+                            ReceiveAction.REJECT);
                 }
             }
-            // If no rules then fall back to a receive-all filter
+            // If no rules then fall back to a reject-all filter
             return NullSafe.getOrElseGet(
                     checker,
                     DataReceiptPolicyAttributeMapFilter::new,
                     () -> {
-                        LOGGER.debug("Falling back to a receive-all filter");
-                        return ReceiveAllAttributeMapFilter.getInstance();
+                        LOGGER.debug("Falling back to a reject-all filter");
+                        return RejectAllAttributeMapFilter.getInstance();
                     });
         }
     }
@@ -292,7 +292,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
                         final ReceiveDataRule matchingRule = findMatchingRule(effectiveAttrMap);
                         // The default action is to receive data.
-                        LOGGER.debug("check() - matchingRule: {}", matchingRule);
+                        LOGGER.debug("check() - matchingRule: {}, fallBackReceiveAction: {}",
+                                matchingRule, fallBackReceiveAction);
                         return NullSafe.getOrElse(
                                 matchingRule,
                                 ReceiveDataRule::getAction,

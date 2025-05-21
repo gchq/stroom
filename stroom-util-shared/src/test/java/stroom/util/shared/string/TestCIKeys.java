@@ -16,12 +16,20 @@
 
 package stroom.util.shared.string;
 
+import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.concurrent.CopyOnWriteMap;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKeys.getCommonKey;
@@ -102,5 +110,54 @@ class TestCIKeys {
                 .isEqualTo(ciKey1);
         assertThat(ciKey4)
                 .isSameAs(ciKey1);
+    }
+
+    @Test
+    @Disabled
+    void testMapPerf() {
+
+        final int count = 5_000;
+        final Map<String, String> concurrentMap = new ConcurrentHashMap<>();
+        final Map<String, String> copyOnWriteMap = CopyOnWriteMap.newHashMap();
+        final List<String> uuids = IntStream.rangeClosed(1, count)
+                .boxed()
+                .map(i -> UUID.randomUUID().toString())
+                .peek(uuid -> {
+                    concurrentMap.put(uuid, uuid);
+                    copyOnWriteMap.put(uuid, uuid);
+                })
+                .toList();
+
+        final int cores = Runtime.getRuntime().availableProcessors();
+
+        TestUtil.comparePerformance(
+                5,
+                100_000_000,
+                LOGGER::info,
+                TimedCase.of("concurrentMap", (round, iterations) -> {
+                    TestUtil.multiThread(cores, () -> {
+                        int j = 0;
+                        for (int i = 0; i < iterations; i++) {
+                            if (j >= count) {
+                                j = 0;
+                            }
+                            concurrentMap.get(uuids.get(j));
+                            j++;
+                        }
+                    });
+                }),
+                TimedCase.of("copyOnWriteMap", (round, iterations) -> {
+                    TestUtil.multiThread(cores, () -> {
+                        int j = 0;
+                        for (int i = 0; i < iterations; i++) {
+                            if (j >= count) {
+                                j = 0;
+                            }
+                            copyOnWriteMap.get(uuids.get(j));
+                            j++;
+                        }
+                    });
+                })
+        );
     }
 }

@@ -25,7 +25,18 @@ public class StroomReceiptPolicyConfig extends AbstractConfig implements IsStroo
 
     public static final Set<String> DEFAULT_OBFUSCATED_FIELDS =
             CollectionUtil.asUnmodifiabledConsistentOrderSet(List.of(
-                    StandardHeaderArguments.FEED));
+                    StandardHeaderArguments.ACCOUNT_ID,
+                    StandardHeaderArguments.ACCOUNT_NAME,
+                    StandardHeaderArguments.COMPONENT,
+                    StandardHeaderArguments.FEED,
+                    StandardHeaderArguments.RECEIVED_PATH,
+                    StandardHeaderArguments.REMOTE_DN,
+                    StandardHeaderArguments.REMOTE_HOST,
+                    StandardHeaderArguments.SYSTEM,
+                    StandardHeaderArguments.UPLOAD_USERNAME,
+                    StandardHeaderArguments.UPLOAD_USER_ID,
+                    StandardHeaderArguments.X_FORWARDED_FOR
+            ));
 
     // Use sha2-512 to make hash clashes very unlikely.
     public static final HashAlgorithm DEFAULT_HASH_ALGORITHM = HashAlgorithm.SHA2_512;

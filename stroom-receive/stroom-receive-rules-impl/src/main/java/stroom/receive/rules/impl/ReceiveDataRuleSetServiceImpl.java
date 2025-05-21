@@ -17,6 +17,7 @@
 
 package stroom.receive.rules.impl;
 
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -26,6 +27,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -35,6 +37,8 @@ import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.HashAlgorithm;
+import stroom.util.collections.CollectionUtil;
+import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -49,8 +53,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -123,13 +129,16 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         final Set<CIKey> obfuscatedFields = CIKey.setOf(receiptPolicyConfig.getObfuscatedFields());
         final HashAlgorithm obfuscationHashAlgorithm = receiptPolicyConfig.getObfuscationHashAlgorithm();
         final HashFunction hashFunction = hashFunctionFactory.getHashFunction(obfuscationHashAlgorithm);
-        final List<ReceiveDataRule> rules = NullSafe.list(receiveDataRules.getRules());
+        final List<ReceiveDataRule> enabledRules = receiveDataRules.getEnabledRules();
 
         final Map<String, DictionaryDoc> uuidToFlattenedDictMap = new HashMap<>();
         final Map<String, String> fieldNameToSaltMap = new HashMap<>();
-        final List<ReceiveDataRule> ruleCopies = new ArrayList<>(rules.size());
+        final List<ReceiveDataRule> ruleCopies = new ArrayList<>(enabledRules.size());
+        final Map<String, QueryField> fieldNameToFieldMap = CollectionUtil.mapBy(
+                QueryField::getFldName, DuplicateMode.USE_FIRST, receiveDataRules.getFields());
+        final Set<QueryField> usedFields = new HashSet<>(fieldNameToFieldMap.size());
 
-        for (final ReceiveDataRule rule : rules) {
+        for (final ReceiveDataRule rule : enabledRules) {
             ExpressionOperator expressionCopy = copyAndObfuscateOperator(
                     rule.getExpression(),
                     fieldNameToSaltMap,
@@ -145,10 +154,17 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                     .withExpression(expressionCopy)
                     .build();
             ruleCopies.add(ruleCopy);
+            final List<String> fieldsInExpression = ExpressionUtil.fields(rule.getExpression());
+            fieldsInExpression.stream()
+                    .map(fieldNameToFieldMap::get)
+                    .filter(Objects::nonNull)
+                    .forEach(usedFields::add);
         }
 
+        // There is no point sending over the full list of fields if they are not used in the terms
         final ReceiveDataRules receiveDataRulesCopy = ReceiveDataRules.copy(receiveDataRules)
                 .withRules(ruleCopies)
+                .withFields(new ArrayList<>(usedFields))
                 .build();
 
         return new HashedReceiveDataRules(

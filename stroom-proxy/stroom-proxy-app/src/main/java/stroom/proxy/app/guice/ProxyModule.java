@@ -16,13 +16,11 @@
 
 package stroom.proxy.app.guice;
 
-import stroom.dictionary.api.DictionaryStore;
 import stroom.dropwizard.common.DropwizardModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
@@ -125,8 +123,5 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)
                 .addBinding(TokenExceptionMapper.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(DictionaryStore.class);
     }
 }

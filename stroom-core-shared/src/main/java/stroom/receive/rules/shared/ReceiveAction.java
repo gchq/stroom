@@ -22,6 +22,8 @@ import stroom.util.shared.HasCaseInsensitiveForm.CaseInsensitiveConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.function.Supplier;
+
 /**
  * The action to perform when data is received by stroom/proxy.
  */
@@ -29,29 +31,43 @@ public enum ReceiveAction implements HasDisplayValue {
     /**
      * Data will be accepted.
      */
-    RECEIVE("Receive"),
+    RECEIVE("Receive", true),
     /**
      * The client will receive an error response. The data will not be accepted.
      */
-    REJECT("Reject"),
+    REJECT("Reject", false),
     /**
      * Data will be silently dropped with no error. The client will receive a 200 response.
      */
-    DROP("Drop"),
+    DROP("Drop", false),
     ;
 
     private static final CaseInsensitiveConverter<ReceiveAction> CASE_INSENSITIVE_CONVERTER =
             CaseInsensitiveConverter.create(ReceiveAction.class);
 
     private final String displayValue;
+    private final boolean filterOutcome;
 
-    ReceiveAction(final String displayValue) {
+    ReceiveAction(final String displayValue, final boolean filterOutcome) {
         this.displayValue = displayValue;
+        this.filterOutcome = filterOutcome;
     }
 
     @Override
     public String getDisplayValue() {
         return displayValue;
+    }
+
+    public boolean getFilterOutcome() {
+        return filterOutcome;
+    }
+
+    public boolean getFilterOutcome(final Supplier<RuntimeException> rejectionExceptionSupplier) {
+        if (this == REJECT && rejectionExceptionSupplier != null) {
+            throw rejectionExceptionSupplier.get();
+        } else {
+            return filterOutcome;
+        }
     }
 
     /**

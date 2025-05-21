@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
+import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
@@ -29,35 +30,36 @@ import java.util.Optional;
 public class ReceiveDataRuleSetClient {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetClient.class);
-    private static final String GET_FEED_STATUS_PATH = "/fetchHashedReceiveDataRules";
+    private static final String GET_FEED_STATUS_PATH = ReceiveDataRuleSetResource.FETCH_HASHED_PATH_PART;
 
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
-    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
+    private final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider;
 
     @Inject
     public ReceiveDataRuleSetClient(final JerseyClientFactory jerseyClientFactory,
                                     final UserIdentityFactory userIdentityFactory,
-                                    final Provider<ContentSyncConfig> contentSyncConfigProvider) {
+                                    final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider) {
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
-        this.contentSyncConfigProvider = contentSyncConfigProvider;
+        this.proxyReceiptPolicyConfigProvider = proxyReceiptPolicyConfigProvider;
     }
 
     public Optional<HashedReceiveDataRules> getHashedReceiveDataRules() {
         Optional<HashedReceiveDataRules> optHashedReceiveDataRules = Optional.empty();
 
-        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-        final String url = contentSyncConfig.getReceiveDataRulesUrl();
+        final ProxyReceiptPolicyConfig proxyReceiptPolicyConfig = proxyReceiptPolicyConfigProvider.get();
+        final String url = proxyReceiptPolicyConfig.getReceiveDataRulesUrl();
         if (NullSafe.isNonBlankString(url)) {
             try {
                 final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
                         .path(GET_FEED_STATUS_PATH);
-                try (Response response = getResponse(contentSyncConfig, webTarget)) {
+                try (Response response = getResponse(proxyReceiptPolicyConfig, webTarget)) {
                     final StatusType statusInfo = response.getStatusInfo();
                     if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
-                        LOGGER.error("Error fetching receive data rules using url '{}', got response {} - {}",
-                                url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
+                        LOGGER.error("Error fetching receive data rules using url '{}', webTarget: {}, " +
+                                     "got response {} - {}",
+                                url, webTarget, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
                     } else {
                         optHashedReceiveDataRules = Optional.ofNullable(
                                 response.readEntity(HashedReceiveDataRules.class));
@@ -74,23 +76,23 @@ public class ReceiveDataRuleSetClient {
         return optHashedReceiveDataRules;
     }
 
-    private Response getResponse(final ContentSyncConfig contentSyncConfig,
+    private Response getResponse(final ProxyReceiptPolicyConfig proxyReceiptPolicyConfig,
                                  final WebTarget webTarget) {
         return webTarget
                 .request(MediaType.APPLICATION_JSON)
-                .headers(getHeaders(contentSyncConfig))
+                .headers(getHeaders(proxyReceiptPolicyConfig))
                 .get();
     }
 
-    private MultivaluedMap<String, Object> getHeaders(final ContentSyncConfig contentSyncConfig) {
+    private MultivaluedMap<String, Object> getHeaders(final ProxyReceiptPolicyConfig proxyReceiptPolicyConfig) {
         final Map<String, String> headers;
 
-        if (!NullSafe.isBlankString(contentSyncConfig.getApiKey())) {
+        if (!NullSafe.isBlankString(proxyReceiptPolicyConfig.getApiKey())) {
             // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
             // and add it to config.
             LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
-                    contentSyncConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
-            headers = userIdentityFactory.getAuthHeaders(contentSyncConfig.getApiKey());
+                    proxyReceiptPolicyConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
+            headers = userIdentityFactory.getAuthHeaders(proxyReceiptPolicyConfig.getApiKey());
         } else {
             // Use a token from the external IDP
             headers = userIdentityFactory.getServiceUserAuthHeaders();

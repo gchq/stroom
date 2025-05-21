@@ -27,7 +27,6 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
     private final Provider<FeedStatusService> feedStatusServiceProvider;
     private final EnumMap<FeedStatus, Meter> feedStatusMeters;
 
-
     @Inject
     public FeedStatusAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider,
                                         final Metrics metrics) {
@@ -45,7 +44,9 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+        final String feedName = NullSafe.get(
+                attributeMap.get(StandardHeaderArguments.FEED),
+                String::trim);
         final UserDesc userDesc;
         // These two have been added by RequestAuthenticatorImpl
         final String uploadUserId = NullSafe.get(

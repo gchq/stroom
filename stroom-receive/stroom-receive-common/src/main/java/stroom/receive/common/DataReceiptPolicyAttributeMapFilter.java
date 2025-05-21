@@ -27,24 +27,17 @@ import java.util.Objects;
 class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
 
     private final Checker checker;
-//    private final UnaryOperator<AttributeMap> attributeMapConverter;
 
     DataReceiptPolicyAttributeMapFilter(final Checker checker) {
         Objects.requireNonNull(checker, "Null policy checker");
         this.checker = checker;
-//        this.attributeMapConverter = Objects.requireNonNullElseGet(attributeMapConverter, UnaryOperator::identity);
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-//        final AttributeMap effectiveAttributeMap = attributeMapConverter.apply(attributeMap);
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
         final ReceiveAction action = checker.check(attributeMap);
-
-        if (ReceiveAction.REJECT.equals(action)) {
-            throw new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap);
-        }
-
-        return ReceiveAction.RECEIVE.equals(action);
+        return action.getFilterOutcome(() ->
+                new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap));
     }
 }

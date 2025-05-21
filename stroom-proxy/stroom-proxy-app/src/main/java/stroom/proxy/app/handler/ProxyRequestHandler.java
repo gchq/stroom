@@ -14,7 +14,6 @@ import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.net.HostNameUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -29,7 +28,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Main entry point to handling proxy requests.
+ * Main entry point to handling requests into Stroom-Proxy. Stroom has it's own handler.
  * <p>
  * This class used the main context and forwards the request on to our
  * dynamic mini proxy.
@@ -44,7 +43,6 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ReceiverFactory receiverFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final DataReceiptMetrics dataReceiptMetrics;
-    private final String hostName;
 
     @Inject
     public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
@@ -57,7 +55,6 @@ public class ProxyRequestHandler implements RequestHandler {
         this.receiverFactory = receiverFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.dataReceiptMetrics = dataReceiptMetrics;
-        this.hostName = HostNameUtil.determineHostName();
     }
 
     @Override

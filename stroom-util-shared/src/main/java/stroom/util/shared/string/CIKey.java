@@ -263,8 +263,13 @@ public class CIKey implements Comparable<CIKey> {
             // First assume it matches the case exactly
             CIKey ciKey = CIKeys.getCommonKey(key);
             if (ciKey == null) {
-                // Now assume it is already lower-case
-                ciKey = CIKeys.getCommonKeyByLowerCase(key);
+                // If the first char is lower case then there is a good change key is
+                // all lower case
+                final char firstChar = key.charAt(0);
+                if (Character.isLowerCase(firstChar)) {
+                    // Now assume it is already lower-case
+                    ciKey = CIKeys.getCommonKeyByLowerCase(key);
+                }
                 if (ciKey == null) {
                     final String lowerKey = toLowerCase(key);
                     ciKey = CIKeys.getCommonKeyByLowerCase(lowerKey);

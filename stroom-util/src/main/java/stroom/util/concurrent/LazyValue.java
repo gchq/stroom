@@ -5,16 +5,17 @@ import java.util.function.Supplier;
 
 /**
  * A value that is lazily evaluated using a provided {@link Supplier}.
+ *
  * @param <T> The type of the lazy value.
  */
 public class LazyValue<T> {
 
     private final Supplier<T> valueSupplier;
-    private volatile boolean isInitialised = false;
-
+    private transient volatile boolean isInitialised = false;
     // Volatile piggybacking ensures that a thread sees the right value
-    // as long as we read/write value after reading/writing initialised,
-    // hence no volatile on this one.
+    // as long as we read value AFTER reading isInitialised and
+    // write value BEFORE writing isInitialised.
+    // Hence, no volatile on this one.
     private transient T value;
 
     private LazyValue(final Supplier<T> valueSupplier) {
@@ -36,6 +37,7 @@ public class LazyValue<T> {
             // May be called >1 times by different threads
             final T newVal = valueSupplier.get();
             // Write order is important here due to volatile piggybacking
+            // Must write to isInitialised last, so the change to value happensBefore it
             value = newVal;
             isInitialised = true;
             return newVal;
@@ -56,6 +58,7 @@ public class LazyValue<T> {
                 if (!isInitialised) {
                     final T newVal = valueSupplier.get();
                     // Write order is important here due to volatile piggybacking
+                    // Must write to isInitialised last, so the change to value happensBefore it
                     value = newVal;
                     isInitialised = true;
                     return newVal;

@@ -23,8 +23,10 @@ import stroom.docref.DocRef.TypedBuilder;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "type",
@@ -128,6 +131,13 @@ public class ReceiveDataRules extends Doc {
 
     public List<ReceiveDataRule> getRules() {
         return rules;
+    }
+
+    @JsonIgnore
+    public List<ReceiveDataRule> getEnabledRules() {
+        return NullSafe.stream(rules)
+                .filter(ReceiveDataRule::isEnabled)
+                .collect(Collectors.toList());
     }
 
     public void setRules(final List<ReceiveDataRule> rules) {

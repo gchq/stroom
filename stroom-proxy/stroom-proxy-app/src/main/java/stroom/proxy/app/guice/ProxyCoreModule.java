@@ -30,10 +30,12 @@ import stroom.proxy.repo.ProgressLogImpl;
 import stroom.proxy.repo.queue.QueueModule;
 import stroom.proxy.repo.store.StoreModule;
 import stroom.receive.common.CertificateExtractorImpl;
+import stroom.receive.common.ContentAutoCreationAttrMapFilterFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
+import stroom.receive.common.ReceiveAllAttributeMapFilter;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
@@ -72,6 +74,9 @@ public class ProxyCoreModule extends AbstractModule {
         bind(ReceiptIdGenerator.class).to(ProxyReceiptIdGenerator.class).asEagerSingleton();
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(HttpClientFactory.class).to(DropwizardHttpClientFactory.class);
+        // Proxy doesn't do content auto-creation
+        bind(ContentAutoCreationAttrMapFilterFactory.class)
+                .toInstance(ReceiveAllAttributeMapFilter::getInstance);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);

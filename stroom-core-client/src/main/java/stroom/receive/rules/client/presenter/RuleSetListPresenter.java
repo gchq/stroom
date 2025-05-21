@@ -74,7 +74,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implement
                         .withToolTip("The number of the rule. Rules are evaluated in ascending order of rule number.")
                         .rightAligned()
                         .build(),
-                40);
+                60);
 
         // Name.
         dataGrid.addResizableColumn(

@@ -54,7 +54,11 @@ import java.util.function.Consumer;
 
 /**
  * <p>
- * Handle the incoming requests and stream them to disk checking a few things.
+ * Stroom's handler for handling the incoming requests. Proxy has it's own handler.
+ * </p>
+ * <p>
+ * Performs authentication, passes the attributeMap to the chain of {@link AttributeMapFilter}s
+ * then for anything that passes,  streams it to disk.
  * </p>
  */
 class ReceiveDataRequestHandler implements RequestHandler {

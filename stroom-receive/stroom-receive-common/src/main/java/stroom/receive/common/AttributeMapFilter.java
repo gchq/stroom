@@ -54,27 +54,30 @@ public interface AttributeMapFilter {
      * If null or empty, a permissive filter will be returned.
      */
     static AttributeMapFilter wrap(final List<AttributeMapFilter> attributeMapFilters) {
-        if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-            LOGGER.debug("Empty attributeMapFilters, returning permissive instance");
+        // No point evaluating filters if we have a reject-all in there
+        if (NullSafe.stream(attributeMapFilters)
+                .anyMatch(filter -> filter instanceof RejectAllAttributeMapFilter)) {
+            return RejectAllAttributeMapFilter.getInstance();
+        }
+
+        // Ignore any permissive filters in the chain as they do nothing
+        final List<AttributeMapFilter> filteredFilters = NullSafe.stream(attributeMapFilters)
+                .filter(Objects::nonNull)
+                .filter(filter ->
+                        !(filter instanceof ReceiveAllAttributeMapFilter))
+                .toList();
+
+        if (filteredFilters.isEmpty()) {
+            LOGGER.debug("No non-null attributeMapFilters, returning permissive instance");
             return ReceiveAllAttributeMapFilter.getInstance();
+        } else if (filteredFilters.size() == 1) {
+            final AttributeMapFilter filter = filteredFilters.getFirst();
+            LOGGER.debug(() -> "Returning single filter: " + filter.getClass().getSimpleName());
+            return filter;
         } else {
-            final List<AttributeMapFilter> filteredFilters = attributeMapFilters.stream()
-                    .filter(Objects::nonNull)
-                    .filter(filter ->
-                            !(filter instanceof ReceiveAllAttributeMapFilter))
-                    .toList();
-            if (filteredFilters.isEmpty()) {
-                LOGGER.debug("No non-null attributeMapFilters, returning permissive instance");
-                return ReceiveAllAttributeMapFilter.getInstance();
-            } else if (filteredFilters.size() == 1) {
-                final AttributeMapFilter filter = NullSafe.first(filteredFilters);
-                LOGGER.debug(() -> "Returning single filter: " + filter.getClass().getSimpleName());
-                return filter;
-            } else {
-                final MultiAttributeMapFilter filter = new MultiAttributeMapFilter(filteredFilters);
-                LOGGER.debug("Returning filter chain: {}", filter);
-                return filter;
-            }
+            final MultiAttributeMapFilter filter = new MultiAttributeMapFilter(filteredFilters);
+            LOGGER.debug("Returning filter chain: {}", filter);
+            return filter;
         }
     }
 }

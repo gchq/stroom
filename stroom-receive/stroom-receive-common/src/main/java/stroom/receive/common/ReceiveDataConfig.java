@@ -381,14 +381,13 @@ public class ReceiveDataConfig
 //    }
 
     @JsonPropertyDescription("Controls how or whether data is checked on receipt. Valid values " +
-                             "(FEED_STATUS|RECEIPT_POLICY|NONE).")
+                             "(FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|REJECT_ALL|DROP_ALL).")
     public ReceiptCheckMode getReceiptCheckMode() {
         return receiptCheckMode;
     }
 
-    @JsonPropertyDescription("If receiptCheckMode is NONE or if receiptCheckMode is RECEIPT_POLICY " +
-                             "and no rules match, or the receipt check failed, then this fallback action will " +
-                             "be used.")
+    @JsonPropertyDescription("If receiptCheckMode is RECEIPT_POLICY and stroom/proxy is unable to access the " +
+                             "receipt rules, then this action will be used.")
     public ReceiveAction getFallbackReceiveAction() {
         return fallbackReceiveAction;
     }
@@ -545,13 +544,22 @@ public class ReceiveDataConfig
          */
         FEED_STATUS,
         /**
-         * The meta attributes from the headers will be checked against the receipt policy rules.
+         * The meta attributes from the headers will be checked against the receipt policy rules to determine
+         * whether the data should be accepted for receipt, rejected or silently dropped.
          */
         RECEIPT_POLICY,
         /**
-         * No check is performed. The default receipt action will be performed.
+         * No check is performed. All data is accepted for receipt (pending any other checks).
          */
-        NONE,
+        RECEIVE_ALL,
+        /**
+         * No check is performed. All data is dropped.
+         */
+        DROP_ALL,
+        /**
+         * No check is performed. All data is rejected.
+         */
+        REJECT_ALL,
         ;
 
         private static final CaseInsensitiveConverter<ReceiptCheckMode> CASE_INSENSITIVE_CONVERTER =

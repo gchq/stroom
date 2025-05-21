@@ -16,11 +16,12 @@
 
 package stroom.util.shared.string;
 
+import stroom.util.shared.concurrent.CopyOnWriteMap;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A set of static common {@link CIKey} instances
@@ -33,11 +34,10 @@ public class CIKeys {
     // object creation for common ones.
     // The cost of a hashmap get is less than the combined cost of CIKey object creation and
     // the toLowerCase call.
-    // Have to be concurrent maps as various classes in potentially multiple threads will call
-    // commonKey(). Not much perf difference as compared to a HashMap in tests and ConcurrentHashMap
-    // is non-blocking for reads which is what these will mostly see
-    private static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
-    private static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = new ConcurrentHashMap<>();
+    // Have to use a thread-safe map impl as multiple threads will call internCommonKey(..).
+    // Use CopyOnWriteMaps so there is no perf hit on the reads and because writes will be few.
+    private static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = CopyOnWriteMap.newHashMap();
+    private static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = CopyOnWriteMap.newHashMap();
 
     public static final CIKey EMPTY = internCommonKey("");
 

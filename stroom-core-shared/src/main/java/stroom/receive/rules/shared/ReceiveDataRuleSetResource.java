@@ -37,6 +37,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
 
     String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V2;
+    String FETCH_HASHED_PATH_PART = "/fetchHashedRules";
 
     @GET
     @Path("/")
@@ -48,7 +49,7 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     @SuppressWarnings("unused") // Called by proxy
     @GET
-    @Path("/fetchHashedRules")
+    @Path(FETCH_HASHED_PATH_PART)
     @Operation(
             summary = "Fetch hashed receipt rules",
             operationId = "fetchHashedReceiveDataRules")
