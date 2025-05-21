@@ -90,10 +90,7 @@ class StoreShard implements Shard {
                 }
 
                 // Open if needed.
-                if (!open) {
-                    open();
-                    open = true;
-                }
+                open();
 
                 final int count = useCount.incrementAndGet();
                 if (count <= 0) {
@@ -362,11 +359,7 @@ class StoreShard implements Shard {
                         // Now we have no readers we can switch the files.
 
                         // Close the DB if open.
-                        if (open) {
-                            db.close();
-                            db = null;
-                            open = false;
-                        }
+                        close();
 
                         // Switch files.
                         try {
@@ -512,10 +505,8 @@ class StoreShard implements Shard {
             readLock.lockInterruptibly();
             try {
                 if (useCount.get() == 0) {
-                    if (open && isIdle()) {
-                        db.close();
-                        db = null;
-                        open = false;
+                    if (isIdle()) {
+                        close();
                     }
                 }
             } finally {
@@ -531,18 +522,29 @@ class StoreShard implements Shard {
                 configProvider.get().getMinTimeToKeepEnvOpen().getDuration()));
     }
 
-    private void open() {
-        if (Files.exists(shardDir)) {
-            LOGGER.info(() -> "Found local shard for '" + doc + "'");
-            db = PlanBDb.open(doc, shardDir, byteBuffers, false);
+    private synchronized void open() {
+        if (!open) {
+            if (Files.exists(shardDir)) {
+                LOGGER.info(() -> "Found local shard for '" + doc + "'");
+                db = PlanBDb.open(doc, shardDir, byteBuffers, false);
+                open = true;
 
-        } else {
-            // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
-            final String message = "Local Plan B shard not found for '" +
-                                   doc +
-                                   "'";
-            LOGGER.error(() -> message);
-            throw new RuntimeException(message);
+            } else {
+                // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
+                final String message = "Local Plan B shard not found for '" +
+                                       doc +
+                                       "'";
+                LOGGER.error(() -> message);
+                throw new RuntimeException(message);
+            }
+        }
+    }
+
+    private synchronized void close() {
+        if (open) {
+            db.close();
+            db = null;
+            open = false;
         }
     }
 
