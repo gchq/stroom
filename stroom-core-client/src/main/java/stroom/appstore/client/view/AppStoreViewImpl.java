@@ -2,11 +2,10 @@ package stroom.appstore.client.view;
 
 import stroom.appstore.client.presenter.AppStorePresenter;
 
+import com.google.inject.Inject;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-
-import javax.inject.Inject;
 
 /**
  * GWT View implementation.
