@@ -24,6 +24,7 @@ import stroom.util.shared.concurrent.CopyOnWriteMap;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,16 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKeys.getCommonKey;
+import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
+@ResourceLock(CI_KEYS_RESOURCE_LOCK)
 class TestCIKeys {
+
+    // Because some of the CIKey tests have to clear out the statically held CIKey
+    // instances this can break other CIKey tests, so make them all use a resource lock.
+    // Other tests that are indirectly using CIKeys should not be an issue as
+    // CIKeys is just a tiny performance boost, so functionality should be OK.
+    public static final String CI_KEYS_RESOURCE_LOCK = "CIKeysResourceLock";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKeys.class);
 

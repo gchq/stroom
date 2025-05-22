@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,7 +59,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
 import static stroom.util.shared.string.CIKey.listOf;
 import static stroom.util.shared.string.CIKeys.getCommonKey;
+import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
+@ResourceLock(CI_KEYS_RESOURCE_LOCK)
 public class TestCIKey {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKey.class);
