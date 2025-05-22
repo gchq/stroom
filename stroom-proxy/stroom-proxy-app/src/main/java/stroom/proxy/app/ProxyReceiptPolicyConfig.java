@@ -5,6 +5,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
@@ -54,6 +55,9 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
     }
 
     @JsonProperty("receiveDataRulesUrl")
+    @JsonPropertyDescription("The base url for the remote stroom/proxy that will provide the rules." +
+                             "If the remote is a proxy, it must also be configured to use receipt policy rules " +
+                             "so that it can obtain them from another stroom/proxy downstream to it.")
     public String getReceiveDataRulesUrl() {
         return receiveDataRulesUrl;
     }

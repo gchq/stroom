@@ -58,6 +58,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
             DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
 
+    private static final ReceiveAction NO_MATCH_OR_NO_RULES_ACTION = ReceiveAction.REJECT;
+
     private final ReceiveDataRuleSetService ruleSetService;
     private final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
@@ -86,15 +88,23 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     public AttributeMapFilter create() {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
         BundledRules bundledRules = null;
-        Checker checker = null;
         try {
             bundledRules = ruleSetService.getBundledRules();
         } catch (Exception e) {
-            LOGGER.error("Error reading rule set. The default receive all policy will be applied", e);
+            LOGGER.error("Error fetching receipt policy rules: {}", LogUtil.exceptionMessage(e), e);
         }
         if (bundledRules == null) {
-            return ReceiveAllAttributeMapFilter.getInstance();
+            // There has been some problem in obtaining the rules, as opposed to there being no rules.
+            final ReceiveAction fallbackReceiveAction = Objects.requireNonNullElse(
+                    receiveDataConfigProvider.get().getFallbackReceiveAction(),
+                    ReceiveDataConfig.DEFAULT_FALLBACK_RECEIVE_ACTION);
+            final AttributeMapFilter fallbackFilter = AttributeMapFilter.getBlanketFilter(fallbackReceiveAction);
+            LOGGER.warn("Unable to fetch/read receipt policy rules. " +
+                        "Using fallback action: {} and filter: '{}'",
+                    fallbackReceiveAction, fallbackFilter);
+            return fallbackFilter;
         } else {
+            Checker checker = null;
             final List<ReceiveDataRule> rules = NullSafe.get(bundledRules, BundledRules::getRules);
             final List<QueryField> fields = NullSafe.get(bundledRules, BundledRules::getFields);
 
@@ -139,7 +149,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             activeRules,
                             valueFunctionFactories,
                             attributeMapper,
-                            ReceiveAction.REJECT);
+                            NO_MATCH_OR_NO_RULES_ACTION); // Rules are essentially 'allow' rules rather than 'deny'.
                 }
             }
             // If no rules then fall back to a reject-all filter
@@ -147,8 +157,10 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                     checker,
                     DataReceiptPolicyAttributeMapFilter::new,
                     () -> {
-                        LOGGER.debug("Falling back to a reject-all filter");
-                        return RejectAllAttributeMapFilter.getInstance();
+                        final AttributeMapFilter filter = AttributeMapFilter.getBlanketFilter(
+                                NO_MATCH_OR_NO_RULES_ACTION);
+                        LOGGER.debug("Falling back to filter {}", filter);
+                        return filter;
                     });
         }
     }
@@ -266,19 +278,19 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         private final ValueFunctionFactories<AttributeMap> valueFunctionFactories;
         private final AttributeMapper attributeMapper;
         private final Map<Integer, Predicate<AttributeMap>> ruleNoToPredicateFactoryMap;
-        private final ReceiveAction fallBackReceiveAction;
+        private final ReceiveAction noMatchAction;
 
         CheckerImpl(final ExpressionPredicateFactory expressionMatcher,
                     final List<ReceiveDataRule> activeRules,
                     final ValueFunctionFactories<AttributeMap> valueFunctionFactories,
                     final AttributeMapper attributeMapper,
-                    final ReceiveAction fallBackReceiveAction) {
+                    final ReceiveAction noMatchAction) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.valueFunctionFactories = valueFunctionFactories;
             this.attributeMapper = attributeMapper;
             this.ruleNoToPredicateFactoryMap = new HashMap<>();
-            this.fallBackReceiveAction = fallBackReceiveAction;
+            this.noMatchAction = noMatchAction;
         }
 
         @Override
@@ -292,12 +304,12 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
                         final ReceiveDataRule matchingRule = findMatchingRule(effectiveAttrMap);
                         // The default action is to receive data.
-                        LOGGER.debug("check() - matchingRule: {}, fallBackReceiveAction: {}",
-                                matchingRule, fallBackReceiveAction);
+                        LOGGER.debug("check() - matchingRule: {}, noMatchAction: {}",
+                                matchingRule, noMatchAction);
                         return NullSafe.getOrElse(
                                 matchingRule,
                                 ReceiveDataRule::getAction,
-                                fallBackReceiveAction);
+                                noMatchAction);
                     },
                     ruleAction -> LogUtil.message("Checked attributeMap: {} with result: {}",
                             attributeMap, ruleAction));

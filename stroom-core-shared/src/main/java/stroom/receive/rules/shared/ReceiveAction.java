@@ -72,9 +72,6 @@ public enum ReceiveAction implements HasDisplayValue {
 
     /**
      * Allow deserialisation from the enum's name in any case.
-     *
-     * @param name
-     * @return
      */
     @JsonCreator
     public static ReceiveAction fromCaseInsensitiveString(final String name) {

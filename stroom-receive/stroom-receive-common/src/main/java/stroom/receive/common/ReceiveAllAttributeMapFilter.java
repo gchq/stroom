@@ -39,4 +39,14 @@ public class ReceiveAllAttributeMapFilter implements AttributeMapFilter {
         LOGGER.debug("Receive all filter - attributeMap: {}", attributeMap);
         return true;
     }
+
+    @Override
+    public String getName() {
+        return "Receive ALL";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

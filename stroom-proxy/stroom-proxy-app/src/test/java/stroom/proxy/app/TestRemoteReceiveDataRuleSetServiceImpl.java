@@ -71,7 +71,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
     @Mock
     private ReceiveDataRuleSetClient mockReceiveDataRuleSetClient;
     @Mock
-    private ContentSyncConfig mockContentSyncConfig;
+    private ProxyReceiptPolicyConfig mockProxyReceiptPolicyConfig;
     @Mock
     private ProxyConfig mockProxyConfig;
 
@@ -99,7 +99,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                 SYSTEM_1,
                 SYSTEM_2);
 
-        Mockito.when(mockContentSyncConfig.getSyncFrequency())
+        Mockito.when(mockProxyReceiptPolicyConfig.getSyncFrequency())
                 .thenReturn(StroomDuration.ofMinutes(1));
 
         try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
@@ -175,7 +175,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             final RemoteReceiveDataRuleSetServiceImpl service = new RemoteReceiveDataRuleSetServiceImpl(
                     mockReceiveDataRuleSetClient,
-                    () -> mockContentSyncConfig,
+                    () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,
@@ -234,7 +234,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
         final HashFunctionFactoryImpl hashFunctionFactory = new HashFunctionFactoryImpl();
         final WordListProviderFactory wordListProviderFactory = new WordListProviderFactory();
 
-        Mockito.when(mockContentSyncConfig.getSyncFrequency())
+        Mockito.when(mockProxyReceiptPolicyConfig.getSyncFrequency())
                 .thenReturn(StroomDuration.ofSeconds(1));
 
         try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
@@ -276,7 +276,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             final RemoteReceiveDataRuleSetServiceImpl service = new RemoteReceiveDataRuleSetServiceImpl(
                     mockReceiveDataRuleSetClient,
-                    () -> mockContentSyncConfig,
+                    () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,

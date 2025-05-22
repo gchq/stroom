@@ -40,4 +40,14 @@ public class RejectAllAttributeMapFilter implements AttributeMapFilter {
         LOGGER.debug("Reject all filter - attributeMap: {}", attributeMap);
         throw new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap);
     }
+
+    @Override
+    public String getName() {
+        return "Reject ALL";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

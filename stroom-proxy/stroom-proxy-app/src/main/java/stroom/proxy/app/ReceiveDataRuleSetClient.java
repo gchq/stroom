@@ -45,6 +45,10 @@ public class ReceiveDataRuleSetClient {
         this.proxyReceiptPolicyConfigProvider = proxyReceiptPolicyConfigProvider;
     }
 
+    public String getFullUrl() {
+        return proxyReceiptPolicyConfigProvider.get().getReceiveDataRulesUrl() + GET_FEED_STATUS_PATH;
+    }
+
     public Optional<HashedReceiveDataRules> getHashedReceiveDataRules() {
         Optional<HashedReceiveDataRules> optHashedReceiveDataRules = Optional.empty();
 
@@ -68,8 +72,11 @@ public class ReceiveDataRuleSetClient {
                     }
                 }
             } catch (Throwable e) {
-                LOGGER.error("Error fetching receive data rules using url '{}': {}",
-                        url, LogUtil.exceptionMessage(e), e);
+                final String fullUrl = getFullUrl();
+                LOGGER.error("Error fetching receive data rules using url '{}': {}. (Enable debug for stack trace)",
+                        fullUrl, LogUtil.exceptionMessage(e));
+                LOGGER.debug("Error fetching receive data rules using url '{}': {}",
+                        fullUrl, LogUtil.exceptionMessage(e), e);
             }
         }
         LOGGER.debug("getHashedReceiveDataRules() - returning {}", optHashedReceiveDataRules);

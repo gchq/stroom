@@ -16,7 +16,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,10 +33,10 @@ import java.util.stream.Collectors;
 public class HashedReceiveDataRules {
 
     /**
-     * The time this snapshot of the rules was taken.
+     * The time this snapshot of the rules was taken. Mostly here for debugging.
      */
     @JsonProperty
-    private final Instant snapshotTime;
+    private final long snapshotTimeEpochMs;
 
     @JsonProperty
     private final ReceiveDataRules receiveDataRules;
@@ -71,13 +70,13 @@ public class HashedReceiveDataRules {
      */
     @JsonCreator
     public HashedReceiveDataRules(
-            @JsonProperty("snapshotTime") final Instant snapshotTime,
+            @JsonProperty("snapshotTimeEpochMs") final long snapshotTimeEpochMs,
             @JsonProperty("receiveDataRules") final ReceiveDataRules receiveDataRules,
             @JsonProperty("uuidToFlattenedDictMap") final Map<String, DictionaryDoc> uuidToFlattenedDictMap,
             @JsonProperty("fieldNameToSaltMap") final Map<String, String> fieldNameToSaltMap,
             @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
 
-        this.snapshotTime = Objects.requireNonNull(snapshotTime);
+        this.snapshotTimeEpochMs = snapshotTimeEpochMs;
         this.receiveDataRules = Objects.requireNonNull(receiveDataRules);
         this.uuidToFlattenedDictMap = NullSafe.map(uuidToFlattenedDictMap);
         this.fieldNameToSaltMap = NullSafe.map(fieldNameToSaltMap);
@@ -93,12 +92,16 @@ public class HashedReceiveDataRules {
                                   final Map<String, DictionaryDoc> uuidToFlattenedDictMap,
                                   final Map<String, String> fieldNameToSaltMap,
                                   final HashAlgorithm hashAlgorithm) {
-        this(Instant.now(), receiveDataRules, uuidToFlattenedDictMap, fieldNameToSaltMap, hashAlgorithm);
+        this(System.currentTimeMillis(),
+                receiveDataRules,
+                uuidToFlattenedDictMap,
+                fieldNameToSaltMap,
+                hashAlgorithm);
     }
 
     @JsonPropertyDescription("The time that this snapshot of the rules was taken.")
-    public Instant getSnapshotTime() {
-        return snapshotTime;
+    public long getSnapshotTimeEpochMs() {
+        return snapshotTimeEpochMs;
     }
 
     @JsonPropertyDescription("The rule set with only enable rules and fields that are used in those rules.")
@@ -222,23 +225,25 @@ public class HashedReceiveDataRules {
     @Override
     public String toString() {
         return "HashedReceiveDataRules{" +
-               "receiveDataRules=" + receiveDataRules +
-               ", dictionaries=" + uuidToFlattenedDictMap +
+               "snapshotTimeEpochMs=" + snapshotTimeEpochMs +
+               ", receiveDataRules=" + receiveDataRules +
+               ", uuidToFlattenedDictMap=" + uuidToFlattenedDictMap +
                ", fieldNameToSaltMap=" + fieldNameToSaltMap +
                ", hashAlgorithm=" + hashAlgorithm +
                '}';
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
+    public boolean equals(final Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final HashedReceiveDataRules that = (HashedReceiveDataRules) o;
-        return Objects.equals(receiveDataRules, that.receiveDataRules)
+        final HashedReceiveDataRules that = (HashedReceiveDataRules) object;
+        return snapshotTimeEpochMs == that.snapshotTimeEpochMs
+               && Objects.equals(receiveDataRules, that.receiveDataRules)
                && Objects.equals(uuidToFlattenedDictMap, that.uuidToFlattenedDictMap)
                && Objects.equals(fieldNameToSaltMap, that.fieldNameToSaltMap)
                && hashAlgorithm == that.hashAlgorithm;
@@ -246,6 +251,11 @@ public class HashedReceiveDataRules {
 
     @Override
     public int hashCode() {
-        return Objects.hash(receiveDataRules, uuidToFlattenedDictMap, fieldNameToSaltMap, hashAlgorithm);
+        return Objects.hash(
+                snapshotTimeEpochMs,
+                receiveDataRules,
+                uuidToFlattenedDictMap,
+                fieldNameToSaltMap,
+                hashAlgorithm);
     }
 }

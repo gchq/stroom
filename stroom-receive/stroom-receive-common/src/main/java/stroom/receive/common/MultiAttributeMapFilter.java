@@ -42,8 +42,7 @@ class MultiAttributeMapFilter implements AttributeMapFilter {
     @Override
     public String toString() {
         return attributeMapFilters.stream()
-                .map(AttributeMapFilter::getClass)
-                .map(Class::getSimpleName)
+                .map(AttributeMapFilter::getName)
                 .collect(Collectors.joining(" -> "));
     }
 }

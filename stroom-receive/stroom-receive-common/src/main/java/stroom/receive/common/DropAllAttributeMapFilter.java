@@ -39,4 +39,14 @@ public class DropAllAttributeMapFilter implements AttributeMapFilter {
         LOGGER.debug("Drop all filter - attributeMap: {}", attributeMap);
         return false;
     }
+
+    @Override
+    public String getName() {
+        return "Drop ALL";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

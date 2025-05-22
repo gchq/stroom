@@ -17,6 +17,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.TimeUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
@@ -44,6 +46,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteReceiveDataRuleSetServiceImpl.class);
+    private static final OpenOption[] WRITE_OPEN_OPTIONS = new OpenOption[]{
+            StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING};
+    private static final OpenOption[] READ_OPEN_OPTIONS = new OpenOption[]{StandardOpenOption.READ};
+    // Pkg private for testing
     static final String FILE_NAME = "receive-data-rules.json";
 
     private final ReceiveDataRuleSetClient receiveDataRuleSetClient;
@@ -56,21 +64,23 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     private final AtomicBoolean isInitialised = new AtomicBoolean(false);
     private final Duration noFetchIntervalAfterFailure = Duration.ofSeconds(30);
 
-    private Instant earliestFetchTime = Instant.EPOCH;
+    private Instant earliestNextFetchTime = Instant.EPOCH;
 
     @Inject
-    public RemoteReceiveDataRuleSetServiceImpl(final ReceiveDataRuleSetClient receiveDataRuleSetClient,
-                                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
-                                               final Provider<ProxyConfig> proxyConfigProvider,
-                                               final PathCreator pathCreator,
-                                               final HashFunctionFactory hashFunctionFactory,
-                                               final WordListProviderFactory wordListProviderFactory) {
+    public RemoteReceiveDataRuleSetServiceImpl(
+            final ReceiveDataRuleSetClient receiveDataRuleSetClient,
+            final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider,
+            final Provider<ProxyConfig> proxyConfigProvider,
+            final PathCreator pathCreator,
+            final HashFunctionFactory hashFunctionFactory,
+            final WordListProviderFactory wordListProviderFactory) {
+
         this.receiveDataRuleSetClient = receiveDataRuleSetClient;
         this.proxyConfigProvider = proxyConfigProvider;
         this.pathCreator = pathCreator;
         this.hashFunctionFactory = hashFunctionFactory;
         this.cachedHashedReceiveDataRules = CachedValue.builder()
-                .withMaxCheckInterval(contentSyncConfigProvider.get()
+                .withMaxCheckInterval(proxyReceiptPolicyConfigProvider.get()
                         .getSyncFrequency()
                         .getDuration())
                 .withoutStateSupplier()
@@ -104,8 +114,9 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
     @Override
     public BundledRules getBundledRules() {
-        return cachedHashedReceiveDataRules.getValueAsync()
-                .bundledRules();
+        return NullSafe.get(
+                cachedHashedReceiveDataRules.getValueAsync(),
+                RuleState::bundledRules);
     }
 
     private synchronized RuleState createRuleBundle(final RuleState currRuleState) {
@@ -141,17 +152,19 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
         // Don't fetch from the remote if we have just failed to avoid spamming the remote
         // if it is down.
-        if (Instant.now().isAfter(earliestFetchTime)) {
+        if (Instant.now().isAfter(earliestNextFetchTime)) {
             optHashedReceiveDataRules = receiveDataRuleSetClient.getHashedReceiveDataRules();
             if (optHashedReceiveDataRules.isEmpty()) {
-                earliestFetchTime = Instant.now().plus(noFetchIntervalAfterFailure);
-                LOGGER.debug("fetchRulesFromRemote() - Failed to get rules from remote, earliestFetchTime: {}",
-                        earliestFetchTime);
+                earliestNextFetchTime = Instant.now().plus(noFetchIntervalAfterFailure);
+                LOGGER.warn("Failed to get rules from remote '{}', will not try again for: {}. " +
+                            "Is the remote down? Will try to use previous rules or read them from disk.",
+                        receiveDataRuleSetClient.getFullUrl(),
+                        TimeUtils.durationUntil(earliestNextFetchTime));
             }
         } else {
             LOGGER.debug(() -> LogUtil.message(
                     "fetchRulesFromRemote() - Not hitting remote, earliestFetchTime: {}, min time to next fetch: {}",
-                    earliestFetchTime, Duration.between(Instant.now(), earliestFetchTime)));
+                    earliestNextFetchTime, TimeUtils.durationUntil(earliestNextFetchTime)));
         }
 
         if (optHashedReceiveDataRules.isPresent()) {
@@ -167,17 +180,20 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             isInitialised.set(true);
         } else {
             // Couldn't get a value from the remote
-            if (!isInitialised.get()) {
-                // try to get one from disk if this is our first time
+            //noinspection StatementWithEmptyBody
+            if (isInitialised.get()) {
+                // We should have the previous value in memory so the caller can fallback to that.
+            } else {
+                // We don't have a prev value in mem, so try to get one from disk
                 optHashedReceiveDataRules = readFromDisk();
-                isInitialised.set(true);
+                optHashedReceiveDataRules.ifPresent(ignored ->
+                        isInitialised.set(true));
             }
         }
 
         // If the remote is down on boot, and we don't have the rules on disk then we
-        // have to return empty and thus use a fully permissive filter, until
+        // have to return empty. The caller will use the configured fallback action for all data.
         // we can hit the remote successfully.
-
         LOGGER.debug("fetchRulesFromRemote() - returning {}", optHashedReceiveDataRules);
         return optHashedReceiveDataRules.orElse(null);
     }
@@ -242,17 +258,24 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     private Optional<HashedReceiveDataRules> readFromDisk() {
         final Path jsonFile = getJsonFilePath();
         if (Files.exists(jsonFile)) {
-            final ObjectMapper mapper = JsonUtil.getMapper();
-            try (InputStream inputStream = Files.newInputStream(jsonFile, StandardOpenOption.READ)) {
-                LOGGER.info("Reading receipt policy rules from file {}", jsonFile);
-                final HashedReceiveDataRules hashedReceiveDataRules = mapper.readValue(inputStream,
-                        HashedReceiveDataRules.class);
-                LOGGER.debug("readFromDisk() - Read hashedReceiveDataRules from file {}\n{}",
-                        jsonFile, hashedReceiveDataRules);
-                return Optional.of(hashedReceiveDataRules);
-            } catch (IOException e) {
-                LOGGER.error("Error reading file " + jsonFile
-                             + ": " + LogUtil.exceptionMessage(e), e);
+            try (InputStream inputStream = Files.newInputStream(jsonFile, READ_OPEN_OPTIONS)) {
+                LOGGER.debug("readFromDisk() - Reading receipt policy rules from file '{}'", jsonFile);
+                final HashedReceiveDataRules hashedReceiveDataRules = JsonUtil.getMapper().readValue(
+                        inputStream, HashedReceiveDataRules.class);
+                if (hashedReceiveDataRules != null) {
+                    LOGGER.info("Read last known receipt policy rules from file '{}' with snapshot time {}",
+                            jsonFile, Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()));
+                    LOGGER.debug("readFromDisk() - Read hashedReceiveDataRules from file {}\n{}",
+                            jsonFile, hashedReceiveDataRules);
+                    return Optional.of(hashedReceiveDataRules);
+                } else {
+                    LOGGER.error("Null hashedReceiveDataRules from file '{}'", jsonFile);
+                    return Optional.empty();
+                }
+            } catch (Exception e) {
+                final String exMsg = LogUtil.exceptionMessage(e);
+                LOGGER.errorAndDebug(e, "Error reading persisted receipt policy rules from file '{}': {}",
+                        jsonFile, exMsg);
                 // Swallow and carry on
                 return Optional.empty();
             }
@@ -265,15 +288,13 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         if (hashedReceiveDataRules != null) {
             final Path jsonFile = getJsonFilePath();
             final ObjectMapper mapper = JsonUtil.getMapper();
-            try (OutputStream outputStream = Files.newOutputStream(
-                    jsonFile,
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
 
                 LOGGER.debug("writeToDisk() - Writing hashedReceiveDataRules to file {}\n{}",
                         jsonFile, hashedReceiveDataRules);
                 mapper.writeValue(outputStream, hashedReceiveDataRules);
+                LOGGER.info("Written receipt policy rules with snapshot time {} to file '{}'",
+                        Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()), jsonFile);
             } catch (IOException e) {
                 LOGGER.error("Error writing to file " + jsonFile
                              + ": " + LogUtil.exceptionMessage(e), e);
