@@ -2,6 +2,8 @@ package stroom.appstore.client.view;
 
 import stroom.appstore.client.presenter.AppStorePresenter;
 
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Widget;
@@ -14,6 +16,10 @@ public class AppStoreViewImpl extends ViewImpl implements AppStorePresenter.AppS
 
     /** Underlying widget */
     private final Widget widget;
+
+    /** Grid of available content packs, set by setInSlot(). Must be public for GWT. */
+    @UiField
+    public SimplePanel contentPackList;
 
     /**
      * Injected constructor.
@@ -41,7 +47,9 @@ public class AppStoreViewImpl extends ViewImpl implements AppStorePresenter.AppS
      */
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        // TODO - add sub-components
+        if (AppStorePresenter.CONTENT_PACK_LIST.equals(slot)) {
+            contentPackList.setWidget(content);
+        }
     }
 
     /**

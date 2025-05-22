@@ -55,6 +55,7 @@ dependencies {
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
     implementation project(':stroom-annotation:stroom-annotation-impl-db-jooq')
     implementation project(':stroom-annotation:stroom-annotation-pipeline')
+    implementation project(':stroom-appstore:stroom-appstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
