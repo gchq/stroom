@@ -13,13 +13,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Provider;
+import org.lmdbjava.LmdbException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
@@ -80,7 +80,7 @@ class SnapshotShard implements Shard {
                                 currentInstance.getCurrentSnapshotTime());
 
                         // If the new shapshot had problems fetching then keep using the current one and extend
-                        // it's expiry time so we don't keep fetching.
+                        // its expiry time so we don't keep fetching.
                         if (newInstance.hasFetchException()) {
                             // Extend the expiry time of the current instance so we don't just keep infinitely retrying
                             // to update this snapshot.
@@ -142,7 +142,7 @@ class SnapshotShard implements Shard {
                 success = true;
                 final SnapshotInstance instance = getDBInstance();
                 result = instance.get(function);
-            } catch (final DestroyedException e) {
+            } catch (final TryAgainException e) {
                 LOGGER.debug(e::getMessage, e);
                 success = false;
             }
@@ -170,7 +170,6 @@ class SnapshotShard implements Shard {
         private final Path dbDir;
         private final RuntimeException fetchException;
         private final ReentrantLock lock = new ReentrantLock();
-        private final AtomicInteger useCount = new AtomicInteger();
         private final Instant currentSnapshotTime;
 
         private volatile Db<?, ?> db;
@@ -247,57 +246,26 @@ class SnapshotShard implements Shard {
             return currentSnapshotTime;
         }
 
-        private void incrementUseCount() throws DestroyedException {
-            lock.lock();
-            try {
-                if (destroy) {
-                    throw new DestroyedException();
+        public <R> R get(final Function<Db<?, ?>, R> function) throws TryAgainException {
+            lastAccessTime = Instant.now();
+            final Db<?, ?> db = this.db;
+            if (db != null) {
+                try {
+                    return function.apply(db);
+                } catch (final LmdbException e) {
+                    LOGGER.debug(e::getMessage, e);
                 }
-
-                // Open if needed.
-                if (!open) {
-                    open();
-                    open = true;
-                }
-
-                final int count = useCount.incrementAndGet();
-                if (count <= 0) {
-                    throw new RuntimeException("Unexpected count");
-                }
-
-                lastAccessTime = Instant.now();
-
-            } finally {
-                lock.unlock();
             }
-        }
 
-        private void decrementUseCount() {
-            lock.lock();
-            try {
-                final int count = useCount.decrementAndGet();
-                if (count < 0) {
-                    throw new RuntimeException("Unexpected count");
-                }
-                cleanup();
-            } finally {
-                lock.unlock();
-            }
-        }
-
-        public <R> R get(final Function<Db<?, ?>, R> function) throws DestroyedException {
-            incrementUseCount();
-            try {
-                return function.apply(db);
-            } finally {
-                decrementUseCount();
-            }
+            // Try opening the DB amd make the caller try again.
+            tryOpen();
+            throw new TryAgainException();
         }
 
         public void destroy() {
+            destroy = true;
             lock.lock();
             try {
-                destroy = true;
                 cleanup();
             } finally {
                 lock.unlock();
@@ -307,21 +275,19 @@ class SnapshotShard implements Shard {
         private void cleanup() {
             lock.lock();
             try {
-                if (useCount.get() == 0) {
-                    if (open && (destroy || isIdle())) {
-                        db.close();
-                        db = null;
-                        open = false;
-                    }
+                if (open && (destroy || isIdle())) {
+                    db.close();
+                    db = null;
+                    open = false;
+                }
 
-                    if (!open && destroy) {
-                        // Delete if this is an old snapshot.
-                        try {
-                            LOGGER.info(() -> "Deleting snapshot for '" + doc + "'");
-                            FileUtil.deleteDir(dbDir);
-                        } catch (final Exception e) {
-                            LOGGER.error(e::getMessage, e);
-                        }
+                if (!open && destroy) {
+                    // Delete if this is an old snapshot.
+                    try {
+                        LOGGER.info(() -> "Deleting snapshot for '" + doc + "'");
+                        FileUtil.deleteDir(dbDir);
+                    } catch (final Exception e) {
+                        LOGGER.error(e::getMessage, e);
                     }
                 }
             } finally {
@@ -343,40 +309,46 @@ class SnapshotShard implements Shard {
         }
 
         private void open() {
-            if (fetchException != null) {
-                throw fetchException;
+            if (!open) {
+                if (fetchException != null) {
+                    throw fetchException;
+                }
+
+                final String mapName = doc.getName();
+
+                // If we already fetched the snapshot then reopen.
+                LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
+                db = PlanBDb.open(doc, dbDir, byteBuffers, true);
+                open = true;
             }
-
-            final String mapName = doc.getName();
-
-            // If we already fetched the snapshot then reopen.
-            LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
-            db = PlanBDb.open(doc, dbDir, byteBuffers, true);
         }
 
-        public String getInfo() {
+        private void tryOpen() {
+            lock.lock();
             try {
-                lock.lock();
-                try {
-                    if (destroy) {
-                        throw new DestroyedException();
-                    }
-
-                    // Open if needed.
-                    if (!open) {
-                        open();
-                        open = true;
-                    }
-
-                    return db.getInfoString();
-
-                } finally {
-                    lock.unlock();
+                // Open if needed.
+                if (!destroy && !open) {
+                    open();
+                    open = true;
                 }
-            } catch (final Exception e) {
-                LOGGER.debug(e::getMessage, e);
+            } finally {
+                lock.unlock();
             }
-            return null;
+        }
+
+        public String getInfo() throws TryAgainException {
+            final Db<?, ?> db = this.db;
+            if (db != null) {
+                try {
+                    return db.getInfoString();
+                } catch (final LmdbException e) {
+                    LOGGER.debug(e::getMessage, e);
+                }
+            }
+
+            // Try opening the DB amd make the caller try again.
+            tryOpen();
+            throw new TryAgainException();
         }
     }
 
@@ -387,14 +359,22 @@ class SnapshotShard implements Shard {
 
     @Override
     public String getInfo() {
-        final SnapshotInstance instance = snapshotInstance;
-        if (instance == null) {
-            return null;
+        String result = null;
+        boolean success = false;
+        while (!success) {
+            try {
+                success = true;
+                final SnapshotInstance instance = getDBInstance();
+                result = instance.getInfo();
+            } catch (final TryAgainException e) {
+                LOGGER.debug(e::getMessage, e);
+                success = false;
+            }
         }
-        return instance.getInfo();
+        return result;
     }
 
-    private static class DestroyedException extends Exception {
+    private static class TryAgainException extends Exception {
 
     }
 }

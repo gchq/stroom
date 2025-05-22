@@ -1,5 +1,6 @@
 package stroom.planb.impl.data;
 
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
@@ -22,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -257,23 +257,18 @@ public class MergeProcessor {
                           final Path path,
                           final String uuid) {
         taskContextFactory.childContext(parentContext, uuid, taskContext -> {
-            getShard(uuid).ifPresent(shard -> {
+            try {
+                final Shard shard = shardManager.getShardForDocUuid(uuid);
                 taskContext.info(() -> "Merging data into '" +
                                        NullSafe.get(shard, Shard::getDoc, PlanBDoc::getName) +
                                        "'");
                 shard.merge(path);
-            });
-            FileUtil.deleteDir(path);
+                FileUtil.deleteDir(path);
+            } catch (final DocumentNotFoundException e) {
+                // Expected exception if a doc has been deleted.
+                LOGGER.debug(e::getMessage, e);
+                FileUtil.deleteDir(path);
+            }
         }).run();
-    }
-
-    private Optional<Shard> getShard(final String docUuid) {
-        try {
-            // The doc might have been deleted so catch this error.
-            return Optional.of(shardManager.getShardForDocUuid(docUuid));
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-        return Optional.empty();
     }
 }

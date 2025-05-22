@@ -180,8 +180,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
             return env.read(txn -> {
                 try {
                     final EnvInf envInf = env.getInfo();
-
-                    final Stat stat = env.read(dbi::stat);
+                    final Stat stat = dbi.stat(txn);
                     final DbInf dbInf = new DbInf("db", stat);
 
                     return new Inf(

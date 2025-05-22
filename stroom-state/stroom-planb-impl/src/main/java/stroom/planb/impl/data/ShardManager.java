@@ -3,6 +3,7 @@ package stroom.planb.impl.data;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.docstore.shared.Doc;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
@@ -194,12 +195,12 @@ public class ShardManager {
         return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
     }
 
-    public Shard getShardForDocUuid(final String docUuid) {
+    public Shard getShardForDocUuid(final String docUuid) throws DocumentNotFoundException {
         return shardMap.computeIfAbsent(docUuid, k -> {
             final PlanBDoc doc = planBDocStore.readDocument(DocRef.builder().type(PlanBDoc.TYPE).uuid(k).build());
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
-                throw new RuntimeException("No PlanB doc found for UUID '" + docUuid + "'");
+                throw new DocumentNotFoundException(DocRef.builder().type(PlanBDoc.TYPE).uuid(docUuid).build());
             }
             return createShard(doc);
         });

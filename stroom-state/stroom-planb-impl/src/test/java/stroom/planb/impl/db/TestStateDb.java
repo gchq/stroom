@@ -55,8 +55,11 @@ import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.zip.ZipUtil;
 
@@ -77,7 +80,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,7 +92,8 @@ import static stroom.planb.impl.db.StateValueTestUtil.makeString;
 
 class TestStateDb {
 
-    private static final int ITERATIONS = 100;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateDb.class);
+    private static final int ITERATIONS = 10000000;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
     private static final StateSettings BASIC_SETTINGS = StateSettings
             .builder()
@@ -378,6 +386,82 @@ class TestStateDb {
             assertThat(value.toString()).isEqualTo("test99");
         }
     }
+
+//    @Test
+//    void testMultiThreadDeleteWhileRead(@TempDir final Path tempDir) {
+//        final AtomicLong createCount = new AtomicLong();
+//        final AtomicLong deleteCount = new AtomicLong();
+//        final AtomicLong queryCount = new AtomicLong();
+//        final AtomicLong valueCount = new AtomicLong();
+//        final AtomicLong nullCount = new AtomicLong();
+//        final AtomicLong errorCount = new AtomicLong();
+//        final AtomicReference<String> error = new AtomicReference<>();
+//        final Executor executor = Executors.newFixedThreadPool(4);
+//        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+//        futures.add(CompletableFuture.runAsync(() -> {
+//            while (!Thread.currentThread().isInterrupted()) {
+//                final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY");
+//                final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
+//                createCount.incrementAndGet();
+//                testWrite(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
+//
+//                ThreadUtil.sleep(250);
+//                FileUtil.deleteContents(tempDir);
+//            }
+//        }, executor));
+//
+//        futures.add(CompletableFuture.runAsync(() -> {
+//            while (!Thread.currentThread().isInterrupted()) {
+//                // Delete the data.
+//                deleteCount.incrementAndGet();
+//                ThreadUtil.sleep(250);
+////                FileUtil.deleteDir(tempDir);
+//            }
+//        }, executor));
+//
+//        futures.add(CompletableFuture.runAsync(() -> {
+//            while (!Thread.currentThread().isInterrupted()) {
+//                try {
+//                    try (final StateDb db = StateDb.create(
+//                            tempDir,
+//                            BYTE_BUFFERS,
+//                            BASIC_SETTINGS,
+//                            true)) {
+//                        final Val key = ValString.create("TEST_KEY");
+//
+//                        // Read the data.
+//                        queryCount.incrementAndGet();
+//                        final Val value = db.get(key);
+//                        if (value != null) {
+//                            valueCount.incrementAndGet();
+//                        } else {
+//                            nullCount.incrementAndGet();
+//                        }
+//                    }
+//                } catch (final Exception e) {
+//                    error.set(e.getClass().getSimpleName() + " " + e.getMessage());
+//                    errorCount.incrementAndGet();
+//                }
+//            }
+//        }, executor));
+//
+//        futures.add(CompletableFuture.runAsync(() -> {
+//            while (!Thread.currentThread().isInterrupted()) {
+//                ThreadUtil.sleep(1000);
+//                LOGGER.info("\n" +
+//                            "\ncreateCount=" + createCount.get() +
+//                            "\ndeleteCount=" + deleteCount.get() +
+//                            "\nqueryCount=" + queryCount.get() +
+//                            "\nvalueCount=" + valueCount.get() +
+//                            "\nnullCount=" + nullCount.get() +
+//                            "\nerrorCount=" + errorCount.get() +
+//                            "\nerror=" + error.get());
+//            }
+//        }, executor));
+//
+//
+//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+//    }
 
     private void writePart(final MergeProcessor mergeProcessor, final Val keyName) {
         try {

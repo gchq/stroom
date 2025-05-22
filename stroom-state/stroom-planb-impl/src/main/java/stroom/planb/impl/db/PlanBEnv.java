@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -29,7 +30,7 @@ public class PlanBEnv implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBEnv.class);
 
-    private static final int CONCURRENT_READERS = 10;
+    private static final int CONCURRENT_READERS = 1023;
     private final Semaphore concurrentReaderSemaphore;
     protected final Env<ByteBuffer> env;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
@@ -48,9 +49,9 @@ public class PlanBEnv implements AutoCloseable {
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
 
         if (readOnly) {
-            LOGGER.info(() -> "Opening: " + path);
+            LOGGER.debug(() -> "Opening: " + path);
         } else {
-            LOGGER.info(() -> "Creating: " + path);
+            LOGGER.debug(() -> "Creating: " + path);
         }
 
         final Env.Builder<ByteBuffer> builder = Env.create()
@@ -58,7 +59,7 @@ public class PlanBEnv implements AutoCloseable {
                         ? LmdbConfig.DEFAULT_MAX_STORE_SIZE.getBytes()
                         : mapSize)
                 .setMaxDbs(maxDbs)
-                .setMaxReaders(CONCURRENT_READERS);
+                .setMaxReaders(CONCURRENT_READERS + 1); // We use another reader for some writes.
 
         if (readOnly) {
             env = builder.open(lmdbEnvDir.getEnvDir().toFile(),
@@ -82,6 +83,14 @@ public class PlanBEnv implements AutoCloseable {
     public final <T> T write(final Function<LmdbWriter, T> function) {
         try (final LmdbWriter writer = createWriter()) {
             return function.apply(writer);
+        }
+    }
+
+    public final <T> T readAndWrite(final BiFunction<Txn<ByteBuffer>, LmdbWriter, T> function) {
+        try (final LmdbWriter writer = createWriter()) {
+            try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
+                return function.apply(readTxn, writer);
+            }
         }
     }
 

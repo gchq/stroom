@@ -26,6 +26,7 @@ import stroom.util.zip.ZipUtil;
 import jakarta.inject.Provider;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.lmdbjava.LmdbException;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -37,9 +38,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 class StoreShard implements Shard {
@@ -54,19 +56,16 @@ class StoreShard implements Shard {
     private final Path shardDir;
     private final Path snapshotDir;
 
-    private final ReentrantLock readLock = new ReentrantLock();
-    private final ReentrantLock writeLock = new ReentrantLock();
-    private final Condition compactingCondition = readLock.newCondition();
-    private final Condition useCountCondition = readLock.newCondition();
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final Lock readLock = readWriteLock.readLock();
+    private final Lock exclusiveReadLock = readWriteLock.writeLock();
+    private final Lock writeLock = new ReentrantLock();
 
     private final PlanBDoc doc;
-    private final AtomicInteger useCount = new AtomicInteger();
     private volatile Db<?, ?> db;
     private volatile boolean open;
-    private volatile Instant lastAccessTime;
     private volatile Instant lastWriteTime;
     private volatile Instant lastSnapshotTime;
-    private volatile boolean compacting;
 
     public StoreShard(final ByteBuffers byteBuffers,
                       final Provider<PlanBConfig> configProvider,
@@ -78,54 +77,14 @@ class StoreShard implements Shard {
         lastWriteTime = Instant.now();
         this.shardDir = statePaths.getShardDir().resolve(doc.getUuid());
         this.snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
-    }
 
-    private void incrementReadCount() {
+        // Just open the DB.
         try {
-            readLock.lockInterruptibly();
-            try {
-                // Don't allow a new read until we have finished compacting.
-                while (compacting) {
-                    compactingCondition.await();
-                }
-
-                // Open if needed.
-                open();
-
-                final int count = useCount.incrementAndGet();
-                if (count <= 0) {
-                    throw new RuntimeException("Unexpected count");
-                }
-
-                lastAccessTime = Instant.now();
-            } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.create(e);
-            } finally {
-                readLock.unlock();
-            }
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
+            Files.createDirectories(shardDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
-    }
-
-    private void decrementReadCount() {
-        try {
-            readLock.lockInterruptibly();
-            try {
-                final int count = useCount.decrementAndGet();
-                if (count < 0) {
-                    throw new RuntimeException("Unexpected count");
-                }
-                cleanup();
-
-                // Let anything waiting on this condition know that the use count has changed.
-                useCountCondition.signalAll();
-            } finally {
-                readLock.unlock();
-            }
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
+        open();
     }
 
     @Override
@@ -133,20 +92,18 @@ class StoreShard implements Shard {
         try {
             writeLock.lockInterruptibly();
             try {
-                readLock.lockInterruptibly();
-                try {
-                    if (useCount.get() == 0) {
+                if (exclusiveReadLock.tryLock()) {
+                    try {
                         LOGGER.info(() -> "Deleting data for: " + doc);
-                        cleanup();
+                        close();
                         FileUtil.deleteDir(shardDir);
                         return true;
+                    } finally {
+                        exclusiveReadLock.unlock();
                     }
+                } else {
                     return false;
-                } finally {
-                    readLock.unlock();
                 }
-            } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.create(e);
             } finally {
                 writeLock.unlock();
             }
@@ -160,40 +117,9 @@ class StoreShard implements Shard {
         try {
             writeLock.lockInterruptibly();
             try {
-                // See if we can just merge by moving the file.
-                boolean success = false;
-
-                // If we don't already have the shard dir then just move the source to the target.
-                if (!Files.isDirectory(shardDir)) {
-                    readLock.lockInterruptibly();
-                    try {
-                        success = true;
-                        Files.createDirectories(shardDir.getParent());
-                        Files.move(sourceDir, shardDir);
-                        lastWriteTime = Instant.now();
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
-                    } finally {
-                        readLock.unlock();
-                    }
-                }
-
-                // If the file already existed then we must open the DB and merge with LMDB.
-                if (!success) {
-                    // Ensure the DB is open and won't be closed.
-                    incrementReadCount();
-                    try {
-                        db.merge(sourceDir);
-                        lastWriteTime = Instant.now();
-                    } finally {
-                        decrementReadCount();
-                    }
-                }
-
-                // Create a new snapshot periodically.
+                db.merge(sourceDir);
+                lastWriteTime = Instant.now();
                 createSnapshot();
-            } catch (final InterruptedException e) {
-                throw UncheckedInterruptedException.create(e);
             } finally {
                 writeLock.unlock();
             }
@@ -239,14 +165,8 @@ class StoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    // Ensure the DB is open and won't be closed.
-                    incrementReadCount();
-                    try {
-                        result = db.deleteOldData(deleteBefore, useStateTime);
-                        lastWriteTime = Instant.now();
-                    } finally {
-                        decrementReadCount();
-                    }
+                    result = db.deleteOldData(deleteBefore, useStateTime);
+                    lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
                 }
@@ -281,14 +201,8 @@ class StoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    // Ensure the DB is open and won't be closed.
-                    incrementReadCount();
-                    try {
-                        result = db.condense(condenseBefore);
-                        lastWriteTime = Instant.now();
-                    } finally {
-                        decrementReadCount();
-                    }
+                    result = db.condense(condenseBefore);
+                    lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
                 }
@@ -329,7 +243,6 @@ class StoreShard implements Shard {
             try {
 
                 // Ensure the DB is open and won't be closed.
-                incrementReadCount();
                 try {
                     // Perform compaction.
                     LOGGER.info("Running compaction");
@@ -341,50 +254,34 @@ class StoreShard implements Shard {
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                     throw new UncheckedIOException(e);
-                } finally {
-                    decrementReadCount();
                 }
 
                 // Now we want to switch out the files atomically when nobody is reading.
-                readLock.lockInterruptibly();
+                exclusiveReadLock.lockInterruptibly();
                 try {
-                    // Let readers know we are performing compaction and don't allow usage to be incremented.
-                    compacting = true;
+                    // Close the DB.
+                    close();
+
+                    // Switch files.
                     try {
-                        // Wait for all readers to stop reading.
-                        while (useCount.get() > 0) {
-                            useCountCondition.await();
-                        }
-
-                        // Now we have no readers we can switch the files.
-
-                        // Close the DB if open.
-                        close();
-
-                        // Switch files.
-                        try {
-                            Files.move(
-                                    compactedFile,
-                                    dataFile,
-                                    StandardCopyOption.REPLACE_EXISTING,
-                                    StandardCopyOption.ATOMIC_MOVE);
-                        } catch (final IOException e) {
-                            LOGGER.error(e::getMessage, e);
-                        }
-
-                        // Cleanup.
-                        FileUtil.deleteDir(compactedDir);
-
-                        lastWriteTime = Instant.now();
-                    } finally {
-                        compacting = false;
-                        // Wake up waiting threads.
-                        compactingCondition.signalAll();
+                        Files.move(
+                                compactedFile,
+                                dataFile,
+                                StandardCopyOption.REPLACE_EXISTING,
+                                StandardCopyOption.ATOMIC_MOVE);
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
                     }
-                } catch (final InterruptedException e) {
-                    throw UncheckedInterruptedException.create(e);
+
+                    // Cleanup.
+                    FileUtil.deleteDir(compactedDir);
+
+                    // Open the new DB.
+                    open();
+
+                    lastWriteTime = Instant.now();
                 } finally {
-                    readLock.unlock();
+                    exclusiveReadLock.unlock();
                 }
             } catch (final InterruptedException e) {
                 throw UncheckedInterruptedException.create(e);
@@ -425,24 +322,28 @@ class StoreShard implements Shard {
     @Override
     public void createSnapshot() {
         if (isNewSnapshotRequired()) {
-            incrementReadCount();
             try {
-                // TODO : Possibly create windowed snapshots.
-                final Instant lastWriteTime = this.lastWriteTime;
+                writeLock.lockInterruptibly();
                 try {
-                    // Get the snapshot file.
-                    Files.createDirectories(snapshotDir);
-                    final Path tmpFile = getSnapshotTmp();
-                    final Path zipFile = getSnapshotZip();
-                    createZip(tmpFile, lastWriteTime);
-                    Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
+                    // TODO : Possibly create windowed snapshots.
+                    final Instant lastWriteTime = this.lastWriteTime;
+                    try {
+                        // Get the snapshot file.
+                        Files.createDirectories(snapshotDir);
+                        final Path tmpFile = getSnapshotTmp();
+                        final Path zipFile = getSnapshotZip();
+                        createZip(tmpFile, lastWriteTime);
+                        Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
+                    } finally {
+                        this.lastSnapshotTime = lastWriteTime;
+                    }
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
                 } finally {
-                    this.lastSnapshotTime = lastWriteTime;
+                    writeLock.unlock();
                 }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                decrementReadCount();
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
             }
         }
     }
@@ -491,38 +392,43 @@ class StoreShard implements Shard {
 
     @Override
     public <R> R get(final Function<Db<?, ?>, R> function) {
-        incrementReadCount();
         try {
-            return function.apply(db);
-        } finally {
-            decrementReadCount();
+            final Db<?, ?> db = this.db;
+            if (db != null) {
+                return function.apply(db);
+            }
+        } catch (final LmdbException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        // Try again under lock.
+        try {
+            readLock.lockInterruptibly();
+            try {
+                if (!open) {
+                    throw new RuntimeException("Database is closed");
+                }
+                return function.apply(db);
+            } finally {
+                readLock.unlock();
+            }
+        } catch (final InterruptedException e2) {
+            throw UncheckedInterruptedException.create(e2);
         }
     }
 
     @Override
     public void cleanup() {
-        try {
-            readLock.lockInterruptibly();
-            try {
-                if (useCount.get() == 0) {
-                    if (isIdle()) {
-                        close();
-                    }
-                }
-            } finally {
-                readLock.unlock();
-            }
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
+//        if (exclusiveReadLock.tryLock()) {
+//            try {
+//                close();
+//            } finally {
+//                exclusiveReadLock.unlock();
+//            }
+//        }
     }
 
-    private boolean isIdle() {
-        return lastAccessTime.isBefore(Instant.now().minus(
-                configProvider.get().getMinTimeToKeepEnvOpen().getDuration()));
-    }
-
-    private synchronized void open() {
+    private void open() {
         if (!open) {
             if (Files.exists(shardDir)) {
                 LOGGER.info(() -> "Found local shard for '" + doc + "'");
@@ -540,7 +446,7 @@ class StoreShard implements Shard {
         }
     }
 
-    private synchronized void close() {
+    private void close() {
         if (open) {
             db.close();
             db = null;
@@ -555,11 +461,28 @@ class StoreShard implements Shard {
 
     @Override
     public String getInfo() {
-        incrementReadCount();
         try {
-            return db.getInfoString();
-        } finally {
-            decrementReadCount();
+            final Db<?, ?> db = this.db;
+            if (db != null) {
+                return db.getInfoString();
+            }
+        } catch (final LmdbException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        // Try again under lock.
+        try {
+            readLock.lockInterruptibly();
+            try {
+                if (!open) {
+                    throw new RuntimeException("Database is closed");
+                }
+                return db.getInfoString();
+            } finally {
+                readLock.unlock();
+            }
+        } catch (final InterruptedException e2) {
+            throw UncheckedInterruptedException.create(e2);
         }
     }
 }

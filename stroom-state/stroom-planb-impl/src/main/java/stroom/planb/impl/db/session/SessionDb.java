@@ -392,108 +392,106 @@ public class SessionDb extends AbstractDb<Session, Session> {
 
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
-        return env.read(readTxn ->
-                env.write(writer -> {
-                    long changeCount = 0;
-                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                        while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                            final KeyVal<ByteBuffer> kv = iterator.next();
-                            final Instant time;
-                            if (useStateTime) {
-                                final Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
-                                time = session.getEnd();
-                            } else {
-                                time = valueSerde.read(writer.getWriteTxn(), kv.val());
-                            }
-
-                            if (time.isBefore(deleteBefore)) {
-                                // If this is data we no longer want to retain then delete it.
-                                dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
-                                writer.tryCommit();
-                                changeCount++;
-                            } else {
-                                // Record used lookup keys.
-                                keyRecorder.recordUsed(writer, kv.key());
-                                valueRecorder.recordUsed(writer, kv.val());
-                            }
-                        }
+        return env.readAndWrite((readTxn, writer) -> {
+            long changeCount = 0;
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    final Instant time;
+                    if (useStateTime) {
+                        final Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
+                        time = session.getEnd();
+                    } else {
+                        time = valueSerde.read(writer.getWriteTxn(), kv.val());
                     }
 
-                    // Delete unused lookup keys.
-                    keyRecorder.deleteUnused(readTxn, writer);
-                    valueRecorder.deleteUnused(readTxn, writer);
+                    if (time.isBefore(deleteBefore)) {
+                        // If this is data we no longer want to retain then delete it.
+                        dbi.delete(writer.getWriteTxn(), kv.key(), kv.val());
+                        writer.tryCommit();
+                        changeCount++;
+                    } else {
+                        // Record used lookup keys.
+                        keyRecorder.recordUsed(writer, kv.key());
+                        valueRecorder.recordUsed(writer, kv.val());
+                    }
+                }
+            }
 
-                    return changeCount;
-                }));
+            // Delete unused lookup keys.
+            keyRecorder.deleteUnused(readTxn, writer);
+            valueRecorder.deleteUnused(readTxn, writer);
+
+            return changeCount;
+        });
     }
 
     @Override
     public long condense(final Instant condenseBefore) {
-        return env.read(readTxn ->
-                env.write(writer -> {
-                    long changeCount = 0;
-                    Session lastSession = null;
-                    Session newSession = null;
+        return env.readAndWrite((readTxn, writer) -> {
+            long changeCount = 0;
+            Session lastSession = null;
+            Session newSession = null;
 
-                    try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                        while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
-                            final KeyVal<ByteBuffer> kv = iterator.next();
-                            Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
+            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
+                while (iterator.hasNext() && !Thread.currentThread().isInterrupted()) {
+                    final KeyVal<ByteBuffer> kv = iterator.next();
+                    Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
 
-                            if (lastSession != null &&
-                                lastSession.getKey().equals(session.getKey()) &&
-                                session.getStart().isBefore(condenseBefore) &&
-                                (lastSession.getEnd().isAfter(session.getStart()) ||
-                                 lastSession.getEnd().equals(session.getStart()))) {
+                    if (lastSession != null &&
+                        lastSession.getKey().equals(session.getKey()) &&
+                        session.getStart().isBefore(condenseBefore) &&
+                        (lastSession.getEnd().isAfter(session.getStart()) ||
+                         lastSession.getEnd().equals(session.getStart()))) {
 
-                                // Extend the session.
-                                newSession = new Session(lastSession.getKey(),
-                                        lastSession.getStart(),
-                                        session.getEnd());
+                        // Extend the session.
+                        newSession = new Session(lastSession.getKey(),
+                                lastSession.getStart(),
+                                session.getEnd());
 
-                                // Delete the previous session as we are extending it.
-                                deleteSession(writer, lastSession);
-                                changeCount++;
-
-                                // We might be forced to insert if we have reached the commit limit.
-                                if (writer.shouldCommit()) {
-                                    deleteSession(writer, session);
-                                    changeCount++;
-
-                                    // Insert new session.
-                                    insert(writer, newSession);
-                                    newSession = null;
-                                    session = null;
-                                }
-
-                            } else if (newSession != null) {
-                                // Delete the previous session as we are extending it.
-                                deleteSession(writer, lastSession);
-                                changeCount++;
-
-                                // Insert new session.
-                                insert(writer, newSession);
-                                newSession = null;
-                            }
-
-                            lastSession = session;
-                        }
-                    }
-
-                    // Insert new session.
-                    if (newSession != null) {
                         // Delete the previous session as we are extending it.
                         deleteSession(writer, lastSession);
                         changeCount++;
 
-                        // Insert the new session.
+                        // We might be forced to insert if we have reached the commit limit.
+                        if (writer.shouldCommit()) {
+                            deleteSession(writer, session);
+                            changeCount++;
+
+                            // Insert new session.
+                            insert(writer, newSession);
+                            newSession = null;
+                            session = null;
+                        }
+
+                    } else if (newSession != null) {
+                        // Delete the previous session as we are extending it.
+                        deleteSession(writer, lastSession);
+                        changeCount++;
+
+                        // Insert new session.
                         insert(writer, newSession);
+                        newSession = null;
                     }
 
-                    return changeCount;
-                }));
+                    lastSession = session;
+                }
+            }
+
+            // Insert new session.
+            if (newSession != null) {
+                // Delete the previous session as we are extending it.
+                deleteSession(writer, lastSession);
+                changeCount++;
+
+                // Insert the new session.
+                insert(writer, newSession);
+            }
+
+            return changeCount;
+        });
     }
 
     private void deleteSession(final LmdbWriter writer, final Session session) {

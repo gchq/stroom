@@ -263,7 +263,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
 
     @Override
     public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
-        return env.read(readTxn -> env.write(writer -> {
+        return env.readAndWrite((readTxn, writer) -> {
             long changeCount = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
@@ -290,7 +290,7 @@ public class RangedStateDb extends AbstractDb<Key, Val> {
             valueRecorder.deleteUnused(readTxn, writer);
 
             return changeCount;
-        }));
+        });
     }
 
     @Override
