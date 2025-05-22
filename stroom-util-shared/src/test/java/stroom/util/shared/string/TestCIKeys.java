@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.concurrent.CopyOnWriteMap;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -50,9 +51,17 @@ class TestCIKeys {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKeys.class);
 
+    @BeforeEach
+    void setUp() {
+        // As we are dealing with a static map, one test may impact another, so always
+        // start with an empty map.  Call addCommonKey to preload the map as required.
+        CIKeys.clearCommonKeys();
+    }
+
     @Test
     void test() {
         // ACCEPT is a common key, so any way we get/create it should give us the same string instances.
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
         final CIKey key1 = CIKeys.ACCEPT;
         final CIKey key2 = CIKey.of(key1.get());
         final CIKey key3 = CIKey.ofLowerCase(key1.getAsLowerCase());
