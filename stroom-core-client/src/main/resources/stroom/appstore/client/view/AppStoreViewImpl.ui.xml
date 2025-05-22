@@ -3,9 +3,11 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:SimplePanel styleName="max">
+
         <g:ThinSplitLayoutPanel styleName="max">
             <g:north size="400">
-                <g:SimplePanel ui:field="appList" styleName="max dashboard-panel"/>
+
+                <g:SimplePanel ui:field="contentPackList" styleName="max dashboard-panel"/>
             </g:north>
             <g:center>
                 <g:FlowPanel styleName="max dashboard-panel form">

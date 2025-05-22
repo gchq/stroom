@@ -2,11 +2,16 @@ ext.moduleName = 'stroom.appstore.impl'
 
 dependencies {
     implementation project(':stroom-appstore:stroom-appstore-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
     implementation libs.jackson.annotations
+    implementation libs.restygwt
+    implementation libs.slf4j.api
 
     testImplementation libs.assertj.core
     testImplementation libs.junit.jupiter.api

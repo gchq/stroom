@@ -16,12 +16,19 @@
 
 package stroom.appstore.impl;
 
+import stroom.appstore.shared.AppStoreResource;
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
 
 public class AppStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        // No code
+        // Bind the Resource API to implementation
+        bind(AppStoreResource.class).to(AppStoreResourceImpl.class);
+
+        // Bind the Resource implementation to the REST service
+        RestResourcesBinder.create(binder()).bind(AppStoreResource.class);
     }
 }
