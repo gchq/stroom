@@ -110,9 +110,10 @@ class TestAttributeMapFilter {
                 filter1,
                 filter2,
                 RejectAllAttributeMapFilter.getInstance());
-        Assertions.assertThatThrownBy(() -> {
-                    combinedFilter.filter(null);
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            combinedFilter.filter(null);
+                        })
                 .isInstanceOf(StroomStreamException.class);
 
         assertThat(filter1Called)
