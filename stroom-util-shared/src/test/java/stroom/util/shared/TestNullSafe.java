@@ -184,7 +184,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testAllNonNull() {
         return TestUtil.buildDynamicTestStream()
-                .withInputType(String[].class)
+                .withInputType(Object[].class)
                 .withOutputType(boolean.class)
                 .withSingleArgTestFunction(NullSafe::allNonNull)
                 .withSimpleEqualityAssertion()
@@ -196,6 +196,28 @@ class TestNullSafe {
                 .addCase(new String[]{null, "foo", null}, false)
                 .addCase(new String[]{null, "foo", "foo"}, false)
                 .addCase(new String[]{"1", "2", "3"}, true)
+                .addCase(new Object[]{"1", 2L, 3.0D}, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAllNonNull_supplier() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Supplier<Object>[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withSingleArgTestFunction(NullSafe::allNonNull)
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(new Supplier[]{null}, false)
+                .addCase(new Supplier[]{null, () -> null}, false)
+                .addCase(new Supplier[]{null, null, null}, false)
+                .addCase(new Supplier[]{() -> null, () -> null, () -> null}, false)
+                .addCase(new Supplier[]{() -> "foo", () -> null, () -> null}, false)
+                .addCase(new Supplier[]{() -> null, () -> "foo", () -> null}, false)
+                .addCase(new Supplier[]{() -> null, () -> "foo", () -> "foo"}, false)
+                .addCase(new Supplier[]{() -> "1", () -> "2", () -> "3"}, true)
+                .addCase(new Supplier[]{() -> "1", () -> 2L, () -> 3.0D}, true)
                 .build();
     }
 
@@ -1327,7 +1349,7 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testForEach() {
+    Stream<DynamicTest> testForEach_iterable() {
         final AtomicInteger counter = new AtomicInteger(0);
 
         return TestUtil.buildDynamicTestStream()
@@ -1351,6 +1373,28 @@ class TestNullSafe {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testForEach_array() {
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String[].class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(testCase.getInput(), item -> {
+                        counter.incrementAndGet();
+                    });
+                    return counter.get();
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
+                .addCase(null, 0)
+                .addCase(new String[0], 0)
+                .addCase(new String[]{"1", "2", "3"}, 3)
+                .addCase(new String[]{null, "2", null}, 1)
+                .addCase(new String[]{null, null, null}, 0)
+                .build();
+    }
 
     @TestFactory
     Stream<DynamicTest> testStream_array() {

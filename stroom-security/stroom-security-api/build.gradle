@@ -4,6 +4,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util-shared')
 
     implementation libs.jackson.annotations

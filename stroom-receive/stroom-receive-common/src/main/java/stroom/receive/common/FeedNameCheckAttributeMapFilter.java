@@ -18,8 +18,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Checks the Feed and Type attributes are supplied. If auto content creation is enabled
- * then the Feed can be derived from AccountId|Format|SchemaName|Type.
+ * Checks the Feed attribute is supplied. If auto content creation is enabled
+ * then the Feed may be derived from the supplied attributes if all the mandatory
+ * attributes have been provided.
  */
 public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
@@ -43,11 +44,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
     @Override
     public boolean filter(final AttributeMap attributeMap) {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
-        // Get the type name from the header arguments if supplied.
-        final String type = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
-        if (!type.isEmpty() && !getValidStreamTypes(receiveDataConfig).contains(type)) {
-            throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);
-        }
 
         String feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
         if (receiveDataConfig.isFeedNameGenerationEnabled()) {
@@ -79,10 +75,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         }
 
         return true;
-    }
-
-    private Set<String> getValidStreamTypes(final ReceiveDataConfig receiveDataConfig) {
-        return NullSafe.set(receiveDataConfig.getMetaTypes());
     }
 
 

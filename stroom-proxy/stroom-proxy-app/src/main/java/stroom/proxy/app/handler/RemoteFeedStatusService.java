@@ -8,6 +8,8 @@ import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.GetFeedStatusRequestAdapter;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
@@ -54,6 +56,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -63,10 +66,12 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                             final JerseyClientFactory jerseyClientFactory,
                             final UserIdentityFactory userIdentityFactory,
                             final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter,
-                            final CacheManager cacheManager) {
+                            final CacheManager cacheManager,
+                            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.updaters = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedStatusConfigProvider.get().getFeedStatusCache(),
@@ -94,13 +99,15 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+
         final FeedStatus defaultFeedStatus = Objects.requireNonNullElse(
                 feedStatusConfig.getDefaultStatus(),
                 FeedStatus.Receive);
 
         // If remote feed status checking is disabled then return the default status.
-        if (!feedStatusConfig.getEnabled()
-            || NullSafe.isBlankString(feedStatusConfig.getFeedStatusUrl())) {
+        if (!isFeedStatusCheckEnabled()) {
+            // We shouldn't come in here anyway as the feed status filter will not be used
+            // if feed status check is not enabled in config.
             return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
         } else {
             final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
@@ -133,6 +140,11 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
             return cachedResponse.getResponse();
         }
+    }
+
+    private boolean isFeedStatusCheckEnabled() {
+        return receiveDataConfigProvider.get().getReceiptCheckMode() == ReceiptCheckMode.FEED_STATUS
+               && NullSafe.isNonBlankString(feedStatusConfigProvider.get().getFeedStatusUrl());
     }
 
     private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequestV2 request) {

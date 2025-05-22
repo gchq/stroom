@@ -60,7 +60,8 @@ public class ApiKeyService {
                     new ShaThree256ApiKeyHasher(),
                     new ShaTwo256ApiKeyHasher(),
                     new BCryptApiKeyHasher(),
-                    new Argon2ApiKeyHasher())
+                    new Argon2ApiKeyHasher(),
+                    new ShaTwo512ApiKeyHasher())
             .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
 
     static {
@@ -472,6 +473,23 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
+    private static class ShaTwo512ApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String value) {
+            return DigestUtils.sha512Hex(value);
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA2_512;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     private static class BCryptApiKeyHasher implements ApiKeyHasher {
 
         @Override
@@ -537,6 +555,7 @@ public class ApiKeyService {
             // due to use in bitcoin.
             return Base58.encode(result);
         }
+
 
         @Override
         public HashAlgorithm getType() {

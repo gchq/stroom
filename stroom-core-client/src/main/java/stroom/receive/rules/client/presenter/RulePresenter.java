@@ -21,8 +21,8 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.receive.rules.shared.RuleAction;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -74,8 +74,8 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
         void setName(String name);
 
-        RuleAction getAction();
+        ReceiveAction getAction();
 
-        void setAction(RuleAction action);
+        void setAction(ReceiveAction action);
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -61,7 +60,6 @@ public class ProxySecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
@@ -71,13 +69,11 @@ public class ProxySecurityFilter implements Filter {
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final Provider<ContentSyncConfig> contentSyncConfigProvider,
-                               final Provider<FeedStatusConfig> feedStatusConfigProvider,
+    public ProxySecurityFilter(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                                final Provider<ProxyConfig> proxyConfigProvider,
                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                final UserIdentityFactory userIdentityFactory,
                                final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.contentSyncConfigProvider = contentSyncConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;

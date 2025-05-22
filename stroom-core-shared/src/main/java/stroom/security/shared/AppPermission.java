@@ -9,6 +9,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * <p>
+ * !!!!!!!! WARNING !!!!!!!!!
+ * </p>
+ * DO NOT change the displayValue of these items unless you also write a migration
+ * script to migrate the value in the permission_app_id table, else it will break
+ * users' permissions.
+ */
 public enum AppPermission implements HasDisplayValue {
     ADMINISTRATOR(
             "Administrator",
@@ -19,10 +27,6 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_CACHE_PERMISSION(
             "Manage Cache",
             "Access the Caches screen to view and clear system caches."),
-    MANAGE_CONTENT_TEMPLATES_PERMISSION(
-            "Manage Content Templates",
-            "Access the Content Templates screen to view and manage the templates for auto-creating " +
-            "content."),
     VIEW_DATA_PERMISSION(
             "Data - View",
             "View stream data (e.g. in the Data Viewer or a Dashboard text pane)."),
@@ -63,6 +67,14 @@ public enum AppPermission implements HasDisplayValue {
             "'" + MANAGE_USERS_PERMISSION.displayValue +
             "' permission is also required to managed other users' " +
             "API keys"),
+    MANAGE_CONTENT_TEMPLATES_PERMISSION(
+            "Manage Content Templates",
+            "Access the Content Templates screen to view and manage the templates for auto-creating " +
+            "content."),
+    MANAGE_DATA_RECEIPT_RULES_PERMISSION(
+            "Manage Data Receipt Rules",
+            "Access the Data Receipt Rules screen to view and manage the rules for accepting, " +
+            "rejecting or dropping received data."),
     MANAGE_JOBS_PERMISSION(
             "Manage Jobs",
             "Access the Jobs screen to manage Stroom's background jobs."),
@@ -97,6 +109,10 @@ public enum AppPermission implements HasDisplayValue {
     CHECK_RECEIPT_STATUS(
             "Check Receipt Status",
             "Ability to check the receipt status of a feed."),
+    FETCH_HASHED_RECEIPT_POLICY_RULES(
+            "Fetch hashed receipt policy rules",
+            "Ability to fetch the obfuscated receipt policy rules. This permission is required for " +
+            "any Stroom-Proxy that needs to fetch receipt policy rules."),
     ;
 
     private static final Map<String, AppPermission> APP_PERMISSION_ENUM_MAP;

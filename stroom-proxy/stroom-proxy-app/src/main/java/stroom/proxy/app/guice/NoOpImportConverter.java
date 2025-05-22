@@ -15,6 +15,6 @@ public class NoOpImportConverter implements ImportConverter {
                                        final ImportState importState,
                                        final ImportSettings importSettings,
                                        final String userId) {
-        throw new UnsupportedOperationException("Import is not supported in proxy.");
+        return dataMap;
     }
 }

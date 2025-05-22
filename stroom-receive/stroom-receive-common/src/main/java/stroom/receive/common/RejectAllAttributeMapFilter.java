@@ -18,25 +18,36 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.StroomStatusCode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-public class PermissiveAttributeMapFilter implements AttributeMapFilter {
+public class RejectAllAttributeMapFilter implements AttributeMapFilter {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PermissiveAttributeMapFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RejectAllAttributeMapFilter.class);
 
-    public static final PermissiveAttributeMapFilter INSTANCE = new PermissiveAttributeMapFilter();
+    public static final RejectAllAttributeMapFilter INSTANCE = new RejectAllAttributeMapFilter();
 
-    private PermissiveAttributeMapFilter() {
+    private RejectAllAttributeMapFilter() {
     }
 
-    public static PermissiveAttributeMapFilter getInstance() {
+    public static RejectAllAttributeMapFilter getInstance() {
         return INSTANCE;
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        LOGGER.debug("{} returning true", PermissiveAttributeMapFilter.class);
-        return true;
+        LOGGER.debug("Reject all filter - attributeMap: {}", attributeMap);
+        throw new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap);
+    }
+
+    @Override
+    public String getName() {
+        return "Reject ALL";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

@@ -1,5 +1,6 @@
 package stroom.item.client;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -39,21 +40,15 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     }
 
     public void addItems(final Collection<T> items) {
-        for (final T item : items) {
-            addItem(item);
-        }
+        NullSafe.forEach(items, this::addItem);
     }
 
     public void addItems(final T[] items) {
-        for (final T item : items) {
-            addItem(item);
-        }
+        NullSafe.forEach(items, this::addItem);
     }
 
     public void addItem(final T item) {
-        if (item != null) {
-            items.add(wrap(item));
-        }
+        NullSafe.consume(item, i -> items.add(wrap(i)));
     }
 
     public void clear() {

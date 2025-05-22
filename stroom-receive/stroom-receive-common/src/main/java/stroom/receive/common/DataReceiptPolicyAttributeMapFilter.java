@@ -15,34 +15,29 @@
  *
  */
 
-package stroom.receive.rules.impl;
+package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
-import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.StroomStreamException;
-import stroom.receive.rules.shared.RuleAction;
+import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl.Checker;
+import stroom.receive.rules.shared.ReceiveAction;
 
 import java.util.Objects;
 
 class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
 
-    private final ReceiveDataPolicyChecker dataReceiptPolicyChecker;
+    private final Checker checker;
 
-    DataReceiptPolicyAttributeMapFilter(final ReceiveDataPolicyChecker dataReceiptPolicyChecker) {
-        Objects.requireNonNull(dataReceiptPolicyChecker, "Null policy checker");
-        this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
+    DataReceiptPolicyAttributeMapFilter(final Checker checker) {
+        Objects.requireNonNull(checker, "Null policy checker");
+        this.checker = checker;
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final RuleAction action = dataReceiptPolicyChecker.check(attributeMap);
-
-        if (RuleAction.REJECT.equals(action)) {
-            throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
-        }
-
-        return RuleAction.RECEIVE.equals(action);
+        final ReceiveAction action = checker.check(attributeMap);
+        return action.getFilterOutcome(() ->
+                new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap));
     }
 }

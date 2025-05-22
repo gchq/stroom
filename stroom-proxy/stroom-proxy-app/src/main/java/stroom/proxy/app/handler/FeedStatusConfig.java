@@ -19,9 +19,9 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_API_KEY = "apiKey";
 
-    @JsonProperty
-    @JsonPropertyDescription("Turn feed status checking on/off.")
-    private final Boolean enabled;
+//    @JsonProperty
+//    @JsonPropertyDescription("Turn feed status checking on/off.")
+//    private final Boolean enabled;
 
     @JsonProperty
     @JsonPropertyDescription("How should proxy treat incoming data if feed status checking is turned off or we are" +
@@ -43,7 +43,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     private final CacheConfig feedStatusCache;
 
     public FeedStatusConfig() {
-        enabled = true;
+//        enabled = true;
         defaultStatus = FeedStatus.Receive;
         feedStatusUrl = null;
         apiKey = null;
@@ -52,19 +52,18 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public FeedStatusConfig(@JsonProperty("enabled") Boolean enabled,
-                            @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
-                            @JsonProperty("url") final String feedStatusUrl,
-                            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
-                            @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
-        this.enabled = enabled;
+    public FeedStatusConfig(
+//            @JsonProperty("enabled") Boolean enabled,
+            @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
+            @JsonProperty("url") final String feedStatusUrl,
+            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
+            @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
+//        this.enabled = enabled;
         this.defaultStatus = defaultStatus;
         this.feedStatusUrl = feedStatusUrl;
         this.apiKey = apiKey;
-
-        this.feedStatusCache = feedStatusCache == null
-                ? buildDefaultCacheConfig()
-                : feedStatusCache;
+        this.feedStatusCache = Objects.requireNonNullElseGet(
+                feedStatusCache, FeedStatusConfig::buildDefaultCacheConfig);
     }
 
     private static CacheConfig buildDefaultCacheConfig() {
@@ -75,9 +74,9 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
                 .build();
     }
 
-    public Boolean getEnabled() {
-        return enabled;
-    }
+//    public Boolean getEnabled() {
+//        return enabled;
+//    }
 
     public FeedStatus getDefaultStatus() {
         return defaultStatus;
@@ -104,22 +103,28 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final FeedStatusConfig that = (FeedStatusConfig) o;
-        return Objects.equals(enabled, that.enabled) &&
-               defaultStatus == that.defaultStatus &&
-               Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
-               Objects.equals(apiKey, that.apiKey) &&
-               Objects.equals(feedStatusCache, that.feedStatusCache);
+        return
+//                Objects.equals(enabled, that.enabled) &&
+                defaultStatus == that.defaultStatus &&
+                Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
+                Objects.equals(apiKey, that.apiKey) &&
+                Objects.equals(feedStatusCache, that.feedStatusCache);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, defaultStatus, feedStatusUrl, apiKey, feedStatusCache);
+        return Objects.hash(
+//                enabled,
+                defaultStatus,
+                feedStatusUrl,
+                apiKey,
+                feedStatusCache);
     }
 
     @Override
     public String toString() {
         return "FeedStatusConfig{" +
-               "enabled=" + enabled +
+//               "enabled=" + enabled +
                ", defaultStatus=" + defaultStatus +
                ", feedStatusUrl='" + feedStatusUrl + '\'' +
                ", apiKey='" + apiKey + '\'' +

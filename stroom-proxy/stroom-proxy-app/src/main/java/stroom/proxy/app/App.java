@@ -278,6 +278,12 @@ public class App extends Application<Config> {
                 })
                 .sorted()
                 .collect(Collectors.joining("\n"));
+        final IdpType idpType = NullSafe.get(
+                configuration.getProxyConfig(),
+                ProxyConfig::getProxySecurityConfig,
+                ProxySecurityConfig::getAuthenticationConfig,
+                ProxyAuthenticationConfig::getOpenIdConfig,
+                ProxyOpenIdConfig::getIdentityProviderType);
 
         LOGGER.info(""
                     + "\n  Build version:       " + buildInfo.getBuildVersion()
@@ -285,6 +291,7 @@ public class App extends Application<Config> {
                     + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Proxy ID:            " + proxyId.getId()
+                    + "\n  IDP Type:            " + idpType
                     + "\n  Forwarders:          " + "\n" + forwaders
                     + "\n");
     }

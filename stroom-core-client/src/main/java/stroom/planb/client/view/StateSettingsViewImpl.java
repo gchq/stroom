@@ -89,6 +89,10 @@ public class StateSettingsViewImpl
         getUiHandlers().onChange();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {
 
     }

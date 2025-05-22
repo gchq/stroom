@@ -35,7 +35,8 @@ public enum StroomStatusCode {
     INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 104, "Data format is invalid",
             "If you provide a data Format header, its value must be valid"),
 
-    FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
+    FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110,
+            "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
     INVALID_FEED_NAME(HttpServletResponse.SC_NOT_ACCEPTABLE, 111,
@@ -46,6 +47,10 @@ public enum StroomStatusCode {
             "Data Feed key and/or accountId is not valid",
             "The Data Feed Key and/or AccountId you have provided do not match " +
             "any known Data Feed Key and AccountIds."),
+
+    REJECTED_BY_POLICY_RULES(HttpServletResponse.SC_NOT_ACCEPTABLE, 113,
+            "Data has been rejected by the receipt policy rules",
+            "The meta data provided with the data has been rejected by the receipt policy rules."),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),

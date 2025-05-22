@@ -603,6 +603,10 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         this.dataRetentionPresenter = dataRetentionPresenter;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface DataRetentionPolicyView extends View {
 
         void setTableView(View view);

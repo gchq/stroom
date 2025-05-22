@@ -89,7 +89,7 @@ public class HttpSender implements StreamDestination {
         this.proxyServices = proxyServices;
         this.sendTimer = metrics.registrationBuilder(getClass())
                 .addNamePart(forwarderName)
-                .addNamePart("send")
+                .addNamePart(Metrics.SEND)
                 .timer()
                 .createAndRegister();
     }

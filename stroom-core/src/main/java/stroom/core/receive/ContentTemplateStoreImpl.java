@@ -168,7 +168,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
     public ContentTemplates writeDocument(final ContentTemplates document) {
         // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
         // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
-        return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION,
+        return securityContext.secureResult(AppPermission.MANAGE_CONTENT_TEMPLATES_PERMISSION,
                 () -> securityContext.asProcessingUserResult(() -> store.writeDocument(document)));
 
     }

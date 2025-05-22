@@ -1,10 +1,12 @@
 package stroom.proxy.repo;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.Duration;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -27,10 +28,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
     protected static final boolean DEFAULT_ENABLED = true;
     protected static final int DEFAULT_MAX_ITEMS_PER_AGGREGATE = 1_000;
-    protected static final String DEFAULT_MAX_UNCOMPRESSED_SIZE_STR = "1G";
-    protected static final Long DEFAULT_MAX_UNCOMPRESSED_SIZE = ModelStringUtil.parseIECByteSizeString(
-            DEFAULT_MAX_UNCOMPRESSED_SIZE_STR);
-    protected static final StroomDuration DEFAULT_MAX_AGGREGATION_FREQUENCY = StroomDuration.of(Duration.ofMinutes(10));
+    protected static final long DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE = ByteSize.ofGibibytes(1).getBytes();
+    protected static final StroomDuration DEFAULT_AGGREGATION_FREQUENCY = StroomDuration.ofMinutes(10);
     protected static final boolean DEFAULT_SPLIT_SOURCES = true;
 
     private final boolean enabled;
@@ -42,23 +41,27 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
     public AggregatorConfig() {
         enabled = DEFAULT_ENABLED;
         maxItemsPerAggregate = DEFAULT_MAX_ITEMS_PER_AGGREGATE;
-        maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_SIZE;
-        aggregationFrequency = DEFAULT_MAX_AGGREGATION_FREQUENCY;
+        maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE;
+        aggregationFrequency = DEFAULT_AGGREGATION_FREQUENCY;
         splitSources = DEFAULT_SPLIT_SOURCES;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public AggregatorConfig(@JsonProperty(PROP_NAME_ENABLED) final boolean enabled,
-                            @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final int maxItemsPerAggregate,
+    public AggregatorConfig(@JsonProperty(PROP_NAME_ENABLED) final Boolean enabled,
+                            @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final Integer maxItemsPerAggregate,
                             @JsonProperty("maxUncompressedByteSize") final String maxUncompressedByteSizeString,
                             @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency,
-                            @JsonProperty(PROP_NAME_SPLIT_SOURCES) final boolean splitSources) {
-        this.enabled = enabled;
-        this.maxItemsPerAggregate = maxItemsPerAggregate;
-        this.maxUncompressedByteSize = ModelStringUtil.parseIECByteSizeString(maxUncompressedByteSizeString);
-        this.aggregationFrequency = aggregationFrequency;
-        this.splitSources = splitSources;
+                            @JsonProperty(PROP_NAME_SPLIT_SOURCES) final Boolean splitSources) {
+
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
+        this.maxItemsPerAggregate = Objects.requireNonNullElse(maxItemsPerAggregate, DEFAULT_MAX_ITEMS_PER_AGGREGATE);
+        this.maxUncompressedByteSize = NullSafe.getOrElse(
+                maxUncompressedByteSizeString,
+                ModelStringUtil::parseIECByteSizeString,
+                DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE);
+        this.aggregationFrequency = Objects.requireNonNullElse(aggregationFrequency, DEFAULT_AGGREGATION_FREQUENCY);
+        this.splitSources = Objects.requireNonNullElse(splitSources, DEFAULT_SPLIT_SOURCES);
     }
 
     private AggregatorConfig(final boolean enabled,
@@ -177,8 +180,8 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
         private boolean enabled = DEFAULT_ENABLED;
         private int maxItemsPerAggregate = DEFAULT_MAX_ITEMS_PER_AGGREGATE;
-        private Long maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_SIZE;
-        private StroomDuration aggregationFrequency = DEFAULT_MAX_AGGREGATION_FREQUENCY;
+        private Long maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE;
+        private StroomDuration aggregationFrequency = DEFAULT_AGGREGATION_FREQUENCY;
         private boolean splitSources = DEFAULT_SPLIT_SOURCES;
 
         private Builder() {

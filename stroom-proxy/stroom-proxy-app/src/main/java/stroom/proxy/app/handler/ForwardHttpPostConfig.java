@@ -21,10 +21,9 @@ public final class ForwardHttpPostConfig
         extends AbstractConfig
         implements IsProxyConfig, ForwarderConfig {
 
-    private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
-    private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
-    private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
-    private static final Integer DEFAULT_MAX_RETRIES = 3;
+    public static final boolean DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN = false;
+    public static final boolean DEFAULT_IS_ENABLED = true;
+    public static final boolean DEFAULT_IS_INSTANT = false;
 
     private final boolean enabled;
     private final boolean instant;
@@ -37,36 +36,36 @@ public final class ForwardHttpPostConfig
     private final ForwardHttpQueueConfig forwardQueueConfig;
 
     public ForwardHttpPostConfig() {
-        enabled = true;
-        instant = false;
+        enabled = DEFAULT_IS_ENABLED;
+        instant = DEFAULT_IS_INSTANT;
         name = null;
         forwardUrl = null;
         livenessCheckUrl = null;
         apiKey = null;
-        addOpenIdAccessToken = false;
+        addOpenIdAccessToken = DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN;
         httpClient = createDefaultHttpClientConfiguration();
         forwardQueueConfig = new ForwardHttpQueueConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ForwardHttpPostConfig(@JsonProperty("enabled") final boolean enabled,
-                                 @JsonProperty("instant") final boolean instant,
+    public ForwardHttpPostConfig(@JsonProperty("enabled") final Boolean enabled,
+                                 @JsonProperty("instant") final Boolean instant,
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
                                  @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
+                                 @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
                                  @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
                                  @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig) {
-        this.enabled = enabled;
-        this.instant = instant;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
+        this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
         this.forwardUrl = forwardUrl;
         this.livenessCheckUrl = livenessCheckUrl;
         this.apiKey = apiKey;
-        this.addOpenIdAccessToken = addOpenIdAccessToken;
-        this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
+        this.addOpenIdAccessToken = Objects.requireNonNullElse(addOpenIdAccessToken, DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN);
+        this.httpClient = Objects.requireNonNullElseGet(httpClient, this::createDefaultHttpClientConfiguration);
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
     }
 
