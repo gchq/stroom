@@ -37,6 +37,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ import static stroom.util.shared.string.CIKeys.getCommonKey;
 import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
 @ResourceLock(CI_KEYS_RESOURCE_LOCK)
+@Execution(ExecutionMode.SAME_THREAD) // clearCommonKeys breaks other tests
 public class TestCIKey {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKey.class);

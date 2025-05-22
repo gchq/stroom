@@ -19,7 +19,6 @@ package stroom.util.shared.string;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.junit.jupiter.api.parallel.ResourceLock;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -28,9 +27,6 @@ import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.infra.Blackhole;
 
-import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
-
-@ResourceLock(CI_KEYS_RESOURCE_LOCK)
 public class TestCIKeyPerf {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKeyPerf.class);

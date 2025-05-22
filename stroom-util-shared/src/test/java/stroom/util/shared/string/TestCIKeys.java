@@ -24,6 +24,8 @@ import stroom.util.shared.concurrent.CopyOnWriteMap;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.List;
@@ -37,6 +39,7 @@ import static stroom.util.shared.string.CIKeys.getCommonKey;
 import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
 @ResourceLock(CI_KEYS_RESOURCE_LOCK)
+@Execution(ExecutionMode.SAME_THREAD) // clearCommonKeys breaks other tests
 class TestCIKeys {
 
     // Because some of the CIKey tests have to clear out the statically held CIKey
