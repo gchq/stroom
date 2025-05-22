@@ -13,8 +13,10 @@ import stroom.util.shared.NullSafe;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -22,8 +24,20 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Essentially this wraps a {@link ReceiveDataRules} instance except that the {@link ReceiveDataRules}
+ * instance may have had the values and/or dictionary content obfuscated for certain fields.
+ * It also contains the hash algorithm and salts used to allow other values to be similarly
+ * obfuscated for evaluating against the expressions.
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class HashedReceiveDataRules {
+
+    /**
+     * The time this snapshot of the rules was taken.
+     */
+    @JsonProperty
+    private final Instant snapshotTime;
 
     @JsonProperty
     private final ReceiveDataRules receiveDataRules;
@@ -40,10 +54,11 @@ public class HashedReceiveDataRules {
     /**
      * One random salt per fieldName. This does mean we may re-use a salt, i.e.
      * in the case of a dictionary of values, but there is not a lot we can do about that.
-     * Field names all in lower-case
+     * Field names all in lower-case.
      */
     @JsonProperty
     private final Map<String, String> fieldNameToSaltMap;
+
     /**
      * The hash algorithm used to hash the hashed field values.
      */
@@ -51,19 +66,18 @@ public class HashedReceiveDataRules {
     private final HashAlgorithm hashAlgorithm;
 
     /**
-     * @param receiveDataRules
-     * @param uuidToFlattenedDictMap
-     * @param fieldNameToSaltMap     A {@link Map} of field name (lower-case) to the salt used to hash values for
-     *                               that field.
-     * @param hashAlgorithm
+     * @param fieldNameToSaltMap A {@link Map} of field name (lower-case) to the salt used to hash values for
+     *                           that field.
      */
     @JsonCreator
     public HashedReceiveDataRules(
+            @JsonProperty("snapshotTime") final Instant snapshotTime,
             @JsonProperty("receiveDataRules") final ReceiveDataRules receiveDataRules,
             @JsonProperty("uuidToFlattenedDictMap") final Map<String, DictionaryDoc> uuidToFlattenedDictMap,
             @JsonProperty("fieldNameToSaltMap") final Map<String, String> fieldNameToSaltMap,
             @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
 
+        this.snapshotTime = Objects.requireNonNull(snapshotTime);
         this.receiveDataRules = Objects.requireNonNull(receiveDataRules);
         this.uuidToFlattenedDictMap = NullSafe.map(uuidToFlattenedDictMap);
         this.fieldNameToSaltMap = NullSafe.map(fieldNameToSaltMap);
@@ -73,6 +87,87 @@ public class HashedReceiveDataRules {
                 this.uuidToFlattenedDictMap,
                 this.fieldNameToSaltMap,
                 this.hashAlgorithm);
+    }
+
+    public HashedReceiveDataRules(final ReceiveDataRules receiveDataRules,
+                                  final Map<String, DictionaryDoc> uuidToFlattenedDictMap,
+                                  final Map<String, String> fieldNameToSaltMap,
+                                  final HashAlgorithm hashAlgorithm) {
+        this(Instant.now(), receiveDataRules, uuidToFlattenedDictMap, fieldNameToSaltMap, hashAlgorithm);
+    }
+
+    @JsonPropertyDescription("The time that this snapshot of the rules was taken.")
+    public Instant getSnapshotTime() {
+        return snapshotTime;
+    }
+
+    @JsonPropertyDescription("The rule set with only enable rules and fields that are used in those rules.")
+    public ReceiveDataRules getReceiveDataRules() {
+        return receiveDataRules;
+    }
+
+    @JsonPropertyDescription("A map of dictionary UUIDs to the dictionary corresponding to that UUID. " +
+                             "Each dictionary has had any imports merged into it and the imports removed to make " +
+                             "a flat hierarchy. Dictionaries used in terms with a field that requires obfuscation " +
+                             "have had their content obfuscated.")
+    public Map<String, DictionaryDoc> getUuidToFlattenedDictMap() {
+        return uuidToFlattenedDictMap;
+    }
+
+    /**
+     * @return A {@link Map} of field name (lower-case) to the salt used to hash values for
+     * that field.
+     */
+    @JsonPropertyDescription("Map of field name (lower-case) to the salt used to obfuscate value(s) for " +
+                             "that field. This map will only contain field keys for those fields that require" +
+                             "obfuscation. If not fields are obfuscated, it will be empty.")
+    public Map<String, String> getFieldNameToSaltMap() {
+        return fieldNameToSaltMap;
+    }
+
+    @JsonPropertyDescription("The hash algorithm used to obfuscated values. If no fields are obfuscated then " +
+                             "this will be null.")
+    public HashAlgorithm getHashAlgorithm() {
+        return hashAlgorithm;
+    }
+
+    @JsonIgnore
+    public List<ReceiveDataRule> getRules() {
+        return NullSafe.list(receiveDataRules.getRules());
+    }
+
+    @JsonIgnore
+    public List<QueryField> getFields() {
+        return NullSafe.list(receiveDataRules.getFields());
+    }
+
+    @JsonIgnore
+    public String getSalt(final String fieldName) {
+        return NullSafe.get(fieldName, fieldNameToSaltMap::get);
+    }
+
+    /**
+     * Set of field names whose values need to be compared in hashed form.
+     * Hashed fields will only support certain conditions, i.e. case-sense equals,
+     * case-sense not equals, in, in dictionary.
+     */
+    @JsonIgnore
+    public Set<String> getHashedFieldNames() {
+        return fieldNameToSaltMap.keySet();
+    }
+
+    @JsonIgnore
+    public boolean isHashedFieldName(final String fieldName) {
+        return fieldName != null
+               && fieldNameToSaltMap.containsKey(fieldName);
+    }
+
+    @JsonIgnore
+    public DictionaryDoc getFlattenedDictionary(final DocRef docRef) {
+        return NullSafe.get(
+                docRef,
+                DocRef::getUuid,
+                uuidToFlattenedDictMap::get);
     }
 
     private void validateValues(final ReceiveDataRules receiveDataRules,
@@ -122,65 +217,6 @@ public class HashedReceiveDataRules {
                 }
             }
         }
-    }
-
-    public ReceiveDataRules getReceiveDataRules() {
-        return receiveDataRules;
-    }
-
-    @JsonIgnore
-    public List<ReceiveDataRule> getRules() {
-        return NullSafe.list(receiveDataRules.getRules());
-    }
-
-    @JsonIgnore
-    public List<QueryField> getFields() {
-        return NullSafe.list(receiveDataRules.getFields());
-    }
-
-    public Map<String, DictionaryDoc> getUuidToFlattenedDictMap() {
-        return uuidToFlattenedDictMap;
-    }
-
-    @JsonIgnore
-    public DictionaryDoc getFlattenedDictionary(final DocRef docRef) {
-        return NullSafe.get(
-                docRef,
-                DocRef::getUuid,
-                uuidToFlattenedDictMap::get);
-    }
-
-    /**
-     * Set of field names whose values need to be compared in hashed form.
-     * Hashed fields will only support certain conditions, i.e. case-sense equals,
-     * case-sense not equals, in, in dictionary.
-     */
-    @JsonIgnore
-    public Set<String> getHashedFieldNames() {
-        return fieldNameToSaltMap.keySet();
-    }
-
-    @JsonIgnore
-    public boolean isHashedFieldName(final String fieldName) {
-        return fieldName != null
-               && fieldNameToSaltMap.containsKey(fieldName);
-    }
-
-    /**
-     * @return A {@link Map} of field name (lower-case) to the salt used to hash values for
-     * that field.
-     */
-    public Map<String, String> getFieldNameToSaltMap() {
-        return fieldNameToSaltMap;
-    }
-
-    @JsonIgnore
-    public String getSalt(final String fieldName) {
-        return NullSafe.get(fieldName, fieldNameToSaltMap::get);
-    }
-
-    public HashAlgorithm getHashAlgorithm() {
-        return hashAlgorithm;
     }
 
     @Override

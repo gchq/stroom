@@ -139,21 +139,21 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         final Set<QueryField> usedFields = new HashSet<>(fieldNameToFieldMap.size());
 
         for (final ReceiveDataRule rule : enabledRules) {
-            ExpressionOperator expressionCopy = copyAndObfuscateOperator(
+            ExpressionOperator obfuscatedExpression = copyAndObfuscateOperator(
                     rule.getExpression(),
                     fieldNameToSaltMap,
                     hashFunction,
                     obfuscatedFields,
                     uuidToFlattenedDictMap);
             // If all are disabled result will be null
-            if (expressionCopy == null) {
-                expressionCopy = ExpressionOperator.builder().build();
+            if (obfuscatedExpression == null) {
+                obfuscatedExpression = ExpressionOperator.builder().build();
             }
 
-            final ReceiveDataRule ruleCopy = ReceiveDataRule.copy(rule)
-                    .withExpression(expressionCopy)
+            final ReceiveDataRule obfuscatedRule = ReceiveDataRule.copy(rule)
+                    .withExpression(obfuscatedExpression)
                     .build();
-            ruleCopies.add(ruleCopy);
+            ruleCopies.add(obfuscatedRule);
             final List<String> fieldsInExpression = ExpressionUtil.fields(rule.getExpression());
             fieldsInExpression.stream()
                     .map(fieldNameToFieldMap::get)
