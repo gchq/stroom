@@ -11833,6 +11833,12 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "overwrite" : {
+            "type" : "boolean"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/RetentionSettings"
+          },
           "snapshotSettings" : {
             "$ref" : "#/components/schemas/SnapshotSettings"
           },
@@ -18616,7 +18622,7 @@
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGE_STATE", "TEMPORAL_RANGE_STATE", "SESSION" ]
           },
           "type" : {
             "type" : "string"
@@ -19591,6 +19597,15 @@
           }
         }
       },
+      "RangeKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "rangeType" : {
+            "type" : "string",
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+          }
+        }
+      },
       "RangeLong" : {
         "type" : "object",
         "properties" : {
@@ -19607,7 +19622,7 @@
           }
         }
       },
-      "RangedState" : {
+      "RangeState" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
@@ -19623,24 +19638,17 @@
           }
         } ]
       },
-      "RangedStateSettings" : {
+      "RangeStateSettings" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractPlanBSettings"
         }, {
           "type" : "object",
           "properties" : {
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/RangeKeySchema"
             },
-            "rangeType" : {
-              "type" : "string",
-              "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
-            },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
-            },
-            "stateValueSchema" : {
+            "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
@@ -20683,6 +20691,20 @@
           }
         }
       },
+      "RetentionSettings" : {
+        "type" : "object",
+        "properties" : {
+          "duration" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "useStateTime" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "Row" : {
         "type" : "object",
         "description" : "A row of data in a result set",
@@ -21407,6 +21429,23 @@
           }
         }
       },
+      "SessionKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
+      },
       "SessionListResponse" : {
         "type" : "object",
         "properties" : {
@@ -21431,21 +21470,8 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
-            },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
-            },
-            "stateValueSchema" : {
-              "$ref" : "#/components/schemas/StateValueSchema"
-            },
-            "timePrecision" : {
-              "type" : "string",
-              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
-            },
-            "useStateTimeForRetention" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/SessionKeySchema"
             }
           }
         } ]
@@ -22036,16 +22062,10 @@
         }, {
           "type" : "object",
           "properties" : {
-            "overwrite" : {
-              "type" : "boolean"
-            },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
-            },
-            "stateKeySchema" : {
+            "keySchema" : {
               "$ref" : "#/components/schemas/StateKeySchema"
             },
-            "stateValueSchema" : {
+            "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
@@ -22954,7 +22974,20 @@
           }
         }
       },
-      "TemporalRangedState" : {
+      "TemporalRangeKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "rangeType" : {
+            "type" : "string",
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
+      },
+      "TemporalRangeState" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/PlanBValue"
@@ -22970,7 +23003,7 @@
           }
         } ]
       },
-      "TemporalRangedStateSettings" : {
+      "TemporalRangeStateSettings" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractPlanBSettings"
@@ -22980,25 +23013,11 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/TemporalRangeKeySchema"
             },
-            "rangeType" : {
-              "type" : "string",
-              "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
-            },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
-            },
-            "stateValueSchema" : {
+            "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
-            },
-            "timePrecision" : {
-              "type" : "string",
-              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
-            },
-            "useStateTimeForRetention" : {
-              "type" : "boolean"
             }
           }
         } ]
@@ -23019,6 +23038,23 @@
           }
         } ]
       },
+      "TemporalStateKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
+      },
       "TemporalStateSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -23029,24 +23065,11 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/TemporalStateKeySchema"
             },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
-            },
-            "stateKeySchema" : {
-              "$ref" : "#/components/schemas/StateKeySchema"
-            },
-            "stateValueSchema" : {
+            "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
-            },
-            "timePrecision" : {
-              "type" : "string",
-              "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
-            },
-            "useStateTimeForRetention" : {
-              "type" : "boolean"
             }
           }
         } ]

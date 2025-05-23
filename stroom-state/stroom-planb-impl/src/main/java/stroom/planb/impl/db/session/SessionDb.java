@@ -132,8 +132,8 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 hashClashCommitRunnable);
     }
 
-    private static TimeSerde createTimeSerde(final TemporalPrecision TemporalPrecision) {
-        return switch (TemporalPrecision) {
+    private static TimeSerde createTimeSerde(final TemporalPrecision temporalPrecision) {
+        return switch (temporalPrecision) {
             case NANOSECOND -> new NanoTimeSerde();
             case MILLISECOND -> new MillisecondTimeSerde();
             case SECOND -> new SecondTimeSerde();

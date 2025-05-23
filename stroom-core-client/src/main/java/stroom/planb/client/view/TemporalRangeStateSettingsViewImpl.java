@@ -61,7 +61,8 @@ public class TemporalRangeStateSettingsViewImpl
                                               final SnapshotSettingsWidget snapshotSettingsWidget,
                                               final CondenseSettingsWidget condenseSettingsWidget,
                                               final RetentionSettingsWidget retentionSettingsWidget,
-                                              final TemporalRangeKeySchemaSettingsWidget temporalRangeKeySchemaSettingsWidget,
+                                              final TemporalRangeKeySchemaSettingsWidget
+                                                      temporalRangeKeySchemaSettingsWidget,
                                               final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;

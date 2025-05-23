@@ -8152,6 +8152,10 @@ components:
         maxStoreSize:
           type: integer
           format: int64
+        overwrite:
+          type: boolean
+        retention:
+          $ref: "#/components/schemas/RetentionSettings"
         snapshotSettings:
           $ref: "#/components/schemas/SnapshotSettings"
         synchroniseMerge:
@@ -13712,8 +13716,8 @@ components:
           enum:
           - STATE
           - TEMPORAL_STATE
-          - RANGED_STATE
-          - TEMPORAL_RANGED_STATE
+          - RANGE_STATE
+          - TEMPORAL_RANGE_STATE
           - SESSION
         type:
           type: string
@@ -14483,6 +14487,16 @@ components:
         to:
           type: integer
           format: int32
+    RangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
     RangeLong:
       type: object
       properties:
@@ -14494,7 +14508,7 @@ components:
         to:
           type: integer
           format: int64
-    RangedState:
+    RangeState:
       type: object
       allOf:
       - $ref: "#/components/schemas/PlanBValue"
@@ -14504,24 +14518,15 @@ components:
             $ref: "#/components/schemas/Key"
           value:
             $ref: "#/components/schemas/Val"
-    RangedStateSettings:
+    RangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
-          rangeType:
-            type: string
-            enum:
-            - BYTE
-            - SHORT
-            - INT
-            - LONG
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
-          stateValueSchema:
+          keySchema:
+            $ref: "#/components/schemas/RangeKeySchema"
+          valueSchema:
             $ref: "#/components/schemas/StateValueSchema"
     Rec:
       type: object
@@ -15263,6 +15268,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultStoreInfo"
+    RetentionSettings:
+      type: object
+      properties:
+        duration:
+          $ref: "#/components/schemas/SimpleDuration"
+        enabled:
+          type: boolean
+        useStateTime:
+          type: boolean
     Row:
       type: object
       description: A row of data in a result set
@@ -15808,6 +15822,37 @@ components:
           type: string
         userRef:
           $ref: "#/components/schemas/UserRef"
+    SessionKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateKeyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     SessionListResponse:
       type: object
       properties:
@@ -15825,23 +15870,8 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
-          stateValueSchema:
-            $ref: "#/components/schemas/StateValueSchema"
-          timePrecision:
-            type: string
-            enum:
-            - DAY
-            - HOUR
-            - MINUTE
-            - SECOND
-            - MILLISECOND
-            - NANOSECOND
-          useStateTimeForRetention:
-            type: boolean
+          keySchema:
+            $ref: "#/components/schemas/SessionKeySchema"
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -16316,13 +16346,9 @@ components:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
-          stateKeySchema:
+          keySchema:
             $ref: "#/components/schemas/StateKeySchema"
-          stateValueSchema:
+          valueSchema:
             $ref: "#/components/schemas/StateValueSchema"
     StateValueSchema:
       type: object
@@ -17025,7 +17051,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
-    TemporalRangedState:
+    TemporalRangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
+    TemporalRangeState:
       type: object
       allOf:
       - $ref: "#/components/schemas/PlanBValue"
@@ -17035,7 +17080,7 @@ components:
             $ref: "#/components/schemas/Key"
           value:
             $ref: "#/components/schemas/Val"
-    TemporalRangedStateSettings:
+    TemporalRangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
@@ -17043,30 +17088,10 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          rangeType:
-            type: string
-            enum:
-            - BYTE
-            - SHORT
-            - INT
-            - LONG
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
-          stateValueSchema:
+          keySchema:
+            $ref: "#/components/schemas/TemporalRangeKeySchema"
+          valueSchema:
             $ref: "#/components/schemas/StateValueSchema"
-          timePrecision:
-            type: string
-            enum:
-            - DAY
-            - HOUR
-            - MINUTE
-            - SECOND
-            - MILLISECOND
-            - NANOSECOND
-          useStateTimeForRetention:
-            type: boolean
     TemporalState:
       type: object
       allOf:
@@ -17077,6 +17102,37 @@ components:
             $ref: "#/components/schemas/Key"
           value:
             $ref: "#/components/schemas/Val"
+    TemporalStateKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateKeyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     TemporalStateSettings:
       type: object
       allOf:
@@ -17085,25 +17141,10 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
-          stateKeySchema:
-            $ref: "#/components/schemas/StateKeySchema"
-          stateValueSchema:
+          keySchema:
+            $ref: "#/components/schemas/TemporalStateKeySchema"
+          valueSchema:
             $ref: "#/components/schemas/StateValueSchema"
-          timePrecision:
-            type: string
-            enum:
-            - DAY
-            - HOUR
-            - MINUTE
-            - SECOND
-            - MILLISECOND
-            - NANOSECOND
-          useStateTimeForRetention:
-            type: boolean
     TerminateTaskProgressRequest:
       type: object
       properties:
