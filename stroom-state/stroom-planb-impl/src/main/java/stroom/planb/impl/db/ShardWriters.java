@@ -7,14 +7,14 @@ import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
-import stroom.planb.impl.db.rangedstate.RangedState;
-import stroom.planb.impl.db.rangedstate.RangedStateDb;
+import stroom.planb.impl.db.rangestate.RangeState;
+import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
-import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
-import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.AbstractPlanBSettings;
@@ -148,14 +148,14 @@ public class ShardWriters {
                 db.insert(writer, temporalState);
             }
 
-            public void addRangedState(final RangedState rangedState) {
-                final RangedStateDb db = (RangedStateDb) lmdb;
-                db.insert(writer, rangedState);
+            public void addRangeState(final RangeState rangeState) {
+                final RangeStateDb db = (RangeStateDb) lmdb;
+                db.insert(writer, rangeState);
             }
 
-            public void addTemporalRangedState(final TemporalRangedState temporalRangedState) {
-                final TemporalRangedStateDb db = (TemporalRangedStateDb) lmdb;
-                db.insert(writer, temporalRangedState);
+            public void addTemporalRangeState(final TemporalRangeState temporalRangeState) {
+                final TemporalRangeStateDb db = (TemporalRangeStateDb) lmdb;
+                db.insert(writer, temporalRangeState);
             }
 
             public void addSession(final Session session) {
@@ -184,14 +184,14 @@ public class ShardWriters {
             getWriter(doc).addTemporalState(temporalState);
         }
 
-        public void addRangedState(final PlanBDoc doc,
-                                   final RangedState rangedState) {
-            getWriter(doc).addRangedState(rangedState);
+        public void addRangeState(final PlanBDoc doc,
+                                   final RangeState rangeState) {
+            getWriter(doc).addRangeState(rangeState);
         }
 
-        public void addTemporalRangedState(final PlanBDoc doc,
-                                           final TemporalRangedState temporalRangedState) {
-            getWriter(doc).addTemporalRangedState(temporalRangedState);
+        public void addTemporalRangeState(final PlanBDoc doc,
+                                           final TemporalRangeState temporalRangeState) {
+            getWriter(doc).addTemporalRangeState(temporalRangeState);
         }
 
         public void addSession(final PlanBDoc doc,
@@ -208,7 +208,7 @@ public class ShardWriters {
                             NullSafe.getOrElse(
                                     doc,
                                     PlanBDoc::getSettings,
-                                    AbstractPlanBSettings::isSynchroniseMerge,
+                                    AbstractPlanBSettings::getSynchroniseMerge,
                                     false)));
         }
 

@@ -66,14 +66,6 @@ public class StateValueSchema {
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
     public static class Builder extends AbstractBuilder<StateValueSchema, Builder> {
 
         private StateValueType stateValueType = StateValueType.VARIABLE;

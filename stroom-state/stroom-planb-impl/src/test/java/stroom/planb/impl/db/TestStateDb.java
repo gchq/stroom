@@ -32,8 +32,8 @@ import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateFields;
-import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateSettings;
@@ -55,11 +55,8 @@ import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.zip.ZipUtil;
 
@@ -80,11 +77,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,13 +85,12 @@ import static stroom.planb.impl.db.StateValueTestUtil.makeString;
 
 class TestStateDb {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateDb.class);
-    private static final int ITERATIONS = 10000000;
+    private static final int ITERATIONS = 100;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
-    private static final StateSettings BASIC_SETTINGS = StateSettings
-            .builder()
+    private static final StateSettings BASIC_SETTINGS = new StateSettings
+            .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
-            .retention(DurationSetting.builder().duration(SimpleDuration.ZERO).enabled(true).build())
+            .retention(new RetentionSettings.Builder().duration(SimpleDuration.ZERO).enabled(true).build())
             .build();
     private static final String MAP_UUID = "map-uuid";
     private static final String MAP_NAME = "map-name";
@@ -165,9 +157,8 @@ class TestStateDb {
     void testReadWriteKeyType(@TempDir final Path tempDir, final StateKeyType stateKeyType, final Val key) {
         final Function<Integer, Val> keyFunction = i -> key;
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
-        final StateSettings settings = StateSettings
-                .builder()
-                .stateKeySchema(StateKeySchema.builder().stateKeyType(stateKeyType).build())
+        final StateSettings settings = new StateSettings.Builder()
+                .keySchema(new StateKeySchema.Builder().stateKeyType(stateKeyType).build())
                 .build();
         testWriteRead(tempDir, settings, 100, keyFunction, valueFunction);
     }
@@ -514,11 +505,8 @@ class TestStateDb {
 //    }
 
     private StateSettings getSettings(final StateKeyType stateKeyType) {
-        return StateSettings
-                .builder()
-                .stateKeySchema(StateKeySchema.builder()
-                        .stateKeyType(stateKeyType)
-                        .build())
+        return new StateSettings.Builder()
+                .keySchema(new StateKeySchema.Builder().stateKeyType(stateKeyType).build())
                 .build();
     }
 
@@ -740,12 +728,12 @@ class TestStateDb {
                 tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
                                                   ", value type = " + valueFunction,
                         () -> {
-                            final StateSettings settings = StateSettings
-                                    .builder()
-                                    .stateKeySchema(StateKeySchema.builder()
+                            final StateSettings settings = new StateSettings
+                                    .Builder()
+                                    .keySchema(new StateKeySchema.Builder()
                                             .stateKeyType(keyFunction.stateKeyType)
                                             .build())
-                                    .stateValueSchema(StateValueSchema.builder()
+                                    .valueSchema(new StateValueSchema.Builder()
                                             .stateValueType(valueFunction.stateValueType())
                                             .build())
                                     .build();

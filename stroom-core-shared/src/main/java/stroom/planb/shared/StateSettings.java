@@ -11,57 +11,39 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "maxStoreSize",
         "synchroniseMerge",
-        "snapshotSettings",
-        "retention",
         "overwrite",
-        "stateKeySchema",
-        "stateValueSchema"
+        "retention",
+        "snapshotSettings",
+        "keySchema",
+        "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
 public class StateSettings extends AbstractPlanBSettings {
 
     @JsonProperty
-    private final DurationSetting retention;
+    private final StateKeySchema keySchema;
     @JsonProperty
-    private final Boolean overwrite;
-    @JsonProperty
-    private final StateKeySchema stateKeySchema;
-    @JsonProperty
-    private final StateValueSchema stateValueSchema;
+    private final StateValueSchema valueSchema;
 
     @JsonCreator
     public StateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
-                         @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
-                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
-                         @JsonProperty("retention") final DurationSetting retention,
+                         @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
                          @JsonProperty("overwrite") final Boolean overwrite,
-                         @JsonProperty("stateKeySchema") final StateKeySchema stateKeySchema,
-                         @JsonProperty("stateValueSchema") final StateValueSchema stateValueSchema) {
-        super(maxStoreSize, synchroniseMerge, snapshotSettings);
-        this.retention = retention;
-        this.overwrite = overwrite;
-        this.stateKeySchema = stateKeySchema;
-        this.stateValueSchema = stateValueSchema;
+                         @JsonProperty("retention") final RetentionSettings retention,
+                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                         @JsonProperty("keySchema") final StateKeySchema keySchema,
+                         @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        this.keySchema = keySchema;
+        this.valueSchema = valueSchema;
     }
 
-    public DurationSetting getRetention() {
-        return retention;
+    public StateKeySchema getKeySchema() {
+        return keySchema;
     }
 
-    public Boolean getOverwrite() {
-        return overwrite;
-    }
-
-    public StateKeySchema getStateKeySchema() {
-        return stateKeySchema;
-    }
-
-    public StateValueSchema getStateValueSchema() {
-        return stateValueSchema;
-    }
-
-    public boolean overwrite() {
-        return overwrite == null || overwrite;
+    public StateValueSchema getValueSchema() {
+        return valueSchema;
     }
 
     @Override
@@ -76,70 +58,44 @@ public class StateSettings extends AbstractPlanBSettings {
             return false;
         }
         final StateSettings that = (StateSettings) o;
-        return Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite) &&
-               Objects.equals(stateKeySchema, that.stateKeySchema) &&
-               Objects.equals(stateValueSchema, that.stateValueSchema);
+        return Objects.equals(keySchema, that.keySchema) &&
+               Objects.equals(valueSchema, that.valueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), retention, overwrite, stateKeySchema, stateValueSchema);
+        return Objects.hash(super.hashCode(), keySchema, valueSchema);
     }
 
     @Override
     public String toString() {
         return "StateSettings{" +
-               "retention=" + retention +
-               ", overwrite=" + overwrite +
-               ", stateKeySchema=" + stateKeySchema +
-               ", stateValueSchema=" + stateValueSchema +
+               "keySchema=" + keySchema +
+               ", valueSchema=" + valueSchema +
                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
     }
 
     public static class Builder extends AbstractBuilder<StateSettings, Builder> {
 
-        private DurationSetting retention;
-        private Boolean overwrite;
-        private StateKeySchema stateKeySchema;
-        private StateValueSchema stateValueSchema;
+        private StateKeySchema keySchema;
+        private StateValueSchema valueSchema;
 
         public Builder() {
         }
 
         public Builder(final StateSettings settings) {
             super(settings);
-            this.retention = settings.retention;
-            this.overwrite = settings.overwrite;
-            this.stateKeySchema = settings.stateKeySchema;
-            this.stateValueSchema = settings.stateValueSchema;
+            this.keySchema = settings.keySchema;
+            this.valueSchema = settings.valueSchema;
         }
 
-        public Builder retention(final DurationSetting retention) {
-            this.retention = retention;
+        public Builder keySchema(final StateKeySchema keySchema) {
+            this.keySchema = keySchema;
             return self();
         }
 
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
-            return self();
-        }
-
-        public Builder stateKeySchema(final StateKeySchema stateKeySchema) {
-            this.stateKeySchema = stateKeySchema;
-            return self();
-        }
-
-        public Builder stateValueSchema(final StateValueSchema stateValueSchema) {
-            this.stateValueSchema = stateValueSchema;
+        public Builder valueSchema(final StateValueSchema valueSchema) {
+            this.valueSchema = valueSchema;
             return self();
         }
 
@@ -153,11 +109,11 @@ public class StateSettings extends AbstractPlanBSettings {
             return new StateSettings(
                     maxStoreSize,
                     synchroniseMerge,
-                    snapshotSettings,
-                    retention,
                     overwrite,
-                    stateKeySchema,
-                    stateValueSchema);
+                    retention,
+                    snapshotSettings,
+                    keySchema,
+                    valueSchema);
         }
     }
 }

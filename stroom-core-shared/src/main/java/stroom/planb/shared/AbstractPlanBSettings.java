@@ -34,14 +34,16 @@ import java.util.Objects;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = StateSettings.class, name = "state"),
         @JsonSubTypes.Type(value = TemporalStateSettings.class, name = "temporalState"),
-        @JsonSubTypes.Type(value = RangedStateSettings.class, name = "rangedState"),
-        @JsonSubTypes.Type(value = TemporalRangedStateSettings.class, name = "temporalRangedState"),
+        @JsonSubTypes.Type(value = RangeStateSettings.class, name = "rangeState"),
+        @JsonSubTypes.Type(value = TemporalRangeStateSettings.class, name = "temporalRangeState"),
         @JsonSubTypes.Type(value = SessionSettings.class, name = "session")
 })
 @Description("Defines settings for Plan B")
 @JsonPropertyOrder({
         "maxStoreSize",
         "synchroniseMerge",
+        "overwrite",
+        "retention",
         "snapshotSettings"
 })
 @JsonInclude(Include.NON_NULL)
@@ -50,15 +52,23 @@ public abstract class AbstractPlanBSettings {
     @JsonProperty
     private final Long maxStoreSize;
     @JsonProperty
-    private final boolean synchroniseMerge;
+    private final Boolean synchroniseMerge;
+    @JsonProperty
+    private final Boolean overwrite;
+    @JsonProperty
+    private final RetentionSettings retention;
     @JsonProperty
     private final SnapshotSettings snapshotSettings;
 
     public AbstractPlanBSettings(final Long maxStoreSize,
-                                 final boolean synchroniseMerge,
+                                 final Boolean synchroniseMerge,
+                                 final Boolean overwrite,
+                                 final RetentionSettings retention,
                                  final SnapshotSettings snapshotSettings) {
         this.maxStoreSize = maxStoreSize;
         this.synchroniseMerge = synchroniseMerge;
+        this.overwrite = overwrite;
+        this.retention = retention;
         this.snapshotSettings = snapshotSettings;
     }
 
@@ -66,8 +76,24 @@ public abstract class AbstractPlanBSettings {
         return maxStoreSize;
     }
 
-    public boolean isSynchroniseMerge() {
+    public Boolean getSynchroniseMerge() {
         return synchroniseMerge;
+    }
+
+    public boolean synchroniseMerge() {
+        return synchroniseMerge != null && synchroniseMerge;
+    }
+
+    public Boolean getOverwrite() {
+        return overwrite;
+    }
+
+    public boolean overwrite() {
+        return overwrite == null || overwrite;
+    }
+
+    public RetentionSettings getRetention() {
+        return retention;
     }
 
     public SnapshotSettings getSnapshotSettings() {
@@ -83,14 +109,16 @@ public abstract class AbstractPlanBSettings {
             return false;
         }
         final AbstractPlanBSettings settings = (AbstractPlanBSettings) o;
-        return synchroniseMerge == settings.synchroniseMerge &&
-               Objects.equals(maxStoreSize, settings.maxStoreSize) &&
+        return Objects.equals(maxStoreSize, settings.maxStoreSize) &&
+               Objects.equals(synchroniseMerge, settings.synchroniseMerge) &&
+               Objects.equals(overwrite, settings.overwrite) &&
+               Objects.equals(retention, settings.retention) &&
                Objects.equals(snapshotSettings, settings.snapshotSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxStoreSize, synchroniseMerge, snapshotSettings);
+        return Objects.hash(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
     }
 
     @Override
@@ -98,6 +126,8 @@ public abstract class AbstractPlanBSettings {
         return "AbstractPlanBSettings{" +
                "maxStoreSize=" + maxStoreSize +
                ", synchroniseMerge=" + synchroniseMerge +
+               ", overwrite=" + overwrite +
+               ", retention=" + retention +
                ", snapshotSettings=" + snapshotSettings +
                '}';
     }
@@ -105,7 +135,9 @@ public abstract class AbstractPlanBSettings {
     public abstract static class AbstractBuilder<T extends AbstractPlanBSettings, B extends AbstractBuilder<T, ?>> {
 
         protected Long maxStoreSize;
-        protected boolean synchroniseMerge;
+        protected Boolean synchroniseMerge;
+        protected Boolean overwrite;
+        protected RetentionSettings retention;
         protected SnapshotSettings snapshotSettings;
 
         public AbstractBuilder() {
@@ -114,6 +146,8 @@ public abstract class AbstractPlanBSettings {
         public AbstractBuilder(final AbstractPlanBSettings settings) {
             this.maxStoreSize = settings.maxStoreSize;
             this.synchroniseMerge = settings.synchroniseMerge;
+            this.overwrite = settings.overwrite;
+            this.retention = settings.retention;
             this.snapshotSettings = settings.snapshotSettings;
         }
 
@@ -122,8 +156,18 @@ public abstract class AbstractPlanBSettings {
             return self();
         }
 
-        public B synchroniseMerge(final boolean synchroniseMerge) {
+        public B synchroniseMerge(final Boolean synchroniseMerge) {
             this.synchroniseMerge = synchroniseMerge;
+            return self();
+        }
+
+        public B overwrite(final Boolean overwrite) {
+            this.overwrite = overwrite;
+            return self();
+        }
+
+        public B retention(final RetentionSettings retention) {
+            this.retention = retention;
             return self();
         }
 

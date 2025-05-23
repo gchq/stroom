@@ -8,10 +8,11 @@ import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.RangedStateSettings;
+import stroom.planb.shared.RangeStateSettings;
+import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateSettings;
-import stroom.planb.shared.TemporalRangedStateSettings;
+import stroom.planb.shared.TemporalRangeStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
@@ -133,25 +134,20 @@ class StoreShard implements Shard {
         long result = 0;
 
         // Find out how old data needs to be before we delete it.
-        boolean useStateTime = false;
-        DurationSetting retention = null;
+        RetentionSettings retention = null;
         if (doc.getSettings() instanceof final StateSettings stateSettings) {
             retention = stateSettings.getRetention();
         } else if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
             retention = temporalStateSettings.getRetention();
-            useStateTime = temporalStateSettings.getUseStateTimeForRetention() != null &&
-                           temporalStateSettings.getUseStateTimeForRetention();
-        } else if (doc.getSettings() instanceof final RangedStateSettings rangedStateSettings) {
-            retention = rangedStateSettings.getRetention();
-        } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-            retention = temporalRangedStateSettings.getRetention();
-            useStateTime = temporalRangedStateSettings.getUseStateTimeForRetention() != null &&
-                           temporalRangedStateSettings.getUseStateTimeForRetention();
+        } else if (doc.getSettings() instanceof final RangeStateSettings rangeStateSettings) {
+            retention = rangeStateSettings.getRetention();
+        } else if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
+            retention = temporalRangeStateSettings.getRetention();
         } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
             retention = sessionSettings.getRetention();
-            useStateTime = sessionSettings.getUseStateTimeForRetention() != null &&
-                           sessionSettings.getUseStateTimeForRetention();
         }
+
+        final boolean useStateTime = NullSafe.getOrElse(retention, RetentionSettings::getUseStateTime, false);
 
         final Instant deleteBefore;
         if (retention != null && retention.isEnabled()) {
@@ -223,8 +219,8 @@ class StoreShard implements Shard {
         DurationSetting condense = null;
         if (doc.getSettings() instanceof final TemporalStateSettings temporalStateSettings) {
             condense = temporalStateSettings.getCondense();
-        } else if (doc.getSettings() instanceof final TemporalRangedStateSettings temporalRangedStateSettings) {
-            condense = temporalRangedStateSettings.getCondense();
+        } else if (doc.getSettings() instanceof final TemporalRangeStateSettings temporalRangeStateSettings) {
+            condense = temporalRangeStateSettings.getCondense();
         } else if (doc.getSettings() instanceof final SessionSettings sessionSettings) {
             condense = sessionSettings.getCondense();
         }

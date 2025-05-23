@@ -37,8 +37,8 @@ class TestStateLookupImpl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStateLookupImpl.class);
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
-    private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
-            .builder()
+    private static final TemporalStateSettings BASIC_SETTINGS = new TemporalStateSettings
+            .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
 
@@ -97,7 +97,7 @@ class TestStateLookupImpl {
         try (final TemporalStateDb db = TemporalStateDb.create(
                 tempDir,
                 BYTE_BUFFERS,
-                TemporalStateSettings.builder().build(),
+                new TemporalStateSettings.Builder().build(),
                 true)) {
             final Random random = new Random(892374809);
             final Runnable work = () -> {

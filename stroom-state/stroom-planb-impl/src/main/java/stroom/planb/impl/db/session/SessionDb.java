@@ -29,10 +29,10 @@ import stroom.planb.impl.db.serde.time.TimeSerde;
 import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
 import stroom.planb.impl.db.serde.valtime.InstantSerde;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.StateValueType;
-import stroom.planb.shared.TimePrecision;
+import stroom.planb.shared.StateKeyType;
+import stroom.planb.shared.TemporalPrecision;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -92,28 +92,29 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                    final ByteBuffers byteBuffers,
                                    final SessionSettings settings,
                                    final boolean readOnly) {
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                SessionSettings::getStateValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                SessionSettings::getStateValueSchema,
-                StateValueSchema::getHashLength,
-                HashLength.LONG);
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final PlanBEnv env = new PlanBEnv(path,
                 settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
+        final StateKeyType stateKeyType = NullSafe.getOrElse(
+                settings,
+                SessionSettings::getKeySchema,
+                SessionKeySchema::getStateKeyType,
+                StateKeyType.VARIABLE);
+        final HashLength valueHashLength = NullSafe.getOrElse(
+                settings,
+                SessionSettings::getKeySchema,
+                SessionKeySchema::getHashLength,
+                HashLength.LONG);
         final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
                 settings,
-                SessionSettings::getTimePrecision,
-                TimePrecision.MILLISECOND));
+                SessionSettings::getKeySchema,
+                SessionKeySchema::getTemporalPrecision,
+                TemporalPrecision.MILLISECOND));
         final SessionSerde keySerde = createKeySerde(
-                stateValueType,
+                stateKeyType,
                 valueHashLength,
                 env,
                 byteBuffers,
@@ -131,8 +132,8 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 hashClashCommitRunnable);
     }
 
-    private static TimeSerde createTimeSerde(final TimePrecision timePrecision) {
-        return switch (timePrecision) {
+    private static TimeSerde createTimeSerde(final TemporalPrecision TemporalPrecision) {
+        return switch (TemporalPrecision) {
             case NANOSECOND -> new NanoTimeSerde();
             case MILLISECOND -> new MillisecondTimeSerde();
             case SECOND -> new SecondTimeSerde();
@@ -142,13 +143,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
         };
     }
 
-    private static SessionSerde createKeySerde(final StateValueType stateValueType,
+    private static SessionSerde createKeySerde(final StateKeyType stateKeyType,
                                                final HashLength hashLength,
                                                final PlanBEnv env,
                                                final ByteBuffers byteBuffers,
                                                final TimeSerde timeSerde,
                                                final HashClashCommitRunnable hashClashCommitRunnable) {
-        return switch (stateValueType) {
+        return switch (stateKeyType) {
             case BOOLEAN -> new BooleanSessionSerde(byteBuffers, timeSerde);
             case BYTE -> new ByteSessionSerde(byteBuffers, timeSerde);
             case SHORT -> new ShortSessionSerde(byteBuffers, timeSerde);

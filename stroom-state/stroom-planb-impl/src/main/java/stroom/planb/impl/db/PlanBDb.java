@@ -1,16 +1,16 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.rangedstate.RangedStateDb;
+import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
-import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateDb;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.RangedStateSettings;
+import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateSettings;
-import stroom.planb.shared.TemporalRangedStateSettings;
+import stroom.planb.shared.TemporalRangeStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.shared.NullSafe;
 
@@ -29,7 +29,7 @@ public class PlanBDb {
                         byteBuffers,
                         NullSafe.getOrElse(doc,
                                 d -> (StateSettings) doc.getSettings(),
-                                StateSettings.builder().build()),
+                                new StateSettings.Builder().build()),
                         readOnly);
             }
             case TEMPORAL_STATE -> {
@@ -38,25 +38,25 @@ public class PlanBDb {
                         byteBuffers,
                         NullSafe.getOrElse(doc,
                                 d -> (TemporalStateSettings) doc.getSettings(),
-                                TemporalStateSettings.builder().build()),
+                                new TemporalStateSettings.Builder().build()),
                         readOnly);
             }
-            case RANGED_STATE -> {
-                return RangedStateDb.create(
+            case RANGE_STATE -> {
+                return RangeStateDb.create(
                         targetPath,
                         byteBuffers,
                         NullSafe.getOrElse(doc,
-                                d -> (RangedStateSettings) doc.getSettings(),
-                                RangedStateSettings.builder().build()),
+                                d -> (RangeStateSettings) doc.getSettings(),
+                                new RangeStateSettings.Builder().build()),
                         readOnly);
             }
-            case TEMPORAL_RANGED_STATE -> {
-                return TemporalRangedStateDb.create(
+            case TEMPORAL_RANGE_STATE -> {
+                return TemporalRangeStateDb.create(
                         targetPath,
                         byteBuffers,
                         NullSafe.getOrElse(doc,
-                                d -> (TemporalRangedStateSettings) doc.getSettings(),
-                                TemporalRangedStateSettings.builder().build()),
+                                d -> (TemporalRangeStateSettings) doc.getSettings(),
+                                new TemporalRangeStateSettings.Builder().build()),
                         readOnly);
             }
             case SESSION -> {
@@ -65,7 +65,7 @@ public class PlanBDb {
                         byteBuffers,
                         NullSafe.getOrElse(doc,
                                 d -> (SessionSettings) doc.getSettings(),
-                                SessionSettings.builder().build()),
+                                new SessionSettings.Builder().build()),
                         readOnly);
             }
             default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());

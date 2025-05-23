@@ -27,10 +27,10 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.rangedstate.RangedState;
+import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.state.State;
-import stroom.planb.impl.db.temporalrangedstate.TemporalRangedState;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
 import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.Type;
@@ -521,8 +521,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                 switch (doc.getStateType()) {
                     case STATE -> addState(doc);
                     case TEMPORAL_STATE -> addTemporalState(doc);
-                    case RANGED_STATE -> addRangedState(doc);
-                    case TEMPORAL_RANGED_STATE -> addTemporalRangedState(doc);
+                    case RANGE_STATE -> addRangeState(doc);
+                    case TEMPORAL_RANGE_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
@@ -583,7 +583,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addRangedState(final PlanBDoc doc) {
+    private void addRangeState(final PlanBDoc doc) {
         // If key is provided then from/to are the same.
         if (key != null) {
             if (rangeFrom != null) {
@@ -601,12 +601,12 @@ public class PlanBFilter extends AbstractXMLFilter {
                                 "Range state only supports non-negative numbers (key: {}) for {}",
                                 longKey, mapName));
                     } else {
-                        final RangedState.Key k = RangedState.Key.builder()
+                        final RangeState.Key k = RangeState.Key.builder()
                                 .keyStart(longKey)
                                 .keyEnd(longKey)
                                 .build();
                         final Val v = getVal();
-                        writer.addRangedState(doc, new RangedState(k, v));
+                        writer.addRangeState(doc, new RangeState(k, v));
                     }
                 } catch (final RuntimeException e) {
                     error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -630,17 +630,17 @@ public class PlanBFilter extends AbstractXMLFilter {
                         "Range state only supports non-negative numbers (from: {}, to: {}) for {}",
                         rangeFrom, rangeTo, mapName));
             } else {
-                final RangedState.Key k = RangedState.Key.builder()
+                final RangeState.Key k = RangeState.Key.builder()
                         .keyStart(rangeFrom)
                         .keyEnd(rangeTo)
                         .build();
                 final Val v = getVal();
-                writer.addRangedState(doc, new RangedState(k, v));
+                writer.addRangeState(doc, new RangeState(k, v));
             }
         }
     }
 
-    private void addTemporalRangedState(final PlanBDoc doc) {
+    private void addTemporalRangeState(final PlanBDoc doc) {
         final Instant time = this.time != null
                 ? this.time
                 : this.effectiveTime;
@@ -669,13 +669,13 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     longKey,
                                     mapName));
                         } else {
-                            final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                            final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                                     .keyStart(longKey)
                                     .keyEnd(longKey)
                                     .effectiveTime(time)
                                     .build();
                             final Val v = getVal();
-                            writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                            writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
                         }
                     } catch (final RuntimeException e) {
                         error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -703,13 +703,13 @@ public class PlanBFilter extends AbstractXMLFilter {
                             rangeTo,
                             mapName));
                 } else {
-                    final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                    final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                             .keyStart(rangeFrom)
                             .keyEnd(rangeTo)
                             .effectiveTime(time)
                             .build();
                     final Val v = getVal();
-                    writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                    writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
                 }
             }
         }

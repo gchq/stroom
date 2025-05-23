@@ -19,11 +19,11 @@ import java.util.Objects;
 public class StateKeySchema {
 
     @JsonProperty
-    private final StateKeyType stateKeyType;
+    final StateKeyType stateKeyType;
 
     @JsonPropertyDescription("The hash length to use for foreign keys")
     @JsonProperty
-    private final HashLength hashLength;
+    final HashLength hashLength;
 
     @JsonCreator
     public StateKeySchema(@JsonProperty("stateKeyType") final StateKeyType stateKeyType,
@@ -64,14 +64,6 @@ public class StateKeySchema {
                "stateKeyType=" + stateKeyType +
                ", hashLength=" + hashLength +
                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
     }
 
     public static class Builder extends AbstractBuilder<StateKeySchema, Builder> {

@@ -18,10 +18,13 @@ package stroom.planb.client.presenter;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
+import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.RetentionSettingsView;
+import stroom.planb.client.view.SnapshotSettingsView;
+import stroom.planb.client.view.StateKeySchemaSettingsView;
+import stroom.planb.client.view.StateValueSchemaSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateSettings;
-import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,86 +46,43 @@ public class StateSettingsPresenter
         if (settings instanceof final StateSettings stateSettings) {
             read(stateSettings, readOnly);
         } else {
-            read(StateSettings.builder().build(), readOnly);
+            read(new StateSettings.Builder().build(), readOnly);
         }
     }
 
     private void read(final StateSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
-        setMaxStoreSize(settings.getMaxStoreSize());
-        getView().setSynchroniseMerge(settings.isSynchroniseMerge());
+        getView().setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.getSynchroniseMerge());
         getView().setOverwrite(settings.getOverwrite());
-
-        final SnapshotSettings snapshotSettings = settings.getSnapshotSettings();
-        if (snapshotSettings != null) {
-            getView().setUseSnapshotsForLookup(snapshotSettings.isUseSnapshotsForLookup());
-            getView().setUseSnapshotsForGet(snapshotSettings.isUseSnapshotsForGet());
-            getView().setUseSnapshotsForQuery(snapshotSettings.isUseSnapshotsForQuery());
-        }
-    }
-
-    private void setMaxStoreSize(Long size) {
-        getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
-                size == null
-                        ? DEFAULT_MAX_STORE_SIZE
-                        : size,
-                true,
-                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
+        getView().setRetention(settings.getRetention());
+        getView().setSnapshotSettings(settings.getSnapshotSettings());
+        getView().setKeySchema(settings.getKeySchema());
+        getView().setValueSchema(settings.getValueSchema());
     }
 
     public AbstractPlanBSettings write() {
-        final SnapshotSettings snapshotSettings = new SnapshotSettings(
-                getView().isUseSnapshotsForLookup(),
-                getView().isUseSnapshotsForGet(),
-                getView().isUseSnapshotsForQuery());
-
-        return StateSettings
-                .builder()
-                .maxStoreSize(getMaxStoreSize())
+        return new StateSettings.Builder()
+                .maxStoreSize(getView().getMaxStoreSize())
                 .synchroniseMerge(getView().getSynchroniseMerge())
                 .overwrite(getView().getOverwrite())
-                .snapshotSettings(snapshotSettings)
+                .retention(getView().getRetention())
+                .snapshotSettings(getView().getSnapshotSettings())
+                .keySchema(getView().getKeySchema())
+                .valueSchema(getView().getValueSchema())
                 .build();
     }
 
-    private Long getMaxStoreSize() {
-        try {
-            final String string = getView().getMaxStoreSize().trim();
-            if (!string.isEmpty()) {
-                return ModelStringUtil.parseIECByteSizeString(string);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
-        }
-        setMaxStoreSize(DEFAULT_MAX_STORE_SIZE);
-        return DEFAULT_MAX_STORE_SIZE;
-    }
 
-    public interface StateSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
+    public interface StateSettingsView extends
+            View,
+            GeneralSettingsView,
+            RetentionSettingsView,
+            SnapshotSettingsView,
+            StateKeySchemaSettingsView,
+            StateValueSchemaSettingsView,
+            ReadOnlyChangeHandler,
+            HasUiHandlers<PlanBSettingsUiHandlers> {
 
-        String getMaxStoreSize();
-
-        void setMaxStoreSize(String maxStoreSize);
-
-        boolean getSynchroniseMerge();
-
-        void setSynchroniseMerge(boolean synchroniseMerge);
-
-        Boolean getOverwrite();
-
-        void setOverwrite(Boolean overwrite);
-
-        boolean isUseSnapshotsForLookup();
-
-        void setUseSnapshotsForLookup(boolean useSnapshotsForLookup);
-
-        boolean isUseSnapshotsForGet();
-
-        void setUseSnapshotsForGet(boolean useSnapshotsForGet);
-
-        boolean isUseSnapshotsForQuery();
-
-        void setUseSnapshotsForQuery(boolean useSnapshotsForQuery);
     }
 }

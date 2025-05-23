@@ -1,9 +1,9 @@
 package stroom.planb.impl;
 
-import stroom.planb.impl.db.rangedstate.RangedStateFields;
+import stroom.planb.impl.db.rangestate.RangeStateFields;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.state.StateFields;
-import stroom.planb.impl.db.temporalrangedstate.TemporalRangedStateFields;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateFields;
 import stroom.planb.impl.db.temporalstate.TemporalStateFields;
 import stroom.planb.shared.StateType;
 import stroom.query.api.datasource.QueryField;
@@ -17,8 +17,8 @@ public class StateFieldUtil {
         return switch (stateType) {
             case STATE -> StateFields.FIELDS;
             case TEMPORAL_STATE -> TemporalStateFields.FIELDS;
-            case RANGED_STATE -> RangedStateFields.FIELDS;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.FIELDS;
+            case RANGE_STATE -> RangeStateFields.FIELDS;
+            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.FIELDS;
             case SESSION -> SessionFields.FIELDS;
         };
     }
@@ -27,17 +27,17 @@ public class StateFieldUtil {
         return switch (stateType) {
             case STATE -> StateFields.FIELD_MAP;
             case TEMPORAL_STATE -> TemporalStateFields.FIELD_MAP;
-            case RANGED_STATE -> RangedStateFields.FIELD_MAP;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.FIELD_MAP;
+            case RANGE_STATE -> RangeStateFields.FIELD_MAP;
+            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.FIELD_MAP;
             case SESSION -> SessionFields.FIELD_MAP;
         };
     }
 
     public static QueryField getTimeField(final StateType stateType) {
         return switch (stateType) {
-            case STATE, RANGED_STATE -> null;
+            case STATE, RANGE_STATE -> null;
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.EFFECTIVE_TIME_FIELD;
+            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
         };
     }

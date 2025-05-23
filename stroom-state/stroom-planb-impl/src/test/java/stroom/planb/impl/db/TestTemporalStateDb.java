@@ -26,11 +26,11 @@ import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateFields;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
-import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateValueSchema;
+import stroom.planb.shared.TemporalPrecision;
+import stroom.planb.shared.TemporalStateKeySchema;
 import stroom.planb.shared.TemporalStateSettings;
-import stroom.planb.shared.TimePrecision;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -68,8 +68,8 @@ class TestTemporalStateDb {
 
     private static final int ITERATIONS = 100;
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
-    private static final TemporalStateSettings BASIC_SETTINGS = TemporalStateSettings
-            .builder()
+    private static final TemporalStateSettings BASIC_SETTINGS = new TemporalStateSettings
+            .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
 
@@ -209,20 +209,20 @@ class TestTemporalStateDb {
         final List<DynamicTest> tests = new ArrayList<>();
         for (final KeyFunction keyFunction : keyFunctions) {
             for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
-                for (final TimePrecision timePrecision : TimePrecision.values()) {
+                for (final TemporalPrecision temporalPrecision : TemporalPrecision.values()) {
                     tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
                                                       ", Value type = " + valueFunction +
-                                                      ", Time precision = " + timePrecision,
+                                                      ", Temporal precision = " + temporalPrecision,
                             () -> {
-                                final TemporalStateSettings settings = TemporalStateSettings
-                                        .builder()
-                                        .stateKeySchema(StateKeySchema.builder()
+                                final TemporalStateSettings settings = new TemporalStateSettings
+                                        .Builder()
+                                        .keySchema(new TemporalStateKeySchema.Builder()
                                                 .stateKeyType(keyFunction.stateKeyType)
+                                                .temporalPrecision(temporalPrecision)
                                                 .build())
-                                        .stateValueSchema(StateValueSchema.builder()
+                                        .valueSchema(new StateValueSchema.Builder()
                                                 .stateValueType(valueFunction.stateValueType())
                                                 .build())
-                                        .timePrecision(timePrecision)
                                         .build();
 
                                 Path path = null;

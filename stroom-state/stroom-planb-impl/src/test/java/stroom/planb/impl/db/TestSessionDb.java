@@ -21,14 +21,14 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
-import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
+import stroom.planb.impl.db.StateKeyTestUtil.ValueFunction;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.session.SessionRequest;
+import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
-import stroom.planb.shared.StateValueSchema;
-import stroom.planb.shared.TimePrecision;
+import stroom.planb.shared.TemporalPrecision;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -60,8 +60,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSessionDb {
 
     private static final int ITERATIONS = 100;
-    private static final SessionSettings BASIC_SETTINGS = SessionSettings
-            .builder()
+    private static final SessionSettings BASIC_SETTINGS = new SessionSettings
+            .Builder()
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(new ByteBufferFactoryImpl());
@@ -141,18 +141,18 @@ class TestSessionDb {
     Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final List<DynamicTest> tests = new ArrayList<>();
-        for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
-            for (final TimePrecision timePrecision : TimePrecision.values()) {
+        for (final ValueFunction valueFunction : StateKeyTestUtil.getValueFunctions()) {
+            for (final TemporalPrecision temporalPrecision : TemporalPrecision.values()) {
 
                 tests.add(DynamicTest.dynamicTest("Value type = " + valueFunction +
-                                                  ", Time precision = " + timePrecision,
+                                                  ", Temporal precision = " + temporalPrecision,
                         () -> {
-                            final SessionSettings settings = SessionSettings
-                                    .builder()
-                                    .stateValueSchema(StateValueSchema.builder()
-                                            .stateValueType(valueFunction.stateValueType())
+                            final SessionSettings settings = new SessionSettings
+                                    .Builder()
+                                    .keySchema(new SessionKeySchema.Builder()
+                                            .stateKeyType(valueFunction.stateValueType())
+                                            .temporalPrecision(temporalPrecision)
                                             .build())
-                                    .timePrecision(timePrecision)
                                     .build();
 
                             Path path = null;

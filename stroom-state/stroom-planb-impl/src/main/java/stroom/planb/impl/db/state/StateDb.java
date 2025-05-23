@@ -88,32 +88,32 @@ public class StateDb extends AbstractDb<Val, Val> {
                                  final ByteBuffers byteBuffers,
                                  final StateSettings settings,
                                  final boolean readOnly) {
-        final StateKeyType stateKeyType = NullSafe.getOrElse(
-                settings,
-                StateSettings::getStateKeySchema,
-                StateKeySchema::getStateKeyType,
-                StateKeyType.VARIABLE);
-        final HashLength keyHashLength = NullSafe.getOrElse(
-                settings,
-                StateSettings::getStateKeySchema,
-                StateKeySchema::getHashLength,
-                HashLength.LONG);
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                StateSettings::getStateValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                StateSettings::getStateValueSchema,
-                StateValueSchema::getHashLength,
-                HashLength.LONG);
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final PlanBEnv env = new PlanBEnv(path,
                 settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
+        final StateKeyType stateKeyType = NullSafe.getOrElse(
+                settings,
+                StateSettings::getKeySchema,
+                StateKeySchema::getStateKeyType,
+                StateKeyType.VARIABLE);
+        final HashLength keyHashLength = NullSafe.getOrElse(
+                settings,
+                StateSettings::getKeySchema,
+                StateKeySchema::getHashLength,
+                HashLength.LONG);
+        final StateValueType stateValueType = NullSafe.getOrElse(
+                settings,
+                StateSettings::getValueSchema,
+                StateValueSchema::getStateValueType,
+                StateValueType.VARIABLE);
+        final HashLength valueHashLength = NullSafe.getOrElse(
+                settings,
+                StateSettings::getValueSchema,
+                StateValueSchema::getHashLength,
+                HashLength.LONG);
         final KeySerde<Val> keySerde = createKeySerde(
                 stateKeyType,
                 keyHashLength,

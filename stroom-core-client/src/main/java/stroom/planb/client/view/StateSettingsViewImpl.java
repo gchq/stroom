@@ -18,13 +18,13 @@ package stroom.planb.client.view;
 
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.planb.shared.RetentionSettings;
+import stroom.planb.shared.SnapshotSettings;
+import stroom.planb.shared.StateKeySchema;
+import stroom.planb.shared.StateValueSchema;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -34,25 +34,51 @@ public class StateSettingsViewImpl
         implements StateSettingsView {
 
     private final Widget widget;
+    private final GeneralSettingsWidget generalSettingsWidget;
+    private final SnapshotSettingsWidget snapshotSettingsWidget;
+    private final RetentionSettingsWidget retentionSettingsWidget;
+    private final StateKeySchemaSettingsWidget stateKeySchemaSettingsWidget;
+    private final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget;
 
     @UiField
-    TextBox maxStoreSize;
+    SettingsGroup generalPanel;
     @UiField
-    CustomCheckBox synchroniseMerge;
+    SettingsGroup snapshotPanel;
     @UiField
-    CustomCheckBox overwrite;
-
+    SettingsGroup retentionPanel;
     @UiField
-    CustomCheckBox useSnapshotsForLookup;
+    SettingsGroup keySchemaPanel;
     @UiField
-    CustomCheckBox useSnapshotsForGet;
-    @UiField
-    CustomCheckBox useSnapshotsForQuery;
+    SettingsGroup valueSchemaPanel;
 
     @Inject
-    public StateSettingsViewImpl(final Binder binder) {
+    public StateSettingsViewImpl(final Binder binder,
+                                 final GeneralSettingsWidget generalSettingsWidget,
+                                 final SnapshotSettingsWidget snapshotSettingsWidget,
+                                 final RetentionSettingsWidget retentionSettingsWidget,
+                                 final StateKeySchemaSettingsWidget stateKeySchemaSettingsWidget,
+                                 final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
-        setOverwrite(true);
+        this.generalSettingsWidget = generalSettingsWidget;
+        this.snapshotSettingsWidget = snapshotSettingsWidget;
+        this.retentionSettingsWidget = retentionSettingsWidget;
+        this.stateKeySchemaSettingsWidget = stateKeySchemaSettingsWidget;
+        this.stateValueSchemaSettingsWidget = stateValueSchemaSettingsWidget;
+        generalPanel.add(generalSettingsWidget.asWidget());
+        snapshotPanel.add(snapshotSettingsWidget.asWidget());
+        retentionPanel.add(retentionSettingsWidget.asWidget());
+        keySchemaPanel.add(stateKeySchemaSettingsWidget.asWidget());
+        valueSchemaPanel.add(stateValueSchemaSettingsWidget.asWidget());
+    }
+
+    @Override
+    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+        super.setUiHandlers(uiHandlers);
+        generalSettingsWidget.setUiHandlers(uiHandlers);
+        snapshotSettingsWidget.setUiHandlers(uiHandlers);
+        retentionSettingsWidget.setUiHandlers(uiHandlers);
+        stateKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
+        stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
     }
 
     @Override
@@ -61,101 +87,82 @@ public class StateSettingsViewImpl
     }
 
     @Override
-    public String getMaxStoreSize() {
-        return maxStoreSize.getValue();
+    public Long getMaxStoreSize() {
+        return generalSettingsWidget.getMaxStoreSize();
     }
 
     @Override
-    public void setMaxStoreSize(final String maxStoreSize) {
-        this.maxStoreSize.setValue(maxStoreSize);
+    public void setMaxStoreSize(final Long maxStoreSize) {
+        generalSettingsWidget.setMaxStoreSize(maxStoreSize);
     }
 
     @Override
-    public boolean getSynchroniseMerge() {
-        return synchroniseMerge.getValue();
+    public Boolean getSynchroniseMerge() {
+        return generalSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
-    public void setSynchroniseMerge(final boolean synchroniseMerge) {
-        this.synchroniseMerge.setValue(synchroniseMerge);
+    public void setSynchroniseMerge(final Boolean synchroniseMerge) {
+        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return overwrite.getValue()
-                ? null
-                : overwrite.getValue();
+        return generalSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        this.overwrite.setValue(overwrite == null || overwrite);
+        generalSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
-    public boolean isUseSnapshotsForLookup() {
-        return useSnapshotsForLookup.getValue();
+    public RetentionSettings getRetention() {
+        return retentionSettingsWidget.getRetention();
     }
 
     @Override
-    public void setUseSnapshotsForLookup(final boolean useSnapshotsForLookup) {
-        this.useSnapshotsForLookup.setValue(useSnapshotsForLookup);
+    public void setRetention(final RetentionSettings retention) {
+        retentionSettingsWidget.setRetention(retention);
     }
 
     @Override
-    public boolean isUseSnapshotsForGet() {
-        return useSnapshotsForGet.getValue();
+    public SnapshotSettings getSnapshotSettings() {
+        return snapshotSettingsWidget.getSnapshotSettings();
     }
 
     @Override
-    public void setUseSnapshotsForGet(final boolean useSnapshotsForGet) {
-        this.useSnapshotsForGet.setValue(useSnapshotsForGet);
+    public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
+        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
-    public boolean isUseSnapshotsForQuery() {
-        return useSnapshotsForQuery.getValue();
+    public StateKeySchema getKeySchema() {
+        return stateKeySchemaSettingsWidget.getKeySchema();
     }
 
     @Override
-    public void setUseSnapshotsForQuery(final boolean useSnapshotsForQuery) {
-        this.useSnapshotsForQuery.setValue(useSnapshotsForQuery);
+    public void setKeySchema(final StateKeySchema keySchema) {
+        stateKeySchemaSettingsWidget.setKeySchema(keySchema);
+    }
+
+    @Override
+    public StateValueSchema getValueSchema() {
+        return stateValueSchemaSettingsWidget.getValueSchema();
+    }
+
+    @Override
+    public void setValueSchema(final StateValueSchema valueSchema) {
+        stateValueSchemaSettingsWidget.setValueSchema(valueSchema);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxStoreSize.setEnabled(!readOnly);
-        overwrite.setEnabled(!readOnly);
-    }
-
-    @UiHandler("maxStoreSize")
-    public void onMaxStoreSize(final ValueChangeEvent<String> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("synchroniseMerge")
-    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("overwrite")
-    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("useSnapshotsForLookup")
-    public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("useSnapshotsForGet")
-    public void onUseSnapshotsForGet(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("useSnapshotsForQuery")
-    public void onUseSnapshotsForQuery(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
+        generalSettingsWidget.onReadOnly(readOnly);
+        snapshotSettingsWidget.onReadOnly(readOnly);
+        retentionSettingsWidget.onReadOnly(readOnly);
+        stateKeySchemaSettingsWidget.onReadOnly(readOnly);
+        stateValueSchemaSettingsWidget.onReadOnly(readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {

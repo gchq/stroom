@@ -35,8 +35,9 @@ import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.StateValueType;
+import stroom.planb.shared.TemporalPrecision;
+import stroom.planb.shared.TemporalStateKeySchema;
 import stroom.planb.shared.TemporalStateSettings;
-import stroom.planb.shared.TimePrecision;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -93,36 +94,37 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                                          final ByteBuffers byteBuffers,
                                          final TemporalStateSettings settings,
                                          final boolean readOnly) {
-        final StateKeyType stateKeyType = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getStateKeySchema,
-                StateKeySchema::getStateKeyType,
-                StateKeyType.VARIABLE);
-        final HashLength keyHashLength = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getStateKeySchema,
-                StateKeySchema::getHashLength,
-                HashLength.LONG);
-        final StateValueType stateValueType = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getStateValueSchema,
-                StateValueSchema::getStateValueType,
-                StateValueType.VARIABLE);
-        final HashLength valueHashLength = NullSafe.getOrElse(
-                settings,
-                TemporalStateSettings::getStateValueSchema,
-                StateValueSchema::getHashLength,
-                HashLength.LONG);
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         final PlanBEnv env = new PlanBEnv(path,
                 settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
+        final StateKeyType stateKeyType = NullSafe.getOrElse(
+                settings,
+                TemporalStateSettings::getKeySchema,
+                StateKeySchema::getStateKeyType,
+                StateKeyType.VARIABLE);
+        final HashLength keyHashLength = NullSafe.getOrElse(
+                settings,
+                TemporalStateSettings::getKeySchema,
+                StateKeySchema::getHashLength,
+                HashLength.LONG);
+        final StateValueType stateValueType = NullSafe.getOrElse(
+                settings,
+                TemporalStateSettings::getValueSchema,
+                StateValueSchema::getStateValueType,
+                StateValueType.VARIABLE);
+        final HashLength valueHashLength = NullSafe.getOrElse(
+                settings,
+                TemporalStateSettings::getValueSchema,
+                StateValueSchema::getHashLength,
+                HashLength.LONG);
         final TimeSerde timeSerde = createTimeSerde(NullSafe.getOrElse(
                 settings,
-                TemporalStateSettings::getTimePrecision,
-                TimePrecision.MILLISECOND));
+                TemporalStateSettings::getKeySchema,
+                TemporalStateKeySchema::getTemporalPrecision,
+                TemporalPrecision.MILLISECOND));
         final KeySerde<Key> keySerde = createKeySerde(
                 stateKeyType,
                 keyHashLength,
@@ -147,8 +149,8 @@ public class TemporalStateDb extends AbstractDb<Key, Val> {
                 hashClashCommitRunnable);
     }
 
-    private static TimeSerde createTimeSerde(final TimePrecision timePrecision) {
-        return switch (timePrecision) {
+    private static TimeSerde createTimeSerde(final TemporalPrecision TemporalPrecision) {
+        return switch (TemporalPrecision) {
             case NANOSECOND -> new NanoTimeSerde();
             case MILLISECOND -> new MillisecondTimeSerde();
             case SECOND -> new SecondTimeSerde();

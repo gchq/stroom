@@ -13,7 +13,7 @@ public class StateFieldUtil {
             case STATE -> StateFields.FIELDS;
             case TEMPORAL_STATE -> TemporalStateFields.FIELDS;
             case RANGED_STATE -> RangedStateFields.FIELDS;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.FIELDS;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELDS;
             case SESSION -> SessionFields.FIELDS;
         };
     }
@@ -23,7 +23,7 @@ public class StateFieldUtil {
             case STATE -> StateFields.FIELD_MAP;
             case TEMPORAL_STATE -> TemporalStateFields.FIELD_MAP;
             case RANGED_STATE -> RangedStateFields.FIELD_MAP;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.FIELD_MAP;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELD_MAP;
             case SESSION -> SessionFields.FIELD_MAP;
         };
     }
@@ -33,7 +33,7 @@ public class StateFieldUtil {
             case STATE -> null;
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;
             case RANGED_STATE -> null;
-            case TEMPORAL_RANGED_STATE -> TemporalRangedStateFields.EFFECTIVE_TIME_FIELD;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
         };
     }

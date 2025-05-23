@@ -2,6 +2,8 @@ package stroom.planb.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.List;
+
 public enum StateValueType implements HasDisplayValue {
     // Treat all values as booleans.
     BOOLEAN("True or False"),
@@ -26,6 +28,19 @@ public enum StateValueType implements HasDisplayValue {
     HASH_LOOKUP("Lookup table (unlimited bytes, deduplicated data)"),
     // Use string or lookup depending on the length of the string.
     VARIABLE("Variable");
+
+    public static final List<StateValueType> ORDERED_LIST = List.of(
+            BOOLEAN,
+            BYTE,
+            SHORT,
+            INT,
+            LONG,
+            FLOAT,
+            DOUBLE,
+            STRING,
+            UID_LOOKUP,
+            HASH_LOOKUP,
+            VARIABLE);
 
     private final String displayValue;
 
