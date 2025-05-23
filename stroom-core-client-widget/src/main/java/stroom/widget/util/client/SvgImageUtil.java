@@ -45,6 +45,26 @@ public class SvgImageUtil {
         return safeHtml;
     }
 
+    /**
+     * Utility method to render an SVG image from SVG characters.
+     * Assumes that the character sequence is safe.
+     * @param title The title of the image. Can be null or empty.
+     * @param svgData The character sequence holding the SVG data.
+     * @param classNames Any CSS classnames associated with the image.
+     * @return The character sequence to render.
+     */
+    public static SafeHtml toSafeHtml(final String title,
+                                      final String svgData,
+                                      final String... classNames) {
+        final String allClassNames = SvgImage.BASE_CLASS_NAME + " "
+                + NullSafe.join(" ", classNames);
+        final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgData);
+
+        return NullSafe.isBlankString(title)
+                ? TEMPLATE.icon(allClassNames, svgHtml)
+                : TEMPLATE.icon(allClassNames, title, svgHtml);
+    }
+
     public static SafeHtml emptySvg(final String... classNames) {
         return TEMPLATE.emptySvg(NullSafe.join(" ", classNames));
     }

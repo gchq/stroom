@@ -8,14 +8,13 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,12 +34,17 @@ public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerVie
     /** Resource to access server-side data */
     private final static AppStoreResource APP_STORE_RESOURCE = GWT.create(AppStoreResource.class);
 
+    /**
+     * Injected constructor.
+     * @param eventBus GWT event bus
+     * @param view Where this component is going to be inserted
+     * @param restFactory Creates connection to server
+     */
     @SuppressWarnings("unused")
     @Inject
     public AppStoreContentPackListPresenter(final EventBus eventBus,
                                             final PagerView view,
-                                            final RestFactory restFactory,
-                                            final UiConfigCache uiConfigCache) {
+                                            final RestFactory restFactory) {
         super(eventBus, view);
 
         // Create the grid
@@ -54,14 +58,13 @@ public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerVie
         this.gridSelectionModel = dataGrid.addDefaultSelectionModel(true);
 
         // Initialise the columns
-        this.initColumns(restFactory, uiConfigCache, dataGrid);
+        this.initColumns(dataGrid);
 
         // Hook up the data
         final RestDataProvider<AppStoreContentPack, ResultPage<AppStoreContentPack>>
                 dataProvider = createDataProvider(eventBus, view, restFactory);
         dataProvider.addDataDisplay(dataGrid);
 
-        Window.alert("Finish ctor AppStoreCPLP");
     }
 
     /**
@@ -93,9 +96,17 @@ public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerVie
         };
     }
 
-    private void initColumns(final RestFactory restFactory,
-                             final UiConfigCache uiConfigCache,
-                             final MyDataGrid<AppStoreContentPack> dataGrid) {
+    private void initColumns(final MyDataGrid<AppStoreContentPack> dataGrid) {
+
+        SvgIconCell svgCell = new SvgIconCell();
+        Column<AppStoreContentPack, String> svgColumn = new Column<>(svgCell) {
+            @Override
+            public String getValue(final AppStoreContentPack cp) {
+                return cp.getIconSvg();
+            }
+        };
+        dataGrid.addColumn(svgColumn, "Icon");
+
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(AppStoreContentPack::getUiName)
                         .build(),
