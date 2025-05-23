@@ -5,7 +5,6 @@ import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 
-import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -43,7 +42,6 @@ implements Refreshable {
         super(eventBus, view);
         this.contentPackListPresenter = contentPackListPresenter;
         this.setInSlot(CONTENT_PACK_LIST, contentPackListPresenter);
-        Window.alert("contentpacklistpresenter set in slot");
     }
 
     /**

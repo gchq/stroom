@@ -19,6 +19,7 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "uiName",
         "iconUrl",
+        "iconSvg",
         "licenseName",
         "licenseUrl",
         "gitUrl",
@@ -36,6 +37,10 @@ public class AppStoreContentPack {
     /** URL of the icon to display */
     @JsonProperty
     private final String iconUrl;
+
+    /** SVG content of the icon. Not final as resolved outside this class. */
+    @JsonProperty
+    private String iconSvg;
 
     /** Display name of the license */
     @JsonProperty
@@ -61,18 +66,17 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String gitCommit;
 
-    /** Default logo to use - big Stroom logo */
-    private static final String DEFAULT_ICON_URL =
-            "https://raw.githubusercontent.com/gchq/stroom/refs/heads/master/logo.png";
-
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
             "/";
 
     /**
-     * Constructor. Initialises the values.
+     * Constructor. Initialises the values from the YAML.
      * @param uiName Name as shown in the UI. Must not be null.
-     * @param iconUrl Icon URL. If null then default icon will be used.
+     * @param iconUrl Icon URL. Can be null in which case null will
+     *                be returned.
+     * @param iconSvg SVG content of the icon. Can be null in which
+     *                case null will be stored for later resolution.
      * @param licenseName Name of license for UI. Can be null.
      * @param licenseUrl URL of full license info. Can be null.
      * @param gitUrl URL of remote Git repository. Must not be null.
@@ -85,6 +89,7 @@ public class AppStoreContentPack {
     @JsonCreator
     public AppStoreContentPack(@JsonProperty("uiName") final String uiName,
                                @JsonProperty("iconUrl") final String iconUrl,
+                               @JsonProperty("iconSvg") final String iconSvg,
                                @JsonProperty("licenseName") final String licenseName,
                                @JsonProperty("licenseUrl") final String licenseUrl,
                                @JsonProperty("gitUrl") final String gitUrl,
@@ -96,7 +101,8 @@ public class AppStoreContentPack {
         // Objects.requireNonNullElse() isn't available in GWT
 
         this.uiName = Objects.requireNonNull(uiName);
-        this.iconUrl = iconUrl == null ? DEFAULT_ICON_URL : iconUrl;
+        this.iconUrl = iconUrl;
+        this.iconSvg = iconSvg;
         this.licenseName = licenseName == null ? "" : licenseName;
         this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
         this.gitUrl = Objects.requireNonNull(gitUrl);
@@ -115,10 +121,26 @@ public class AppStoreContentPack {
 
     /**
      * @return the URL of the icon to display.
-     * Never returns null but may return empty string.
+     * Can return null.
      */
     public String getIconUrl() {
         return iconUrl;
+    }
+
+    /**
+     * Sets the icon SVG content. Used so that something else
+     * can resolve the icon if it hasn't been set yet.
+     * @param iconSvg The SVG content for the icon.
+     */
+    public void setIconSvg(String iconSvg) {
+        this.iconSvg = iconSvg;
+    }
+
+    /**
+     * @return null, or the SVG representing the icon.
+     */
+    public String getIconSvg() {
+        return iconSvg;
     }
 
     /**
@@ -175,24 +197,37 @@ public class AppStoreContentPack {
             return false;
         }
         final AppStoreContentPack that = (AppStoreContentPack) o;
-        return Objects.equals(uiName, that.uiName) && Objects.equals(iconUrl,
-                that.iconUrl) && Objects.equals(licenseName, that.licenseName) && Objects.equals(
-                licenseUrl,
-                that.licenseUrl) && Objects.equals(gitUrl, that.gitUrl) && Objects.equals(gitBranch,
-                that.gitBranch) && Objects.equals(gitPath, that.gitPath) && Objects.equals(gitCommit,
-                that.gitCommit);
+        return Objects.equals(uiName, that.uiName)
+               && Objects.equals(iconUrl, that.iconUrl)
+               && Objects.equals(iconSvg, that.iconSvg)
+               && Objects.equals(licenseName, that.licenseName)
+               && Objects.equals(licenseUrl, that.licenseUrl)
+               && Objects.equals(gitUrl, that.gitUrl)
+               && Objects.equals(gitBranch, that.gitBranch)
+               && Objects.equals(gitPath, that.gitPath)
+               && Objects.equals(gitCommit, that.gitCommit);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uiName, iconUrl, licenseName, licenseUrl, gitUrl, gitBranch, gitPath, gitCommit);
+        return Objects.hash(uiName,
+                iconUrl,
+                iconSvg,
+                licenseName,
+                licenseUrl,
+                gitUrl,
+                gitBranch,
+                gitPath,
+                gitCommit);
     }
 
     @Override
     public String toString() {
+        String svgContent = (iconSvg == null ? "null" : "<svg content>");
         return "AppStoreContentPack{" +
                "uiName='" + uiName + '\'' +
                ", iconUrl='" + iconUrl + '\'' +
+               ", iconSvg='" + svgContent + '\'' +
                ", licenseName='" + licenseName + '\'' +
                ", licenseUrl='" + licenseUrl + '\'' +
                ", gitUrl='" + gitUrl + '\'' +
