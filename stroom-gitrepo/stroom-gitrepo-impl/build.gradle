@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.gitrepo.impl'
 
 dependencies {
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -9,6 +10,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation libs.guice
@@ -17,4 +19,10 @@ dependencies {
     implementation libs.jgit
     implementation libs.restygwt
     implementation libs.slf4j.api
+
+    testImplementation libs.assertj.core
+    testImplementation libs.junit.jupiter.api
+    testImplementation libs.junit.jupiter.engine
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

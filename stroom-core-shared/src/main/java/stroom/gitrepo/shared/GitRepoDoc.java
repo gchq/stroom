@@ -46,7 +46,9 @@ import java.util.Objects;
         "username",
         "password",
         "branch",
-        "path"})
+        "path",
+        "autoPush"
+})
 @JsonInclude(Include.NON_NULL)
 public class GitRepoDoc extends Doc {
 
@@ -71,6 +73,9 @@ public class GitRepoDoc extends Doc {
     @JsonProperty
     private String path = "";
 
+    @JsonProperty
+    private Boolean autoPush = Boolean.FALSE;
+
     /**
      * No-args constructor; needed by some code.
      */
@@ -92,7 +97,8 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password,
                       @JsonProperty("branch") final String branch,
-                      @JsonProperty("path") final String path) {
+                      @JsonProperty("path") final String path,
+                      @JsonProperty("autoPush") final Boolean autoPush) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
 
@@ -102,6 +108,7 @@ public class GitRepoDoc extends Doc {
         this.password = password;
         this.branch = branch;
         this.path = path;
+        this.autoPush = autoPush;
 
         // Make sure none of the settings are null
         if (this.url == null) {
@@ -118,6 +125,9 @@ public class GitRepoDoc extends Doc {
         }
         if (this.path == null) {
             this.path = "";
+        }
+        if (this.autoPush == null) {
+            this.autoPush = Boolean.FALSE;
         }
     }
 
@@ -151,13 +161,14 @@ public class GitRepoDoc extends Doc {
                && Objects.equals(username, that.username)
                && Objects.equals(password, that.password)
                && Objects.equals(branch, that.branch)
-               && Objects.equals(path, that.path);
+               && Objects.equals(path, that.path)
+               && Objects.equals(autoPush, that.autoPush);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(),
-                description, url, username, password, branch, path);
+                description, url, username, password, branch, path, autoPush);
     }
 
     public String getDescription() {
@@ -208,16 +219,31 @@ public class GitRepoDoc extends Doc {
         this.path = path;
     }
 
+    public Boolean isAutoPush() {
+        return autoPush;
+    }
+
+    public void setAutoPush(final Boolean autoPush) {
+        // Objects.requireNonNullElse() not defined for GWT
+        if (autoPush == null) {
+            this.autoPush = Boolean.FALSE;
+        } else {
+            this.autoPush = autoPush;
+        }
+    }
+
     /**
      * Returns debugging info about the Doc.
      */
     @Override
     public String toString() {
-        return "GitRepoDoc: {"
-                + description + ",\n"
-                + url + ",\n"
-                + username + ",\n"
-                + branch + "\n"
-                + path + "\n}";
+        return "GitRepoDoc: {\n  "
+                + this.getName() + ",\n  "
+                + description + ",\n  "
+                + url + ",\n  "
+                + username + ",\n  "
+                + branch + "\n  "
+                + path + "\n  "
+                + autoPush + "\n}";
     }
 }
