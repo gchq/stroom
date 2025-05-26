@@ -41,7 +41,7 @@ public class PlanBDb {
                                 new TemporalStateSettings.Builder().build()),
                         readOnly);
             }
-            case RANGE_STATE -> {
+            case RANGED_STATE -> {
                 return RangeStateDb.create(
                         targetPath,
                         byteBuffers,
@@ -50,7 +50,7 @@ public class PlanBDb {
                                 new RangeStateSettings.Builder().build()),
                         readOnly);
             }
-            case TEMPORAL_RANGE_STATE -> {
+            case TEMPORAL_RANGED_STATE -> {
                 return TemporalRangeStateDb.create(
                         targetPath,
                         byteBuffers,

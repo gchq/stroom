@@ -7,20 +7,18 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
-                label="Condense Data"
+                label="Enabled"
                 helpText="Forget duplicate repeating temporal values and just keep the first in order to optimise the store and reduce store size. Note that some care may be needed when processing old data or when data is received late. It may be necessary to turn condense off during the time you are loading old data.">
-            <g:FlowPanel>
-                <tickbox:CustomCheckBox ui:field="condenseEnabled" identity="condenseEnabled" label="Enabled"/>
-                <form:FormGroup
-                        ui:field="condenseAgePanel"
+            <tickbox:CustomCheckBox ui:field="condenseEnabled"
+                                    identity="condenseEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="condenseAgePanel"
                         identity="condenseAgePanel"
                         label="Condense Age"
                         helpText="Choose how long to wait before condensing recently added data.">
-                    <g:FlowPanel styleName="durationSetting">
-                        <valuespinner:ValueSpinner ui:field="condenseAge"/>
-                        <i:SelectionBox ui:field="condenseTimeUnit" addStyleNames="allow-focus"/>
-                    </g:FlowPanel>
-                </form:FormGroup>
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="condenseAge"/>
+                <i:SelectionBox ui:field="condenseTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>

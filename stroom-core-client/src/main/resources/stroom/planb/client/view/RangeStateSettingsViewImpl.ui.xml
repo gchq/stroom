@@ -3,20 +3,15 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:sg="urn:import:stroom.planb.client.view">
     <g:FlowPanel styleName="max form">
-        <sg:SettingsGroup label="General Settings"
-                          helpText="General Settings."
+        <sg:SettingsGroup label="General"
                           ui:field="generalPanel"/>
-        <sg:SettingsGroup label="Snapshot Settings"
-                          helpText="Snapshot Settings."
+        <sg:SettingsGroup label="Snapshot"
                           ui:field="snapshotPanel"/>
-        <sg:SettingsGroup label="Data Retention Settings"
-                          helpText="Data Retention Settings."
+        <sg:SettingsGroup label="Data Retention"
                           ui:field="retentionPanel"/>
-        <sg:SettingsGroup label="Key Schema Settings"
-                          helpText="Key Schema Settings."
+        <sg:SettingsGroup label="Key Schema"
                           ui:field="keySchemaPanel"/>
-        <sg:SettingsGroup label="Value Schema Settings"
-                          helpText="Value Schema Settings."
+        <sg:SettingsGroup label="Value Schema"
                           ui:field="valueSchemaPanel"/>
     </g:FlowPanel>
 </ui:UiBinder> 

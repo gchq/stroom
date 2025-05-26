@@ -47,9 +47,9 @@ public class PlanBSettingsViewImpl
         widget = binder.createAndBindUi(this);
 
         stateType.addItem(StateType.STATE);
-        stateType.addItem(StateType.RANGE_STATE);
+        stateType.addItem(StateType.RANGED_STATE);
         stateType.addItem(StateType.TEMPORAL_STATE);
-        stateType.addItem(StateType.TEMPORAL_RANGE_STATE);
+        stateType.addItem(StateType.TEMPORAL_RANGED_STATE);
         stateType.addItem(StateType.SESSION);
         stateType.setValue(StateType.TEMPORAL_STATE);
     }

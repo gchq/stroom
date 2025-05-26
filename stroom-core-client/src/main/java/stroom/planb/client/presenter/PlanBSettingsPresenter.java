@@ -127,7 +127,7 @@ public class PlanBSettingsPresenter
                 settingsPresenter = presenter;
                 break;
             }
-            case RANGE_STATE: {
+            case RANGED_STATE: {
                 final RangeStateSettingsPresenter presenter =
                         rangeStateSettingsPresenterProvider.get();
                 presenter.getView().setMaxStoreSize(maxStoreSize);
@@ -137,7 +137,7 @@ public class PlanBSettingsPresenter
                 settingsPresenter = presenter;
                 break;
             }
-            case TEMPORAL_RANGE_STATE: {
+            case TEMPORAL_RANGED_STATE: {
                 final TemporalRangeStateSettingsPresenter presenter =
                         temporalRangeStateSettingsPresenterProvider.get();
                 presenter.getView().setMaxStoreSize(maxStoreSize);

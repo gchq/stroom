@@ -7,25 +7,25 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
-                label="Data Retention"
+                label="Enabled"
                 helpText="Choose if we want to delete old data after a period of time.">
-            <g:FlowPanel>
-                <tickbox:CustomCheckBox ui:field="retentionEnabled"
-                                        identity="retentionEnabled"
-                                        label="Enabled"/>
-                <form:FormGroup ui:field="retentionAgePanel"
-                                identity="retentionAgePanel"
-                                label="Retain For"
-                                helpText="Choose how long to keep data for.">
-                    <g:FlowPanel styleName="durationSetting">
-                        <valuespinner:ValueSpinner ui:field="retentionAge"/>
-                        <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
-                    </g:FlowPanel>
-                </form:FormGroup>
-                <tickbox:CustomCheckBox ui:field="useStateTime"
-                                        identity="useStateTime"
-                                        label="Use State Time"/>
+            <tickbox:CustomCheckBox ui:field="retentionEnabled"
+                                    identity="retentionEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionAgePanel"
+                        identity="retentionAgePanel"
+                        label="Retain For"
+                        helpText="Choose how long to keep data for.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="retentionAge"/>
+                <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="useStateTimePanel"
+                        label="Use State Time"
+                        helpText="Perform retention based on temporal state time rather than data insert time.">
+            <tickbox:CustomCheckBox ui:field="useStateTime"
+                                    identity="useStateTime"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

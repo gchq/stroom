@@ -17,8 +17,8 @@ public class StateFieldUtil {
         return switch (stateType) {
             case STATE -> StateFields.FIELDS;
             case TEMPORAL_STATE -> TemporalStateFields.FIELDS;
-            case RANGE_STATE -> RangeStateFields.FIELDS;
-            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.FIELDS;
+            case RANGED_STATE -> RangeStateFields.FIELDS;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELDS;
             case SESSION -> SessionFields.FIELDS;
         };
     }
@@ -27,17 +27,17 @@ public class StateFieldUtil {
         return switch (stateType) {
             case STATE -> StateFields.FIELD_MAP;
             case TEMPORAL_STATE -> TemporalStateFields.FIELD_MAP;
-            case RANGE_STATE -> RangeStateFields.FIELD_MAP;
-            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.FIELD_MAP;
+            case RANGED_STATE -> RangeStateFields.FIELD_MAP;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELD_MAP;
             case SESSION -> SessionFields.FIELD_MAP;
         };
     }
 
     public static QueryField getTimeField(final StateType stateType) {
         return switch (stateType) {
-            case STATE, RANGE_STATE -> null;
+            case STATE, RANGED_STATE -> null;
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;
-            case TEMPORAL_RANGE_STATE -> TemporalRangeStateFields.EFFECTIVE_TIME_FIELD;
+            case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
         };
     }

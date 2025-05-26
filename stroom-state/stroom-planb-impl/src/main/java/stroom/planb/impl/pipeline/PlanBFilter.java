@@ -521,8 +521,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                 switch (doc.getStateType()) {
                     case STATE -> addState(doc);
                     case TEMPORAL_STATE -> addTemporalState(doc);
-                    case RANGE_STATE -> addRangeState(doc);
-                    case TEMPORAL_RANGE_STATE -> addTemporalRangeState(doc);
+                    case RANGED_STATE -> addRangeState(doc);
+                    case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }

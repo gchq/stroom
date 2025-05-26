@@ -6,13 +6,13 @@ import java.util.List;
 
 public enum RangeType implements HasDisplayValue {
     // Treat all ranges as bytes.
-    BYTE("Unsigned Byte (1 byte from 0 to 255)"),
+    BYTE("Unsigned Byte"), // 1 byte from 0 to 255
     // Treat all ranges as shorts.
-    SHORT("Unsigned Short (2 bytes from 0 to 65,535)"),
+    SHORT("Unsigned Short"), // 2 bytes from 0 to 65,535
     // Treat all ranges as integers.
-    INT("Unsigned Integer (4 bytes from 0 to 4,294,967,295)"),
+    INT("Unsigned Integer"), // 4 bytes from 0 to 4,294,967,295
     // Treat all ranges as longs.
-    LONG("Unsigned Long (8 bytes from 0 to 9,223,372,036,854,775,807)");
+    LONG("Unsigned Long"); // 8 bytes from 0 to 9,223,372,036,854,775,807
 
     public static final List<RangeType> ORDERED_LIST = List.of(
             BYTE,
