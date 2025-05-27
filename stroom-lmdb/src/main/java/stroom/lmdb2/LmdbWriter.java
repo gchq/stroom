@@ -73,7 +73,7 @@ public class LmdbWriter {
                 lock.unlock();
             }
         } catch (final InterruptedException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw new UncheckedInterruptedException(e);
         } catch (final Exception e) {
             LOGGER.error(() -> LogUtil.message("Error doing put: {}", LogUtil.exceptionMessage(e), e));
