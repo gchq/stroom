@@ -61,10 +61,8 @@ public interface AnnotationDao {
 
     /**
      * Mark annotations deleted if they have not been updated within their specified retention time.
-     *
-     * @param currentUser The current user.
      */
-    void markDeletedByDataRetention(UserRef currentUser);
+    void markDeletedByDataRetention();
 
     /**
      * Physically delete annotations that have been marked as deleted since before the provided age.
