@@ -13,6 +13,33 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.1] - 2025-05-27
+
+* Issue **#4484** : Change selection handling to use fully qualified keys.
+
+* Issue **#4456** : Fix selection handling across multiple components by uniquely namespacing selections.
+
+* Issue **#4886** : Fix ctrl+enter query execution for rules and reports.
+
+* Issue **#4884** : Suggest only queryable fields in StroomQL where clause.
+
+* Issue **#4742** : Allow embedded queries to be copies rather than references.
+
+* Issue **#4894** : Plan B query without snapshots.
+
+* Issue **#4896** : Plan B option to synchronise writes.
+
+* Issue **#4720** : Add Plan B shards data source.
+
+* Issue **#4919** : Add functions to format byte size strings.
+
+* Issue **#4901** : Add advanced schema selection to Plan B to improve performance and reduce storage requirements.
+
+* Fix primitive value conversion of query field types.
+
+* Issue **#4945** : Increase index field name length.
+
+
 ## [v7.9-beta.12] - 2025-05-07
 
 * Fix compile issues.
@@ -1458,7 +1485,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.1...HEAD
+[v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
 [v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
 [v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
