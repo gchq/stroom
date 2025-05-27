@@ -6,11 +6,13 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SessionSettings;
+import stroom.planb.shared.SnapshotSettings;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.TemporalRangeStateSettings;
 import stroom.planb.shared.TemporalStateSettings;
@@ -345,6 +347,18 @@ class StoreShard implements Shard {
     }
 
     private boolean isNewSnapshotRequired() {
+        final SnapshotSettings snapshotSettings = NullSafe.getOrElse(
+                doc,
+                PlanBDoc::getSettings,
+                AbstractPlanBSettings::getSnapshotSettings,
+                new SnapshotSettings());
+
+        if (!snapshotSettings.isUseSnapshotsForLookup() &&
+            !snapshotSettings.isUseSnapshotsForGet() &&
+            snapshotSettings.isUseSnapshotsForQuery()) {
+            return false;
+        }
+
         final Instant lastWriteTime = this.lastWriteTime;
         final Instant lastSnapshotTime = this.lastSnapshotTime;
 

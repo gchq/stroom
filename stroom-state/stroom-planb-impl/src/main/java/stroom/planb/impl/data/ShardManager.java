@@ -3,7 +3,6 @@ package stroom.planb.impl.data;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.docstore.shared.Doc;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
