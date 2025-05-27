@@ -44,8 +44,7 @@ class TestUnsignedBytesInstancesFour {
     @Test
     void testPutAll() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-        for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
-
+        UnsignedBytesInstances.allPositive(unsignedBytes -> {
             byteBuffer.clear();
             unsignedBytes.put(byteBuffer, 1L);
 
@@ -60,7 +59,7 @@ class TestUnsignedBytesInstancesFour {
             unsignedBytes.put(byteBuffer, unsignedBytes.getMaxVal());
 
             LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
-        }
+        });
     }
 
     private void doValTest(final long val) {
@@ -176,8 +175,7 @@ class TestUnsignedBytesInstancesFour {
     @Test
     void testIncrementAll() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-
-        for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
+        UnsignedBytesInstances.allPositive(unsignedBytes -> {
             byteBuffer.clear();
 
             unsignedBytes.put(byteBuffer, unsignedBytes.getMaxVal() - 1);
@@ -197,7 +195,7 @@ class TestUnsignedBytesInstancesFour {
 
             Assertions.assertThat(val2)
                     .isEqualTo(val + 1);
-        }
+        });
     }
 
     @Test
@@ -266,8 +264,7 @@ class TestUnsignedBytesInstancesFour {
     @Test
     void testDecrementAll() {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-
-        for (final UnsignedBytesInstances unsignedBytes : UnsignedBytesInstances.values()) {
+        UnsignedBytesInstances.allPositive(unsignedBytes -> {
             byteBuffer.clear();
 
             unsignedBytes.put(byteBuffer, unsignedBytes.getMaxVal());
@@ -287,7 +284,7 @@ class TestUnsignedBytesInstancesFour {
 
             Assertions.assertThat(val2)
                     .isEqualTo(val - 1);
-        }
+        });
     }
 
     @Test

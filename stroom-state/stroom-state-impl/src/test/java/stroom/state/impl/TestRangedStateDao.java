@@ -25,13 +25,13 @@ class TestRangedStateDao {
 //    @Test
 //    void testDao() {
 //        ScyllaDbUtil.test((sessionProvider, tableName) -> {
-//            final RangedStateDao rangedStateDao = new RangedStateDao(sessionProvider, tableName);
+//            final RangedStateDao rangeStateDao = new RangedStateDao(sessionProvider, tableName);
 //
-//            insertData(rangedStateDao, 100);
+//            insertData(rangeStateDao, 100);
 //
 //            final RangedStateRequest stateRequest =
 //                    new RangedStateRequest("TEST_MAP", 11);
-//            final Optional<State> optional = rangedStateDao.getState(stateRequest);
+//            final Optional<State> optional = rangeStateDao.getState(stateRequest);
 //            assertThat(optional).isNotEmpty();
 //            final State res = optional.get();
 //            assertThat(res.key()).isEqualTo("11");
@@ -41,7 +41,7 @@ class TestRangedStateDao {
 //            final FieldIndex fieldIndex = new FieldIndex();
 //            fieldIndex.create(RangedStateFields.KEY_START);
 //            final AtomicInteger count = new AtomicInteger();
-//            rangedStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
+//            rangeStateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
 //                    v -> count.incrementAndGet());
 //            assertThat(count.get()).isEqualTo(1);
 //        });
@@ -65,7 +65,7 @@ class TestRangedStateDao {
 //        });
 //    }
 //
-//    private void insertData(final RangedStateDao rangedStateDao,
+//    private void insertData(final RangedStateDao rangeStateDao,
 //                            final int rows) {
 //        for (int i = 0; i < rows; i++) {
 //            final ByteBuffer byteBuffer = ByteBuffer.wrap(("test" + i).getBytes(StandardCharsets.UTF_8));
@@ -74,7 +74,7 @@ class TestRangedStateDao {
 //                    30,
 //                    StringValue.TYPE_ID,
 //                    byteBuffer);
-//            rangedStateDao.insert(Collections.singletonList(state));
+//            rangeStateDao.insert(Collections.singletonList(state));
 //        }
 //    }
 }

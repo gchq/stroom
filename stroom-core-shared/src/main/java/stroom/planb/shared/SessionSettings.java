@@ -9,12 +9,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
         "synchroniseMerge",
+        "overwrite",
+        "retention",
         "snapshotSettings",
-        "overwrite"
+        "condense",
+        "keySchema"
 })
 @JsonInclude(Include.NON_NULL)
 public class SessionSettings extends AbstractPlanBSettings {
@@ -22,33 +23,27 @@ public class SessionSettings extends AbstractPlanBSettings {
     @JsonProperty
     private final DurationSetting condense;
     @JsonProperty
-    private final DurationSetting retention;
-    @JsonProperty
-    private final Boolean overwrite;
+    private final SessionKeySchema keySchema;
 
     @JsonCreator
-    public SessionSettings(@JsonProperty("condense") final DurationSetting condense,
-                           @JsonProperty("retention") final DurationSetting retention,
-                           @JsonProperty("maxStoreSize") final Long maxStoreSize,
-                           @JsonProperty("synchroniseMerge") final boolean synchroniseMerge,
+    public SessionSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
+                           @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                           @JsonProperty("overwrite") final Boolean overwrite,
+                           @JsonProperty("retention") final RetentionSettings retention,
                            @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
-                           @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize, synchroniseMerge, snapshotSettings);
+                           @JsonProperty("condense") final DurationSetting condense,
+                           @JsonProperty("keySchema") final SessionKeySchema keySchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
         this.condense = condense;
-        this.retention = retention;
-        this.overwrite = overwrite;
+        this.keySchema = keySchema;
     }
 
     public DurationSetting getCondense() {
         return condense;
     }
 
-    public DurationSetting getRetention() {
-        return retention;
-    }
-
-    public Boolean getOverwrite() {
-        return overwrite;
+    public SessionKeySchema getKeySchema() {
+        return keySchema;
     }
 
     @Override
@@ -64,37 +59,28 @@ public class SessionSettings extends AbstractPlanBSettings {
         }
         final SessionSettings that = (SessionSettings) o;
         return Objects.equals(condense, that.condense) &&
-               Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite);
+               Objects.equals(keySchema, that.keySchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite);
+        return Objects.hash(super.hashCode(),
+                condense,
+                keySchema);
     }
 
     @Override
     public String toString() {
         return "SessionSettings{" +
                "condense=" + condense +
-               ", retention=" + retention +
-               ", overwrite=" + overwrite +
+               ", keySchema=" + keySchema +
                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
     }
 
     public static class Builder extends AbstractBuilder<SessionSettings, Builder> {
 
-        protected DurationSetting condense;
-        protected DurationSetting retention;
-        protected Boolean overwrite;
+        private DurationSetting condense;
+        private SessionKeySchema keySchema;
 
         public Builder() {
         }
@@ -102,8 +88,7 @@ public class SessionSettings extends AbstractPlanBSettings {
         public Builder(final SessionSettings settings) {
             super(settings);
             this.condense = settings.condense;
-            this.retention = settings.retention;
-            this.overwrite = settings.overwrite;
+            this.keySchema = settings.keySchema;
         }
 
         public Builder condense(final DurationSetting condense) {
@@ -111,13 +96,8 @@ public class SessionSettings extends AbstractPlanBSettings {
             return self();
         }
 
-        public Builder retention(final DurationSetting retention) {
-            this.retention = retention;
-            return self();
-        }
-
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder keySchema(final SessionKeySchema keySchema) {
+            this.keySchema = keySchema;
             return self();
         }
 
@@ -129,12 +109,13 @@ public class SessionSettings extends AbstractPlanBSettings {
         @Override
         public SessionSettings build() {
             return new SessionSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
                     synchroniseMerge,
+                    overwrite,
+                    retention,
                     snapshotSettings,
-                    overwrite);
+                    condense,
+                    keySchema);
         }
     }
 }

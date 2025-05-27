@@ -41,7 +41,7 @@ public class SequentialFileStore {
         // Create the store directory and initialise the store id.
         this.path = path;
         if (ensureDirExists(path)) {
-            long maxId = getMaxId(path);
+            final long maxId = getMaxId(path);
             storeId.set(maxId + 1);
             addedStoreId.set(maxId);
         }
@@ -75,29 +75,6 @@ public class SequentialFileStore {
         }
         return getStoreFileSet(storeId);
     }
-
-//    public Optional<SequentialFile> awaitNext(final long storeId,
-//                                              final long time,
-//                                              final TimeUnit timeUnit) {
-//        try {
-//            lock.lockInterruptibly();
-//            try {
-//                long currentStoreId = addedStoreId.get();
-//                while (currentStoreId < storeId) {
-//                    if (!condition.await(time,timeUnit)) {
-//                        return Optional.empty();
-//                    }
-//                    currentStoreId = addedStoreId.get();
-//                }
-//            } finally {
-//                lock.unlock();
-//            }
-//        } catch (final InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//            throw UncheckedInterruptedException.create(e);
-//        }
-//        return Optional.of(getStoreFileSet(storeId));
-//    }
 
     private SequentialFile getStoreFileSet(final long storeId) {
         return SequentialFile.get(path, storeId, true, latches.remove(storeId));
@@ -233,7 +210,7 @@ public class SequentialFileStore {
             }
             start = i + 1;
         }
-        int end = name.indexOf(".");
+        final int end = name.indexOf(".");
         final String numericPart;
         if (start == 0 && end == -1) {
             numericPart = name;

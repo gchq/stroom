@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
 import stroom.query.api.Column;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.language.functions.ExpressionContext;
@@ -52,7 +53,7 @@ public class TestValueSerialisation {
         final CompiledDepths compiledDepths = new CompiledDepths(compiledColumnArray, false);
         KeyFactoryConfigImpl keyFactoryConfig =
                 new KeyFactoryConfigImpl(SourceType.DASHBOARD_UI, compiledColumnArray, compiledDepths);
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactory();
+        final ByteBufferFactory byteBufferFactory = new SimpleByteBufferFactory();
         final DataWriterFactory writerFactory =
                 new DataWriterFactory(errorConsumer, 1000);
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);

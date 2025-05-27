@@ -5,7 +5,6 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
-    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')

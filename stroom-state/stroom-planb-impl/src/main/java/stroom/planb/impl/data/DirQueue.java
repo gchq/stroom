@@ -206,7 +206,7 @@ public class DirQueue {
     }
 
     private Dir createDir(final long id, final Path path) {
-        return new Dir(this, id, path, latches.remove(id));
+        return new Dir(this, path, latches.remove(id));
     }
 
     @Override

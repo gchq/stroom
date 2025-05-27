@@ -26,7 +26,7 @@ import java.util.Objects;
 
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
-        permits ValNumber, ValString, ValErr, ValNull, ValBoolean {
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {
 
     Val[] EMPTY_VALUES = new Val[0];
     double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;

@@ -8152,6 +8152,10 @@ components:
         maxStoreSize:
           type: integer
           format: int64
+        overwrite:
+          type: boolean
+        retention:
+          $ref: "#/components/schemas/RetentionSettings"
         snapshotSettings:
           $ref: "#/components/schemas/SnapshotSettings"
         synchroniseMerge:
@@ -12636,8 +12640,8 @@ components:
       type: object
       properties:
         effectiveTime:
-          type: integer
-          format: int64
+          type: string
+          format: date-time
         keyEnd:
           type: integer
           format: int64
@@ -14483,6 +14487,16 @@ components:
         to:
           type: integer
           format: int32
+    RangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
     RangeLong:
       type: object
       properties:
@@ -14494,7 +14508,7 @@ components:
         to:
           type: integer
           format: int64
-    RangedState:
+    RangeState:
       type: object
       allOf:
       - $ref: "#/components/schemas/PlanBValue"
@@ -14503,15 +14517,17 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
-    RangedStateSettings:
+            $ref: "#/components/schemas/Val"
+    RangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
+          keySchema:
+            $ref: "#/components/schemas/RangeKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     Rec:
       type: object
       properties:
@@ -15252,6 +15268,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultStoreInfo"
+    RetentionSettings:
+      type: object
+      properties:
+        duration:
+          $ref: "#/components/schemas/SimpleDuration"
+        enabled:
+          type: boolean
+        useStateTime:
+          type: boolean
     Row:
       type: object
       description: A row of data in a result set
@@ -15766,16 +15791,13 @@ components:
       - type: object
         properties:
           end:
-            type: integer
-            format: int64
+            type: string
+            format: date-time
           key:
-            type: array
-            items:
-              type: string
-              format: byte
+            $ref: "#/components/schemas/Val"
           start:
-            type: integer
-            format: int64
+            type: string
+            format: date-time
     SessionDetails:
       type: object
       properties:
@@ -15800,6 +15822,37 @@ components:
           type: string
         userRef:
           $ref: "#/components/schemas/UserRef"
+    SessionKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateKeyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     SessionListResponse:
       type: object
       properties:
@@ -15817,10 +15870,8 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/SessionKeySchema"
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -16197,9 +16248,9 @@ components:
       - type: object
         properties:
           key:
-            $ref: "#/components/schemas/Key"
+            $ref: "#/components/schemas/Val"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
     StateDoc:
       type: object
       properties:
@@ -16267,44 +16318,60 @@ components:
           type: string
         version:
           type: string
+    StateKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateKeyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
     StateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
-    StateValue:
+          keySchema:
+            $ref: "#/components/schemas/StateKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+    StateValueSchema:
       type: object
       properties:
-        byteBuffer:
-          type: object
-          properties:
-            char:
-              type: string
-            direct:
-              type: boolean
-            double:
-              type: number
-              format: double
-            float:
-              type: number
-              format: float
-            int:
-              type: integer
-              format: int32
-            long:
-              type: integer
-              format: int64
-            readOnly:
-              type: boolean
-            short:
-              type: integer
-              format: int32
-        typeId:
+        hashLength:
           type: string
-          format: byte
+          enum:
+          - INTEGER
+          - LONG
+        stateValueType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
     StatisticField:
       type: object
       properties:
@@ -16984,7 +17051,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
-    TemporalRangedState:
+    TemporalRangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
+    TemporalRangeState:
       type: object
       allOf:
       - $ref: "#/components/schemas/PlanBValue"
@@ -16993,8 +17079,8 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
-    TemporalRangedStateSettings:
+            $ref: "#/components/schemas/Val"
+    TemporalRangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
@@ -17002,10 +17088,10 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/TemporalRangeKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     TemporalState:
       type: object
       allOf:
@@ -17015,7 +17101,38 @@ components:
           key:
             $ref: "#/components/schemas/Key"
           value:
-            $ref: "#/components/schemas/StateValue"
+            $ref: "#/components/schemas/Val"
+    TemporalStateKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateKeyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     TemporalStateSettings:
       type: object
       allOf:
@@ -17024,10 +17141,10 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/TemporalStateKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     TerminateTaskProgressRequest:
       type: object
       properties:
@@ -17497,6 +17614,8 @@ components:
           - Offset
       required:
       - use
+    Val:
+      type: object
     ValidateExpressionRequest:
       type: object
       properties:

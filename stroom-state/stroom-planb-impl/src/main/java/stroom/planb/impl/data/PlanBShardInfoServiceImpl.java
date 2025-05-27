@@ -234,7 +234,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                                final Predicate<Val[]> predicate,
                                final ValuesConsumer consumer) {
         list.forEach(result -> {
-            Val[] values = new Val[fields.length];
+            final Val[] values = new Val[fields.length];
             for (int i = 0; i < fields.length; i++) {
                 final String field = fields[i];
                 final String res = result[i];
