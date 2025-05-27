@@ -65,7 +65,7 @@ public class StateValueProxy implements RefDataValueProxy {
     @Override
     public Optional<RefDataValue> supplyValue() {
         return switch (state.val().type()) {
-            case XML -> Optional.of(new FastInfosetValue(((ValXml) state.val()).getByteBuffer().duplicate()));
+            case XML -> Optional.of(new FastInfosetValue(ByteBuffer.wrap(((ValXml) state.val()).getBytes())));
             case NULL -> Optional.of(NullValue.getInstance());
             default -> Optional.of(new StringValue(state.val().toString()));
         };
@@ -76,7 +76,7 @@ public class StateValueProxy implements RefDataValueProxy {
         switch (state.val().type()) {
             case XML -> typedByteBufferConsumer.accept(new TypedByteBuffer(
                     FastInfosetValue.TYPE_ID,
-                    ((ValXml) state.val()).getByteBuffer().duplicate()));
+                    ByteBuffer.wrap(((ValXml) state.val()).getBytes())));
             case NULL -> {
             }
             default -> typedByteBufferConsumer.accept(new TypedByteBuffer(

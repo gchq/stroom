@@ -9,8 +9,8 @@ import org.xml.sax.InputSource;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Objects;
 
 public final class ValXml implements Val {
 
@@ -24,19 +24,19 @@ public final class ValXml implements Val {
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
     public static final Type TYPE = Type.XML;
-    private final ByteBuffer byteBuffer;
+    private final byte[] bytes;
     private String stringValue;
 
-    private ValXml(final ByteBuffer byteBuffer) {
-        this.byteBuffer = byteBuffer;
+    private ValXml(final byte[] bytes) {
+        this.bytes = bytes;
     }
 
-    public ByteBuffer getByteBuffer() {
-        return byteBuffer;
+    public byte[] getBytes() {
+        return bytes;
     }
 
-    public static ValXml create(final ByteBuffer byteBuffer) {
-        return new ValXml(byteBuffer);
+    public static ValXml create(final byte[] bytes) {
+        return new ValXml(bytes);
     }
 
     @Override
@@ -84,16 +84,16 @@ public final class ValXml implements Val {
     @Override
     public String toString() {
         if (stringValue == null) {
-            stringValue = byteBufferToString(byteBuffer);
+            stringValue = byteBufferToString(bytes);
         }
         return stringValue;
     }
 
-    private static String byteBufferToString(final ByteBuffer byteBuffer) {
+    private static String byteBufferToString(final byte[] bytes) {
         try {
             final Writer writer = new StringWriter(1000);
             final SAXDocumentParser parser = new SAXDocumentParser();
-            XMLUtil.prettyPrintXML(parser, new InputSource(new ByteBufferInputStream(byteBuffer.duplicate())), writer);
+            XMLUtil.prettyPrintXML(parser, new InputSource(new ByteBufferInputStream(ByteBuffer.wrap(bytes))), writer);
             return writer.toString();
 
         } catch (final Exception e) {
@@ -119,11 +119,11 @@ public final class ValXml implements Val {
             return false;
         }
         final ValXml valXml = (ValXml) o;
-        return Objects.equals(byteBuffer, valXml.byteBuffer);
+        return Arrays.equals(bytes, valXml.bytes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(byteBuffer);
+        return Arrays.hashCode(bytes);
     }
 }

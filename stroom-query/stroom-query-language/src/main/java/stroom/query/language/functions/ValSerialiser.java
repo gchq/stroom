@@ -72,8 +72,8 @@ public final class ValSerialiser {
                 input -> ValShort.create(input.readShort()),
                 (output, value) -> output.writeShort(((ValShort) value).getValue()));
         SERIALISERS[Type.XML.getId()] = new Serialiser(
-                input -> ValXml.create(input.read()),
-                (output, value) -> output.write(((ValXml) value).getByteBuffer()));
+                input -> ValXml.create(input.readBytes()),
+                (output, value) -> output.writeBytes(((ValXml) value).getBytes()));
     }
 
     public static Val read(final DataReader reader) {

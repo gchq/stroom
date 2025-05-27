@@ -1,7 +1,5 @@
 package stroom.query.language.functions.ref;
 
-import java.nio.ByteBuffer;
-
 public interface DataWriter extends AutoCloseable {
 
     void writeByteUnsigned(int value);
@@ -22,7 +20,7 @@ public interface DataWriter extends AutoCloseable {
 
     void writeString(String value);
 
-    void write(ByteBuffer byteBuffer);
+    void writeBytes(byte[] bytes);
 
     @Override
     void close();

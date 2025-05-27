@@ -158,11 +158,11 @@ public class ValSerdeUtil {
                 });
             }
             case XML -> {
-                final ByteBuffer bb = ((ValXml) val).getByteBuffer();
-                yield byteBuffers.use(len + bb.remaining(), byteBuffer -> {
+                final byte[] bytes = ((ValXml) val).getBytes();
+                yield byteBuffers.use(len + bytes.length, byteBuffer -> {
                     prefix.getConsumer().accept(byteBuffer);
                     byteBuffer.put(type.getId());
-                    byteBuffer.put(bb);
+                    byteBuffer.put(bytes);
                     suffix.getConsumer().accept(byteBuffer);
                     byteBuffer.flip();
                     return function.apply(byteBuffer);
@@ -186,7 +186,7 @@ public class ValSerdeUtil {
             case DATE -> ValDate.create(byteBuffer.getLong());
             case DURATION -> ValDuration.create(byteBuffer.getLong());
             case STRING -> ValString.create(ByteBufferUtils.toString(byteBuffer));
-            case XML -> ValXml.create(ByteBuffer.wrap(ByteBufferUtils.getBytes(byteBuffer)));
+            case XML -> ValXml.create(ByteBufferUtils.getBytes(byteBuffer));
             case ERR -> ValErr.create(ByteBufferUtils.toString(byteBuffer));
         };
     }

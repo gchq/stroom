@@ -1,7 +1,5 @@
 package stroom.query.language.functions.ref;
 
-import java.nio.ByteBuffer;
-
 public interface DataReader extends AutoCloseable {
 
     int readByteUnsigned();
@@ -22,7 +20,7 @@ public interface DataReader extends AutoCloseable {
 
     String readString();
 
-    ByteBuffer read();
+    byte[] readBytes();
 
     @Override
     void close();

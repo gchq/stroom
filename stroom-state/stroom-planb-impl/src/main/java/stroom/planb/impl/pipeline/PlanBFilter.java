@@ -16,6 +16,7 @@
 
 package stroom.planb.impl.pipeline;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.pipeline.LocationFactoryProxy;
@@ -741,7 +742,7 @@ public class PlanBFilter extends AbstractXMLFilter {
             case XML -> {
                 final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
                 value.flip();
-                yield ValXml.create(value);
+                yield ValXml.create(ByteBufferUtils.getBytes(value));
             }
             default -> ValNull.INSTANCE;
         };

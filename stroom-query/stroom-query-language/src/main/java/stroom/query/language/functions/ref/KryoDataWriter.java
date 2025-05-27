@@ -2,8 +2,6 @@ package stroom.query.language.functions.ref;
 
 import com.esotericsoftware.kryo.io.Output;
 
-import java.nio.ByteBuffer;
-
 public class KryoDataWriter implements DataWriter {
 
     private final Output output;
@@ -58,9 +56,8 @@ public class KryoDataWriter implements DataWriter {
     }
 
     @Override
-    public void write(final ByteBuffer byteBuffer) {
-        final byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
+    public void writeBytes(final byte[] bytes) {
+        output.writeInt(bytes.length);
         output.write(bytes);
     }
 
