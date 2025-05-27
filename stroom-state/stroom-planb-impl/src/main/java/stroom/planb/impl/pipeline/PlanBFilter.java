@@ -230,18 +230,20 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            if (stagingValueOutputStream != null) {
-                LOGGER.debug("closing stagingValueOutputStream");
-                stagingValueOutputStream.close();
-            }
-        } finally {
             try {
-                writer.close();
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+                if (stagingValueOutputStream != null) {
+                    LOGGER.debug("closing stagingValueOutputStream");
+                    stagingValueOutputStream.close();
+                }
             } finally {
-                super.endProcessing();
+                try {
+                    writer.close();
+                } finally {
+                    super.endProcessing();
+                }
             }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -271,7 +273,7 @@ public class PlanBFilter extends AbstractXMLFilter {
             recordHavingSeenXmlContent();
             fastInfosetStartPrefixMapping(prefix, uri);
         } else {
-            // capture all the prefixmappings we encounter before we are in the value and hold them for use later
+            // capture all the prefix mappings we encounter before we are in the value and hold them for use later
             addWrapperPrefixMapping(prefix, uri);
         }
     }
