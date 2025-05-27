@@ -13716,8 +13716,8 @@ components:
           enum:
           - STATE
           - TEMPORAL_STATE
-          - RANGE_STATE
-          - TEMPORAL_RANGE_STATE
+          - RANGED_STATE
+          - TEMPORAL_RANGED_STATE
           - SESSION
         type:
           type: string
