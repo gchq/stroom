@@ -1124,6 +1124,7 @@ class stroom.query.api.datasource.ConditionSet - public static stroom.query.api.
 class stroom.query.api.datasource.ConditionSet - public static stroom.query.api.datasource.ConditionSet stroom.query.api.datasource.ConditionSet.valueOf(java.lang.String)
 class stroom.query.api.datasource.ConditionSet - public static stroom.query.api.datasource.ConditionSet[] stroom.query.api.datasource.ConditionSet.values()
 class stroom.query.api.datasource.FieldType - public boolean stroom.query.api.datasource.FieldType.isNumeric()
+class stroom.query.api.datasource.FieldType - public byte stroom.query.api.datasource.FieldType.getPrimitiveValue()
 class stroom.query.api.datasource.FieldType - public final boolean java.lang.Enum.equals(java.lang.Object)
 class stroom.query.api.datasource.FieldType - public final int java.lang.Enum.compareTo(E)
 class stroom.query.api.datasource.FieldType - public final int java.lang.Enum.hashCode()
@@ -1138,7 +1139,7 @@ class stroom.query.api.datasource.FieldType - public final void java.lang.Object
 class stroom.query.api.datasource.FieldType - public final void java.lang.Object.wait(long) throws java.lang.InterruptedException
 class stroom.query.api.datasource.FieldType - public final void java.lang.Object.wait(long,int) throws java.lang.InterruptedException
 class stroom.query.api.datasource.FieldType - public int java.lang.Enum.compareTo(java.lang.Object)
-class stroom.query.api.datasource.FieldType - public int stroom.query.api.datasource.FieldType.getIndex()
+class stroom.query.api.datasource.FieldType - public int stroom.query.api.datasource.FieldType.getTypeId()
 class stroom.query.api.datasource.FieldType - public java.lang.String java.lang.Enum.toString()
 class stroom.query.api.datasource.FieldType - public java.lang.String stroom.query.api.datasource.FieldType.getDescription()
 class stroom.query.api.datasource.FieldType - public java.lang.String stroom.query.api.datasource.FieldType.getDisplayValue()
@@ -1146,7 +1147,8 @@ class stroom.query.api.datasource.FieldType - public java.lang.String stroom.que
 class stroom.query.api.datasource.FieldType - public java.lang.String stroom.query.api.datasource.FieldType.getTypeName()
 class stroom.query.api.datasource.FieldType - public static <T extends java.lang.Enum<T>> T java.lang.Enum.valueOf(java.lang.Class<T>,java.lang.String)
 class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType stroom.query.api.datasource.FieldType.fromDisplayValue(java.lang.String)
-class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType stroom.query.api.datasource.FieldType.get(int)
+class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType stroom.query.api.datasource.FieldType.fromTypeId(byte)
+class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType stroom.query.api.datasource.FieldType.fromTypeId(int)
 class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType stroom.query.api.datasource.FieldType.valueOf(java.lang.String)
 class stroom.query.api.datasource.FieldType - public static stroom.query.api.datasource.FieldType[] stroom.query.api.datasource.FieldType.values()
 class stroom.query.api.datasource.QueryField - public boolean stroom.query.api.datasource.QueryField.equals(java.lang.Object)
