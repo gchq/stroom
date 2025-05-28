@@ -302,7 +302,6 @@ public class QueryResultVisPresenter
             if (componentResult != null) {
                 final QLVisResult visResult = (QLVisResult) componentResult;
 
-                currentSettings = getJSONSettings(visResult);
                 currentData = getJSONData(visResult);
 //                    final List<String> errors = visResult.getErrors();
 //                    if (currentError == null && errors != null && !errors.isEmpty()) {
@@ -325,7 +324,7 @@ public class QueryResultVisPresenter
                     function.addStatusHandler(this);
 
                     // Load the visualisation.
-                    loadVisualisation(function, visualisation);
+                    loadVisualisation(function, visualisation, visResult);
 
                 } else {
                     if (currentFunction != visFunction) {
@@ -384,7 +383,7 @@ public class QueryResultVisPresenter
         return settings;
     }
 
-    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
+    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef, final QLVisResult visResult) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
@@ -402,6 +401,8 @@ public class QueryResultVisPresenter
                             failure(function, "Unable to parse settings for visualisation: "
                                     + visualisationDocRef);
                         }
+
+                        currentSettings = getJSONSettings(visResult);
 
                         function.setFunctionName(result.getFunctionName());
 
