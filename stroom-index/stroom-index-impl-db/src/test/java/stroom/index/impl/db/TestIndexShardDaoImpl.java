@@ -196,7 +196,7 @@ class TestIndexShardDaoImpl {
         indexShardDao.create(indexShardKey, indexVolume, nodeName, "1.0-test");
 
         final List<QueryField> fields = IndexShardFields.getFields();
-        assertThat(fields.size()).isEqualTo(10);
+        assertThat(fields.size()).isEqualTo(12);
 
         for (final QueryField field : fields) {
             final FieldIndex fieldIndex = new FieldIndex();
