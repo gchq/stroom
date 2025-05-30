@@ -221,9 +221,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
             try (final SessionDb sourceDb = SessionDb.create(source, byteBuffers, settings, true)) {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (keySerde.usesLookup(kv.key())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key())) {
                             // We need to do a full read and merge.
-                            final Session session = keySerde.read(readTxn, kv.key());
+                            final Session session = sourceDb.keySerde.read(readTxn, kv.key());
                             insert(writer, session);
                         } else {
                             // Quick merge.

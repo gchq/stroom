@@ -1,5 +1,6 @@
 package stroom.planb.impl;
 
+import stroom.planb.impl.db.histogram.HistogramFields;
 import stroom.planb.impl.db.rangestate.RangeStateFields;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.state.StateFields;
@@ -20,6 +21,7 @@ public class StateFieldUtil {
             case RANGED_STATE -> RangeStateFields.FIELDS;
             case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELDS;
             case SESSION -> SessionFields.FIELDS;
+            case HISTOGRAM -> HistogramFields.FIELDS;
         };
     }
 
@@ -30,6 +32,7 @@ public class StateFieldUtil {
             case RANGED_STATE -> RangeStateFields.FIELD_MAP;
             case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.FIELD_MAP;
             case SESSION -> SessionFields.FIELD_MAP;
+            case HISTOGRAM -> HistogramFields.FIELD_MAP;
         };
     }
 
@@ -39,6 +42,7 @@ public class StateFieldUtil {
             case TEMPORAL_STATE -> TemporalStateFields.EFFECTIVE_TIME_FIELD;
             case TEMPORAL_RANGED_STATE -> TemporalRangeStateFields.EFFECTIVE_TIME_FIELD;
             case SESSION -> SessionFields.START_FIELD;
+            case HISTOGRAM -> HistogramFields.TIME_FIELD;
         };
     }
 }

@@ -180,10 +180,10 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                     true)) {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
-                            final Key key = keySerde.read(readTxn, kv.key());
-                            final Val value = valueSerde.read(readTxn, kv.val()).val();
+                            final Key key = sourceDb.keySerde.read(readTxn, kv.key());
+                            final Val value = sourceDb.valueSerde.read(readTxn, kv.val()).val();
                             insert(writer, new TemporalRangeState(key, value));
                         } else {
                             // Quick merge.

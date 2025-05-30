@@ -7,6 +7,8 @@ import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.impl.db.histogram.HistogramDb;
+import stroom.planb.impl.db.histogram.HistogramValue;
 import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.session.Session;
@@ -163,6 +165,11 @@ public class ShardWriters {
                 db.insert(writer, session);
             }
 
+            public void addHistogramValue(final HistogramValue histogramValue) {
+                final HistogramDb db = (HistogramDb) lmdb;
+                db.insert(writer, histogramValue);
+            }
+
             public boolean isSynchroniseMerge() {
                 return synchroniseMerge;
             }
@@ -185,18 +192,23 @@ public class ShardWriters {
         }
 
         public void addRangeState(final PlanBDoc doc,
-                                   final RangeState rangeState) {
+                                  final RangeState rangeState) {
             getWriter(doc).addRangeState(rangeState);
         }
 
         public void addTemporalRangeState(final PlanBDoc doc,
-                                           final TemporalRangeState temporalRangeState) {
+                                          final TemporalRangeState temporalRangeState) {
             getWriter(doc).addTemporalRangeState(temporalRangeState);
         }
 
         public void addSession(final PlanBDoc doc,
                                final Session session) {
             getWriter(doc).addSession(session);
+        }
+
+        public void addHistogramValue(final PlanBDoc doc,
+                                      final HistogramValue histogramValue) {
+            getWriter(doc).addHistogramValue(histogramValue);
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {

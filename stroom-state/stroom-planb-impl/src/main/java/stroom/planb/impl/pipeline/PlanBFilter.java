@@ -28,6 +28,10 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
+import stroom.planb.impl.db.histogram.HistogramKey;
+import stroom.planb.impl.db.histogram.HistogramValue;
+import stroom.planb.impl.db.histogram.Tag;
+import stroom.planb.impl.db.histogram.Tags;
 import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.state.State;
@@ -61,9 +65,11 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -130,8 +136,24 @@ public class PlanBFilter extends AbstractXMLFilter {
             </value>
         or
             <value>UK</value>
-     */
 
+    Example histogram
+    <histogram>
+      <tags>
+        <tag>
+          <name>TEST</name>
+          <value>TEST</value>
+        </tag>
+        <tag>
+          <name>TEST2</name>
+          <value>TEST2</value>
+        </tag>
+      </tags>
+      <time></time>
+      <value>10</value>
+    </histogram>
+
+     */
 
     /*
     A word about namespaces
@@ -155,6 +177,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String SESSION_ELEMENT = "session";
+    private static final String HISTOGRAM_ELEMENT = "histogram";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
     private static final String FROM_ELEMENT = "from";
@@ -201,6 +224,12 @@ public class PlanBFilter extends AbstractXMLFilter {
     private Instant time;
     private StroomDuration timeout;
     private ShardWriter writer;
+
+
+    private String currentName;
+    private String currentValue;
+    private List<Tag> currentTags;
+
 
     @Inject
     public PlanBFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -363,6 +392,13 @@ public class PlanBFilter extends AbstractXMLFilter {
             }
 
             fastInfosetStartElement(localName, uri, qName, atts);
+        } else if ("tags".equalsIgnoreCase(localName)) {
+            currentName = null;
+            currentValue = null;
+            currentTags = new ArrayList<>();
+        } else if ("tag".equalsIgnoreCase(localName)) {
+            currentName = null;
+            currentValue = null;
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -453,7 +489,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                     error("Unable to parse string \"" + string + "\" as long for range to", e);
                 }
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName) ||
-                       SESSION_ELEMENT.equalsIgnoreCase(localName)) {
+                       SESSION_ELEMENT.equalsIgnoreCase(localName) ||
+                       HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
                 addData();
 
             } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
@@ -461,6 +498,20 @@ public class PlanBFilter extends AbstractXMLFilter {
 
             } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
                 timeout = StroomDuration.parse(contentBuffer.toString());
+
+
+            } else if ("name".equalsIgnoreCase(localName)) {
+                currentName = contentBuffer.toString();
+            } else if ("value".equalsIgnoreCase(localName)) {
+                currentValue = contentBuffer.toString();
+            } else if ("tag".equalsIgnoreCase(localName)) {
+                if (currentName == null) {
+                    error("Name is null for tag");
+                } else if (currentValue == null) {
+                    error("Value is null for tag");
+                } else {
+                    currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                }
             }
         }
 
@@ -527,6 +578,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case RANGED_STATE -> addRangeState(doc);
                     case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
+                    case HISTOGRAM -> addHistogramValue(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
             } catch (final BufferOverflowException boe) {
@@ -552,6 +604,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         valueXmlDefaultNamespaceUri = null;
         time = null;
         timeout = null;
+        currentTags = null;
     }
 
     private void addState(final PlanBDoc doc) {
@@ -735,6 +788,20 @@ public class PlanBFilter extends AbstractXMLFilter {
 
             LOGGER.trace("Putting session {} into table {}", key, mapName);
             writer.addSession(doc, sessionBuilder.build());
+        }
+    }
+
+    private void addHistogramValue(final PlanBDoc doc) {
+        if (currentTags == null || currentTags.isEmpty()) {
+            error(LogUtil.message("Histogram 'tags' are null or empty for {}", mapName));
+        } else if (time == null) {
+            error(LogUtil.message("Histogram 'time' is null for {}", mapName));
+        } else {
+            final Tags tags = new Tags(currentTags);
+            final HistogramKey histogramKey = new HistogramKey(tags, time);
+            final HistogramValue histogramValue = new HistogramValue(histogramKey, Long.parseLong(currentValue));
+            LOGGER.trace("Putting histogram value {} into table {}", key, mapName);
+            writer.addHistogramValue(doc, histogramValue);
         }
     }
 

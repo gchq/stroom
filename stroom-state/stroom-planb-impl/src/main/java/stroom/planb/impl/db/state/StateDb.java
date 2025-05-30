@@ -208,10 +208,10 @@ public class StateDb extends AbstractDb<Val, Val> {
             try (final StateDb sourceDb = StateDb.create(source, byteBuffers, settings, true)) {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
-                            final Val key = keySerde.read(readTxn, kv.key());
-                            final ValTime value = valueSerde.read(readTxn, kv.val());
+                            final Val key = sourceDb.keySerde.read(readTxn, kv.key());
+                            final ValTime value = sourceDb.valueSerde.read(readTxn, kv.val());
                             insert(writer, new State(key, value.val()));
                         } else {
                             // Quick merge.

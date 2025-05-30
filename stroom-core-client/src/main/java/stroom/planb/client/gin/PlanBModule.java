@@ -18,6 +18,8 @@ package stroom.planb.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.planb.client.PlanBPlugin;
+import stroom.planb.client.presenter.HistogramSettingsPresenter;
+import stroom.planb.client.presenter.HistogramSettingsPresenter.HistogramSettingsView;
 import stroom.planb.client.presenter.PlanBPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
@@ -31,6 +33,7 @@ import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter;
 import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter.TemporalRangeStateSettingsView;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
+import stroom.planb.client.view.HistogramSettingsViewImpl;
 import stroom.planb.client.view.PlanBSettingsViewImpl;
 import stroom.planb.client.view.RangeStateSettingsViewImpl;
 import stroom.planb.client.view.SessionSettingsViewImpl;
@@ -63,5 +66,8 @@ public class PlanBModule extends PluginModule {
         bindPresenterWidget(SessionSettingsPresenter.class,
                 SessionSettingsView.class,
                 SessionSettingsViewImpl.class);
+        bindPresenterWidget(HistogramSettingsPresenter.class,
+                HistogramSettingsView.class,
+                HistogramSettingsViewImpl.class);
     }
 }

@@ -7,7 +7,8 @@ public enum StateType implements HasDisplayValue {
     TEMPORAL_STATE("Temporal State"),
     RANGED_STATE("Range State"),
     TEMPORAL_RANGED_STATE("Temporal Range State"),
-    SESSION("Session");
+    SESSION("Session"),
+    HISTOGRAM("Histogram");
 
     private final String displayValue;
 

@@ -1,5 +1,6 @@
 package stroom.planb.impl.db;
 
+import stroom.planb.impl.db.histogram.HistogramValue;
 import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.state.State;
@@ -18,7 +19,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TemporalState.class, name = "temporalState"),
         @JsonSubTypes.Type(value = RangeState.class, name = "rangeState"),
         @JsonSubTypes.Type(value = TemporalRangeState.class, name = "temporalRangeState"),
-        @JsonSubTypes.Type(value = Session.class, name = "session")
+        @JsonSubTypes.Type(value = Session.class, name = "session"),
+        @JsonSubTypes.Type(value = HistogramValue.class, name = "histogram")
 })
 public interface PlanBValue {
 
