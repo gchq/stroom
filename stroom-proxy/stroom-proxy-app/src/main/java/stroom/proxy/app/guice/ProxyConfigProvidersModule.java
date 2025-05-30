@@ -18,6 +18,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.DownstreamHostConfig getDownstreamHostConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.DownstreamHostConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.ProxyAuthenticationConfig getProxyAuthenticationConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(

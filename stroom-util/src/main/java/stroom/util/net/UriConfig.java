@@ -1,4 +1,4 @@
-package stroom.config.common;
+package stroom.util.net;
 
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
@@ -19,10 +19,10 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public abstract class UriConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final String PROP_NAME_SCHEME = "scheme";
-    private static final String PROP_NAME_HOSTNAME = "hostname";
-    private static final String PROP_NAME_PORT = "port";
-    private static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
+    public static final String PROP_NAME_SCHEME = "scheme";
+    public static final String PROP_NAME_HOSTNAME = "hostname";
+    public static final String PROP_NAME_PORT = "port";
+    public static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
 
     private final String scheme;
     private final String hostname;
@@ -37,10 +37,10 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
     }
 
     @JsonCreator
-    public UriConfig(@JsonProperty("scheme") final String scheme,
-                     @JsonProperty("hostname") final String hostname,
-                     @JsonProperty("port") final Integer port,
-                     @JsonProperty("pathPrefix") final String pathPrefix) {
+    public UriConfig(@JsonProperty(PROP_NAME_SCHEME) final String scheme,
+                     @JsonProperty(PROP_NAME_HOSTNAME) final String hostname,
+                     @JsonProperty(PROP_NAME_PORT) final Integer port,
+                     @JsonProperty(PROP_NAME_PATH_PREFIX) final String pathPrefix) {
         this.scheme = scheme;
         this.hostname = hostname;
         this.port = port;
@@ -75,15 +75,14 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
 
     @JsonProperty(PROP_NAME_PATH_PREFIX)
     @Pattern(regexp = "/[^/]+")
-    @JsonPropertyDescription("Any prefix to be added to the beginning of paths for this UIR. " +
+    @JsonPropertyDescription(
+            "Any prefix to be added to the beginning of paths for this UIR. " +
             "This may be needed if there is some form of gateway in front of Stroom that requires different paths.")
     public String getPathPrefix() {
         return pathPrefix;
     }
 
-
-    @Override
-    public String toString() {
+    public String asUri() {
         final StringBuilder sb = new StringBuilder();
         if (scheme != null) {
             sb.append(scheme).append("://");
@@ -108,6 +107,11 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
     }
 
     @Override
+    public String toString() {
+        return asUri();
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -117,9 +121,9 @@ public abstract class UriConfig extends AbstractConfig implements IsStroomConfig
         }
         final UriConfig uriConfig = (UriConfig) o;
         return Objects.equals(scheme, uriConfig.scheme) &&
-                Objects.equals(hostname, uriConfig.hostname) &&
-                Objects.equals(port, uriConfig.port) &&
-                Objects.equals(pathPrefix, uriConfig.pathPrefix);
+               Objects.equals(hostname, uriConfig.hostname) &&
+               Objects.equals(port, uriConfig.port) &&
+               Objects.equals(pathPrefix, uriConfig.pathPrefix);
     }
 
     @Override

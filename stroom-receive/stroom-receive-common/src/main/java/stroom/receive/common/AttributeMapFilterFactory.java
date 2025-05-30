@@ -2,6 +2,7 @@ package stroom.receive.common;
 
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveAction;
+import stroom.security.api.SecurityContext;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,6 +28,7 @@ public class AttributeMapFilterFactory {
     private final Provider<StreamTypeValidator> streamTypeValidatorProvider;
     private final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider;
     private final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider;
+    private final SecurityContext securityContext;
     private final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
 
@@ -38,6 +40,7 @@ public class AttributeMapFilterFactory {
             final Provider<StreamTypeValidator> streamTypeValidatorProvider,
             final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider,
             final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider,
+            final SecurityContext securityContext,
             final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory) {
 
@@ -45,6 +48,7 @@ public class AttributeMapFilterFactory {
         this.streamTypeValidatorProvider = streamTypeValidatorProvider;
         this.feedNameCheckAttributeMapFilterProvider = feedNameCheckAttributeMapFilterProvider;
         this.feedStatusAttributeMapFilterProvider = feedStatusAttributeMapFilterProvider;
+        this.securityContext = securityContext;
         this.contentAutoCreationAttrMapFilterFactory = contentAutoCreationAttrMapFilterFactory;
         this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
 
@@ -62,31 +66,33 @@ public class AttributeMapFilterFactory {
     }
 
     private AttributeMapFilter doCreate() {
-        final List<AttributeMapFilter> filters = new ArrayList<>();
-        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+        return securityContext.asProcessingUserResult(() -> {
+            final List<AttributeMapFilter> filters = new ArrayList<>();
+            final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
-        // !!!! ORDER IS IMPORTANT !!!!
-        // Some filters depend on others, so the order in the list matters.
+            // !!!! ORDER IS IMPORTANT !!!!
+            // Some filters depend on others, so the order in the list matters.
 
-        // Validate the stream type, if there is one
-        filters.add(streamTypeValidatorProvider.get());
+            // Validate the stream type, if there is one
+            filters.add(streamTypeValidatorProvider.get());
 
-        // This one validates the feed attr, or if it is not there (and config allows)
-        // generates it, so needs to go before most others.
-        filters.add(feedNameCheckAttributeMapFilterProvider.get());
+            // This one validates the feed attr, or if it is not there (and config allows)
+            // generates it, so needs to go before most others.
+            filters.add(feedNameCheckAttributeMapFilterProvider.get());
 
-        final ReceiptCheckMode receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
-        filters.add(getReceiptCheckFilter(receiptCheckMode));
+            final ReceiptCheckMode receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
+            filters.add(getReceiptCheckFilter(receiptCheckMode));
 
-        // Auto-create the feed/pipe/procFilter/userGrp/etc, if configured.
-        // On Proxy this will always be a ReceiveAll filter
-        filters.add(contentAutoCreationAttrMapFilterFactory.create());
+            // Auto-create the feed/pipe/procFilter/userGrp/etc, if configured.
+            // On Proxy this will always be a ReceiveAll filter
+            filters.add(contentAutoCreationAttrMapFilterFactory.create());
 
-        // This copes with nulls and compacts down the filter chain if there are
-        // ReceiveAll filters in there.
-        final AttributeMapFilter filterChain = AttributeMapFilter.wrap(filters);
-        LOGGER.debug("doCreate() - receiptCheckMode: {}, filterChain: {}", receiptCheckMode, filterChain);
-        return filterChain;
+            // This copes with nulls and compacts down the filter chain if there are
+            // ReceiveAll filters in there.
+            final AttributeMapFilter filterChain = AttributeMapFilter.wrap(filters);
+            LOGGER.debug("doCreate() - receiptCheckMode: {}, filterChain: {}", receiptCheckMode, filterChain);
+            return filterChain;
+        });
     }
 
     private AttributeMapFilter getReceiptCheckFilter(final ReceiptCheckMode receiptCheckMode) {

@@ -21,10 +21,14 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl.Checker;
 import stroom.receive.rules.shared.ReceiveAction;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Objects;
 
 class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataReceiptPolicyAttributeMapFilter.class);
 
     private final Checker checker;
 
@@ -37,7 +41,10 @@ class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
     public boolean filter(final AttributeMap attributeMap) {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
         final ReceiveAction action = checker.check(attributeMap);
-        return action.getFilterOutcome(() ->
+        final boolean filterOutcome = action.getFilterOutcome(() ->
                 new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap));
+        LOGGER.debug("filter() - filterOutcome: {}, action: {}, attributeMap: {}",
+                filterOutcome, action, attributeMap);
+        return filterOutcome;
     }
 }

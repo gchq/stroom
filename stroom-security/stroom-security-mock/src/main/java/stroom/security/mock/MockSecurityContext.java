@@ -17,6 +17,7 @@
 package stroom.security.mock;
 
 import stroom.docref.DocRef;
+import stroom.security.api.AppPermissionSet;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -80,6 +81,16 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
     }
 
     @Override
+    public boolean hasAppPermissions(final AppPermissionSet permissions) {
+        return true;
+    }
+
+    @Override
+    public boolean hasAppPermissions(final UserIdentity userIdentity, final AppPermissionSet permissions) {
+        return true;
+    }
+
+    @Override
     public boolean hasDocumentCreatePermission(final DocRef docRef, final String documentType) {
         return true;
     }
@@ -135,7 +146,17 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
     }
 
     @Override
+    public void secure(final AppPermissionSet permission, final Runnable runnable) {
+        runnable.run();
+    }
+
+    @Override
     public <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
+        return supplier.get();
+    }
+
+    @Override
+    public <T> T secureResult(final AppPermissionSet permissionSet, final Supplier<T> supplier) {
         return supplier.get();
     }
 

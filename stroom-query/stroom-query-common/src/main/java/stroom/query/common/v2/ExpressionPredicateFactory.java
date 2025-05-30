@@ -37,17 +37,20 @@ import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ExpressionPredicateFactory {
@@ -1124,11 +1127,11 @@ public class ExpressionPredicateFactory {
     private static class NumericInDictionary<T> extends ExpressionTermPredicate<T> {
 
         private final Function<T, Double> extractionFunction;
-        private final Double[] in;
+        private final Set<Double> in;
 
         private NumericInDictionary(final ExpressionTerm term,
                                     final Function<T, Double> extractionFunction,
-                                    final Double[] in) {
+                                    final Set<Double> in) {
             super(term);
             this.extractionFunction = extractionFunction;
             this.in = in;
@@ -1147,23 +1150,17 @@ public class ExpressionPredicateFactory {
                 return Optional.of(matchNone());
             }
 
-            final Double[] in = new Double[words.length];
-            for (int i = 0; i < words.length; i++) {
-                final String word = words[i];
-                in[i] = getTermNumber(term, word);
-            }
+            final Set<Double> in = Arrays.stream(words)
+                    .filter(NullSafe::isNonBlankString)
+                    .map(word -> getTermNumber(term, word))
+                    .collect(Collectors.toSet());
             return Optional.of(new NumericInDictionary<>(term, extractionFunction, in));
         }
 
         @Override
         public boolean test(final T values) {
             final Double val = extractionFunction.apply(values);
-            for (final Double n : in) {
-                if (Objects.equals(n, val)) {
-                    return true;
-                }
-            }
-            return false;
+            return in.contains(val);
         }
     }
 
@@ -1389,11 +1386,11 @@ public class ExpressionPredicateFactory {
     private static class DateInDictionary<T> extends ExpressionTermPredicate<T> {
 
         private final Function<T, Long> extractionFunction;
-        private final long[] in;
+        private final Set<Long> in;
 
         private DateInDictionary(final ExpressionTerm term,
                                  final Function<T, Long> extractionFunction,
-                                 final long[] in) {
+                                 final Set<Long> in) {
             super(term);
             this.extractionFunction = extractionFunction;
             this.in = in;
@@ -1413,23 +1410,17 @@ public class ExpressionPredicateFactory {
                 return Optional.of(matchNone());
             }
 
-            final long[] in = new long[words.length];
-            for (int i = 0; i < words.length; i++) {
-                final String word = words[i];
-                in[i] = getTermDate(term, word, dateTimeSettings);
-            }
+            final Set<Long> in = Arrays.stream(words)
+                    .filter(NullSafe::isNonBlankString)
+                    .map(word -> getTermDate(term, word, dateTimeSettings))
+                    .collect(Collectors.toSet());
             return Optional.of(new DateInDictionary<>(term, extractionFunction, in));
         }
 
         @Override
         public boolean test(final T values) {
             final Long val = extractionFunction.apply(values);
-            for (final long n : in) {
-                if (Objects.equals(n, val)) {
-                    return true;
-                }
-            }
-            return false;
+            return in.contains(val);
         }
     }
 
@@ -1938,14 +1929,16 @@ public class ExpressionPredicateFactory {
     private static class StringIn<T> extends ExpressionTermPredicate<T> {
 
         private final Function<T, String> extractionFunction;
-        private final String[] in;
+        private final Set<String> in;
 
         private StringIn(final ExpressionTerm term,
                          final Function<T, String> extractionFunction,
                          final String[] in) {
             super(term);
             this.extractionFunction = extractionFunction;
-            this.in = in;
+            this.in = NullSafe.stream(in)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
         }
 
         private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
@@ -1961,12 +1954,7 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             final String value = extractionFunction.apply(values);
-            for (final String n : in) {
-                if (Objects.equals(n, value)) {
-                    return true;
-                }
-            }
-            return false;
+            return in.contains(value);
         }
     }
 
@@ -1979,6 +1967,7 @@ public class ExpressionPredicateFactory {
         private final Function<T, String> extractionFunction;
         private final String[] in;
 
+        // Not used as far as I can see
         private StringInDictionary(final ExpressionTerm term,
                                    final Function<T, String> extractionFunction,
                                    final String[] in) {
@@ -2001,6 +1990,10 @@ public class ExpressionPredicateFactory {
             if (words.length == 0) {
                 return Optional.of(matchNone());
             }
+            // Not sure why we are creating a StringIn rather than a StringInDictionary.
+            // If we are being consistent then we should probably throw an ex if the line contains
+            // a space as that is the delimiter used when handling dicts in lucene searches.
+            // Here we are testing against one value, so AND between parts of a line makes no sense.
             return Optional.of(new StringIn<>(term, extractionFunction, words));
         }
 

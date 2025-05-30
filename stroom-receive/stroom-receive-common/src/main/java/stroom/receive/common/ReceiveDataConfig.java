@@ -75,7 +75,8 @@ public class ReceiveDataConfig
     public static final Set<String> DEFAULT_META_TYPES = CollectionUtil.asUnmodifiabledConsistentOrderSet(
             StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
 
-    public static final EnumSet<AuthenticationType> DEFAULT_AUTH_TYPES = EnumSet.of(AuthenticationType.CERTIFICATE);
+    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES = Collections.unmodifiableSet(
+            EnumSet.of(AuthenticationType.CERTIFICATE));
 
 //    public static final Map<String, String> DEFAULT_INITIAL_RECEIPT_RULE_FIELDS =
 //            CollectionUtil.linkedHashMapBuilder(String.class, String.class)
@@ -111,6 +112,7 @@ public class ReceiveDataConfig
 //                    .build();
 
     public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.FEED_STATUS;
+    // If we can't hit the downstream then we have to let everything in
     public static final ReceiveAction DEFAULT_FALLBACK_RECEIVE_ACTION = ReceiveAction.RECEIVE;
 
     @JsonProperty
@@ -194,7 +196,7 @@ public class ReceiveDataConfig
         this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
         this.enabledAuthenticationTypes = NullSafe.getOrElse(
                 enabledAuthenticationTypes,
-                authTypes -> NullSafe.enumSet(AuthenticationType.class, authTypes),
+                authTypes -> NullSafe.unmodifialbeEnumSet(AuthenticationType.class, authTypes),
                 DEFAULT_AUTH_TYPES);
         this.authenticationRequired = Objects.requireNonNullElse(
                 authenticationRequired, DEFAULT_AUTHENTICATION_REQUIRED);
@@ -386,8 +388,9 @@ public class ReceiveDataConfig
         return receiptCheckMode;
     }
 
-    @JsonPropertyDescription("If receiptCheckMode is RECEIPT_POLICY and stroom/proxy is unable to access the " +
-                             "receipt rules, then this action will be used.")
+    @JsonPropertyDescription("If receiptCheckMode is RECEIPT_POLICY or FEED_STATUS and stroom/proxy is " +
+                             "unable to perform the receipt check, then this action will be used as a fallback " +
+                             "until the receipt check can be successfully performed.")
     public ReceiveAction getFallbackReceiveAction() {
         return fallbackReceiveAction;
     }
@@ -545,11 +548,13 @@ public class ReceiveDataConfig
         FEED_STATUS,
         /**
          * The meta attributes from the headers will be checked against the receipt policy rules to determine
-         * whether the data should be accepted for receipt, rejected or silently dropped.
+         * whether the data should be accepted for receipt, rejected or silently dropped. ALL downstream
+         * stroom-proxy instances in the chain must also use this mode if this mode is set.
          */
         RECEIPT_POLICY,
         /**
-         * No check is performed. All data is accepted for receipt (pending any other checks).
+         * No check is performed. All data is accepted for receipt (subject to other checks
+         * like presence of stream type).
          */
         RECEIVE_ALL,
         /**
@@ -613,19 +618,19 @@ public class ReceiveDataConfig
         }
 
         public Builder withEnabledAuthenticationTypes(final Set<AuthenticationType> val) {
-            enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, val);
+            enabledAuthenticationTypes = NullSafe.mutableEnumSet(AuthenticationType.class, val);
             return this;
         }
 
         public Builder withEnabledAuthenticationTypes(final AuthenticationType... values) {
-            enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, values);
+            enabledAuthenticationTypes = NullSafe.mutableEnumSetOf(AuthenticationType.class, values);
             return this;
         }
 
         public Builder addEnabledAuthenticationType(final AuthenticationType val) {
             if (val != null) {
                 if (enabledAuthenticationTypes == null) {
-                    enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, val);
+                    enabledAuthenticationTypes = NullSafe.mutableEnumSetOf(AuthenticationType.class, val);
                 } else {
                     enabledAuthenticationTypes.add(val);
                 }

@@ -22,10 +22,13 @@ import org.fusesource.restygwt.client.DirectRestService;
 import java.util.Collection;
 
 @Tag(name = "API Key")
-@Path("/apikey" + ResourcePaths.V2)
+@Path(ApiKeyResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ApiKeyResource extends RestResource, DirectRestService, FetchWithIntegerId<HashedApiKey> {
+public interface ApiKeyResource
+        extends ApiKeyCheckResource, RestResource, DirectRestService, FetchWithIntegerId<HashedApiKey> {
+
+    String BASE_PATH = "/apikey" + ResourcePaths.V2;
 
     @POST
     @Path("/")

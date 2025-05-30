@@ -26,6 +26,7 @@ public class StreamTypeValidator implements AttributeMapFilter {
     public boolean filter(final AttributeMap attributeMap) {
         // Get the type name from the header arguments if supplied.
         final String type = NullSafe.trim(attributeMap.get(StandardHeaderArguments.TYPE));
+        LOGGER.debug("filter() - type: {}, attributeMap: {}", type, attributeMap);
         if (!type.isEmpty() && !validStreamTypes.contains(type)) {
             LOGGER.debug("filter() - invalid type: {}, validStreamTypes: {}", type, validStreamTypes);
             throw new StroomStreamException(StroomStatusCode.INVALID_TYPE, attributeMap);

@@ -93,7 +93,6 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
         @Override
         public String hash(final String value, final String salt) {
             final String saltedVal = getSaltedValue(value, salt);
-//            return DigestUtils.sha256Hex(saltedVal);
             return Base58.encode(DigestUtils.sha256(saltedVal));
         }
 
@@ -112,7 +111,6 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
         @Override
         public String hash(final String value, final String salt) {
             final String saltedVal = getSaltedValue(value, salt);
-//            return DigestUtils.sha512Hex(saltedVal);
             return Base58.encode(DigestUtils.sha512(saltedVal));
         }
 
@@ -215,7 +213,6 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
             // due to use in bitcoin.
             return Base58.encode(result);
         }
-
 
         @Override
         public HashAlgorithm getType() {

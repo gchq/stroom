@@ -328,7 +328,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         try {
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             return User.builder()
-                    .withId(userIdentity.getSubjectId())
+                    .withId(userIdentity.subjectId())
                     .withName(userIdentity.getDisplayName())
                     .build();
         } catch (final RuntimeException e) {
@@ -401,8 +401,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                     return "Empty collection";
                 } else {
                     return "Collection containing " + (long) collection.size() + " "
-                            + collection.stream().findFirst().get().getClass().getSimpleName() +
-                            " and possibly other objects";
+                           + collection.stream().findFirst().get().getClass().getSimpleName() +
+                           " and possibly other objects";
                 }
             }
             return object.getClass().getSimpleName();
@@ -587,13 +587,13 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 Collection<?> collection = (Collection<?>) valObj;
 
                 if (loggingConfig.getMaxListElements() >= 0
-                        && collection.size() > loggingConfig.getMaxListElements()) {
+                    && collection.size() > loggingConfig.getMaxListElements()) {
                     final String collectionValue = collection.stream()
                             .limit(loggingConfig.getMaxListElements())
                             .map(Objects::toString)
                             .collect(Collectors.joining(", "));
                     builder.withValue(collectionValue + "...(" + collection.size() +
-                            " elements in total).");
+                                      " elements in total).");
                 } else {
                     final String collectionValue = collection.stream()
                             .map(Objects::toString)
@@ -663,35 +663,35 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private static boolean isLeafPropertyType(final Class<?> type) {
 
         boolean isLeaf = type.equals(String.class) ||
-                type.equals(Byte.class) ||
-                type.equals(byte.class) ||
-                type.equals(Integer.class) ||
-                type.equals(int.class) ||
-                type.equals(Long.class) ||
-                type.equals(long.class) ||
-                type.equals(Short.class) ||
-                type.equals(short.class) ||
-                type.equals(Float.class) ||
-                type.equals(float.class) ||
-                type.equals(Double.class) ||
-                type.equals(double.class) ||
-                type.equals(Boolean.class) ||
-                type.equals(boolean.class) ||
-                type.equals(Character.class) ||
-                type.equals(char.class) ||
+                         type.equals(Byte.class) ||
+                         type.equals(byte.class) ||
+                         type.equals(Integer.class) ||
+                         type.equals(int.class) ||
+                         type.equals(Long.class) ||
+                         type.equals(long.class) ||
+                         type.equals(Short.class) ||
+                         type.equals(short.class) ||
+                         type.equals(Float.class) ||
+                         type.equals(float.class) ||
+                         type.equals(Double.class) ||
+                         type.equals(double.class) ||
+                         type.equals(Boolean.class) ||
+                         type.equals(boolean.class) ||
+                         type.equals(Character.class) ||
+                         type.equals(char.class) ||
 
-                DocRef.class.isAssignableFrom(type) ||
-                Enum.class.isAssignableFrom(type) ||
-                Path.class.isAssignableFrom(type) ||
-                StroomDuration.class.isAssignableFrom(type) ||
-                ByteSize.class.isAssignableFrom(type) ||
-                Date.class.isAssignableFrom(type) ||
-                Instant.class.isAssignableFrom(type) ||
-                (type.isArray() &&
-                        (type.getComponentType().equals(Byte.class) ||
-                                type.getComponentType().equals(byte.class) ||
-                                type.getComponentType().equals(Character.class) ||
-                                type.getComponentType().equals(char.class)));
+                         DocRef.class.isAssignableFrom(type) ||
+                         Enum.class.isAssignableFrom(type) ||
+                         Path.class.isAssignableFrom(type) ||
+                         StroomDuration.class.isAssignableFrom(type) ||
+                         ByteSize.class.isAssignableFrom(type) ||
+                         Date.class.isAssignableFrom(type) ||
+                         Instant.class.isAssignableFrom(type) ||
+                         (type.isArray() &&
+                          (type.getComponentType().equals(Byte.class) ||
+                           type.getComponentType().equals(byte.class) ||
+                           type.getComponentType().equals(Character.class) ||
+                           type.getComponentType().equals(char.class)));
 
         LOGGER.trace("isLeafPropertyType({}), returning: {}", type, isLeaf);
         return isLeaf;
@@ -705,11 +705,11 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 return method.callOn(obj);
             } catch (Exception e) {
                 LOGGER.debug("Error calling getter of " + beanPropDef.getName() + " on class " +
-                        obj.getClass().getSimpleName(), e);
+                             obj.getClass().getSimpleName(), e);
             }
         } else {
             LOGGER.debug("No getter for property " + beanPropDef.getName() + " of class " +
-                    obj.getClass().getSimpleName());
+                         obj.getClass().getSimpleName());
         }
 
         return null;
@@ -726,10 +726,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         //TODO consider replacing or augmenting this hard coding
         // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
         return propNameLowercase.endsWith("password") ||
-                propNameLowercase.endsWith("secret") ||
-                propNameLowercase.endsWith("token") ||
-                propNameLowercase.endsWith("nonce") ||
-                propNameLowercase.endsWith("key");
+               propNameLowercase.endsWith("secret") ||
+               propNameLowercase.endsWith("token") ||
+               propNameLowercase.endsWith("nonce") ||
+               propNameLowercase.endsWith("key");
     }
 
 

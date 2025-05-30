@@ -53,7 +53,7 @@ class SessionResourceImpl implements SessionResource {
         Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
         userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
         if (userIdentity.isPresent()) {
-            return new ValidateSessionResponse(true, userIdentity.get().getSubjectId(), null);
+            return new ValidateSessionResponse(true, userIdentity.get().subjectId(), null);
         }
 
         // If the session doesn't have a user ref then attempt login.
@@ -64,7 +64,7 @@ class SessionResourceImpl implements SessionResource {
             userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
             return userIdentity
                     .map(identity ->
-                            createValidResponse(identity.getSubjectId()))
+                            createValidResponse(identity.subjectId()))
                     .orElseGet(() -> createRedirectResponse(request, postAuthRedirectUri));
 
         } catch (final RuntimeException e) {
@@ -111,7 +111,7 @@ class SessionResourceImpl implements SessionResource {
             UserIdentitySessionUtil.get(session).ifPresent(userIdentity -> {
                 stroomUserIdentityFactoryProvider.get().logoutUser(userIdentity);
                 // Create an event for logout
-                authenticationEventLogProvider.get().logoff(userIdentity.getSubjectId());
+                authenticationEventLogProvider.get().logoff(userIdentity.subjectId());
             });
 
             // Remove the user identity from the current session.

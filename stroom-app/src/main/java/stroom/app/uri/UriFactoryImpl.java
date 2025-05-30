@@ -5,8 +5,8 @@ import stroom.config.app.Config;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
+import stroom.util.net.UriConfig;
 
 import io.dropwizard.core.server.DefaultServerFactory;
 import io.dropwizard.jetty.ConnectorFactory;

@@ -13,15 +13,15 @@ public class CertificateUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return commonName;
     }
 
     @Override
     public String toString() {
         return "CertificateUserIdentity{" +
-                "commonName='" + commonName + '\'' +
-                '}';
+               "commonName='" + commonName + '\'' +
+               '}';
     }
 
     @Override

@@ -26,6 +26,7 @@ import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
@@ -109,7 +110,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ContentTemplateStore contentTemplateStore,
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
-                                          final ExpressionMatcherFactory expressionMatcherFactory) {
+                                          final ExpressionMatcherFactory expressionMatcherFactory,
+                                          final ExpressionPredicateFactory expressionPredicateFactory) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -124,6 +126,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+        // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
                 .withMaxCheckInterval(CHECK_INTERVAL)
                 .withStateSupplier(() ->

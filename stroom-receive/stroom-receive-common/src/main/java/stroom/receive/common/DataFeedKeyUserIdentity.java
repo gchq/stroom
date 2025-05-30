@@ -21,7 +21,7 @@ public class DataFeedKeyUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return subjectId;
     }
 

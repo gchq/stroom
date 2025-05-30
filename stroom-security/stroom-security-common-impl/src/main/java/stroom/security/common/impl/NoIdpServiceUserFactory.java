@@ -7,7 +7,7 @@ public class NoIdpServiceUserFactory implements ServiceUserFactory {
 
     private static final UserIdentity NO_IDP_SERVICE_USER_IDENTITY = new UserIdentity() {
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return "NO_IDP SERVICE USER";
         }
     };

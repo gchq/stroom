@@ -7,6 +7,19 @@ proxyConfig:
     maxUncompressedByteSize: "1.0G"
     splitSources: true
   contentDir: "content"
+  downstreamHost:
+    apiKey: null
+    apiKeyVerificationUrl: null
+    hostname: null
+    pathPrefix: null
+    port: null
+    scheme: "https"
+    verifiedApiKeysCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT30M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "DROPWIZARD_METRICS"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
@@ -20,8 +33,6 @@ proxyConfig:
       statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
-    apiKey: null
-    defaultStatus: "Receive"
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null
@@ -106,7 +117,6 @@ proxyConfig:
     temp: null
   proxyId: null
   receiptPolicy:
-    apiKey: null
     receiveDataRulesUrl: null
     syncFrequency: "PT1M"
   receive:

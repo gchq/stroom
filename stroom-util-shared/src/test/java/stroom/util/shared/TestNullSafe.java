@@ -33,6 +33,7 @@ import io.vavr.Tuple4;
 import io.vavr.Tuple5;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -1598,18 +1599,21 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testEnumSet() {
+    Stream<DynamicTest> testMutableEnumSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<TestEnum>>() {
                 })
                 .withTestFunction(testCase ->
-                        NullSafe.enumSet(TestEnum.class, testCase.getInput()))
+                        NullSafe.mutableEnumSet(TestEnum.class, testCase.getInput()))
                 .withAssertions(testOutcome -> {
                     final Set<TestEnum> actual = testOutcome.getActualOutput();
                     assertThat(actual)
                             .isNotNull()
                             .isEqualTo(testOutcome.getExpectedOutput())
                             .isInstanceOf(EnumSet.class);
+
+                    // Make sure the set is mutable
+                    actual.clear();
                 })
                 .addCase(null, Collections.emptySet())
                 .addCase(Collections.emptySet(), EnumSet.noneOf(TestEnum.class))
@@ -1619,19 +1623,74 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testEnumSetOf() {
+    Stream<DynamicTest> testUnmodifiableEnumSet() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<TestEnum>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifialbeEnumSet(TestEnum.class, testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<TestEnum> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isNotNull()
+                            .isEqualTo(testOutcome.getExpectedOutput())
+                            .isInstanceOf(Set.class);
+
+                    if (!actual.isEmpty()) {
+                        Assertions.assertThatThrownBy(actual::clear)
+                                .isInstanceOf(RuntimeException.class);
+                    }
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), EnumSet.noneOf(TestEnum.class))
+                .addCase(Set.of(TestEnum.A, TestEnum.C), Set.of(TestEnum.A, TestEnum.C))
+                .addCase(EnumSet.of(TestEnum.A, TestEnum.B), Set.of(TestEnum.A, TestEnum.B))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testMutableEnumSetOf() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(TestEnum[].class)
                 .withWrappedOutputType(new TypeLiteral<Set<TestEnum>>() {
                 })
                 .withTestFunction(testCase ->
-                        NullSafe.enumSetOf(TestEnum.class, testCase.getInput()))
+                        NullSafe.mutableEnumSetOf(TestEnum.class, testCase.getInput()))
                 .withAssertions(testOutcome -> {
                     final Set<TestEnum> actual = testOutcome.getActualOutput();
                     assertThat(actual)
                             .isNotNull()
                             .isEqualTo(testOutcome.getExpectedOutput())
                             .isInstanceOf(EnumSet.class);
+
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(new TestEnum[0], EnumSet.noneOf(TestEnum.class))
+                .addCase(new TestEnum[]{null}, EnumSet.noneOf(TestEnum.class))
+                .addCase(new TestEnum[]{null, TestEnum.A}, EnumSet.of(TestEnum.A))
+                .addCase(new TestEnum[]{TestEnum.B, TestEnum.A}, EnumSet.of(TestEnum.B, TestEnum.A))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testUnmodifiableEnumSetOf() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(TestEnum[].class)
+                .withWrappedOutputType(new TypeLiteral<Set<TestEnum>>() {
+                })
+                .withTestFunction(testCase ->
+                        NullSafe.unmodifiableEnumSetOf(TestEnum.class, testCase.getInput()))
+                .withAssertions(testOutcome -> {
+                    final Set<TestEnum> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isNotNull()
+                            .isEqualTo(testOutcome.getExpectedOutput())
+                            .isInstanceOf(Set.class);
+
+                    if (!actual.isEmpty()) {
+                        Assertions.assertThatThrownBy(actual::clear)
+                                .isInstanceOf(RuntimeException.class);
+                    }
                 })
                 .addCase(null, Collections.emptySet())
                 .addCase(new TestEnum[0], EnumSet.noneOf(TestEnum.class))

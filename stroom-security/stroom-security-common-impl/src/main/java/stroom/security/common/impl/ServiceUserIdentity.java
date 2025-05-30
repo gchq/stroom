@@ -31,7 +31,7 @@ public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasJwt, 
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return id;
     }
 

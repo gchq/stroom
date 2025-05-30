@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
@@ -45,6 +47,7 @@ public class CachedValue<V, S> {
     private final AtomicBoolean isAsyncUpdateInProgress = new AtomicBoolean(false);
 
     private final AtomicLong nextCheckEpochMs = new AtomicLong(UNINITIALISED);
+    private final Executor executor;
     private volatile S state = null;
     private volatile V value = null;
 
@@ -64,10 +67,14 @@ public class CachedValue<V, S> {
      */
     private CachedValue(final Duration maxCheckInterval,
                         final BiFunction<S, V, V> valueSupplier,
-                        final Supplier<S> stateSupplier) {
+                        final Supplier<S> stateSupplier,
+                        final Executor executor) {
         this.checkIntervalMs = Objects.requireNonNull(maxCheckInterval).toMillis();
         this.valueSupplier = Objects.requireNonNull(valueSupplier);
         this.stateSupplier = stateSupplier;
+        // isAsyncUpdateInProgress prevents two threads from doing an async update concurrently
+        // so use a newSingleThreadExecutor by default
+        this.executor = Objects.requireNonNullElseGet(executor, Executors::newSingleThreadExecutor);
     }
 
     private CheckResult<S> checkUpdateRequired() {
@@ -157,7 +164,7 @@ public class CachedValue<V, S> {
                     } finally {
                         isAsyncUpdateInProgress.set(false);
                     }
-                });
+                }, executor);
             } else {
                 LOGGER.debug("getValueAsync() - Another thread has initiated an update");
             }
@@ -380,6 +387,7 @@ public class CachedValue<V, S> {
         private final Duration maxCheckInterval;
         private final Supplier<S> stateSupplier;
         private final BiFunction<S, V, V> valueFunction;
+        private Executor executor;
 
         private BuilderStage4(final Duration maxCheckInterval,
                               final Supplier<S> stateSupplier,
@@ -389,8 +397,18 @@ public class CachedValue<V, S> {
             this.valueFunction = valueFunction;
         }
 
+        /**
+         * Optionally provide an executor to use with {@link CachedValue#getValueAsync()}, e.g.
+         * to use a cached thread pool. If not provided, {@link Executors#newSingleThreadExecutor()}
+         * will be used by default.
+         */
+        public BuilderStage4<S, V> withExecutor(final Executor executor) {
+            this.executor = executor;
+            return this;
+        }
+
         public CachedValue<V, S> build() {
-            return new CachedValue<>(maxCheckInterval, valueFunction, stateSupplier);
+            return new CachedValue<>(maxCheckInterval, valueFunction, stateSupplier, executor);
         }
     }
 

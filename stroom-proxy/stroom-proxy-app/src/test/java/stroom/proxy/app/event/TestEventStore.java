@@ -36,7 +36,8 @@ public class TestEventStore {
                 () -> eventStoreConfig,
                 dataDirProvider,
                 new FileStores(metrics),
-                new CacheManagerImpl(() -> metrics));
+                new CacheManagerImpl(() -> metrics),
+                metrics);
 
         for (int i = 0; i < 10; i++) {
             final AttributeMap attributeMap = new AttributeMap();

@@ -232,8 +232,8 @@ class SecurityFilter implements Filter {
                 optUserIdentity.map(
                                 identity -> {
                                     final String id = identity.getDisplayName() != null
-                                            ? identity.getSubjectId() + " (" + identity.getDisplayName() + ")"
-                                            : identity.getSubjectId();
+                                            ? identity.subjectId() + " (" + identity.getDisplayName() + ")"
+                                            : identity.subjectId();
                                     return LogUtil.message("'{}' {}",
                                             id,
                                             identity.getClass().getSimpleName());

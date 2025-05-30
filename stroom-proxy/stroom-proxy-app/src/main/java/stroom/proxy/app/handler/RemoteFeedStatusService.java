@@ -2,6 +2,7 @@ package stroom.proxy.app.handler;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
@@ -38,7 +39,6 @@ import jakarta.ws.rs.core.Response.StatusType;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -55,6 +55,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
     private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
+    private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
@@ -62,12 +63,13 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
-    RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
+    RemoteFeedStatusService(final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
+                            final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final JerseyClientFactory jerseyClientFactory,
                             final UserIdentityFactory userIdentityFactory,
-                            final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter,
                             final CacheManager cacheManager,
                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+        this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
@@ -100,9 +102,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
 
-        final FeedStatus defaultFeedStatus = Objects.requireNonNullElse(
-                feedStatusConfig.getDefaultStatus(),
-                FeedStatus.Receive);
+        final FeedStatus defaultFeedStatus = getDefaultFeedStatus();
 
         // If remote feed status checking is disabled then return the default status.
         if (!isFeedStatusCheckEnabled()) {
@@ -147,6 +147,35 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                && NullSafe.isNonBlankString(feedStatusConfigProvider.get().getFeedStatusUrl());
     }
 
+    private FeedStatus getDefaultFeedStatus() {
+        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+        return switch (receiveDataConfig.getReceiptCheckMode()) {
+            case FEED_STATUS -> switch (receiveDataConfig.getFallbackReceiveAction()) {
+                case RECEIVE -> FeedStatus.Receive;
+                case REJECT -> FeedStatus.Reject;
+                case DROP -> FeedStatus.Drop;
+                case null -> FeedStatus.Receive;
+            };
+            case RECEIVE_ALL -> FeedStatus.Receive;
+            case REJECT_ALL -> FeedStatus.Reject;
+            case DROP_ALL -> FeedStatus.Drop;
+            case null, default -> throw new IllegalStateException(
+                    "Not expecting receiptCheckMode " + receiveDataConfig.getReceiptCheckMode());
+        };
+    }
+
+    private String getFeedStatusCheckUrl() {
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final String url;
+        if (NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl())) {
+            url = feedStatusConfig.getFeedStatusUrl();
+        } else {
+            url = downstreamHostConfigProvider.get().getUri(FeedStatusConfig.DEFAULT_URL_PATH);
+        }
+        LOGGER.debug("getUrl() - url: {}", url);
+        return url;
+    }
+
     private GetFeedStatusResponse callFeedStatus(final GetFeedStatusRequestV2 request) {
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final String url = feedStatusConfig.getFeedStatusUrl();
@@ -183,8 +212,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                 feedStatusConfig.getFeedStatusUrl(),
                 GET_FEED_STATUS_PATH));
 
-        final WebTarget webTarget = getFeedStatusWebTarget(feedStatusConfig);
-
+        final WebTarget webTarget = getFeedStatusWebTarget();
         final DurationTimer timer = DurationTimer.start();
         try (final Response response = getFeedStatusResponse(feedStatusConfig, webTarget, request)) {
             LOGGER.debug("Received response {}, duration: {}", response, timer);
@@ -201,10 +229,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
     }
 
-    private WebTarget getFeedStatusWebTarget(final FeedStatusConfig feedStatusConfig) {
+    private WebTarget getFeedStatusWebTarget() {
         return jerseyClientFactory.createWebTarget(
-                        JerseyClientName.FEED_STATUS, feedStatusConfig.getFeedStatusUrl())
-                .path(GET_FEED_STATUS_PATH);
+                JerseyClientName.DOWNSTREAM,
+                getFeedStatusCheckUrl());
     }
 
     private Response getFeedStatusResponse(final FeedStatusConfig feedStatusConfig,
@@ -212,19 +240,21 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                                            final GetFeedStatusRequestV2 feedStatusRequest) {
         return webTarget
                 .request(MediaType.APPLICATION_JSON)
-                .headers(getHeaders(feedStatusConfig))
+                .headers(getAuthHeaders())
                 .post(Entity.json(feedStatusRequest));
     }
 
-    private MultivaluedMap<String, Object> getHeaders(final FeedStatusConfig feedStatusConfig) {
+    private MultivaluedMap<String, Object> getAuthHeaders() {
         final Map<String, String> headers;
 
-        if (!NullSafe.isBlankString(feedStatusConfig.getApiKey())) {
+        final DownstreamHostConfig downstreamHostConfig = downstreamHostConfigProvider.get();
+        final String apiKey = downstreamHostConfig.getApiKey();
+        if (!NullSafe.isBlankString(apiKey)) {
             // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
             // and add it to config.
             LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
-                    feedStatusConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
-            headers = userIdentityFactory.getAuthHeaders(feedStatusConfig.getApiKey());
+                    downstreamHostConfig.getFullPathStr(DownstreamHostConfig.PROP_NAME_API_KEY)));
+            headers = userIdentityFactory.getAuthHeaders(apiKey);
         } else {
             // Use a token from the external IDP
             headers = userIdentityFactory.getServiceUserAuthHeaders();
@@ -237,10 +267,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         LOGGER.debug("getHealth called");
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-        final String url = feedStatusConfig.getFeedStatusUrl();
-        resultBuilder.withDetail("url", getFeedStatusWebTarget(feedStatusConfig).getUri().toString());
+        resultBuilder.withDetail("url", getFeedStatusWebTarget().getUri().toString());
 
-        if (NullSafe.isBlankString(url)) {
+        if (!isFeedStatusCheckEnabled()) {
             // If no url is configured then no feed status checking is required so we consider this healthy
             resultBuilder.healthy();
         } else {

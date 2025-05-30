@@ -1,32 +1,44 @@
 package stroom.proxy.app.security;
 
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.HttpHeaders;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 
-@Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyUserIdentityFactory.class);
+
+    private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -35,7 +47,9 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final CertificateExtractor certificateExtractor,
                              final ServiceUserFactory serviceUserFactory,
                              final JerseyClientFactory jerseyClientFactory,
-                             final RefreshManager refreshManager) {
+                             final RefreshManager refreshManager,
+                             final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider,
+                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
@@ -44,6 +58,8 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                 jerseyClientFactory,
                 refreshManager);
         this.openIdConfigurationProvider = openIdConfigProvider;
+        this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
     @Override
@@ -69,5 +85,56 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                                                          final HttpServletRequest request,
                                                          final TokenResponse tokenResponse) {
         throw new UnsupportedOperationException("UI Auth flow not applicable to stroom-proxy");
+    }
+
+    @Override
+    public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
+        if (IdpType.NO_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
+            final String apiKey = extractApiKey(request);
+            if (NullSafe.isNonBlankString(apiKey)) {
+                final VerifyApiKeyRequest verifyApiKeyRequest = new VerifyApiKeyRequest(
+                        apiKey,
+                        EnumSet.of(AppPermission.STROOM_PROXY));
+                final Optional<UserDesc> optUserDesc = proxyApiKeyServiceProvider.get()
+                        .verifyApiKey(verifyApiKeyRequest);
+
+                return optUserDesc.map(this::createSimpleIdentity);
+            } else {
+                LOGGER.debug("No API key in request");
+                return Optional.empty();
+            }
+        } else {
+            return super.getApiUserIdentity(request);
+        }
+    }
+
+    private UserIdentity createSimpleIdentity(final UserDesc userDesc) {
+        Objects.requireNonNull(userDesc);
+        final String subjectId = userDesc.getSubjectId();
+        final String displayName = userDesc.getDisplayName();
+        final Optional<String> optFullName = Optional.ofNullable(userDesc.getFullName());
+
+        return new UserIdentity() {
+            @Override
+            public String subjectId() {
+                return subjectId;
+            }
+
+            @Override
+            public String getDisplayName() {
+                return displayName;
+            }
+
+            @Override
+            public Optional<String> getFullName() {
+                return optFullName;
+            }
+        };
+    }
+
+    private String extractApiKey(final HttpServletRequest request) {
+        return NullSafe.get(
+                request.getHeader(HttpHeaders.AUTHORIZATION),
+                header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
     }
 }

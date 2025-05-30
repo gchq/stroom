@@ -18,6 +18,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -32,6 +33,7 @@ public class ProxySecurityModule extends AbstractModule {
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
+        bind(ProxyApiKeyService.class).to(ProxyApiKeyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
@@ -44,5 +46,8 @@ public class ProxySecurityModule extends AbstractModule {
                 .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
                 .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class)
                 .addBinding(IdpType.NO_IDP, NoIdpServiceUserFactory.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(ProxyApiKeyResourceImpl.class);
     }
 }

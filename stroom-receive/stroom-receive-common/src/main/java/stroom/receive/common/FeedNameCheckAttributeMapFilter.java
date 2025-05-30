@@ -26,8 +26,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedNameCheckAttributeMapFilter.class);
 
-//    public static final String NAME_PART_DELIMITER = "-";
-
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final CachedValue<FeedNameGenerator, ConfigState> cachedFeedNameGenerator;
 
@@ -66,6 +64,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 feedName = cachedFeedNameGenerator.getValue()
                         .generateName(attributeMap);
                 // Add the derived feed name as everything else depends on the feed name
+                LOGGER.debug("filter() - feedName: {}, attributeMap: {}", feedName, attributeMap);
                 attributeMap.put(StandardHeaderArguments.FEED, feedName);
             }
         } else {
@@ -73,7 +72,6 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
             }
         }
-
         return true;
     }
 

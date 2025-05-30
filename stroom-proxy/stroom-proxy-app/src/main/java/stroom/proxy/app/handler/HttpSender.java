@@ -59,6 +59,7 @@ public class HttpSender implements StreamDestination {
     // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
     private static final Set<StroomStatusCode> NON_RECOVERABLE_STATUS_CODES = EnumSet.of(
             StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+            StroomStatusCode.REJECTED_BY_POLICY_RULES,
             StroomStatusCode.UNEXPECTED_DATA_TYPE,
             StroomStatusCode.FEED_MUST_BE_SPECIFIED);
 
@@ -103,8 +104,6 @@ public class HttpSender implements StreamDestination {
 
         // We need to add the authentication token to our headers
         final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
-        attributeMap.putAll(authHeaders);
-
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         LOGGER.debug(() -> LogUtil.message(

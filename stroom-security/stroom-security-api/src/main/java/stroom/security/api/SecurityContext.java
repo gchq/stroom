@@ -30,7 +30,7 @@ public interface SecurityContext extends HasAuditableUserIdentity {
     /**
      * @return The user identity in a form suitable for use in audit events, for display
      * in the UI, or in exception messages. Returns {@link UserIdentity#getDisplayName()} or
-     * if that is not set {@link UserIdentity#getSubjectId()}.
+     * if that is not set {@link UserIdentity#subjectId()}.
      */
     default String getUserIdentityForAudit() {
         final UserIdentity userIdentity = getUserIdentity();
@@ -110,6 +110,25 @@ public interface SecurityContext extends HasAuditableUserIdentity {
 
     /**
      * Check if the user associated with this security context has the requested
+     * permission to use the specified functionality.
+     *
+     * @param permissions The permission we are checking for. All must be held.
+     * @return True if the user associated with the security context has the
+     * requested permission.
+     */
+    boolean hasAppPermissions(AppPermissionSet permissions);
+
+    /**
+     * Check if the supplied user has the requested
+     * permission to use the specified functionality.
+     *
+     * @param permissions The permission we are checking for. All must be held.
+     * @return True if the supplied user has the requested permission.
+     */
+    boolean hasAppPermissions(UserIdentity userIdentity, AppPermissionSet permissions);
+
+    /**
+     * Check if the user associated with this security context has the requested
      * permission on the document specified by the document docRef.
      *
      * @param docRef     The docRef of the document.
@@ -176,10 +195,14 @@ public interface SecurityContext extends HasAuditableUserIdentity {
      */
     void secure(AppPermission permission, Runnable runnable);
 
+    void secure(AppPermissionSet permission, Runnable runnable);
+
     /**
      * Secure the supplied code with the supplied application permission.
      */
     <T> T secureResult(AppPermission permission, Supplier<T> supplier);
+
+    <T> T secureResult(AppPermissionSet permissionSet, Supplier<T> supplier);
 
     /**
      * Secure the supplied code to ensure that there is a current authenticated user.

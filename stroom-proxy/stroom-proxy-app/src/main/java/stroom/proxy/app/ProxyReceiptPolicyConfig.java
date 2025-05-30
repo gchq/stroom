@@ -1,7 +1,9 @@
 package stroom.proxy.app;
 
+import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,35 +16,35 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 
     public static final StroomDuration DEFAULT_SYNC_FREQUENCY = StroomDuration.ofMinutes(1);
 
+    public static final String DEFAULT_URL_PATH = ResourcePaths.buildAuthenticatedApiPath(
+            ReceiveDataRuleSetResource.BASE_RESOURCE_PATH,
+            ReceiveDataRuleSetResource.FETCH_HASHED_PATH_PART);
+
     private final String receiveDataRulesUrl;
     private final StroomDuration syncFrequency;
-    private final String apiKey;
+//    private final String apiKey;
 
     public ProxyReceiptPolicyConfig() {
         receiveDataRulesUrl = null;
         syncFrequency = DEFAULT_SYNC_FREQUENCY;
-        apiKey = null;
+//        apiKey = null;
     }
 
     public ProxyReceiptPolicyConfig(final String receiveDataRulesUrl,
-                                    final StroomDuration syncFrequency,
-                                    final String apiKey) {
+                                    final StroomDuration syncFrequency) {
         this.receiveDataRulesUrl = receiveDataRulesUrl;
         this.syncFrequency = Objects.requireNonNullElse(syncFrequency, DEFAULT_SYNC_FREQUENCY);
-        this.apiKey = apiKey;
     }
 
     private ProxyReceiptPolicyConfig(final Builder builder) {
         receiveDataRulesUrl = builder.receiveDataRulesUrl;
         syncFrequency = builder.syncFrequency;
-        apiKey = builder.apiKey;
     }
 
     public static Builder copy(final ProxyReceiptPolicyConfig copy) {
         final Builder builder = new Builder();
         builder.receiveDataRulesUrl = copy.getReceiveDataRulesUrl();
         builder.syncFrequency = copy.getSyncFrequency();
-        builder.apiKey = copy.getApiKey();
         return builder;
     }
 
@@ -50,7 +52,6 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
         final Builder builder = copy(new ProxyReceiptPolicyConfig());
         builder.receiveDataRulesUrl = this.getReceiveDataRulesUrl();
         builder.syncFrequency = this.getSyncFrequency();
-        builder.apiKey = this.getApiKey();
         return builder;
     }
 
@@ -68,11 +69,6 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
         return syncFrequency;
     }
 
-    @JsonProperty
-    public String getApiKey() {
-        return apiKey;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -82,14 +78,13 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
             return false;
         }
         final ProxyReceiptPolicyConfig that = (ProxyReceiptPolicyConfig) o;
-        return Objects.equals(receiveDataRulesUrl, that.receiveDataRulesUrl) && Objects.equals(
-                syncFrequency,
-                that.syncFrequency) && Objects.equals(apiKey, that.apiKey);
+        return Objects.equals(receiveDataRulesUrl, that.receiveDataRulesUrl)
+               && Objects.equals(syncFrequency, that.syncFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(receiveDataRulesUrl, syncFrequency, apiKey);
+        return Objects.hash(receiveDataRulesUrl, syncFrequency);
     }
 
     @Override
@@ -97,7 +92,6 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
         return "ProxyReceiptPolicyConfig{" +
                "receiveDataRulesUrl='" + receiveDataRulesUrl + '\'' +
                ", syncFrequency=" + syncFrequency +
-               ", apiKey='" + apiKey + '\'' +
                '}';
     }
 
@@ -113,7 +107,6 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 
         private String receiveDataRulesUrl;
         private StroomDuration syncFrequency;
-        private String apiKey;
 
         private Builder() {
         }
@@ -125,11 +118,6 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 
         public Builder withSyncFrequency(final StroomDuration syncFrequency) {
             this.syncFrequency = syncFrequency;
-            return this;
-        }
-
-        public Builder withApiKey(final String apiKey) {
-            this.apiKey = apiKey;
             return this;
         }
 

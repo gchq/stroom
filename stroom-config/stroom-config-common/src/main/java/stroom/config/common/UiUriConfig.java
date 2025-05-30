@@ -1,5 +1,7 @@
 package stroom.config.common;
 
+import stroom.util.net.UriConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -27,7 +29,7 @@ public class UiUriConfig extends UriConfig {
 
     @Override
     @JsonPropertyDescription("This is the hostname/DNS for where the UI is hosted if different to the public facing " +
-            "URI of the server, e.g. during development or some other deployments.")
+                             "URI of the server, e.g. during development or some other deployments.")
     public String getHostname() {
         return super.getHostname();
     }
@@ -40,7 +42,7 @@ public class UiUriConfig extends UriConfig {
 
     @Override
     @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the UI communication" +
-            "goes via some form of gateway where the paths are mapped to something else.")
+                             "goes via some form of gateway where the paths are mapped to something else.")
     public String getPathPrefix() {
         return super.getPathPrefix();
     }

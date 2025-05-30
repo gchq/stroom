@@ -21,7 +21,7 @@ class TestUniqueId {
         final UniqueId uniqueId = new UniqueId(123456, 22, NodeType.STROOM, "node-abc");
         final String str = uniqueId.toString();
         Assertions.assertThat(str)
-                .isEqualTo("0000000000000123456_0022_S_node-abc");
+                .isEqualTo("0000000123456_0022_S_node-abc");
     }
 
     @Test
@@ -29,7 +29,20 @@ class TestUniqueId {
         final UniqueId uniqueId = new UniqueId(123456, 5, NodeType.PROXY, "node-abc");
         final String str = uniqueId.toString();
         Assertions.assertThat(str)
-                .isEqualTo("0000000000000123456_0005_P_node-abc");
+                .isEqualTo("0000000123456_0005_P_node-abc");
+    }
+
+    @Test
+    void testToString3() {
+        final UniqueId uniqueId = new UniqueId(
+                1748593005000L, // Friday, 30 May 2025 08:16:45
+                1234,
+                NodeType.PROXY,
+                "node-abc");
+
+        final String str = uniqueId.toString();
+        Assertions.assertThat(str)
+                .isEqualTo("1748593005000_1234_P_node-abc");
     }
 
     @Test

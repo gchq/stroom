@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom Proxy" type="Application" factoryName="Application">
+  <configuration default="false" name="Stroom Proxy Local" type="Application" factoryName="Application">
     <envs>
       <env name="STROOM_RESOURCES_REPO_DIR" value="$PROJECT_DIR$/../stroom-resources" />
     </envs>

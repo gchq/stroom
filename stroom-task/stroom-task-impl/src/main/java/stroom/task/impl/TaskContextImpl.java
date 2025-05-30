@@ -76,7 +76,7 @@ public class TaskContextImpl implements TaskContext {
         if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
             logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
                     getTaskHierarchy(),
-                    NullSafe.get(userIdentity, UserIdentity::getSubjectId),
+                    NullSafe.get(userIdentity, UserIdentity::subjectId),
                     name,
                     messageSupplier.get());
         }

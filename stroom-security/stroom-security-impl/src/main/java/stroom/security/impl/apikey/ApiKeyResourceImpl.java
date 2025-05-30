@@ -6,17 +6,20 @@ import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringUtil;
+import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.Collection;
+import java.util.Objects;
 
 @AutoLogged()
 public class ApiKeyResourceImpl implements ApiKeyResource {
@@ -81,5 +84,12 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     @Override
     public ResultPage<HashedApiKey> find(final FindApiKeyCriteria criteria) {
         return apiKeyServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
+        Objects.requireNonNull(request);
+        return apiKeyServiceProvider.get().verifyApiKey(request)
+                .orElse(null);
     }
 }

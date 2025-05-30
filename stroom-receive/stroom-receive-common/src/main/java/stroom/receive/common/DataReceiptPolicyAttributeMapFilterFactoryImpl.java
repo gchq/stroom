@@ -17,7 +17,6 @@
 
 package stroom.receive.common;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
@@ -30,6 +29,8 @@ import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
+import stroom.util.collections.CollectionUtil;
+import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -39,7 +40,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,7 +63,6 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     private final ReceiveDataRuleSetService ruleSetService;
     private final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
-//    private final CachedValue<AttributeMapFilter, Void> cachedFilter; // = new ReceiveAllChecker();
 
     @Inject
     public DataReceiptPolicyAttributeMapFilterFactoryImpl(
@@ -74,14 +73,6 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         this.ruleSetService = ruleSetService;
         this.expressionPredicateFactoryFactory = expressionPredicateFactoryFactory;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
-//        this.cachedFilter = CachedValue.builder()
-//                .withMaxCheckIntervalSeconds(60)
-//                .withoutStateSupplier()
-//                .withValueSupplier(this::doCreate)
-//                .build();
-//
-//        // Eagerly init the filter
-//        this.cachedFilter.getValue();
     }
 
     @Override
@@ -110,8 +101,10 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
             if (NullSafe.hasItems(rules) && NullSafe.hasItems(fields)) {
                 // Create a map of fields.
-                final Map<String, QueryField> fieldNameToFieldMap = fields.stream()
-                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+                final Map<String, QueryField> fieldNameToFieldMap = CollectionUtil.mapBy(
+                        QueryField::getFldName,
+                        DuplicateMode.THROW,
+                        fields);
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
@@ -134,7 +127,9 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             .stream()
                             .map(fieldNameToFieldMap::get)
                             .filter(Objects::nonNull)
-                            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
+                            .collect(Collectors.toMap(
+                                    QueryField::getFldName,
+                                    Function.identity()));
 
                     final ValueFunctionFactories<AttributeMap> valueFunctionFactories =
                             createAttributeMapExtractor(usedFieldMap);
@@ -165,69 +160,6 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         }
     }
 
-//    private AttributeMapFilter doCreate() {
-//        // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-//        BundledRules bundledRules = null;
-//        Checker checker = null;
-//        try {
-//            bundledRules = ruleSetService.getBundledRules();
-//        } catch (Exception e) {
-//            LOGGER.error("Error reading rule set. The default receive all policy will be applied", e);
-//        }
-//
-//        final List<ReceiveDataRule> rules = NullSafe.get(bundledRules, BundledRules::getRules);
-//        final List<QueryField> fields = NullSafe.get(bundledRules, BundledRules::getFields);
-//
-//        if (NullSafe.hasItems(rules) && NullSafe.hasItems(fields)) {
-//            // Create a map of fields.
-//            final Map<String, QueryField> fieldNameToFieldMap = fields.stream()
-//                    .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
-//
-//            // Also make sure we create a list of rules that are enabled and have at least one enabled term.
-//            final Set<String> fieldSet = new HashSet<>();
-//            final List<ReceiveDataRule> activeRules = new ArrayList<>();
-//            rules.forEach(rule -> {
-//                if (rule.isEnabled() && NullSafe.test(rule.getExpression(), ExpressionItem::enabled)) {
-//                    final Set<String> set = new HashSet<>();
-//                    addToFieldSet(rule, set);
-//                    if (!set.isEmpty()) {
-//                        fieldSet.addAll(set);
-//                    }
-//                    // expression may have no fields in it.
-//                    activeRules.add(rule);
-//                }
-//            });
-//
-//            if (NullSafe.hasItems(activeRules)) {
-//                // Create a map of fields that are valid fields and have been used in the expressions.
-//                final Map<String, QueryField> usedFieldMap = fieldSet
-//                        .stream()
-//                        .map(fieldNameToFieldMap::get)
-//                        .filter(Objects::nonNull)
-//                        .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
-//
-//                final ValueFunctionFactories<AttributeMap> valueFunctionFactories =
-//                        createAttributeMapExtractor(usedFieldMap);
-//
-//                final AttributeMapper attributeMapper = bundledRules.attributeMapper();
-//
-//                final ExpressionPredicateFactory expressionPredicateFactory =
-//                        expressionPredicateFactoryFactory.createFactory(bundledRules.wordListProvider());
-//
-//                checker = new CheckerImpl(
-//                        expressionPredicateFactory,
-//                        activeRules,
-//                        valueFunctionFactories,
-//                        attributeMapper);
-//            }
-//        }
-//        // If no rules then fall back to a receive-all filter
-//        return NullSafe.getOrElseGet(
-//                checker,
-//                DataReceiptPolicyAttributeMapFilter::new,
-//                PermissiveAttributeMapFilter::getInstance);
-//    }
-
     static ValueFunctionFactories<AttributeMap> createAttributeMapExtractor(final Map<String, QueryField> usedFields) {
 
         final Map<String, ValueFunctionFactory<AttributeMap>> fieldPositionMap = usedFields.entrySet()
@@ -252,20 +184,6 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
         ReceiveAction check(AttributeMap attributeMap);
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-//    private static class ReceiveAllChecker implements Checker {
-//
-//        public static final ReceiveAllChecker INSTANCE = new ReceiveAllChecker();
-//
-//        @Override
-//        public RuleAction check(final AttributeMap attributeMap) {
-//            return RuleAction.RECEIVE;
-//        }
-//    }
 
 
     // --------------------------------------------------------------------------------
@@ -315,10 +233,6 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             attributeMap, ruleAction));
         }
 
-//        private Predicate<AttributeMap> createPredicate(final ReceiveDataRule rule) {
-//            return expressionMatcher.create(rule.getExpression(), valueFunctionFactories);
-//        }
-
         private ReceiveDataRule findMatchingRule(final AttributeMap attributeMap) {
             for (final ReceiveDataRule rule : activeRules) {
                 // Lazily create the predicate in case we match on the first rule
@@ -327,7 +241,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                         ruleNo -> expressionMatcher.create(rule.getExpression(), valueFunctionFactories));
                 try {
                     final boolean isMatch = predicate.test(attributeMap);
-                    LOGGER.debug("Rule {}, attributeMap: {}, result: {}", rule, attributeMap, isMatch);
+                    LOGGER.debug("findMatchingRule() - Rule {}, isMatch: {}, attributeMap: {}",
+                            rule, isMatch, attributeMap);
                     if (isMatch) {
                         return rule;
                     }
@@ -337,118 +252,9 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                     // Try the next rule
                 }
             }
+            LOGGER.debug(() -> LogUtil.message("findMatchingRule() - No matched after {} active rules",
+                    activeRules.size()));
             return null;
-        }
-    }
-
-
-// --------------------------------------------------------------------------------
-
-
-//    private static class AttributeMapHasher {
-//
-//        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AttributeMapHasher.class);
-//
-//        private final HashFunction hashFunction;
-//        private final Map<String, String> fieldNameToSaltMap;
-//
-//        private AttributeMapHasher(final HashFunction hashFunction,
-//                                   final Map<String, String> fieldNameToSaltMap) {
-//            this.hashFunction = hashFunction;
-//            this.fieldNameToSaltMap = fieldNameToSaltMap;
-//        }
-//
-//        /**
-//         * Return a new {@link AttributeMap} instance containing all entries from attributeMap,
-//         * except that those values that need to be hashed will have been hashed.
-//         */
-//        public AttributeMap hashValues(final AttributeMap attributeMap) {
-//            if (attributeMap == null) {
-//                return null;
-//            } else if (attributeMap.isEmpty()) {
-//                return new AttributeMap(attributeMap.isOverrideEmbeddedMeta());
-//            } else {
-//                final AttributeMap newAttrMap = new AttributeMap(attributeMap.isOverrideEmbeddedMeta());
-//                LOGGER.logDurationIfDebugEnabled(
-//                        () -> {
-//                            attributeMap.forEach((key, val) -> {
-//                                final String salt = fieldNameToSaltMap.get(key);
-//                                if (NullSafe.isNonEmptyString(salt)) {
-//                                    // Needs to be hashed
-//                                    final String hashedVal = hashFunction.hash(val, salt);
-//                                    newAttrMap.put(key, hashedVal);
-//                                } else {
-//                                    // Not hashed, put as was
-//                                    newAttrMap.put(key, val);
-//                                }
-//                            });
-//                        },
-//                        "Hash attributeMap values");
-//                return newAttrMap;
-//            }
-//        }
-//    }
-
-
-// --------------------------------------------------------------------------------
-
-
-    private static class AttributeMapFunctionFactory implements ValueFunctionFactory<AttributeMap> {
-
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AttributeMapFunctionFactory.class);
-
-        private final FieldType fieldType;
-        private final String fieldName;
-
-        private AttributeMapFunctionFactory(final QueryField queryField) {
-            Objects.requireNonNull(queryField);
-            this.fieldType = queryField.getFldType();
-            this.fieldName = queryField.getFldName();
-        }
-
-        @Override
-        public Function<AttributeMap, Boolean> createNullCheck() {
-            return attributeMap -> Objects.isNull(attributeMap.get(fieldName));
-        }
-
-        @Override
-        public Function<AttributeMap, String> createStringExtractor() {
-            return attributeMap -> attributeMap.get(fieldName);
-        }
-
-        @Override
-        public Function<AttributeMap, Long> createDateExtractor() {
-            return attributeMap -> {
-                try {
-                    return attributeMap.getAsEpochMillis(fieldName);
-                } catch (Exception e) {
-                    // attributeMap could contain any old rubbish so swallow and return null
-                    LOGGER.debug(LogUtil.message("Error extracting field {} of type {} as millis: {}",
-                            fieldName, fieldType, LogUtil.exceptionMessage(e), e));
-                    return null;
-                }
-            };
-        }
-
-        @Override
-        public Function<AttributeMap, Double> createNumberExtractor() {
-            return attributeMap -> {
-                try {
-                    return NullSafe.get(
-                            attributeMap.get(fieldName),
-                            val -> new BigDecimal(val).doubleValue());
-                } catch (final RuntimeException e) {
-                    // attributeMap could contain any old rubbish so swallow and return null
-                    LOGGER.debug(LogUtil.message("Error extracting field {} of type {} as double: {}",
-                            fieldName, fieldType, LogUtil.exceptionMessage(e), e));
-                    return null;
-                }
-            };
-        }
-
-        @Override
-        public FieldType getFieldType() {
-            return fieldType;
         }
     }
 }

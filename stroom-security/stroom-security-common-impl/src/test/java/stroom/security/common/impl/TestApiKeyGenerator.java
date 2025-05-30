@@ -1,4 +1,4 @@
-package stroom.security.impl.apikey;
+package stroom.security.common.impl;
 
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
@@ -105,5 +105,33 @@ class TestApiKeyGenerator {
             assertThat(apiKey)
                     .hasSize(ApiKeyGenerator.API_KEY_TOTAL_LENGTH);
         }
+    }
+
+    @Test
+    void testPrefixesMatch_true() {
+        final String apiKey1 = apiKeyGenerator.generateRandomApiKey();
+        final String prefix = ApiKeyGenerator.extractPrefixPart(apiKey1);
+        final String apiKey2 = prefix + "foo";
+
+        assertThat(ApiKeyGenerator.prefixesMatch(apiKey1, apiKey2))
+                .isTrue();
+    }
+
+    @Test
+    void testPrefixesMatch_true2() {
+        final String apiKey1 = apiKeyGenerator.generateRandomApiKey();
+        final String prefix = ApiKeyGenerator.extractPrefixPart(apiKey1);
+
+        assertThat(ApiKeyGenerator.prefixesMatch(apiKey1, prefix))
+                .isTrue();
+    }
+
+    @Test
+    void testPrefixesMatch_false() {
+        final String apiKey1 = apiKeyGenerator.generateRandomApiKey();
+        final String apiKey2 = apiKeyGenerator.generateRandomApiKey();
+
+        assertThat(ApiKeyGenerator.prefixesMatch(apiKey1, apiKey2))
+                .isFalse();
     }
 }

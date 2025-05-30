@@ -16,7 +16,7 @@
 
 package stroom.ui.config.shared;
 
-import stroom.security.shared.HashAlgorithm;
+import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -242,7 +242,7 @@ public class ExtendedUiConfig {
     }
 
     @JsonIgnore
-    public HashAlgorithm getDefaultApiKeyHashAlgorithm() {
+    public ApiKeyHashAlgorithm getDefaultApiKeyHashAlgorithm() {
         return uiConfig.getDefaultApiKeyHashAlgorithm();
     }
 

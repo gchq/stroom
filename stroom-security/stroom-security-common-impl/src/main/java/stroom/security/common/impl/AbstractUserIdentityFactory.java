@@ -213,8 +213,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     }
 
     @Override
-    public Map<String, String> getAuthHeaders(final String jwt) {
-        return jwtContextFactory.createAuthorisationEntries(jwt);
+    public Map<String, String> getAuthHeaders(final String token) {
+        return jwtContextFactory.createAuthorisationEntries(token);
     }
 
     /**

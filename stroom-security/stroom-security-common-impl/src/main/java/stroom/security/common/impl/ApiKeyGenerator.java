@@ -1,4 +1,4 @@
-package stroom.security.impl.apikey;
+package stroom.security.common.impl;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -23,16 +23,15 @@ public class ApiKeyGenerator {
     // Stands for stroom-api-key
     static final String API_KEY_TYPE = "sak";
     static final String API_KEY_SEPARATOR = "_";
-    static final String API_KEY_STATIC_PREFIX = API_KEY_TYPE + API_KEY_SEPARATOR;
+    public static final String API_KEY_STATIC_PREFIX = API_KEY_TYPE + API_KEY_SEPARATOR;
     private static final Pattern API_KEY_SEPARATOR_PATTERN = Pattern.compile(API_KEY_SEPARATOR, Pattern.LITERAL);
     public static final int API_KEY_RANDOM_CODE_LENGTH = 128;
     // A sha256 truncated to 10 typically gives less than a handful of clashes for 1mil random codes
     public static final int TRUNCATED_HASH_LENGTH = 10;
-    public static final int API_KEY_TOTAL_LENGTH =
-            API_KEY_TYPE.length()
-            + (API_KEY_SEPARATOR.length() * 2)
-            + TRUNCATED_HASH_LENGTH
-            + API_KEY_RANDOM_CODE_LENGTH;
+    public static final int PREFIX_LENGTH = API_KEY_TYPE.length()
+                                            + (API_KEY_SEPARATOR.length() * 2)
+                                            + TRUNCATED_HASH_LENGTH;
+    public static final int API_KEY_TOTAL_LENGTH = PREFIX_LENGTH + API_KEY_RANDOM_CODE_LENGTH;
 
     private static final String BASE_58_ALPHABET = new String(Base58.ALPHABET);
     private static final String BASE_58_CHAR_CLASS = "[" + BASE_58_ALPHABET + "]";
@@ -59,7 +58,7 @@ public class ApiKeyGenerator {
      * Asserts that the passed string matches the format of a stroom API key and that the hash part of
      * the key matches the hash computed from the random code part.
      * Note, this method is NOT to be used for authenticating
-     * an API key, for that see {@link ApiKeyService#fetchVerifiedIdentity(String)}. It simply verifies
+     * an API key. It simply verifies
      * that a string is very likely to be a stroom API key (whether valid/invalid, present/absent, enabled/disabled).
      * It can be used to see if a string passed in the {@code Authorization: Bearer ...} header is a stroom
      * API key before looking in the database to check its validity.
@@ -67,7 +66,7 @@ public class ApiKeyGenerator {
      * @return True if the hash part of the API key matches a computed hash of the random
      * code part of the API key and the string matches the pattern for an API key.
      */
-    boolean isApiKey(final String apiKey) {
+    public boolean isApiKey(final String apiKey) {
         if (NullSafe.isBlankString(apiKey)) {
             return false;
         } else {
@@ -124,7 +123,7 @@ public class ApiKeyGenerator {
      *
      * </pre>
      */
-    String generateRandomApiKey() {
+    public String generateRandomApiKey() {
         // This is the meat of the API key. A random string of chars using the
         // base58 character set. THis is so we have a nice simple set of readable chars
         // without visually similar ones like '0OIl'
@@ -163,7 +162,7 @@ public class ApiKeyGenerator {
      * This is to allow a user to identify their key. This prefix part may not be unique as it is only 7 chars of the
      * hash, however it probably is, so is good enough.
      */
-    static String extractPrefixPart(final String apiKey) {
+    public static String extractPrefixPart(final String apiKey) {
         Objects.requireNonNull(apiKey);
         final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
         if (parts.length != 3) {
@@ -172,39 +171,55 @@ public class ApiKeyGenerator {
         return parts[0] + API_KEY_SEPARATOR + parts[1] + API_KEY_SEPARATOR;
     }
 
+    /**
+     * Return true if the prefix portion of the two strings match exactly. Either argument
+     * can be of any length greater than or equal to {@link ApiKeyGenerator#PREFIX_LENGTH}.
+     */
+    public static boolean prefixesMatch(final String apiKey1, final String apiKey2) {
+        if (NullSafe.allNull(apiKey1, apiKey2)) {
+            return false;
+        } else if (apiKey1 == null) {
+            return false;
+        } else if (apiKey2 == null) {
+            return false;
+        } else {
+            return apiKey1.regionMatches(0, apiKey2, 0, PREFIX_LENGTH);
+        }
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    record ApiKeyParts(String type, String hash, String randomCode) {
-
-        static ApiKeyParts fromApiKey(final String apiKey) {
-            Objects.requireNonNull(apiKey);
-            final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
-            if (parts.length != 3) {
-                throw new IllegalArgumentException("Invalid key format, expecting three parts.");
-            }
-            return new ApiKeyParts(parts[0], parts[1], parts[2]);
-        }
-
-        String asApiKey() {
-            return String.join(API_KEY_SEPARATOR, type, hash, randomCode);
-        }
-
-        /**
-         * For a key like
-         * <pre>{@code
-         * sak_50910c4ef3_Lz3mnbGYS14fn14LWZFvCn2wPD2bB.....yFimeDifW2FZmj8TixAAgGMM1BeJLpT5cN5ztTuNK3SZ8JZogL
-         * }</pre>
-         * return
-         * <pre>{@code
-         * sak_50910c4ef3_
-         * }</pre>
-         * This is to allow a user to identify their key. This prefix part may not be unique as it is only
-         * 10 chars of the hash, however it probably is, so is good enough.
-         */
-        String asPrefix() {
-            return String.join(API_KEY_SEPARATOR, type, hash) + API_KEY_SEPARATOR;
-        }
-    }
+//    record ApiKeyParts(String type, String hash, String randomCode) {
+//
+//        static ApiKeyParts fromApiKey(final String apiKey) {
+//            Objects.requireNonNull(apiKey);
+//            final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
+//            if (parts.length != 3) {
+//                throw new IllegalArgumentException("Invalid key format, expecting three parts.");
+//            }
+//            return new ApiKeyParts(parts[0], parts[1], parts[2]);
+//        }
+//
+//        String asApiKey() {
+//            return String.join(API_KEY_SEPARATOR, type, hash, randomCode);
+//        }
+//
+//        /**
+//         * For a key like
+//         * <pre>{@code
+//         * sak_50910c4ef3_Lz3mnbGYS14fn14LWZFvCn2wPD2bB.....yFimeDifW2FZmj8TixAAgGMM1BeJLpT5cN5ztTuNK3SZ8JZogL
+//         * }</pre>
+//         * return
+//         * <pre>{@code
+//         * sak_50910c4ef3_
+//         * }</pre>
+//         * This is to allow a user to identify their key. This prefix part may not be unique as it is only
+//         * 10 chars of the hash, however it probably is, so is good enough.
+//         */
+//        String asPrefix() {
+//            return String.join(API_KEY_SEPARATOR, type, hash) + API_KEY_SEPARATOR;
+//        }
+//    }
 }

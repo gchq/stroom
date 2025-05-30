@@ -2,7 +2,6 @@ package stroom.proxy.app;
 
 import stroom.docref.DocRef;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * No longer used. Leaving it here in case we need to implement something similar
  */
+@Deprecated // No longer used. Leaving it here in case we need to implement something similar
 @Singleton
 public class ContentSyncService implements Managed, HasHealthCheck {
 
@@ -177,7 +177,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     private Invocation.Builder createClient(final String url,
                                             final String path,
                                             final ContentSyncConfig contentSyncConfig) {
-        return jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
+        return jerseyClientFactory.createWebTarget(JerseyClientName.DOWNSTREAM, url)
                 .path(path)
                 .request(MediaType.APPLICATION_JSON)
                 .headers(getHeaders(contentSyncConfig));
@@ -193,8 +193,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         if (!NullSafe.isBlankString(contentSyncConfig.getApiKey())) {
             // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
             // and add it to config.
-            LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
-                    contentSyncConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
+//            LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
+//                    contentSyncConfig.getFullPathStr(FeedStatusConfig.PROP_NAME_API_KEY)));
 
             headers = userIdentityFactory.getAuthHeaders(contentSyncConfig.getApiKey());
         } else {

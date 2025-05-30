@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  * users' permissions.
  */
 public enum AppPermission implements HasDisplayValue {
+
     ADMINISTRATOR(
             "Administrator",
             "Full administrator rights to access and manage everything."),
@@ -113,7 +114,15 @@ public enum AppPermission implements HasDisplayValue {
             "Fetch hashed receipt policy rules",
             "Ability to fetch the obfuscated receipt policy rules. This permission is required for " +
             "any Stroom-Proxy that needs to fetch receipt policy rules."),
-    ;
+    VERIFY_API_KEY(
+            "Check the validity of an API Key.",
+            "Ability to call the API endpoint to verify an API Key. This is required for any " +
+            "Stroom-Proxy that needs to verify API keys sent to it from upstream Stroom-Proxies."),
+    STROOM_PROXY(
+            "Stroom Proxy",
+            "Intended to be granted to a non-human user account that is used by a Stroom-Proxy instance " +
+            "to communicate with Stroom or another Stroom-Proxy. It provides the permission to check feed status, " +
+            "fetch receipt policy rules and verify API keys.");
 
     private static final Map<String, AppPermission> APP_PERMISSION_ENUM_MAP;
     public static final List<AppPermission> LIST;

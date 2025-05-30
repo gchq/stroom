@@ -6,7 +6,6 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
-import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.AggregatorConfig;
@@ -469,11 +468,11 @@ public class MockHttpDestination {
     static FeedStatusConfig createFeedStatusConfig() {
         return new FeedStatusConfig(
 //                true,
-                FeedStatus.Receive,
+//                FeedStatus.Receive,
                 "http://localhost:"
                 + MockHttpDestination.DEFAULT_STROOM_PORT
                 + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
-                null,
+//                null,
                 null);
     }
 
