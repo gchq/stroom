@@ -8,9 +8,9 @@
                         helpText="Choose the data type to use for the key.">
             <i:SelectionBox ui:field="keyType" addStyleNames="allow-focus"/>
         </form:FormGroup>
-        <form:FormGroup label="Period"
-                        helpText="The granularity of histogram data points?">
-            <i:SelectionBox ui:field="period" addStyleNames="allow-focus"/>
+        <form:FormGroup label="Temporal Resolution"
+                        helpText="The temporal resolution of histogram data points?">
+            <i:SelectionBox ui:field="temporalResolution" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="timeZone"/>
     </g:FlowPanel>

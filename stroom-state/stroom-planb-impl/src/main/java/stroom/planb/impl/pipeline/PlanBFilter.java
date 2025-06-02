@@ -139,6 +139,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     Example histogram
     <histogram>
+      <map>histogram_name</map>
       <tags>
         <tag>
           <name>TEST</name>

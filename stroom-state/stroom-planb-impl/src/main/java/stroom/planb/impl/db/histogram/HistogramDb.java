@@ -17,8 +17,8 @@ import stroom.planb.impl.db.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramKeyType;
-import stroom.planb.shared.HistogramPeriod;
 import stroom.planb.shared.HistogramSettings;
+import stroom.planb.shared.HistogramTemporalResolution;
 import stroom.planb.shared.HistogramValueMax;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.query.api.Column;
@@ -95,11 +95,11 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
                 HistogramSettings::getKeySchema,
                 HistogramKeySchema::getKeyType,
                 HistogramKeyType.TAGS);
-        final HistogramPeriod period = NullSafe.getOrElse(
+        final HistogramTemporalResolution temporalResolution = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getKeySchema,
-                HistogramKeySchema::getPeriod,
-                HistogramPeriod.SECOND);
+                HistogramKeySchema::getTemporalResolution,
+                HistogramTemporalResolution.SECOND);
         final UserTimeZone timeZone = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getKeySchema,
@@ -116,7 +116,8 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
 
         // The key time is always a coarse grained time with rows having multiple values.
         final TimeSerde timeSerde;
-        if (period.equals(HistogramPeriod.MONTH) || period.equals(HistogramPeriod.YEAR)) {
+        if (temporalResolution.equals(HistogramTemporalResolution.MONTH) ||
+            temporalResolution.equals(HistogramTemporalResolution.YEAR)) {
             timeSerde = new ZonedDayTimeSerde(zoneId);
         } else {
             timeSerde = new ZonedHourTimeSerde(zoneId);
@@ -423,7 +424,7 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
             final long currentValue = countSerde.get(valueByteBuffer, position);
             final long newValue = currentValue + value;
             valueByteBuffer.position(position);
-            countSerde.put(valueByteBuffer, newValue);
+            countSerde.put(valueByteBuffer, Math.min(countSerde.maxValue(), newValue));
             writeInsertTime(valueByteBuffer);
             valueByteBuffer.position(0);
             consumer.accept(valueByteBuffer);
@@ -437,7 +438,7 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
                     final long sourceValue = countSerde.get(source);
                     final long destinationValue = countSerde.get(destination);
                     final long total = sourceValue + destinationValue;
-                    countSerde.put(valueByteBuffer, total);
+                    countSerde.put(valueByteBuffer, Math.min(countSerde.maxValue(), total));
                 }
                 writeInsertTime(valueByteBuffer);
                 valueByteBuffer.flip();

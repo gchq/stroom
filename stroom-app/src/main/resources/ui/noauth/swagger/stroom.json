@@ -16916,6 +16916,35 @@
           }
         }
       },
+      "HistogramKey" : {
+        "type" : "object",
+        "properties" : {
+          "tags" : {
+            "$ref" : "#/components/schemas/Tags"
+          },
+          "time" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "HistogramValue" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/HistogramKey"
+            },
+            "value" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        } ]
+      },
       "HoppingWindow" : {
         "type" : "object",
         "allOf" : [ {
@@ -18622,7 +18651,7 @@
           },
           "stateType" : {
             "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM" ]
           },
           "type" : {
             "type" : "string"
@@ -22902,6 +22931,28 @@
           },
           "window" : {
             "$ref" : "#/components/schemas/Window"
+          }
+        }
+      },
+      "Tag" : {
+        "type" : "object",
+        "properties" : {
+          "tagName" : {
+            "type" : "string"
+          },
+          "tagValue" : {
+            "$ref" : "#/components/schemas/Val"
+          }
+        }
+      },
+      "Tags" : {
+        "type" : "object",
+        "properties" : {
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Tag"
+            }
           }
         }
       },

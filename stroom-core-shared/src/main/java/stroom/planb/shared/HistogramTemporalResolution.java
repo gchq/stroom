@@ -4,7 +4,7 @@ import stroom.docref.HasDisplayValue;
 
 import java.util.List;
 
-public enum HistogramPeriod implements HasDisplayValue {
+public enum HistogramTemporalResolution implements HasDisplayValue {
     YEAR("Year"),
     MONTH("Month"),
     DAY("Day"),
@@ -12,7 +12,7 @@ public enum HistogramPeriod implements HasDisplayValue {
     MINUTE("Minute"),
     SECOND("Second");
 
-    public static final List<HistogramPeriod> ORDERED_LIST = List.of(
+    public static final List<HistogramTemporalResolution> ORDERED_LIST = List.of(
             YEAR,
             MONTH,
             DAY,
@@ -22,7 +22,7 @@ public enum HistogramPeriod implements HasDisplayValue {
 
     private final String displayValue;
 
-    HistogramPeriod(final String displayValue) {
+    HistogramTemporalResolution(final String displayValue) {
         this.displayValue = displayValue;
     }
 

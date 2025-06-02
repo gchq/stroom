@@ -28,8 +28,8 @@ import stroom.planb.impl.db.histogram.Tag;
 import stroom.planb.impl.db.histogram.Tags;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramKeyType;
-import stroom.planb.shared.HistogramPeriod;
 import stroom.planb.shared.HistogramSettings;
+import stroom.planb.shared.HistogramTemporalResolution;
 import stroom.planb.shared.HistogramValueMax;
 import stroom.planb.shared.HistogramValueSchema;
 import stroom.query.api.ExpressionOperator;
@@ -119,7 +119,8 @@ class TestHistogramDb {
                     expressionPredicateFactory,
                     results::add);
             assertThat(results.size()).isEqualTo(3600L);
-            assertThat(results.getFirst()[0].toString()).isEqualTo("captain=kirk, dr=mccoy, lieutenant=uhura, mr=spock");
+            assertThat(results.getFirst()[0].toString())
+                    .isEqualTo("captain=kirk, dr=mccoy, lieutenant=uhura, mr=spock");
             assertThat(results.getFirst()[1].toString()).isEqualTo("2000-01-01T00:00:00.000Z");
             assertThat(results.getFirst()[2].toString()).isEqualTo("1s");
             assertThat(results.getFirst()[3].toString()).isEqualTo("1");
@@ -175,16 +176,16 @@ class TestHistogramDb {
 //            for (final ValueFunction valueFunction : HistogramValueTestUtil.getValueFunctions()) {
 //            for (final HistogramPeriod period : HistogramPeriod.values()) {
 
-            HistogramPeriod period = HistogramPeriod.HOUR;
+            HistogramTemporalResolution temporalResolution = HistogramTemporalResolution.HOUR;
             tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
 //                                                      ", Value type = " + valueFunction +
-                                              ", Period = " + period,
+                                              ", Temporal resolution = " + temporalResolution,
                     () -> {
                         final HistogramSettings settings = new HistogramSettings
                                 .Builder()
                                 .keySchema(new HistogramKeySchema.Builder()
                                         .keyType(keyFunction.keyType)
-                                        .period(period)
+                                        .temporalResolution(temporalResolution)
                                         .build())
                                 .valueSchema(new HistogramValueSchema.Builder()
                                         .valueType(HistogramValueMax.TWO)

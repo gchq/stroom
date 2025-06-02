@@ -6,14 +6,17 @@
              xmlns:form="urn:import:stroom.widget.form.client">
 
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone">
-            <item:SelectionBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        <form:FormGroup identity="userPreferencesTimeZone"
+                        label="Time Zone">
+            <item:SelectionBox ui:field="timeZoneUse"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
+        <form:FormGroup ui:field="userPreferencesTimeZoneId"
+                        identity="userPreferencesTimeZoneId"
                         label="Time Zone Id">
-            <item:SelectionBox ui:field="timeZoneId" addStyleNames="w-100"/>
+            <item:SelectionBox ui:field="timeZoneId"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
+        <form:FormGroup ui:field="userPreferencesTimeZoneOffset"
+                        identity="userPreferencesTimeZoneOffset"
                         label="Time Zone Offset">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>

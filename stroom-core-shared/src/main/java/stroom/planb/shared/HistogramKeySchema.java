@@ -13,7 +13,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "keyType",
-        "period",
+        "temporalResolution",
         "timeZone"
 })
 @JsonInclude(Include.NON_NULL)
@@ -22,16 +22,16 @@ public class HistogramKeySchema {
     @JsonProperty
     private final HistogramKeyType keyType;
     @JsonProperty
-    private final HistogramPeriod period;
+    private final HistogramTemporalResolution temporalResolution;
     @JsonProperty
     private final UserTimeZone timeZone;
 
     @JsonCreator
     public HistogramKeySchema(@JsonProperty("keyType") final HistogramKeyType keyType,
-                              @JsonProperty("period") final HistogramPeriod period,
+                              @JsonProperty("temporalResolution") final HistogramTemporalResolution temporalResolution,
                               @JsonProperty("timeZone") final UserTimeZone timeZone) {
         this.keyType = keyType;
-        this.period = period;
+        this.temporalResolution = temporalResolution;
         this.timeZone = timeZone;
     }
 
@@ -39,8 +39,8 @@ public class HistogramKeySchema {
         return keyType;
     }
 
-    public HistogramPeriod getPeriod() {
-        return period;
+    public HistogramTemporalResolution getTemporalResolution() {
+        return temporalResolution;
     }
 
     public UserTimeZone getTimeZone() {
@@ -57,20 +57,20 @@ public class HistogramKeySchema {
         }
         final HistogramKeySchema that = (HistogramKeySchema) o;
         return keyType == that.keyType &&
-               period == that.period &&
+               temporalResolution == that.temporalResolution &&
                Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(keyType, period, timeZone);
+        return Objects.hash(keyType, temporalResolution, timeZone);
     }
 
     @Override
     public String toString() {
         return "HistogramKeySchema{" +
                "keyType=" + keyType +
-               ", period=" + period +
+               ", temporalResolution=" + temporalResolution +
                ", timeZone=" + timeZone +
                '}';
     }
@@ -78,7 +78,7 @@ public class HistogramKeySchema {
     public static class Builder extends AbstractBuilder<HistogramKeySchema, Builder> {
 
         private HistogramKeyType keyType = HistogramKeyType.TAGS;
-        private HistogramPeriod period = HistogramPeriod.SECOND;
+        private HistogramTemporalResolution temporalResolution = HistogramTemporalResolution.SECOND;
         private UserTimeZone timeZone = UserTimeZone.utc();
 
         public Builder() {
@@ -86,7 +86,7 @@ public class HistogramKeySchema {
 
         public Builder(final HistogramKeySchema schema) {
             this.keyType = schema.keyType;
-            this.period = schema.period;
+            this.temporalResolution = schema.temporalResolution;
             this.timeZone = schema.timeZone;
         }
 
@@ -95,8 +95,8 @@ public class HistogramKeySchema {
             return self();
         }
 
-        public Builder period(final HistogramPeriod period) {
-            this.period = period;
+        public Builder temporalResolution(final HistogramTemporalResolution temporalResolution) {
+            this.temporalResolution = temporalResolution;
             return self();
         }
 
@@ -114,7 +114,7 @@ public class HistogramKeySchema {
         public HistogramKeySchema build() {
             return new HistogramKeySchema(
                     keyType,
-                    period,
+                    temporalResolution,
                     timeZone);
         }
     }

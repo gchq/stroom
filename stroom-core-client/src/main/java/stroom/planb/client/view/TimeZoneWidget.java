@@ -58,6 +58,7 @@ public final class TimeZoneWidget
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
         timeZoneUse.addItem(Use.OFFSET);
+        timeZoneUse.setValue(Use.UTC);
 
         for (final String tz : MomentJs.getTimeZoneIds()) {
             timeZoneId.addItem(tz);
@@ -78,6 +79,8 @@ public final class TimeZoneWidget
 
         // FIXME:  Browsers don't support minute offsets so disable this for now.
         timeZoneOffsetMinutes.setVisible(false);
+
+        changeVisible();
     }
 
     @Override
@@ -99,6 +102,7 @@ public final class TimeZoneWidget
         timeZoneId.setValue(userTimeZone.getId());
         timeZoneOffsetHours.setValue(userTimeZone.getOffsetHours());
         timeZoneOffsetMinutes.setValue(userTimeZone.getOffsetMinutes());
+        changeVisible();
     }
 
     @Override

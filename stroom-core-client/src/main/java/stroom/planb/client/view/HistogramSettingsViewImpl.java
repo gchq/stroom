@@ -37,7 +37,7 @@ public class HistogramSettingsViewImpl
     private final GeneralSettingsWidget generalSettingsWidget;
     private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
-    private final HistogramKeySchemaSettingsWidget temporalHistogramKeySchemaSettingsWidget;
+    private final HistogramKeySchemaSettingsWidget histogramKeySchemaSettingsWidget;
     private final HistogramValueSchemaSettingsWidget stateValueSchemaSettingsWidget;
 
     @UiField
@@ -57,18 +57,18 @@ public class HistogramSettingsViewImpl
                                      final SnapshotSettingsWidget snapshotSettingsWidget,
                                      final RetentionSettingsWidget retentionSettingsWidget,
                                      final HistogramKeySchemaSettingsWidget
-                                             temporalHistogramKeySchemaSettingsWidget,
+                                             histogramKeySchemaSettingsWidget,
                                      final HistogramValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
         this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
-        this.temporalHistogramKeySchemaSettingsWidget = temporalHistogramKeySchemaSettingsWidget;
+        this.histogramKeySchemaSettingsWidget = histogramKeySchemaSettingsWidget;
         this.stateValueSchemaSettingsWidget = stateValueSchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
         snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
-        keySchemaPanel.add(temporalHistogramKeySchemaSettingsWidget.asWidget());
+        keySchemaPanel.add(histogramKeySchemaSettingsWidget.asWidget());
         valueSchemaPanel.add(stateValueSchemaSettingsWidget.asWidget());
     }
 
@@ -78,7 +78,7 @@ public class HistogramSettingsViewImpl
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
-        temporalHistogramKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
+        histogramKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
         stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
     }
 
@@ -139,12 +139,12 @@ public class HistogramSettingsViewImpl
 
     @Override
     public HistogramKeySchema getKeySchema() {
-        return temporalHistogramKeySchemaSettingsWidget.getKeySchema();
+        return histogramKeySchemaSettingsWidget.getKeySchema();
     }
 
     @Override
     public void setKeySchema(final HistogramKeySchema keySchema) {
-        temporalHistogramKeySchemaSettingsWidget.setKeySchema(keySchema);
+        histogramKeySchemaSettingsWidget.setKeySchema(keySchema);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class HistogramSettingsViewImpl
         generalSettingsWidget.onReadOnly(readOnly);
         snapshotSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
-        temporalHistogramKeySchemaSettingsWidget.onReadOnly(readOnly);
+        histogramKeySchemaSettingsWidget.onReadOnly(readOnly);
         stateValueSchemaSettingsWidget.onReadOnly(readOnly);
     }
 

@@ -20,7 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramKeyType;
-import stroom.planb.shared.HistogramPeriod;
+import stroom.planb.shared.HistogramTemporalResolution;
 import stroom.query.api.UserTimeZone;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -42,7 +42,7 @@ public class HistogramKeySchemaSettingsWidget
     @UiField
     SelectionBox<HistogramKeyType> keyType;
     @UiField
-    SelectionBox<HistogramPeriod> period;
+    SelectionBox<HistogramTemporalResolution> temporalResolution;
     @UiField
     SimplePanel timeZone;
 
@@ -53,8 +53,8 @@ public class HistogramKeySchemaSettingsWidget
         widget = binder.createAndBindUi(this);
         keyType.addItems(HistogramKeyType.ORDERED_LIST);
         keyType.setValue(HistogramKeyType.TAGS);
-        period.addItems(HistogramPeriod.ORDERED_LIST);
-        period.setValue(HistogramPeriod.SECOND);
+        temporalResolution.addItems(HistogramTemporalResolution.ORDERED_LIST);
+        temporalResolution.setValue(HistogramTemporalResolution.SECOND);
         timeZone.setWidget(timeZoneWidget.asWidget());
     }
 
@@ -72,21 +72,21 @@ public class HistogramKeySchemaSettingsWidget
     @Override
     public HistogramKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
-        return new HistogramKeySchema(keyType.getValue(), period.getValue(), userTimeZone);
+        return new HistogramKeySchema(keyType.getValue(), temporalResolution.getValue(), userTimeZone);
     }
 
     @Override
     public void setKeySchema(final HistogramKeySchema keySchema) {
         if (keySchema != null) {
             keyType.setValue(keySchema.getKeyType());
-            period.setValue(keySchema.getPeriod());
+            temporalResolution.setValue(keySchema.getTemporalResolution());
             timeZoneWidget.setUserTimeZone(keySchema.getTimeZone());
         }
     }
 
     public void onReadOnly(final boolean readOnly) {
         keyType.setEnabled(!readOnly);
-        period.setEnabled(!readOnly);
+        temporalResolution.setEnabled(!readOnly);
         timeZoneWidget.onReadOnly(readOnly);
     }
 
@@ -95,8 +95,8 @@ public class HistogramKeySchemaSettingsWidget
         getUiHandlers().onChange();
     }
 
-    @UiHandler("period")
-    public void onPeriod(final ValueChangeEvent<HistogramPeriod> event) {
+    @UiHandler("temporalResolution")
+    public void onTemporalResolution(final ValueChangeEvent<HistogramTemporalResolution> event) {
         getUiHandlers().onChange();
     }
 
