@@ -50,6 +50,13 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String licenseUrl;
 
+    /** Where the pack will be installed within Stroom */
+    @JsonProperty
+    private final String stroomPath;
+
+    @JsonProperty
+    private final String details;
+
     /** Git remote repository URL */
     @JsonProperty
     private final String gitUrl;
@@ -79,6 +86,9 @@ public class AppStoreContentPack {
      *                case null will be stored for later resolution.
      * @param licenseName Name of license for UI. Can be null.
      * @param licenseUrl URL of full license info. Can be null.
+     * @param stroomPath Where the pack will be installed in Stroom.
+     *                   Can be null in which case it will be installed in
+     *                   the root of the Explorer Tree.
      * @param gitUrl URL of remote Git repository. Must not be null.
      * @param gitBranch Name of Git branch. Must not be null.
      * @param gitPath Path to files we're interested in. Can be null in which
@@ -92,6 +102,8 @@ public class AppStoreContentPack {
                                @JsonProperty("iconSvg") final String iconSvg,
                                @JsonProperty("licenseName") final String licenseName,
                                @JsonProperty("licenseUrl") final String licenseUrl,
+                               @JsonProperty("stroomPath") final String stroomPath,
+                               @JsonProperty("details") final String details,
                                @JsonProperty("gitUrl") final String gitUrl,
                                @JsonProperty("gitBranch") final String gitBranch,
                                @JsonProperty("gitPath") final String gitPath,
@@ -105,6 +117,8 @@ public class AppStoreContentPack {
         this.iconSvg = iconSvg;
         this.licenseName = licenseName == null ? "" : licenseName;
         this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
+        this.stroomPath = stroomPath == null || stroomPath.isEmpty() ? "/" : stroomPath;
+        this.details = details == null ? "": details;
         this.gitUrl = Objects.requireNonNull(gitUrl);
         this.gitBranch = Objects.requireNonNull(gitBranch);
         this.gitPath = gitPath == null ? DEFAULT_GIT_PATH : gitPath;
@@ -160,6 +174,22 @@ public class AppStoreContentPack {
     }
 
     /**
+     * @return The path within stroom where the content pack should be
+     * installed. Never returns null or empty string.
+     */
+    public String getStroomPath() {
+        return stroomPath;
+    }
+
+    /**
+     * @return Returns the description of the content pack.
+     * Return string is in Markdown format.
+     */
+    public String getDetails() {
+        return details;
+    }
+
+    /**
      * @return The URL of the remote Git repository.
      * Never returns null.
      */
@@ -202,6 +232,8 @@ public class AppStoreContentPack {
                && Objects.equals(iconSvg, that.iconSvg)
                && Objects.equals(licenseName, that.licenseName)
                && Objects.equals(licenseUrl, that.licenseUrl)
+               && Objects.equals(stroomPath, that.stroomPath)
+               && Objects.equals(details, that.details)
                && Objects.equals(gitUrl, that.gitUrl)
                && Objects.equals(gitBranch, that.gitBranch)
                && Objects.equals(gitPath, that.gitPath)
@@ -215,6 +247,8 @@ public class AppStoreContentPack {
                 iconSvg,
                 licenseName,
                 licenseUrl,
+                stroomPath,
+                details,
                 gitUrl,
                 gitBranch,
                 gitPath,
@@ -230,6 +264,8 @@ public class AppStoreContentPack {
                ", iconSvg='" + svgContent + '\'' +
                ", licenseName='" + licenseName + '\'' +
                ", licenseUrl='" + licenseUrl + '\'' +
+               ", stroomPath='" + stroomPath + '\'' +
+               ", details='" + details + '\'' +
                ", gitUrl='" + gitUrl + '\'' +
                ", gitBranch='" + gitBranch + '\'' +
                ", gitPath='" + gitPath + '\'' +

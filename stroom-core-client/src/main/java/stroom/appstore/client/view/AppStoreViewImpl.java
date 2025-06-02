@@ -10,7 +10,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 /**
- * GWT View implementation.
+ * GWT View implementation for the top-level view of the App Store page.
  */
 public class AppStoreViewImpl extends ViewImpl implements AppStorePresenter.AppStoreView {
 
@@ -20,6 +20,9 @@ public class AppStoreViewImpl extends ViewImpl implements AppStorePresenter.AppS
     /** Grid of available content packs, set by setInSlot(). Must be public for GWT. */
     @UiField
     public SimplePanel contentPackList;
+
+    @UiField
+    public SimplePanel contentPackDetails;
 
     /**
      * Injected constructor.
@@ -50,6 +53,11 @@ public class AppStoreViewImpl extends ViewImpl implements AppStorePresenter.AppS
         if (AppStorePresenter.CONTENT_PACK_LIST.equals(slot)) {
             contentPackList.setWidget(content);
         }
+    }
+
+    @Override
+    public SimplePanel getContentPackDetailsPanel() {
+        return contentPackDetails;
     }
 
     /**

@@ -15,10 +15,11 @@ public class AppStoreModule extends PluginModule {
         // Generate menu item for AppStore
         bindPlugin(AppStorePlugin.class);
 
-        // Tie the presenter, View interface and View together
+        // Tie the presenters, View interfaces and Views together
         bindPresenterWidget(AppStorePresenter.class,
                 AppStorePresenter.AppStoreView.class,
                 AppStoreViewImpl.class);
+
     }
 
 }
