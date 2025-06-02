@@ -12,7 +12,7 @@
             <g:center>
                 <g:FlowPanel styleName="max dashboard-panel form">
                     <form:FormGroup ui:field="appListFormGroup" addStyleNames="max">
-                        <g:SimplePanel ui:field="appNodeList" styleName="max dashboard-panel"/>
+                        <g:SimplePanel ui:field="contentPackDetails" styleName="max dashboard-panel"/>
                     </form:FormGroup>
                 </g:FlowPanel>
             </g:center>

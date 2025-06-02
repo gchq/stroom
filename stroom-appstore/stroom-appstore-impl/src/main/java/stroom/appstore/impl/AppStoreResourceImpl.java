@@ -54,6 +54,9 @@ public class AppStoreResourceImpl implements AppStoreResource {
 
     /**
      * REST method to return the list of content packs to the client.
+     *
+     * Gets called repeatedly by the client, every minute or so.
+     *
      * @return A list of content packs. Never returns null but may
      * return an empty list.
      */

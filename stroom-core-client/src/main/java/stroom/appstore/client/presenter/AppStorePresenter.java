@@ -1,10 +1,13 @@
 package stroom.appstore.client.presenter;
 
+import stroom.appstore.shared.AppStoreContentPack;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.MultiSelectEvent;
 
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -16,8 +19,10 @@ public class AppStorePresenter extends ContentTabPresenter<AppStorePresenter.App
 implements Refreshable {
 
     /** Widget to show the list of available content packs */
-    @SuppressWarnings("unused")
     private final AppStoreContentPackListPresenter contentPackListPresenter;
+
+    /** Widget to show the details of a particular content pack */
+    public final AppStoreContentPackDetailsPresenter contentPackDetailsPresenter;
 
     /** Label for the content */
     private final static String LABEL = "App Store";
@@ -38,10 +43,13 @@ implements Refreshable {
     @Inject
     public AppStorePresenter(final EventBus eventBus,
                              final AppStoreView view,
-                             final AppStoreContentPackListPresenter contentPackListPresenter) {
+                             final AppStoreContentPackListPresenter contentPackListPresenter,
+                             final AppStoreContentPackDetailsPresenter contentPackDetailsPresenter) {
         super(eventBus, view);
         this.contentPackListPresenter = contentPackListPresenter;
+        this.contentPackDetailsPresenter = contentPackDetailsPresenter;
         this.setInSlot(CONTENT_PACK_LIST, contentPackListPresenter);
+        view.getContentPackDetailsPanel().add(contentPackDetailsPresenter);
     }
 
     /**
@@ -51,7 +59,9 @@ implements Refreshable {
     protected void onBind() {
         super.onBind();
 
-        // TODO register handler for Content Pack selection
+        // Add in the handler for the list selection
+        contentPackListPresenter.getSelectionModel()
+                .addSelectionHandler(this::contentPackListSelectionHandler);
     }
 
     /**
@@ -92,14 +102,28 @@ implements Refreshable {
      */
     @Override
     public void refresh() {
-        // TODO
-        //contentPackListPresenter.refresh();
+        contentPackListPresenter.refresh();
     }
 
+    /**
+     * Handler for when a row is selected in the list of content packs.
+     * Displays blank details if nothing is selected.
+     * @param event The event (ignored - can be null)
+     */
+    private void contentPackListSelectionHandler(final MultiSelectEvent event) {
+        AppStoreContentPack cp =
+                contentPackListPresenter.getSelectionModel().getSelected();
+        contentPackDetailsPresenter.setContentPack(cp);
+    }
+    
     /**
      * GWT view managed by this presenter.
      */
     public interface AppStoreView extends View {
-        // No code
+
+        /**
+         * Returns the details panel so stuff can be put into it
+         */
+        SimplePanel getContentPackDetailsPanel();
     }
 }

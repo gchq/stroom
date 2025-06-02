@@ -6,6 +6,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.client.DataGridUtil;
@@ -26,10 +27,16 @@ import java.util.function.Consumer;
  * Represents the table of App Store Content Packs at the top of the App Store
  * Content Tab.
  */
-public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerView> {
+public class AppStoreContentPackListPresenter
+        extends MyPresenterWidget<PagerView>
+        implements Refreshable {
 
     /** Shows what is selected in the App Store list */
     private final MultiSelectionModel<AppStoreContentPack> gridSelectionModel;
+
+    /** Data hookup */
+    private final RestDataProvider<AppStoreContentPack, ResultPage<AppStoreContentPack>>
+                dataProvider;
 
     /** Resource to access server-side data */
     private final static AppStoreResource APP_STORE_RESOURCE = GWT.create(AppStoreResource.class);
@@ -55,16 +62,14 @@ public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerVie
         dataGrid.setMultiLine(true);
 
         // Allow multi-selection
-        this.gridSelectionModel = dataGrid.addDefaultSelectionModel(true);
+        this.gridSelectionModel = dataGrid.addDefaultSelectionModel(false);
 
         // Initialise the columns
         this.initColumns(dataGrid);
 
         // Hook up the data
-        final RestDataProvider<AppStoreContentPack, ResultPage<AppStoreContentPack>>
-                dataProvider = createDataProvider(eventBus, view, restFactory);
+        this.dataProvider = createDataProvider(eventBus, view, restFactory);
         dataProvider.addDataDisplay(dataGrid);
-
     }
 
     /**
@@ -130,6 +135,13 @@ public class AppStoreContentPackListPresenter extends MyPresenterWidget<PagerVie
      */
     public MultiSelectionModel<AppStoreContentPack> getSelectionModel() {
         return this.gridSelectionModel;
+    }
+
+    /**
+     * Refreshes the display by telling the data provider to refresh its data.
+     */
+    public void refresh() {
+        dataProvider.refresh();
     }
 
 }
