@@ -23,7 +23,7 @@ public class UidLookupRecorder implements UsedLookupsRecorder {
     @Override
     public void deleteUnused(final Txn<ByteBuffer> readTxn, final LmdbWriter writer) {
         uidLookupDb.forEachUid(readTxn, uid -> {
-            if (usedLookupsDb.isUnused(readTxn, uid)) {
+            if (usedLookupsDb.isUnused(writer.getWriteTxn(), uid)) {
                 uidLookupDb.deleteByUid(writer.getWriteTxn(), uid);
                 writer.tryCommit();
             }

@@ -94,26 +94,15 @@ class TestHistogramDb {
                 BYTE_BUFFERS,
                 BASIC_SETTINGS,
                 true)) {
-            assertThat(db.count()).isEqualTo(100);
+            assertThat(db.count()).isEqualTo(1);
 
             final Tags tags = getTags();
             // Check exact time states.
             checkHistogram(db, tags, refTime, 1L);
-            // Check before time states.
-            checkHistogram(db, tags, refTime.minusMillis(1), 1L);
-            // Check after time states.
-            checkHistogram(db, tags, refTime.plusMillis(1), 1L);
-
-//            final HistogramRequest stateRequest =
-//                    new HistogramRequest("TEST_MAP", "TEST_KEY", refTime);
-
 
             final HistogramKey key = getKey(refTime);
             final Long value = db.get(key);
             assertThat(value).isNotNull();
-//            assertThat(res.key()).isEqualTo("TEST_KEY");
-//            assertThat(res.effectiveTime()).isEqualTo(refTime);
-//            assertThat(value.type()).isEqualTo(Type.STRING);
             assertThat(value).isEqualTo(1L);
 
             final FieldIndex fieldIndex = new FieldIndex();
@@ -129,17 +118,11 @@ class TestHistogramDb {
                     null,
                     expressionPredicateFactory,
                     results::add);
-            assertThat(results.size()).isEqualTo(100);
-            assertThat(results.getFirst()[0].toString()).isEqualTo("TEST_KEY");
+            assertThat(results.size()).isEqualTo(3600L);
+            assertThat(results.getFirst()[0].toString()).isEqualTo("captain=kirk, dr=mccoy, lieutenant=uhura, mr=spock");
             assertThat(results.getFirst()[1].toString()).isEqualTo("2000-01-01T00:00:00.000Z");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("string");
-            assertThat(results.getFirst()[3].toString()).isEqualTo("test");
-
-
-//            final AtomicInteger count = new AtomicInteger();
-//            stateDao.search(new ExpressionCriteria(ExpressionOperator.builder().build()), fieldIndex, null,
-//                    v -> count.incrementAndGet());
-//            assertThat(count.get()).isEqualTo(100);
+            assertThat(results.getFirst()[2].toString()).isEqualTo("1s");
+            assertThat(results.getFirst()[3].toString()).isEqualTo("1");
         }
     }
 
@@ -166,67 +149,69 @@ class TestHistogramDb {
 
     @TestFactory
     Collection<DynamicTest> testMultiWrite() {
-        return createMultiKeyTest(1, false);
+        return createMultiKeyTest(1, false, 1);
     }
 
     @TestFactory
     Collection<DynamicTest> testMultiWritePerformance() {
-        return createMultiKeyTest(ITERATIONS, false);
+        return createMultiKeyTest(ITERATIONS, false, ITERATIONS);
     }
 
     @TestFactory
     Collection<DynamicTest> testMultiWriteRead() {
-        return createMultiKeyTest(1, true);
+        return createMultiKeyTest(1, true, 1);
     }
 
     @TestFactory
     Collection<DynamicTest> testMultiWriteReadPerformance() {
-        return createMultiKeyTest(ITERATIONS, true);
+        return createMultiKeyTest(ITERATIONS, true, ITERATIONS);
     }
 
-    Collection<DynamicTest> createMultiKeyTest(final int iterations, final boolean read) {
+    Collection<DynamicTest> createMultiKeyTest(final int iterations,
+                                               final boolean read,
+                                               final long expectedValue) {
         final List<DynamicTest> tests = new ArrayList<>();
         for (final KeyFunction keyFunction : keyFunctions) {
 //            for (final ValueFunction valueFunction : HistogramValueTestUtil.getValueFunctions()) {
 //            for (final HistogramPeriod period : HistogramPeriod.values()) {
 
-                HistogramPeriod period = HistogramPeriod.HOUR;
-                tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
+            HistogramPeriod period = HistogramPeriod.HOUR;
+            tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
 //                                                      ", Value type = " + valueFunction +
-                                                  ", Temporal precision = " + period,
-                        () -> {
-                            final HistogramSettings settings = new HistogramSettings
-                                    .Builder()
-                                    .keySchema(new HistogramKeySchema.Builder()
-                                            .keyType(keyFunction.keyType)
-                                            .period(period)
-                                            .build())
-                                    .valueSchema(new HistogramValueSchema.Builder()
-                                            .valueType(HistogramValueMax.TWO)
-                                            .build())
-                                    .build();
+                                              ", Period = " + period,
+                    () -> {
+                        final HistogramSettings settings = new HistogramSettings
+                                .Builder()
+                                .keySchema(new HistogramKeySchema.Builder()
+                                        .keyType(keyFunction.keyType)
+                                        .period(period)
+                                        .build())
+                                .valueSchema(new HistogramValueSchema.Builder()
+                                        .valueType(HistogramValueMax.TWO)
+                                        .build())
+                                .build();
 
-                            Path path = null;
-                            try {
-                                path = Files.createTempDirectory("stroom");
+                        Path path = null;
+                        try {
+                            path = Files.createTempDirectory("stroom");
 
-                                testWrite(path, settings, iterations,
+                            testWrite(path, settings, iterations,
+                                    keyFunction.function,
+                                    i -> 1L);
+                            if (read) {
+                                testSimpleRead(path, settings, iterations,
                                         keyFunction.function,
-                                        i -> 1L);
-                                if (read) {
-                                    testSimpleRead(path, settings, iterations,
-                                            keyFunction.function,
-                                            i -> 1L);
-                                }
-
-                            } catch (final IOException e) {
-                                throw new UncheckedIOException(e);
-                            } finally {
-                                if (path != null) {
-                                    FileUtil.deleteDir(path);
-                                }
+                                        i -> expectedValue);
                             }
-                        }));
+
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        } finally {
+                            if (path != null) {
+                                FileUtil.deleteDir(path);
+                            }
+                        }
+                    }));
 //            }
 //            }
         }
@@ -249,25 +234,23 @@ class TestHistogramDb {
     }
 
     @Test
-    void testCondenseAndDelete(@TempDir final Path rootDir) throws IOException {
+    void testDelete(@TempDir final Path rootDir) throws IOException {
         final Path dbPath = rootDir.resolve("db");
         Files.createDirectory(dbPath);
 
         testWrite(dbPath);
 
         try (final HistogramDb db = HistogramDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
-            assertThat(db.count()).isEqualTo(100);
-            db.condense(Instant.now());
+            assertThat(db.count()).isEqualTo(1);
             db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
-            db.condense(Instant.now());
             db.deleteOldData(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }
 
     @Test
-    void testCondense2(@TempDir final Path rootDir) throws IOException {
+    void testDelete2(@TempDir final Path rootDir) throws IOException {
         final Path dbPath = rootDir.resolve("db");
         Files.createDirectory(dbPath);
 
@@ -280,13 +263,11 @@ class TestHistogramDb {
 
             assertThat(db.count()).isEqualTo(109L);
 
-            db.condense(refTime.plusMillis(1));
             db.deleteOldData(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(109L);
 
-            db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1));
             db.deleteOldData(Instant.MIN, true);
-            assertThat(db.count()).isEqualTo(182);
+            assertThat(db.count()).isEqualTo(109L);
         }
     }
 
@@ -331,7 +312,6 @@ class TestHistogramDb {
                 final Long value = db.get(key);
                 assertThat(value).isNotNull();
                 assertThat(value).isEqualTo(valueFunction.apply(i));
-//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
             }
         }
     }

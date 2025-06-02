@@ -59,14 +59,14 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
         final List<Tag> tags = new ArrayList<>();
         byteBuffers.use(Integer.BYTES, uidBuffer -> {
             // The first 4 bytes gives us a lookup to the tag combination uid.
-            final long tagCombinationUid = uidUnsignedBytes.get(prefixSlice);
-            putUid(uidBuffer, tagCombinationUid);
-            final ByteBuffer tagCombinationByteBuffer = uidLookupDb.getValue(txn, uidBuffer);
+            final long tagSetUid = uidUnsignedBytes.get(prefixSlice);
+            putUid(uidBuffer, tagSetUid);
+            final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(txn, uidBuffer);
 
             // Decompose the tag combination down into tag names.
             final List<Long> tagNameUids = new ArrayList<>();
-            while (tagCombinationByteBuffer.remaining() > 0) {
-                final long tagNameUid = uidUnsignedBytes.get(tagCombinationByteBuffer);
+            while (tagSetByteBuffer.remaining() > 0) {
+                final long tagNameUid = uidUnsignedBytes.get(tagSetByteBuffer);
                 tagNameUids.add(tagNameUid);
             }
 
@@ -105,27 +105,27 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
         final List<Tag> tags = sortTags(key.getTags());
 
         // Get a UID for the combination of tag names.
-        final long tagCombinationUid = byteBuffers.use(tags.size() * Integer.BYTES, tagCombinationByteBuffer -> {
+        final long tagSetUid = byteBuffers.use(tags.size() * Integer.BYTES, tagSetByteBuffer -> {
             for (final Tag tag : tags) {
                 final Val tagName = ValString.create(tag.getTagName());
                 ValSerdeUtil.write(tagName, byteBuffers, byteBuffer -> {
                     uidLookupDb.put(txn, byteBuffer, uidByteBuffer -> {
                         final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining()).get(uidByteBuffer);
-                        uidUnsignedBytes.put(tagCombinationByteBuffer, uid);
+                        uidUnsignedBytes.put(tagSetByteBuffer, uid);
                         return null;
                     });
                     return null;
                 });
             }
-            tagCombinationByteBuffer.flip();
+            tagSetByteBuffer.flip();
 
             // Get a UID for the tag combination.
-            return uidLookupDb.put(txn, tagCombinationByteBuffer, uidByteBuffer ->
+            return uidLookupDb.put(txn, tagSetByteBuffer, uidByteBuffer ->
                     UnsignedBytesInstances.ofLength(uidByteBuffer.remaining()).get(uidByteBuffer));
         });
 
         byteBuffers.use(Integer.BYTES + (tags.size() * Integer.BYTES) + timeSerde.getSize(), keyByteBuffer -> {
-            uidUnsignedBytes.put(keyByteBuffer, tagCombinationUid);
+            uidUnsignedBytes.put(keyByteBuffer, tagSetUid);
             for (final Tag tag : tags) {
                 final Val tagValue = tag.getTagValue();
                 ValSerdeUtil.write(tagValue, byteBuffers, byteBuffer -> {
@@ -152,8 +152,8 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
             final List<Tag> tags = sortTags(key.getTags());
 
             // Get a UID for the combination of tag names.
-            final long tagCombinationUid = byteBuffers.use(tags.size() * Integer.BYTES,
-                    tagCombinationByteBuffer -> {
+            final long tagSetUid = byteBuffers.use(tags.size() * Integer.BYTES,
+                    tagSetByteBuffer -> {
                         for (final Tag tag : tags) {
                             final Val tagName = ValString.create(tag.getTagName());
                             ValSerdeUtil.write(tagName, byteBuffers, byteBuffer -> {
@@ -162,16 +162,16 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
                                             .orElseThrow(KeyNotFoundException::new);
                                     final long uid = UnsignedBytesInstances.ofLength(uidByteBuffer.remaining())
                                             .get(uidByteBuffer);
-                                    uidUnsignedBytes.put(tagCombinationByteBuffer, uid);
+                                    uidUnsignedBytes.put(tagSetByteBuffer, uid);
                                     return null;
                                 });
                                 return null;
                             });
                         }
-                        tagCombinationByteBuffer.flip();
+                        tagSetByteBuffer.flip();
 
                         // Get a UID for the tag combination.
-                        return uidLookupDb.get(txn, tagCombinationByteBuffer, optionalUidByteBuffer -> {
+                        return uidLookupDb.get(txn, tagSetByteBuffer, optionalUidByteBuffer -> {
                             final ByteBuffer uidByteBuffer = optionalUidByteBuffer
                                     .orElseThrow(KeyNotFoundException::new);
                             return UnsignedBytesInstances.ofLength(uidByteBuffer.remaining())
@@ -181,7 +181,7 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
 
             return byteBuffers.use(Integer.BYTES + (tags.size() * Integer.BYTES) + timeSerde.getSize(),
                     keyByteBuffer -> {
-                        uidUnsignedBytes.put(keyByteBuffer, tagCombinationUid);
+                        uidUnsignedBytes.put(keyByteBuffer, tagSetUid);
                         for (final Tag tag : tags) {
                             final Val tagValue = tag.getTagValue();
                             ValSerdeUtil.write(tagValue, byteBuffers, byteBuffer -> {
@@ -221,15 +221,15 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
                 final ByteBuffer prefix = getPrefix(byteBuffer);
                 byteBuffers.use(Integer.BYTES, uidBuffer -> {
                     // The first 4 bytes gives us a lookup to the tag combination uid.
-                    final long tagCombinationUid = uidUnsignedBytes.get(prefix);
-                    putUid(uidBuffer, tagCombinationUid);
+                    final long tagSetUid = uidUnsignedBytes.get(prefix);
+                    putUid(uidBuffer, tagSetUid);
                     uidLookupRecorder.recordUsed(writer, uidBuffer);
 
-                    final ByteBuffer tagCombinationByteBuffer = uidLookupDb.getValue(writer.getWriteTxn(), uidBuffer);
+                    final ByteBuffer tagSetByteBuffer = uidLookupDb.getValue(writer.getWriteTxn(), uidBuffer);
 
                     // Remember each tag name used.
-                    while (tagCombinationByteBuffer.remaining() > 0) {
-                        final long tagNameUid = uidUnsignedBytes.get(tagCombinationByteBuffer);
+                    while (tagSetByteBuffer.remaining() > 0) {
+                        final long tagNameUid = uidUnsignedBytes.get(tagSetByteBuffer);
                         putUid(uidBuffer, tagNameUid);
                         uidLookupRecorder.recordUsed(writer, uidBuffer);
                     }
@@ -240,6 +240,8 @@ public class HistogramTagsKeySerde implements HistogramKeySerde {
                         putUid(uidBuffer, tagValueUid);
                         uidLookupRecorder.recordUsed(writer, uidBuffer);
                     }
+
+                    writer.tryCommit();
                 });
             }
 
