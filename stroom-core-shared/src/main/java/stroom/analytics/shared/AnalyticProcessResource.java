@@ -16,7 +16,7 @@
 
 package stroom.analytics.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

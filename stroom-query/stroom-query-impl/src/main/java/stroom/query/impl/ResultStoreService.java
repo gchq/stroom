@@ -1,9 +1,9 @@
 package stroom.query.impl;
 
 import stroom.node.api.NodeService;
-import stroom.query.api.v2.FindResultStoreCriteria;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.FindResultStoreCriteria;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.shared.DestroyStoreRequest;

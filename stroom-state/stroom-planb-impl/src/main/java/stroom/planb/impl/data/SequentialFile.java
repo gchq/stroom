@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class SequentialFile {
 
@@ -23,22 +24,26 @@ public class SequentialFile {
     private final List<Path> subDirs;
     private final Path dir;
     private final Path zip;
+    private final CountDownLatch countDownLatch;
 
     private SequentialFile(final long id,
                            final Path root,
                            final List<Path> subDirs,
                            final Path dir,
-                           final Path zip) {
+                           final Path zip,
+                           final CountDownLatch countDownLatch) {
         this.id = id;
         this.root = root;
         this.subDirs = subDirs;
         this.dir = dir;
         this.zip = zip;
+        this.countDownLatch = countDownLatch;
     }
 
     public static SequentialFile get(final Path root,
                                      final long id,
-                                     final boolean nested) {
+                                     final boolean nested,
+                                     final CountDownLatch countDownLatch) {
         // Convert the id to a padded string.
         final String idString = StringIdUtil.idToString(id);
         Path dir = root;
@@ -60,7 +65,7 @@ public class SequentialFile {
 
         final Path zip = dir.resolve(idString +
                                      ZIP_EXTENSION);
-        return new SequentialFile(id, root, subDirs, dir, zip);
+        return new SequentialFile(id, root, subDirs, dir, zip, countDownLatch);
     }
 
     public long getId() {
@@ -81,6 +86,10 @@ public class SequentialFile {
 
     public Path getZip() {
         return zip;
+    }
+
+    public CountDownLatch getCountDownLatch() {
+        return countDownLatch;
     }
 
     public void delete() throws IOException {

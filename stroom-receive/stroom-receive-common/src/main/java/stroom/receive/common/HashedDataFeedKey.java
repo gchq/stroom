@@ -1,6 +1,8 @@
 package stroom.receive.common;
 
+import stroom.meta.api.AttributeMap;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,7 +14,9 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Represents the hashed form of a Data Feed Key, i.e. where we only have the
@@ -26,35 +30,53 @@ public class HashedDataFeedKey {
     private final String hash;
 
     @JsonProperty
-    @JsonPropertyDescription("The hash algorithm ID used to hash the datafeed key. A zero padded 3 digit number.")
-    private final String hashAlgorithmId;
+    @JsonPropertyDescription("The salt used to hash the datafeed key. May be null if there is no salt or the " +
+                             "algorithm encodes the salt in the hash, like BCrypt does.")
+    private final String salt;
 
-//    @JsonProperty
-//    @JsonPropertyDescription("The unique ID for the account sending the data to stroom. " +
-//                             "An account may comprise multiple systems and components of systems. " +
-//                             "This will be used to name auto-created folders and documents in Stroom")
-//    private final String accountId;
+    @JsonProperty
+    @JsonPropertyDescription("The hash algorithm used to hash the datafeed key. Currently one of " +
+                             "(ARGON2|BCRYPT_2A).")
+    private final DataFeedKeyHashAlgorithm hashAlgorithm;
 
     @JsonProperty
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
                              "in the stream headers.")
-    private final Map<String, String> streamMetaData;
+    private final Map<CIKey, String> streamMetaData;
 
     @JsonProperty
     @JsonPropertyDescription("The date/time the key expires, expressed as milliseconds since the unix epoch.")
     private final long expiryDateEpochMs;
 
+    @JsonIgnore
+    private final int hashCode;
+
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
-                             @JsonProperty("hashAlgorithmId") final String hashAlgorithmId,
-//                             @JsonProperty("accountId") final String accountId,
+                             @JsonProperty("salt") final String salt,
+                             @JsonProperty("hashAlgorithmId") final DataFeedKeyHashAlgorithm hashAlgorithm,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.hash = hash;
-        this.hashAlgorithmId = hashAlgorithmId;
-//        this.accountId = accountId;
-        this.streamMetaData = NullSafe.map(streamMetaData);
+        this.salt = salt;
+        this.hashAlgorithm = hashAlgorithm;
+        // No point holding blank keys or null values
+        this.streamMetaData = NullSafe.map(streamMetaData)
+                .entrySet()
+                .stream()
+                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(
+                        entry -> CIKey.of(entry.getKey()),
+                        Entry::getValue));
         this.expiryDateEpochMs = expiryDateEpochMs;
+        // Cache the hashCode as we know we will use it
+        this.hashCode = Objects.hash(
+                hash,
+                salt,
+                hashAlgorithm,
+                streamMetaData,
+                expiryDateEpochMs);
     }
 
     @NotBlank
@@ -62,25 +84,39 @@ public class HashedDataFeedKey {
         return hash;
     }
 
-    @NotBlank
-    public String getHashAlgorithmId() {
-        return hashAlgorithmId;
+    public String getSalt() {
+        return salt;
     }
 
-//    @NotBlank
-//    public String getAccountId() {
-//        return accountId;
-//    }
+    @NotBlank
+    public DataFeedKeyHashAlgorithm getHashAlgorithm() {
+        return hashAlgorithm;
+    }
 
     public Map<String, String> getStreamMetaData() {
+        return CIKey.convertToStringMap(streamMetaData);
+    }
+
+    @JsonIgnore
+    public Map<CIKey, String> getCIStreamMetaData() {
         return streamMetaData;
+    }
+
+    @JsonIgnore
+    public AttributeMap getAttributeMap() {
+        return new AttributeMap(getStreamMetaData());
     }
 
     @JsonIgnore
     public String getStreamMetaValue(final String metaKey) {
         return NullSafe.isNonBlankString(metaKey)
-                ? streamMetaData.get(metaKey)
+                ? streamMetaData.get(CIKey.of(metaKey))
                 : null;
+    }
+
+    @JsonIgnore
+    public String getStreamMetaValue(final CIKey metaKey) {
+        return NullSafe.get(metaKey, streamMetaData::get);
     }
 
     @Min(0)
@@ -109,32 +145,22 @@ public class HashedDataFeedKey {
         final HashedDataFeedKey that = (HashedDataFeedKey) object;
         return expiryDateEpochMs == that.expiryDateEpochMs
                && Objects.equals(hash, that.hash)
-               && Objects.equals(hashAlgorithmId, that.hashAlgorithmId)
-//               && Objects.equals(subjectId, that.subjectId)
-//               && Objects.equals(displayName, that.displayName)
-//               && Objects.equals(accountId, that.accountId)
+               && Objects.equals(salt, that.salt)
+               && Objects.equals(hashAlgorithm, that.hashAlgorithm)
                && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hash,
-                hashAlgorithmId,
-//                subjectId,
-//                displayName,
-//                accountId,
-                streamMetaData,
-                expiryDateEpochMs);
+        return hashCode;
     }
 
     @Override
     public String toString() {
         return "DataFeedKey{" +
                "hash='" + hash + '\'' +
-               ", hashAlgorithmId='" + hashAlgorithmId + '\'' +
-//               ", subjectId='" + subjectId + '\'' +
-//               ", displayName='" + displayName + '\'' +
-//               ", accountId='" + accountId + '\'' +
+               ", salt='" + salt + '\'' +
+               ", hashAlgorithmId='" + hashAlgorithm + '\'' +
                ", streamMetaData=" + streamMetaData +
                ", expiryDateEpochMs=" + expiryDateEpochMs +
                '}';

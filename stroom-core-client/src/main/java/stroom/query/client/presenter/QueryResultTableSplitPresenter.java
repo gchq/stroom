@@ -20,9 +20,9 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.SpecialColumns;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Result;
+import stroom.query.api.SpecialColumns;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
 
@@ -191,6 +191,10 @@ public class QueryResultTableSplitPresenter
 
     public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {
         tablePresenter.setQueryResultVisPresenter(queryResultVisPresenter);
+    }
+
+    public void setQuery(final String query) {
+        tablePresenter.setQuery(query);
     }
 
     public interface QueryResultTableSplitView extends View {

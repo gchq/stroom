@@ -13,7 +13,7 @@ import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.FindResultWithPermissions;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.util.client.DataGridUtil;
@@ -139,7 +139,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));
@@ -152,7 +152,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getInheritedDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));

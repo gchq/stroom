@@ -17,10 +17,10 @@
 package stroom.query.client.presenter;
 
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.LifespanInfo;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.api.LifespanInfo;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchTaskProgress;
 import stroom.query.client.presenter.ResultStorePresenter.ResultStoreView;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;

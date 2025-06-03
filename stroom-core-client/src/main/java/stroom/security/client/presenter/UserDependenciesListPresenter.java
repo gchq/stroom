@@ -8,7 +8,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
@@ -158,12 +158,12 @@ public class UserDependenciesListPresenter
 //                DataGridUtil.svgPresetColumnBuilder(
 //                                false,
 //                                (UserDependency row) -> {
-//                                    final String documentType = GwtNullSafe.get(
+//                                    final String documentType = NullSafe.get(
 //                                            row,
 //                                            UserDependency::getDocRef,
 //                                            DocRef::getType);
 //                                    if (documentType != null) {
-//                                        return GwtNullSafe.get(documentTypes.getDocumentType(documentType),
+//                                        return NullSafe.get(documentTypes.getDocumentType(documentType),
 //                                                DocumentType::getIcon,
 //                                                svg -> new Preset(svg, documentType, true));
 //                                    } else {

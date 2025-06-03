@@ -24,8 +24,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -36,7 +38,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -69,13 +70,15 @@ public class TestCIKey {
                     final CIKey str1 = CIKey.of(testCase.getInput()._1());
                     final CIKey str2 = CIKey.of(testCase.getInput()._2());
                     // Make sure the wrappers hold the original value
-                    assertThat(str1.get())
+                    assertThat(NullSafe.get(str1, CIKey::get))
                             .isEqualTo(testCase.getInput()._1());
-                    assertThat(str2.get())
+                    assertThat(NullSafe.get(str2, CIKey::get))
                             .isEqualTo(testCase.getInput()._2());
 
                     final boolean areEqual = Objects.equals(str1, str2);
-                    final boolean haveEqualHashCode = Objects.equals(str1.hashCode(), str2.hashCode());
+                    final boolean haveEqualHashCode = Objects.equals(
+                            NullSafe.get(str1, Object::hashCode),
+                            NullSafe.get(str2, Object::hashCode));
 
                     // If objects are equal, so should the hashes
                     assertThat(haveEqualHashCode)
@@ -142,12 +145,11 @@ public class TestCIKey {
                     // Test the other overloaded equalsIgnoreCase methods too
                     assertThat(equalsIgnoreCase(ciKey, str))
                             .isEqualTo(isEqual);
-                    assertThat(equalsIgnoreCase(str, ciKey.get()))
+                    assertThat(equalsIgnoreCase(str, NullSafe.get(ciKey, CIKey::get)))
                             .isEqualTo(isEqual);
                     return isEqual;
                 })
                 .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(null, null), true)
                 .addCase(Tuple.of("", ""), true)
                 .addCase(Tuple.of("foo", "foo"), true)
                 .addCase(Tuple.of("foo", "FOO"), true)
@@ -224,7 +226,6 @@ public class TestCIKey {
                 .addCase(Tuple.of("xxx", List.of("foo", "bar")), false)
                 .addCase(Tuple.of("", List.of("foo", "bar")), false)
                 .addCase(Tuple.of("", List.of("foo", "", "bar")), true)
-                .addCase(Tuple.of(null, Arrays.asList("foo", "bar", null)), true)
                 .build();
     }
 
@@ -254,14 +255,14 @@ public class TestCIKey {
                 .stream()
                 .sorted(Comparator.nullsFirst(CIKey.COMPARATOR))
                 .toList())
-                .extracting(CIKey::get)
+                .extracting(ciKey -> NullSafe.get(ciKey, CIKey::get))
                 .containsExactly(null, "", "0", "1", "A", "aa", "b", "C", "d");
 
         assertThat(map.keySet()
                 .stream()
-                .sorted()
+                .sorted(Comparator.nullsFirst(CIKey.COMPARATOR))
                 .toList())
-                .extracting(CIKey::getAsLowerCase)
+                .extracting(ciKey -> NullSafe.get(ciKey, CIKey::getAsLowerCase))
                 .containsExactly(null, "", "0", "1", "a", "aa", "b", "c", "d");
     }
 
@@ -348,6 +349,33 @@ public class TestCIKey {
     }
 
     @Test
+    void testSerialisation2() throws JsonProcessingException {
+        final SerdeTestClass serdeTestClass = new SerdeTestClass(CIKey.of("foo"), "bar");
+
+        String json = JsonUtil.getMapper()
+                .writeValueAsString(serdeTestClass);
+
+        LOGGER.info("json\n{}", json);
+
+        assertThat(json)
+                .isEqualTo("""
+                        {
+                          "ciKey" : {
+                            "key" : "foo"
+                          },
+                          "string" : "bar"
+                        }""");
+
+        final SerdeTestClass serdeTestClass2 = JsonUtil.getMapper()
+                .readerFor(SerdeTestClass.class)
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .readValue(json);
+
+        assertThat(serdeTestClass2)
+                .isEqualTo(serdeTestClass);
+    }
+
+    @Test
     void trimmed() {
         CIKey ciKey1 = CIKey.trimmed("  Foo   ");
         CIKey ciKey2 = CIKey.of("Foo");
@@ -416,6 +444,26 @@ public class TestCIKey {
                 .isSameAs(ciKey1);
     }
 
+    @Test
+    void testMapOf_nullKey() {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put(null, "bar");
+        final Map<CIKey, String> ciMap = CIKey.mapOf(map);
+        assertThat(ciMap.get(null))
+                .isEqualTo("bar");
+    }
+
+    @Test
+    void testMapOf_nullValue() {
+        final HashMap<String, String> map = new HashMap<>();
+        map.put("foo", null);
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            CIKey.mapOf(map);
+                        })
+                .isInstanceOf(NullPointerException.class);
+    }
+
     @TestFactory
     Stream<DynamicTest> testComparator() {
         return TestUtil.buildDynamicTestStream()
@@ -432,19 +480,17 @@ public class TestCIKey {
                             testCase.getInput()._1));
 
                     if (result == 0) {
-                        Assertions.assertThat(result2)
+                        assertThat(result2)
                                 .isEqualTo(0);
                     } else {
-                        Assertions.assertThat(result2)
+                        assertThat(result2)
                                 .isEqualTo(-1 * result);
                     }
                     return result;
                 })
                 .withSimpleEqualityAssertion()
                 .addCase(Tuple.of(null, CIKey.ofDynamicKey("a")), -1)
-                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.EMPTY_STRING), -1)
-                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.ofDynamicKey("a")), -1)
-                .addCase(Tuple.of(CIKey.NULL_STRING, CIKey.EMPTY_STRING), -1)
+                .addCase(Tuple.of(CIKey.EMPTY_STRING, CIKey.ofDynamicKey("a")), -1)
                 .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("bbb")), -1)
                 .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("BBB")), -1)
                 .addCase(Tuple.of(CIKey.ofDynamicKey("aaa"), CIKey.ofDynamicKey("AAA")), 0)
@@ -579,6 +625,49 @@ public class TestCIKey {
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class SerdeTestClass {
+
+        @JsonProperty
+        private final CIKey ciKey;
+        @JsonProperty
+        private final String string;
+
+        private SerdeTestClass(@JsonProperty("ciKey") final CIKey ciKey,
+                               @JsonProperty("string") final String string) {
+            this.ciKey = ciKey;
+            this.string = string;
+        }
+
+        public CIKey getCiKey() {
+            return ciKey;
+        }
+
+        public String getString() {
+            return string;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final SerdeTestClass that = (SerdeTestClass) o;
+            return Objects.equals(ciKey, that.ciKey) && Objects.equals(string, that.string);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(ciKey, string);
         }
     }
 }

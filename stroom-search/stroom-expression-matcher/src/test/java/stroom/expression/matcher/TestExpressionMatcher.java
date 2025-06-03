@@ -17,17 +17,17 @@
 package stroom.expression.matcher;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
+import stroom.query.api.datasource.QueryField;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;

@@ -18,7 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;

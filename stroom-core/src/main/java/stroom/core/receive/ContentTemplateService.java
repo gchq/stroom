@@ -1,6 +1,6 @@
 package stroom.core.receive;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.content.shared.ContentTemplates;
 
 import java.util.Set;

@@ -14,7 +14,6 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-impl')
     implementation project(':stroom-meta:stroom-meta-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-task:stroom-task-api')

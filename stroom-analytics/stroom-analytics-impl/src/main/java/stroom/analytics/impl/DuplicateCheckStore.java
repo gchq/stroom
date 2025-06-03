@@ -7,6 +7,7 @@ import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
@@ -45,6 +46,7 @@ class DuplicateCheckStore {
     private static final int CURRENT_SCHEMA_VERSION = 1;
 
     private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final DuplicateCheckRowSerde duplicateCheckRowSerde;
     private final LmdbEnv lmdbEnv;
     private final LmdbDb db;
@@ -56,13 +58,15 @@ class DuplicateCheckStore {
 
     DuplicateCheckStore(final DuplicateCheckDirs duplicateCheckDirs,
                         final ByteBufferFactory byteBufferFactory,
+                        final ByteBuffers byteBuffers,
                         final DuplicateCheckStoreConfig duplicateCheckStoreConfig,
                         final DuplicateCheckRowSerde duplicateCheckRowSerde,
                         final Provider<Executor> executorProvider,
                         final String analyticRuleUUID) {
         this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.duplicateCheckRowSerde = duplicateCheckRowSerde;
-        lmdbKeySequence = new LmdbKeySequence(byteBufferFactory);
+        lmdbKeySequence = new LmdbKeySequence(byteBuffers);
         final LmdbEnvDir lmdbEnvDir = duplicateCheckDirs.getDir(analyticRuleUUID);
 
         // See if the DB dir already exists.
@@ -117,14 +121,9 @@ class DuplicateCheckStore {
     }
 
     private void writeSchemaVersion(final WriteTxn txn, final int schemaVersion) {
-        final ByteBuffer byteBuffer = byteBufferFactory.acquire(Integer.BYTES);
-        try {
-            byteBuffer.putInt(schemaVersion);
-            byteBuffer.flip();
+        byteBuffers.useInt(schemaVersion, byteBuffer -> {
             infoDb.put(txn, InfoKey.SCHEMA_VERSION.getByteBuffer(), byteBuffer);
-        } finally {
-            byteBufferFactory.release(byteBuffer);
-        }
+        });
     }
 
     synchronized void writeColumnNames(final List<String> columnNames) {
@@ -165,38 +164,46 @@ class DuplicateCheckStore {
                               final WriteTxn writeTxn,
                               final LmdbKV lmdbKV) {
         // try immediate insert first.
-        boolean didPut = db.put(writeTxn, lmdbKV.key(), lmdbKV.val(), PutFlags.MDB_NOOVERWRITE);
-        if (!didPut) {
-            // If we didn't put then check to see if this was because this is an exact duplicate.
-            final AtomicBoolean ok = new AtomicBoolean();
-            lmdbKeySequence.find(
-                    db.getDbi(),
-                    writeTxn.get(),
-                    lmdbKV.key(),
-                    lmdbKV.val(),
-                    kv -> kv.val().equals(lmdbKV.val()),
-                    match -> {
-                        if (match.foundKey() == null) {
-                            LOGGER.debug("Didn't find row {}", duplicateCheckRow);
-                            lmdbKeySequence.addSequenceNumber(
+        final boolean didPut = lmdbKeySequence.find(
+                db.getDbi(),
+                writeTxn.get(),
+                lmdbKV.key(),
+                lmdbKV.val(),
+                val -> val.equals(lmdbKV.val()),
+                match -> {
+                    if (match.foundKey() == null) {
+                        // If there is 0 sequence number then just put.
+                        if (match.nextSequenceNumber() == 0) {
+                            final boolean success = db.put(writeTxn,
                                     lmdbKV.key(),
-                                    duplicateCheckRowSerde.getKeyLength(),
-                                    match.nextSequenceNumber(),
-                                    sequenceKeyBuffer -> {
-                                        final boolean success = db.put(writeTxn,
-                                                sequenceKeyBuffer,
-                                                lmdbKV.val(),
-                                                PutFlags.MDB_NOOVERWRITE);
-                                        if (!success) {
-                                            throw new RuntimeException("Expected to put value but failed");
-                                        }
-                                        uncommittedCount++;
-                                        ok.set(success);
-                                    });
+                                    lmdbKV.val(),
+                                    PutFlags.MDB_NOOVERWRITE);
+                            if (!success) {
+                                throw new RuntimeException("Expected to put value but failed");
+                            }
+                            return true;
                         }
-                    });
-            didPut = ok.get();
-        }
+
+                        LOGGER.debug("Didn't find row {}", duplicateCheckRow);
+                        return lmdbKeySequence.addSequenceNumber(
+                                lmdbKV.key(),
+                                duplicateCheckRowSerde.getKeyLength(),
+                                match.nextSequenceNumber(),
+                                sequenceKeyBuffer -> {
+                                    final boolean success = db.put(writeTxn,
+                                            sequenceKeyBuffer,
+                                            lmdbKV.val(),
+                                            PutFlags.MDB_NOOVERWRITE);
+                                    if (!success) {
+                                        throw new RuntimeException("Expected to put value but failed");
+                                    }
+                                    uncommittedCount++;
+                                    return true;
+                                });
+                    }
+
+                    return false;
+                });
 
         if (LOGGER.isDebugEnabled()) {
             if (didPut) {

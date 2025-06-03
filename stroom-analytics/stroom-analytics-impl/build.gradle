@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.analytics.impl'
 dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-rule-impl')
-    implementation project(':stroom-annotation:stroom-annotation-api')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
@@ -28,7 +27,6 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-search:stroom-search-impl')

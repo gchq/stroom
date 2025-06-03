@@ -16,9 +16,8 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.Param;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
 
 import java.util.Map;
 

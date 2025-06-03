@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
-import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.UserTimeZone;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.util.date.DateUtil;
 

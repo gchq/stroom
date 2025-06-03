@@ -14,5 +14,6 @@ public interface FileTransferService {
                      long metaId,
                      String fileHash,
                      String fileName,
+                     boolean synchroniseMerge,
                      InputStream inputStream) throws IOException;
 }

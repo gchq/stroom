@@ -27,7 +27,6 @@ dependencies {
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-user-api')
@@ -56,6 +55,7 @@ dependencies {
     testImplementation libs.jaxb.api
     testImplementation libs.mockito.core
     testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testRuntimeOnly libs.junit.jupiter.engine

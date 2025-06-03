@@ -26,7 +26,7 @@ public final class SvgPresets {
     public static final Preset ADD_BELOW = enabled(SvgImage.ADD_BELOW, "Add below");
     public static final Preset ADD_MULTIPLE = enabled(SvgImage.ADD_MULTIPLE, "Add Multiple");
     public static final Preset ALERT = enabled(SvgImage.ALERT, "Alert");
-    public static final Preset ANNOTATE = disabled(SvgImage.EDIT, "Annotate");
+    public static final Preset ANNOTATE = enabled(SvgImage.EDIT, "Annotate");
     public static final Preset ARROW_RIGHT = enabled(SvgImage.ARROW_RIGHT, "Move Right");
     public static final Preset ARROW_LEFT = enabled(SvgImage.ARROW_LEFT, "Move Left");
     public static final Preset ARROW_UP = enabled(SvgImage.ARROW_UP, "Move Up");

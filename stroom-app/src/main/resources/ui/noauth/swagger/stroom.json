@@ -703,7 +703,7 @@
     },
     "/annotation/v1" : {
       "get" : {
-        "operationId" : "getAnnotationDetail",
+        "operationId" : "getAnnotationById",
         "parameters" : [ {
           "in" : "query",
           "name" : "annotationId",
@@ -717,23 +717,25 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AnnotationDetail"
+                  "$ref" : "#/components/schemas/Annotation"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Gets an annotation",
+        "summary" : "Gets an annotation by id",
         "tags" : [ "Annotations" ]
-      },
+      }
+    },
+    "/annotation/v1/batchChange" : {
       "post" : {
-        "operationId" : "createAnnotationEntry",
+        "operationId" : "batchChangeAnnotation",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateEntryRequest"
+                "$ref" : "#/components/schemas/MultiAnnotationChangeRequest"
               }
             }
           },
@@ -745,20 +747,323 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AnnotationDetail"
+                  "type" : "integer",
+                  "format" : "int32"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Gets an annotation",
+        "summary" : "Applies a change to multiple annotations",
         "tags" : [ "Annotations" ]
       }
     },
-    "/annotation/v1/comment" : {
+    "/annotation/v1/change" : {
+      "post" : {
+        "operationId" : "changeAnnotation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SingleAnnotationChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Applies a change to an annotation",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/changeDocumentPermissions" : {
+      "post" : {
+        "operationId" : "changeDocumentPermissions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SingleDocumentPermissionChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Change document permissions",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/create" : {
+      "post" : {
+        "operationId" : "createAnnotation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAnnotationRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates an annotation",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/createAnnotationTag" : {
+      "post" : {
+        "operationId" : "createAnnotationTag",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateAnnotationTagRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AnnotationTag"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an annotation tag",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/delete" : {
+      "delete" : {
+        "operationId" : "deleteAnnotation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes an annotation",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/deleteAnnotationTag" : {
+      "delete" : {
+        "operationId" : "deleteAnnotationTag",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AnnotationTag"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an annotation tag",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/findAnnotationTags" : {
+      "post" : {
+        "operationId" : "findAnnotationTags",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExpressionCriteria"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageAnnotationTag"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds annotation tags matching request",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getAnnotationByRef" : {
+      "post" : {
+        "operationId" : "getAnnotationByRef",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets an annotation by ref",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getAnnotationEntries" : {
+      "post" : {
+        "operationId" : "getAnnotationEntries",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AnnotationEntry"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets annotation entries",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getLinkedEvents" : {
+      "post" : {
+        "operationId" : "getAnnotationLinkedEvents",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "annotationRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/EventId"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a list of events linked to this annotation",
+        "tags" : [ "Annotations" ]
+      }
+    },
+    "/annotation/v1/getStandardComments" : {
       "get" : {
-        "operationId" : "getAnnotationComments",
+        "operationId" : "getAnnotationSampleComments",
         "parameters" : [ {
           "in" : "query",
           "name" : "filter",
@@ -785,190 +1090,31 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/annotation/v1/link" : {
-      "post" : {
-        "operationId" : "linkAnnotationEvents",
+    "/annotation/v1/updateAnnotationTag" : {
+      "put" : {
+        "operationId" : "updateAnnotationTag",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/EventLink"
+                "$ref" : "#/components/schemas/AnnotationTag"
               }
             }
-          },
-          "description" : "eventLink",
-          "required" : true
+          }
         },
         "responses" : {
           "default" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/EventId"
-                  }
+                  "$ref" : "#/components/schemas/AnnotationTag"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Links an annotation to an event",
-        "tags" : [ "Annotations" ]
-      }
-    },
-    "/annotation/v1/linkedEvents" : {
-      "get" : {
-        "operationId" : "getAnnotationLinkedEvents",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "annotationId",
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/EventId"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets a list of events linked to this annotation",
-        "tags" : [ "Annotations" ]
-      }
-    },
-    "/annotation/v1/setAssignedTo" : {
-      "post" : {
-        "operationId" : "setAnnotationAssignedTo",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SetAssignedToRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Bulk action to set the assignment for several annotations",
-        "tags" : [ "Annotations" ]
-      }
-    },
-    "/annotation/v1/setStatus" : {
-      "post" : {
-        "operationId" : "setAnnotationStatus",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SetStatusRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Bulk action to set the status for several annotations",
-        "tags" : [ "Annotations" ]
-      }
-    },
-    "/annotation/v1/status" : {
-      "get" : {
-        "operationId" : "getAnnotationDStatus",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "filter",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets a list of allowed statuses",
-        "tags" : [ "Annotations" ]
-      }
-    },
-    "/annotation/v1/unlink" : {
-      "post" : {
-        "operationId" : "unlinkAnnotationEvents",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/EventLink"
-              }
-            }
-          },
-          "description" : "eventLink",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/EventId"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Unlinks an annotation from an event",
+        "summary" : "Update an annotation tag",
         "tags" : [ "Annotations" ]
       }
     },
@@ -2114,6 +2260,76 @@
         },
         "summary" : "Import content",
         "tags" : [ "Content" ]
+      }
+    },
+    "/contentTemplates/v1" : {
+      "get" : {
+        "operationId" : "fetchContentTemplates",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentTemplates"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get content templates",
+        "tags" : [ "Content Templates" ]
+      },
+      "put" : {
+        "operationId" : "updateContentTemplates",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentTemplates"
+              }
+            }
+          },
+          "description" : "contentTemplates",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentTemplates"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update content templates",
+        "tags" : [ "Content Templates" ]
+      }
+    },
+    "/contentTemplates/v1/fields" : {
+      "get" : {
+        "operationId" : "fetchFields",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/QueryField"
+                  },
+                  "uniqueItems" : true
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get the list of fields for use in the match expression.",
+        "tags" : [ "Content Templates" ]
       }
     },
     "/dashboard/v1/columnValues" : {
@@ -3633,7 +3849,7 @@
     },
     "/explorer/v2/changeDocumentPermissions" : {
       "post" : {
-        "operationId" : "changeDocumentPermissions",
+        "operationId" : "changeDocumentPermissions_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4540,6 +4756,12 @@
           "name" : "fileName",
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "synchroniseMerge",
+          "schema" : {
+            "type" : "boolean"
           }
         } ],
         "requestBody" : {
@@ -6994,6 +7216,62 @@
         "tags" : [ "State Stores" ]
       }
     },
+    "/planb/v1/getStoreInfo" : {
+      "post" : {
+        "operationId" : "getPlanBStoreInfo",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlanBShardInfoRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBShardInfoResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets Plan B store info.",
+        "tags" : [ "Plan B Query" ]
+      }
+    },
+    "/planb/v1/getValue" : {
+      "post" : {
+        "operationId" : "planBQueryGetValue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanBValue"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a value from a remote Plan B store.",
+        "tags" : [ "Plan B Query" ]
+      }
+    },
     "/preferences/v1" : {
       "get" : {
         "operationId" : "fetchUserPreferences",
@@ -7801,6 +8079,36 @@
           }
         },
         "summary" : "Fetch completions for the query",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/fetchDataSourceFromQueryString" : {
+      "post" : {
+        "operationId" : "fetchDataSourceFromQueryString",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "query",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a data source from a query string",
         "tags" : [ "Queries" ]
       }
     },
@@ -11422,6 +11730,18 @@
   },
   "components" : {
     "schemas" : {
+      "AbstractAnnotationChange" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
       "AbstractAppPermissionChange" : {
         "type" : "object",
         "discriminator" : {
@@ -11430,7 +11750,7 @@
         "properties" : {
           "permission" : {
             "type" : "string",
-            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+            "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
           },
           "type" : {
             "type" : "string"
@@ -11512,6 +11832,18 @@
           "maxStoreSize" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "overwrite" : {
+            "type" : "boolean"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/RetentionSettings"
+          },
+          "snapshotSettings" : {
+            "$ref" : "#/components/schemas/SnapshotSettings"
+          },
+          "synchroniseMerge" : {
+            "type" : "boolean"
           },
           "type" : {
             "type" : "string"
@@ -11758,6 +12090,19 @@
           }
         }
       },
+      "AddTag" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "tag" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
+            }
+          }
+        } ]
+      },
       "AdvancedDocumentFindRequest" : {
         "type" : "object",
         "properties" : {
@@ -11984,14 +12329,23 @@
           "assignedTo" : {
             "$ref" : "#/components/schemas/UserRef"
           },
+          "collections" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
+            }
+          },
           "comment" : {
             "type" : "string"
           },
-          "createTime" : {
+          "createTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
             "type" : "string"
           },
           "history" : {
@@ -12001,39 +12355,43 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "status" : {
+          "labels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
+            }
+          },
+          "name" : {
             "type" : "string"
+          },
+          "retainUntilTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "retentionPeriod" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/AnnotationTag"
           },
           "subject" : {
             "type" : "string"
           },
-          "title" : {
+          "type" : {
             "type" : "string"
           },
-          "updateTime" : {
+          "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "updateUser" : {
             "type" : "string"
           },
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
-      },
-      "AnnotationDetail" : {
-        "type" : "object",
-        "properties" : {
-          "annotation" : {
-            "$ref" : "#/components/schemas/Annotation"
+          "uuid" : {
+            "type" : "string"
           },
-          "entries" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AnnotationEntry"
-            }
+          "version" : {
+            "type" : "string"
           }
         }
       },
@@ -12045,7 +12403,8 @@
             "format" : "int64"
           },
           "entryType" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "TITLE", "SUBJECT", "STATUS", "ASSIGNED", "COMMENT", "LINK", "UNLINK", "RETENTION_PERIOD", "DESCRIPTION", "ADD_TO_COLLECTION", "REMOVE_FROM_COLLECTION", "ADD_LABEL", "REMOVE_LABEL", "DELETE" ]
           },
           "entryUser" : {
             "$ref" : "#/components/schemas/UserRef"
@@ -12056,6 +12415,29 @@
           "id" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "AnnotationTag" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "style" : {
+            "type" : "string",
+            "enum" : [ "NONE", "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "STATUS", "LABEL", "COLLECTION" ]
+          },
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
@@ -12129,7 +12511,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
             },
             "uniqueItems" : true
           },
@@ -12137,7 +12519,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
             },
             "uniqueItems" : true
           },
@@ -12153,7 +12535,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
+              "enum" : [ "ADMINISTRATOR", "ANNOTATIONS", "MANAGE_CACHE_PERMISSION", "MANAGE_CONTENT_TEMPLATES_PERMISSION", "VIEW_DATA_PERMISSION", "VIEW_DATA_WITH_PIPELINE_PERMISSION", "DELETE_DATA_PERMISSION", "IMPORT_DATA_PERMISSION", "EXPORT_DATA_PERMISSION", "MANAGE_USERS_PERMISSION", "CHANGE_OWNER_PERMISSION", "STEPPING_PERMISSION", "MANAGE_PROCESSORS_PERMISSION", "MANAGE_TASKS_PERMISSION", "DOWNLOAD_SEARCH_RESULTS_PERMISSION", "MANAGE_API_KEYS", "MANAGE_JOBS_PERMISSION", "MANAGE_PROPERTIES_PERMISSION", "MANAGE_POLICIES_PERMISSION", "MANAGE_NODES_PERMISSION", "MANAGE_INDEX_SHARDS_PERMISSION", "MANAGE_VOLUMES_PERMISSION", "MANAGE_DB_PERMISSION", "IMPORT_CONFIGURATION", "EXPORT_CONFIGURATION", "VIEW_SYSTEM_INFO_PERMISSION", "CHECK_RECEIPT_STATUS" ]
             },
             "uniqueItems" : true
           },
@@ -12645,6 +13027,45 @@
           }
         }
       },
+      "ChangeAssignedTo" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "userRef" : {
+              "$ref" : "#/components/schemas/UserRef"
+            }
+          }
+        } ]
+      },
+      "ChangeComment" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "comment" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "ChangeDescription" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "ChangePasswordRequest" : {
         "type" : "object",
         "properties" : {
@@ -12675,6 +13096,45 @@
             "type" : "string"
           }
         }
+      },
+      "ChangeRetentionPeriod" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "retentionPeriod" : {
+              "$ref" : "#/components/schemas/SimpleDuration"
+            }
+          }
+        } ]
+      },
+      "ChangeSubject" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "subject" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "ChangeTitle" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "title" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "CheckDocumentPermissionRequest" : {
         "type" : "object",
@@ -12925,7 +13385,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+              "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -12942,6 +13402,10 @@
           },
           "text" : {
             "type" : "string"
+          },
+          "textType" : {
+            "type" : "string",
+            "enum" : [ "STROOM_QUERY_LANGUAGE", "EXPRESSION" ]
           }
         }
       },
@@ -13124,6 +13588,79 @@
           }
         }
       },
+      "ContentTemplate" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "pipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "processorMaxConcurrent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "processorPriority" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "templateNumber" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "templateType" : {
+            "type" : "string",
+            "enum" : [ "PROCESSOR_FILTER", "INHERIT_PIPELINE" ]
+          }
+        }
+      },
+      "ContentTemplates" : {
+        "type" : "object",
+        "properties" : {
+          "contentTemplates" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ContentTemplate"
+            }
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
+      },
       "CoprocessorSettings" : {
         "type" : "object",
         "discriminator" : {
@@ -13184,6 +13721,38 @@
           }
         }
       },
+      "CreateAnnotationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "linkedEvents" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/EventId"
+            }
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CreateAnnotationTagRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "STATUS", "LABEL", "COLLECTION" ]
+          }
+        }
+      },
       "CreateApiKeyRequest" : {
         "type" : "object",
         "properties" : {
@@ -13206,26 +13775,6 @@
           }
         },
         "required" : [ "tokenType", "userId" ]
-      },
-      "CreateEntryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "annotation" : {
-            "$ref" : "#/components/schemas/Annotation"
-          },
-          "entryValue" : {
-            "$ref" : "#/components/schemas/EntryValue"
-          },
-          "linkedEvents" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/EventId"
-            }
-          },
-          "type" : {
-            "type" : "string"
-          }
-        }
       },
       "CreateHashedApiKeyRequest" : {
         "type" : "object",
@@ -14036,7 +14585,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -14467,6 +15016,9 @@
             "automate" : {
               "$ref" : "#/components/schemas/Automate"
             },
+            "embeddedQueryDoc" : {
+              "$ref" : "#/components/schemas/QueryDoc"
+            },
             "lastQueryKey" : {
               "$ref" : "#/components/schemas/QueryKey"
             },
@@ -14478,6 +15030,9 @@
             },
             "queryTablePreferences" : {
               "$ref" : "#/components/schemas/QueryTablePreferences"
+            },
+            "reference" : {
+              "type" : "boolean"
             },
             "selectionFilter" : {
               "type" : "array",
@@ -14586,18 +15141,6 @@
           "streamId" : {
             "type" : "integer",
             "format" : "int64"
-          }
-        }
-      },
-      "EventLink" : {
-        "type" : "object",
-        "properties" : {
-          "annotationId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "eventId" : {
-            "$ref" : "#/components/schemas/EventId"
           }
         }
       },
@@ -16252,7 +16795,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - AccountId must be specified", "406 - 104 - Component must be specified", "406 - 105 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - AccountId is not valid", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -16266,6 +16809,21 @@
           "metaId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "GetRequest" : {
+        "type" : "object",
+        "properties" : {
+          "eventTime" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keyName" : {
+            "type" : "string"
+          },
+          "mapName" : {
+            "type" : "string"
           }
         }
       },
@@ -16894,6 +17452,23 @@
           }
         }
       },
+      "Key" : {
+        "type" : "object",
+        "properties" : {
+          "effectiveTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "keyEnd" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "keyStart" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "KeyValueInputComponentSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -16969,6 +17544,22 @@
         "xml" : {
           "name" : "limits"
         }
+      },
+      "LinkEvents" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "events" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/EventId"
+              }
+            }
+          }
+        } ]
       },
       "ListConfigResponse" : {
         "type" : "object",
@@ -17273,6 +17864,21 @@
           },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
+      "MultiAnnotationChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationIdList" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractAnnotationChange"
           }
         }
       },
@@ -17731,7 +18337,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -18035,6 +18641,43 @@
             "type" : "string"
           }
         }
+      },
+      "PlanBShardInfoRequest" : {
+        "type" : "object",
+        "properties" : {
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "PlanBShardInfoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
+      },
+      "PlanBValue" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
       },
       "ProcessConfig" : {
         "type" : "object",
@@ -18807,7 +19450,7 @@
             "type" : "array",
             "items" : {
               "type" : "string",
-              "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+              "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
             },
             "uniqueItems" : true
           },
@@ -18855,7 +19498,7 @@
           },
           "type" : {
             "type" : "string",
-            "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
+            "enum" : [ "DATA_SOURCE", "QUERYABLE_FIELD", "FIELD", "FUNCTION", "TITLE", "STRUCTURE", "VISUALISATION", "DICTIONARY" ]
           }
         }
       },
@@ -18954,6 +19597,15 @@
           }
         }
       },
+      "RangeKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "rangeType" : {
+            "type" : "string",
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+          }
+        }
+      },
       "RangeLong" : {
         "type" : "object",
         "properties" : {
@@ -18970,15 +19622,34 @@
           }
         }
       },
-      "RangedStateSettings" : {
+      "RangeState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/Val"
+            }
+          }
+        } ]
+      },
+      "RangeStateSettings" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractPlanBSettings"
         }, {
           "type" : "object",
           "properties" : {
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/RangeKeySchema"
+            },
+            "valueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
@@ -19225,6 +19896,19 @@
           }
         } ]
       },
+      "RemoveTag" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "tag" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
+            }
+          }
+        } ]
+      },
       "ReportDoc" : {
         "type" : "object",
         "properties" : {
@@ -19441,6 +20125,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/AnalyticDataShard"
+            }
+          }
+        }
+      },
+      "ResultPageAnnotationTag" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
             }
           }
         }
@@ -19989,6 +20688,20 @@
             "items" : {
               "$ref" : "#/components/schemas/ResultStoreInfo"
             }
+          }
+        }
+      },
+      "RetentionSettings" : {
+        "type" : "object",
+        "properties" : {
+          "duration" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "useStateTime" : {
+            "type" : "boolean"
           }
         }
       },
@@ -20659,6 +21372,27 @@
           }
         }
       },
+      "Session" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "end" : {
+              "type" : "string",
+              "format" : "date-time"
+            },
+            "key" : {
+              "$ref" : "#/components/schemas/Val"
+            },
+            "start" : {
+              "type" : "string",
+              "format" : "date-time"
+            }
+          }
+        } ]
+      },
       "SessionDetails" : {
         "type" : "object",
         "properties" : {
@@ -20695,6 +21429,23 @@
           }
         }
       },
+      "SessionKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
+      },
       "SessionListResponse" : {
         "type" : "object",
         "properties" : {
@@ -20719,11 +21470,8 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
-            },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/SessionKeySchema"
             }
           }
         } ]
@@ -20740,21 +21488,6 @@
             }
           }
         } ]
-      },
-      "SetAssignedToRequest" : {
-        "type" : "object",
-        "properties" : {
-          "annotationIdList" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int64"
-            }
-          },
-          "assignedTo" : {
-            "$ref" : "#/components/schemas/UserRef"
-          }
-        }
       },
       "SetDocumentUserCreatePermissions" : {
         "type" : "object",
@@ -20793,20 +21526,18 @@
           }
         } ]
       },
-      "SetStatusRequest" : {
+      "SetTag" : {
         "type" : "object",
-        "properties" : {
-          "annotationIdList" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int64"
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "tag" : {
+              "$ref" : "#/components/schemas/AnnotationTag"
             }
-          },
-          "status" : {
-            "type" : "string"
           }
-        }
+        } ]
       },
       "SharedElementData" : {
         "type" : "object",
@@ -20855,6 +21586,28 @@
           }
         }
       },
+      "SingleAnnotationChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "annotationRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractAnnotationChange"
+          }
+        }
+      },
+      "SingleDocumentPermissionChangeRequest" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "$ref" : "#/components/schemas/AbstractDocumentPermissionsChange"
+          },
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -20884,6 +21637,20 @@
           },
           "planBDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
+      "SnapshotSettings" : {
+        "type" : "object",
+        "properties" : {
+          "useSnapshotsForGet" : {
+            "type" : "boolean"
+          },
+          "useSnapshotsForLookup" : {
+            "type" : "boolean"
+          },
+          "useSnapshotsForQuery" : {
+            "type" : "boolean"
           }
         }
       },
@@ -21196,6 +21963,22 @@
           "name" : "splitLayout"
         }
       },
+      "State" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Val"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/Val"
+            }
+          }
+        } ]
+      },
       "StateDoc" : {
         "type" : "object",
         "properties" : {
@@ -21259,6 +22042,19 @@
           }
         }
       },
+      "StateKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          }
+        }
+      },
       "StateSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -21266,11 +22062,27 @@
         }, {
           "type" : "object",
           "properties" : {
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/StateKeySchema"
+            },
+            "valueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
+      },
+      "StateValueSchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateValueType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          }
+        }
       },
       "StatisticField" : {
         "type" : "object",
@@ -22162,7 +22974,36 @@
           }
         }
       },
-      "TemporalRangedStateSettings" : {
+      "TemporalRangeKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "rangeType" : {
+            "type" : "string",
+            "enum" : [ "BYTE", "SHORT", "INT", "LONG" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
+      },
+      "TemporalRangeState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/Val"
+            }
+          }
+        } ]
+      },
+      "TemporalRangeStateSettings" : {
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractPlanBSettings"
@@ -22172,14 +23013,47 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/TemporalRangeKeySchema"
             },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
+            "valueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
+      },
+      "TemporalState" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/PlanBValue"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/components/schemas/Key"
+            },
+            "value" : {
+              "$ref" : "#/components/schemas/Val"
+            }
+          }
+        } ]
+      },
+      "TemporalStateKeySchema" : {
+        "type" : "object",
+        "properties" : {
+          "hashLength" : {
+            "type" : "string",
+            "enum" : [ "INTEGER", "LONG" ]
+          },
+          "stateKeyType" : {
+            "type" : "string",
+            "enum" : [ "BOOLEAN", "BYTE", "SHORT", "INT", "LONG", "FLOAT", "DOUBLE", "STRING", "UID_LOOKUP", "HASH_LOOKUP", "VARIABLE" ]
+          },
+          "temporalPrecision" : {
+            "type" : "string",
+            "enum" : [ "DAY", "HOUR", "MINUTE", "SECOND", "MILLISECOND", "NANOSECOND" ]
+          }
+        }
       },
       "TemporalStateSettings" : {
         "type" : "object",
@@ -22191,11 +23065,11 @@
             "condense" : {
               "$ref" : "#/components/schemas/DurationSetting"
             },
-            "overwrite" : {
-              "type" : "boolean"
+            "keySchema" : {
+              "$ref" : "#/components/schemas/TemporalStateKeySchema"
             },
-            "retention" : {
-              "$ref" : "#/components/schemas/DurationSetting"
+            "valueSchema" : {
+              "$ref" : "#/components/schemas/StateValueSchema"
             }
           }
         } ]
@@ -22504,6 +23378,22 @@
           }
         }
       },
+      "UnlinkEvents" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AbstractAnnotationChange"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "events" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/EventId"
+              }
+            }
+          }
+        } ]
+      },
       "UpdateAccountRequest" : {
         "type" : "object",
         "properties" : {
@@ -22798,6 +23688,9 @@
           }
         },
         "required" : [ "use" ]
+      },
+      "Val" : {
+        "type" : "object"
       },
       "ValidateExpressionRequest" : {
         "type" : "object",

@@ -27,12 +27,12 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QLVisResult;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QLVisResult;
+import stroom.query.api.Result;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.shared.QueryTablePreferences;
@@ -47,6 +47,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -68,6 +69,7 @@ public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
         implements HasDirtyHandlers, HasToolbar, HasHandlers {
 
+    private static final int DEBOUNCE_DELAY_MS = 400;
     private static final TabData TABLE = new TabDataImpl("Table");
     private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
 
@@ -86,6 +88,8 @@ public class QueryEditPresenter
     private final Provider<QueryResultVisPresenter> visPresenterProvider;
 
     private QueryResultVisPresenter currentVisPresenter;
+    private String currentQuery;
+    private Timer requestTimer;
 
     @Inject
     public QueryEditPresenter(final EventBus eventBus,
@@ -280,7 +284,8 @@ public class QueryEditPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
-            queryHelpPresenter.setQuery(editorPresenter.getText());
+            final String query = editorPresenter.getText();
+            updateQuery(query);
             setDirty(true);
         }));
         registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
@@ -298,6 +303,25 @@ public class QueryEditPresenter
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
         registerHandler(queryResultPresenter.addDirtyHandler(e -> setDirty(true)));
+    }
+
+    public void updateQuery(final String query) {
+        // Debounce requests so we don't spam the backend
+        if (requestTimer != null) {
+            requestTimer.cancel();
+        }
+
+        requestTimer = new Timer() {
+            @Override
+            public void run() {
+                if (!Objects.equals(currentQuery, query)) {
+                    currentQuery = query;
+                    queryHelpPresenter.setQuery(query);
+                    queryResultPresenter.setQuery(query);
+                }
+            }
+        };
+        requestTimer.schedule(DEBOUNCE_DELAY_MS);
     }
 
     @Override
@@ -340,14 +364,14 @@ public class QueryEditPresenter
         }
     }
 
-    void start() {
+    public void start() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         }
         run(true, true);
     }
 
-    void stop() {
+    public void stop() {
         queryModel.stop();
     }
 
@@ -398,7 +422,7 @@ public class QueryEditPresenter
             if (NullSafe.isBlankString(editorPresenter.getText())
                 || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
-                queryHelpPresenter.setQuery(query);
+                updateQuery(query);
             }
             reading = false;
         }

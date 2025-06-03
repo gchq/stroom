@@ -17,8 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.annotation.shared.AnnotationTag;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,16 +33,13 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
     private final Widget widget;
 
     @UiField
-    Label statusLabel;
-    @UiField
-    InlineSvgButton statusIcon;
-    @UiField
     Label status;
+    @UiField
+    SettingBlock statusBlock;
 
     @Inject
     public ChangeStatusViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        statusIcon.setSvg(SvgImage.ARROW_DOWN);
     }
 
     @Override
@@ -53,38 +49,24 @@ public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandl
 
     @Override
     public void focus() {
-        statusIcon.setFocus(true);
+//        statusBlock.setFocus(true);
     }
 
     @Override
-    public void setStatus(final String status) {
-        if (status == null || status.trim().isEmpty()) {
+    public void setStatus(final AnnotationTag status) {
+        if (status == null) {
             this.status.setText("None");
             this.status.getElement().getStyle().setOpacity(0.5);
         } else {
-            this.status.setText(status);
+            this.status.setText(status.getName());
             this.status.getElement().getStyle().setOpacity(1);
         }
     }
 
-    @UiHandler("statusLabel")
-    public void onStatusLabel(final ClickEvent e) {
+    @UiHandler("statusBlock")
+    public void onStatusBlock(final ClickEvent e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
-        }
-    }
-
-    @UiHandler("status")
-    public void onStatus(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
-        }
-    }
-
-    @UiHandler("statusIcon")
-    public void onStatusIcon(final ClickEvent e) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().showStatusChooser(statusLabel.getElement());
+            getUiHandlers().showStatusChooser(statusBlock.getElement());
         }
     }
 

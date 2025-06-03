@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.NullSafe;

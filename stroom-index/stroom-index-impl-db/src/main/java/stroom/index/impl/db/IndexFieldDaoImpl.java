@@ -16,11 +16,6 @@
 
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
-import stroom.datasource.api.v2.IndexFieldFields;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -30,7 +25,12 @@ import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.UpdateField;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.IndexFieldFields;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
@@ -91,7 +91,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
             if (fieldType == null) {
                 return null;
             }
-            return (byte) fieldType.getIndex();
+            return fieldType.getPrimitiveValue();
         });
         expressionMapper.map(IndexFieldFields.STORE_FIELD, INDEX_FIELD.STORED, Boolean::valueOf);
         expressionMapper.map(IndexFieldFields.INDEX_FIELD, INDEX_FIELD.INDEXED, Boolean::valueOf);
@@ -190,7 +190,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             if (!existingFieldNames.contains(field.getFldName())) {
                                 c = c.values(
                                         fieldSourceId,
-                                        (byte) field.getFldType().getIndex(),
+                                        field.getFldType().getPrimitiveValue(),
                                         field.getFldName(),
                                         field.getAnalyzerType().getDisplayValue(),
                                         field.isIndexed(),
@@ -292,7 +292,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     final boolean termPositions = r.get(INDEX_FIELD.TERM_POSITIONS);
                     final boolean caseSensitive = r.get(INDEX_FIELD.CASE_SENSITIVE);
 
-                    final FieldType fieldType = FieldType.get(typeId);
+                    final FieldType fieldType = FieldType.fromTypeId(typeId);
                     final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(analyzer);
                     return IndexFieldImpl
                             .builder()
@@ -346,7 +346,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             INDEX_FIELD.TERM_POSITIONS,
                             INDEX_FIELD.CASE_SENSITIVE)
                     .values(fieldSourceId,
-                            (byte) field.getFldType().getIndex(),
+                            field.getFldType().getPrimitiveValue(),
                             field.getFldName(),
                             field.getAnalyzerType().getDisplayValue(),
                             field.isIndexed(),
@@ -372,7 +372,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     .orElseThrow(() -> new RuntimeException("No field source found for " + docRef));
             txnContext
                     .update(INDEX_FIELD)
-                    .set(INDEX_FIELD.TYPE, (byte) field.getFldType().getIndex())
+                    .set(INDEX_FIELD.TYPE, field.getFldType().getPrimitiveValue())
                     .set(INDEX_FIELD.NAME, field.getFldName())
                     .set(INDEX_FIELD.ANALYZER, field.getAnalyzerType().getDisplayValue())
                     .set(INDEX_FIELD.INDEXED, field.isIndexed())

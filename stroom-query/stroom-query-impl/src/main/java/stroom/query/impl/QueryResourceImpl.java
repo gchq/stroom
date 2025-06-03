@@ -26,6 +26,7 @@ import stroom.node.api.NodeService;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryDoc;
@@ -49,6 +50,7 @@ import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -109,6 +111,17 @@ class QueryResourceImpl implements QueryResource {
     }
 
     @Override
+    public DocRef fetchDataSourceFromQueryString(final String query) {
+        try {
+            final Optional<DocRef> optional = queryServiceProvider.get().getReferencedDataSource(query);
+            return optional.orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+        return null;
+    }
+
+    @Override
     public QueryDoc update(final String uuid, final QueryDoc doc) {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
@@ -134,18 +147,19 @@ class QueryResourceImpl implements QueryResource {
     public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return queryServiceProvider.get().downloadSearchResults(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ResourceGeneration.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().downloadSearchResults(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -159,18 +173,19 @@ class QueryResourceImpl implements QueryResource {
     public DashboardSearchResponse search(final String nodeName, final QuerySearchRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request);
+            if (node == null) {
                 return queryServiceProvider.get().search(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             DashboardSearchResponse.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.SEARCH_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().search(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -225,10 +240,22 @@ class QueryResourceImpl implements QueryResource {
     @AutoLogged(OperationType.UNLOGGED)
     public ResultPage<CompletionItem> fetchCompletions(final CompletionsRequest request) {
         final List<CompletionItem> list = new ArrayList<>();
-        final ContextualQueryHelp contextualQueryHelp = queryServiceProvider.get()
-                .getQueryHelpContext(request.getText(), request.getRow(), request.getColumn());
+        final ContextualQueryHelp contextualQueryHelp;
+        final Set<QueryHelpType> contextualHelpTypes;
+        final Set<String> applicableStructureItems;
 
-        final Set<QueryHelpType> contextualHelpTypes = contextualQueryHelp.queryHelpTypes();
+        if (TextType.EXPRESSION == request.getTextType()) {
+            // An expression on its own doesn't have keywords, so can't determine contextual items,
+            // at least not in the same way
+            contextualQueryHelp = null;
+            contextualHelpTypes = request.getIncludedTypes();
+            applicableStructureItems = Collections.emptySet();
+        } else {
+            contextualQueryHelp = queryServiceProvider.get()
+                    .getQueryHelpContext(request.getText(), request.getRow(), request.getColumn());
+            contextualHelpTypes = contextualQueryHelp.queryHelpTypes();
+            applicableStructureItems = contextualQueryHelp.applicableStructureItems();
+        }
 
         LOGGER.debug("\n  request: {}, \n  contextualQueryHelp: {}", request, contextualQueryHelp);
         // Only return the types asked for by the client and that are appropriate for the context
@@ -241,10 +268,12 @@ class QueryResourceImpl implements QueryResource {
                     request,
                     reduceMaxCompletions(maxCompletions, list),
                     list,
-                    contextualQueryHelp.applicableStructureItems());
+                    applicableStructureItems);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
+            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+        } else if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.QUERYABLE_FIELD)) {
+            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FUNCTION)) {
             functionsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
@@ -299,18 +328,19 @@ class QueryResourceImpl implements QueryResource {
                                         final QueryColumnValuesRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = queryServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return queryServiceProvider.get().getColumnValues(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ColumnValues.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     QueryResource.BASE_PATH,
                                     QueryResource.COLUMN_VALUES_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> queryServiceProvider.get().getColumnValues(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {

@@ -1,6 +1,6 @@
 package stroom.query.shared;
 
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.ResultStoreInfo;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 

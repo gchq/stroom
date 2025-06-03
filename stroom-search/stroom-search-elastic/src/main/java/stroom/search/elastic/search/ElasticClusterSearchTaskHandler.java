@@ -17,11 +17,11 @@
 
 package stroom.search.elastic.search;
 
-import stroom.annotation.api.AnnotationFields;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProgressLog;
@@ -114,7 +114,7 @@ class ElasticClusterSearchTaskHandler {
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final CompletableFuture<Void> indexShardSearchFuture = elasticSearchFactory.search(

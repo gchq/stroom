@@ -2,11 +2,12 @@ ext.moduleName = 'stroom.expression'
 
 dependencies {
     implementation project(':stroom-docref')
-    implementation project(':stroom-query:stroom-query-language-api')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.classgraph
+    implementation libs.fast.infoset
     implementation libs.guava
     implementation libs.jackson.annotations
     implementation libs.jaxb.api

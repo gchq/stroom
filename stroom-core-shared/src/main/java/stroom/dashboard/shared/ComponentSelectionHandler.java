@@ -1,6 +1,6 @@
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,6 +43,7 @@ public class ComponentSelectionHandler {
         return id;
     }
 
+    @Deprecated
     public String getComponentId() {
         return componentId;
     }
@@ -113,6 +114,7 @@ public class ComponentSelectionHandler {
             return this;
         }
 
+        @Deprecated
         public Builder componentId(final String componentId) {
             this.componentId = componentId;
             return this;

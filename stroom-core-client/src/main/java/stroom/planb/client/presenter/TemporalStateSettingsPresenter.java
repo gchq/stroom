@@ -18,10 +18,14 @@ package stroom.planb.client.presenter;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
+import stroom.planb.client.view.CondenseSettingsView;
+import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.RetentionSettingsView;
+import stroom.planb.client.view.SnapshotSettingsView;
+import stroom.planb.client.view.StateValueSchemaSettingsView;
+import stroom.planb.client.view.TemporalStateKeySchemaSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.TemporalStateSettings;
-import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -43,65 +47,45 @@ public class TemporalStateSettingsPresenter
         if (settings instanceof final TemporalStateSettings temporalStateSettings) {
             read(temporalStateSettings, readOnly);
         } else {
-            read(TemporalStateSettings.builder().build(), readOnly);
+            read(new TemporalStateSettings.Builder().build(), readOnly);
         }
     }
 
     private void read(final TemporalStateSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
+        getView().setMaxStoreSize(settings.getMaxStoreSize());
+        getView().setSynchroniseMerge(settings.getSynchroniseMerge());
+        getView().setOverwrite(settings.getOverwrite());
         getView().setCondense(settings.getCondense());
         getView().setRetention(settings.getRetention());
-        setMaxStoreSize(settings.getMaxStoreSize());
-        getView().setOverwrite(settings.getOverwrite());
-    }
-
-    private void setMaxStoreSize(Long size) {
-        getView().setMaxStoreSize(ModelStringUtil.formatIECByteSizeString(
-                size == null ? DEFAULT_MAX_STORE_SIZE : size,
-                true,
-                ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
+        getView().setSnapshotSettings(settings.getSnapshotSettings());
+        getView().setKeySchema(settings.getKeySchema());
+        getView().setValueSchema(settings.getValueSchema());
     }
 
     public AbstractPlanBSettings write() {
-        return TemporalStateSettings
-                .builder()
+        return new TemporalStateSettings.Builder()
+                .maxStoreSize(getView().getMaxStoreSize())
+                .synchroniseMerge(getView().getSynchroniseMerge())
+                .overwrite(getView().getOverwrite())
                 .condense(getView().getCondense())
                 .retention(getView().getRetention())
-                .maxStoreSize(getMaxStoreSize())
-                .overwrite(getView().getOverwrite())
+                .snapshotSettings(getView().getSnapshotSettings())
+                .keySchema(getView().getKeySchema())
+                .valueSchema(getView().getValueSchema())
                 .build();
     }
 
-    private Long getMaxStoreSize() {
-        try {
-            final String string = getView().getMaxStoreSize().trim();
-            if (!string.isEmpty()) {
-                return ModelStringUtil.parseIECByteSizeString(string);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
-        }
-        setMaxStoreSize(DEFAULT_MAX_STORE_SIZE);
-        return DEFAULT_MAX_STORE_SIZE;
-    }
+    public interface TemporalStateSettingsView extends
+            View,
+            GeneralSettingsView,
+            CondenseSettingsView,
+            RetentionSettingsView,
+            SnapshotSettingsView,
+            TemporalStateKeySchemaSettingsView,
+            StateValueSchemaSettingsView,
+            ReadOnlyChangeHandler,
+            HasUiHandlers<PlanBSettingsUiHandlers> {
 
-    public interface TemporalStateSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
-
-        DurationSetting getCondense();
-
-        void setCondense(DurationSetting condense);
-
-        DurationSetting getRetention();
-
-        void setRetention(DurationSetting retention);
-
-        String getMaxStoreSize();
-
-        void setMaxStoreSize(String maxStoreSize);
-
-        Boolean getOverwrite();
-
-        void setOverwrite(Boolean overwrite);
     }
 }

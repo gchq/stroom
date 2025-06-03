@@ -31,7 +31,7 @@ import stroom.dictionary.shared.WordListResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.Param;
+import stroom.query.api.Param;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;

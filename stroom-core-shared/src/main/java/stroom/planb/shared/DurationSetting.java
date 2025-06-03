@@ -34,9 +34,9 @@ import java.util.Objects;
 public class DurationSetting {
 
     @JsonProperty
-    private final boolean enabled;
+    final boolean enabled;
     @JsonProperty
-    private final SimpleDuration duration;
+    final SimpleDuration duration;
 
     @JsonCreator
     public DurationSetting(@JsonProperty("enabled") final boolean enabled,
@@ -79,20 +79,12 @@ public class DurationSetting {
                '}';
     }
 
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public static class Builder {
 
         private boolean enabled;
         private SimpleDuration duration;
 
-        private Builder() {
+        public Builder() {
         }
 
         private Builder(final DurationSetting durationSetting) {

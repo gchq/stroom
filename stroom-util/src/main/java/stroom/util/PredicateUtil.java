@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -209,7 +209,7 @@ public class PredicateUtil {
      * @param predicate The predicate to wrap
      * @return The wrapped predicate
      */
-    public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
+    public static <T> Predicate<T> countingPredicate(final LongAdder counter,
                                                      final Predicate<T> predicate) {
         return countingPredicate(counter, true, predicate);
     }
@@ -223,7 +223,7 @@ public class PredicateUtil {
      * @param predicate   The predicate to wrap
      * @return The wrapped predicate
      */
-    public static <T> Predicate<T> countingPredicate(final AtomicInteger counter,
+    public static <T> Predicate<T> countingPredicate(final LongAdder counter,
                                                      final boolean countIfTrue,
                                                      final Predicate<T> predicate) {
         Objects.requireNonNull(predicate);
@@ -232,11 +232,11 @@ public class PredicateUtil {
             final boolean result = predicate.test(val);
             if (countIfTrue) {
                 if (result) {
-                    counter.incrementAndGet();
+                    counter.increment();
                 }
             } else {
                 if (!result) {
-                    counter.incrementAndGet();
+                    counter.increment();
                 }
             }
             return result;
@@ -250,14 +250,14 @@ public class PredicateUtil {
      * @param predicate The {@link BiPredicate} to wrap
      * @return The wrapped predicate
      */
-    public static <T1, T2> BiPredicate<T1, T2> countingBiPredicate(final AtomicInteger counter,
+    public static <T1, T2> BiPredicate<T1, T2> countingBiPredicate(final LongAdder counter,
                                                                    final BiPredicate<T1, T2> predicate) {
         Objects.requireNonNull(predicate);
         Objects.requireNonNull(counter);
         return (t1, t2) -> {
             final boolean result = predicate.test(t1, t2);
             if (result) {
-                counter.incrementAndGet();
+                counter.increment();
             }
             return result;
         };

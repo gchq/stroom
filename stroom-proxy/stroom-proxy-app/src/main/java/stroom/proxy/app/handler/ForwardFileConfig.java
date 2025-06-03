@@ -21,9 +21,11 @@ public final class ForwardFileConfig
         implements IsProxyConfig, ForwarderConfig {
 
     public static final String PROP_NAME_SUB_PATH_TEMPLATE = "subPathTemplate";
+    public static final String PROP_NAME_ATOMIC_MOVE_ENABLED = "atomicMoveEnabled";
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
 
     private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
+    private static final boolean DEFAULT_ATOMIC_MOVE_ENABLED = true;
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
 
     private final boolean enabled;
@@ -31,9 +33,10 @@ public final class ForwardFileConfig
     private final String name;
     private final String path;
     private final PathTemplateConfig subPathTemplate;
-    private final ForwardQueueConfig forwardQueueConfig;
+    private final ForwardFileQueueConfig forwardQueueConfig;
     private final String livenessCheckPath;
     private final LivenessCheckMode livenessCheckMode;
+    private final boolean atomicMoveEnabled;
 
     public ForwardFileConfig() {
         enabled = true;
@@ -41,9 +44,10 @@ public final class ForwardFileConfig
         name = null;
         path = null;
         subPathTemplate = null;
-        forwardQueueConfig = null; // Assume local file forwarder by default, so no queue config needed
+        forwardQueueConfig = new ForwardFileQueueConfig();
         livenessCheckPath = null;
         livenessCheckMode = LivenessCheckMode.READ;
+        atomicMoveEnabled = DEFAULT_ATOMIC_MOVE_ENABLED;
     }
 
     @SuppressWarnings("unused")
@@ -53,17 +57,19 @@ public final class ForwardFileConfig
                              @JsonProperty("name") final String name,
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final PathTemplateConfig subPathTemplate,
-                             @JsonProperty("queue") final ForwardQueueConfig forwardQueueConfig,
+                             @JsonProperty("queue") final ForwardFileQueueConfig forwardQueueConfig,
                              @JsonProperty("livenessCheckPath") final String livenessCheckPath,
-                             @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode) {
+                             @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode,
+                             @JsonProperty(PROP_NAME_ATOMIC_MOVE_ENABLED) final Boolean atomicMoveEnabled) {
         this.enabled = enabled;
         this.instant = instant;
         this.name = name;
         this.path = path;
         this.subPathTemplate = Objects.requireNonNullElse(subPathTemplate, PathTemplateConfig.DISABLED);
-        this.forwardQueueConfig = forwardQueueConfig;
+        this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardFileQueueConfig::new);
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
+        this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_ATOMIC_MOVE_ENABLED);
     }
 
     private ForwardFileConfig(final Builder builder) {
@@ -75,6 +81,7 @@ public final class ForwardFileConfig
         forwardQueueConfig = builder.forwardQueueConfig;
         livenessCheckPath = builder.livenessCheckPath;
         livenessCheckMode = builder.livenessCheckMode;
+        atomicMoveEnabled = builder.atomicMoveEnabled;
     }
 
     /**
@@ -130,13 +137,14 @@ public final class ForwardFileConfig
         return subPathTemplate;
     }
 
+    @NotNull
     @Override
     @JsonProperty("queue")
     @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. Can be set to null " +
                              "for a local file forwarder, but should be populated if the file forwarder is " +
                              "forwarding to a remote file system that may fail. Defaults to null as a " +
                              "local file forwarder is assumed.")
-    public ForwardQueueConfig getForwardQueueConfig() {
+    public ForwardFileQueueConfig getForwardQueueConfig() {
         return forwardQueueConfig;
     }
 
@@ -169,8 +177,22 @@ public final class ForwardFileConfig
         return livenessCheckPath;
     }
 
+    @JsonPropertyDescription(
+            "The type of liveness check to perform (READ|WRITE). " +
+            "READ will attempt to read the file/dir specified in livenessCheckPath. " +
+            "WRITE will attempt to touch the file specified in livenessCheckPath.")
     public LivenessCheckMode getLivenessCheckMode() {
         return livenessCheckMode;
+    }
+
+    @JsonPropertyDescription(
+            "Stroom-Proxy will attempt to move files onto the forward destination using an atomic move. " +
+            "This ensures that the move does not happen more than once. If an atomic move is not possible, " +
+            "e.g. the destination is a remote file system that does not support an atomic move, then it will " +
+            "fall back to a non-atomic move with the risk of it happening more than once. If you see warnings " +
+            "in the logs or know the file system will not support atomic moves then set this to false.")
+    public boolean isAtomicMoveEnabled() {
+        return atomicMoveEnabled;
     }
 
     @Override
@@ -189,7 +211,8 @@ public final class ForwardFileConfig
                && Objects.equals(subPathTemplate, that.subPathTemplate)
                && Objects.equals(forwardQueueConfig, that.forwardQueueConfig)
                && Objects.equals(livenessCheckPath, that.livenessCheckPath)
-               && livenessCheckMode == that.livenessCheckMode;
+               && livenessCheckMode == that.livenessCheckMode
+               && atomicMoveEnabled == that.atomicMoveEnabled;
     }
 
     @Override
@@ -201,7 +224,8 @@ public final class ForwardFileConfig
                 subPathTemplate,
                 forwardQueueConfig,
                 livenessCheckPath,
-                livenessCheckMode);
+                livenessCheckMode,
+                atomicMoveEnabled);
     }
 
     @Override
@@ -215,6 +239,7 @@ public final class ForwardFileConfig
                ", forwardQueueConfig=" + forwardQueueConfig +
                ", livenessCheckPath='" + livenessCheckPath + '\'' +
                ", livenessCheckMode=" + livenessCheckMode +
+               ", atomicMoveEnabled=" + atomicMoveEnabled +
                '}';
     }
 
@@ -232,6 +257,7 @@ public final class ForwardFileConfig
         builder.forwardQueueConfig = copy.getForwardQueueConfig();
         builder.livenessCheckPath = copy.getLivenessCheckPath();
         builder.livenessCheckMode = copy.getLivenessCheckMode();
+        builder.atomicMoveEnabled = copy.isAtomicMoveEnabled();
         return builder;
     }
 
@@ -241,14 +267,15 @@ public final class ForwardFileConfig
 
     public static final class Builder {
 
-        public String livenessCheckPath;
-        public LivenessCheckMode livenessCheckMode;
+        private String livenessCheckPath;
+        private LivenessCheckMode livenessCheckMode;
+        private boolean atomicMoveEnabled;
         private boolean enabled;
         private boolean instant;
         private String name;
         private String path;
         private PathTemplateConfig subPathTemplate;
-        private ForwardQueueConfig forwardQueueConfig;
+        private ForwardFileQueueConfig forwardQueueConfig;
 
         private Builder() {
         }
@@ -293,7 +320,7 @@ public final class ForwardFileConfig
             return this;
         }
 
-        public Builder withForwardQueueConfig(final ForwardQueueConfig forwardQueueConfig) {
+        public Builder withForwardQueueConfig(final ForwardFileQueueConfig forwardQueueConfig) {
             this.forwardQueueConfig = forwardQueueConfig;
             return this;
         }
@@ -305,6 +332,11 @@ public final class ForwardFileConfig
 
         public Builder withLivenessCheckMode(final LivenessCheckMode livenessCheckMode) {
             this.livenessCheckMode = livenessCheckMode;
+            return this;
+        }
+
+        public Builder withAtomicMoveEnabled(final boolean atomicMoveEnabled) {
+            this.atomicMoveEnabled = atomicMoveEnabled;
             return this;
         }
 

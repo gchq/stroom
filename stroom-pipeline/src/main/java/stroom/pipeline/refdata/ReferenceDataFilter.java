@@ -658,7 +658,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 //            // Not seen any XML content so treat as string or null
 //            final String content = contentBuffer.toString();
 //            // simple string value so use content buffer
-//            if (GwtNullSafe.isBlankString(content)) {
+//            if (NullSafe.isBlankString(content)) {
 //                LOGGER.trace("Null value");
 //                refDataValue = NullValue.getInstance();
 //            } else {

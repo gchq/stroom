@@ -1,12 +1,23 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.impl.db.rangestate.RangeState;
+import stroom.planb.impl.db.rangestate.RangeStateDb;
+import stroom.planb.impl.db.session.Session;
+import stroom.planb.impl.db.session.SessionDb;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
+import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -31,17 +42,17 @@ public class ShardWriters {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardWriters.class);
 
     private final PlanBDocCache planBDocCache;
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
 
     @Inject
     ShardWriters(final PlanBDocCache planBDocCache,
-                 final ByteBufferFactory byteBufferFactory,
+                 final ByteBuffers byteBuffers,
                  final StatePaths statePaths,
                  final FileTransferClient fileTransferClient) {
         this.planBDocCache = planBDocCache;
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
     }
@@ -55,13 +66,13 @@ public class ShardWriters {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new ShardWriter(planBDocCache, byteBufferFactory, fileTransferClient, dir, meta);
+        return new ShardWriter(planBDocCache, byteBuffers, fileTransferClient, dir, meta);
     }
 
     public static class ShardWriter implements AutoCloseable {
 
         private final PlanBDocCache planBDocCache;
-        private final ByteBufferFactory byteBufferFactory;
+        private final ByteBuffers byteBuffers;
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
@@ -69,12 +80,12 @@ public class ShardWriters {
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
         public ShardWriter(final PlanBDocCache planBDocCache,
-                           final ByteBufferFactory byteBufferFactory,
+                           final ByteBuffers byteBuffers,
                            final FileTransferClient fileTransferClient,
                            final Path dir,
                            final Meta meta) {
             this.planBDocCache = planBDocCache;
-            this.byteBufferFactory = byteBufferFactory;
+            this.byteBuffers = byteBuffers;
             this.fileTransferClient = fileTransferClient;
             this.dir = dir;
             this.meta = meta;
@@ -117,12 +128,14 @@ public class ShardWriters {
 
         private static class WriterInstance implements AutoCloseable {
 
-            private final AbstractDb<?, ?> lmdb;
-            private final AbstractDb.Writer writer;
+            private final Db<?, ?> lmdb;
+            private final LmdbWriter writer;
+            private final boolean synchroniseMerge;
 
-            public WriterInstance(final AbstractDb<?, ?> lmdb) {
+            public WriterInstance(final Db<?, ?> lmdb, final boolean synchroniseMerge) {
                 this.lmdb = lmdb;
                 this.writer = lmdb.createWriter();
+                this.synchroniseMerge = synchroniseMerge;
             }
 
             public void addState(final State state) {
@@ -135,19 +148,23 @@ public class ShardWriters {
                 db.insert(writer, temporalState);
             }
 
-            public void addRangedState(final RangedState rangedState) {
-                final RangedStateDb db = (RangedStateDb) lmdb;
-                db.insert(writer, rangedState);
+            public void addRangeState(final RangeState rangeState) {
+                final RangeStateDb db = (RangeStateDb) lmdb;
+                db.insert(writer, rangeState);
             }
 
-            public void addTemporalRangedState(final TemporalRangedState temporalRangedState) {
-                final TemporalRangedStateDb db = (TemporalRangedStateDb) lmdb;
-                db.insert(writer, temporalRangedState);
+            public void addTemporalRangeState(final TemporalRangeState temporalRangeState) {
+                final TemporalRangeStateDb db = (TemporalRangeStateDb) lmdb;
+                db.insert(writer, temporalRangeState);
             }
 
             public void addSession(final Session session) {
                 final SessionDb db = (SessionDb) lmdb;
-                db.insert(writer, session, session);
+                db.insert(writer, session);
+            }
+
+            public boolean isSynchroniseMerge() {
+                return synchroniseMerge;
             }
 
             @Override
@@ -167,14 +184,14 @@ public class ShardWriters {
             getWriter(doc).addTemporalState(temporalState);
         }
 
-        public void addRangedState(final PlanBDoc doc,
-                                   final RangedState rangedState) {
-            getWriter(doc).addRangedState(rangedState);
+        public void addRangeState(final PlanBDoc doc,
+                                   final RangeState rangeState) {
+            getWriter(doc).addRangeState(rangeState);
         }
 
-        public void addTemporalRangedState(final PlanBDoc doc,
-                                           final TemporalRangedState temporalRangedState) {
-            getWriter(doc).addTemporalRangedState(temporalRangedState);
+        public void addTemporalRangeState(final PlanBDoc doc,
+                                           final TemporalRangeState temporalRangeState) {
+            getWriter(doc).addTemporalRangeState(temporalRangeState);
         }
 
         public void addSession(final PlanBDoc doc,
@@ -186,8 +203,13 @@ public class ShardWriters {
             return writers.computeIfAbsent(doc, k ->
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
-                            byteBufferFactory,
-                            false)));
+                            byteBuffers,
+                            false),
+                            NullSafe.getOrElse(
+                                    doc,
+                                    PlanBDoc::getSettings,
+                                    AbstractPlanBSettings::getSynchroniseMerge,
+                                    false)));
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {
@@ -207,6 +229,11 @@ public class ShardWriters {
                 try {
                     writers.values().forEach(WriterInstance::close);
 
+                    final boolean synchroniseMerge = writers
+                            .values()
+                            .stream()
+                            .anyMatch(WriterInstance::isSynchroniseMerge);
+
                     // Zip all and delete dir.
                     zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
                     ZipUtil.zip(zipFile, dir);
@@ -218,7 +245,7 @@ public class ShardWriters {
                             System.currentTimeMillis(),
                             meta.getId(),
                             fileHash);
-                    fileTransferClient.storePart(fileDescriptor, zipFile);
+                    fileTransferClient.storePart(fileDescriptor, zipFile, synchroniseMerge);
 
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);

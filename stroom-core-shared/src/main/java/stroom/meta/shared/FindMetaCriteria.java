@@ -17,8 +17,8 @@
 package stroom.meta.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;

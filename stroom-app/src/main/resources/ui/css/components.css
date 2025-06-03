@@ -1719,6 +1719,7 @@ button.main-menu svg {
     display: flex;
     gap: var(--control__gap--vertical);
     flex-direction: column;
+    overflow: auto;
 }
 
 .form-padding {
@@ -2477,3 +2478,37 @@ button.main-menu svg {
 .ExpressionTreeViewImpl-layoutPanel {
     position: absolute;
 }
+
+.multiChooser td {
+    vertical-align: middle;
+}
+
+.lozengeOuter {
+    padding: 3px 0;
+}
+
+.lozenge {
+    padding: 2px 10px;
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 10rem;
+    display: inline-block;
+    border-color: var(--text-color);
+}
+
+.stroom-theme-dark .lozenge {
+    border: 1px solid rgba(255,255,255,.3);
+}
+
+.settings-group {
+    display: flex;
+    margin-top: 1rem;
+    flex-direction: column;
+}
+
+.settings-group-label {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding-bottom: 0.3em;
+}
+

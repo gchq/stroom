@@ -32,6 +32,11 @@ public interface MultiSelectionModel<T> {
     List<T> getSelectedItems();
 
     /**
+     * Set a list of all selected items.
+     */
+    void setSelectedItems(List<T> selectedItems);
+
+    /**
      * Gets the number of selected items
      */
     int getSelectedCount();

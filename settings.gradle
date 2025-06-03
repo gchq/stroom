@@ -33,7 +33,6 @@ include 'stroom-analytics:stroom-analytics-impl-db'
 include 'stroom-analytics:stroom-analytics-impl-db-jooq'
 
 // Annotations
-include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
@@ -224,7 +223,6 @@ include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
-include 'stroom-query:stroom-query-language-api'
 
 // State store
 include 'stroom-state:stroom-state-impl'

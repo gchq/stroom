@@ -4,16 +4,21 @@
 package stroom.annotation.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
+import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import stroom.annotation.impl.db.jooq.tables.AnnotationFeed;
+import stroom.annotation.impl.db.jooq.tables.AnnotationLink;
+import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
+import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.annotation.impl.db.jooq.tables.Annotation;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -45,6 +50,31 @@ public class Stroom extends SchemaImpl {
     public final AnnotationEntry ANNOTATION_ENTRY = AnnotationEntry.ANNOTATION_ENTRY;
 
     /**
+     * The table <code>stroom.annotation_feed</code>.
+     */
+    public final AnnotationFeed ANNOTATION_FEED = AnnotationFeed.ANNOTATION_FEED;
+
+    /**
+     * The table <code>stroom.annotation_link</code>.
+     */
+    public final AnnotationLink ANNOTATION_LINK = AnnotationLink.ANNOTATION_LINK;
+
+    /**
+     * The table <code>stroom.annotation_subscription</code>.
+     */
+    public final AnnotationSubscription ANNOTATION_SUBSCRIPTION = AnnotationSubscription.ANNOTATION_SUBSCRIPTION;
+
+    /**
+     * The table <code>stroom.annotation_tag</code>.
+     */
+    public final AnnotationTag ANNOTATION_TAG = AnnotationTag.ANNOTATION_TAG;
+
+    /**
+     * The table <code>stroom.annotation_tag_link</code>.
+     */
+    public final AnnotationTagLink ANNOTATION_TAG_LINK = AnnotationTagLink.ANNOTATION_TAG_LINK;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -62,7 +92,12 @@ public class Stroom extends SchemaImpl {
         return Arrays.asList(
             Annotation.ANNOTATION,
             AnnotationDataLink.ANNOTATION_DATA_LINK,
-            AnnotationEntry.ANNOTATION_ENTRY
+            AnnotationEntry.ANNOTATION_ENTRY,
+            AnnotationFeed.ANNOTATION_FEED,
+            AnnotationLink.ANNOTATION_LINK,
+            AnnotationSubscription.ANNOTATION_SUBSCRIPTION,
+            AnnotationTag.ANNOTATION_TAG,
+            AnnotationTagLink.ANNOTATION_TAG_LINK
         );
     }
 }

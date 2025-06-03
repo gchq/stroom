@@ -28,6 +28,7 @@ import stroom.widget.util.client.MySingleSelectionModel;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
@@ -53,7 +54,7 @@ public class ChooserPresenter<T>
     private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
     private final CellTable<T> cellTable;
     private DataSupplier<T> dataSupplier;
-    private Function<T, String> displayValueFunction = Objects::toString;
+    private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     @Inject
     public ChooserPresenter(final EventBus eventBus,
@@ -86,7 +87,7 @@ public class ChooserPresenter<T>
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
                 builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
                 if (value != null) {
-                    builder.appendEscaped(displayValueFunction.apply(value));
+                    builder.append(displayValueFunction.apply(value));
                 }
                 builder.appendHtmlConstant("</div>");
                 return builder.toSafeHtml();
@@ -116,7 +117,7 @@ public class ChooserPresenter<T>
     /**
      * Sets the function to provide a display value for value T.
      */
-    public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
+    public void setDisplayValueFunction(final Function<T, SafeHtml> displayValueFunction) {
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
     }
 
@@ -124,7 +125,7 @@ public class ChooserPresenter<T>
         return selectionModel.getSelectedObject();
     }
 
-    public String getSelectedDisplayValue() {
+    public SafeHtml getSelectedDisplayValue() {
         final T selected = getSelected();
         return NullSafe.get(selected, displayValueFunction);
     }

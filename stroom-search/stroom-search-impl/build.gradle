@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.search.impl'
 
 dependencies {
     implementation project(':stroom-bytebuffer')
-    implementation project(':stroom-annotation:stroom-annotation-api')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cluster:stroom-cluster-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
@@ -21,7 +20,6 @@ dependencies {
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-search-api')

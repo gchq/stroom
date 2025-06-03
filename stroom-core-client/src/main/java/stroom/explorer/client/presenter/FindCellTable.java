@@ -25,7 +25,7 @@ public class FindCellTable<T> extends MyCellTable<T> {
         super(pageSize);
         addStyleName("FindCellTable");
 
-        selectionModel = new MultiSelectionModelImpl<>(this);
+        selectionModel = new MultiSelectionModelImpl<>();
         SelectionEventManager<T> selectionEventManager = new SelectionEventManager<>(
                 this,
                 selectionModel,

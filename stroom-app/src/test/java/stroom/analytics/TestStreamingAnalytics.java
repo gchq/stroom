@@ -32,7 +32,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTranslationTestHelper;

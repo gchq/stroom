@@ -18,6 +18,7 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.security.api.UserGroupsService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -33,7 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
+class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable, UserGroupsService {
 
     private static final String USER_GROUPS_CACHE_NAME = "User Groups Cache";
 
@@ -57,7 +58,8 @@ class UserGroupsCache implements PermissionChangeEvent.Handler, Clearable {
         return users.getValues().stream().map(User::asRef).collect(Collectors.toSet());
     }
 
-    Set<UserRef> getGroups(final UserRef userRef) {
+    @Override
+    public Set<UserRef> getGroups(final UserRef userRef) {
         return cache.get(userRef);
     }
 

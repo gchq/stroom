@@ -16,10 +16,10 @@
 
 package stroom.util.client;
 
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.ParamValues;
-import stroom.query.api.v2.ParamValuesImpl;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.ParamValues;
+import stroom.query.api.ParamValuesImpl;
 
 import org.junit.jupiter.api.Test;
 
@@ -74,23 +74,44 @@ class TestParamUtil {
 
         paramValues = new ParamValuesImpl(getMap("key1=value1 key2=value2"));
         result = ParamUtil.replaceParameters("this is $${key1} ${key2}", paramValues);
-        assertThat(result).isEqualTo("this is ${key1} value2");
-
-        result = ParamUtil.replaceParameters("this is $$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is $value1 value2");
 
-        result = ParamUtil.replaceParameters("this is $$$${key1} ${key2}", paramValues);
-        assertThat(result).isEqualTo("this is $${key1} value2");
-
-        result = ParamUtil.replaceParameters("this is $$$$${key1} ${key2}", paramValues);
+        result = ParamUtil.replaceParameters("this is $$${key1} ${key2}", paramValues);
         assertThat(result).isEqualTo("this is $$value1 value2");
 
-        result = ParamUtil.replaceParameters("$this is $$$$${key1} ${key2}", paramValues);
-        assertThat(result).isEqualTo("$this is $$value1 value2");
+        result = ParamUtil.replaceParameters("this is $$$${key1} ${key2}", paramValues);
+        assertThat(result).isEqualTo("this is $$$value1 value2");
 
-        paramValues = new ParamValuesImpl(getMap("user=user1 user2"));
+        result = ParamUtil.replaceParameters("this is \"${key1}\" ${key2}", paramValues);
+        assertThat(result).isEqualTo("this is \"${key1}\" value2");
+
+        paramValues = new ParamValuesImpl(getMap("user=\"user1 user2\""));
         result = ParamUtil.replaceParameters("${user}", paramValues);
-        assertThat(result).isEqualTo("user1 user2");
+        assertThat(result).isEqualTo("'user1 user2'");
+    }
+
+    @Test
+    void testGetKeys() {
+        List<String> result = ParamUtil.getKeys("this is ${key1}");
+        assertThat(result).containsAll(List.of("key1"));
+
+        result = ParamUtil.getKeys("this is $${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key2"));
+
+        result = ParamUtil.getKeys("this is $$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("this is $$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key2"));
+
+        result = ParamUtil.getKeys("this is $$$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("$this is $$$$${key1} ${key2}");
+        assertThat(result).containsAll(List.of("key1", "key2"));
+
+        result = ParamUtil.getKeys("${user}");
+        assertThat(result).containsAll(List.of("user"));
     }
 
     private Map<String, String> getMap(final String input) {

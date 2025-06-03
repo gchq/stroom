@@ -73,7 +73,7 @@ public class DocumentCreatePermissionsListPresenter
         this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>();
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<DocumentType> selectionEventManager =
                 new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

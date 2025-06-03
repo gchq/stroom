@@ -1197,7 +1197,7 @@ public final class JooqUtil {
         }
     }
 
-    private static boolean isDuplicateKeyException(final Throwable throwable) {
+    public static boolean isDuplicateKeyException(final Throwable throwable) {
         // 1062 is a duplicate key exception so someone else has already inserted it
         return NullSafe.test(throwable, e ->
                 e instanceof DataAccessException

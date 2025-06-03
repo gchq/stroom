@@ -44,6 +44,7 @@ public class QueryDocPresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final DocumentEditTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
+    private Runnable saveInterceptor;
 
     @Inject
     public QueryDocPresenter(final EventBus eventBus,
@@ -81,11 +82,6 @@ public class QueryDocPresenter
     }
 
     @Override
-    public String getType() {
-        return QueryDoc.TYPE;
-    }
-
-    @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
@@ -106,6 +102,24 @@ public class QueryDocPresenter
         } else {
             return false;
         }
+    }
+
+    @Override
+    public void save() {
+        if (saveInterceptor == null) {
+            super.save();
+        } else {
+            saveInterceptor.run();
+        }
+    }
+
+    public void setSaveInterceptor(final Runnable saveInterceptor) {
+        this.saveInterceptor = saveInterceptor;
+    }
+
+    @Override
+    public String getType() {
+        return QueryDoc.TYPE;
     }
 
     @Override

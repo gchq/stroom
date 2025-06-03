@@ -16,27 +16,29 @@
 
 package stroom.planb.impl.pipeline;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.refdata.store.FastInfosetValue;
-import stroom.pipeline.refdata.store.NullValue;
-import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.planb.impl.db.RangedState;
-import stroom.planb.impl.db.Session;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.State;
-import stroom.planb.impl.db.StateValue;
-import stroom.planb.impl.db.TemporalRangedState;
-import stroom.planb.impl.db.TemporalState;
+import stroom.planb.impl.db.rangestate.RangeState;
+import stroom.planb.impl.db.session.Session;
+import stroom.planb.impl.db.state.State;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
+import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.shared.PlanBDoc;
+import stroom.query.language.functions.Type;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValXml;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
@@ -166,7 +168,8 @@ public class PlanBFilter extends AbstractXMLFilter {
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteBufferFactory byteBufferFactory;
     private ByteBufferPoolOutput stagingValueOutputStream;
-    private byte typeId;
+    private String currentStringValue;
+    private Type type;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private final MetaHolder metaHolder;
@@ -227,18 +230,20 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            if (stagingValueOutputStream != null) {
-                LOGGER.debug("closing stagingValueOutputStream");
-                stagingValueOutputStream.close();
-            }
-        } finally {
             try {
-                writer.close();
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+                if (stagingValueOutputStream != null) {
+                    LOGGER.debug("closing stagingValueOutputStream");
+                    stagingValueOutputStream.close();
+                }
             } finally {
-                super.endProcessing();
+                try {
+                    writer.close();
+                } finally {
+                    super.endProcessing();
+                }
             }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -268,7 +273,7 @@ public class PlanBFilter extends AbstractXMLFilter {
             recordHavingSeenXmlContent();
             fastInfosetStartPrefixMapping(prefix, uri);
         } else {
-            // capture all the prefixmappings we encounter before we are in the value and hold them for use later
+            // capture all the prefix mappings we encounter before we are in the value and hold them for use later
             addWrapperPrefixMapping(prefix, uri);
         }
     }
@@ -332,6 +337,7 @@ public class PlanBFilter extends AbstractXMLFilter {
             // Prepare to store new value.
             stagingValueOutputStream =
                     new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+            currentStringValue = null;
             saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 
         } else if (insideValueElement) {
@@ -495,14 +501,15 @@ public class PlanBFilter extends AbstractXMLFilter {
         if (haveSeenXmlInValueElement) {
             // Complete the fastInfoSet serialisation to stagingValueOutputStream
             fastInfosetEndDocument();
-            typeId = FastInfosetValue.TYPE_ID;
+            type = Type.XML;
         } else {
             // Simple string value
             final String value = contentBuffer.toString();
             if (NullSafe.isBlankString(value)) {
-                typeId = NullValue.TYPE_ID;
+                type = Type.NULL;
             } else {
-                typeId = StringValue.TYPE_ID;
+                type = Type.STRING;
+                currentStringValue = value;
                 stagingValueOutputStream.write(value.getBytes(StandardCharsets.UTF_8));
             }
         }
@@ -517,8 +524,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                 switch (doc.getStateType()) {
                     case STATE -> addState(doc);
                     case TEMPORAL_STATE -> addTemporalState(doc);
-                    case RANGED_STATE -> addRangedState(doc);
-                    case TEMPORAL_RANGED_STATE -> addTemporalRangedState(doc);
+                    case RANGED_STATE -> addRangeState(doc);
+                    case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
@@ -552,16 +559,15 @@ public class PlanBFilter extends AbstractXMLFilter {
             error(LogUtil.message("State 'key' is null for {}", mapName));
         } else {
             LOGGER.trace("Putting key {} into table {}", key, mapName);
-            final State.Key k = State.Key.builder()
-                    .name(key)
-                    .build();
-            final StateValue v = getStateValue();
-            writer.addState(doc, new State(k, v));
+            final Val v = getVal();
+            writer.addState(doc, new State(ValString.create(key), v));
         }
     }
 
     private void addTemporalState(final PlanBDoc doc) {
-        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+        final Instant time = this.time != null
+                ? this.time
+                : this.effectiveTime;
         if (time == null) {
             error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
 
@@ -574,13 +580,13 @@ public class PlanBFilter extends AbstractXMLFilter {
                         .name(key)
                         .effectiveTime(time)
                         .build();
-                final StateValue v = getStateValue();
+                final Val v = getVal();
                 writer.addTemporalState(doc, new TemporalState(k, v));
             }
         }
     }
 
-    private void addRangedState(final PlanBDoc doc) {
+    private void addRangeState(final PlanBDoc doc) {
         // If key is provided then from/to are the same.
         if (key != null) {
             if (rangeFrom != null) {
@@ -598,12 +604,12 @@ public class PlanBFilter extends AbstractXMLFilter {
                                 "Range state only supports non-negative numbers (key: {}) for {}",
                                 longKey, mapName));
                     } else {
-                        final RangedState.Key k = RangedState.Key.builder()
+                        final RangeState.Key k = RangeState.Key.builder()
                                 .keyStart(longKey)
                                 .keyEnd(longKey)
                                 .build();
-                        final StateValue v = getStateValue();
-                        writer.addRangedState(doc, new RangedState(k, v));
+                        final Val v = getVal();
+                        writer.addRangeState(doc, new RangeState(k, v));
                     }
                 } catch (final RuntimeException e) {
                     error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -627,18 +633,20 @@ public class PlanBFilter extends AbstractXMLFilter {
                         "Range state only supports non-negative numbers (from: {}, to: {}) for {}",
                         rangeFrom, rangeTo, mapName));
             } else {
-                final RangedState.Key k = RangedState.Key.builder()
+                final RangeState.Key k = RangeState.Key.builder()
                         .keyStart(rangeFrom)
                         .keyEnd(rangeTo)
                         .build();
-                final StateValue v = getStateValue();
-                writer.addRangedState(doc, new RangedState(k, v));
+                final Val v = getVal();
+                writer.addRangeState(doc, new RangeState(k, v));
             }
         }
     }
 
-    private void addTemporalRangedState(final PlanBDoc doc) {
-        final Instant time = Objects.requireNonNullElse(this.time, this.effectiveTime);
+    private void addTemporalRangeState(final PlanBDoc doc) {
+        final Instant time = this.time != null
+                ? this.time
+                : this.effectiveTime;
         if (time == null) {
             error(LogUtil.message("Temporal range range 'time' is null for {}", mapName));
 
@@ -664,13 +672,13 @@ public class PlanBFilter extends AbstractXMLFilter {
                                     longKey,
                                     mapName));
                         } else {
-                            final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                            final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                                     .keyStart(longKey)
                                     .keyEnd(longKey)
-                                    .effectiveTime(time.toEpochMilli())
+                                    .effectiveTime(time)
                                     .build();
-                            final StateValue v = getStateValue();
-                            writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                            final Val v = getVal();
+                            writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
                         }
                     } catch (final RuntimeException e) {
                         error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -698,13 +706,13 @@ public class PlanBFilter extends AbstractXMLFilter {
                             rangeTo,
                             mapName));
                 } else {
-                    final TemporalRangedState.Key k = TemporalRangedState.Key.builder()
+                    final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                             .keyStart(rangeFrom)
                             .keyEnd(rangeTo)
-                            .effectiveTime(time.toEpochMilli())
+                            .effectiveTime(time)
                             .build();
-                    final StateValue v = getStateValue();
-                    writer.addTemporalRangedState(doc, new TemporalRangedState(k, v));
+                    final Val v = getVal();
+                    writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
                 }
             }
         }
@@ -716,10 +724,11 @@ public class PlanBFilter extends AbstractXMLFilter {
         } else if (time == null) {
             error(LogUtil.message("Session 'time' is null for {}", mapName));
         } else {
-            final Session.Builder sessionBuilder = new Session.Builder();
-            sessionBuilder.key(key);
-            sessionBuilder.start(time);
-            sessionBuilder.end(time);
+            final Session.Builder sessionBuilder = Session
+                    .builder()
+                    .key(ValString.create(key))
+                    .start(time)
+                    .end(time);
             if (timeout != null) {
                 sessionBuilder.end(time.plus(timeout));
             }
@@ -729,13 +738,16 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private StateValue getStateValue() {
-        final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-        value.flip();
-        return StateValue.builder()
-                .typeId(typeId)
-                .byteBuffer(value)
-                .build();
+    private Val getVal() {
+        return switch (type) {
+            case STRING -> ValString.create(currentStringValue);
+            case XML -> {
+                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
+                value.flip();
+                yield ValXml.create(ByteBufferUtils.getBytes(value));
+            }
+            default -> ValNull.INSTANCE;
+        };
     }
 
     /**
@@ -768,7 +780,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-    private boolean isAllWhitespace(char[] ch, final int start, final int length) {
+    private boolean isAllWhitespace(final char[] ch, final int start, final int length) {
 
         boolean isOnlyWhitespace = true;
         for (int i = start; i < start + length; i++) {

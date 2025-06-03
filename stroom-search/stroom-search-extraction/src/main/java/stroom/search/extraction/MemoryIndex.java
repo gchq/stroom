@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 
 import java.util.List;
 

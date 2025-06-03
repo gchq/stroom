@@ -21,6 +21,7 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.shared.QueryDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -33,6 +34,7 @@ public class QueryModule extends AbstractModule {
     protected void configure() {
         bind(QueryStore.class).to(QueryStoreImpl.class);
         bind(QueryService.class).to(QueryServiceImpl.class);
+        bind(QueryFieldProvider.class).to(QueryServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(QueryStoreImpl.class);

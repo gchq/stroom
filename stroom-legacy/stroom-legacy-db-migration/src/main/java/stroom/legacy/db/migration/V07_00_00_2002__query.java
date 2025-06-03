@@ -55,7 +55,7 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
                             final stroom.legacy.model_6_1.Query query = XMLMarshallerUtil.unmarshal(jaxbContext,
                                     stroom.legacy.model_6_1.Query.class,
                                     data);
-                            final stroom.query.api.v2.Query mapped = MappingUtil.map(query);
+                            final stroom.query.api.Query mapped = MappingUtil.map(query);
                             final String json = queryJsonSerialiser.serialise(mapped);
 
                             // Update the record.

@@ -1,13 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:annotation="urn:import:stroom.annotation.client">
     <g:FlowPanel addStyleNames="annotationSetting">
-        <g:FlowPanel addStyleNames="annotationSettingHeading">
-            <g:Label ui:field="statusLabel" styleName="annotationClickLabel" text="Status:"/>
-            <g:Label ui:field="status" styleName="annotationLabel"/>
-            <b:InlineSvgButton ui:field="statusIcon" title="Change Status"/>
-        </g:FlowPanel>
+        <annotation:SettingBlock ui:field="statusBlock" title="Change Status">
+            <form:FormGroup identity="annotationStatus" label="Status">
+                <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                    <g:Label ui:field="status" styleName="annotationLabel"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+        </annotation:SettingBlock>
     </g:FlowPanel>
 </ui:UiBinder>
 

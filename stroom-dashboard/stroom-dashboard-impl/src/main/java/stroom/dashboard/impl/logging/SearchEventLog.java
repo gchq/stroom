@@ -18,21 +18,26 @@ package stroom.dashboard.impl.logging;
 
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Param;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.SearchRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 
 import java.util.List;
 
 public interface SearchEventLog {
 
-    void search(String type,
+    void search(QueryKey queryKey,
+                String queryComponentId,
+                String type,
                 String rawQuery,
                 DocRef dataSourceRef,
                 ExpressionOperator expression,
                 String queryInfo,
                 List<Param> params,
+                List<Result> results,
                 Exception ex);
 
     default void downloadResults(DownloadSearchResultsRequest downloadSearchResultsRequest,

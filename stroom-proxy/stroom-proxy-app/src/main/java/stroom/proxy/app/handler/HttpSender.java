@@ -10,6 +10,8 @@ import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -35,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.EnumSet;
 import java.util.Map;
@@ -96,8 +97,6 @@ public class HttpSender implements StreamDestination {
     @Override
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws ForwardException {
-        final Instant startTime = Instant.now();
-
         if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
@@ -123,7 +122,7 @@ public class HttpSender implements StreamDestination {
 
         // Execute and get the response.
         final ResponseStatus responseStatus = sendTimer.timeSupplier(() ->
-                post(httpPost, startTime, attributeMap, byteCountInputStream::getCount));
+                post(httpPost, attributeMap, byteCountInputStream::getCount));
         LOGGER.debug("responseStatus: {}", responseStatus);
     }
 
@@ -217,37 +216,42 @@ public class HttpSender implements StreamDestination {
     }
 
     private ResponseStatus post(final HttpPost httpPost,
-                                final Instant startTime,
                                 final AttributeMap attributeMap,
                                 final LongSupplier contentLengthSupplier) throws ForwardException {
         // Execute and get the response.
+        final DurationTimer timer = DurationTimer.start();
         try {
             final ResponseStatus responseStatus = httpClient.execute(httpPost, response -> {
                 LOGGER.debug(() -> LogUtil.message(
                         "'{}' - Closing stream, response header fields:\n{}",
                         forwarderName, formatHeaderEntryListForLogging(response.getHeaders())));
-                return logResponseToSendLog(startTime, response, attributeMap, contentLengthSupplier);
+                return logResponseToSendLog(timer.get(), response, attributeMap, contentLengthSupplier);
             });
 
-            LOGGER.debug("'{}' - responseStatus: {}", forwarderName, responseStatus);
+            LOGGER.debug("'{}' - responseStatus: {}, duration: {}", forwarderName, responseStatus, timer);
 
             // There is no point retrying with these
             final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
             if (stroomStatusCode == StroomStatusCode.OK) {
                 return responseStatus;
             } else if (NON_RECOVERABLE_STATUS_CODES.contains(stroomStatusCode)) {
-                throw ForwardException.nonRecoverable(stroomStatusCode, attributeMap);
+                throw ForwardException.nonRecoverable(responseStatus, attributeMap);
             } else {
-                throw ForwardException.recoverable(stroomStatusCode, attributeMap);
+                throw ForwardException.recoverable(responseStatus, attributeMap);
             }
         } catch (final ForwardException e) {
             // Created above so we will have already logged
             throw e;
         } catch (final Exception e) {
-            logErrorToSendLog(startTime, e, attributeMap);
+            final Duration duration = timer.get();
+            final long byteCount = LogUtil.swallowExceptions(contentLengthSupplier)
+                    .orElse(0);
             // Have to assume that any exception is recoverable
+            final String msg = LogUtil.message("Error during HTTP POST, data sent: {}, duration: {}, error: {}",
+                    ByteSize.ofBytes(byteCount), duration, LogUtil.exceptionMessage(e));
+            logErrorToSendLog(duration, e, msg, attributeMap);
             throw ForwardException.recoverable(
-                    StroomStatusCode.UNKNOWN_ERROR, attributeMap, e.getMessage(), e);
+                    StroomStatusCode.UNKNOWN_ERROR, attributeMap, msg, e);
         }
     }
 
@@ -284,10 +288,11 @@ public class HttpSender implements StreamDestination {
                 .collect(Collectors.joining("\n"));
     }
 
-    private void logErrorToSendLog(final Instant startTime,
-                                   final Throwable e,
+    private void logErrorToSendLog(final Duration duration,
+                                   final Exception e,
+                                   final String exceptionMessage,
                                    final AttributeMap attributeMap) {
-        LOGGER.debug(() -> LogUtil.message("'{}' - {}", forwarderName, LogUtil.exceptionMessage(e), e));
+        LOGGER.debug(() -> LogUtil.message("'{}' - {}", forwarderName, exceptionMessage, e));
         logStream.log(
                 SEND_LOG,
                 attributeMap,
@@ -296,11 +301,11 @@ public class HttpSender implements StreamDestination {
                 StroomStatusCode.UNKNOWN_ERROR,
                 null,
                 0,
-                Duration.between(startTime, Instant.now()).toMillis(),
+                duration.toMillis(),
                 LogUtil.exceptionMessage(e));
     }
 
-    private ResponseStatus logResponseToSendLog(final Instant startTime,
+    private ResponseStatus logResponseToSendLog(final Duration duration,
                                                 final ClassicHttpResponse response,
                                                 final AttributeMap attributeMap,
                                                 final LongSupplier contentLengthSupplier) {
@@ -313,8 +318,13 @@ public class HttpSender implements StreamDestination {
             final ResponseStatus responseStatus = checkConnectionResponse(response, attributeMap);
             final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
             final String receiptId = responseStatus.receiptId;
-            LOGGER.debug("'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}",
-                    forwarderName, stroomStatusCode, receiptId, contentLength);
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}, compression: '{}'",
+                    forwarderName,
+                    stroomStatusCode,
+                    receiptId,
+                    ByteSize.ofBytes(contentLength),
+                    attributeMap.get(StandardHeaderArguments.COMPRESSION)));
 
             final EventType eventType = stroomStatusCode == StroomStatusCode.OK
                     ? EventType.SEND
@@ -328,7 +338,7 @@ public class HttpSender implements StreamDestination {
                     stroomStatusCode,
                     receiptId,
                     contentLength,
-                    Duration.between(startTime, Instant.now()).toMillis());
+                    duration.toMillis());
 
             return responseStatus;
 //        } catch (StroomStreamException e) {
@@ -441,8 +451,6 @@ public class HttpSender implements StreamDestination {
             // Response payload should be a plain text receipt ID
             // TODO Should we get receiptId from content or from a resp header?
             receiptId = readResponseContent(response);
-//            consumeAndCloseResponseContent(response);
-//            receiptId = getHeader(response, StandardHeaderArguments.RECEIPT_ID);
 
             LOGGER.debug("httpResponseCode: {}, stroomStatusCode: {}, receiptId: {}, responseMessage: {}",
                     httpResponseCode, stroomStatusCode, receiptId, responseMessage);
@@ -458,7 +466,7 @@ public class HttpSender implements StreamDestination {
                             stroomStatusCode.getMessage());
                 }
             }
-            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage);
+            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage, httpResponseCode);
         } catch (final Exception ioEx) {
             LOGGER.debug(() -> LogUtil.message("Error sending to forwardUrl '{}': {}",
                     forwardUrl, LogUtil.exceptionMessage(ioEx)));
@@ -487,7 +495,7 @@ public class HttpSender implements StreamDestination {
 
         try (final InputStream inputStream = response.getEntity().getContent()) {
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                return NullSafe.trim(IOUtils.toString(inputStream, StandardCharsets.UTF_8));
             }
         } catch (final IOException ioex) {
             LOGGER.debug(ioex.getMessage(), ioex);
@@ -501,7 +509,8 @@ public class HttpSender implements StreamDestination {
 
     public record ResponseStatus(StroomStatusCode stroomStatusCode,
                                  String receiptId,
-                                 String message) {
+                                 String message,
+                                 int httpResponseCode) {
 
     }
 }

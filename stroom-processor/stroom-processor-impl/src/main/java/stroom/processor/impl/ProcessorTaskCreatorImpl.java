@@ -34,12 +34,12 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.Query;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
@@ -667,7 +667,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                   final boolean reprocess,
                                   final int length) {
         // Validate expression.
-        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
+        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getProcessorFilterFields());
         expressionValidator.validate(expression);
 
         if (reprocess) {

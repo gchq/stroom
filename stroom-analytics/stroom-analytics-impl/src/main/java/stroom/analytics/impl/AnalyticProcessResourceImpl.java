@@ -21,7 +21,7 @@ import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;

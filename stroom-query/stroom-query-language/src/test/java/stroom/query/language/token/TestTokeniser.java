@@ -1,5 +1,7 @@
 package stroom.query.language.token;
 
+import stroom.query.api.token.Token;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

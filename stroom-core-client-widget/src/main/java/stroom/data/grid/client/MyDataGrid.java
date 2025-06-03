@@ -102,7 +102,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
-        final MultiSelectionModelImpl<R> selectionModel = new MultiSelectionModelImpl<>(this);
+        final MultiSelectionModelImpl<R> selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<R> selectionEventManager =
                 new DataGridSelectionEventManager<>(this, selectionModel, allowMultiSelect);
         setSelectionModel(selectionModel, selectionEventManager);

@@ -1,6 +1,6 @@
 package stroom.query.common.v2.format;
 
-import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.NumberFormatSettings;
 import stroom.query.language.functions.Val;
 import stroom.test.common.TestCase;
 import stroom.test.common.TestUtil;

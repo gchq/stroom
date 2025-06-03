@@ -83,7 +83,7 @@ public class ExplorerNodeEditTagsPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowEditNodeTagsDialogEvent event) {
-//        GWT.log("onCreate: " + GwtNullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
+//        GWT.log("onCreate: " + NullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
         explorerNodes = NullSafe.list(event.getExplorerNodes());
         if (NullSafe.isEmptyCollection(explorerNodes)) {
             AlertEvent.fireError(this, "No explorer nodes supplied", null);

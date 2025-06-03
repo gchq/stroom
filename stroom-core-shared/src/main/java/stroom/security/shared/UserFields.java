@@ -1,8 +1,8 @@
 package stroom.security.shared;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.Arrays;

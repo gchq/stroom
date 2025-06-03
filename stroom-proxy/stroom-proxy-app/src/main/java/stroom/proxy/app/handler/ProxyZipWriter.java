@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 
@@ -32,6 +33,12 @@ public class ProxyZipWriter extends ZipWriter {
     @Override
     void putArchiveEntry(final ZipArchiveEntry zipArchiveEntry) throws IOException {
         super.putArchiveEntry(zipArchiveEntry);
+        validator.addEntry(zipArchiveEntry.getName());
+    }
+
+    @Override
+    void putRawArchiveEntry(final ZipArchiveEntry zipArchiveEntry, final InputStream inputStream) throws IOException {
+        super.putRawArchiveEntry(zipArchiveEntry, inputStream);
         validator.addEntry(zipArchiveEntry.getName());
     }
 

@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 
 import java.util.List;

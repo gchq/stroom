@@ -1,12 +1,8 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.StatePaths;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -16,8 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,40 +24,37 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-@Singleton
 public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
+    private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
-    private final Path stagingDir;
+    private final Path path;
     private final AtomicLong storeId = new AtomicLong();
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private final AtomicLong addedStoreId = new AtomicLong(-1);
 
-    @Inject
-    public SequentialFileStore(final StatePaths statePaths) {
-
-        // Create the root directory
-        ensureDirExists(statePaths.getRootDir());
+    public SequentialFileStore(final Path path) {
 
         // Create the store directory and initialise the store id.
-        stagingDir = statePaths.getStagingDir();
-        if (ensureDirExists(stagingDir)) {
-            long maxId = getMaxId(stagingDir);
+        this.path = path;
+        if (ensureDirExists(path)) {
+            final long maxId = getMaxId(path);
             storeId.set(maxId + 1);
             addedStoreId.set(maxId);
         }
     }
 
     public void add(final FileDescriptor fileDescriptor,
-                    final Path path) throws IOException {
+                    final Path path,
+                    final CountDownLatch countDownLatch) throws IOException {
         final String fileHash = FileHashUtil.hash(path);
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
         }
-        add(path);
+        add(path, countDownLatch);
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -80,37 +76,17 @@ public class SequentialFileStore {
         return getStoreFileSet(storeId);
     }
 
-//    public Optional<SequentialFile> awaitNext(final long storeId,
-//                                              final long time,
-//                                              final TimeUnit timeUnit) {
-//        try {
-//            lock.lockInterruptibly();
-//            try {
-//                long currentStoreId = addedStoreId.get();
-//                while (currentStoreId < storeId) {
-//                    if (!condition.await(time,timeUnit)) {
-//                        return Optional.empty();
-//                    }
-//                    currentStoreId = addedStoreId.get();
-//                }
-//            } finally {
-//                lock.unlock();
-//            }
-//        } catch (final InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//            throw UncheckedInterruptedException.create(e);
-//        }
-//        return Optional.of(getStoreFileSet(storeId));
-//    }
-
     private SequentialFile getStoreFileSet(final long storeId) {
-        return SequentialFile.get(stagingDir, storeId, true);
+        return SequentialFile.get(path, storeId, true, latches.remove(storeId));
     }
 
-    private void add(final Path tempFile) throws IOException {
+    private void add(final Path tempFile, final CountDownLatch countDownLatch) throws IOException {
         // Move the new data to the store.
         final long currentStoreId = storeId.getAndIncrement();
         final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
+        if (countDownLatch != null) {
+            latches.put(currentStoreId, countDownLatch);
+        }
 
         try {
             move(
@@ -168,11 +144,11 @@ public class SequentialFileStore {
     }
 
     public long getMaxStoreId() {
-        return getMaxId(stagingDir);
+        return getMaxId(path);
     }
 
     public long getMinStoreId() {
-        return getMinId(stagingDir);
+        return getMinId(path);
     }
 
     private long getMaxId(final Path path) {
@@ -234,7 +210,7 @@ public class SequentialFileStore {
             }
             start = i + 1;
         }
-        int end = name.indexOf(".");
+        final int end = name.indexOf(".");
         final String numericPart;
         if (start == 0 && end == -1) {
             numericPart = name;

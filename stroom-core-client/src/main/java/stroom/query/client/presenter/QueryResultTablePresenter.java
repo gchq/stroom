@@ -19,6 +19,8 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
@@ -36,18 +38,20 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.Row;
+import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
@@ -67,6 +71,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -120,7 +125,9 @@ public class QueryResultTablePresenter
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
+    private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
+    private final ButtonView annotateButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -130,6 +137,8 @@ public class QueryResultTablePresenter
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
     private final TableRowStyles tableRowStyles;
+    private DashboardContext dashboardContext;
+    private DocRef currentDataSource;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -138,6 +147,7 @@ public class QueryResultTablePresenter
                                      final QueryResultTableView tableView,
                                      final PagerView pagerView,
                                      final DownloadPresenter downloadPresenter,
+                                     final AnnotationManager annotationManager,
                                      final ClientSecurityContext securityContext,
                                      final FormatPresenter formatPresenter,
                                      final Provider<RulesPresenter> rulesPresenterProvider,
@@ -148,13 +158,14 @@ public class QueryResultTablePresenter
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
+        this.annotationManager = annotationManager;
         tableRowStyles = new TableRowStyles(userPreferencesManager);
 
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>();
         dataGrid.addStyleName("TablePresenter");
         dataGrid.setRowStyles(tableRowStyles);
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
@@ -201,6 +212,22 @@ public class QueryResultTablePresenter
         valueFilterButton.setSvg(SvgImage.FILTER);
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);
+
+        // Annotate
+        annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
+        annotateButton.setVisible(securityContext
+                .hasAppPermission(AppPermission.ANNOTATIONS));
+
+        annotationManager.setDataSourceSupplier(() -> currentDataSource);
+        annotationManager.setColumnSupplier(() -> currentColumns);
+    }
+
+    public DashboardContext getDashboardContext() {
+        return dashboardContext;
+    }
+
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
     }
 
     private void toggleOpenGroup(final String group) {
@@ -246,7 +273,8 @@ public class QueryResultTablePresenter
                 refresh();
             }
         }));
-        registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
+        registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
+                .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
 
 //        registerHandler(dataGrid.addColumnSortHandler(event -> {
 //            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
@@ -276,6 +304,23 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+
+        registerHandler(annotateButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                annotationManager.showAnnotationMenu(event.getNativeEvent(),
+                        selectionModel.getSelectedItems());
+            }
+        }));
+
+        registerHandler(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.get(0));
+                }
+            }
+        }));
     }
 
     public void toggleApplyValueFilters() {
@@ -294,6 +339,21 @@ public class QueryResultTablePresenter
         } else {
             dataGrid.removeStyleName("applyValueFilters");
         }
+    }
+
+    public void changeSettings() {
+        final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
+        updatePageSize(queryTablePreferences);
+
+        // Update styles and re-render
+        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+    }
+
+    private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
+        final int start = dataGrid.getVisibleRange().getStart();
+        dataGrid.setVisibleRange(new Range(
+                start,
+                NullSafe.getOrElse(queryTablePreferences, QueryTablePreferences::getPageSize, 100)));
     }
 
     private void setPause(final boolean pause,
@@ -791,7 +851,9 @@ public class QueryResultTablePresenter
 
     public void updateQueryTablePreferences() {
         // Change value filter state.
-        setApplyValueFilters(queryTablePreferencesSupplier.get().applyValueFilters());
+        final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
+        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        updatePageSize(queryTablePreferences);
         refresh();
     }
 
@@ -838,6 +900,15 @@ public class QueryResultTablePresenter
                 column);
     }
 
+    public void setQuery(final String query) {
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.fetchDataSourceFromQueryString(query))
+                .onSuccess(result -> currentDataSource = result)
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
     public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
 
         private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
@@ -850,7 +921,7 @@ public class QueryResultTablePresenter
         public QueryTableColumnValuesDataSupplier(
                 final RestFactory restFactory,
                 final QueryModel searchModel,
-                final stroom.query.api.v2.Column column) {
+                final stroom.query.api.Column column) {
             super(column.copy().build());
             this.restFactory = restFactory;
             this.searchModel = searchModel;

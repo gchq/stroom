@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl;
 
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;

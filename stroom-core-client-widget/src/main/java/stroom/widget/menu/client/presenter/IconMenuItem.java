@@ -31,24 +31,22 @@ public class IconMenuItem extends MenuItem {
     private final SvgImage disabledIcon;
     private final IconColour iconColour;
     private final boolean highlight;
-    public final String tooltip;
 
     protected IconMenuItem(final int priority,
                            final SvgImage enabledIcon,
                            final SvgImage disabledIcon,
                            final IconColour iconColour,
                            final SafeHtml text,
+                           final SafeHtml tooltip,
                            final Action action,
                            final boolean enabled,
                            final Command command,
-                           final boolean highlight,
-                           final String tooltip) {
-        super(priority, text, action, enabled, command);
+                           final boolean highlight) {
+        super(priority, text, tooltip, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.iconColour = iconColour;
         this.highlight = highlight;
-        this.tooltip = tooltip;
     }
 
     public SvgImage getEnabledIcon() {
@@ -66,13 +64,6 @@ public class IconMenuItem extends MenuItem {
     public boolean isHighlight() {
         return highlight;
     }
-
-    public String getTooltip() {
-        return NullSafe.string(tooltip);
-    }
-
-    // --------------------------------------------------------------------------------
-
 
     protected abstract static class AbstractBuilder<T extends IconMenuItem, B extends AbstractBuilder<T, ?>>
             extends MenuItem.AbstractBuilder<T, B> {
@@ -117,10 +108,6 @@ public class IconMenuItem extends MenuItem {
         public abstract T build();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
     public static class Builder
             extends AbstractBuilder<IconMenuItem, Builder> {
 
@@ -139,11 +126,11 @@ public class IconMenuItem extends MenuItem {
                     disabledIcon,
                     iconColour,
                     text,
+                    tooltip,
                     action,
                     enabled,
                     command,
-                    highlight,
-                    tooltip);
+                    highlight);
         }
     }
 }

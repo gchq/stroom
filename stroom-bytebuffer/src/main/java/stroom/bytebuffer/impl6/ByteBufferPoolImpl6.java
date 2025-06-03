@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
  * This impl uses {@link ArrayBlockingQueue}
  */
 @Singleton
-public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBufferPool {
+public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl6.class);
 

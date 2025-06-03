@@ -22,7 +22,6 @@ import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
@@ -30,7 +29,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -45,11 +43,11 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -218,7 +216,7 @@ public class QueryPresenter
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (!menuItems.isEmpty()) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -249,7 +247,8 @@ public class QueryPresenter
         }));
         registerHandler(historyButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
+                historyPresenter.show(QueryPresenter.this,
+                        getDashboardContext().getDashboardDocRef().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
@@ -257,7 +256,7 @@ public class QueryPresenter
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
-                        getComponents().getDashboard().getUuid(),
+                        getDashboardContext().getDashboardDocRef().getUuid(),
                         getQuerySettings().getDataSource(),
                         root);
 
@@ -287,13 +286,12 @@ public class QueryPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addContextChangeHandler(event -> {
             if (initialised) {
-                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
-                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                final ExpressionOperator selectionQuery = dashboardContext
+                        .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
                         .orElse(null);
                 if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
                     currentSelectionQuery = selectionQuery;
@@ -467,7 +465,7 @@ public class QueryPresenter
         queryData.setDataSource(getQuerySettings().getDataSource());
         queryData.setExpression(root);
         queryData.setParams(dashboardContext.getParams());
-        queryData.setTimeRange(dashboardContext.getTimeRange());
+        queryData.setTimeRange(dashboardContext.getResolvedTimeRange());
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -597,14 +595,16 @@ public class QueryPresenter
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+            ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+
+            final DashboardContext dashboardContext = getDashboardContext();
+            decorated = dashboardContext.replaceExpression(decorated, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     decorated,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     incremental,
                     storeHistory,
                     queryInfo.getMessage(),
@@ -626,14 +626,15 @@ public class QueryPresenter
             setWarningsVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = expressionPresenter.write();
+            ExpressionOperator root = expressionPresenter.write();
+            final DashboardContext dashboardContext = getDashboardContext();
+            root = dashboardContext.replaceExpression(root, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     root,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     true,
                     false,
                     queryInfo.getMessage(),
@@ -660,9 +661,16 @@ public class QueryPresenter
                     .build());
         }
 
+        // Fix legacy selection filters.
+        setSettings(getQuerySettings()
+                .copy()
+                .selectionQuery(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionQuery()))
+                .build());
+
         // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
-        final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(dashboard.asDocRef(), componentConfig.getId());
+        final DocRef dashboardDocRef = getDashboardContext().getDashboardDocRef();
+        searchModel.init(dashboardDocRef, componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());
@@ -874,7 +882,7 @@ public class QueryPresenter
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange());
+                    dashboardContext.getResolvedTimeRange());
 
             restFactory
                     .create(DASHBOARD_RESOURCE)

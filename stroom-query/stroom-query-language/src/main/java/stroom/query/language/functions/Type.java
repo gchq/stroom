@@ -1,6 +1,9 @@
 package stroom.query.language.functions;
 
-public enum Type {
+import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.PrimitiveValueConverter;
+
+public enum Type implements HasPrimitiveValue {
     NULL("null", 0, false, false, false, true),
     BOOLEAN("boolean", 1, true, false, false, false),
     FLOAT("float", 2, true, true, false, false),
@@ -10,7 +13,10 @@ public enum Type {
     DATE("date", 6, true, true, false, false),
     STRING("string", 7, true, false, false, false),
     ERR("error", 9, false, false, true, false),
-    DURATION("duration", 10, true, true, false, false);
+    DURATION("duration", 10, true, true, false, false),
+    BYTE("byte", 11, true, true, false, false),
+    SHORT("short", 12, true, true, false, false),
+    XML("xml", 13, true, false, false, false);
 
     private final String name;
     private final byte id;
@@ -18,6 +24,9 @@ public enum Type {
     private final boolean isNumber;
     private final boolean isError;
     private final boolean isNull;
+
+    public static final PrimitiveValueConverter<Type> PRIMITIVE_VALUE_CONVERTER =
+            PrimitiveValueConverter.create(Type.class, Type.values());
 
     Type(final String name,
          final int id,
@@ -60,5 +69,10 @@ public enum Type {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public byte getPrimitiveValue() {
+        return id;
     }
 }

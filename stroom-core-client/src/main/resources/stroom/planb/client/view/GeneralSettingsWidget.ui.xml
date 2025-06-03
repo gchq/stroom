@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Max Store Size"
+                        helpText="How large is this Plan B store allowed to be, e.g. 10G.">
+            <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Synchronise Data Merges On Write"
+                        helpText="When writing data, should processors wait until data is fully merged into Plan B shards before marking stream processing as complete.">
+            <tickbox:CustomCheckBox ui:field="synchroniseMerge" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Overwrite Existing Data"
+                        helpText="If subsequent data that is loaded matches an existing key then should the existing be kept or overwritten? By default Plan B will overwrite existing data.">
+            <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

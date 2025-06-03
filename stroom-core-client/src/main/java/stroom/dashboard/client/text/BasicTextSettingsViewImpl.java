@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;

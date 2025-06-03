@@ -23,7 +23,6 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -50,10 +49,11 @@ import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.SimpleMetaImpl;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -688,7 +688,7 @@ public class MetaDaoImpl implements MetaDao {
 //        final Condition combinedConditions = JooqUtil.andConditions(criteriaCondition, statusCondition);
 //
 //        // Add a condition if we should check current status.
-//        final boolean containsPipelineCondition = GwtNullSafe.test(
+//        final boolean containsPipelineCondition = NullSafe.test(
 //                expression,
 //                expr ->
 //                        expr.containsField(MetaFields.PIPELINE.getName(), MetaFields.PIPELINE_NAME.getName()));
@@ -704,7 +704,7 @@ public class MetaDaoImpl implements MetaDao {
 //        // TODO: 21/02/2023 See https://github.com/gchq/stroom/issues/3253 for changing meta_val
 //        //  to be a single row to avoid all these horrible joins
 //        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(expression, new HashSet<>());
-//        if (GwtNullSafe.hasItems(usedValKeys)) {
+//        if (NullSafe.hasItems(usedValKeys)) {
 //            // Add 1-* joins to meta_val if we need them.
 //            fromPart = metaExpressionMapper.addJoins(fromPart, meta.ID, usedValKeys);
 //        }

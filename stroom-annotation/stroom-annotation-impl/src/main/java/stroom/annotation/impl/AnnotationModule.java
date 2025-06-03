@@ -16,17 +16,21 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.datasource.api.v2.DataSourceProvider;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationCreator;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.HasUserDependencies;
+import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class AnnotationModule extends AbstractModule {
 
@@ -41,7 +45,7 @@ public class AnnotationModule extends AbstractModule {
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(AnnotationDetail.class, AnnotationEventInfoProvider.class);
+                .bind(Annotation.class, AnnotationEventInfoProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(AnnotationService.class);
@@ -50,5 +54,20 @@ public class AnnotationModule extends AbstractModule {
 
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
                 .addBinding(AnnotationService.class.getName(), AnnotationService.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(DataRetention.class, builder -> builder
+                        .name(AnnotationService.ANNOTATION_RETENTION_JOB_NAME)
+                        .description("Delete annotations that exceed the retention period " +
+                                     "specified by data retention policy")
+                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
+    }
+
+    private static class DataRetention extends RunnableWrapper {
+
+        @Inject
+        DataRetention(final AnnotationService annotationService) {
+            super(annotationService::performDataRetention);
+        }
     }
 }

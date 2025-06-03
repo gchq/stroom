@@ -210,7 +210,7 @@ To recap, the directories used by Plan B are as follows:
 # Data Structure
 Each store type stores data in LMDB in a specific way for that store type.
 There are various tradeoffs between performance and disk usage to be considered with each scheme.
-The mak key length for LMDB of 512 bytes complicates even the simples key value storage scheme if keys are longer than the max size.
+The max key length for LMDB of 512 bytes complicates even the simplest key value storage scheme if keys are longer than the max size.
 At present Plan B implements a single scheme for each store type that aims to fit all data and still be performant, however this may use more disk than is desirable for some data.
 Due to the highly data dependant nature of this problem it is likely that future iterations will need to provide some advanced options for choosing specific schemes.
 
@@ -233,7 +233,7 @@ If we could guarantee that a key would always be less than 512 bytes then it wou
 Because we cannot guarantee that this is the case without some future user configuration we instead need to store the key differently.
 The key is converted into a long hash using `xx3` byte hashing.
 This long is used as the key in the table and the real key is inserted before the value.
-As with any hashing there is a change that we will get hash clashes between different keys.
+As with any hashing there is a chance that we will get hash clashes between different keys.
 Whenever we insert data and already have a row with a matching key hash we also check that the full key in the value matches.
 If we have a match then the data can be overwritten.
 If the key does not match (i.e. we have a hash clash) then look across all rows for the same key hash to see if we can find one.
@@ -278,9 +278,9 @@ If we had many key hash clashes then this would also suffer greatly and potentia
 Having said that we might also get away with an `int` hash and even shorter unique part depending on the data.
 
 For state storage we don't get any deduplication by storing keys in a lookup table as every key is used only once.
-This means that this scheme would use certainly use more storage as there would be no deduplication benefit and storage of index pointers in the lookup and primary tables.
+This means that this scheme would certainly use more storage as there would be no deduplication benefit and storage of index pointers in the lookup and primary tables.
 
-In testing the use of lookup tables for keys and values was found to be far slower hence due to the additional processing involved.
+In testing the use of lookup tables for keys and values was found to be far slower due to the additional processing involved.
 Using lookup tables might be a useful future option for keys and values for data sets that have high degrees of duplication to save storage at the cost of performance.
 However, it will never be appropriate for storing the key of non-temporal state.
 

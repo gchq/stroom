@@ -20,11 +20,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
-import stroom.query.api.v2.ColumnValueSelection;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
+import stroom.query.api.ColumnValueSelection;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.client.presenter.ColumnHeaderHtmlUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -299,7 +300,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
 
             if (newField.getColumnFilter() != null &&
                 NullSafe.isNonBlankString(newField.getColumnFilter().getFilter())) {
-                if (!tablePresenter.getTableSettings().applyValueFilters()) {
+                if (!tablePresenter.getTableComponentSettings().applyValueFilters()) {
                     tablePresenter.toggleApplyValueFilters();
                 }
             }
@@ -769,7 +770,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
                         .icon(SvgImage.SHOW)
-                        .text(column.getName())
+                        .text(ColumnHeaderHtmlUtil.getSafeHtml(column))
                         .command(() -> showColumn(column))
                         .build();
                 menuItems.add(item2);

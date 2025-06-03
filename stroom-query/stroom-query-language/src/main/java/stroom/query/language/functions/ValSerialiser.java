@@ -65,6 +65,15 @@ public final class ValSerialiser {
         SERIALISERS[Type.DURATION.getId()] = new Serialiser(
                 input -> ValDuration.create(input.readLong()),
                 (output, value) -> output.writeLong(value.toLong()));
+        SERIALISERS[Type.BYTE.getId()] = new Serialiser(
+                input -> ValByte.create(input.readByte()),
+                (output, value) -> output.writeByte(((ValByte) value).getValue()));
+        SERIALISERS[Type.SHORT.getId()] = new Serialiser(
+                input -> ValShort.create(input.readShort()),
+                (output, value) -> output.writeShort(((ValShort) value).getValue()));
+        SERIALISERS[Type.XML.getId()] = new Serialiser(
+                input -> ValXml.create(input.readBytes()),
+                (output, value) -> output.writeBytes(((ValXml) value).getBytes()));
     }
 
     public static Val read(final DataReader reader) {

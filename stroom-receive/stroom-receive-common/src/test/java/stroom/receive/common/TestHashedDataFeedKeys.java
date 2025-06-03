@@ -2,6 +2,7 @@ package stroom.receive.common;
 
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
+import stroom.receive.common.DataFeedKeyHasher.HashOutput;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -100,18 +101,22 @@ class TestHashedDataFeedKeys {
                 + "_"
                 + "7GqxzCAhBnui4wSCicVtFdmghBxtBAQVDbLrsqDAqthuoHTmVEorJf6xvWviWajwKboJUDvanQXK8UpYroqwfxxYhsG264acXbjcpeQPutNqXrq3rTNqWWYNWaQrj2e1";
 
+        final HashOutput hashOutput1 = hasher.hash(key1);
         final HashedDataFeedKey hashedDataFeedKey1 = new HashedDataFeedKey(
-                hasher.hash(key1),
-                hasher.getAlgorithm().getUniqueId(),
+                hashOutput1.hash(),
+                hashOutput1.salt(),
+                hasher.getAlgorithm(),
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 1",
                         "key1", "val1",
                         "key2", "val2"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
+        final HashOutput hashOutput2 = hasher.hash(key2);
         final HashedDataFeedKey hashedDataFeedKey2 = new HashedDataFeedKey(
-                hasher.hash(key2),
-                hasher.getAlgorithm().getUniqueId(),
+                hashOutput2.hash(),
+                hashOutput2.salt(),
+                hasher.getAlgorithm(),
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 2",
                         "key3", "val3",

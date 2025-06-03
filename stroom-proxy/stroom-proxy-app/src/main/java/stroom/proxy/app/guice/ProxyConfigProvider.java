@@ -123,7 +123,7 @@ public class ProxyConfigProvider {
             }
 
             // If it is not in the map then it is not injectable
-//            final AbstractConfig existingConfig = GwtNullSafe.getOrElseGet(
+//            final AbstractConfig existingConfig = NullSafe.getOrElseGet(
 //                    this.configInstanceMap,
 //                    map -> map.get(clazz),
 //                    ThrowingSupplier.unchecked(() -> clazz.getConstructor().newInstance()));

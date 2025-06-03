@@ -1,6 +1,6 @@
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.ArrayList;
 import java.util.List;

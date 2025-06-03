@@ -1,9 +1,9 @@
 package stroom.state.impl;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.state.impl.dao.ScyllaDbColumn;
 import stroom.util.logging.LambdaLogger;

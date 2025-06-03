@@ -16,15 +16,21 @@
 
 package stroom.annotation.shared;
 
+import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -41,62 +47,107 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @GET
     @Operation(
-            summary = "Gets an annotation",
-            operationId = "getAnnotationDetail")
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
+            summary = "Gets an annotation by id",
+            operationId = "getAnnotationById")
+    Annotation getAnnotationById(@QueryParam("annotationId") Long annotationId);
 
     @POST
+    @Path("getAnnotationByRef")
     @Operation(
-            summary = "Gets an annotation",
-            operationId = "createAnnotationEntry")
-    AnnotationDetail createEntry(@Parameter(description = "request", required = true) CreateEntryRequest request);
+            summary = "Gets an annotation by ref",
+            operationId = "getAnnotationByRef")
+    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
+                                  DocRef annotationRef);
+
+    @POST
+    @Path("getAnnotationEntries")
+    @Operation(
+            summary = "Gets annotation entries",
+            operationId = "getAnnotationEntries")
+    List<AnnotationEntry> getAnnotationEntries(@Parameter(description = "annotationRef", required = true)
+                                               DocRef annotationRef);
+
+    @POST
+    @Path("create")
+    @Operation(
+            summary = "Creates an annotation",
+            operationId = "createAnnotation")
+    Annotation createAnnotation(@Parameter(description = "request", required = true)
+                                CreateAnnotationRequest request);
+
+    @DELETE
+    @Path("delete")
+    @Operation(
+            summary = "Deletes an annotation",
+            operationId = "deleteAnnotation")
+    Boolean deleteAnnotation(@Parameter(description = "annotationRef", required = true)
+                             DocRef annotationRef);
+
+    @POST
+    @Path("change")
+    @Operation(
+            summary = "Applies a change to an annotation",
+            operationId = "changeAnnotation")
+    Boolean change(@Parameter(description = "request", required = true)
+                   SingleAnnotationChangeRequest request);
+
+    @POST
+    @Path("batchChange")
+    @Operation(
+            summary = "Applies a change to multiple annotations",
+            operationId = "batchChangeAnnotation")
+    Integer batchChange(@Parameter(description = "request", required = true)
+                        MultiAnnotationChangeRequest request);
 
     @GET
-    @Path("status")
-    @Operation(
-            summary = "Gets a list of allowed statuses",
-            operationId = "getAnnotationDStatus")
-    List<String> getStatus(@QueryParam("filter") String filter);
-
-    @GET
-    @Path("comment")
+    @Path("getStandardComments")
     @Operation(
             summary = "Gets a list of predefined comments",
-            operationId = "getAnnotationComments")
-    List<String> getComment(@QueryParam("filter") String filter);
+            operationId = "getAnnotationSampleComments")
+    List<String> getStandardComments(@QueryParam("filter") String filter);
 
-    @GET
-    @Path("linkedEvents")
+
+    @POST
+    @Path("getLinkedEvents")
     @Operation(
             summary = "Gets a list of events linked to this annotation",
             operationId = "getAnnotationLinkedEvents")
-    List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
+    List<EventId> getLinkedEvents(@Parameter(description = "annotationRef", required = true) DocRef annotationRef);
 
     @POST
-    @Path("link")
+    @Path("/changeDocumentPermissions")
     @Operation(
-            summary = "Links an annotation to an event",
-            operationId = "linkAnnotationEvents")
-    List<EventId> link(@Parameter(description = "eventLink", required = true) EventLink eventLink);
+            summary = "Change document permissions",
+            operationId = "changeDocumentPermissions")
+    Boolean changeDocumentPermissions(
+            @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
 
     @POST
-    @Path("unlink")
+    @Path("createAnnotationTag")
     @Operation(
-            summary = "Unlinks an annotation from an event",
-            operationId = "unlinkAnnotationEvents")
-    List<EventId> unlink(@Parameter(description = "eventLink", required = true) EventLink eventLink);
+            summary = "Create an annotation tag",
+            operationId = "createAnnotationTag")
+    AnnotationTag createAnnotationTag(CreateAnnotationTagRequest request);
+
+    @PUT
+    @Path("updateAnnotationTag")
+    @Operation(
+            summary = "Update an annotation tag",
+            operationId = "updateAnnotationTag")
+    AnnotationTag updateAnnotationTag(AnnotationTag annotationTag);
+
+    @DELETE
+    @Path("deleteAnnotationTag")
+    @Operation(
+            summary = "Delete an annotation tag",
+            operationId = "deleteAnnotationTag")
+    Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
     @POST
-    @Path("setStatus")
+    @Path("findAnnotationTags")
     @Operation(
-            summary = "Bulk action to set the status for several annotations",
-            operationId = "setAnnotationStatus")
-    Integer setStatus(@Parameter(description = "request", required = true) SetStatusRequest request);
-
-    @POST
-    @Path("setAssignedTo")
-    @Operation(
-            summary = "Bulk action to set the assignment for several annotations",
-            operationId = "setAnnotationAssignedTo")
-    Integer setAssignedTo(@Parameter(description = "request", required = true) SetAssignedToRequest request);
+            summary = "Finds annotation tags matching request",
+            operationId = "findAnnotationTags")
+    ResultPage<AnnotationTag> findAnnotationTags(
+            @Parameter(description = "request", required = true) ExpressionCriteria request);
 }

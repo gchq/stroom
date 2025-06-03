@@ -211,9 +211,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                 "stroom.annotation.standardComments",
                 "This is comment one,This is comment two, This is comment three",
 
-                "stroom.annotation.statusValues",
-                "New,Assigned,Closed,Bingo,Bongo",
-
                 "stroom.statistics.sql.maxProcessingAge",
                 "100d"
         );
@@ -398,10 +395,13 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             map("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
 //        map("stroom.advertisedUrl", "stroom.ui.url.ui");
 
-            map("stroom.annotation.statusValues", COMMA_DELIM_STR_2_LIST_OF_STR);
+//            map("stroom.annotation.statusValues", COMMA_DELIM_STR_2_LIST_OF_STR);
+            ignoredMappings.add("stroom.annotation.statusValues");
             map("stroom.annotation.standardComments", COMMA_DELIM_STR_2_LIST_OF_STR);
-            map("stroom.annotation.createText",
-                    "stroom.annotation.createText");  // name and serialised form are the same
+//            map("stroom.annotation.createText",
+//                    "stroom.annotation.createText");  // name and serialised form are the same
+
+            ignoredMappings.add("stroom.annotation.createText");
 
 //        map("stroom.auth.authentication.service.url",
 //                "stroom.security.authentication.openId.authenticationServiceUrl");

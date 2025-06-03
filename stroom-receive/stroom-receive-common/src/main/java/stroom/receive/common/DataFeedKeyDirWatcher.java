@@ -5,9 +5,11 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectReader;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -102,18 +104,19 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                 }
             });
             LOGGER.info("Completed reading {} data feed key files in {}", counter, dirToWatch);
-        } catch (IOException e) {
-            LOGGER.error("Error reading contents of " + dirToWatch, e);
+        } catch (Exception e) {
+            LOGGER.error("Error reading contents of directory '{}': {}", dirToWatch, LogUtil.exceptionMessage(e));
         }
     }
 
     private void processFile(final Path path) {
         if (path != null && Files.isRegularFile(path)) {
             LOGGER.info("Reading datafeed key file {}", path.toAbsolutePath().normalize());
-            final ObjectMapper mapper = JsonUtil.getMapper();
+            final ObjectReader reader = JsonUtil.getMapper().reader()
+                    .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             try (InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
-                    final HashedDataFeedKeys hashedDataFeedKeys = mapper.readValue(fileStream,
+                    final HashedDataFeedKeys hashedDataFeedKeys = reader.readValue(fileStream,
                             HashedDataFeedKeys.class);
                     if (hashedDataFeedKeys != null && NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
                         final int addedCount = dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys,
@@ -125,11 +128,12 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                         LOGGER.info("No datafeed keys found in {}", path.toAbsolutePath().normalize());
                     }
                 } catch (IOException e) {
-                    LOGGER.error("Error parsing file {}: {}", path, e.getMessage(), e);
-                    throw new RuntimeException(e);
+                    LOGGER.debug("Error parsing file {}: {}", path, e.getMessage(), e);
+                    LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
                 }
             } catch (IOException e) {
-                LOGGER.error("Error reading file {}: {}", path, e.getMessage(), e);
+                LOGGER.debug("Error reading file {}: {}", path, e.getMessage(), e);
+                LOGGER.error("Error reading file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
             }
         }
     }

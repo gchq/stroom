@@ -2,10 +2,10 @@ package stroom.processor.shared;
 
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
 
 public final class ProcessorTaskExpressionUtil {
 

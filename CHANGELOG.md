@@ -13,6 +13,162 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.1] - 2025-05-27
+
+* Issue **#4484** : Change selection handling to use fully qualified keys.
+
+* Issue **#4456** : Fix selection handling across multiple components by uniquely namespacing selections.
+
+* Issue **#4886** : Fix ctrl+enter query execution for rules and reports.
+
+* Issue **#4884** : Suggest only queryable fields in StroomQL where clause.
+
+* Issue **#4742** : Allow embedded queries to be copies rather than references.
+
+* Issue **#4894** : Plan B query without snapshots.
+
+* Issue **#4896** : Plan B option to synchronise writes.
+
+* Issue **#4720** : Add Plan B shards data source.
+
+* Issue **#4919** : Add functions to format byte size strings.
+
+* Issue **#4901** : Add advanced schema selection to Plan B to improve performance and reduce storage requirements.
+
+* Fix primitive value conversion of query field types.
+
+* Issue **#4945** : Increase index field name length.
+
+
+## [v7.9-beta.12] - 2025-05-07
+
+* Fix compile issues.
+
+
+## [v7.9-beta.11] - 2025-05-07
+
+* Issue **#4929** : Improve Plan B merge performance.
+
+* Uplift the stroom/proxy docker base images to 21.0.7_6-jdk-alpine from 21.0.5_11-jdk-alpine.
+
+* Issue **#4934** : Change the audit logging for dashboard queries to log the column names. It now logs one event for each table attached to the query.
+
+* Fix field/function completions not being offered in the dashboard column expression editor.
+
+* Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
+
+* Issue **#4892** : Prevent disabled users from authenticating.
+
+* Issue **#4925** : Fix UI IndexOutOfBoundsException.
+
+* Issue **#4926** : Fix UI NPE.
+
+* Issue **#4893** : Fix text editor context menu styling.
+
+* Issue **#4916** : Fix query results download so it doesn't require VIEW on the View. It now only needs USE on the View.
+
+* Fix permissions checking when executing a Query. It no longer requires VIEW permission on the extraction pipeline, just USE.
+
+
+## [v7.9-beta.10] - 2025-04-29
+
+* Issue **#4875** : Fix select *.
+
+* Issue **#3928** : Add merge filter for deeply nested data.
+
+* Issue **#4211** : Prevent stream status in processing filters.
+
+* Issue **#4927** : Fix TOKEN data feed auth when DATA_FEED_KEY is enabled.
+
+* Issue **#4863** : Stop errors being logged on proxy shutdown.
+
+* Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
+
+* Issue **#4889** : Fix stream downloads resulting in HTTP error 404.
+
+* Proxy - Change the way zip receipt works to speed up client requests and to reduce cpu/io load caused by de-compressing/compressing the zip entries. Change the zip splitting to be asynchronous from the initial receipt, so the client doesn't have to wait for it to happen.
+
+* Issue **#4914** : Fix Plan B condense bug.
+
+* Issue **#4915** : Fix Plan B interrupt exception.
+
+* Rationalise the handling/setting of meta attributes between proxy and stroom to ensure common receipt handling. Also change proxy and stroom to set/append ReceiptId, ReceiptIdPath, ReceivedTime, ReceivedTimeHistory and ReceivedPath attributes within zip meta entries.
+
+* Proxy - Fix receipt of un-compressed data not recording the data size in bytes.
+
+* Issue **#4856** : Fix dashboard permissions tab title.
+
+
+## [v7.9-beta.9] - 2025-04-14
+
+* Issue **#4862** : Add select * to StroomQL.
+
+* Annotations 2.0.
+
+* Issue **#4855** : Fix Plan B session state range.
+
+* Improve log message when proxy HTTP forwarding fails. Now includes the time taken and the bytes sent.
+
+* Issue **#4858** : Fix Plan B query field error.
+
+* Issue **#4859** : Fix query on open for embedded queries.
+
+* Issue **#4861** : Allow embedded queries to have a set page size.
+
+* Issue **#4748** : Add user group icon to API key page.
+
+* Issue **#4806** : Add filter/group/sort indicators to hidden field menu items.
+
+
+## [v7.9-beta.8] - 2025-04-09
+
+* Uplift BCrypt lib to 0.4.3.
+
+* Add BCrypt as a hashing algorithm to data feed keys. Change Data feed key auth to require the header as configured by `dataFeedKeyOwnerMetaKey`. Change `hashAlgorithmId` to `hashAlgorithm` in the data feed keys json file.
+
+
+## [v7.9-beta.7] - 2025-04-07
+
+* Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
+
+* Issue **#4829** : Fix stuck searches.
+
+* Issue **#4830** : Use a cache rather than sessions to maintain auth flow state to avoid creating unnecessary sessions.
+
+* Issue **#4842** : Fix null session when doing OIDC code flow with KeyCloak.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+* Issue **#4837** : Change the fetching of OIDC config to use jersey client instead of Apache http client. The yaml properties `appConfig.security.authentication.openId.httpClient` and `proxyConfig.security.authentication.openId.httpClient` have been removed. Configuration of the jersey client is now done using `jerseyClients.OPEN_ID.` (see https://gchq.github.io/stroom-docs/docs/install-guide/configuration/stroom-and-proxy/common-configuration/#jersey-http-client-configuration).
+
+* Issue **#4849** : Fix the default forwarding queue config so that it retries for HTTP and not for FILE. Add the config prop `queue.queueAndRetryEnabled` to control whether forwarding is queued with retry handling or not. Add the config prop `atomicMoveEnabled` to `forwardFileDestinations` items to allow disabling of atomic file moves when using a remote file system that doesn't support atomic moves.
+
+
+## [v7.9-beta.6] - 2025-04-07
+
+* Issue **#4109** : Add `receive` config properties `x509CertificateHeader`, `x509CertificateDnHeader` and `allowedCertificateProviders` to control the use of certificates and DNs placed in the request headers by load balancers or reverse proxies that are doing the TLS termination. Header keys were previously hard coded. `allowedCertificateProviders` is an allow list of FQDN/IPs that are allowed to use the cert/DN headers.
+
+* Add Dropwizard Metrics to proxy.
+
+* Change proxy to use the same caching as stroom.
+
+* Remove unused proxy config property `maxAggregateAge`. `aggregationFrequency` controls the aggregation age/frequency.
+
+* Stroom-Proxy instances that are making remote feed status requests using an API key or token, will now need to hold the application permission `Check Receipt Status` in Stroom. This prevents anybody with an API key from checking feed statuses.
+
+* Issue **#4312** : Add Data Feed Keys to proxy and stroom to allow their use in data receipt authentication. Replace `proxyConfig.receive.(certificateAuthenticationEnabled|tokenAuthenticationEnabled)` with `proxyConfig.receive.enabledAuthenticationTypes` that takes values: `DATA_FEED_KEY|TOKEN|CERTIFICATE` (where `TOKEN` means an oauth token or an API key). The feed status check endpoint `/api/feedStatus/v1` has been deprecated. Proxies with a version >=v7.9 should now use `/api/feedStatus/v2`.
+
+* Replace proxy config prop `proxyConfig.eventStore.maxOpenFiles` with `proxyConfig.eventStore.openFilesCache`.
+
+* Add optional auto-generation of the `Feed` attribute using property `proxyConfig.receive.feedNameGenerationEnabled`. This is used alongside properties `proxyConfig.receive.feedNameTemplate` (which defines a template for the auto-generated feed name using meta keys and their values) and `feedNameGenerationMandatoryHeaders` which defines the mandatory meta headers that must be present for a auto-generation of the feed name to be possible.
+
+* Add a new _Content Templates_ screen to stroom (requires `Manage Content Templates` application permission). This screen is used to define rules for matching incoming data where the feed does not exist and creating content to process data for that feed.
+
+* Feed status check calls made by a proxy into stroom now require the application permission `Check Receipt Status`. This is to stop anyone with an API key from discovering the feeds available in stroom. Any existing API keys used for feed status checks on proxy will need to have `Check Receipt Status` granted to the owner of the key.
+
+* Issue **#4844** : Fix issue where vis parent table filters are not applied to the right data values.
+
+
 ## [v7.9-beta.5] - 2025-04-02
 
 * Issue **#4831** : Fix Data Retention -> Impact Summary not showing any data.
@@ -1329,23 +1485,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.1...HEAD
+[v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
+[v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
+[v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
+[v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
+[v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
+[v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
+[v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7
+[v7.9-beta.6]: https://github.com/gchq/stroom/compare/v7.9-beta.5...v7.9-beta.6
 [v7.9-beta.5]: https://github.com/gchq/stroom/compare/v7.9-beta.4...v7.9-beta.5
 [v7.9-beta.4]: https://github.com/gchq/stroom/compare/v7.9-beta.3...v7.9-beta.4
 [v7.9-beta.3]: https://github.com/gchq/stroom/compare/v7.9-beta.2...v7.9-beta.3
 [v7.9-beta.2]: https://github.com/gchq/stroom/compare/v7.9-beta.1...v7.9-beta.2
 [v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
-[v7.8-beta.14]: https://github.com/gchq/stroom/compare/v7.8-beta.13...v7.8-beta.14
-[v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
-[v7.8-beta.12]: https://github.com/gchq/stroom/compare/v7.8-beta.11...v7.8-beta.12
-[v7.8-beta.11]: https://github.com/gchq/stroom/compare/v7.8-beta.10...v7.8-beta.11
-[v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
-[v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
-[v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
-[v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
-[v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6
-[v7.8-beta.5]: https://github.com/gchq/stroom/compare/v7.8-beta.4...v7.8-beta.5
-[v7.8-beta.4]: https://github.com/gchq/stroom/compare/v7.8-beta.3...v7.8-beta.4
-[v7.8-beta.3]: https://github.com/gchq/stroom/compare/v7.8-beta.2...v7.8-beta.3
-[v7.8-beta.2]: https://github.com/gchq/stroom/compare/v7.8-beta.1...v7.8-beta.2
-[v7.8-beta.1]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...v7.8-beta.1

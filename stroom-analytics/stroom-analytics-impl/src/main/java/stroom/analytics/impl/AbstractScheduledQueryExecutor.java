@@ -307,7 +307,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                     return new UserDependency(userRef, details, executionSchedule.getOwningDoc());
                 })
 //                    .filter(userDependency ->
-//                            GwtNullSafe.getOrElse(
+//                            NullSafe.getOrElse(
 //                                    userDependency.getDocRef(),
 //                                    docRef -> securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW),
 //                                    true))

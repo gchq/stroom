@@ -1,11 +1,11 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.HoppingWindow;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.Window;
+import stroom.query.api.Column;
+import stroom.query.api.HoppingWindow;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.Window;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
@@ -128,14 +128,14 @@ public class CompiledWindow {
                 final int index = columns.indexOf(timeColumn);
                 columns.set(index, timeColumn
                         .copy()
-                        .expression(ParamSubstituteUtil.makeParam(timeField))
+                        .expression(ParamUtil.create(timeField))
                         .group(0)
                         .build());
             } else {
                 columns.add(Column.builder()
                         .id(timeField)
                         .name(timeField)
-                        .expression(ParamSubstituteUtil.makeParam(timeField))
+                        .expression(ParamUtil.create(timeField))
                         .group(0)
                         .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
                         .visible(true)

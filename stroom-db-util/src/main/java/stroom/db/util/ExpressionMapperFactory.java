@@ -1,6 +1,6 @@
 package stroom.db.util;
 
-import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.ExpressionItem;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;

@@ -1,7 +1,7 @@
 package stroom.query.language;
 
-import stroom.query.api.v2.TableSettings;
-import stroom.query.language.token.KeywordGroup;
+import stroom.query.api.TableSettings;
+import stroom.query.api.token.KeywordGroup;
 
 public interface VisualisationTokenConsumer {
 

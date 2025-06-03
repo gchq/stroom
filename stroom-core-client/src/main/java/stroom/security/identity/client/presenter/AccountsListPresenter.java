@@ -12,7 +12,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
@@ -75,7 +75,7 @@ public class AccountsListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
         this.editAccountPresenterProvider = editAccountPresenterProvider;
         this.dataGrid = new MyDataGrid<>(1000);
-        this.selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        this.selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<Account> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid, selectionModel, false);
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);

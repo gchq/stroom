@@ -24,14 +24,17 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
+    private final Object context;
     private final String href;
 
-    private ShowDashboardEvent(final String href) {
+    private ShowDashboardEvent(final Object context,
+                               final String href) {
+        this.context = context;
         this.href = href;
     }
 
-    public static void fire(final HasHandlers handlers, final String href) {
-        handlers.fireEvent(new ShowDashboardEvent(href));
+    public static void fire(final HasHandlers handlers, final Object context, final String href) {
+        handlers.fireEvent(new ShowDashboardEvent(context, href));
     }
 
     public static Type<Handler> getType() {
@@ -49,6 +52,10 @@ public class ShowDashboardEvent extends GwtEvent<ShowDashboardEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onChange(this);
+    }
+
+    public Object getContext() {
+        return context;
     }
 
     public String getHref() {

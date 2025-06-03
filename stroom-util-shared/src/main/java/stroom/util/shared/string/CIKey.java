@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder(alphabetic = true)
 public class CIKey implements Comparable<CIKey> {
 
-    public static final CIKey NULL_STRING = new CIKey(null);
+    //    public static final CIKey NULL_STRING = new CIKey(null);
     public static final CIKey EMPTY_STRING = new CIKey("");
 
     // Compare on the lower case form of the key. CIKey may be null and lowerKey may be null
@@ -61,16 +61,22 @@ public class CIKey implements Comparable<CIKey> {
             Comparator.nullsFirst(String::compareTo)));
 
     @JsonProperty
-//    @JsonValue // No need to serialise the CIKey wrapper, just the key
+    // RestyGWT doesn't understand @JsonValue, so we can't (de)serialise to/from a simple string
+    // like we do for StroomDuration, what a pain :-(
+    //@JsonValue // No need to serialise the CIKey wrapper, just the key
     private final String key;
 
     @JsonIgnore
     private final transient String lowerKey;
 
+    @JsonIgnore
+    public final transient int hashCode;
+
     @JsonCreator
     private CIKey(@JsonProperty("key") final String key) {
-        this.key = key;
+        this.key = Objects.requireNonNull(key);
         this.lowerKey = toLowerCase(key);
+        this.hashCode = Objects.hash(lowerKey);
     }
 
     /**
@@ -80,8 +86,9 @@ public class CIKey implements Comparable<CIKey> {
      * @param lowerKey The key converted to lower-case
      */
     CIKey(final String key, final String lowerKey) {
-        this.key = key;
-        this.lowerKey = lowerKey;
+        this.key = Objects.requireNonNull(key);
+        this.lowerKey = Objects.requireNonNull(lowerKey);
+        this.hashCode = Objects.hash(key);
     }
 
     /**
@@ -93,12 +100,12 @@ public class CIKey implements Comparable<CIKey> {
      * The returned {@link CIKey} will wrap key with no change of case and no trimming.
      * </p>
      * <p>
-     * Is null safe.
+     * Is null safe. If key is null, returns null.
      * </p>
      */
     public static CIKey of(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -115,7 +122,7 @@ public class CIKey implements Comparable<CIKey> {
      */
     public static CIKey trimmed(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return EMPTY_STRING;
         } else {
             final String trimmed = key.trim();
             return CIKey.of(trimmed);
@@ -128,10 +135,13 @@ public class CIKey implements Comparable<CIKey> {
      * If key is all lower case then user {@link CIKey#ofLowerCase(String)}.
      * If key is a common key this method will return an existing {@link CIKey} instance
      * else it will create a new instance.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey of(final String key, final String lowerKey) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -149,10 +159,13 @@ public class CIKey implements Comparable<CIKey> {
      * Will fall back on {@link CIKeys#commonKeys()} if not found in knownKeys.
      * Allows callers to hold their own local set of known {@link CIKey}s to save
      * re-creating them each time.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey of(final String key, final Map<String, CIKey> knownKeys) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -174,10 +187,13 @@ public class CIKey implements Comparable<CIKey> {
      * Create a {@link CIKey} for an all lower case key, e.g. "foo".
      * This is a minor optimisation to avoid a call to toLowerCase as the
      * key is already in lower-case.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofLowerCase(final String lowerKey) {
         if (lowerKey == null) {
-            return NULL_STRING;
+            return null;
         } else if (lowerKey.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -194,10 +210,13 @@ public class CIKey implements Comparable<CIKey> {
      * of common keys and is a key that will not be added to the map of common keys in future.
      * This is a minor optimisation that saves a map lookup if the key is known
      * to probably not be in the map.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofDynamicKey(final String dynamicKey) {
         if (dynamicKey == null) {
-            return NULL_STRING;
+            return null;
         } else if (dynamicKey.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -210,10 +229,13 @@ public class CIKey implements Comparable<CIKey> {
      * Only use this for commonly used static {@link CIKey} instances
      * as if the key is not already held in the map of common {@link CIKey}s
      * then it will be added.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey internStaticKey(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -226,10 +248,13 @@ public class CIKey implements Comparable<CIKey> {
      * {@link CIKey} else return ciKey. Use this if you don't care about the case of the
      * wrapped string, e.g. if key is 'FOO', you could get back a {@link CIKey} that wraps
      * 'foo', 'FOO', 'Foo', etc.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofIgnoringCase(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -288,10 +313,7 @@ public class CIKey implements Comparable<CIKey> {
 
     @Override
     public int hashCode() {
-        // String lazily caches its hashcode so no need for us to do it too
-        return lowerKey != null
-                ? lowerKey.hashCode()
-                : 0;
+        return hashCode;
     }
 
     @Override
@@ -356,8 +378,16 @@ public class CIKey implements Comparable<CIKey> {
         return ciKey == null || ciKey.key == null;
     }
 
-    public boolean isEmpty(final CIKey ciKey) {
+    public static boolean isEmpty(final CIKey ciKey) {
         return ciKey.key == null || ciKey.key.isEmpty();
+    }
+
+    public static boolean isBlank(final CIKey ciKey) {
+        return ciKey.key == null || ciKey.key.isBlank();
+    }
+
+    public static boolean isNonBlank(final CIKey ciKey) {
+        return ciKey.key != null && !ciKey.key.isBlank();
     }
 
     @JsonIgnore
@@ -527,7 +557,7 @@ public class CIKey implements Comparable<CIKey> {
 
     /**
      * Convert a {@link String} keyed map into a {@link CIKey} keyed map.
-     * Accepts nulls and never returns a null.
+     * Accepts null keys, but not null values, and never returns a null.
      */
     public static <V> Map<CIKey, V> mapOf(final Map<String, ? extends V> map) {
         return NullSafe.map(map)
@@ -585,13 +615,52 @@ public class CIKey implements Comparable<CIKey> {
      * True if str is equal to the string wrapped by ciKey, ignoring case.
      */
     public static boolean equalsIgnoreCase(final String str, final CIKey ciKey) {
-        final String lowerKey = ciKey.lowerKey;
+        final String lowerKey = NullSafe.get(ciKey, CIKey::getAsLowerCase);
         if (lowerKey == null && str == null) {
             return true;
         } else {
             return lowerKey != null && lowerKey.equalsIgnoreCase(str);
         }
     }
+
+//    /**
+//     * If ciKey is null or wraps a null String, throw a {@link NullPointerException},
+//     * else return ciKey.
+//     */
+//    public static CIKey requireNonNullString(final CIKey ciKey) {
+//        if (ciKey == null) {
+//            throw new NullPointerException("ciKey is null");
+//        } else if (ciKey.key == null) {
+//            throw new NullPointerException("ciKey wraps a null");
+//        } else {
+//            return ciKey;
+//        }
+//    }
+//
+//    /**
+//     * If ciKey is non-null and does not wrap a null string return it, else
+//     * return other, which must also be non-null and not wrap a null string.
+//     */
+//    public static CIKey requireNonNullStringElse(final CIKey ciKey, CIKey other) {
+//        if (CIKey.isNull(ciKey)) {
+//            return CIKey.requireNonNullString(other);
+//        } else {
+//            return ciKey;
+//        }
+//    }
+//
+//    /**
+//     * If ciKey is non-null and does not wrap a null string return it, else
+//     * return the value supplied by supplier, which must also be non-null and not wrap a null string.
+//     */
+//    public static CIKey requireNonNullStringElseGet(final CIKey ciKey, Supplier<CIKey> supplier) {
+//        if (CIKey.isNull(ciKey)) {
+//            final CIKey other = Objects.requireNonNull(supplier, "supplier").get();
+//            return CIKey.requireNonNullString(other);
+//        } else {
+//            return ciKey;
+//        }
+//    }
 
     /**
      * Method so we have a consistent way of doing it, in the unlikely event it changes.

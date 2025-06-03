@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.event;
 
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.ResultStoreInfo;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

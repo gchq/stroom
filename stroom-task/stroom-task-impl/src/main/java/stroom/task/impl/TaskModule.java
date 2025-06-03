@@ -16,8 +16,8 @@
 
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskManager;

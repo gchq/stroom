@@ -16,9 +16,9 @@
 
 package stroom.query.impl;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
@@ -128,7 +128,8 @@ public class Fields {
 
     public void addCompletions(final CompletionsRequest request,
                                final int maxCompletions,
-                               final List<CompletionItem> resultList) {
+                               final List<CompletionItem> resultList,
+                               final Boolean queryable) {
         try {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optDataSourceRef = Optional.ofNullable(request.getDataSourceRef())
@@ -158,7 +159,7 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     pattern,
-                                    null))
+                                    queryable))
                             .getValues();
 
                     // Score the matching fields so we get the best matches
@@ -184,7 +185,7 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     null,
-                                    null))
+                                    queryable))
                             .getValues();
                     LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
                             fields.size(), maxCompletions));

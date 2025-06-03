@@ -18,14 +18,14 @@ package stroom.dashboard.impl;
 
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.Column;
+import stroom.query.api.FlatResult;
+import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Row;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
 
 import org.junit.jupiter.api.Test;
 

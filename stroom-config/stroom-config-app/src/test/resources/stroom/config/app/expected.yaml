@@ -70,6 +70,18 @@ appConfig:
       statisticsMode: "INTERNAL"
     timezone: "UTC"
   annotation:
+    annotationFeedCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    annotationTagCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     createText: "Create Annotation"
     db:
       connection:
@@ -87,11 +99,9 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    defaultRetentionPeriod: "5y"
+    physicalDeleteAge: "P7D"
     standardComments: []
-    statusValues:
-    - "New"
-    - "Assigned"
-    - "Closed"
   autoContentCreation:
     additionalGroupTemplate: "grp-${accountid}-sandbox"
     createAsSubjectId: "Administrators"
@@ -659,7 +669,7 @@ appConfig:
     stateDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
-      maximumSize: 100
+      maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
   processor:
@@ -880,7 +890,6 @@ appConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
-        httpClient: null
         identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null

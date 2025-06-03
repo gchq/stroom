@@ -245,7 +245,7 @@ public class SteppingPresenter
     private void showChangeFiltersDialog() {
         final List<PipelineElement> elements = new ArrayList<>();
         getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
-//            GWT.log("elements: \n" + GwtNullSafe.stream(elements)
+//            GWT.log("elements: \n" + NullSafe.stream(elements)
 //                    .map(PipelineElement::toString)
 //                    .map(str -> "  " + str)
 //                    .collect(Collectors.joining("\n")));

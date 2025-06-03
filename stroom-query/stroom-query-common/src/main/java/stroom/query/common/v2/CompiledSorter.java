@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.api.Sort.SortDirection;
 import stroom.query.language.functions.Val;
 
 import java.util.ArrayList;

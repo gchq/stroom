@@ -86,7 +86,7 @@ public class HeadingBuilder {
 
             builder.appendHtmlConstant(">")
                     .append(headingText);
-//                if (GwtNullSafe.isBlankString(headingText)) {
+//                if (NullSafe.isBlankString(headingText)) {
 //                    builder.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
 //                } else {
 //                    builder.appendEscaped(headingText);

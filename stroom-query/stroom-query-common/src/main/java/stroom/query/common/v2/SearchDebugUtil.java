@@ -1,11 +1,11 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.FlatResult;
+import stroom.query.api.Result;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;

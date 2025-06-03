@@ -26,6 +26,10 @@ public enum QueryHelpType {
      */
     DATA_SOURCE,
     /**
+     * A field within a datasource that can be queried. Only known once a datasource has been defined.
+     */
+    QUERYABLE_FIELD,
+    /**
      * A field within a datasource. Only known once a datasource has been defined.
      */
     FIELD,
@@ -48,8 +52,7 @@ public enum QueryHelpType {
     /**
      * A dictionary Doc.
      */
-    DICTIONARY,
-    ;
+    DICTIONARY;
 
     public static final Set<QueryHelpType> ALL_TYPES = Collections.unmodifiableSet(EnumSet.allOf(QueryHelpType.class));
 

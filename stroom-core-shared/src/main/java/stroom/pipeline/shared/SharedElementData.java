@@ -63,7 +63,7 @@ public class SharedElementData {
     }
 
 //    public Indicators getIndicators(final ErrorType... includedErrorTypes) {
-//        return GwtNullSafe.get(
+//        return NullSafe.get(
 //                indicators,
 //                indicators2 -> indicators2.filter(includedErrorTypes));
 //    }

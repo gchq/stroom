@@ -1,5 +1,7 @@
 package stroom.util.exception;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.function.Consumer;
 
 @FunctionalInterface
@@ -17,7 +19,11 @@ public interface ThrowingConsumer<T, E extends Throwable> {
             try {
                 consumer.accept(t);
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                if (e instanceof IOException ioe) {
+                    throw new UncheckedIOException(ioe);
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }

@@ -17,9 +17,9 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -125,7 +125,7 @@ public class TableComponentSettings implements ComponentSettings, HasSelectionFi
             @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
 
         // TODO all List props should be set like this
-        //  this.fields = GwtNullSafe.unmodifiableList(fields);
+        //  this.fields = NullSafe.unmodifiableList(fields);
         //  so that we can ensure the obj is immutable, however some code is mutating
         //  these lists, e.g.
         //  getTableSettings().getColumns().removeIf(Column::isSpecial);

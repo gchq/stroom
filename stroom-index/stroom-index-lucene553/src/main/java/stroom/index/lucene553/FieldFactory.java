@@ -16,8 +16,8 @@
 
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.LuceneIndexField;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDate;

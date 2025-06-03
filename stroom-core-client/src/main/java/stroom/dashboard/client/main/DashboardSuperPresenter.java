@@ -25,7 +25,7 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -79,6 +79,20 @@ public class DashboardSuperPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(DASHBOARD);
+    }
+
+    public void setParentContext(final Object context) {
+        if (context instanceof final DashboardContext dashboardContext) {
+            dashboardPresenter.setParentContext(dashboardContext);
+        }
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef,
+                          final DashboardDoc document,
+                          final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        dashboardPresenter.onRead(docRef, document, readOnly);
     }
 
     @Override
