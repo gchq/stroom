@@ -143,11 +143,14 @@ public enum AppPermission implements HasDisplayValue {
 
     private final String displayValue;
     private final String description;
+    private final AppPermissionSet appPermissionSet;
 
     AppPermission(final String displayValue,
                   final String description) {
         this.displayValue = displayValue;
         this.description = description;
+        // Saves us having to wrap the perm every time we use SecurityContext
+        this.appPermissionSet = AppPermissionSet.of(this);
     }
 
     @Override
@@ -157,5 +160,9 @@ public enum AppPermission implements HasDisplayValue {
 
     public String getDescription() {
         return description;
+    }
+
+    public AppPermissionSet asAppPermissionSet() {
+        return appPermissionSet;
     }
 }

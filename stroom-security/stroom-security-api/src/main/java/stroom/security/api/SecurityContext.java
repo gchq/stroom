@@ -18,6 +18,7 @@ package stroom.security.api;
 
 import stroom.docref.DocRef;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.UserRef;

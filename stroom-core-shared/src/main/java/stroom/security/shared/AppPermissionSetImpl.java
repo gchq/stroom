@@ -1,14 +1,21 @@
-package stroom.security.api;
+package stroom.security.shared;
 
-import stroom.security.shared.AppPermission;
+import stroom.util.shared.NullSafe;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,30 +24,46 @@ import java.util.stream.Stream;
  * A set of {@link AppPermission} where one or all must be held depending on the
  * value of operator.
  */
+@JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class AppPermissionSetImpl implements AppPermissionSet {
 
-    private final Operator operator;
+    @JsonProperty
+    private final AppPermissionOperator operator;
+    @JsonProperty
     private final Set<AppPermission> appPermissions;
 
-    AppPermissionSetImpl(final Operator operator,
-                         final Set<AppPermission> appPermissions) {
+    @JsonCreator
+    AppPermissionSetImpl(@JsonProperty("operator") final AppPermissionOperator operator,
+                         @JsonProperty("appPermissions") final Collection<AppPermission> appPermissions) {
+        if (operator != AppPermissionOperator.ALL_OF && operator != AppPermissionOperator.ONE_OF) {
+            throw new IllegalArgumentException("Unexpected operator " + operator);
+        }
         this.operator = operator;
-        this.appPermissions = appPermissions;
+        this.appPermissions = Collections.unmodifiableSet(NullSafe.stream(appPermissions)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(AppPermission.class))));
     }
 
     @Override
-    public Operator getOperator() {
-        return operator;
+    public Set<AppPermission> asSet() {
+        return appPermissions;
     }
 
+    @JsonIgnore
     @Override
     public boolean isAllOf() {
-        return operator == Operator.ALL_OF;
+        return operator.isAllOf();
     }
 
+    @JsonIgnore
     @Override
     public boolean isAtLeastOneOf() {
-        return operator == Operator.ONE_OF;
+        return operator.isAtLeastOneOf();
+    }
+
+    public AppPermissionOperator getOperator() {
+        return operator;
     }
 
     @Override
@@ -49,20 +72,11 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     }
 
     @Override
-    public Object[] toArray() {
-        return appPermissions.toArray();
-    }
-
-    @Override
-    public <T> T[] toArray(final T[] a) {
-        return appPermissions.toArray(a);
-    }
-
-    @Override
     public int size() {
         return appPermissions.size();
     }
 
+    @JsonIgnore
     @Override
     public boolean isEmpty() {
         return appPermissions.isEmpty();
@@ -79,21 +93,14 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     }
 
     @Override
-    public Spliterator<AppPermission> spliterator() {
-        return appPermissions.spliterator();
-    }
-
-    @Override
     public Stream<AppPermission> stream() {
         return appPermissions.stream();
     }
 
-    @Override
     public Stream<AppPermission> parallelStream() {
         return appPermissions.parallelStream();
     }
 
-    @Override
     public void forEach(final Consumer<? super AppPermission> action) {
         appPermissions.forEach(action);
     }
@@ -120,6 +127,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         final String op = switch (operator) {
             case ALL_OF -> "All of: ";
             case ONE_OF -> "One of: ";
+            default -> throw new IllegalStateException("Unexpected operator " + operator);
         };
         return op + appPermissions.stream()
                 .map(AppPermission::getDisplayValue)
@@ -130,27 +138,35 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     // --------------------------------------------------------------------------------
 
 
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
     public static class SingletonAppPermissionSet implements AppPermissionSet {
 
+        private static final AppPermissionOperator OPERATOR = AppPermissionOperator.SINGLE;
+
+        @JsonProperty
         private final AppPermission appPermission;
 
-        SingletonAppPermissionSet(final AppPermission appPermission) {
+        @JsonCreator
+        SingletonAppPermissionSet(@JsonProperty("appPermission") final AppPermission appPermission) {
             this.appPermission = Objects.requireNonNull(appPermission);
         }
 
         @Override
-        public Operator getOperator() {
-            return Operator.ALL_OF;
+        public Set<AppPermission> asSet() {
+            return Collections.singleton(appPermission);
         }
 
+        @JsonIgnore
         @Override
         public boolean isAllOf() {
-            return true;
+            return OPERATOR.isAllOf();
         }
 
+        @JsonIgnore
         @Override
         public boolean isAtLeastOneOf() {
-            return false;
+            return OPERATOR.isAtLeastOneOf();
         }
 
         @Override
@@ -158,6 +174,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             return 1;
         }
 
+        @JsonIgnore
         @Override
         public boolean isEmpty() {
             return false;
@@ -165,7 +182,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
 
         @Override
         public boolean contains(final Object o) {
-            return Objects.equals(this, o);
+            return Objects.equals(appPermission, o);
         }
 
         @Override
@@ -191,16 +208,6 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         }
 
         @Override
-        public Object[] toArray() {
-            return new AppPermission[]{appPermission};
-        }
-
-        @Override
-        public <T> T[] toArray(final T[] a) {
-            return Collections.singleton(appPermission).toArray(a);
-        }
-
-        @Override
         public boolean containsAll(final Collection<?> c) {
             for (Object e : c) {
                 if (!contains(e)) {
@@ -220,16 +227,28 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             if (this == object) {
                 return true;
             }
-            if (object == null || getClass() != object.getClass()) {
+            if (object == null) {
                 return false;
             }
-            final SingletonAppPermissionSet that = (SingletonAppPermissionSet) object;
-            return appPermission == that.appPermission;
+            if (object instanceof SingletonAppPermissionSet that) {
+                return appPermission == that.appPermission;
+            } else if (object instanceof AppPermissionSetImpl that) {
+                // Operator doesn't matter for a singleton set
+                return that.size() == 1
+                       && that.contains(appPermission);
+            } else {
+                return false;
+            }
         }
 
         @Override
         public int hashCode() {
             return Objects.hash(appPermission);
+        }
+
+        @Override
+        public Stream<AppPermission> stream() {
+            return Stream.of(appPermission);
         }
     }
 
@@ -237,9 +256,17 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     // --------------------------------------------------------------------------------
 
 
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
     public static class EmptyAppPermissionSet implements AppPermissionSet {
 
-        static AppPermissionSet INSTANCE = new EmptyAppPermissionSet();
+        private static final AppPermissionOperator OPERATOR = AppPermissionOperator.EMPTY;
+        static final AppPermissionSet INSTANCE = new EmptyAppPermissionSet(OPERATOR);
+
+        // This is pointless, but can't seem to get jackson to play ball without it.
+        // Empty perm sets are unlikely to be used anyway, so not worth losing sleep over.
+        @JsonProperty
+        private final AppPermissionOperator operator;
 
         private static final Iterator<AppPermission> ITERATOR = new Iterator<>() {
             @Override
@@ -253,22 +280,33 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             }
         };
 
-        private EmptyAppPermissionSet() {
+        @JsonCreator
+        EmptyAppPermissionSet(@JsonProperty("operator") final AppPermissionOperator operator) {
+            if (operator != AppPermissionOperator.EMPTY) {
+                throw new IllegalArgumentException("Only ALL_OF allowed");
+            }
+            this.operator = operator;
         }
 
         @Override
-        public Operator getOperator() {
-            return Operator.ALL_OF;
+        public Set<AppPermission> asSet() {
+            return Collections.emptySet();
         }
 
+        public AppPermissionOperator getOperator() {
+            return operator;
+        }
+
+        @JsonIgnore
         @Override
         public boolean isAllOf() {
-            return true;
+            return operator.isAllOf();
         }
 
+        @JsonIgnore
         @Override
         public boolean isAtLeastOneOf() {
-            return false;
+            return operator.isAtLeastOneOf();
         }
 
         @Override
@@ -276,6 +314,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             return 0;
         }
 
+        @JsonIgnore
         @Override
         public boolean isEmpty() {
             return true;
@@ -292,18 +331,13 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         }
 
         @Override
-        public Object[] toArray() {
-            return new Object[0];
-        }
-
-        @Override
-        public <T> T[] toArray(final T[] a) {
-            return Collections.emptySet().toArray(a);
-        }
-
-        @Override
         public boolean containsAll(final Collection<?> c) {
             return false;
+        }
+
+        @Override
+        public Stream<AppPermission> stream() {
+            return Stream.empty();
         }
 
         @Override
@@ -323,20 +357,5 @@ public class AppPermissionSetImpl implements AppPermissionSet {
                 }
             }
         }
-    }
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum Operator {
-        /**
-         * I.e. permA AND permB
-         */
-        ALL_OF,
-        /**
-         * I.e. permA OR permB
-         */
-        ONE_OF,
-        ;
     }
 }

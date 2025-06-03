@@ -175,7 +175,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             final RemoteReceiveDataRuleSetServiceImpl service = new RemoteReceiveDataRuleSetServiceImpl(
                     mockReceiveDataRuleSetClient,
-                    () -> mockProxyReceiptPolicyConfig,
+                    proxySecurityContextProvider, () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,
@@ -276,7 +276,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             final RemoteReceiveDataRuleSetServiceImpl service = new RemoteReceiveDataRuleSetServiceImpl(
                     mockReceiveDataRuleSetClient,
-                    () -> mockProxyReceiptPolicyConfig,
+                    proxySecurityContextProvider, () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,

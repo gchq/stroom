@@ -2,12 +2,12 @@ package stroom.security.impl;
 
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.security.api.AppPermissionSet;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.HasUserRef;
 import stroom.security.shared.User;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 class SecurityContextImpl implements SecurityContext {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityContextImpl.class);
-    private static final AppPermissionSet ADMIN_APP_PERMISSIONS = AppPermissionSet.of(AppPermission.ADMINISTRATOR);
+    private static final AppPermissionSet ADMIN_APP_PERMISSIONS = AppPermission.ADMINISTRATOR.asAppPermissionSet();
 
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
@@ -146,7 +146,7 @@ class SecurityContextImpl implements SecurityContext {
         final UserIdentity userIdentity = assertUserIdentity();
         return hasAppPermissions(
                 userIdentity,
-                AppPermissionSet.of(requiredPermission));
+                requiredPermission.asAppPermissionSet());
     }
 
     @Override
@@ -222,12 +222,7 @@ class SecurityContextImpl implements SecurityContext {
             if (effectiveUserPermissions.contains(AppPermission.ADMINISTRATOR)) {
                 return true;
             } else {
-                if (requiredPermissions.isAllOf()) {
-                    return effectiveUserPermissions.containsAll(requiredPermissions);
-                } else {
-                    return requiredPermissions.stream()
-                            .anyMatch(effectiveUserPermissions::contains);
-                }
+                return requiredPermissions.check(effectiveUserPermissions);
             }
         }
     }
@@ -469,7 +464,7 @@ class SecurityContextImpl implements SecurityContext {
     public void secure(final AppPermission requiredPermission, final Runnable runnable) {
         Objects.requireNonNull(requiredPermission);
         doSecureWork(runnableAsSupplier(runnable),
-                () -> checkAppPermissionSet(AppPermissionSet.of(requiredPermission)),
+                () -> checkAppPermissionSet(requiredPermission.asAppPermissionSet()),
                 false);
     }
 
@@ -488,7 +483,7 @@ class SecurityContextImpl implements SecurityContext {
     public <T> T secureResult(final AppPermission requiredPermission, final Supplier<T> supplier) {
         Objects.requireNonNull(requiredPermission);
         return doSecureWork(supplier,
-                () -> checkAppPermissionSet(AppPermissionSet.of(requiredPermission)),
+                () -> checkAppPermissionSet(requiredPermission.asAppPermissionSet()),
                 false);
     }
 

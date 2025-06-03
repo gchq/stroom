@@ -11,7 +11,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.security.shared.AppPermission;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
@@ -28,7 +27,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
-import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -39,6 +37,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<ProxySecurityContext> proxySecurityContextProvider;
 
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -49,7 +48,8 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final JerseyClientFactory jerseyClientFactory,
                              final RefreshManager refreshManager,
                              final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider,
-                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                             final Provider<ProxySecurityContext> proxySecurityContextProvider) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
@@ -60,6 +60,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
         this.openIdConfigurationProvider = openIdConfigProvider;
         this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.proxySecurityContextProvider = proxySecurityContextProvider;
     }
 
     @Override
@@ -89,47 +90,35 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
 
     @Override
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
+        // First see if we have a Stroom API key to authenticate with, else
+        // let the super try and get the identity
         if (IdpType.NO_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
-            final String apiKey = extractApiKey(request);
-            if (NullSafe.isNonBlankString(apiKey)) {
-                final VerifyApiKeyRequest verifyApiKeyRequest = new VerifyApiKeyRequest(
-                        apiKey,
-                        EnumSet.of(AppPermission.STROOM_PROXY));
-                final Optional<UserDesc> optUserDesc = proxyApiKeyServiceProvider.get()
-                        .verifyApiKey(verifyApiKeyRequest);
-
-                return optUserDesc.map(this::createSimpleIdentity);
-            } else {
-                LOGGER.debug("No API key in request");
-                return Optional.empty();
-            }
+            return fetchApiKeyUserIdentity(request);
         } else {
-            return super.getApiUserIdentity(request);
+            return fetchApiKeyUserIdentity(request)
+                    .or(() -> super.getApiUserIdentity(request));
         }
     }
 
-    private UserIdentity createSimpleIdentity(final UserDesc userDesc) {
-        Objects.requireNonNull(userDesc);
-        final String subjectId = userDesc.getSubjectId();
-        final String displayName = userDesc.getDisplayName();
-        final Optional<String> optFullName = Optional.ofNullable(userDesc.getFullName());
+    private Optional<UserIdentity> fetchApiKeyUserIdentity(final HttpServletRequest request) {
+        final String apiKey = extractApiKey(request);
+        if (NullSafe.isNonBlankString(apiKey)) {
+            // At this point we are just getting the identity so don't need to check if the user
+            // has any perms or not.
+            final VerifyApiKeyRequest verifyApiKeyRequest = new VerifyApiKeyRequest(apiKey);
+            final Optional<UserDesc> optUserDesc = proxySecurityContextProvider.get()
+                    .insecureResult(() ->
+                            proxyApiKeyServiceProvider.get()
+                                    .verifyApiKey(verifyApiKeyRequest));
+            final Optional<UserIdentity> optIdentity = optUserDesc.map(userDesc ->
+                    new ApiKeyUserIdentity(apiKey, userDesc));
 
-        return new UserIdentity() {
-            @Override
-            public String subjectId() {
-                return subjectId;
-            }
-
-            @Override
-            public String getDisplayName() {
-                return displayName;
-            }
-
-            @Override
-            public Optional<String> getFullName() {
-                return optFullName;
-            }
-        };
+            LOGGER.debug("fetchApiKeyUserIdentity() - Returning {} for apiKey: {}", optIdentity, apiKey);
+            return optIdentity;
+        } else {
+            LOGGER.debug("fetchApiKeyUserIdentity() - No API key in request");
+            return Optional.empty();
+        }
     }
 
     private String extractApiKey(final HttpServletRequest request) {

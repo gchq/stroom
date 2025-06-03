@@ -12,6 +12,8 @@ import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
  * obfuscated for evaluating against the expressions.
  */
 @JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class HashedReceiveDataRules {
 
     /**
@@ -144,7 +147,6 @@ public class HashedReceiveDataRules {
         return NullSafe.list(receiveDataRules.getFields());
     }
 
-    @JsonIgnore
     public String getSalt(final String fieldName) {
         return NullSafe.get(fieldName, fieldNameToSaltMap::get);
     }
@@ -159,13 +161,11 @@ public class HashedReceiveDataRules {
         return fieldNameToSaltMap.keySet();
     }
 
-    @JsonIgnore
     public boolean isHashedFieldName(final String fieldName) {
         return fieldName != null
                && fieldNameToSaltMap.containsKey(fieldName);
     }
 
-    @JsonIgnore
     public DictionaryDoc getFlattenedDictionary(final DocRef docRef) {
         return NullSafe.get(
                 docRef,

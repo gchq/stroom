@@ -2,7 +2,6 @@ package stroom.security.impl.apikey;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
-import stroom.security.api.AppPermissionSet;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
@@ -14,6 +13,7 @@ import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
@@ -149,10 +149,12 @@ public class ApiKeyService {
         return securityContext.secureResult(REQUIRED_PERMISSION_SET, () -> {
             final Optional<UserDesc> optUserDesc = fetchVerifiedIdentity(request.getApiKey())
                     .filter(userIdentity -> {
-                        final Set<AppPermission> requiredAppPermissions = request.getRequiredAppPermissions();
-                        return securityContext.hasAppPermissions(
-                                userIdentity,
-                                AppPermissionSet.allOf(requiredAppPermissions));
+                        final AppPermissionSet requiredAppPermissions = request.getRequiredAppPermissions();
+                        if (AppPermissionSet.isEmpty(requiredAppPermissions)) {
+                            return true;
+                        } else {
+                            return securityContext.hasAppPermissions(userIdentity, requiredAppPermissions);
+                        }
                     })
                     .map(UserIdentity::asUserDesc);
             LOGGER.debug("verifyApiKey() - request: {}, optUserDesc: {}", request, optUserDesc);

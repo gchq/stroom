@@ -17,12 +17,12 @@
 package stroom.security.mock;
 
 import stroom.docref.DocRef;
-import stroom.security.api.AppPermissionSet;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.UserRef;
 

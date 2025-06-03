@@ -57,6 +57,8 @@ public class ProxySecurityFilter implements Filter {
     private static final String IGNORE_URI_REGEX = "ignoreUri";
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String EVENT_RESOURCE_PATH = ResourcePaths.buildAuthenticatedApiPath(
+            EventResource.BASE_RESOURCE_PATH);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
@@ -149,10 +151,10 @@ public class ProxySecurityFilter implements Filter {
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
         } else {
-            final boolean isApiRequest = fullPath.contains(ResourcePaths.API_ROOT_PATH);
+            final boolean isApiRequest = isApiRequest(servletPath);
 
             if (isApiRequest) {
-                if (fullPath.contains(EventResource.BASE_RESOURCE_PATH)) {
+                if (isEventResourceRequest(servletPath)) {
                     // Allow all event requests through as security is applied elsewhere.
                     chain.doFilter(request, response);
                 } else {
@@ -252,5 +254,13 @@ public class ProxySecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    private boolean isApiRequest(String servletPath) {
+        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
+    }
+
+    private boolean isEventResourceRequest(String servletPath) {
+        return servletPath.startsWith(EVENT_RESOURCE_PATH);
     }
 }

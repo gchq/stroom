@@ -28,10 +28,8 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Main entry point to handling requests into Stroom-Proxy. Stroom has it's own handler.
- * <p>
- * This class used the main context and forwards the request on to our
- * dynamic mini proxy.
+ * Main entry point to handling datafeed requests into Stroom-Proxy.
+ * Stroom has its own handler.
  */
 public class ProxyRequestHandler implements RequestHandler {
 

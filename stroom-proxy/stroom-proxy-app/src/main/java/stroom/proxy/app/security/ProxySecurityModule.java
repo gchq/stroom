@@ -34,12 +34,10 @@ public class ProxySecurityModule extends AbstractModule {
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
         bind(ProxyApiKeyService.class).to(ProxyApiKeyServiceImpl.class);
+        bind(ProxySecurityContext.class).to(ProxySecurityContextImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
-
-        // TODO: 26/07/2023 Remove
-//        bind(ProcessingUserIdentityProvider.class).to(ExternalProcessingUserIdentityProvider.class);
 
         bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)

@@ -3,12 +3,15 @@ package stroom.proxy.app;
 import stroom.dictionary.api.WordListProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
+import stroom.proxy.app.security.ProxySecurityContext;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.WordListProviderFactory;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.HashFunction;
 import stroom.security.api.HashFunctionFactory;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.io.PathCreator;
@@ -51,11 +54,15 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING};
     private static final OpenOption[] READ_OPEN_OPTIONS = new OpenOption[]{StandardOpenOption.READ};
+    private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
+            AppPermission.FETCH_HASHED_RECEIPT_POLICY_RULES,
+            AppPermission.STROOM_PROXY);
     // Pkg private for testing
     static final String FILE_NAME = "receive-data-rules.json";
 
     private final ReceiveDataRuleSetClient receiveDataRuleSetClient;
     private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<ProxySecurityContext> proxySecurityContextProvider;
     private final PathCreator pathCreator;
     private final HashFunctionFactory hashFunctionFactory;
     private final WordListProviderFactory wordListProviderFactory;
@@ -69,6 +76,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     @Inject
     public RemoteReceiveDataRuleSetServiceImpl(
             final ReceiveDataRuleSetClient receiveDataRuleSetClient,
+            final Provider<ProxySecurityContext> proxySecurityContextProvider,
             final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider,
             final Provider<ProxyConfig> proxyConfigProvider,
             final PathCreator pathCreator,
@@ -76,6 +84,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             final WordListProviderFactory wordListProviderFactory) {
 
         this.receiveDataRuleSetClient = receiveDataRuleSetClient;
+        this.proxySecurityContextProvider = proxySecurityContextProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.pathCreator = pathCreator;
         this.hashFunctionFactory = hashFunctionFactory;
@@ -108,15 +117,17 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
      */
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
-        return cachedHashedReceiveDataRules.getValueAsync()
-                .hashedReceiveDataRules();
+        return proxySecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
+                cachedHashedReceiveDataRules.getValueAsync()
+                        .hashedReceiveDataRules());
     }
 
     @Override
     public BundledRules getBundledRules() {
-        return NullSafe.get(
-                cachedHashedReceiveDataRules.getValueAsync(),
-                RuleState::bundledRules);
+        return proxySecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
+                NullSafe.get(
+                        cachedHashedReceiveDataRules.getValueAsync(),
+                        RuleState::bundledRules));
     }
 
     private synchronized RuleState createRuleBundle(final RuleState currRuleState) {

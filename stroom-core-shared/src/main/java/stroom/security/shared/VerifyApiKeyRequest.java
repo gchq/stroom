@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -18,22 +17,29 @@ public class VerifyApiKeyRequest {
     @JsonProperty
     private final String apiKey;
     @JsonProperty
-    private final Set<AppPermission> requiredAppPermissions;
+    private final AppPermissionSet requiredAppPermissions;
 
     @JsonCreator
     public VerifyApiKeyRequest(
             @JsonProperty("apiKey") final String apiKey,
-            @JsonProperty("requiredAppPermissions") final Set<AppPermission> requiredAppPermissions) {
+            @JsonProperty("requiredAppPermissions") final AppPermissionSet requiredAppPermissions) {
 
         this.apiKey = Objects.requireNonNull(apiKey);
-        this.requiredAppPermissions = NullSafe.unmodifialbeEnumSet(AppPermission.class, requiredAppPermissions);
+        this.requiredAppPermissions = NullSafe.requireNonNullElseGet(
+                requiredAppPermissions,
+                AppPermissionSet::empty);
+    }
+
+    public VerifyApiKeyRequest(final String apiKey) {
+        this.apiKey = Objects.requireNonNull(apiKey);
+        this.requiredAppPermissions = AppPermissionSet.empty();
     }
 
     public String getApiKey() {
         return apiKey;
     }
 
-    public Set<AppPermission> getRequiredAppPermissions() {
+    public AppPermissionSet getRequiredAppPermissions() {
         return requiredAppPermissions;
     }
 

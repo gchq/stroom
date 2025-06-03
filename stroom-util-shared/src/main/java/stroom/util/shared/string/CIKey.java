@@ -435,12 +435,14 @@ public class CIKey implements Comparable<CIKey> {
                 .collect(Collectors.toList());
     }
 
+    @JsonIgnore
     public static Set<CIKey> setOf(final String... keys) {
         return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toSet());
     }
 
+    @JsonIgnore
     public static Set<CIKey> setOf(final Set<String> keys) {
         return NullSafe.stream(keys)
                 .map(CIKey::of)

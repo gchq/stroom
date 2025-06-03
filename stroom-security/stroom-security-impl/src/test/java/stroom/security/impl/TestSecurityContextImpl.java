@@ -1,12 +1,12 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.api.AppPermissionSet;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.util.shared.PermissionException;
@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static stroom.security.api.AppPermissionSet.empty;
 import static stroom.security.shared.AppPermission.MANAGE_USERS_PERMISSION;
+import static stroom.security.shared.AppPermissionSet.empty;
 import static stroom.security.shared.DocumentPermission.VIEW;
 
 @ExtendWith(MockitoExtension.class)
