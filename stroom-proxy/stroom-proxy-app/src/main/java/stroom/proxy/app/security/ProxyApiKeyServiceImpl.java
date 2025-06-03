@@ -1,18 +1,17 @@
 package stroom.proxy.app.security;
 
-import stroom.proxy.app.AbstractDownstreamClient;
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.ProxyConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.HashFunction;
 import stroom.security.api.HashFunctionFactory;
-import stroom.security.api.UserIdentityFactory;
+import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.ApiKeyGenerator;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.io.PathCreator;
-import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,11 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
-import jakarta.ws.rs.core.Response.StatusType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Singleton
-public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements ProxyApiKeyService {
+public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyApiKeyServiceImpl.class);
 
@@ -73,14 +67,11 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
 
     static final String FILE_NAME = "verified-api-keys.json";
 
-    private static final Duration MAX_CACHED_VALUE_AGE = Duration.ofMinutes(10);
-    private static final Duration MAX_VERIFIED_KEY_AGE_IN_FILE = Duration.ofDays(30);
-    private static final Duration NO_FETCH_INTERVAL_AFTER_FAILURE = Duration.ofSeconds(30);
-
     private final ApiKeyGenerator apiKeyGenerator;
     private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
     private final Provider<ProxyConfig> proxyConfigProvider;
-    private final Provider<ProxySecurityContext> proxySecurityContextProvider;
+    private final Provider<CommonSecurityContext> proxySecurityContextProvider;
+    private final Provider<ProxyApiKeyCheckClient> proxyApiKeyCheckClientProvider;
     // Use a map rather than a cache as we should not be dealing with many
     // and any that are not the right format will be ignored
     private final Map<VerifyApiKeyRequest, DatedValue<VerifiedApiKey>> verifiedKeysMap;
@@ -90,22 +81,20 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
     private volatile Instant earliestNextFetchTime = Instant.EPOCH;
 
     @Inject
-    public ProxyApiKeyServiceImpl(final JerseyClientFactory jerseyClientFactory,
-                                  final UserIdentityFactory userIdentityFactory,
-                                  final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
+    public ProxyApiKeyServiceImpl(final Provider<DownstreamHostConfig> downstreamHostConfigProvider,
                                   final ApiKeyGenerator apiKeyGenerator,
                                   final Provider<ProxyConfig> proxyConfigProvider,
-//                                  final CacheManager cacheManager,
-                                  final Provider<ProxySecurityContext> proxySecurityContextProvider,
+                                  final Provider<CommonSecurityContext> proxySecurityContextProvider,
+                                  final Provider<ProxyApiKeyCheckClient> proxyApiKeyCheckClientProvider,
                                   final HashFunctionFactory hashFunctionFactory,
                                   final PathCreator pathCreator) {
-        super(jerseyClientFactory, userIdentityFactory, downstreamHostConfigProvider);
         this.apiKeyGenerator = apiKeyGenerator;
-        this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.proxySecurityContextProvider = proxySecurityContextProvider;
+        this.proxyApiKeyCheckClientProvider = proxyApiKeyCheckClientProvider;
         this.hashFunctionFactory = hashFunctionFactory;
         this.pathCreator = pathCreator;
+        this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         // Hopefully this should not contain many items as in most cases
         // we won't have many upstream proxies hitting us
 //        this.verifiedKeysCache = cacheManager.createLoadingCache(
@@ -119,58 +108,70 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
     }
 
     @Override
-    protected Optional<String> getConfiguredUrl() {
-        return NullSafe.nonBlank(downstreamHostConfigProvider.get().getApiKeyVerificationUrl());
-    }
-
-    @Override
-    protected String getDefaultPath() {
-        return DownstreamHostConfig.DEFAULT_API_KEY_VERIFICATION_URL_PATH;
-    }
-
-    @Override
     public Optional<UserDesc> verifyApiKey(final VerifyApiKeyRequest request) {
-        return proxySecurityContextProvider.get().secureResult(KEY_CHECK_PERM_SET, () -> {
-            final String apiKey = request.getApiKey();
-            if (apiKeyGenerator.isApiKey(apiKey)) {
-                DatedValue<VerifiedApiKey> datedVerifiedApiKey = verifiedKeysMap.get(request);
-                if (isTooOld(datedVerifiedApiKey)) {
-                    synchronized (this) {
-                        datedVerifiedApiKey = verifiedKeysMap.get(request);
-                        if (isTooOld(datedVerifiedApiKey)) {
-                            // Try to hit the downstream to verify it
-                            final VerifiedApiKey verifiedApiKey = doVerifyApiKey(request)
-                                    .orElse(null);
-                            final DatedValue<VerifiedApiKey> newDatedVerifiedApiKey = verifiedApiKey != null
-                                    ? DatedValue.create(verifiedApiKey.getLastVerified(), verifiedApiKey)
-                                    : DatedValue.create(null);
-                            LOGGER.debug("verifyApiKey() - Putting new verified API key {}", newDatedVerifiedApiKey);
-                            // Cache the outcome
-                            verifiedKeysMap.put(request, newDatedVerifiedApiKey);
-                            updateFile(verifiedApiKey, request);
-                            return Optional.ofNullable(verifiedApiKey)
-                                    .map(VerifiedApiKey::getUserDesc);
-                        } else {
-                            LOGGER.debug("verifyApiKey() - Found cached value {}", datedVerifiedApiKey);
-                            return Optional.ofNullable(datedVerifiedApiKey.getValue())
-                                    .map(VerifiedApiKey::getUserDesc);
+        LOGGER.debug("verifyApiKey() - request: {}", request);
+        try {
+            return proxySecurityContextProvider.get().secureResult(KEY_CHECK_PERM_SET, () -> {
+                final String apiKey = request.getApiKey();
+                if (apiKeyGenerator.isApiKey(apiKey)) {
+                    DatedValue<VerifiedApiKey> datedVerifiedApiKey = verifiedKeysMap.get(request);
+                    if (isTooOld(datedVerifiedApiKey)) {
+                        synchronized (this) {
+                            datedVerifiedApiKey = verifiedKeysMap.get(request);
+                            if (isTooOld(datedVerifiedApiKey)) {
+                                // Remove just in case
+                                verifiedKeysMap.remove(request);
+                                // Try to hit the downstream to verify it
+                                final VerifiedApiKey verifiedApiKey = doApiKeyVerification(request)
+                                        .orElse(null);
+                                final DatedValue<VerifiedApiKey> newDatedVerifiedApiKey = verifiedApiKey != null
+                                        ? DatedValue.create(verifiedApiKey.getLastVerified(), verifiedApiKey)
+                                        : DatedValue.create(null);
+                                LOGGER.debug("verifyApiKey() - Putting new verified API key {}",
+                                        newDatedVerifiedApiKey);
+                                // Cache the outcome
+                                verifiedKeysMap.put(request, newDatedVerifiedApiKey);
+                                updateFile(verifiedApiKey, request);
+                                return Optional.ofNullable(verifiedApiKey)
+                                        .map(VerifiedApiKey::getUserDesc);
+                            } else {
+                                LOGGER.debug("verifyApiKey() - Found cached value {}", datedVerifiedApiKey);
+                                return Optional.ofNullable(datedVerifiedApiKey.getValue())
+                                        .map(VerifiedApiKey::getUserDesc);
+                            }
                         }
+                    } else {
+                        LOGGER.debug("verifyApiKey() - Found cached value {}", datedVerifiedApiKey);
+                        return Optional.ofNullable(datedVerifiedApiKey.getValue())
+                                .map(VerifiedApiKey::getUserDesc);
                     }
                 } else {
-                    LOGGER.debug("verifyApiKey() - Found cached value {}", datedVerifiedApiKey);
-                    return Optional.ofNullable(datedVerifiedApiKey.getValue())
-                            .map(VerifiedApiKey::getUserDesc);
+                    LOGGER.debug("verifyApiKey() - Doesn't look like an API key {}", apiKey);
+                    return Optional.empty();
                 }
-            } else {
-                LOGGER.debug("verifyApiKey() - Doesn't look like an API key {}", apiKey);
-                return Optional.empty();
-            }
-        });
+            });
+        } catch (Exception e) {
+            LOGGER.debug(() -> LogUtil.message("verifyApiKey() - Failed security check, request: {}, {}",
+                    request, LogUtil.exceptionMessage(e)));
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Optional<UserIdentity> verifyIdentity(final String apiKey) {
+        final Optional<UserIdentity> optIdentity = verifyApiKey(new VerifyApiKeyRequest(apiKey))
+                .map(userDesc -> new ApiKeyUserIdentity(apiKey, userDesc));
+
+        LOGGER.debug(() -> LogUtil.message("verifyIdentity() - apiKey: {}, optIdentity: {}",
+                NullSafe.subString(apiKey, 0, 15), optIdentity));
+        return optIdentity;
     }
 
     private boolean isTooOld(final DatedValue<VerifiedApiKey> datedVerifiedApiKey) {
         final boolean isTooOld = datedVerifiedApiKey == null
-                                 || datedVerifiedApiKey.isOlderThan(MAX_CACHED_VALUE_AGE);
+                                 || datedVerifiedApiKey.hasNullValue()
+                                 || datedVerifiedApiKey.isOlderThan(
+                downstreamHostConfigProvider.get().getMaxCachedKeyAge().getDuration());
         LOGGER.debug(() -> LogUtil.message("isTooOld() - isTooOld: {}, age: {}, instant: {}",
                 isTooOld,
                 NullSafe.get(datedVerifiedApiKey, DatedValue::getAge, Duration::toString),
@@ -178,7 +179,7 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
         return isTooOld;
     }
 
-    private synchronized Optional<VerifiedApiKey> doVerifyApiKey(final VerifyApiKeyRequest request) {
+    private synchronized Optional<VerifiedApiKey> doApiKeyVerification(final VerifyApiKeyRequest request) {
         final String apiKey = request.getApiKey();
         // We can locally rule out any API keys that are invalid based on the format.
         final boolean looksLikeApiKey = apiKeyGenerator.isApiKey(apiKey);
@@ -188,15 +189,19 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
             if (Instant.now().isAfter(earliestNextFetchTime)) {
                 // Looks like an API key so call the verifyApiKey endpoint on the remote to
                 // see if it is an actual enabled key belonging to someone.
+                final ProxyApiKeyCheckClient proxyApiKeyCheckClient = proxyApiKeyCheckClientProvider.get();
                 try {
-                    final Optional<UserDesc> optUserDesc = fetchApiKeyValidity(request);
+                    final Optional<UserDesc> optUserDesc = proxyApiKeyCheckClient.fetchApiKeyValidity(request);
                     verifiedApiKey = optUserDesc.map(userDesc ->
-                                    createVerifiedApiKey(request, HASH_ALGORITHM, userDesc))
+                                    createVerifiedApiKey(request, userDesc))
                             .orElse(null);
                 } catch (Exception e) {
-                    earliestNextFetchTime = Instant.now().plus(NO_FETCH_INTERVAL_AFTER_FAILURE);
+                    final Duration noFetchIntervalAfterFailure = downstreamHostConfigProvider.get()
+                            .getNoFetchIntervalAfterFailure()
+                            .getDuration();
+                    earliestNextFetchTime = Instant.now().plus(noFetchIntervalAfterFailure);
                     LOGGER.errorAndDebug(e, "Error verifying API key using URL {}: {}",
-                            getFullUrl(), LogUtil.exceptionMessage(e), e);
+                            proxyApiKeyCheckClient.getFullUrl(), LogUtil.exceptionMessage(e), e);
                     // See if we can verify based on what we had in the file.
                     verifiedApiKey = verifyLocally(request)
                             .orElse(null);
@@ -231,7 +236,7 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
                 newVerifiedApiKeySet.add(aVerifiedApiKey);
             }
         }
-        // Add our new one
+        // Add our new one, or if it is null effectively remove it
         if (verifiedApiKey != null) {
             LOGGER.debug("updateFile() - adding {}", verifiedApiKey);
             newVerifiedApiKeySet.add(verifiedApiKey);
@@ -245,6 +250,8 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
 
     private Optional<VerifiedApiKey> verifyLocally(final VerifyApiKeyRequest request) {
         if (verifiedApiKeysFromFile != null) {
+            final Duration maxPersistedKeyAge = downstreamHostConfigProvider.get().getMaxPersistedKeyAge()
+                    .getDuration();
             final Optional<VerifiedApiKey> optVerifiedApiKey = verifiedApiKeysFromFile.getVerifiedApiKeys().stream()
                     .filter(verifiedApiKey -> {
                         // Have to compare them using the same hashing algo used in the file
@@ -260,7 +267,7 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
                         return areEqual;
                     })
                     .filter(verifiedApiKey ->
-                            !verifiedApiKey.isOlderThan(MAX_VERIFIED_KEY_AGE_IN_FILE)) // Can't trust ancient ones
+                            !verifiedApiKey.isOlderThan(maxPersistedKeyAge)) // Can't trust ancient ones
                     .findAny();
 
             LOGGER.debug("verifyLocally() - optVerifiedApiKey: {}", optVerifiedApiKey);
@@ -271,10 +278,10 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
     }
 
     private VerifiedApiKey createVerifiedApiKey(final VerifyApiKeyRequest request,
-                                                final HashAlgorithm hashAlgorithm,
                                                 final UserDesc userDesc) {
         final String apiKey = request.getApiKey();
         final String prefix = ApiKeyGenerator.extractPrefixPart(apiKey);
+        final HashAlgorithm hashAlgorithm = downstreamHostConfigProvider.get().getPersistedKeysHashAlgorithm();
         final String hash = hashFunctionFactory.getHashFunction(hashAlgorithm)
                 .hash(apiKey);
         return new VerifiedApiKey(
@@ -286,32 +293,32 @@ public class ProxyApiKeyServiceImpl extends AbstractDownstreamClient implements 
                 userDesc);
     }
 
-    private Optional<UserDesc> fetchApiKeyValidity(final VerifyApiKeyRequest request) {
-        final String url = getFullUrl();
-        Optional<UserDesc> optUserDesc = Optional.empty();
-        if (NullSafe.isNonBlankString(url)) {
-            try (Response response = getResponse(builder -> builder.post(Entity.json(request)))) {
-                final StatusType statusInfo = response.getStatusInfo();
-                if (statusInfo.getStatusCode() == Status.OK.getStatusCode()) {
-                    if (response.hasEntity()) {
-                        optUserDesc = Optional.ofNullable(response.readEntity(UserDesc.class));
-                        LOGGER.debug("fetchApiKeyValidity() - optUserDesc: {}, request: {}", optUserDesc, request);
-                    } else {
-                        LOGGER.debug("fetchApiKeyValidity() - No response entity from {}", url);
-                    }
-                } else {
-                    LOGGER.error("Error fetching API Key validity using url '{}', " +
-                                 "got response {} - {}",
-                            url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
-                }
-            } catch (NotFoundException e) {
-                LOGGER.debug("fetchApiKeyValidity() - Not found exception");
-            }
-        } else {
-            LOGGER.warn("No url configured for API key verification.");
-        }
-        return optUserDesc;
-    }
+//    private Optional<UserDesc> fetchApiKeyValidity(final VerifyApiKeyRequest request) {
+//        final String url = getFullUrl();
+//        Optional<UserDesc> optUserDesc = Optional.empty();
+//        if (NullSafe.isNonBlankString(url)) {
+//            try (Response response = getResponse(builder -> builder.post(Entity.json(request)))) {
+//                final StatusType statusInfo = response.getStatusInfo();
+//                if (statusInfo.getStatusCode() == Status.OK.getStatusCode()) {
+//                    if (response.hasEntity()) {
+//                        optUserDesc = Optional.ofNullable(response.readEntity(UserDesc.class));
+//                        LOGGER.debug("fetchApiKeyValidity() - optUserDesc: {}, request: {}", optUserDesc, request);
+//                    } else {
+//                        LOGGER.debug("fetchApiKeyValidity() - No response entity from {}", url);
+//                    }
+//                } else {
+//                    LOGGER.error("Error fetching API Key validity using url '{}', " +
+//                                 "got response {} - {}, request: {}",
+//                            url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase(), request);
+//                }
+//            } catch (NotFoundException e) {
+//                LOGGER.debug("fetchApiKeyValidity() - Not found exception");
+//            }
+//        } else {
+//            LOGGER.warn("No url configured for API key verification.");
+//        }
+//        return optUserDesc;
+//    }
 
     private Path getJsonFilePath() {
         final String contentDir = proxyConfigProvider.get().getContentDir();

@@ -1,8 +1,10 @@
 package stroom.proxy.app.security;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
@@ -14,11 +16,12 @@ import jakarta.inject.Inject;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ProxySecurityContextImpl implements ProxySecurityContext {
+public class ProxySecurityContextImpl implements CommonSecurityContext {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityContextImpl.class);
     private static final ThreadLocal<CheckType> CHECK_TYPE_THREAD_LOCAL = ThreadLocal.withInitial(() ->
             CheckType.CHECK);
+    private static final AppPermissionSet ADMIN_APP_PERMISSIONS = AppPermission.ADMINISTRATOR.asAppPermissionSet();
 
     private final UserIdentityFactory userIdentityFactory;
     private final ProxyApiKeyService proxyApiKeyService;
@@ -33,6 +36,11 @@ public class ProxySecurityContextImpl implements ProxySecurityContext {
     @Override
     public UserIdentity getUserIdentity() {
         return ProxyCurrentUserState.current();
+    }
+
+    @Override
+    public boolean isAdmin() {
+        return hasAppPermissions(ADMIN_APP_PERMISSIONS);
     }
 
     @Override
@@ -230,7 +238,7 @@ public class ProxySecurityContextImpl implements ProxySecurityContext {
             result = supplier.get();
         } else {
             // If the current user is an administrator then don't do any security checking.
-            if (isInsecure) {
+            if (isInsecure || checkAdmin()) {
                 try {
                     // Don't check any further permissions.
                     CHECK_TYPE_THREAD_LOCAL.set(CheckType.DONT_CHECK);
@@ -264,34 +272,55 @@ public class ProxySecurityContextImpl implements ProxySecurityContext {
         }
     }
 
+    private boolean checkAdmin() {
+        final CheckType currentCheckType = CHECK_TYPE_THREAD_LOCAL.get();
+        try {
+            // Don't check any further permissions.
+            CHECK_TYPE_THREAD_LOCAL.set(CheckType.DONT_CHECK);
+            return isAdmin();
+        } finally {
+            CHECK_TYPE_THREAD_LOCAL.set(currentCheckType);
+        }
+    }
+
     private void checkAppPermissionSet(final AppPermissionSet requiredPermissions) {
         final CheckType currentCheckType = CHECK_TYPE_THREAD_LOCAL.get();
         try {
             // Don't check any further permissions.
             CHECK_TYPE_THREAD_LOCAL.set(CheckType.DONT_CHECK);
 
-            if (AppPermissionSet.isEmpty(requiredPermissions)) {
-                // No perms required, so all fine
-            } else if (requiredPermissions.isAllOf()) {
-                if (!hasAppPermissions(requiredPermissions)) {
-                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
-                            .orElse(null);
-                    throw new AuthenticationException(
-                            LogUtil.message("User {} does not have the required permissions ({})",
-                                    userIdentity, requiredPermissions));
-                }
-            } else {
-                // One of permissionSet must be held
-                boolean foundOne = requiredPermissions.stream()
-                        .anyMatch(this::hasAppPermission);
-                if (!foundOne) {
-                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
-                            .orElse(null);
-                    throw new AuthenticationException(
-                            LogUtil.message("User {} does not have the required permissions ({})",
-                                    userIdentity, requiredPermissions));
-                }
+            final boolean hasPerms = hasAppPermissions(requiredPermissions);
+
+            if (!hasPerms) {
+                final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
+                        .orElse(null);
+                throw new AuthenticationException(
+                        LogUtil.message("User {} does not have the required permissions ({})",
+                                userIdentity, requiredPermissions));
             }
+
+//            if (AppPermissionSet.isEmpty(requiredPermissions)) {
+//                // No perms required, so all fine
+//            } else if (requiredPermissions.isAllOf()) {
+//                if (!hasAppPermissions(requiredPermissions)) {
+//                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
+//                            .orElse(null);
+//                    throw new AuthenticationException(
+//                            LogUtil.message("User {} does not have the required permissions ({})",
+//                                    userIdentity, requiredPermissions));
+//                }
+//            } else {
+//                // One of permissionSet must be held
+//                boolean foundOne = requiredPermissions.stream()
+//                        .anyMatch(this::hasAppPermission);
+//                if (!foundOne) {
+//                    final UserIdentity userIdentity = LogUtil.swallowExceptions(this::getUserIdentity)
+//                            .orElse(null);
+//                    throw new AuthenticationException(
+//                            LogUtil.message("User {} does not have the required permissions ({})",
+//                                    userIdentity, requiredPermissions));
+//                }
+//            }
         } finally {
             CHECK_TYPE_THREAD_LOCAL.set(currentCheckType);
         }

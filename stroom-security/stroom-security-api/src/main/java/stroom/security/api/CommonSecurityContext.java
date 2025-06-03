@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.security;
+package stroom.security.api;
 
-import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 
 import java.util.function.Supplier;
 
-public interface ProxySecurityContext {
+/**
+ * A Security Context that is used by both Stroom and Stroom-Proxy, allowing
+ * each to implement in their own way. Only deals in {@link UserIdentity} and
+ * {@link AppPermission}, not {@link stroom.util.shared.UserRef} or
+ * {@link stroom.security.shared.DocumentPermission}.
+ */
+public interface CommonSecurityContext {
 
     /**
      * Gets the identity of the current user.
@@ -30,6 +35,13 @@ public interface ProxySecurityContext {
      * @return The identity of the current user.
      */
     UserIdentity getUserIdentity();
+
+    /**
+     * This is a convenience method to check that the user has system administrator privileges.
+     *
+     * @return True if the current user is an administrator.
+     */
+    boolean isAdmin();
 
     /**
      * Check if the current user is the processing user.

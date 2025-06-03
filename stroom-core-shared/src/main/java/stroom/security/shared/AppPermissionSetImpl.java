@@ -39,6 +39,9 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         if (operator != AppPermissionOperator.ALL_OF && operator != AppPermissionOperator.ONE_OF) {
             throw new IllegalArgumentException("Unexpected operator " + operator);
         }
+        if (NullSafe.size(appPermissions) < 2) {
+            throw new IllegalArgumentException("Two or more appPermissions required: " + appPermissions);
+        }
         this.operator = operator;
         this.appPermissions = Collections.unmodifiableSet(NullSafe.stream(appPermissions)
                 .filter(Objects::nonNull)
@@ -130,7 +133,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             default -> throw new IllegalStateException("Unexpected operator " + operator);
         };
         return op + appPermissions.stream()
-                .map(AppPermission::getDisplayValue)
+                .map(AppPermission::name)
                 .collect(Collectors.joining(", "));
     }
 
@@ -219,7 +222,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
 
         @Override
         public String toString() {
-            return appPermission.getDisplayValue();
+            return appPermission.name();
         }
 
         @Override
@@ -227,18 +230,11 @@ public class AppPermissionSetImpl implements AppPermissionSet {
             if (this == object) {
                 return true;
             }
-            if (object == null) {
+            if (object == null || getClass() != object.getClass()) {
                 return false;
             }
-            if (object instanceof SingletonAppPermissionSet that) {
-                return appPermission == that.appPermission;
-            } else if (object instanceof AppPermissionSetImpl that) {
-                // Operator doesn't matter for a singleton set
-                return that.size() == 1
-                       && that.contains(appPermission);
-            } else {
-                return false;
-            }
+            final SingletonAppPermissionSet that = (SingletonAppPermissionSet) object;
+            return appPermission == that.appPermission;
         }
 
         @Override
@@ -347,15 +343,12 @@ public class AppPermissionSetImpl implements AppPermissionSet {
 
         @Override
         public boolean equals(final Object obj) {
-            if (obj == this) {
-                return true;
-            } else {
-                if (obj instanceof AppPermissionSet appPermissions) {
-                    return appPermissions.isEmpty();
-                } else {
-                    return false;
-                }
-            }
+            return obj == this;
+        }
+
+        @Override
+        public int hashCode() {
+            return 1;
         }
     }
 }

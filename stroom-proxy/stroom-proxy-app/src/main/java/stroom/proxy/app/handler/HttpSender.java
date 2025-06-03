@@ -186,13 +186,14 @@ public class HttpSender implements StreamDestination {
 
     private void addAuthHeaders(final BasicHttpRequest request) {
         Objects.requireNonNull(request);
-        final String apiKey = config.getApiKey();
-        if (NullSafe.isNonBlankString(apiKey)) {
-            request.addHeader("Authorization", "Bearer " + apiKey.trim());
-        }
-
-        // Allows sending to systems on the same OpenId realm as us using an access token
-        if (config.isAddOpenIdAccessToken()) {
+        final String apiKey = NullSafe.trim(config.getApiKey());
+        if (!apiKey.isEmpty()) {
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured apiKey {}",
+                    NullSafe.subString(apiKey, 0, 15)));
+            userIdentityFactory.getAuthHeaders(apiKey)
+                    .forEach(request::addHeader);
+        } else if (config.isAddOpenIdAccessToken()) {
+            // Allows sending to systems on the same OpenId realm as us using an access token
             LOGGER.debug(() -> LogUtil.message(
                     "'{}' - Setting request props (values truncated):\n{}",
                     forwarderName,
@@ -211,6 +212,8 @@ public class HttpSender implements StreamDestination {
 
             userIdentityFactory.getServiceUserAuthHeaders()
                     .forEach(request::addHeader);
+        } else {
+            LOGGER.debug("authHeaders() - No headers added");
         }
     }
 

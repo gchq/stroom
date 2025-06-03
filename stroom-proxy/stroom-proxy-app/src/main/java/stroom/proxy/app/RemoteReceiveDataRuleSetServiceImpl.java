@@ -3,11 +3,11 @@ package stroom.proxy.app;
 import stroom.dictionary.api.WordListProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
-import stroom.proxy.app.security.ProxySecurityContext;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.WordListProviderFactory;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.HashFunction;
 import stroom.security.api.HashFunctionFactory;
 import stroom.security.shared.AppPermission;
@@ -62,7 +62,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
     private final ReceiveDataRuleSetClient receiveDataRuleSetClient;
     private final Provider<ProxyConfig> proxyConfigProvider;
-    private final Provider<ProxySecurityContext> proxySecurityContextProvider;
+    private final Provider<CommonSecurityContext> commonSecurityContextProvider;
     private final PathCreator pathCreator;
     private final HashFunctionFactory hashFunctionFactory;
     private final WordListProviderFactory wordListProviderFactory;
@@ -76,7 +76,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     @Inject
     public RemoteReceiveDataRuleSetServiceImpl(
             final ReceiveDataRuleSetClient receiveDataRuleSetClient,
-            final Provider<ProxySecurityContext> proxySecurityContextProvider,
+            final Provider<CommonSecurityContext> commonSecurityContextProvider,
             final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider,
             final Provider<ProxyConfig> proxyConfigProvider,
             final PathCreator pathCreator,
@@ -84,7 +84,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             final WordListProviderFactory wordListProviderFactory) {
 
         this.receiveDataRuleSetClient = receiveDataRuleSetClient;
-        this.proxySecurityContextProvider = proxySecurityContextProvider;
+        this.commonSecurityContextProvider = commonSecurityContextProvider;
         this.proxyConfigProvider = proxyConfigProvider;
         this.pathCreator = pathCreator;
         this.hashFunctionFactory = hashFunctionFactory;
@@ -117,42 +117,45 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
      */
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
-        return proxySecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
+        return commonSecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
                 cachedHashedReceiveDataRules.getValueAsync()
                         .hashedReceiveDataRules());
     }
 
     @Override
     public BundledRules getBundledRules() {
-        return proxySecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
+        return commonSecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
                 NullSafe.get(
                         cachedHashedReceiveDataRules.getValueAsync(),
                         RuleState::bundledRules));
     }
 
     private synchronized RuleState createRuleBundle(final RuleState currRuleState) {
-        return LOGGER.logDurationIfDebugEnabled(() -> {
-            final HashedReceiveDataRules hashedReceiveDataRules = fetchRulesFromRemote(
-                    NullSafe.get(currRuleState, RuleState::hashedReceiveDataRules));
+        // This may run async so needs to run as the proc user
+        return commonSecurityContextProvider.get().asProcessingUserResult(() -> {
+            return LOGGER.logDurationIfDebugEnabled(() -> {
+                final HashedReceiveDataRules hashedReceiveDataRules = fetchRulesFromRemote(
+                        NullSafe.get(currRuleState, RuleState::hashedReceiveDataRules));
 
-            if (hashedReceiveDataRules != null) {
-                final HashAlgorithm hashAlgorithm = hashedReceiveDataRules.getHashAlgorithm();
-                final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
-                final AttributeMapHasher attributeMapHasher = new AttributeMapHasher(
-                        hashFunction,
-                        hashedReceiveDataRules.getFieldNameToSaltMap());
-                final WordListProvider wordListProvider = wordListProviderFactory.create(
-                        hashedReceiveDataRules.getUuidToFlattenedDictMap());
-                final BundledRules bundledRules = new BundledRules(
-                        hashedReceiveDataRules.getReceiveDataRules(),
-                        wordListProvider,
-                        attributeMapHasher);
-                return new RuleState(hashedReceiveDataRules, bundledRules);
-            } else {
-                // A null return will mean a receive-all filter
-                return currRuleState;
-            }
-        }, "createRuleBundle");
+                if (hashedReceiveDataRules != null) {
+                    final HashAlgorithm hashAlgorithm = hashedReceiveDataRules.getHashAlgorithm();
+                    final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
+                    final AttributeMapHasher attributeMapHasher = new AttributeMapHasher(
+                            hashFunction,
+                            hashedReceiveDataRules.getFieldNameToSaltMap());
+                    final WordListProvider wordListProvider = wordListProviderFactory.create(
+                            hashedReceiveDataRules.getUuidToFlattenedDictMap());
+                    final BundledRules bundledRules = new BundledRules(
+                            hashedReceiveDataRules.getReceiveDataRules(),
+                            wordListProvider,
+                            attributeMapHasher);
+                    return new RuleState(hashedReceiveDataRules, bundledRules);
+                } else {
+                    // A null return will mean a receive-all filter
+                    return currRuleState;
+                }
+            }, "createRuleBundle");
+        });
     }
 
     private synchronized HashedReceiveDataRules fetchRulesFromRemote(

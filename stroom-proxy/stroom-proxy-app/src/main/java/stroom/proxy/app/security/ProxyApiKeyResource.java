@@ -1,5 +1,6 @@
 package stroom.proxy.app.security;
 
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.ApiKeyCheckResource;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -10,6 +11,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+import java.util.Optional;
+
 @Tag(name = "API Key")
 @Path(ProxyApiKeyResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,5 +21,5 @@ public interface ProxyApiKeyResource extends ApiKeyCheckResource, RestResource {
 
     String BASE_PATH = "/apikey" + ResourcePaths.V2;
 
-    // Only inherited methods thus far
+    Optional<UserIdentity> verifyIdentity(final String apiKey);
 }

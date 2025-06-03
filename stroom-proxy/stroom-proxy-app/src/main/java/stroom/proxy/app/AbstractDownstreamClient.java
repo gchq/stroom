@@ -30,6 +30,8 @@ public abstract class AbstractDownstreamClient {
     protected final JerseyClientFactory jerseyClientFactory;
     protected final UserIdentityFactory userIdentityFactory;
     protected final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
+//    private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
+
 
     public AbstractDownstreamClient(final JerseyClientFactory jerseyClientFactory,
                                     final UserIdentityFactory userIdentityFactory,
@@ -37,6 +39,7 @@ public abstract class AbstractDownstreamClient {
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
+//        this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
     }
 
     /**
@@ -49,7 +52,7 @@ public abstract class AbstractDownstreamClient {
      */
     protected abstract String getDefaultPath();
 
-    protected String getFullUrl() {
+    public String getFullUrl() {
         // This allows a full url to be explicitly configured, else we just combine the default path
         // with the downstream host config.
         final String url = getConfiguredUrl()
@@ -81,14 +84,24 @@ public abstract class AbstractDownstreamClient {
         final Map<String, String> headers;
 
         final DownstreamHostConfig downstreamHostConfig = downstreamHostConfigProvider.get();
-        final String apiKey = downstreamHostConfig.getApiKey();
-        if (!NullSafe.isBlankString(apiKey)) {
+        final String apiKey = NullSafe.trim(downstreamHostConfig.getApiKey());
+        if (!apiKey.isEmpty()) {
             // Intended for when stroom is using its internal IDP. Create the API Key in stroom UI
             // and add it to config.
-            LOGGER.debug(() -> LogUtil.message("Using API key from config prop {}",
+            LOGGER.debug(() -> LogUtil.message("getAuthHeaders() - Using API key from config prop {}",
                     downstreamHostConfig.getFullPathStr(DownstreamHostConfig.PROP_NAME_API_KEY)));
+            // Make sure the API key is valid
+//            proxyApiKeyServiceProvider.get()
+//                    .verifyApiKey(new VerifyApiKeyRequest(apiKey))
+//                    .map(userDesc -> new ApiKeyUserIdentity(apiKey, userDesc))
+//                    .orElseThrow(() -> {
+//                        final String prefix = ApiKeyGenerator.extractPrefixPart(apiKey);
+//                        return new AuthenticationException(LogUtil.message(
+//                                "API Key with prefix '{}' is not valid.", prefix));
+//                    });
             headers = userIdentityFactory.getAuthHeaders(apiKey);
         } else {
+            LOGGER.debug("getAuthHeaders() - Adding service user token to headers");
             // Use a token from the external IDP
             headers = userIdentityFactory.getServiceUserAuthHeaders();
         }

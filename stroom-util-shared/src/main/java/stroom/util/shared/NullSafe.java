@@ -394,6 +394,12 @@ public class NullSafe {
                 : "";
     }
 
+    public static String subString(final String str, final int beginIndex, final int endIndex) {
+        return str != null
+                ? str.substring(beginIndex, endIndex)
+                : "";
+    }
+
     public static String join(final CharSequence delimiter, final CharSequence... elements) {
         if (elements == null || elements.length == 0) {
             return "";

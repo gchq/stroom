@@ -2,6 +2,7 @@ package stroom.proxy.app.security;
 
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestAuthenticatorImpl;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
@@ -34,7 +35,7 @@ public class ProxySecurityModule extends AbstractModule {
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
         bind(ProxyApiKeyService.class).to(ProxyApiKeyServiceImpl.class);
-        bind(ProxySecurityContext.class).to(ProxySecurityContextImpl.class);
+        bind(CommonSecurityContext.class).to(ProxySecurityContextImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);

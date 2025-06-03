@@ -19,6 +19,7 @@ package stroom.proxy.app.servlet;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
 import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
@@ -64,6 +65,7 @@ public class ProxySecurityFilter implements Filter {
 
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<CommonSecurityContext> securityContextProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final UserIdentityFactory userIdentityFactory;
     private final AuthenticationBypassChecker authenticationBypassChecker;
@@ -73,11 +75,13 @@ public class ProxySecurityFilter implements Filter {
     @Inject
     public ProxySecurityFilter(final Provider<FeedStatusConfig> feedStatusConfigProvider,
                                final Provider<ProxyConfig> proxyConfigProvider,
+                               final Provider<CommonSecurityContext> securityContextProvider,
                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                final UserIdentityFactory userIdentityFactory,
                                final AuthenticationBypassChecker authenticationBypassChecker) {
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.proxyConfigProvider = proxyConfigProvider;
+        this.securityContextProvider = securityContextProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userIdentityFactory = userIdentityFactory;
         this.authenticationBypassChecker = authenticationBypassChecker;
@@ -151,10 +155,8 @@ public class ProxySecurityFilter implements Filter {
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
         } else {
-            final boolean isApiRequest = isApiRequest(servletPath);
-
-            if (isApiRequest) {
-                if (isEventResourceRequest(servletPath)) {
+            if (isApiRequest(servletPath)) {
+                if (isEventResourceRequest(fullPath)) {
                     // Allow all event requests through as security is applied elsewhere.
                     chain.doFilter(request, response);
                 } else {
@@ -164,8 +166,9 @@ public class ProxySecurityFilter implements Filter {
                     if (optUserIdentity.isPresent()) {
                         LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
                                 fullPath, servletPath, optUserIdentity.get());
-                        chain.doFilter(request, response);
 
+                        securityContextProvider.get().asUser(optUserIdentity.get(), () ->
+                                process(request, response, chain));
                     } else {
                         LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
                         response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
@@ -260,7 +263,17 @@ public class ProxySecurityFilter implements Filter {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
-    private boolean isEventResourceRequest(String servletPath) {
-        return servletPath.startsWith(EVENT_RESOURCE_PATH);
+    private boolean isEventResourceRequest(String fullPath) {
+        return fullPath.startsWith(EVENT_RESOURCE_PATH);
+    }
+
+    private void process(final HttpServletRequest request,
+                         final HttpServletResponse response,
+                         final FilterChain chain) {
+        try {
+            chain.doFilter(request, response);
+        } catch (final IOException | ServletException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

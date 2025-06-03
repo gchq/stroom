@@ -67,7 +67,9 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetServiceImpl.class);
 
-    private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
+    private static final AppPermissionSet MANAGE_RULES_PERM_SET = AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION
+            .asAppPermissionSet();
+    private static final AppPermissionSet FETCH_HASHED_RULES_PERM_SET = AppPermissionSet.oneOf(
             AppPermission.FETCH_HASHED_RECEIPT_POLICY_RULES,
             AppPermission.STROOM_PROXY);
 
@@ -93,7 +95,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Override
     public ReceiveDataRules getReceiveDataRules() {
         final ReceiveDataRules receiveDataRules = securityContext.secureResult(
-                REQUIRED_PERMISSION_SET,
+                MANAGE_RULES_PERM_SET,
                 receiveDataRuleSetStore::getOrCreate);
         LOGGER.debug("getReceiveDataRules() - receiveDataRules: {}", receiveDataRules);
         return receiveDataRules;
@@ -103,8 +105,8 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     public ReceiveDataRules updateReceiveDataRules(final ReceiveDataRules receiveDataRules) {
 
         final ReceiveDataRules receiveDataRules2 = securityContext.secureResult(
-                REQUIRED_PERMISSION_SET,
-                () -> receiveDataRuleSetStore.writeDocument(receiveDataRules));
+                MANAGE_RULES_PERM_SET, () ->
+                        receiveDataRuleSetStore.writeDocument(receiveDataRules));
         LOGGER.debug("updateReceiveDataRules() - receiveDataRules2: {}", receiveDataRules2);
         return receiveDataRules2;
     }
@@ -112,7 +114,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
         final HashedReceiveDataRules hashedReceiveDataRules = securityContext.secureResult(
-                REQUIRED_PERMISSION_SET,
+                FETCH_HASHED_RULES_PERM_SET,
                 () -> {
                     final ReceiveDataRules receiveDataRules = receiveDataRuleSetStore.getOrCreate();
                     final List<ReceiveDataRule> rules = receiveDataRules.getRules();
@@ -132,12 +134,16 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public BundledRules getBundledRules() {
-        final BundledRules bundledRules = new BundledRules(
-                getReceiveDataRules(),
-                wordListProvider,
-                AttributeMapper.identity());
-        LOGGER.debug("getBundledRules() - bundledRules: {}", bundledRules);
-        return bundledRules;
+        return securityContext.secureResult(
+                FETCH_HASHED_RULES_PERM_SET,
+                () -> {
+                    final BundledRules bundledRules = new BundledRules(
+                            getReceiveDataRules(),
+                            wordListProvider,
+                            AttributeMapper.identity());
+                    LOGGER.debug("getBundledRules() - bundledRules: {}", bundledRules);
+                    return bundledRules;
+                });
     }
 
     private HashedReceiveDataRules buildHashedReceiveDataRules(final ReceiveDataRules receiveDataRules) {

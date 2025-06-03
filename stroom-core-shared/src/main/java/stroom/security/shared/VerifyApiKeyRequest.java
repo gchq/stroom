@@ -46,7 +46,8 @@ public class VerifyApiKeyRequest {
     @Override
     public String toString() {
         return "VerifyApiKeyRequest{" +
-               "apiKey='" + apiKey + '\'' +
+               // Just output the prefix bit
+               "apiKey='" + NullSafe.get(apiKey, k -> k.substring(0, 15)) + '\'' +
                ", requiredAppPermissions=" + requiredAppPermissions +
                '}';
     }

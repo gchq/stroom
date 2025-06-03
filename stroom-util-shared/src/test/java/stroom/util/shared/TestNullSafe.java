@@ -1065,6 +1065,21 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testSubString() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, Integer.class, Integer.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> NullSafe.subString(
+                        testCase.getInput()._1,
+                        testCase.getInput()._2,
+                        testCase.getInput()._3))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, 1, 10), "")
+                .addCase(Tuple.of("foobar", 0, 3), "foo")
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testConsumeNonBlankString() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)

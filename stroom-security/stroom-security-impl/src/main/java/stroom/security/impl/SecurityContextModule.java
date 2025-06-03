@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 
 import com.google.inject.AbstractModule;
@@ -25,5 +26,6 @@ public class SecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(SecurityContextImpl.class);
+        bind(CommonSecurityContext.class).to(SecurityContextImpl.class);
     }
 }

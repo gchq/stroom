@@ -11,7 +11,10 @@ import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.jersey.JerseyClientFactory;
@@ -51,6 +54,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusService.class);
 
+    private static final AppPermissionSet REQUIRED_PERM_SET = AppPermissionSet.oneOf(
+            AppPermission.STROOM_PROXY,
+            AppPermission.CHECK_RECEIPT_STATUS);
+
     private static final String CACHE_NAME = "Remote Feed Status Response Cache";
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
@@ -58,6 +65,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
     private final Provider<FeedStatusConfig> feedStatusConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<CommonSecurityContext> securityContextProvider;
     private final JerseyClientFactory jerseyClientFactory;
     private final UserIdentityFactory userIdentityFactory;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -68,12 +76,14 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
                             final JerseyClientFactory jerseyClientFactory,
                             final UserIdentityFactory userIdentityFactory,
                             final CacheManager cacheManager,
-                            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                            final Provider<CommonSecurityContext> securityContextProvider) {
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
         this.feedStatusConfigProvider = feedStatusConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.securityContextProvider = securityContextProvider;
         this.updaters = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedStatusConfigProvider.get().getFeedStatusCache(),
@@ -94,52 +104,56 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
      */
     @Deprecated
     public GetFeedStatusResponse getFeedStatus(GetFeedStatusRequest legacyRequest) {
-        final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
-        return getFeedStatus(request);
+        return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
+            final GetFeedStatusRequestV2 request = GetFeedStatusRequestAdapter.mapLegacyRequest(legacyRequest);
+            return getFeedStatus(request);
+        });
     }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
-        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
+            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
 
-        final FeedStatus defaultFeedStatus = getDefaultFeedStatus();
+            final FeedStatus defaultFeedStatus = getDefaultFeedStatus();
 
-        // If remote feed status checking is disabled then return the default status.
-        if (!isFeedStatusCheckEnabled()) {
-            // We shouldn't come in here anyway as the feed status filter will not be used
-            // if feed status check is not enabled in config.
-            return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
-        } else {
-            final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
-            final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
-                CachedResponse result;
-                try {
-                    final GetFeedStatusResponse response = callFeedStatus(request);
-                    result = new CachedResponse(Instant.now(), response);
+            // If remote feed status checking is disabled then return the default status.
+            if (!isFeedStatusCheckEnabled()) {
+                // We shouldn't come in here anyway as the feed status filter will not be used
+                // if feed status check is not enabled in config.
+                return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
+            } else {
+                final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
+                final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
+                    CachedResponse result;
+                    try {
+                        final GetFeedStatusResponse response = callFeedStatus(request);
+                        result = new CachedResponse(Instant.now(), response);
 
-                } catch (final Exception e) {
-                    LOGGER.debug("Unable to check remote feed service", e);
-                    // Get the last response we received.
-                    if (lastResponse != null) {
-                        result = new CachedResponse(Instant.now(), lastResponse.getResponse());
-                        LOGGER.error(
-                                "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                                request, result, e.getMessage());
+                    } catch (final Exception e) {
+                        LOGGER.debug("Unable to check remote feed service", e);
+                        // Get the last response we received.
+                        if (lastResponse != null) {
+                            result = new CachedResponse(Instant.now(), lastResponse.getResponse());
+                            LOGGER.error(
+                                    "Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                                    request, result, e.getMessage());
 
-                    } else {
-                        // Revert to default behaviour.
-                        result = new CachedResponse(Instant.now(),
-                                GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
-                        LOGGER.error(
-                                "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                                request, result, e.getMessage());
+                        } else {
+                            // Revert to default behaviour.
+                            result = new CachedResponse(Instant.now(),
+                                    GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
+                            LOGGER.error(
+                                    "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                                    request, result, e.getMessage());
+                        }
                     }
-                }
-                return result;
-            });
+                    return result;
+                });
 
-            return cachedResponse.getResponse();
-        }
+                return cachedResponse.getResponse();
+            }
+        });
     }
 
     private boolean isFeedStatusCheckEnabled() {

@@ -1,6 +1,7 @@
 package stroom.proxy.app.security;
 
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
@@ -37,7 +38,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
-    private final Provider<ProxySecurityContext> proxySecurityContextProvider;
+    private final Provider<CommonSecurityContext> proxySecurityContextProvider;
 
     @Inject
     ProxyUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -49,7 +50,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final RefreshManager refreshManager,
                              final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider,
                              final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final Provider<ProxySecurityContext> proxySecurityContextProvider) {
+                             final Provider<CommonSecurityContext> proxySecurityContextProvider) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
@@ -92,12 +93,15 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
         // First see if we have a Stroom API key to authenticate with, else
         // let the super try and get the identity
+        Optional<UserIdentity> optIdentity;
         if (IdpType.NO_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType())) {
-            return fetchApiKeyUserIdentity(request);
+            optIdentity = fetchApiKeyUserIdentity(request);
         } else {
-            return fetchApiKeyUserIdentity(request)
+            optIdentity = fetchApiKeyUserIdentity(request)
                     .or(() -> super.getApiUserIdentity(request));
         }
+        LOGGER.debug("getApiUserIdentity() - optIdentity: {}", optIdentity);
+        return optIdentity;
     }
 
     private Optional<UserIdentity> fetchApiKeyUserIdentity(final HttpServletRequest request) {

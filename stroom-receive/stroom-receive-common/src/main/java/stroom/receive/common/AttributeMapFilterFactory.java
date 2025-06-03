@@ -2,7 +2,7 @@ package stroom.receive.common;
 
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveAction;
-import stroom.security.api.SecurityContext;
+import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,7 +28,7 @@ public class AttributeMapFilterFactory {
     private final Provider<StreamTypeValidator> streamTypeValidatorProvider;
     private final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider;
     private final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider;
-    private final SecurityContext securityContext;
+    private final CommonSecurityContext securityContext;
     private final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory;
     private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
 
@@ -40,7 +40,7 @@ public class AttributeMapFilterFactory {
             final Provider<StreamTypeValidator> streamTypeValidatorProvider,
             final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider,
             final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider,
-            final SecurityContext securityContext,
+            final CommonSecurityContext securityContext,
             final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory,
             final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory) {
 
