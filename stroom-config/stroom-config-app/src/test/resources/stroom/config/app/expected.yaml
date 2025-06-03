@@ -784,7 +784,17 @@ appConfig:
     itemsRetention: 100
   receiptPolicy:
     obfuscatedFields:
+    - "AccountId"
+    - "AccountName"
+    - "Component"
     - "Feed"
+    - "ReceivedPath"
+    - "RemoteDN"
+    - "RemoteHost"
+    - "System"
+    - "UploadUserId"
+    - "UploadUsername"
+    - "X-Forwarded-For"
     obfuscationHashAlgorithm: "SHA2_512"
     receiptRulesInitialFields:
       AccountId: "Text"
@@ -848,7 +858,7 @@ appConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptCheckMode: "FEED_STATUS_CHECK"
+    receiptCheckMode: "FEED_STATUS"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   s3:

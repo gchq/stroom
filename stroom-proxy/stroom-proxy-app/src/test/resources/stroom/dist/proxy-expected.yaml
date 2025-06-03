@@ -11,15 +11,13 @@ proxyConfig:
     apiKey: null
     apiKeyVerificationUrl: null
     hostname: null
+    maxCachedKeyAge: "PT10M"
+    maxPersistedKeyAge: "P30D"
+    noFetchIntervalAfterFailure: "PT30S"
     pathPrefix: null
+    persistedKeysHashAlgorithm: "SHA2_512"
     port: null
     scheme: "https"
-    verifiedApiKeysCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT30M"
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "DROPWIZARD_METRICS"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
