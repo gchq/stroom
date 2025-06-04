@@ -383,7 +383,8 @@ public class QueryResultVisPresenter
         return settings;
     }
 
-    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef, final QLVisResult visResult) {
+    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef,
+                                   final QLVisResult visResult) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
