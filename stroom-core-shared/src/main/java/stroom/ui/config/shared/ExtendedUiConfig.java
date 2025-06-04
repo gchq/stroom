@@ -69,7 +69,20 @@ public class ExtendedUiConfig {
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
-        this.obfuscatedFields = Set.of("Feed");
+        // This set of values comes from
+        // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS
+        this.obfuscatedFields = Set.of(
+                "AccountId",
+                "AccountName",
+                "Component",
+                "Feed",
+                "ReceivedPath",
+                "RemoteDN",
+                "RemoteHost",
+                "System",
+                "UploadUserId",
+                "UploadUsername",
+                "X-Forwarded-For");
     }
 
     @JsonCreator
