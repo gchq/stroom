@@ -47,6 +47,7 @@ import java.util.Objects;
         "password",
         "branch",
         "path",
+        "commit",
         "autoPush"
 })
 @JsonInclude(Include.NON_NULL)
@@ -74,6 +75,9 @@ public class GitRepoDoc extends Doc {
     private String path = "";
 
     @JsonProperty
+    private String commit = "";
+
+    @JsonProperty
     private Boolean autoPush = Boolean.FALSE;
 
     /**
@@ -98,6 +102,7 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("password") final String password,
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
+                      @JsonProperty("commit") final String commit,
                       @JsonProperty("autoPush") final Boolean autoPush) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -108,6 +113,7 @@ public class GitRepoDoc extends Doc {
         this.password = password;
         this.branch = branch;
         this.path = path;
+        this.commit = commit;
         this.autoPush = autoPush;
 
         // Make sure none of the settings are null
@@ -125,6 +131,9 @@ public class GitRepoDoc extends Doc {
         }
         if (this.path == null) {
             this.path = "";
+        }
+        if (this.commit == null) {
+            this.commit = "";
         }
         if (this.autoPush == null) {
             this.autoPush = Boolean.FALSE;
@@ -162,13 +171,14 @@ public class GitRepoDoc extends Doc {
                && Objects.equals(password, that.password)
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
+               && Objects.equals(commit, that.commit)
                && Objects.equals(autoPush, that.autoPush);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(),
-                description, url, username, password, branch, path, autoPush);
+                description, url, username, password, branch, path, commit, autoPush);
     }
 
     public String getDescription() {
@@ -219,6 +229,14 @@ public class GitRepoDoc extends Doc {
         this.path = path;
     }
 
+    public String getCommit() {
+        return commit;
+    }
+
+    public void setCommit(final String commit) {
+        this.commit = commit;
+    }
+
     public Boolean isAutoPush() {
         return autoPush;
     }
@@ -244,6 +262,7 @@ public class GitRepoDoc extends Doc {
                 + username + ",\n  "
                 + branch + "\n  "
                 + path + "\n  "
+                + commit +"\n  "
                 + autoPush + "\n}";
     }
 }

@@ -246,7 +246,7 @@ public class AppStoreContentPack {
         gitRepoDoc.setUrl(gitUrl);
         gitRepoDoc.setBranch(gitBranch);
         gitRepoDoc.setPath(gitPath);
-        // TODO set commit
+        gitRepoDoc.setCommit(gitCommit);
         gitRepoDoc.setDescription(details);
     }
 

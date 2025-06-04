@@ -29,6 +29,11 @@
                        title="The path within the GIT repository"
                        ui:field="path" />
         </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsCommit" label="Git commit">
+            <g:TextBox name="Path"
+                       title="The commit you want to pull from Git"
+                       ui:field="commit" />
+        </form:FormGroup>
         <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
             <g:CheckBox name="AutoPush"
                         title="Automatically push changes to the Git repository"

@@ -59,6 +59,9 @@ public class GitRepoSettingsViewImpl
     TextBox path;
 
     @UiField
+    TextBox commit;
+
+    @UiField
     CheckBox autoPush;
 
     @UiField
@@ -136,6 +139,16 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
+    public String getCommit() {
+        return commit.getText();
+    }
+
+    @Override
+    public void setCommit(String commit) {
+        this.commit.setText(commit);
+    }
+
+    @Override
     public Boolean isAutoPush() {
         return this.autoPush.getValue();
     }
@@ -168,6 +181,7 @@ public class GitRepoSettingsViewImpl
         password.setEnabled(!readOnly);
         branch.setEnabled(!readOnly);
         path.setEnabled(!readOnly);
+        commit.setEnabled(!readOnly);
         autoPush.setEnabled(!readOnly);
     }
 
@@ -176,7 +190,7 @@ public class GitRepoSettingsViewImpl
      * @param e Event from the UI widget. Ignored. Can be null.
      */
     @SuppressWarnings("unused")
-    @UiHandler({"url", "username", "password", "branch", "path"})
+    @UiHandler({"url", "username", "password", "branch", "path", "commit"})
     public void onWidgetValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
