@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "stateKeyType",
+        "keyType",
         "hashLength",
         "temporalPrecision"
 })
@@ -22,10 +22,10 @@ public class TemporalStateKeySchema extends StateKeySchema {
     private final TemporalPrecision temporalPrecision;
 
     @JsonCreator
-    public TemporalStateKeySchema(@JsonProperty("stateKeyType") final StateKeyType stateKeyType,
+    public TemporalStateKeySchema(@JsonProperty("keyType") final KeyType keyType,
                                   @JsonProperty("hashLength") final HashLength hashLength,
                                   @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
-        super(stateKeyType, hashLength);
+        super(keyType, hashLength);
         this.temporalPrecision = temporalPrecision;
     }
 
@@ -62,7 +62,7 @@ public class TemporalStateKeySchema extends StateKeySchema {
 
     public static class Builder extends AbstractBuilder<TemporalStateKeySchema, Builder> {
 
-        private StateKeyType stateKeyType = StateKeyType.VARIABLE;
+        private KeyType keyType = KeyType.VARIABLE;
         private HashLength hashLength = HashLength.INTEGER;
         private TemporalPrecision temporalPrecision;
 
@@ -70,13 +70,13 @@ public class TemporalStateKeySchema extends StateKeySchema {
         }
 
         public Builder(final TemporalStateKeySchema schema) {
-            this.stateKeyType = schema.stateKeyType;
+            this.keyType = schema.keyType;
             this.hashLength = schema.hashLength;
             this.temporalPrecision = schema.temporalPrecision;
         }
 
-        public Builder stateKeyType(final StateKeyType stateKeyType) {
-            this.stateKeyType = stateKeyType;
+        public Builder keyType(final KeyType keyType) {
+            this.keyType = keyType;
             return self();
         }
 
@@ -98,7 +98,7 @@ public class TemporalStateKeySchema extends StateKeySchema {
         @Override
         public TemporalStateKeySchema build() {
             return new TemporalStateKeySchema(
-                    stateKeyType,
+                    keyType,
                     hashLength,
                     temporalPrecision);
         }

@@ -17,14 +17,14 @@ import java.util.Objects;
 public class HistogramValueSchema {
 
     @JsonProperty
-    private final HistogramValueMax valueType;
+    private final MaxValueSize valueType;
 
     @JsonCreator
-    public HistogramValueSchema(@JsonProperty("valueType") final HistogramValueMax valueType) {
+    public HistogramValueSchema(@JsonProperty("valueType") final MaxValueSize valueType) {
         this.valueType = valueType;
     }
 
-    public HistogramValueMax getHistogramValueType() {
+    public MaxValueSize getValueType() {
         return valueType;
     }
 
@@ -54,7 +54,7 @@ public class HistogramValueSchema {
 
     public static class Builder extends AbstractBuilder<HistogramValueSchema, Builder> {
 
-        private HistogramValueMax valueType = HistogramValueMax.TWO;
+        private MaxValueSize valueType = MaxValueSize.TWO;
 
         public Builder() {
         }
@@ -63,7 +63,7 @@ public class HistogramValueSchema {
             this.valueType = schema.valueType;
         }
 
-        public Builder valueType(final HistogramValueMax valueType) {
+        public Builder valueType(final MaxValueSize valueType) {
             this.valueType = valueType;
             return self();
         }

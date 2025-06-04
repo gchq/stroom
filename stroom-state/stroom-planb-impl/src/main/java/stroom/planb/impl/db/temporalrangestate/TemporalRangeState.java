@@ -50,7 +50,7 @@ public class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
         }
     }
 
-    @JsonPropertyOrder({"keyStart", "keyEnd", "effectiveTime"})
+    @JsonPropertyOrder({"keyStart", "keyEnd", "time"})
     @JsonInclude(Include.NON_NULL)
     public static class Key {
 
@@ -59,15 +59,15 @@ public class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
         @JsonProperty
         private final long keyEnd;
         @JsonProperty
-        private final Instant effectiveTime;
+        private final Instant time;
 
         @JsonCreator
         public Key(@JsonProperty("keyStart") final long keyStart,
                    @JsonProperty("keyEnd") final long keyEnd,
-                   @JsonProperty("effectiveTime") final Instant effectiveTime) {
+                   @JsonProperty("time") final Instant time) {
             this.keyStart = keyStart;
             this.keyEnd = keyEnd;
-            this.effectiveTime = effectiveTime;
+            this.time = time;
         }
 
         public long getKeyStart() {
@@ -78,8 +78,8 @@ public class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
             return keyEnd;
         }
 
-        public Instant getEffectiveTime() {
-            return effectiveTime;
+        public Instant getTime() {
+            return time;
         }
 
         public Builder copy() {
@@ -94,7 +94,7 @@ public class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
 
             private long keyStart;
             private long keyEnd;
-            private Instant effectiveTime;
+            private Instant time;
 
             private Builder() {
             }
@@ -114,13 +114,13 @@ public class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
                 return this;
             }
 
-            public Builder effectiveTime(final Instant effectiveTime) {
-                this.effectiveTime = effectiveTime;
+            public Builder time(final Instant time) {
+                this.time = time;
                 return this;
             }
 
             public Key build() {
-                return new Key(keyStart, keyEnd, effectiveTime);
+                return new Key(keyStart, keyEnd, time);
             }
         }
     }

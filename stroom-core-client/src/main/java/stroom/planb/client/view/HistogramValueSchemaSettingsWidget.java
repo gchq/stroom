@@ -17,8 +17,8 @@
 package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.shared.HistogramValueMax;
 import stroom.planb.shared.HistogramValueSchema;
+import stroom.planb.shared.MaxValueSize;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,13 +34,13 @@ public class HistogramValueSchemaSettingsWidget
     private final Widget widget;
 
     @UiField
-    SelectionBox<HistogramValueMax> maxValue;
+    SelectionBox<MaxValueSize> maxValue;
 
     @Inject
     public HistogramValueSchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        maxValue.addItems(HistogramValueMax.ORDERED_LIST);
-        maxValue.setValue(HistogramValueMax.TWO);
+        maxValue.addItems(MaxValueSize.ORDERED_LIST);
+        maxValue.setValue(MaxValueSize.TWO);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class HistogramValueSchemaSettingsWidget
     @Override
     public void setValueSchema(final HistogramValueSchema valueSchema) {
         if (valueSchema != null) {
-            maxValue.setValue(valueSchema.getHistogramValueType());
+            maxValue.setValue(valueSchema.getValueType());
         }
     }
 
@@ -65,7 +65,7 @@ public class HistogramValueSchemaSettingsWidget
     }
 
     @UiHandler("maxValue")
-    public void onMaxValue(final ValueChangeEvent<HistogramValueMax> event) {
+    public void onMaxValue(final ValueChangeEvent<MaxValueSize> event) {
         getUiHandlers().onChange();
     }
 

@@ -12,28 +12,28 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "stateKeyType",
+        "keyType",
         "hashLength"
 })
 @JsonInclude(Include.NON_NULL)
 public class StateKeySchema {
 
     @JsonProperty
-    final StateKeyType stateKeyType;
+    final KeyType keyType;
 
     @JsonPropertyDescription("The hash length to use for foreign keys")
     @JsonProperty
     final HashLength hashLength;
 
     @JsonCreator
-    public StateKeySchema(@JsonProperty("stateKeyType") final StateKeyType stateKeyType,
+    public StateKeySchema(@JsonProperty("keyType") final KeyType keyType,
                           @JsonProperty("hashLength") final HashLength hashLength) {
-        this.stateKeyType = stateKeyType;
+        this.keyType = keyType;
         this.hashLength = hashLength;
     }
 
-    public StateKeyType getStateKeyType() {
-        return stateKeyType;
+    public KeyType getKeyType() {
+        return keyType;
     }
 
     public HashLength getHashLength() {
@@ -49,38 +49,38 @@ public class StateKeySchema {
             return false;
         }
         final StateKeySchema that = (StateKeySchema) o;
-        return stateKeyType == that.stateKeyType &&
+        return keyType == that.keyType &&
                hashLength == that.hashLength;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(stateKeyType, hashLength);
+        return Objects.hash(keyType, hashLength);
     }
 
     @Override
     public String toString() {
         return "StateKeySchema{" +
-               "stateKeyType=" + stateKeyType +
+               "keyType=" + keyType +
                ", hashLength=" + hashLength +
                '}';
     }
 
     public static class Builder extends AbstractBuilder<StateKeySchema, Builder> {
 
-        private StateKeyType stateKeyType = StateKeyType.VARIABLE;
+        private KeyType keyType = KeyType.VARIABLE;
         private HashLength hashLength = HashLength.INTEGER;
 
         public Builder() {
         }
 
         public Builder(final StateKeySchema schema) {
-            this.stateKeyType = schema.stateKeyType;
+            this.keyType = schema.keyType;
             this.hashLength = schema.hashLength;
         }
 
-        public Builder stateKeyType(final StateKeyType stateKeyType) {
-            this.stateKeyType = stateKeyType;
+        public Builder keyType(final KeyType keyType) {
+            this.keyType = keyType;
             return self();
         }
 
@@ -97,7 +97,7 @@ public class StateKeySchema {
         @Override
         public StateKeySchema build() {
             return new StateKeySchema(
-                    stateKeyType,
+                    keyType,
                     hashLength);
         }
     }

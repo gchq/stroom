@@ -9,18 +9,33 @@ import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.serde.time.TimeSerde;
-import stroom.planb.impl.db.serde.time.ZonedDayTimeSerde;
-import stroom.planb.impl.db.serde.time.ZonedHourTimeSerde;
-import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
+import stroom.planb.impl.serde.count.CountSerde;
+import stroom.planb.impl.serde.count.CountValuesSerde;
+import stroom.planb.impl.serde.count.CountValuesSerdeImpl;
+import stroom.planb.impl.serde.count.DayOfYearTemporalIndex;
+import stroom.planb.impl.serde.count.HourOfDayTemporalIndex;
+import stroom.planb.impl.serde.count.MinuteOfHourTemporalIndex;
+import stroom.planb.impl.serde.count.MonthOfYearTemporalIndex;
+import stroom.planb.impl.serde.count.SecondOfHourTemporalIndex;
+import stroom.planb.impl.serde.count.TemporalIndex;
+import stroom.planb.impl.serde.count.ValConverter;
+import stroom.planb.impl.serde.count.YearTemporalIndex;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
+import stroom.planb.impl.serde.temporalkey.TemporalKeySerde;
+import stroom.planb.impl.serde.temporalkey.TemporalKeySerdeFactory;
+import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
+import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
+import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
+import stroom.planb.impl.serde.valtime.InsertTimeSerde;
+import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
-import stroom.planb.shared.HistogramKeyType;
 import stroom.planb.shared.HistogramSettings;
-import stroom.planb.shared.HistogramTemporalResolution;
-import stroom.planb.shared.HistogramValueMax;
 import stroom.planb.shared.HistogramValueSchema;
+import stroom.planb.shared.KeyType;
+import stroom.planb.shared.MaxValueSize;
+import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -32,7 +47,6 @@ import stroom.query.common.v2.ValArrayFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
-import stroom.query.language.functions.ValDuration;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
@@ -46,35 +60,35 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class HistogramDb extends AbstractDb<HistogramKey, Long> {
-
-    private static final String KEY_LOOKUP_DB_NAME = "key";
+public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     private final HistogramSettings settings;
-    private final HistogramKeySerde keySerde;
+    private final TemporalResolution temporalResolution;
+    private final TemporalKeySerde keySerde;
     private final UsedLookupsRecorder keyRecorder;
-    private final HistogramSecondValuesSerde valuesSerde;
+    private final CountValuesSerde<Long> valuesSerde;
 
     private HistogramDb(final PlanBEnv env,
                         final ByteBuffers byteBuffers,
                         final Boolean overwrite,
                         final HistogramSettings settings,
-                        final HistogramKeySerde keySerde,
-                        final HistogramSecondValuesSerde valuesSerde,
+                        final TemporalResolution temporalResolution,
+                        final TemporalKeySerde keySerde,
+                        final CountValuesSerde<Long> valuesSerde,
                         final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env, byteBuffers, overwrite, hashClashCommitRunnable);
         this.settings = settings;
+        this.temporalResolution = temporalResolution;
         this.keySerde = keySerde;
         this.valuesSerde = valuesSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
@@ -90,58 +104,84 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final HistogramKeyType keyType = NullSafe.getOrElse(
+        final KeyType keyType = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getKeySchema,
                 HistogramKeySchema::getKeyType,
-                HistogramKeyType.TAGS);
-        final HistogramTemporalResolution temporalResolution = NullSafe.getOrElse(
+                KeyType.TAGS);
+        final HashLength keyHashLength = NullSafe.getOrElse(
+                settings,
+                HistogramSettings::getKeySchema,
+                HistogramKeySchema::getHashLength,
+                HashLength.LONG);
+        final TemporalResolution temporalResolution = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getKeySchema,
                 HistogramKeySchema::getTemporalResolution,
-                HistogramTemporalResolution.SECOND);
+                TemporalResolution.SECOND);
         final UserTimeZone timeZone = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getKeySchema,
                 HistogramKeySchema::getTimeZone,
                 UserTimeZone.utc());
 
-        final HistogramValueMax valueType = NullSafe.getOrElse(
+        final MaxValueSize valueType = NullSafe.getOrElse(
                 settings,
                 HistogramSettings::getValueSchema,
-                HistogramValueSchema::getHistogramValueType,
-                HistogramValueMax.TWO);
+                HistogramValueSchema::getValueType,
+                MaxValueSize.TWO);
         // Rows will store hour precision.
         final ZoneId zoneId = getZoneId(timeZone);
 
         // The key time is always a coarse grained time with rows having multiple values.
-        final TimeSerde timeSerde;
-        if (temporalResolution.equals(HistogramTemporalResolution.MONTH) ||
-            temporalResolution.equals(HistogramTemporalResolution.YEAR)) {
-            timeSerde = new ZonedDayTimeSerde(zoneId);
-        } else {
-            timeSerde = new ZonedHourTimeSerde(zoneId);
-        }
-
-        final HistogramKeySerde keySerde = createKeySerde(
-                keyType,
-                env,
-                byteBuffers,
-                timeSerde);
-        final UnsignedBytes countSerde = getCountSerde(valueType);
-        final HistogramSecondValuesSerde valueSerde = new HistogramSecondValuesSerde(
+        final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
+        final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
+        final CountSerde<Long> countSerde = getCountSerde(valueType);
+        final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
+        final CountValuesSerde<Long> valueSerde = new CountValuesSerdeImpl<>(
                 byteBuffers,
                 countSerde,
-                new InsertTimeSerde(),
-                zoneId);
+                insertTimeSerde,
+                zoneId,
+                temporalIndex);
+
+        final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
+                keyType,
+                keyHashLength,
+                env,
+                byteBuffers,
+                keyTimeSerde,
+                hashClashCommitRunnable);
+
         return new HistogramDb(
                 env,
                 byteBuffers,
                 settings.overwrite(),
                 settings,
+                temporalResolution,
                 keySerde,
                 valueSerde,
                 hashClashCommitRunnable);
+    }
+
+    private static TimeSerde getKeyTimeSerde(final TemporalResolution temporalResolution,
+                                             final ZoneId zoneId) {
+        return switch (temporalResolution) {
+            case SECOND, MINUTE -> new ZonedHourTimeSerde(zoneId);
+            case HOUR -> new ZonedDayTimeSerde(zoneId);
+            case DAY, MONTH, YEAR -> new ZonedYearTimeSerde(zoneId);
+        };
+    }
+
+    private static TemporalIndex getTemporalIndex(final TemporalResolution temporalResolution) {
+        return switch (temporalResolution) {
+            case SECOND -> new SecondOfHourTemporalIndex();
+            case MINUTE -> new MinuteOfHourTemporalIndex();
+            case HOUR -> new HourOfDayTemporalIndex();
+            case DAY -> new DayOfYearTemporalIndex();
+            case MONTH -> new MonthOfYearTemporalIndex();
+            case YEAR -> new YearTemporalIndex();
+        };
     }
 
     private static ZoneId getZoneId(final UserTimeZone userTimeZone) {
@@ -162,23 +202,8 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
         return zone;
     }
 
-    private static HistogramKeySerde createKeySerde(final HistogramKeyType keyType,
-                                                    final PlanBEnv env,
-                                                    final ByteBuffers byteBuffers,
-                                                    final TimeSerde timeSerde) {
-        return switch (keyType) {
-            case TAGS -> {
-                final UidLookupDb uidLookupDb = new UidLookupDb(
-                        env,
-                        byteBuffers,
-                        KEY_LOOKUP_DB_NAME);
-                yield new HistogramTagsKeySerde(uidLookupDb, byteBuffers, timeSerde);
-            }
-        };
-    }
-
-    private static UnsignedBytes getCountSerde(final HistogramValueMax valueType) {
-        return switch (valueType) {
+    private static CountSerde<Long> getCountSerde(final MaxValueSize valueType) {
+        final UnsignedBytes unsignedBytes = switch (valueType) {
             case ONE -> UnsignedBytesInstances.ONE;
             case TWO -> UnsignedBytesInstances.TWO;
             case THREE -> UnsignedBytesInstances.THREE;
@@ -188,10 +213,11 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
             case SEVEN -> UnsignedBytesInstances.SEVEN;
             case EIGHT -> UnsignedBytesInstances.EIGHT;
         };
+        return new HistogramCountSerde(unsignedBytes);
     }
 
     @Override
-    public void insert(final LmdbWriter writer, final KV<HistogramKey, Long> kv) {
+    public void insert(final LmdbWriter writer, final KV<TemporalKey, Long> kv) {
         final Instant time = kv.key().getTime();
         keySerde.write(writer.getWriteTxn(), kv.key(), keyByteBuffer -> {
             final ByteBuffer existingValueByteBuffer = dbi.get(writer.getWriteTxn(), keyByteBuffer);
@@ -222,7 +248,7 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
                         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
-                        final HistogramKey key = sourceDb.keySerde.read(readTxn, kv.key());
+                        final TemporalKey key = sourceDb.keySerde.read(readTxn, kv.key());
                         keySerde.write(writeTxn, key, keyByteBuffer -> {
                             final ByteBuffer existingValueByteBuffer = dbi.get(writeTxn, keyByteBuffer);
                             if (existingValueByteBuffer == null) {
@@ -243,7 +269,7 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
     }
 
     @Override
-    public Long get(final HistogramKey key) {
+    public Long get(final TemporalKey key) {
         return env.read(readTxn -> keySerde.toBufferForGet(readTxn, key, optionalKeyByteBuffer ->
                 optionalKeyByteBuffer.map(keyByteBuffer -> {
                     final ByteBuffer valueByteBuffer = dbi.get(readTxn, keyByteBuffer);
@@ -269,13 +295,13 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
             final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
                     .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
             final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
-            final HistogramConverter[] histogramConverters = createValuesExtractor(fieldIndex);
+            final List<ValConverter<Long>> valConverters = createValuesExtractor(fieldIndex);
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final HistogramKey key = keySerde.read(readTxn, keyVal.key());
-                    valuesSerde.getValues(key, keyVal.val(), histogramConverters, vals -> {
+                    final TemporalKey key = keySerde.read(readTxn, keyVal.key());
+                    valuesSerde.getValues(key, keyVal.val(), valConverters, vals -> {
                         if (predicate.test(vals)) {
                             consumer.accept(vals);
                         }
@@ -297,17 +323,18 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
         };
     }
 
-    public static HistogramConverter[] createValuesExtractor(final FieldIndex fieldIndex) {
+    public List<ValConverter<Long>> createValuesExtractor(final FieldIndex fieldIndex) {
         final String[] fields = fieldIndex.getFields();
-        final HistogramConverter[] converters = new HistogramConverter[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            converters[i] = switch (fields[i]) {
-                case HistogramFields.KEY -> kv -> ValString.create(kv.key().getTags().toString());
-                case HistogramFields.TIME -> kv -> ValDate.create(kv.key().getTime());
-                case HistogramFields.DURATION -> kv -> ValDuration.create(Duration.ofSeconds(1));
-                case HistogramFields.VALUE -> kv -> ValLong.create(kv.val());
-                default -> kv -> ValNull.INSTANCE;
+        final List<ValConverter<Long>> converters = new ArrayList<>();
+        for (final String field : fields) {
+            final ValConverter<Long> valConverter = switch (field) {
+                case HistogramFields.KEY -> (k, v) -> ValString.create(k.getPrefix().toString());
+                case HistogramFields.TIME -> (k, v) -> ValDate.create(k.getTime());
+                case HistogramFields.RESOLUTION -> (k, v) -> ValString.create(temporalResolution.getDisplayValue());
+                case HistogramFields.VALUE -> (k, v) -> ValLong.create(v);
+                default -> (k, v) -> ValNull.INSTANCE;
             };
+            converters.add(valConverter);
         }
         return converters;
     }
@@ -321,7 +348,7 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
                     final KeyVal<ByteBuffer> kv = iterator.next();
-                    final HistogramKey key = keySerde.read(readTxn, kv.key().duplicate());
+                    final TemporalKey key = keySerde.read(readTxn, kv.key().duplicate());
                     final Instant time;
                     if (useStateTime) {
                         time = key.getTime();
@@ -351,139 +378,5 @@ public class HistogramDb extends AbstractDb<HistogramKey, Long> {
     @Override
     public long condense(final Instant condenseBefore) {
         return 0;
-    }
-
-    public interface HistogramConverter {
-
-        Val convert(HistogramValue histogramDelta);
-    }
-
-    public interface HistogramValuesSerde {
-
-    }
-
-    public static class HistogramSecondValuesSerde implements HistogramValuesSerde {
-
-        private static final int SECONDS_IN_HOUR = 60 * 60;
-        private final ByteBuffers byteBuffers;
-        private final UnsignedBytes countSerde;
-        private final InsertTimeSerde insertTimeSerde;
-        private final ZoneId zoneId;
-        private final int bufferLength;
-
-        public HistogramSecondValuesSerde(final ByteBuffers byteBuffers,
-                                          final UnsignedBytes countSerde,
-                                          final InsertTimeSerde insertTimeSerde,
-                                          final ZoneId zoneId) {
-            this.byteBuffers = byteBuffers;
-            this.countSerde = countSerde;
-            this.insertTimeSerde = insertTimeSerde;
-            this.zoneId = zoneId;
-            bufferLength = (SECONDS_IN_HOUR * countSerde.length()) + insertTimeSerde.getSize();
-        }
-
-        private void newByteBuffer(final Consumer<ByteBuffer> consumer) {
-            byteBuffers.use(bufferLength, byteBuffer -> {
-                consumer.accept(byteBuffer);
-                return null;
-            });
-        }
-
-        private void zeroByteBuffer(final ByteBuffer byteBuffer) {
-            for (int seconds = 0; seconds < SECONDS_IN_HOUR; seconds++) {
-                countSerde.put(byteBuffer, 0);
-            }
-            insertTimeSerde.write(byteBuffer, Instant.now());
-            byteBuffer.flip();
-        }
-
-        public void newSingleValue(final Instant instant, final long value, final Consumer<ByteBuffer> consumer) {
-            newByteBuffer(valueByteBuffer -> {
-                zeroByteBuffer(valueByteBuffer);
-                writeValue(valueByteBuffer, instant, value, consumer);
-            });
-        }
-
-        public void addSingleValue(final ByteBuffer byteBuffer,
-                                   final Instant instant,
-                                   final long value,
-                                   final Consumer<ByteBuffer> consumer) {
-            newByteBuffer(valueByteBuffer -> {
-                valueByteBuffer.put(byteBuffer);
-                valueByteBuffer.flip();
-                writeValue(valueByteBuffer, instant, value, consumer);
-            });
-        }
-
-        private void writeValue(final ByteBuffer valueByteBuffer,
-                                final Instant instant,
-                                final long value,
-                                final Consumer<ByteBuffer> consumer) {
-            final int seconds = getSecondOfHour(instant);
-            final int position = seconds * countSerde.length();
-            final long currentValue = countSerde.get(valueByteBuffer, position);
-            final long newValue = currentValue + value;
-            valueByteBuffer.position(position);
-            countSerde.put(valueByteBuffer, Math.min(countSerde.maxValue(), newValue));
-            writeInsertTime(valueByteBuffer);
-            valueByteBuffer.position(0);
-            consumer.accept(valueByteBuffer);
-        }
-
-        public void merge(final ByteBuffer source,
-                          final ByteBuffer destination,
-                          final Consumer<ByteBuffer> consumer) {
-            newByteBuffer(valueByteBuffer -> {
-                for (int seconds = 0; seconds < SECONDS_IN_HOUR; seconds++) {
-                    final long sourceValue = countSerde.get(source);
-                    final long destinationValue = countSerde.get(destination);
-                    final long total = sourceValue + destinationValue;
-                    countSerde.put(valueByteBuffer, Math.min(countSerde.maxValue(), total));
-                }
-                writeInsertTime(valueByteBuffer);
-                valueByteBuffer.flip();
-                consumer.accept(valueByteBuffer);
-            });
-        }
-
-        public void writeInsertTime(final ByteBuffer byteBuffer) {
-            byteBuffer.position(byteBuffer.limit() - insertTimeSerde.getSize());
-            insertTimeSerde.write(byteBuffer, Instant.now());
-        }
-
-        public Instant readInsertTime(final ByteBuffer byteBuffer) {
-            byteBuffer.position(byteBuffer.limit() - insertTimeSerde.getSize());
-            return insertTimeSerde.read(byteBuffer);
-        }
-
-        public Long getVal(final Instant instant, final ByteBuffer byteBuffer) {
-            final int secondOfHour = getSecondOfHour(instant);
-            final int position = secondOfHour * countSerde.length();
-            byteBuffer.position(position);
-            return countSerde.get(byteBuffer);
-        }
-
-        public void getValues(final HistogramKey key,
-                              final ByteBuffer byteBuffer,
-                              final HistogramConverter[] histogramConverters,
-                              final Consumer<Val[]> consumer) {
-            final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(key.getTime(), zoneId);
-            for (int seconds = 0; seconds < SECONDS_IN_HOUR; seconds++) {
-                final long value = countSerde.get(byteBuffer);
-                final Instant time = zonedDateTime.plusSeconds(seconds).toInstant();
-                final HistogramKey histogramKey = new HistogramKey(key.getTags(), time);
-                final HistogramValue histogramDelta = new HistogramValue(histogramKey, value);
-                final Val[] vals = new Val[histogramConverters.length];
-                for (int i = 0; i < histogramConverters.length; i++) {
-                    vals[i] = histogramConverters[i].convert(histogramDelta);
-                }
-                consumer.accept(vals);
-            }
-        }
-
-        private int getSecondOfHour(final Instant instant) {
-            final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(instant, zoneId);
-            return (zonedDateTime.getMinute() * 60) + zonedDateTime.getSecond();
-        }
     }
 }

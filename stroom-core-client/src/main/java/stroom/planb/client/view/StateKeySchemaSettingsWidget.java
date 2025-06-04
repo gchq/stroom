@@ -18,8 +18,8 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.StateKeySchema;
-import stroom.planb.shared.StateKeyType;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,7 +35,7 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     private final Widget widget;
 
     @UiField
-    SelectionBox<StateKeyType> stateKeyType;
+    SelectionBox<KeyType> keyType;
     @UiField
     SelectionBox<HashLength> hashLength;
 
@@ -44,8 +44,8 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     @Inject
     public StateKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        stateKeyType.addItems(StateKeyType.ORDERED_LIST);
-        stateKeyType.setValue(StateKeyType.VARIABLE);
+        keyType.addItems(KeyType.ORDERED_LIST);
+        keyType.setValue(KeyType.VARIABLE);
         hashLength.addItems(HashLength.ORDERED_LIST);
         hashLength.setValue(HashLength.INTEGER);
         onStateKeyTypeChange();
@@ -58,13 +58,13 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
 
     @Override
     public StateKeySchema getKeySchema() {
-        return new StateKeySchema(stateKeyType.getValue(), hashLength.getValue());
+        return new StateKeySchema(keyType.getValue(), hashLength.getValue());
     }
 
     @Override
     public void setKeySchema(final StateKeySchema stateKeySchema) {
         if (stateKeySchema != null) {
-            stateKeyType.setValue(stateKeySchema.getStateKeyType());
+            keyType.setValue(stateKeySchema.getKeyType());
             hashLength.setValue(stateKeySchema.getHashLength());
         }
         onStateKeyTypeChange();
@@ -72,19 +72,19 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
 
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        stateKeyType.setEnabled(!readOnly);
+        keyType.setEnabled(!readOnly);
         hashLength.setEnabled(!readOnly);
     }
 
     private void onStateKeyTypeChange() {
-        final StateKeyType value = stateKeyType.getValue();
+        final KeyType value = keyType.getValue();
         hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, StateKeyType.HASH_LOOKUP) ||
-                               Objects.equals(value, StateKeyType.VARIABLE)));
+                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                               Objects.equals(value, KeyType.VARIABLE)));
     }
 
-    @UiHandler("stateKeyType")
-    public void onStateKeyType(final ValueChangeEvent<StateKeyType> event) {
+    @UiHandler("keyType")
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onStateKeyTypeChange();
         getUiHandlers().onChange();
     }

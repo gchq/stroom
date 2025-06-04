@@ -28,15 +28,15 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.histogram.HistogramKey;
-import stroom.planb.impl.db.histogram.HistogramValue;
-import stroom.planb.impl.db.histogram.Tag;
-import stroom.planb.impl.db.histogram.Tags;
+import stroom.planb.impl.db.histogram.TemporalValue;
 import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
 import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.keyprefix.Tag;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
@@ -179,6 +179,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String SESSION_ELEMENT = "session";
     private static final String HISTOGRAM_ELEMENT = "histogram";
+    private static final String METRIC_ELEMENT = "metric";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
     private static final String FROM_ELEMENT = "from";
@@ -491,7 +492,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                 }
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName) ||
                        SESSION_ELEMENT.equalsIgnoreCase(localName) ||
-                       HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
+                       HISTOGRAM_ELEMENT.equalsIgnoreCase(localName) ||
+                       METRIC_ELEMENT.equalsIgnoreCase(localName)) {
                 addData();
 
             } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
@@ -580,6 +582,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
                     case HISTOGRAM -> addHistogramValue(doc);
+                    case METRIC -> addMetricValue(doc);
                     default -> error("Unexpected state type: " + doc.getStateType());
                 }
             } catch (final BufferOverflowException boe) {
@@ -609,30 +612,29 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addState(final PlanBDoc doc) {
-        if (key == null) {
-            error(LogUtil.message("State 'key' is null for {}", mapName));
-        } else {
-            LOGGER.trace("Putting key {} into table {}", key, mapName);
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            LOGGER.trace("Putting key {} into table {}", prefix, mapName);
             final Val v = getVal();
-            writer.addState(doc, new State(ValString.create(key), v));
+            writer.addState(doc, new State(prefix, v));
         }
     }
 
     private void addTemporalState(final PlanBDoc doc) {
-        final Instant time = this.time != null
-                ? this.time
-                : this.effectiveTime;
-        if (time == null) {
-            error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            final Instant time = this.time != null
+                    ? this.time
+                    : this.effectiveTime;
+            if (time == null) {
+                error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
 
-        } else {
-            if (key == null) {
-                error(LogUtil.message("Temporal state 'key' is null for {}", mapName));
             } else {
-                LOGGER.trace("Putting key {} into table {}", key, mapName);
-                final TemporalState.Key k = TemporalState.Key.builder()
-                        .name(key)
-                        .effectiveTime(time)
+                LOGGER.trace("Putting key {} into table {}", prefix, mapName);
+                final TemporalKey k = TemporalKey
+                        .builder()
+                        .prefix(prefix)
+                        .time(time)
                         .build();
                 final Val v = getVal();
                 writer.addTemporalState(doc, new TemporalState(k, v));
@@ -729,7 +731,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                             final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                                     .keyStart(longKey)
                                     .keyEnd(longKey)
-                                    .effectiveTime(time)
+                                    .time(time)
                                     .build();
                             final Val v = getVal();
                             writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
@@ -763,7 +765,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                             .keyStart(rangeFrom)
                             .keyEnd(rangeTo)
-                            .effectiveTime(time)
+                            .time(time)
                             .build();
                     final Val v = getVal();
                     writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
@@ -773,37 +775,68 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private void addSession(final PlanBDoc doc) {
-        if (key == null) {
-            error(LogUtil.message("Session 'key' is null for {}", mapName));
-        } else if (time == null) {
-            error(LogUtil.message("Session 'time' is null for {}", mapName));
-        } else {
-            final Session.Builder sessionBuilder = Session
-                    .builder()
-                    .key(ValString.create(key))
-                    .start(time)
-                    .end(time);
-            if (timeout != null) {
-                sessionBuilder.end(time.plus(timeout));
-            }
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Session 'time' is null for {}", mapName));
+            } else {
+                final Session.Builder sessionBuilder = Session
+                        .builder()
+                        .prefix(prefix)
+                        .start(time)
+                        .end(time);
+                if (timeout != null) {
+                    sessionBuilder.end(time.plus(timeout));
+                }
 
-            LOGGER.trace("Putting session {} into table {}", key, mapName);
-            writer.addSession(doc, sessionBuilder.build());
+                LOGGER.trace("Putting session {} into table {}", sessionBuilder.build(), mapName);
+                writer.addSession(doc, sessionBuilder.build());
+            }
         }
     }
 
     private void addHistogramValue(final PlanBDoc doc) {
-        if (currentTags == null || currentTags.isEmpty()) {
-            error(LogUtil.message("Histogram 'tags' are null or empty for {}", mapName));
-        } else if (time == null) {
-            error(LogUtil.message("Histogram 'time' is null for {}", mapName));
-        } else {
-            final Tags tags = new Tags(currentTags);
-            final HistogramKey histogramKey = new HistogramKey(tags, time);
-            final HistogramValue histogramValue = new HistogramValue(histogramKey, Long.parseLong(currentValue));
-            LOGGER.trace("Putting histogram value {} into table {}", key, mapName);
-            writer.addHistogramValue(doc, histogramValue);
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Histogram 'time' is null for {}", mapName));
+            } else {
+                final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
+                LOGGER.trace("Putting histogram value {} into table {}", temporalKey, mapName);
+                writer.addHistogramValue(doc, temporalValue);
+            }
         }
+    }
+
+    private void addMetricValue(final PlanBDoc doc) {
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Metric 'time' is null for {}", mapName));
+            } else {
+                final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
+                LOGGER.trace("Putting metric value {} into table {}", temporalKey, mapName);
+                writer.addMetricValue(doc, temporalValue);
+            }
+        }
+    }
+
+    private KeyPrefix getKeyPrefix() {
+        final KeyPrefix prefix;
+
+        if (currentTags == null || currentTags.isEmpty()) {
+            if (key == null) {
+                error(LogUtil.message("Histogram 'key' is null for {}", mapName));
+                prefix = null;
+            } else {
+                prefix = KeyPrefix.create(key);
+            }
+        } else {
+            prefix = KeyPrefix.create(currentTags);
+        }
+        return prefix;
     }
 
     private Val getVal() {

@@ -18,8 +18,8 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.SessionKeySchema;
-import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.TemporalPrecision;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -37,7 +37,7 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
     private final Widget widget;
 
     @UiField
-    SelectionBox<StateKeyType> stateKeyType;
+    SelectionBox<KeyType> keyType;
     @UiField
     SelectionBox<HashLength> hashLength;
     @UiField
@@ -48,8 +48,8 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
     @Inject
     public SessionKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        stateKeyType.addItems(StateKeyType.ORDERED_LIST);
-        stateKeyType.setValue(StateKeyType.VARIABLE);
+        keyType.addItems(KeyType.ORDERED_LIST);
+        keyType.setValue(KeyType.VARIABLE);
         hashLength.addItems(HashLength.ORDERED_LIST);
         hashLength.setValue(HashLength.INTEGER);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
@@ -64,13 +64,13 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     @Override
     public SessionKeySchema getKeySchema() {
-        return new SessionKeySchema(stateKeyType.getValue(), hashLength.getValue(), temporalPrecision.getValue());
+        return new SessionKeySchema(keyType.getValue(), hashLength.getValue(), temporalPrecision.getValue());
     }
 
     @Override
     public void setKeySchema(final SessionKeySchema keySchema) {
         if (keySchema != null) {
-            stateKeyType.setValue(keySchema.getStateKeyType());
+            keyType.setValue(keySchema.getKeyType());
             hashLength.setValue(keySchema.getHashLength());
             temporalPrecision.setValue(keySchema.getTemporalPrecision());
         }
@@ -79,20 +79,20 @@ public class SessionKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        stateKeyType.setEnabled(!readOnly);
+        keyType.setEnabled(!readOnly);
         hashLength.setEnabled(!readOnly);
         temporalPrecision.setEnabled(!readOnly);
     }
 
     private void onStateKeyTypeChange() {
-        final StateKeyType value = stateKeyType.getValue();
+        final KeyType value = keyType.getValue();
         hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, StateKeyType.HASH_LOOKUP) ||
-                               Objects.equals(value, StateKeyType.VARIABLE)));
+                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                               Objects.equals(value, KeyType.VARIABLE)));
     }
 
-    @UiHandler("stateKeyType")
-    public void onStateKeyType(final ValueChangeEvent<StateKeyType> event) {
+    @UiHandler("keyType")
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
         onStateKeyTypeChange();
         getUiHandlers().onChange();
     }

@@ -1,7 +1,7 @@
 package stroom.planb.impl.db.session;
 
 import stroom.planb.impl.db.PlanBValue;
-import stroom.query.language.functions.Val;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,28 +11,28 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Instant;
 
-@JsonPropertyOrder({"key", "start", "end"})
+@JsonPropertyOrder({"prefix", "start", "end"})
 @JsonInclude(Include.NON_NULL)
 public class Session implements PlanBValue {
 
     @JsonProperty
-    private final Val key;
+    private final KeyPrefix prefix;
     @JsonProperty
     private final Instant start;
     @JsonProperty
     private final Instant end;
 
     @JsonCreator
-    public Session(@JsonProperty("key") final Val key,
+    public Session(@JsonProperty("prefix") final KeyPrefix prefix,
                    @JsonProperty("start") final Instant start,
                    @JsonProperty("end") final Instant end) {
-        this.key = key;
+        this.prefix = prefix;
         this.start = start;
         this.end = end;
     }
 
-    public Val getKey() {
-        return key;
+    public KeyPrefix getPrefix() {
+        return prefix;
     }
 
     public Instant getStart() {
@@ -53,7 +53,7 @@ public class Session implements PlanBValue {
 
     public static class Builder {
 
-        private Val key;
+        private KeyPrefix prefix;
         private Instant start;
         private Instant end;
 
@@ -61,13 +61,13 @@ public class Session implements PlanBValue {
         }
 
         private Builder(final Session session) {
-            this.key = session.key;
+            this.prefix = session.prefix;
             this.start = session.start;
             this.end = session.end;
         }
 
-        public Builder key(final Val key) {
-            this.key = key;
+        public Builder prefix(final KeyPrefix prefix) {
+            this.prefix = prefix;
             return this;
         }
 
@@ -82,7 +82,7 @@ public class Session implements PlanBValue {
         }
 
         public Session build() {
-            return new Session(key, start, end);
+            return new Session(prefix, start, end);
         }
     }
 }

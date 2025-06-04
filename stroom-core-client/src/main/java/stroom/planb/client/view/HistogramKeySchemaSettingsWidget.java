@@ -18,9 +18,10 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
-import stroom.planb.shared.HistogramKeyType;
-import stroom.planb.shared.HistogramTemporalResolution;
+import stroom.planb.shared.KeyType;
+import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -31,6 +32,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import java.util.Objects;
+
 public class HistogramKeySchemaSettingsWidget
         extends AbstractSettingsWidget
         implements HistogramKeySchemaSettingsView {
@@ -40,22 +43,29 @@ public class HistogramKeySchemaSettingsWidget
     private final TimeZoneWidget timeZoneWidget;
 
     @UiField
-    SelectionBox<HistogramKeyType> keyType;
+    SelectionBox<KeyType> keyType;
     @UiField
-    SelectionBox<HistogramTemporalResolution> temporalResolution;
+    SelectionBox<HashLength> hashLength;
+    @UiField
+    SelectionBox<TemporalResolution> temporalResolution;
     @UiField
     SimplePanel timeZone;
+
+    private boolean readOnly;
 
     @Inject
     public HistogramKeySchemaSettingsWidget(final Binder binder,
                                             final TimeZoneWidget timeZoneWidget) {
         this.timeZoneWidget = timeZoneWidget;
         widget = binder.createAndBindUi(this);
-        keyType.addItems(HistogramKeyType.ORDERED_LIST);
-        keyType.setValue(HistogramKeyType.TAGS);
-        temporalResolution.addItems(HistogramTemporalResolution.ORDERED_LIST);
-        temporalResolution.setValue(HistogramTemporalResolution.SECOND);
+        keyType.addItems(KeyType.ORDERED_LIST);
+        keyType.setValue(KeyType.TAGS);
+        hashLength.addItems(HashLength.ORDERED_LIST);
+        hashLength.setValue(HashLength.INTEGER);
+        temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
+        temporalResolution.setValue(TemporalResolution.SECOND);
         timeZone.setWidget(timeZoneWidget.asWidget());
+        onKeyTypeChange();
     }
 
     @Override
@@ -72,31 +82,52 @@ public class HistogramKeySchemaSettingsWidget
     @Override
     public HistogramKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
-        return new HistogramKeySchema(keyType.getValue(), temporalResolution.getValue(), userTimeZone);
+        return new HistogramKeySchema(
+                keyType.getValue(),
+                hashLength.getValue(),
+                temporalResolution.getValue(),
+                userTimeZone);
     }
 
     @Override
     public void setKeySchema(final HistogramKeySchema keySchema) {
         if (keySchema != null) {
             keyType.setValue(keySchema.getKeyType());
+            hashLength.setValue(keySchema.getHashLength());
             temporalResolution.setValue(keySchema.getTemporalResolution());
             timeZoneWidget.setUserTimeZone(keySchema.getTimeZone());
         }
+        onKeyTypeChange();
     }
 
     public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
         keyType.setEnabled(!readOnly);
+        hashLength.setEnabled(!readOnly);
         temporalResolution.setEnabled(!readOnly);
         timeZoneWidget.onReadOnly(readOnly);
     }
 
+    private void onKeyTypeChange() {
+        final KeyType value = keyType.getValue();
+        hashLength.setEnabled(!readOnly &&
+                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                               Objects.equals(value, KeyType.VARIABLE)));
+    }
+
     @UiHandler("keyType")
-    public void onKeyType(final ValueChangeEvent<HistogramKeyType> event) {
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+        onKeyTypeChange();
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("hashLength")
+    public void onHashLength(final ValueChangeEvent<HashLength> event) {
         getUiHandlers().onChange();
     }
 
     @UiHandler("temporalResolution")
-    public void onTemporalResolution(final ValueChangeEvent<HistogramTemporalResolution> event) {
+    public void onTemporalResolution(final ValueChangeEvent<TemporalResolution> event) {
         getUiHandlers().onChange();
     }
 

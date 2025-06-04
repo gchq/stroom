@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "stateKeyType",
+        "keyType",
         "hashLength",
         "temporalPrecision"
 })
@@ -22,10 +22,10 @@ public class SessionKeySchema extends StateKeySchema {
     private final TemporalPrecision temporalPrecision;
 
     @JsonCreator
-    public SessionKeySchema(@JsonProperty("stateKeyType") final StateKeyType stateKeyType,
+    public SessionKeySchema(@JsonProperty("keyType") final KeyType keyType,
                             @JsonProperty("hashLength") final HashLength hashLength,
                             @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
-        super(stateKeyType, hashLength);
+        super(keyType, hashLength);
         this.temporalPrecision = temporalPrecision;
     }
 
@@ -62,7 +62,7 @@ public class SessionKeySchema extends StateKeySchema {
 
     public static class Builder extends AbstractBuilder<SessionKeySchema, Builder> {
 
-        private StateKeyType stateKeyType = StateKeyType.VARIABLE;
+        private KeyType keyType = KeyType.VARIABLE;
         private HashLength hashLength = HashLength.INTEGER;
         private TemporalPrecision temporalPrecision;
 
@@ -70,13 +70,13 @@ public class SessionKeySchema extends StateKeySchema {
         }
 
         public Builder(final SessionKeySchema schema) {
-            this.stateKeyType = schema.stateKeyType;
+            this.keyType = schema.keyType;
             this.hashLength = schema.hashLength;
             this.temporalPrecision = schema.temporalPrecision;
         }
 
-        public Builder stateKeyType(final StateKeyType stateKeyType) {
-            this.stateKeyType = stateKeyType;
+        public Builder keyType(final KeyType keyType) {
+            this.keyType = keyType;
             return self();
         }
 
@@ -98,7 +98,7 @@ public class SessionKeySchema extends StateKeySchema {
         @Override
         public SessionKeySchema build() {
             return new SessionKeySchema(
-                    stateKeyType,
+                    keyType,
                     hashLength,
                     temporalPrecision);
         }

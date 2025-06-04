@@ -1,6 +1,6 @@
 package stroom.planb.impl.db;
 
-import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
+import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;

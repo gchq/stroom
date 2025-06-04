@@ -12223,25 +12223,6 @@ components:
         version:
           type: integer
           format: int32
-    HistogramKey:
-      type: object
-      properties:
-        tags:
-          $ref: "#/components/schemas/Tags"
-        time:
-          type: string
-          format: date-time
-    HistogramValue:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/PlanBValue"
-      - type: object
-        properties:
-          key:
-            $ref: "#/components/schemas/HistogramKey"
-          value:
-            type: integer
-            format: int64
     HoppingWindow:
       type: object
       allOf:
@@ -12658,15 +12639,24 @@ components:
     Key:
       type: object
       properties:
-        effectiveTime:
-          type: string
-          format: date-time
         keyEnd:
           type: integer
           format: int64
         keyStart:
           type: integer
           format: int64
+        time:
+          type: string
+          format: date-time
+    KeyPrefix:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        val:
+          $ref: "#/components/schemas/Val"
     KeyValueInputComponentSettings:
       type: object
       allOf:
@@ -13739,6 +13729,7 @@ components:
           - TEMPORAL_RANGED_STATE
           - SESSION
           - HISTOGRAM
+          - METRIC
         type:
           type: string
         updateTimeMs:
@@ -15813,8 +15804,8 @@ components:
           end:
             type: string
             format: date-time
-          key:
-            $ref: "#/components/schemas/Val"
+          prefix:
+            $ref: "#/components/schemas/KeyPrefix"
           start:
             type: string
             format: date-time
@@ -15850,7 +15841,7 @@ components:
           enum:
           - INTEGER
           - LONG
-        stateKeyType:
+        keyType:
           type: string
           enum:
           - BOOLEAN
@@ -15864,6 +15855,7 @@ components:
           - UID_LOOKUP
           - HASH_LOOKUP
           - VARIABLE
+          - TAGS
         temporalPrecision:
           type: string
           enum:
@@ -16268,7 +16260,7 @@ components:
       - type: object
         properties:
           key:
-            $ref: "#/components/schemas/Val"
+            $ref: "#/components/schemas/KeyPrefix"
           value:
             $ref: "#/components/schemas/Val"
     StateDoc:
@@ -16346,7 +16338,7 @@ components:
           enum:
           - INTEGER
           - LONG
-        stateKeyType:
+        keyType:
           type: string
           enum:
           - BOOLEAN
@@ -16360,6 +16352,7 @@ components:
           - UID_LOOKUP
           - HASH_LOOKUP
           - VARIABLE
+          - TAGS
     StateSettings:
       type: object
       allOf:
@@ -17030,13 +17023,6 @@ components:
           type: string
         tagValue:
           $ref: "#/components/schemas/Val"
-    Tags:
-      type: object
-      properties:
-        tags:
-          type: array
-          items:
-            $ref: "#/components/schemas/Tag"
     TaskId:
       type: object
       properties:
@@ -17085,6 +17071,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
+    TemporalKey:
+      type: object
+      properties:
+        prefix:
+          $ref: "#/components/schemas/KeyPrefix"
+        time:
+          type: string
+          format: date-time
     TemporalRangeKeySchema:
       type: object
       properties:
@@ -17133,7 +17127,7 @@ components:
       - type: object
         properties:
           key:
-            $ref: "#/components/schemas/Key"
+            $ref: "#/components/schemas/TemporalKey"
           value:
             $ref: "#/components/schemas/Val"
     TemporalStateKeySchema:
@@ -17144,7 +17138,7 @@ components:
           enum:
           - INTEGER
           - LONG
-        stateKeyType:
+        keyType:
           type: string
           enum:
           - BOOLEAN
@@ -17158,6 +17152,7 @@ components:
           - UID_LOOKUP
           - HASH_LOOKUP
           - VARIABLE
+          - TAGS
         temporalPrecision:
           type: string
           enum:
@@ -17179,6 +17174,17 @@ components:
             $ref: "#/components/schemas/TemporalStateKeySchema"
           valueSchema:
             $ref: "#/components/schemas/StateValueSchema"
+    TemporalValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/TemporalKey"
+          value:
+            type: integer
+            format: int64
     TerminateTaskProgressRequest:
       type: object
       properties:

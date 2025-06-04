@@ -8,7 +8,8 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.db.histogram.HistogramDb;
-import stroom.planb.impl.db.histogram.HistogramValue;
+import stroom.planb.impl.db.histogram.TemporalValue;
+import stroom.planb.impl.db.metric.MetricDb;
 import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.session.Session;
@@ -165,9 +166,14 @@ public class ShardWriters {
                 db.insert(writer, session);
             }
 
-            public void addHistogramValue(final HistogramValue histogramValue) {
+            public void addHistogramValue(final TemporalValue temporalValue) {
                 final HistogramDb db = (HistogramDb) lmdb;
-                db.insert(writer, histogramValue);
+                db.insert(writer, temporalValue);
+            }
+
+            public void addMetricValue(final TemporalValue temporalValue) {
+                final MetricDb db = (MetricDb) lmdb;
+                db.insert(writer, temporalValue);
             }
 
             public boolean isSynchroniseMerge() {
@@ -207,8 +213,13 @@ public class ShardWriters {
         }
 
         public void addHistogramValue(final PlanBDoc doc,
-                                      final HistogramValue histogramValue) {
-            getWriter(doc).addHistogramValue(histogramValue);
+                                      final TemporalValue temporalValue) {
+            getWriter(doc).addHistogramValue(temporalValue);
+        }
+
+        public void addMetricValue(final PlanBDoc doc,
+                                   final TemporalValue temporalValue) {
+            getWriter(doc).addMetricValue(temporalValue);
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {

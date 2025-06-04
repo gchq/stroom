@@ -22,16 +22,16 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.db.histogram.HistogramDb;
 import stroom.planb.impl.db.histogram.HistogramFields;
-import stroom.planb.impl.db.histogram.HistogramKey;
-import stroom.planb.impl.db.histogram.HistogramValue;
-import stroom.planb.impl.db.histogram.Tag;
-import stroom.planb.impl.db.histogram.Tags;
+import stroom.planb.impl.db.histogram.TemporalValue;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.keyprefix.Tag;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.HistogramKeySchema;
-import stroom.planb.shared.HistogramKeyType;
 import stroom.planb.shared.HistogramSettings;
-import stroom.planb.shared.HistogramTemporalResolution;
-import stroom.planb.shared.HistogramValueMax;
 import stroom.planb.shared.HistogramValueSchema;
+import stroom.planb.shared.KeyType;
+import stroom.planb.shared.MaxValueSize;
+import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -68,20 +68,20 @@ class TestHistogramDb {
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
-            new KeyFunction(HistogramKeyType.TAGS.name(), HistogramKeyType.TAGS,
+            new KeyFunction(KeyType.TAGS.name(), KeyType.TAGS,
                     i -> getKey(refTime)));
 
-    private Tags getTags() {
+    private KeyPrefix getTags() {
         final List<Tag> tags = new ArrayList<>();
         tags.add(new Tag("captain", ValString.create("kirk")));
         tags.add(new Tag("mr", ValString.create("spock")));
         tags.add(new Tag("dr", ValString.create("mccoy")));
         tags.add(new Tag("lieutenant", ValString.create("uhura")));
-        return new Tags(tags);
+        return KeyPrefix.create(tags);
     }
 
-    private HistogramKey getKey(final Instant time) {
-        return new HistogramKey(getTags(), time);
+    private TemporalKey getKey(final Instant time) {
+        return new TemporalKey(getTags(), time);
     }
 
     @Test
@@ -96,11 +96,11 @@ class TestHistogramDb {
                 true)) {
             assertThat(db.count()).isEqualTo(1);
 
-            final Tags tags = getTags();
+            final KeyPrefix tags = getTags();
             // Check exact time states.
             checkHistogram(db, tags, refTime, 1L);
 
-            final HistogramKey key = getKey(refTime);
+            final TemporalKey key = getKey(refTime);
             final Long value = db.get(key);
             assertThat(value).isNotNull();
             assertThat(value).isEqualTo(1L);
@@ -108,7 +108,7 @@ class TestHistogramDb {
             final FieldIndex fieldIndex = new FieldIndex();
             fieldIndex.create(HistogramFields.KEY);
             fieldIndex.create(HistogramFields.TIME);
-            fieldIndex.create(HistogramFields.DURATION);
+            fieldIndex.create(HistogramFields.RESOLUTION);
             fieldIndex.create(HistogramFields.VALUE);
             final List<Val[]> results = new ArrayList<>();
             final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
@@ -122,19 +122,19 @@ class TestHistogramDb {
             assertThat(results.getFirst()[0].toString())
                     .isEqualTo("captain=kirk, dr=mccoy, lieutenant=uhura, mr=spock");
             assertThat(results.getFirst()[1].toString()).isEqualTo("2000-01-01T00:00:00.000Z");
-            assertThat(results.getFirst()[2].toString()).isEqualTo("1s");
+            assertThat(results.getFirst()[2].toString()).isEqualTo("Second");
             assertThat(results.getFirst()[3].toString()).isEqualTo("1");
         }
     }
 
     @Test
     void testGetHistogram(@TempDir Path tempDir) {
-        final Tags tags = getTags();
+        final KeyPrefix tags = getTags();
         final Instant time = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final HistogramDb db = HistogramDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.write(writer -> {
-                final HistogramKey k = getKey(time);
-                db.insert(writer, new HistogramValue(k, 1L));
+                final TemporalKey k = getKey(time);
+                db.insert(writer, new TemporalValue(k, 1L));
             });
         }
 
@@ -176,7 +176,7 @@ class TestHistogramDb {
 //            for (final ValueFunction valueFunction : HistogramValueTestUtil.getValueFunctions()) {
 //            for (final HistogramPeriod period : HistogramPeriod.values()) {
 
-            HistogramTemporalResolution temporalResolution = HistogramTemporalResolution.HOUR;
+            TemporalResolution temporalResolution = TemporalResolution.HOUR;
             tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
 //                                                      ", Value type = " + valueFunction +
                                               ", Temporal resolution = " + temporalResolution,
@@ -188,7 +188,7 @@ class TestHistogramDb {
                                         .temporalResolution(temporalResolution)
                                         .build())
                                 .valueSchema(new HistogramValueSchema.Builder()
-                                        .valueType(HistogramValueMax.TWO)
+                                        .valueType(MaxValueSize.TWO)
                                         .build())
                                 .build();
 
@@ -282,7 +282,7 @@ class TestHistogramDb {
     private void testWrite(final Path dbDir,
                            final HistogramSettings settings,
                            final int insertRows,
-                           final Function<Integer, HistogramKey> keyFunction,
+                           final Function<Integer, TemporalKey> keyFunction,
                            final Function<Integer, Long> valueFunction) {
         try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
@@ -291,13 +291,13 @@ class TestHistogramDb {
 
     private void insertData(final HistogramDb db,
                             final int rows,
-                            final Function<Integer, HistogramKey> keyFunction,
+                            final Function<Integer, TemporalKey> keyFunction,
                             final Function<Integer, Long> valueFunction) {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
-                final HistogramKey k = keyFunction.apply(i);
+                final TemporalKey k = keyFunction.apply(i);
                 final Long v = valueFunction.apply(i);
-                db.insert(writer, new HistogramValue(k, v));
+                db.insert(writer, new TemporalValue(k, v));
             }
         });
     }
@@ -305,11 +305,11 @@ class TestHistogramDb {
     private void testSimpleRead(final Path dbDir,
                                 final HistogramSettings settings,
                                 final int rows,
-                                final Function<Integer, HistogramKey> keyFunction,
+                                final Function<Integer, TemporalKey> keyFunction,
                                 final Function<Integer, Long> valueFunction) {
         try (final HistogramDb db = HistogramDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
             for (int i = 0; i < rows; i++) {
-                final HistogramKey key = keyFunction.apply(i);
+                final TemporalKey key = keyFunction.apply(i);
                 final Long value = db.get(key);
                 assertThat(value).isNotNull();
                 assertThat(value).isEqualTo(valueFunction.apply(i));
@@ -325,24 +325,24 @@ class TestHistogramDb {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
                 final Instant time = refTime.plusSeconds(i * deltaSeconds);
-                final HistogramKey k = getKey(time);
-                db.insert(writer, new HistogramValue(k, delta));
+                final TemporalKey k = getKey(time);
+                db.insert(writer, new TemporalValue(k, delta));
             }
         });
     }
 
     private void checkHistogram(final HistogramDb db,
-                                final Tags tags,
+                                final KeyPrefix tags,
                                 final Instant time,
                                 final Long expected) {
-        final HistogramKey key = new HistogramKey(tags, time);
+        final TemporalKey key = new TemporalKey(tags, time);
         final Long state = db.get(key);
         assertThat(state).isEqualTo(expected);
     }
 
     private record KeyFunction(String description,
-                               HistogramKeyType keyType,
-                               Function<Integer, HistogramKey> function) {
+                               KeyType keyType,
+                               Function<Integer, TemporalKey> function) {
 
         @Override
         public String toString() {

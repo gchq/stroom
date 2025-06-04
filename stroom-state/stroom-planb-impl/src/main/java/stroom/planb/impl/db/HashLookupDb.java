@@ -2,9 +2,9 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.LmdbKeySequence;
-import stroom.planb.impl.db.hash.Hash;
-import stroom.planb.impl.db.hash.HashClashCount;
-import stroom.planb.impl.db.hash.HashFactory;
+import stroom.planb.impl.serde.hash.Hash;
+import stroom.planb.impl.serde.hash.HashClashCount;
+import stroom.planb.impl.serde.hash.HashFactory;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;

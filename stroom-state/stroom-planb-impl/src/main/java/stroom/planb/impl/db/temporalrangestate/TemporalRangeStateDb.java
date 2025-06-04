@@ -13,17 +13,22 @@ import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.serde.time.DayTimeSerde;
-import stroom.planb.impl.db.serde.time.HourTimeSerde;
-import stroom.planb.impl.db.serde.time.MillisecondTimeSerde;
-import stroom.planb.impl.db.serde.time.MinuteTimeSerde;
-import stroom.planb.impl.db.serde.time.NanoTimeSerde;
-import stroom.planb.impl.db.serde.time.SecondTimeSerde;
-import stroom.planb.impl.db.serde.time.TimeSerde;
-import stroom.planb.impl.db.serde.valtime.ValTime;
-import stroom.planb.impl.db.serde.valtime.ValTimeSerde;
-import stroom.planb.impl.db.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeState.Key;
+import stroom.planb.impl.serde.temporalrangestate.ByteRangeKeySerde;
+import stroom.planb.impl.serde.temporalrangestate.IntegerRangeKeySerde;
+import stroom.planb.impl.serde.temporalrangestate.LongRangeKeySerde;
+import stroom.planb.impl.serde.temporalrangestate.ShortRangeKeySerde;
+import stroom.planb.impl.serde.temporalrangestate.TemporalRangeKeySerde;
+import stroom.planb.impl.serde.time.DayTimeSerde;
+import stroom.planb.impl.serde.time.HourTimeSerde;
+import stroom.planb.impl.serde.time.MillisecondTimeSerde;
+import stroom.planb.impl.serde.time.MinuteTimeSerde;
+import stroom.planb.impl.serde.time.NanoTimeSerde;
+import stroom.planb.impl.serde.time.SecondTimeSerde;
+import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.valtime.ValTime;
+import stroom.planb.impl.serde.valtime.ValTimeSerde;
+import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeType;
 import stroom.planb.shared.StateValueSchema;
@@ -258,8 +263,8 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                             final Key key = keySerde.read(readTxn, kv.key());
                             if (key.getKeyEnd() < request.key()) {
                                 return result;
-                            } else if ((key.getEffectiveTime().isBefore(request.effectiveTime()) ||
-                                        key.getEffectiveTime().equals(request.effectiveTime())) &&
+                            } else if ((key.getTime().isBefore(request.effectiveTime()) ||
+                                        key.getTime().equals(request.effectiveTime())) &&
                                        key.getKeyStart() <= request.key()) {
                                 final Val value = valueSerde.read(readTxn, kv.val()).val();
                                 result = new TemporalRangeState(key, value);
@@ -282,7 +287,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                     final Key key = keySerde.read(readTxn, kv.key().duplicate());
                     final Instant time;
                     if (useStateTime) {
-                        time = key.getEffectiveTime();
+                        time = key.getTime();
                     } else {
                         final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
                         time = valTime.insertTime();
@@ -323,7 +328,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
                     final Key key = keySerde.read(readTxn, kv.key().duplicate());
                     final ValTime valTime = valueSerde.read(readTxn, kv.val().duplicate());
                     TemporalRangeState state = new TemporalRangeState(key, valTime.val());
-                    final Instant time = key.getEffectiveTime();
+                    final Instant time = key.getTime();
 
                     if (lastState != null &&
                         Objects.equals(lastState.key().getKeyStart(), key.getKeyStart()) &&
@@ -396,7 +401,7 @@ public class TemporalRangeStateDb extends AbstractDb<Key, Val> {
             converters[i] = switch (fields[i]) {
                 case TemporalRangeStateFields.KEY_START -> kv -> ValLong.create(kv.getKey().getKeyStart());
                 case TemporalRangeStateFields.KEY_END -> kv -> ValLong.create(kv.getKey().getKeyEnd());
-                case TemporalRangeStateFields.EFFECTIVE_TIME -> kv -> ValDate.create(kv.getKey().getEffectiveTime());
+                case TemporalRangeStateFields.EFFECTIVE_TIME -> kv -> ValDate.create(kv.getKey().getTime());
                 case TemporalRangeStateFields.VALUE_TYPE -> kv -> ValString.create(kv.getValue().type().toString());
                 case TemporalRangeStateFields.VALUE -> LazyKV::getValue;
                 default -> kv -> ValNull.INSTANCE;
