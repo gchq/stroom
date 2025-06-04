@@ -508,19 +508,42 @@ public class GitRepoStorageService {
         this.ensureDirectoryExists(gitWorkDir);
         this.deleteFileTree(gitWorkDir, false);
 
-        try (final Git git = Git.cloneRepository()
-                .setURI(gitRepoDoc.getUrl())
-                .setDirectory(gitWorkDir.toFile())
-                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
-                .setDepth(1)
-                .setBranch(gitRepoDoc.getBranch())
-                .setCloneAllBranches(false)
-                .call()) {
+        final String gitCommit = gitRepoDoc.getCommit();
+        if (gitCommit == null || gitCommit.isEmpty()) {
+            // No commit data so just do clone
+            try (final Git git = Git.cloneRepository()
+                    .setURI(gitRepoDoc.getUrl())
+                    .setDirectory(gitWorkDir.toFile())
+                    .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                    .setDepth(1)
+                    .setBranch(gitRepoDoc.getBranch())
+                    .setCloneAllBranches(false)
+                    .call()) {
 
-            // No code - close automatically
-        } catch (final GitAPIException e) {
-            throw new IOException("Git error cloning repository "
-                                  + gitRepoDoc.getUrl(), e);
+                // No code - close automatically
+            } catch (final GitAPIException e) {
+                throw new IOException("Git error cloning repository "
+                                      + gitRepoDoc.getUrl(), e);
+            }
+        } else {
+            // We want a particular commit so get everything - all commits
+            try (Git git = Git.cloneRepository()
+                    .setURI(gitRepoDoc.getUrl())
+                    .setDirectory(gitWorkDir.toFile())
+                    .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                    .setBranch(gitRepoDoc.getBranch())
+                    .call()) {
+                // Ok that worked; now find the commit in the repo
+                git.checkout()
+                        .setName(gitCommit)
+                        .call();
+            } catch (GitAPIException e) {
+                LOGGER.error("Error cloning git commit '{}': {}", gitCommit, e.getMessage(), e);
+                throw new IOException("Git error cloning / checking out commit '"
+                                      + gitCommit
+                                      + "': " + e.getMessage(), e);
+            }
+
         }
     }
 

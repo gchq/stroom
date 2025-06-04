@@ -74,6 +74,7 @@ public class GitRepoSettingsPresenter
         this.getView().setPassword(doc.getPassword());
         this.getView().setBranch(doc.getBranch());
         this.getView().setPath(doc.getPath());
+        this.getView().setCommit(doc.getCommit());
         this.getView().setAutoPush(doc.isAutoPush());
     }
 
@@ -84,6 +85,7 @@ public class GitRepoSettingsPresenter
         doc.setPassword(this.getView().getPassword());
         doc.setBranch(this.getView().getBranch());
         doc.setPath(this.getView().getPath());
+        doc.setCommit(this.getView().getCommit());
         doc.setAutoPush(this.getView().isAutoPush());
         return doc;
     }
@@ -184,6 +186,10 @@ public class GitRepoSettingsPresenter
         String getPath();
 
         void setPath(final String directory);
+
+        String getCommit();
+
+        void setCommit(String commit);
 
         String getCommitMessage();
 
