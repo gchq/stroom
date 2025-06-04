@@ -1,7 +1,16 @@
 package stroom.appstore.impl;
 
 import stroom.appstore.api.AppStoreConfig;
+import stroom.appstore.shared.AppStoreResponse;
+import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
+import stroom.gitrepo.api.GitRepoStore;
+import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.util.shared.DocPath;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.appstore.shared.AppStoreContentPack;
@@ -36,6 +45,11 @@ public class AppStoreResourceImpl implements AppStoreResource {
     /** Where we get configuration from */
     private final AppStoreConfig config;
 
+    /** The store used to create a GitRepo */
+    private final GitRepoStore gitRepoStore;
+
+    private final ExplorerService explorerService;
+
     /** The size of the buffer used to copy stuff around */
     private static final int IO_BUF_SIZE = 4096;
 
@@ -48,13 +62,18 @@ public class AppStoreResourceImpl implements AppStoreResource {
      */
     @SuppressWarnings("unused")
     @Inject
-    public AppStoreResourceImpl(final AppStoreConfig config) {
+    public AppStoreResourceImpl(final AppStoreConfig config,
+                                GitRepoStore gitRepoStore,
+                                ExplorerService explorerService,
+                                ExplorerNodeService explorerNodeService) {
         this.config = config;
+        this.gitRepoStore = gitRepoStore;
+        this.explorerService = explorerService;
     }
 
     /**
      * REST method to return the list of content packs to the client.
-     *
+     * <br/>
      * Gets called repeatedly by the client, every minute or so.
      *
      * @return A list of content packs. Never returns null but may
@@ -134,6 +153,71 @@ public class AppStoreResourceImpl implements AppStoreResource {
                         e);
             }
         }
+    }
+
+    /**
+     * Checks to see if a GitRepo exists that matches the content pack.
+     * Not a full check to see if there is a match; just compare
+     * Git URL, branch and path to try to avoid duplicate objects.
+     * @param contentPack The content pack to check for a match.
+     * @return true if the GitRepo already exists; false if not.
+     */
+    @Override
+    public boolean exists(AppStoreContentPack contentPack) {
+        List<DocRef> existingDocRefs = gitRepoStore.list();
+        for (var existingDocRef : existingDocRefs) {
+            GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
+            if (contentPack.matches(existingGitRepoDoc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates a GitRepoDoc from a Content Pack.
+     * @param contentPack The content pack that holds the data for the GitRepoDoc.
+     */
+    @Override
+    public AppStoreResponse create(AppStoreContentPack contentPack) {
+        final AppStoreResponse response;
+
+        if (this.exists(contentPack)) {
+            LOGGER.error("Content pack already exists within Stroom");
+            response = new AppStoreResponse(false, "Content pack already exists");
+        } else {
+            try {
+                // Put the document into the Explorer Tree
+                LOGGER.info("Creating DocPath from '{}'", contentPack.getStroomPath());
+                DocPath docPathToGitRepo = DocPath.fromPathString(contentPack.getStroomPath());
+                ExplorerNode parentNode = explorerService.ensureFolderPath(docPathToGitRepo,
+                        PermissionInheritance.DESTINATION);
+                ExplorerNode gitRepoNode = explorerService.create(
+                        GitRepoDoc.TYPE,
+                        contentPack.getUiName(),
+                        parentNode,
+                        PermissionInheritance.DESTINATION);
+
+                // Update the GitRepoDoc
+                DocRef docRef = gitRepoNode.getDocRef();
+                GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
+                contentPack.updateSettingsIn(gitRepoDoc);
+                gitRepoStore.writeDocument(gitRepoDoc);
+
+                // TODO Refresh Explorer Tree
+
+                // TODO Pull if necessary
+
+                // Tell the user it worked
+                response = new AppStoreResponse(true,
+                        "Created '" + contentPack.getUiName() + "'");
+            } catch (RuntimeException e) {
+                LOGGER.error("Error creating GitRepo: {}", e.getMessage(), e);
+                throw e;
+            }
+        }
+
+        return response;
     }
 
 }

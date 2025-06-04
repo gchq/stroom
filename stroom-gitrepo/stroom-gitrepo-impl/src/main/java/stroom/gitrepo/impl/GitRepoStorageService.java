@@ -528,7 +528,7 @@ public class GitRepoStorageService {
      * Safely adds a subdirectory to the parent path given.
      * Ensures that the real path to the resulting 'subdirectory' starts
      * with the real path 'parent'.
-     * Note that the parent of the directory you are trying to resolve must
+     * Note that the 'parent' of the directory you are trying to resolve must
      * already exist on disk, so this isn't a general purpose function.
      * <p>
      * Package public static to allow testing.

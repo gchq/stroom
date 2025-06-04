@@ -1,28 +1,38 @@
 package stroom.appstore.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.appstore.shared.AppStoreContentPack;
 import stroom.data.table.client.Refreshable;
+import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.widget.button.client.Button;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.DecoratorPanel;
-import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasAutoHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 import javax.inject.Inject;
 
 public class AppStoreContentPackDetailsPresenter
     extends SimplePanel
-    implements Refreshable {
+    implements Refreshable, HasHandlers {
 
     /** Converts markdown to HTML */
     private final MarkdownConverter markdownConverter;
+
+    /** Connection to the server */
+    private final RestFactory restFactory;
 
     /** Displays the icon of the content pack */
     private final HTML lblIcon = new HTML();
@@ -54,6 +64,15 @@ public class AppStoreContentPackDetailsPresenter
     /** Description of content pack */
     private final HTML lblDetails = new HTML();
 
+    /** Button to create the GitRepo */
+    private final Button btnCreateGitRepo = new Button();
+
+    /** Checkbox to automatically pull on creation */
+    private final CheckBox chkPull = new CheckBox("Pull content after creation");
+
+    /** Current content pack selected. Might be null */
+    private AppStoreContentPack contentPack = null;
+
     /** Used when we need an empty string */
     private final static String EMPTY = "";
 
@@ -74,24 +93,30 @@ public class AppStoreContentPackDetailsPresenter
      */
     @SuppressWarnings("unused")
     @Inject
-    public AppStoreContentPackDetailsPresenter(MarkdownConverter markdownConverter) {
-        this.markdownConverter = markdownConverter;
+    public AppStoreContentPackDetailsPresenter(MarkdownConverter markdownConverter,
+                                               final RestFactory restFactory) {
 
-        DockPanel root = new DockPanel();
-        root.setSpacing(100);
+        this.markdownConverter = markdownConverter;
+        this.restFactory = restFactory;
+
+        HorizontalPanel pnlHorizontal = new HorizontalPanel();
+        pnlHorizontal.addStyleName("appstore-details");
 
         // Icon
-        lblIcon.setHeight("50px");
-        lblIcon.setWidth("50px");
-        lblIcon.setStyleName("svg-image", true);
-        root.add(lblIcon, DockPanel.WEST);
+        pnlHorizontal.add(lblIcon);
+
+        // Everything else is in a vertical stack
+        VerticalPanel pnlVertical = new VerticalPanel();
+        pnlVertical.addStyleName("appstore-details-vertical");
+        pnlHorizontal.add(pnlVertical);
 
         // Main layout
         FlexTable detailsTable = new FlexTable();
-        detailsTable.setCellSpacing(6);
+        detailsTable.addStyleName("appstore-details-table");
         FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
 
         // Title - name of content pack
+        lblName.addStyleName("appstore-details-heading");
         detailsTable.setWidget(0, 0, lblName);
         detailsFormatter.setColSpan(0, 0, 2);
         detailsFormatter.setHorizontalAlignment(0, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
@@ -123,14 +148,26 @@ public class AppStoreContentPackDetailsPresenter
 
         // Details
         lblDetails.setWordWrap(true);
-        detailsTable.setHTML(8, 0, "Details:");
+        detailsTable.setHTML(8, 0, "Info:");
         detailsTable.setWidget(8, 1, lblDetails);
 
+        // Buttons
+        btnCreateGitRepo.setText("Create Git Repo");
+        btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
+        FlexTable buttonTable = new FlexTable();
+        buttonTable.addStyleName("appstore-details-buttons");
+        buttonTable.setWidget(0, 0, btnCreateGitRepo);
+        buttonTable.setWidget(0, 1, chkPull);
+
         // Add the panels into the structure
-        DecoratorPanel decoratorPanel = new DecoratorPanel();
-        decoratorPanel.setWidget(detailsTable);
-        root.add(decoratorPanel, DockPanel.CENTER);
-        this.add(root);
+        pnlVertical.add(detailsTable);
+        pnlVertical.add(buttonTable);
+
+        // Add everything to the presenter's panel
+        this.add(pnlHorizontal);
+
+        // Ensure initial state is correct
+        this.setState();
     }
 
     public void refresh() {
@@ -143,6 +180,8 @@ public class AppStoreContentPackDetailsPresenter
      *           in which case the display will be blank.
      */
     public void setContentPack(AppStoreContentPack cp) {
+        // Store for click handler
+        this.contentPack = cp;
 
         if (cp == null) {
             this.lblIcon.setHTML(EMPTY);
@@ -174,6 +213,64 @@ public class AppStoreContentPackDetailsPresenter
             // Details get converted to markdown
             SafeHtml safeDetails = markdownConverter.convertMarkdownToHtml(cp.getDetails());
             this.lblDetails.setHTML(safeDetails);
+        }
+
+        // Update state
+        this.setState();
+    }
+
+    /**
+     * Sets the state of the UI components. Called when something
+     * relevant changes.
+     */
+    private void setState() {
+        if (contentPack != null) {
+            btnCreateGitRepo.setEnabled(true);
+
+            // Check if this has already been installed
+            // TODO This doesn't work :-(
+            restFactory
+                    .create(AppStorePresenter.APP_STORE_RESOURCE)
+                    .method(res -> res.exists(contentPack))
+                    .onSuccess(exists -> {
+                        btnCreateGitRepo.setEnabled(!exists);
+                    });
+        } else {
+            btnCreateGitRepo.setEnabled(false);
+        }
+
+    }
+
+    /**
+     * Event handler called when the button 'Create Git Repo' is clicked.
+     */
+    private void btnCreateGitRepoClick() {
+        if (contentPack != null) {
+            restFactory
+                    .create(AppStorePresenter.APP_STORE_RESOURCE)
+                    .method(res -> res.create(contentPack))
+                    .onSuccess(result -> {
+                        Window.alert("Success: " + result.isOk() + ": " + result.getMessage());
+
+                        // TODO This bit doesn't work yet - alerts are not shown
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(AppStoreContentPackDetailsPresenter.this,
+                                    "Creation success",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(AppStoreContentPackDetailsPresenter.this));
+                        } else {
+                            AlertEvent.fireError(AppStoreContentPackDetailsPresenter.this,
+                                    "Create failed",
+                                    result.getMessage(),
+                                    () -> RefreshExplorerTreeEvent.fire(AppStoreContentPackDetailsPresenter.this));
+                        }
+                    })
+                    .onFailure(restError -> {
+                        // TODO Fire error dialog
+                        Window.alert("Failure: " + restError.getMessage());
+                    })
+                    .taskMonitorFactory(btnCreateGitRepo)
+                    .exec();
         }
     }
 }

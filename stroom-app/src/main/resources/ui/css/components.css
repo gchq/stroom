@@ -2488,6 +2488,53 @@ button.main-menu svg {
     position: absolute;
 }
 
+/* Appstore CSS */
+.appstore-details {
+    width: 100%;
+}
+/* Details title */
+.appstore-details .appstore-details-heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+/* Set the SVG to 100x100px */
+.appstore-details svg {
+    height: 100px;
+    width: 100px;
+}
+/* Padding in details table */
+.appstore-details .appstore-details-table th, .appstore-details .appstore-details-table td {
+    padding: 5px;
+}
+/* Overall width of details table */
+.appstore-details table.appstore-details-table, .appstore-details .appstore-details-vertical {
+    width: 100%;
+    padding-right: 15px;
+}
+/* The box that the markdown is displayed in */
+.appstore-details div.markdown {
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    padding: 4px;
+    height: 200px;
+    overflow: auto;
+}
+/* Appstore Markdown - make it a bit smaller */
+.appstore-details .markdown {
+    font-size: 70%;
+}
+/* Buttons formatting */
+.appstore-details-buttons {
+    margin-top: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    width: 100%
+}
+.appstore-details-buttons .gwt-CheckBox {
+    vertical-align: center;
+}
 .multiChooser td {
     vertical-align: middle;
 }
