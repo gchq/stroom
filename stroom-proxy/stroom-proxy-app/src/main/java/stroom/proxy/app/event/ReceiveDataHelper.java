@@ -12,6 +12,8 @@ import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
+import stroom.security.api.CommonSecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
@@ -36,6 +38,7 @@ public class ReceiveDataHelper {
     private final RequestAuthenticator requestAuthenticator;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final CertificateExtractor certificateExtractor;
+    private final CommonSecurityContext commonSecurityContext;
     private final LogStream logStream;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final Timer receiveStreamTimer;
@@ -45,12 +48,14 @@ public class ReceiveDataHelper {
     public ReceiveDataHelper(final RequestAuthenticator requestAuthenticator,
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
+                             final CommonSecurityContext commonSecurityContext,
                              final LogStream logStream,
                              final ReceiptIdGenerator receiptIdGenerator,
                              final Metrics metrics) {
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.certificateExtractor = certificateExtractor;
+        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.receiptIdGenerator = receiptIdGenerator;
 
@@ -82,16 +87,22 @@ public class ReceiveDataHelper {
         try {
             receiveStreamTimer.time(() -> {
                 // Authorise request.
-                requestAuthenticator.authenticate(request, attributeMap);
+                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+                LOGGER.debug("process() - userIdentity: {}", userIdentity);
 
                 receiveHandleTimer.time(() -> {
                     // Test to see if we are going to accept this stream or drop the data.
-                    final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-                    if (attributeMapFilter.filter(attributeMap)) {
-                        consumeHandler.handle(request, attributeMap, receiptId);
-                    } else {
-                        dropHandler.handle(request, attributeMap, receiptId);
-                    }
+                    // We have authenticated the user to accept the data, but from here on,
+                    // we run as the processing user as the request user won't have perms to do
+                    // things like check feed status.
+                    commonSecurityContext.asProcessingUser(() -> {
+                        final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+                        if (attributeMapFilter.filter(attributeMap)) {
+                            consumeHandler.handle(request, attributeMap, receiptId);
+                        } else {
+                            dropHandler.handle(request, attributeMap, receiptId);
+                        }
+                    });
                 });
             });
         } catch (final Throwable e) {

@@ -6,10 +6,10 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
-import stroom.proxy.feed.remote.GetFeedStatusRequest;
+import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.test.common.TestUtil;
 import stroom.util.concurrent.UniqueId;
@@ -323,25 +323,30 @@ public class MockHttpDestination {
         return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getDataFeedPath())));
     }
 
-    private List<GetFeedStatusRequest> getPostsToFeedStatusCheck() {
+    private List<GetFeedStatusRequestV2> getPostsToFeedStatusCheck() {
         return WireMock.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(getFeedStatusPath())))
                 .stream()
-                .map(req -> extractContent(req, GetFeedStatusRequest.class))
+                .map(req -> extractContent(req, GetFeedStatusRequestV2.class))
                 .toList();
     }
 
     void assertFeedStatusCheck() {
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         Assertions.assertThat(getPostsToFeedStatusCheck())
-                .extracting(GetFeedStatusRequest::getFeedName)
+                .extracting(GetFeedStatusRequestV2::getFeedName)
                 .filteredOn(feed -> !"DUMMY_FEED".equals(feed))
                 .containsExactly(TestConstants.FEED_TEST_EVENTS_1, TestConstants.FEED_TEST_EVENTS_2);
     }
 
-    private static String getFeedStatusPath() {
+    private static String getFeedStatusBasePath() {
         return ResourcePaths.buildAuthenticatedApiPath(
-                FeedStatusResource.BASE_RESOURCE_PATH,
-                FeedStatusResource.GET_FEED_STATUS_PATH_PART);
+                FeedStatusResourceV2.BASE_RESOURCE_PATH);
+    }
+
+    private static String getFeedStatusPath() {
+        return ResourcePaths.buildPath(
+                getFeedStatusBasePath(),
+                FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART);
     }
 
     /**
@@ -471,7 +476,7 @@ public class MockHttpDestination {
 //                FeedStatus.Receive,
                 "http://localhost:"
                 + MockHttpDestination.DEFAULT_STROOM_PORT
-                + ResourcePaths.buildAuthenticatedApiPath(FeedStatusResource.BASE_RESOURCE_PATH),
+                + getFeedStatusBasePath(),
 //                null,
                 null);
     }

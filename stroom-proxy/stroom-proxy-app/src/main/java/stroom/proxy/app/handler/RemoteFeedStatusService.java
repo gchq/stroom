@@ -7,6 +7,7 @@ import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
+import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.receive.common.ReceiveDataConfig;
@@ -59,7 +60,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             AppPermission.CHECK_RECEIPT_STATUS);
 
     private static final String CACHE_NAME = "Remote Feed Status Response Cache";
-    private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
+    private static final String GET_FEED_STATUS_PATH_PART = FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART;
 
     private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
     private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
@@ -182,7 +183,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final String url;
         if (NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl())) {
-            url = feedStatusConfig.getFeedStatusUrl();
+            url = feedStatusConfig.getFeedStatusUrl() + GET_FEED_STATUS_PATH_PART;
         } else {
             url = downstreamHostConfigProvider.get().getUri(FeedStatusConfig.DEFAULT_URL_PATH);
         }
@@ -221,12 +222,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             final FeedStatusConfig feedStatusConfig,
             final Function<Response, GetFeedStatusResponse> responseConsumer) {
 
-        LOGGER.debug(() -> LogUtil.message("Sending {} to {}{}",
-                request,
-                feedStatusConfig.getFeedStatusUrl(),
-                GET_FEED_STATUS_PATH));
-
         final WebTarget webTarget = getFeedStatusWebTarget();
+        LOGGER.debug(() -> LogUtil.message("Sending {} to {}{}", request, webTarget.getUri()));
+
         final DurationTimer timer = DurationTimer.start();
         try (final Response response = getFeedStatusResponse(feedStatusConfig, webTarget, request)) {
             LOGGER.debug("Received response {}, duration: {}", response, timer);
@@ -235,8 +233,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
             throw new RuntimeException(LogUtil.message(
                     "Error sending {} to {}{}, duration: {}, msg: {}",
                     request,
-                    feedStatusConfig.getFeedStatusUrl(),
-                    GET_FEED_STATUS_PATH,
+                    webTarget.getUri(),
                     timer,
                     e.getMessage()),
                     e);
@@ -244,9 +241,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private WebTarget getFeedStatusWebTarget() {
-        return jerseyClientFactory.createWebTarget(
-                JerseyClientName.DOWNSTREAM,
-                getFeedStatusCheckUrl());
+        final String url = getFeedStatusCheckUrl();
+        return jerseyClientFactory.createWebTarget(JerseyClientName.DOWNSTREAM, url);
     }
 
     private Response getFeedStatusResponse(final FeedStatusConfig feedStatusConfig,

@@ -28,10 +28,9 @@ public class AttributeMapFilterFactory {
     private final Provider<StreamTypeValidator> streamTypeValidatorProvider;
     private final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider;
     private final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider;
+    private final Provider<DataReceiptPolicyAttributeMapFilterFactory> dataReceiptPolicyAttrMapFilterFactoryProvider;
     private final CommonSecurityContext securityContext;
     private final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory;
-    private final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory;
-
     private final CachedValue<AttributeMapFilter, Void> updatableAttributeMapFilter;
 
     @Inject
@@ -40,9 +39,9 @@ public class AttributeMapFilterFactory {
             final Provider<StreamTypeValidator> streamTypeValidatorProvider,
             final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider,
             final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider,
+            final Provider<DataReceiptPolicyAttributeMapFilterFactory> dataReceiptPolicyAttrMapFilterFactoryProvider,
             final CommonSecurityContext securityContext,
-            final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory,
-            final DataReceiptPolicyAttributeMapFilterFactory dataReceiptPolicyAttributeMapFilterFactory) {
+            final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory) {
 
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.streamTypeValidatorProvider = streamTypeValidatorProvider;
@@ -50,7 +49,7 @@ public class AttributeMapFilterFactory {
         this.feedStatusAttributeMapFilterProvider = feedStatusAttributeMapFilterProvider;
         this.securityContext = securityContext;
         this.contentAutoCreationAttrMapFilterFactory = contentAutoCreationAttrMapFilterFactory;
-        this.dataReceiptPolicyAttributeMapFilterFactory = dataReceiptPolicyAttributeMapFilterFactory;
+        this.dataReceiptPolicyAttrMapFilterFactoryProvider = dataReceiptPolicyAttrMapFilterFactoryProvider;
 
         // Every 60s, create a new filter.
         // Some of the filters involve calls to a downstream stroom/proxy, so
@@ -101,7 +100,7 @@ public class AttributeMapFilterFactory {
             // to happen as the config for it is different between proxy and stroom.
             // Proxy and stroom each have a different FeedStatusService impl bound.
             case FEED_STATUS -> feedStatusAttributeMapFilterProvider.get();
-            case RECEIPT_POLICY -> dataReceiptPolicyAttributeMapFilterFactory.create();
+            case RECEIPT_POLICY -> dataReceiptPolicyAttrMapFilterFactoryProvider.get().create();
             case RECEIVE_ALL -> ReceiveAllAttributeMapFilter.getInstance();
             case REJECT_ALL -> RejectAllAttributeMapFilter.getInstance();
             case DROP_ALL -> DropAllAttributeMapFilter.getInstance();

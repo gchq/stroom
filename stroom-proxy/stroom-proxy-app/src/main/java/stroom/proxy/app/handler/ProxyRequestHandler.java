@@ -9,6 +9,8 @@ import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
+import stroom.security.api.CommonSecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
@@ -41,18 +43,21 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ReceiverFactory receiverFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final DataReceiptMetrics dataReceiptMetrics;
+    private final CommonSecurityContext commonSecurityContext;
 
     @Inject
     public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
                                final CertificateExtractor certificateExtractor,
                                final ReceiverFactory receiverFactory,
                                final ReceiptIdGenerator receiptIdGenerator,
-                               final DataReceiptMetrics dataReceiptMetrics) {
+                               final DataReceiptMetrics dataReceiptMetrics,
+                               final CommonSecurityContext commonSecurityContext) {
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
         this.receiverFactory = receiverFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.dataReceiptMetrics = dataReceiptMetrics;
+        this.commonSecurityContext = commonSecurityContext;
     }
 
     @Override
@@ -86,7 +91,9 @@ public class ProxyRequestHandler implements RequestHandler {
                     attributeMap));
 
             // Authorise request.
-            requestAuthenticator.authenticate(request, attributeMap);
+            final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+
+            LOGGER.debug("handle() - userIdentity: {}", userIdentity);
 
             // Treat differently depending on compression type.
             final String compression = AttributeMapUtil.validateAndNormaliseCompression(
@@ -101,12 +108,18 @@ public class ProxyRequestHandler implements RequestHandler {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
                 receiver = null;
             } else {
-                receiver = receiverFactory.get(attributeMap);
-                receiver.receive(
-                        receiveTime,
-                        attributeMap,
-                        request.getRequestURI(),
-                        request::getInputStream);
+                // We have authenticated the user to accept the data, but from here on,
+                // we run as the processing user as the request user won't have perms to do
+                // things like check feed status.
+                receiver = commonSecurityContext.asProcessingUserResult(() -> {
+                    final Receiver receiver2 = receiverFactory.get(attributeMap);
+                    receiver2.receive(
+                            receiveTime,
+                            attributeMap,
+                            request.getRequestURI(),
+                            request::getInputStream);
+                    return receiver2;
+                });
             }
 
             response.setStatus(HttpStatus.SC_OK);

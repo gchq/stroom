@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
@@ -79,7 +78,6 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     }
 
     @Override
-    @NotBlank
     @JsonProperty(UriConfig.PROP_NAME_HOSTNAME)
     public String getHostname() {
         return super.getHostname();

@@ -12,6 +12,10 @@ import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ZipWriter;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
+import stroom.security.api.CommonSecurityContext;
+import stroom.security.mock.MockCommonSecurityContext;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -50,6 +54,7 @@ class TestInnerProcessEndToEnd {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
 
+    private final CommonSecurityContext commonSecurityContext = new MockCommonSecurityContext();
 
     @Test
     void testSimple() {
@@ -140,6 +145,10 @@ class TestInnerProcessEndToEnd {
                                 null,
                                 null,
                                 null))
+                        .receiveDataConfig(ReceiveDataConfig.builder()
+                                // Stop it trying to call out to a downstream stroom/proxy
+                                .withReceiptCheckMode(ReceiptCheckMode.RECEIVE_ALL)
+                                .build())
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);
@@ -206,12 +215,14 @@ class TestInnerProcessEndToEnd {
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
         final byte[] dataBytes = "test".getBytes(StandardCharsets.UTF_8);
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -241,12 +252,14 @@ class TestInnerProcessEndToEnd {
         }
 
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -284,12 +297,14 @@ class TestInnerProcessEndToEnd {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

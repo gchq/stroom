@@ -35,7 +35,7 @@ class TestProxyOpenIdConfig extends AbstractValidatorTest {
         for (final IdpType idpType : IdpType.values()) {
             typesMaps.put(idpType, idpType);
         }
-        typesMaps.put(null, null);
+        typesMaps.put(null, IdpType.NO_IDP);
 
         return typesMaps.entrySet()
                 .stream()

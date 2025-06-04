@@ -14,7 +14,6 @@ import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
-import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.client.Invocation;
@@ -51,7 +50,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
-    @Inject
+    //    @Inject
     public ContentSyncService(final Provider<ProxyConfig> proxyConfigProvider,
                               final Provider<ContentSyncConfig> contentSyncConfigProvider,
                               final DefaultOpenIdCredentials defaultOpenIdCredentials,

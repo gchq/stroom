@@ -6,6 +6,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import jakarta.validation.constraints.NotNull;
@@ -30,8 +31,9 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 //        apiKey = null;
     }
 
-    public ProxyReceiptPolicyConfig(final String receiveDataRulesUrl,
-                                    final StroomDuration syncFrequency) {
+    @JsonCreator
+    public ProxyReceiptPolicyConfig(@JsonProperty("receiveDataRulesUrl") final String receiveDataRulesUrl,
+                                    @JsonProperty("syncFrequency") final StroomDuration syncFrequency) {
         this.receiveDataRulesUrl = receiveDataRulesUrl;
         this.syncFrequency = Objects.requireNonNullElse(syncFrequency, DEFAULT_SYNC_FREQUENCY);
     }

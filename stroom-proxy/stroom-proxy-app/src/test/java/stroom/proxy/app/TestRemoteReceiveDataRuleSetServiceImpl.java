@@ -11,6 +11,8 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
 import stroom.receive.common.WordListProviderFactory;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
@@ -75,6 +77,8 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
     private ProxyReceiptPolicyConfig mockProxyReceiptPolicyConfig;
     @Mock
     private ProxyConfig mockProxyConfig;
+    @Mock
+    private ReceiveDataConfig mockReceiveDataConfig;
 
     @Test
     void test() throws IOException {
@@ -107,6 +111,8 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
 
             Mockito.when(mockProxyConfig.getContentDir())
                     .thenReturn(ProxyConfig.DEFAULT_CONTENT_DIR);
+            Mockito.when(mockReceiveDataConfig.getReceiptCheckMode())
+                    .thenReturn(ReceiptCheckMode.RECEIPT_POLICY);
 
             int ruleNo = 0;
             final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -156,8 +162,8 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     systemDict);
 
             final Map<String, String> fieldNameToSaltMap = Map.of(
-                    FIELD_FEED.getFldName(), feedSalt,
-                    FIELD_ENVIRONMENT.getFldName(), environmentSalt);
+                    FIELD_FEED.getFldName().toLowerCase(), feedSalt,
+                    FIELD_ENVIRONMENT.getFldName().toLowerCase(), environmentSalt);
 
             Mockito.when(mockReceiveDataRuleSetClient.getHashedReceiveDataRules())
                     .thenReturn(Optional.of(
@@ -179,6 +185,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     MockCommonSecurityContext::new,
                     () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
+                    () -> mockReceiveDataConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,
                     wordListProviderFactory);
@@ -242,6 +249,8 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
         try (TemporaryPathCreator temporaryPathCreator = new TemporaryPathCreator()) {
             Mockito.when(mockProxyConfig.getContentDir())
                     .thenReturn(ProxyConfig.DEFAULT_CONTENT_DIR);
+            Mockito.when(mockReceiveDataConfig.getReceiptCheckMode())
+                    .thenReturn(ReceiptCheckMode.RECEIPT_POLICY);
 
             int ruleNo = 0;
             final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -281,6 +290,7 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     MockCommonSecurityContext::new,
                     () -> mockProxyReceiptPolicyConfig,
                     () -> mockProxyConfig,
+                    () -> mockReceiveDataConfig,
                     temporaryPathCreator,
                     hashFunctionFactory,
                     wordListProviderFactory);

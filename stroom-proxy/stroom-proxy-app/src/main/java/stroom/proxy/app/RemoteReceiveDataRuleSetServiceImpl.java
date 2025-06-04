@@ -3,6 +3,8 @@ package stroom.proxy.app;
 import stroom.dictionary.api.WordListProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.WordListProviderFactory;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
@@ -63,6 +65,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     private final ReceiveDataRuleSetClient receiveDataRuleSetClient;
     private final Provider<ProxyConfig> proxyConfigProvider;
     private final Provider<CommonSecurityContext> commonSecurityContextProvider;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final PathCreator pathCreator;
     private final HashFunctionFactory hashFunctionFactory;
     private final WordListProviderFactory wordListProviderFactory;
@@ -79,6 +82,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             final Provider<CommonSecurityContext> commonSecurityContextProvider,
             final Provider<ProxyReceiptPolicyConfig> proxyReceiptPolicyConfigProvider,
             final Provider<ProxyConfig> proxyConfigProvider,
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final PathCreator pathCreator,
             final HashFunctionFactory hashFunctionFactory,
             final WordListProviderFactory wordListProviderFactory) {
@@ -86,6 +90,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         this.receiveDataRuleSetClient = receiveDataRuleSetClient;
         this.commonSecurityContextProvider = commonSecurityContextProvider;
         this.proxyConfigProvider = proxyConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.pathCreator = pathCreator;
         this.hashFunctionFactory = hashFunctionFactory;
         this.cachedHashedReceiveDataRules = CachedValue.builder()
@@ -97,8 +102,11 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                 .build();
         this.wordListProviderFactory = wordListProviderFactory;
 
-        // Eagerly init the rules
-        cachedHashedReceiveDataRules.getValue();
+        // No point trying to fetch rules if we are not using them
+        if (receiveDataConfigProvider.get().getReceiptCheckMode() == ReceiptCheckMode.RECEIPT_POLICY) {
+            // Eagerly init the rules
+            cachedHashedReceiveDataRules.getValue();
+        }
     }
 
     @Override

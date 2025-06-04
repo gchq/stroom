@@ -33,7 +33,6 @@ public class EventResourceImpl implements EventResource {
     private final EventStore eventStore;
     private final ReceiveDataHelper receiveDataHelper;
 
-
     @Inject
     public EventResourceImpl(final EventStore eventStore,
                              final ReceiveDataHelper receiveDataHelper) {
