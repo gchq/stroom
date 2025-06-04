@@ -1,7 +1,6 @@
 package stroom.appstore.client.presenter;
 
 import stroom.appstore.shared.AppStoreContentPack;
-import stroom.appstore.shared.AppStoreResource;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -14,7 +13,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -37,9 +35,6 @@ public class AppStoreContentPackListPresenter
     /** Data hookup */
     private final RestDataProvider<AppStoreContentPack, ResultPage<AppStoreContentPack>>
                 dataProvider;
-
-    /** Resource to access server-side data */
-    private final static AppStoreResource APP_STORE_RESOURCE = GWT.create(AppStoreResource.class);
 
     /**
      * Injected constructor.
@@ -91,7 +86,7 @@ public class AppStoreContentPackListPresenter
                                 final RestErrorHandler restErrorHandler) {
                 PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 restFactory
-                        .create(APP_STORE_RESOURCE)
+                        .create(AppStorePresenter.APP_STORE_RESOURCE)
                         .method((r) ->  r.list(pageRequest))
                         .onSuccess(dataConsumer)
                         .onFailure(restErrorHandler)

@@ -1,12 +1,14 @@
 package stroom.appstore.client.presenter;
 
 import stroom.appstore.shared.AppStoreContentPack;
+import stroom.appstore.shared.AppStoreResource;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.MultiSelectEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,6 +34,9 @@ implements Refreshable {
 
     /** ID of the presenter for the list of content packs */
     public final static String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";
+
+    /** Resource to access server-side data across the package */
+    final static AppStoreResource APP_STORE_RESOURCE = GWT.create(AppStoreResource.class);
 
     /**
      * Injected constructor.

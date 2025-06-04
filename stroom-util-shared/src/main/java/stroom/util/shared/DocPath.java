@@ -124,7 +124,7 @@ public class DocPath {
      * will be stripped.
      */
     public static DocPath fromPathString(final String pathString) {
-        if (pathString == null || pathString.isEmpty()) {
+        if (pathString == null || pathString.isEmpty() || DELIMITER.equals(pathString)) {
             return EMPTY_INSTANCE;
         } else {
             String str = pathString.trim();

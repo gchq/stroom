@@ -1,6 +1,7 @@
 package stroom.appstore.shared;
 
 import stroom.docs.shared.Description;
+import stroom.gitrepo.shared.GitRepoDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -76,6 +77,9 @@ public class AppStoreContentPack {
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
             "/";
+
+    /** Length to truncate details field to in toString() */
+    private static final int DETAILS_TRUNC = 25;
 
     /**
      * Constructor. Initialises the values from the YAML.
@@ -221,6 +225,31 @@ public class AppStoreContentPack {
         return gitCommit;
     }
 
+    /**
+     * Returns whether this Content Pack matches the given GitRepoDoc.
+     * Note that this ignores the name of the pack. Instead it focuses
+     * on the Git content, as the content has UUIDs and shouldn't be
+     * downloaded to multiple places within Stroom as confusion would result.
+     * @param gitRepoDoc The existing Stroom GitRepoDoc to check.
+     * @return true if there is a match; false otherwise.
+     */
+    public boolean matches(final GitRepoDoc gitRepoDoc) {
+        return Objects.equals(gitUrl, gitRepoDoc.getUrl())
+                && Objects.equals(gitPath, gitRepoDoc.getPath());
+    }
+
+    /**
+     * Copies the settings in this Content Pack into the GitRepoDoc.
+     * @param gitRepoDoc The doc to copy settings into.
+     */
+    public void updateSettingsIn(final GitRepoDoc gitRepoDoc) {
+        gitRepoDoc.setUrl(gitUrl);
+        gitRepoDoc.setBranch(gitBranch);
+        gitRepoDoc.setPath(gitPath);
+        // TODO set commit
+        gitRepoDoc.setDescription(details);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -265,7 +294,7 @@ public class AppStoreContentPack {
                ", licenseName='" + licenseName + '\'' +
                ", licenseUrl='" + licenseUrl + '\'' +
                ", stroomPath='" + stroomPath + '\'' +
-               ", details='" + details + '\'' +
+               ", details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC)) + '\'' +
                ", gitUrl='" + gitUrl + '\'' +
                ", gitBranch='" + gitBranch + '\'' +
                ", gitPath='" + gitPath + '\'' +
