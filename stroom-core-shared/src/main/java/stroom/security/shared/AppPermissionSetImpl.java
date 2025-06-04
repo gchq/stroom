@@ -259,7 +259,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         private static final AppPermissionOperator OPERATOR = AppPermissionOperator.EMPTY;
         static final AppPermissionSet INSTANCE = new EmptyAppPermissionSet(OPERATOR);
 
-        // This is pointless, but can't seem to get jackson to play ball without it.
+        // This field is pointless, but can't seem to get jackson to play ball without it.
         // Empty perm sets are unlikely to be used anyway, so not worth losing sleep over.
         @JsonProperty
         private final AppPermissionOperator operator;
@@ -278,6 +278,8 @@ public class AppPermissionSetImpl implements AppPermissionSet {
 
         @JsonCreator
         EmptyAppPermissionSet(@JsonProperty("operator") final AppPermissionOperator operator) {
+            // This field is pointless, but can't seem to get jackson to play ball without it.
+            // Empty perm sets are unlikely to be used anyway, so not worth losing sleep over.
             if (operator != AppPermissionOperator.EMPTY) {
                 throw new IllegalArgumentException("Only ALL_OF allowed");
             }
@@ -342,8 +344,8 @@ public class AppPermissionSetImpl implements AppPermissionSet {
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            return obj == this;
+        public boolean equals(final Object object) {
+            return object instanceof EmptyAppPermissionSet;
         }
 
         @Override
