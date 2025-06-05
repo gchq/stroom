@@ -54,8 +54,8 @@ public class AppStorePlugin extends ContentPlugin<AppStorePresenter> {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
                             .priority(10)
-                            .icon(SvgImage.QUESTION)
-                            .text("App Store")
+                            .icon(SvgImage.CONTENT_STORE)
+                            .text("Content Store")
                             .command(this::open)
                             .build());
         }
