@@ -20,7 +20,7 @@ package stroom.receive.common;
 import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
-import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
@@ -110,7 +110,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                 final Set<String> fieldSet = new HashSet<>();
                 final List<ReceiveDataRule> activeRules = new ArrayList<>();
                 rules.forEach(rule -> {
-                    if (rule.isEnabled() && NullSafe.test(rule.getExpression(), ExpressionItem::enabled)) {
+                    if (isRuleActive(rule)) {
                         final Set<String> set = new HashSet<>();
                         addToFieldSet(rule, set);
                         if (!set.isEmpty()) {
@@ -158,6 +158,12 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                         return filter;
                     });
         }
+    }
+
+    private static boolean isRuleActive(final ReceiveDataRule rule) {
+        return rule != null
+               && rule.isEnabled()
+               && (rule.getExpression() == null || rule.getExpression().enabled());
     }
 
     static ValueFunctionFactories<AttributeMap> createAttributeMapExtractor(final Map<String, QueryField> usedFields) {
@@ -235,14 +241,24 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
         private ReceiveDataRule findMatchingRule(final AttributeMap attributeMap) {
             for (final ReceiveDataRule rule : activeRules) {
+                final ExpressionOperator ruleExpression = rule.getExpression();
+
+                if (ruleExpression == null) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "findMatchingRule() - Null ruleExpression, rule {}, ruleAction: {}, attributeMap: {}",
+                            rule, rule.getAction(), attributeMap));
+                    return rule;
+                }
+
                 // Lazily create the predicate in case we match on the first rule
                 final Predicate<AttributeMap> predicate = ruleNoToPredicateFactoryMap.computeIfAbsent(
                         rule.getRuleNumber(),
-                        ruleNo -> expressionMatcher.create(rule.getExpression(), valueFunctionFactories));
+                        ruleNo -> expressionMatcher.create(ruleExpression, valueFunctionFactories));
                 try {
                     final boolean isMatch = predicate.test(attributeMap);
-                    LOGGER.debug("findMatchingRule() - Rule {}, isMatch: {}, attributeMap: {}",
-                            rule, isMatch, attributeMap);
+                    LOGGER.debug(() -> LogUtil.message(
+                            "findMatchingRule() - Rule {}, isMatch: {}, ruleAction: {}, attributeMap: {}",
+                            rule, isMatch, rule.getAction(), attributeMap));
                     if (isMatch) {
                         return rule;
                     }

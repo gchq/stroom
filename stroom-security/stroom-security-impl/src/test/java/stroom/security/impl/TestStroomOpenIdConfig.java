@@ -32,7 +32,7 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
         for (final IdpType idpType : IdpType.values()) {
             typesMaps.put(idpType, idpType);
         }
-        typesMaps.put(null, null);
+        typesMaps.put(null, IdpType.INTERNAL_IDP);
 
         return typesMaps.entrySet()
                 .stream()

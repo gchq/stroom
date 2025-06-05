@@ -82,6 +82,9 @@ public final class ExpressionTerm extends ExpressionItem {
         // TODO : XML serialisation still requires no-arg constructor and mutable fields
     }
 
+    /**
+     * Convenience method for creating an enabled {@code field = value} {@link ExpressionTerm}
+     */
     public static ExpressionTerm equals(final String field, final String value) {
         return new ExpressionTerm(true, field, Condition.EQUALS, value, null);
     }

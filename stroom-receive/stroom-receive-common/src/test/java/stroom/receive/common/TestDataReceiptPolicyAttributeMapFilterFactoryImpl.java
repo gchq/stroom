@@ -14,6 +14,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
+import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
@@ -64,6 +65,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
     @Mock
     private ReceiveDataRuleSetService mockReceiveDataRuleSetService;
+    @Mock
+    private ReceiveDataConfig mockReceiveDataConfig;
 
     @Test
     void test_noRules() {
@@ -71,7 +74,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .build();
@@ -86,25 +89,24 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         wordListProvider,
                         AttributeMapper.identity()));
 
-        final boolean result = factory.create()
-                .filter(ATTRIBUTE_MAP);
-
-        assertThat(result)
-                .isTrue();
+        assertRejected(() ->
+                factory.create()
+                        .filter(ATTRIBUTE_MAP));
     }
 
     @Test
-    void test_noExpression() {
+    void test_noActiveExpression() {
         final DataReceiptPolicyAttributeMapFilterFactoryImpl factory =
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
-                        .withExpression(ExpressionOperator.builder().build())
+                        .withExpression(ExpressionOperator.builder()
+                                .build())
                         .build())
                 .build();
 
@@ -119,20 +121,18 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         receiveDataRules,
                         wordListProvider,
                         AttributeMapper.identity()));
+//        setReceiptCheckModeInMockConfig();
 
-        boolean result = factory.create()
-                .filter(ATTRIBUTE_MAP);
+        // No active expression so fallback is reject all
+        assertRejected(() -> {
+            factory.create()
+                    .filter(ATTRIBUTE_MAP);
+        });
 
-        // No expr, so match all
-        assertThat(result)
-                .isTrue();
-
-        result = factory.create()
-                .filter(createAttrMap(null, null, null));
-
-        // No expr, so match all
-        assertThat(result)
-                .isTrue();
+        assertRejected(() -> {
+            factory.create()
+                    .filter(createAttrMap(null, null, null));
+        });
     }
 
     @Test
@@ -141,7 +141,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -190,7 +190,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -225,6 +225,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         receiveDataRules,
                         wordListProvider,
                         AttributeMapper.identity()));
+//        setReceiptCheckModeInMockConfig();
 
         final boolean result = factory.create()
                 .filter(ATTRIBUTE_MAP);
@@ -239,7 +240,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         int ruleNo = 0;
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -284,6 +285,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         receiveDataRules,
                         wordListProvider,
                         AttributeMapper.identity()));
+//        setReceiptCheckModeInMockConfig();
 
         final AttributeMapFilter filter = factory.create();
         // RECEIVE by rule 1
@@ -300,10 +302,10 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         assertThat(result)
                 .isFalse();
 
-        // No match on any rule, so RECEIVE
-        result = filter.filter(createAttrMap(null, null, null));
-        assertThat(result)
-                .isTrue();
+        // No match on any rule, so REJECT
+        assertRejected(() -> {
+            filter.filter(createAttrMap(null, null, null));
+        });
     }
 
     @Test
@@ -312,7 +314,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -327,6 +329,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                                         .build())
                                 .build())
                         .build())
+                .addRule(createReceiveAllRule())
                 .addField(FIELD_CONTENT_LENGTH)
                 .build();
 
@@ -341,18 +344,19 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         receiveDataRules,
                         wordListProvider,
                         AttributeMapper.identity()));
+//        setReceiptCheckModeInMockConfig();
 
         boolean result = factory.create()
                 .filter(createAttrMap(FEED_1, SYSTEM_1, ENVIRONMENT_1, 50, null));
 
-        // No rule match
+        // Matches on the catch-all 2nd rule
         assertThat(result)
                 .isTrue();
 
         result = factory.create()
                 .filter(createAttrMap(FEED_1, SYSTEM_1, ENVIRONMENT_1, 150, null));
 
-        // rule match
+        // 1st rule match
         assertThat(result)
                 .isFalse();
     }
@@ -363,7 +367,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -395,19 +399,18 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
         final Instant now = Instant.now();
 
-        boolean result = factory.create()
-                .filter(createAttrMap(
-                        FEED_1,
-                        SYSTEM_1,
-                        ENVIRONMENT_1,
-                        null,
-                        now.minus(1, ChronoUnit.DAYS)));
-
         // No rule match
-        assertThat(result)
-                .isTrue();
+        assertRejected(() -> {
+            factory.create()
+                    .filter(createAttrMap(
+                            FEED_1,
+                            SYSTEM_1,
+                            ENVIRONMENT_1,
+                            null,
+                            now.minus(1, ChronoUnit.DAYS)));
+        });
 
-        result = factory.create()
+        boolean result = factory.create()
                 .filter(createAttrMap(
                         FEED_1,
                         SYSTEM_1,
@@ -426,7 +429,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        ReceiveDataConfig::new);
+                        () -> mockReceiveDataConfig);
 
         final DictionaryDoc feedDict = createDict(
                 "FeedDict",
@@ -449,6 +452,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                                 .addTerm(ExpressionTerm.equals(StandardHeaderArguments.SYSTEM, SYSTEM_1))
                                 .build())
                         .build())
+                .addRule(createReceiveAllRule())
                 .addField(FIELD_FEED)
                 .addField(FIELD_SYSTEM)
                 .build();
@@ -463,8 +467,9 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         receiveDataRules,
                         wordListProvider,
                         AttributeMapper.identity()));
+//        setReceiptCheckModeInMockConfig();
 
-        // Feed1 not in dict, so receive
+        // Feed1 not in dict, so receive from 2nd catch-all rule
         assertThat(factory.create().filter(
                 createAttrMap(FEED_1, SYSTEM_1, ENVIRONMENT_1, 50, null)))
                 .isTrue();
@@ -474,10 +479,15 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 createAttrMap(FEED_2, SYSTEM_1, ENVIRONMENT_1, 50, null)))
                 .isFalse();
 
-        // Feed2 in dict, but system2 is not match, so receive
+        // Feed2 in dict, but system2 is not match, so receive from 2nd catch-all rule
         assertThat(factory.create().filter(
                 createAttrMap(FEED_2, SYSTEM_2, ENVIRONMENT_1, 50, null)))
                 .isTrue();
+    }
+
+    private void setReceiptCheckModeInMockConfig() {
+        Mockito.when(mockReceiveDataConfig.getReceiptCheckMode())
+                .thenReturn(ReceiptCheckMode.RECEIPT_POLICY);
     }
 
     private void assertRejected(final ThrowingCallable throwingCallable) {
@@ -486,7 +496,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 .extracting(throwable ->
                         ((StroomStreamException) throwable).getStroomStreamStatus()
                                 .getStroomStatusCode())
-                .isEqualTo(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA);
+                .isEqualTo(StroomStatusCode.REJECTED_BY_POLICY_RULES);
     }
 
     private AttributeMap createAttrMap(final String feed,
@@ -527,5 +537,15 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
         dict.setType(DictionaryDoc.TYPE);
         dict.setData(String.join("\n", lines));
         return dict;
+    }
+
+    private ReceiveDataRule createReceiveAllRule() {
+        return ReceiveDataRule.builder()
+                .withEnabled(true)
+                .withRuleNumber(999)
+                .withExpression(null)
+                .withAction(ReceiveAction.RECEIVE)
+                .withName("Receive ALL")
+                .build();
     }
 }
