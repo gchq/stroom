@@ -45,9 +45,9 @@ import java.util.Objects;
         "embeddedQueryDoc"
 })
 @JsonInclude(Include.NON_NULL)
-public class EmbeddedQueryComponentSettings
+public final class EmbeddedQueryComponentSettings
         extends AbstractQueryComponentSettings
-        implements HasSelectionQuery, HasSelectionFilter {
+        implements ComponentSettings, HasSelectionQuery, HasSelectionFilter {
 
     @JsonProperty
     private final Boolean reference;
@@ -158,7 +158,7 @@ public class EmbeddedQueryComponentSettings
      * Builder for constructing a {@link TableSettings tableSettings}
      */
     public static final class Builder
-            extends AbstractBuilder<EmbeddedQueryComponentSettings, EmbeddedQueryComponentSettings.Builder>
+            extends AbstractQueryComponentSettings.AbstractBuilder<EmbeddedQueryComponentSettings, Builder>
             implements
             HasSelectionQueryBuilder<EmbeddedQueryComponentSettings, Builder>,
             HasSelectionFilterBuilder<EmbeddedQueryComponentSettings, Builder> {

@@ -1,8 +1,7 @@
-package stroom.planb.impl.db.rangestate;
+package stroom.planb.impl.data;
 
 import stroom.lmdb2.KV;
-import stroom.planb.impl.db.PlanBValue;
-import stroom.planb.impl.db.rangestate.RangeState.Key;
+import stroom.planb.impl.data.TemporalRangeState.Key;
 import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,13 +10,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.time.Instant;
+
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-public class RangeState extends KV<Key, Val> implements PlanBValue {
+public final class TemporalRangeState extends KV<Key, Val> implements PlanBValue {
 
     @JsonCreator
-    public RangeState(@JsonProperty("key") final Key key,
-                      @JsonProperty("value") final Val value) {
+    public TemporalRangeState(@JsonProperty("key") final Key key,
+                              @JsonProperty("value") final Val value) {
         super(key, value);
     }
 
@@ -29,12 +30,12 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
         return new Builder();
     }
 
-    public static class Builder extends AbstractKVBuilder<RangeState, Builder, Key, Val> {
+    public static class Builder extends AbstractKVBuilder<TemporalRangeState, Builder, Key, Val> {
 
         private Builder() {
         }
 
-        private Builder(final RangeState key) {
+        private Builder(final TemporalRangeState key) {
             super(key);
         }
 
@@ -43,12 +44,12 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
             return this;
         }
 
-        public RangeState build() {
-            return new RangeState(key, value);
+        public TemporalRangeState build() {
+            return new TemporalRangeState(key, value);
         }
     }
 
-    @JsonPropertyOrder({"keyStart", "keyEnd"})
+    @JsonPropertyOrder({"keyStart", "keyEnd", "time"})
     @JsonInclude(Include.NON_NULL)
     public static class Key {
 
@@ -56,12 +57,16 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
         private final long keyStart;
         @JsonProperty
         private final long keyEnd;
+        @JsonProperty
+        private final Instant time;
 
         @JsonCreator
         public Key(@JsonProperty("keyStart") final long keyStart,
-                   @JsonProperty("keyEnd") final long keyEnd) {
+                   @JsonProperty("keyEnd") final long keyEnd,
+                   @JsonProperty("time") final Instant time) {
             this.keyStart = keyStart;
             this.keyEnd = keyEnd;
+            this.time = time;
         }
 
         public long getKeyStart() {
@@ -70,6 +75,10 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
 
         public long getKeyEnd() {
             return keyEnd;
+        }
+
+        public Instant getTime() {
+            return time;
         }
 
         public Builder copy() {
@@ -84,6 +93,7 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
 
             private long keyStart;
             private long keyEnd;
+            private Instant time;
 
             private Builder() {
             }
@@ -103,8 +113,13 @@ public class RangeState extends KV<Key, Val> implements PlanBValue {
                 return this;
             }
 
+            public Builder time(final Instant time) {
+                this.time = time;
+                return this;
+            }
+
             public Key build() {
-                return new Key(keyStart, keyEnd);
+                return new Key(keyStart, keyEnd, time);
             }
         }
     }

@@ -16,7 +16,6 @@
 
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.PlanBValue;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

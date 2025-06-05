@@ -41,17 +41,17 @@ import java.util.Objects;
 @Schema(
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class, VisResult.class, QLVisResult.class})
-public abstract class Result {
+public abstract sealed class Result permits TableResult, FlatResult, VisResult, QLVisResult {
 
     //TODO add an example value
     @Schema(description = "The ID of the component that this result set was requested for. See ResultRequest in " +
-            "SearchRequest",
+                          "SearchRequest",
             required = true)
     @JsonProperty
     private final String componentId;
 
     @Schema(description = "If an error has occurred producing this result set then this will have details " +
-            "of the error")
+                          "of the error")
     @JsonProperty
     private final List<String> errors;
 
@@ -80,7 +80,7 @@ public abstract class Result {
         }
         Result result = (Result) o;
         return Objects.equals(componentId, result.componentId) &&
-                Objects.equals(errors, result.errors);
+               Objects.equals(errors, result.errors);
     }
 
     @Override
@@ -91,8 +91,8 @@ public abstract class Result {
     @Override
     public String toString() {
         return "Result{" +
-                "componentId='" + componentId + '\'' +
-                ", errors='" + errors + '\'' +
-                '}';
+               "componentId='" + componentId + '\'' +
+               ", errors='" + errors + '\'' +
+               '}';
     }
 }

@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
         "applyValueFilters",
         "selectionHandlers"})
 @JsonInclude(Include.NON_NULL)
-public class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
+public final class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
 
     public static final long[] DEFAULT_MAX_RESULTS = {};
 

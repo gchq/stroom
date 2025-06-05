@@ -1,11 +1,4 @@
-package stroom.planb.impl.db;
-
-import stroom.planb.impl.db.histogram.TemporalValue;
-import stroom.planb.impl.db.rangestate.RangeState;
-import stroom.planb.impl.db.session.Session;
-import stroom.planb.impl.db.state.State;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
-import stroom.planb.impl.db.temporalstate.TemporalState;
+package stroom.planb.impl.data;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -22,6 +15,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = Session.class, name = "session"),
         @JsonSubTypes.Type(value = TemporalValue.class, name = "histogram")
 })
-public interface PlanBValue {
+public sealed interface PlanBValue permits
+        State,
+        TemporalState,
+        RangeState,
+        TemporalRangeState,
+        Session,
+        TemporalValue {
 
 }

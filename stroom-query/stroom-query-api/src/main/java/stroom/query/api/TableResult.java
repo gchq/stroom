@@ -33,7 +33,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Object for describing a set of results in a table form that supports grouped data")
-public class TableResult extends Result {
+public final class TableResult extends Result {
 
     @Schema(required = true)
     @JsonProperty

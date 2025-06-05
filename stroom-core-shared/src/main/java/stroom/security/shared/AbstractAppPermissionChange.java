@@ -22,7 +22,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = AddAppPermission.class, name = "AddAppPermission"),
         @JsonSubTypes.Type(value = RemoveAppPermission.class, name = "RemoveAppPermission"),
 })
-public abstract class AbstractAppPermissionChange {
+public abstract sealed class AbstractAppPermissionChange permits AddAppPermission, RemoveAppPermission {
 
     @JsonProperty
     private final UserRef userRef;
@@ -47,7 +47,7 @@ public abstract class AbstractAppPermissionChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddAppPermission extends AbstractAppPermissionChange {
+    public static final class AddAppPermission extends AbstractAppPermissionChange {
 
 
         @JsonCreator
@@ -58,7 +58,7 @@ public abstract class AbstractAppPermissionChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveAppPermission extends AbstractAppPermissionChange {
+    public static final class RemoveAppPermission extends AbstractAppPermissionChange {
 
         @JsonCreator
         public RemoveAppPermission(@JsonProperty("userRef") final UserRef userRef,

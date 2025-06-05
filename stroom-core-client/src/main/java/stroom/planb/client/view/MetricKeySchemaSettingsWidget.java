@@ -19,8 +19,8 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.KeyType;
+import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
 

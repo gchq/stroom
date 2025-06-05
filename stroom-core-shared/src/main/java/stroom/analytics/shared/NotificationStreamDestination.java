@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class NotificationStreamDestination extends NotificationDestination {
+public final class NotificationStreamDestination extends NotificationDestination {
 
     @JsonProperty
     private final DocRef destinationFeed;

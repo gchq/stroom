@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ChangeAssignedTo extends AbstractAnnotationChange {
+public final class ChangeAssignedTo extends AbstractAnnotationChange {
 
     @JsonProperty
     private final UserRef userRef;

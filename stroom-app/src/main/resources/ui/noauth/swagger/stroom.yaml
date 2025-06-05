@@ -12223,6 +12223,64 @@ components:
         version:
           type: integer
           format: int32
+    HistogramKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalResolution:
+          type: string
+          enum:
+          - YEAR
+          - MONTH
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+        timeZone:
+          $ref: "#/components/schemas/UserTimeZone"
+    HistogramSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          keySchema:
+            $ref: "#/components/schemas/HistogramKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/HistogramValueSchema"
+    HistogramValueSchema:
+      type: object
+      properties:
+        valueType:
+          type: string
+          enum:
+          - ONE
+          - TWO
+          - THREE
+          - FOUR
+          - FIVE
+          - SIX
+          - SEVEN
+          - EIGHT
     HoppingWindow:
       type: object
       allOf:
@@ -12971,6 +13029,74 @@ components:
           $ref: "#/components/schemas/Meta"
         pipeline:
           $ref: "#/components/schemas/DocRef"
+    MetricKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalResolution:
+          type: string
+          enum:
+          - YEAR
+          - MONTH
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+        timeZone:
+          $ref: "#/components/schemas/UserTimeZone"
+    MetricSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          keySchema:
+            $ref: "#/components/schemas/MetricKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/MetricValueSchema"
+    MetricValueSchema:
+      type: object
+      properties:
+        storeCount:
+          type: boolean
+        storeLatestValue:
+          type: boolean
+        storeMax:
+          type: boolean
+        storeMin:
+          type: boolean
+        storeSum:
+          type: boolean
+        valueType:
+          type: string
+          enum:
+          - ONE
+          - TWO
+          - THREE
+          - FOUR
+          - FIVE
+          - SIX
+          - SEVEN
+          - EIGHT
     MultiAnnotationChangeRequest:
       type: object
       properties:

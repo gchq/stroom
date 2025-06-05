@@ -14,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = ProcessorRow.class, name = "processor"),
         @Type(value = ProcessorFilterRow.class, name = "processorFilter")
 })
-public abstract class ProcessorListRow implements TreeRow {
+public abstract sealed class ProcessorListRow implements TreeRow permits ProcessorRow, ProcessorFilterRow {
 
 }

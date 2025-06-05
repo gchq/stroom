@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = StringEntryValue.class, name = "string"),
         @JsonSubTypes.Type(value = UserRefEntryValue.class, name = "user")
 })
-public interface EntryValue {
+public sealed interface EntryValue permits StringEntryValue, UserRefEntryValue {
 
     String asUiValue();
 

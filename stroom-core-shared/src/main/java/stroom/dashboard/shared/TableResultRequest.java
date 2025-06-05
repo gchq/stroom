@@ -38,7 +38,7 @@ import java.util.Set;
         "requestedRange",
         "openGroups"})
 @JsonInclude(Include.NON_NULL)
-public class TableResultRequest extends ComponentResultRequest {
+public final class TableResultRequest extends ComponentResultRequest {
 
     @JsonProperty
     private final String tableName;

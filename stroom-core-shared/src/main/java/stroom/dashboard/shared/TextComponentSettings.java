@@ -43,7 +43,7 @@ import java.util.Objects;
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
-public class TextComponentSettings implements ComponentSettings {
+public final class TextComponentSettings implements ComponentSettings {
 
     @JsonProperty("tableId")
     private final String tableId;

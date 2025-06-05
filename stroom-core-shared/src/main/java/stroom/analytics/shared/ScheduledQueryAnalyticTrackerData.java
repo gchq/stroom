@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ScheduledQueryAnalyticTrackerData extends AnalyticTrackerData {
+public final class ScheduledQueryAnalyticTrackerData extends AnalyticTrackerData {
 
     @JsonProperty
     private Long actualExecutionTimeMs;

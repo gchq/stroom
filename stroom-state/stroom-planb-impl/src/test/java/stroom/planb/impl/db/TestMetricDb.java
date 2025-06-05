@@ -20,7 +20,7 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.planb.impl.db.histogram.TemporalValue;
+import stroom.planb.impl.data.TemporalValue;
 import stroom.planb.impl.db.metric.MetricDb;
 import stroom.planb.impl.db.metric.MetricFields;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;

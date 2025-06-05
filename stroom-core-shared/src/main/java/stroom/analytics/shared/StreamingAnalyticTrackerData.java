@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class StreamingAnalyticTrackerData extends AnalyticTrackerData {
+public final class StreamingAnalyticTrackerData extends AnalyticTrackerData {
 
     @JsonProperty
     private Long lastExecutionTimeMs;

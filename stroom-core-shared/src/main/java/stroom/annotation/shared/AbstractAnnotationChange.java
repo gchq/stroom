@@ -20,6 +20,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = LinkEvents.class, name = "link"),
         @JsonSubTypes.Type(value = UnlinkEvents.class, name = "unlink")
 })
-public abstract class AbstractAnnotationChange {
+public abstract sealed class AbstractAnnotationChange permits
+        ChangeTitle,
+        ChangeSubject,
+        AddTag,
+        RemoveTag,
+        SetTag,
+        ChangeAssignedTo,
+        ChangeComment,
+        ChangeRetentionPeriod,
+        ChangeDescription,
+        LinkEvents,
+        UnlinkEvents {
 
 }

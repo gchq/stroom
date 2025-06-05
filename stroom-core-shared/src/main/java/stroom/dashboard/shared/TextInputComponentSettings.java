@@ -29,7 +29,7 @@ import java.util.Objects;
         "value"
 })
 @JsonInclude(Include.NON_NULL)
-public class TextInputComponentSettings implements ComponentSettings {
+public final class TextInputComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String key;

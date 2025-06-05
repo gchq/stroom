@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ChangeRetentionPeriod extends AbstractAnnotationChange {
+public final class ChangeRetentionPeriod extends AbstractAnnotationChange {
     @JsonProperty
     private final SimpleDuration retentionPeriod;
 

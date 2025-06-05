@@ -37,7 +37,7 @@ import java.util.Objects;
         "tableSettings",
         "requestedRange"})
 @JsonInclude(Include.NON_NULL)
-public class VisResultRequest extends ComponentResultRequest {
+public final class VisResultRequest extends ComponentResultRequest {
 
     @JsonProperty
     private final DocRef visualisation;

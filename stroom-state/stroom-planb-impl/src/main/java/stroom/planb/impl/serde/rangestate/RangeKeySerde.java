@@ -1,6 +1,6 @@
 package stroom.planb.impl.serde.rangestate;
 
-import stroom.planb.impl.db.rangestate.RangeState.Key;
+import stroom.planb.impl.data.RangeState.Key;
 import stroom.planb.impl.serde.KeySerde;
 
 import java.nio.ByteBuffer;

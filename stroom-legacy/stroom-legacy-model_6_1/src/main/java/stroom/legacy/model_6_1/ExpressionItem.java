@@ -43,7 +43,8 @@ import java.io.Serializable;
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 @Deprecated
-public abstract class ExpressionItem implements Serializable {
+public abstract sealed class ExpressionItem implements Serializable permits ExpressionOperator, ExpressionTerm {
+
     private static final long serialVersionUID = -8483817637655853635L;
 
     @XmlElement
@@ -69,17 +70,25 @@ public abstract class ExpressionItem implements Serializable {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ExpressionItem)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ExpressionItem)) {
+            return false;
+        }
 
         final ExpressionItem that = (ExpressionItem) o;
 
-        return enabled != null ? enabled.equals(that.enabled) : that.enabled == null;
+        return enabled != null
+                ? enabled.equals(that.enabled)
+                : that.enabled == null;
     }
 
     @Override
     public int hashCode() {
-        return enabled != null ? enabled.hashCode() : 0;
+        return enabled != null
+                ? enabled.hashCode()
+                : 0;
     }
 
     abstract void append(final StringBuilder sb, final String pad, final boolean singleLine);
@@ -115,7 +124,6 @@ public abstract class ExpressionItem implements Serializable {
 
         /**
          * @param value Sets the terms state to enabled if true or null, disabled if false
-         *
          * @return The Builder Builder, enabling method chaining
          */
         public CHILD_CLASS enabled(final Boolean value) {

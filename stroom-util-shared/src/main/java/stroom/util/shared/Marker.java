@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = StoredError.class, name = "storedError"),
         @JsonSubTypes.Type(value = Summary.class, name = "summary")
 })
-public interface Marker {
+public sealed interface Marker permits StoredError, Summary {
 
     Severity getSeverity();
 }

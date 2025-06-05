@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class ChangeDescription extends AbstractAnnotationChange {
+public final class ChangeDescription extends AbstractAnnotationChange {
 
     @JsonProperty
     private final String description;

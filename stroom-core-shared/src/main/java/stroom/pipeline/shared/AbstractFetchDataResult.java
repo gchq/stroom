@@ -40,7 +40,7 @@ import java.util.Set;
         @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractFetchDataResult {
+public abstract sealed class AbstractFetchDataResult permits FetchDataResult, FetchMarkerResult {
 
     @JsonProperty
     private final String feedName;

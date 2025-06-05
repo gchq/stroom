@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashClashCommitRunnable;

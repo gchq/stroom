@@ -28,7 +28,7 @@ import java.util.Objects;
         "text"
 })
 @JsonInclude(Include.NON_NULL)
-public class KeyValueInputComponentSettings implements ComponentSettings {
+public final class KeyValueInputComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String text;

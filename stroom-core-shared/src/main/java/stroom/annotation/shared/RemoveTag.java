@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class RemoveTag extends AbstractAnnotationChange {
+public final class RemoveTag extends AbstractAnnotationChange {
 
     @JsonProperty
     private final AnnotationTag tag;

@@ -1,8 +1,7 @@
-package stroom.planb.impl.db.state;
+package stroom.planb.impl.data;
 
 import stroom.lmdb2.KV;
-import stroom.planb.impl.db.PlanBValue;
-import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.query.language.functions.Val;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-public class State extends KV<KeyPrefix, Val> implements PlanBValue {
+public final class TemporalState extends KV<TemporalKey, Val> implements PlanBValue {
 
     @JsonCreator
-    public State(@JsonProperty("key") final KeyPrefix key,
-                 @JsonProperty("value") final Val value) {
+    public TemporalState(@JsonProperty("key") final TemporalKey key,
+                         @JsonProperty("value") final Val value) {
         super(key, value);
     }
 
@@ -29,12 +28,12 @@ public class State extends KV<KeyPrefix, Val> implements PlanBValue {
         return new Builder();
     }
 
-    public static class Builder extends AbstractKVBuilder<State, Builder, KeyPrefix, Val> {
+    public static class Builder extends AbstractKVBuilder<TemporalState, Builder, TemporalKey, Val> {
 
         private Builder() {
         }
 
-        private Builder(final State key) {
+        private Builder(final TemporalState key) {
             super(key);
         }
 
@@ -43,8 +42,8 @@ public class State extends KV<KeyPrefix, Val> implements PlanBValue {
             return this;
         }
 
-        public State build() {
-            return new State(key, value);
+        public TemporalState build() {
+            return new TemporalState(key, value);
         }
     }
 }

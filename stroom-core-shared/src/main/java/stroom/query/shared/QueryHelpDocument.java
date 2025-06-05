@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class QueryHelpDocument extends QueryHelpData {
+public final class QueryHelpDocument extends QueryHelpData {
 
     @JsonProperty
     @JsonPropertyDescription("The document reference of the document.")

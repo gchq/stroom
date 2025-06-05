@@ -15,7 +15,10 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = TableBuilderAnalyticTrackerData.class, name = "table_builder"),
         @JsonSubTypes.Type(value = ScheduledQueryAnalyticTrackerData.class, name = "scheduled_query"),
 })
-public abstract class AnalyticTrackerData {
+public abstract sealed class AnalyticTrackerData permits
+        StreamingAnalyticTrackerData,
+        TableBuilderAnalyticTrackerData,
+        ScheduledQueryAnalyticTrackerData {
 
     @JsonProperty
     private String message;
@@ -55,7 +58,7 @@ public abstract class AnalyticTrackerData {
     @Override
     public String toString() {
         return "AnalyticTrackerData{" +
-                "message='" + message + '\'' +
-                '}';
+               "message='" + message + '\'' +
+               '}';
     }
 }

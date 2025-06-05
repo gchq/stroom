@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class TableCoprocessorSettings implements CoprocessorSettings {
+public final class TableCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
     private final int coprocessorId;
     @JsonProperty

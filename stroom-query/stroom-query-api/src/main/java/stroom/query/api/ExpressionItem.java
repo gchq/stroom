@@ -48,7 +48,7 @@ import java.util.function.Predicate;
 @Schema(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
-public abstract class ExpressionItem implements Serializable {
+public abstract sealed class ExpressionItem implements Serializable permits ExpressionOperator, ExpressionTerm {
 
     @XmlElement
     @Schema(description = "Whether this item in the expression tree is enabled or not",

@@ -40,7 +40,7 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "splitLayout")
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
-public class SplitLayoutConfig extends LayoutConfig {
+public final class SplitLayoutConfig extends LayoutConfig {
 
     @JsonIgnore
     private final String id;

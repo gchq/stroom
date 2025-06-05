@@ -28,7 +28,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"partIndex", "lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
-public class StreamLocation implements Location {
+public final class StreamLocation implements Location {
 
     private static final Comparator<StreamLocation> STREAM_LINE_COL_COMPARATOR = Comparator
             .comparingLong(StreamLocation::getPartIndex)

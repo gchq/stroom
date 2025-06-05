@@ -11,7 +11,7 @@ import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.data.TemporalState;
 import stroom.query.language.functions.ValXml;
 import stroom.util.logging.LogUtil;
 

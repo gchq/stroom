@@ -35,7 +35,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
         @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class ComponentResultRequest {
+public abstract sealed class ComponentResultRequest permits TableResultRequest, VisResultRequest {
 
     @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
@@ -62,8 +62,8 @@ public abstract class ComponentResultRequest {
     @Override
     public String toString() {
         return "ComponentResultRequest{" +
-                "componentId='" + componentId + '\'' +
-                ", fetch=" + fetch +
-                '}';
+               "componentId='" + componentId + '\'' +
+               ", fetch=" + fetch +
+               '}';
     }
 }

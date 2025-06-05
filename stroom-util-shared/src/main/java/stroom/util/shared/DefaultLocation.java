@@ -28,7 +28,7 @@ import java.util.Optional;
 
 @JsonPropertyOrder({"lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
-public class DefaultLocation implements Location {
+public final class DefaultLocation implements Location {
 
     @JsonProperty
     private final int lineNo;

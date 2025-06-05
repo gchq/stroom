@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class UserRefEntryValue implements EntryValue {
+public final class UserRefEntryValue implements EntryValue {
 
     @JsonProperty
     private final UserRef userRef;

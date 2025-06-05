@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = HoppingWindow.class, name = "hopping")
 })
 @JsonInclude(Include.NON_NULL)
-public interface Window {
+public sealed interface Window permits HoppingWindow {
 
 }

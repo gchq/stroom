@@ -2,7 +2,7 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;

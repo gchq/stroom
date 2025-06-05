@@ -1,13 +1,13 @@
 package stroom.planb.impl.serde.session;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBEnv;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UidLookupRecorder;
 import stroom.planb.impl.db.UsedLookupsRecorder;
 import stroom.planb.impl.db.UsedLookupsRecorderProxy;
-import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;

@@ -1,6 +1,5 @@
-package stroom.planb.impl.db.session;
+package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.PlanBValue;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -13,7 +12,7 @@ import java.time.Instant;
 
 @JsonPropertyOrder({"prefix", "start", "end"})
 @JsonInclude(Include.NON_NULL)
-public class Session implements PlanBValue {
+public final class Session implements PlanBValue {
 
     @JsonProperty
     private final KeyPrefix prefix;

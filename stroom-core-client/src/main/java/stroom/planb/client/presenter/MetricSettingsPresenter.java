@@ -43,8 +43,8 @@ public class MetricSettingsPresenter
     }
 
     public void read(final AbstractPlanBSettings settings, final boolean readOnly) {
-        if (settings instanceof final MetricSettings MetricSettings) {
-            read(MetricSettings, readOnly);
+        if (settings instanceof final MetricSettings metricSettings) {
+            read(metricSettings, readOnly);
         } else {
             read(new MetricSettings.Builder().build(), readOnly);
         }

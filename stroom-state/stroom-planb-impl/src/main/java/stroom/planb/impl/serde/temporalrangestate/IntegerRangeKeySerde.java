@@ -4,7 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState.Key;
+import stroom.planb.impl.data.TemporalRangeState.Key;
 import stroom.planb.impl.serde.time.TimeSerde;
 
 import org.lmdbjava.Txn;

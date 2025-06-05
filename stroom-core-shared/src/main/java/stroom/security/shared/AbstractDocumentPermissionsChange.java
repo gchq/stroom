@@ -45,10 +45,20 @@ import java.util.Set;
         @JsonSubTypes.Type(value = SetAllPermissionsFrom.class, name = "SetAllPermissionsFrom"),
         @JsonSubTypes.Type(value = RemoveAllPermissions.class, name = "RemoveAllPermissions"),
 })
-public abstract class AbstractDocumentPermissionsChange {
+public abstract sealed class AbstractDocumentPermissionsChange permits
+        SetPermission,
+        RemovePermission,
+        AddDocumentUserCreatePermission,
+        RemoveDocumentUserCreatePermission,
+        SetDocumentUserCreatePermissions,
+        AddAllDocumentUserCreatePermissions,
+        RemoveAllDocumentUserCreatePermissions,
+        AddAllPermissionsFrom,
+        SetAllPermissionsFrom,
+        RemoveAllPermissions {
 
     @JsonInclude(Include.NON_NULL)
-    public static class SetPermission extends AbstractDocumentPermissionsChange {
+    public static final class SetPermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -74,7 +84,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemovePermission extends AbstractDocumentPermissionsChange {
+    public static final class RemovePermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -92,7 +102,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
+    public static final class AddDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -118,7 +128,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
+    public static final class RemoveDocumentUserCreatePermission extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -144,7 +154,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class SetDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
+    public static final class SetDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -171,7 +181,7 @@ public abstract class AbstractDocumentPermissionsChange {
 
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
+    public static final class AddAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -188,7 +198,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
+    public static final class RemoveAllDocumentUserCreatePermissions extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final UserRef userRef;
@@ -206,7 +216,7 @@ public abstract class AbstractDocumentPermissionsChange {
 
 
     @JsonInclude(Include.NON_NULL)
-    public static class AddAllPermissionsFrom extends AbstractDocumentPermissionsChange {
+    public static final class AddAllPermissionsFrom extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final DocRef sourceDocRef;
@@ -223,7 +233,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class SetAllPermissionsFrom extends AbstractDocumentPermissionsChange {
+    public static final class SetAllPermissionsFrom extends AbstractDocumentPermissionsChange {
 
         @JsonProperty
         private final DocRef sourceDocRef;
@@ -240,7 +250,7 @@ public abstract class AbstractDocumentPermissionsChange {
     }
 
     @JsonInclude(Include.NON_NULL)
-    public static class RemoveAllPermissions extends AbstractDocumentPermissionsChange {
+    public static final class RemoveAllPermissions extends AbstractDocumentPermissionsChange {
 
         public RemoveAllPermissions() {
         }

@@ -31,7 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FetchDataResult extends AbstractFetchDataResult {
+public final class FetchDataResult extends AbstractFetchDataResult {
 
     @JsonProperty
     private final String data;

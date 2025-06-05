@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NotificationStreamDestination.class, name = "stream"),
         @JsonSubTypes.Type(value = NotificationEmailDestination.class, name = "email")
 })
-public abstract class NotificationDestination {
+public abstract sealed class NotificationDestination permits
+        NotificationStreamDestination,
+        NotificationEmailDestination {
 
 }
