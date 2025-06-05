@@ -27,10 +27,10 @@ implements Refreshable {
     public final AppStoreContentPackDetailsPresenter contentPackDetailsPresenter;
 
     /** Label for the content */
-    private final static String LABEL = "App Store";
+    private final static String LABEL = "Content Store";
 
     /** Tab type for the content (what is this?) */
-    private final static String TAB_TYPE = "App Store";
+    private final static String TAB_TYPE = "Content Store";
 
     /** ID of the presenter for the list of content packs */
     public final static String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";
@@ -75,8 +75,7 @@ implements Refreshable {
      */
     @Override
     public SvgImage getIcon() {
-        // TODO Put in proper icon
-        return SvgImage.QUESTION;
+        return SvgImage.CONTENT_STORE;
     }
 
     /**
