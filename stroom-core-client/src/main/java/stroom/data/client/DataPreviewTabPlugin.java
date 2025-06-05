@@ -19,6 +19,7 @@ package stroom.data.client;
 
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.presenter.DataViewType;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;
@@ -46,13 +47,14 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
     /**
      * 4. This method will open the source and show it in the content pane.
      */
-    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
+    public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation, DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 
         return super.openTabPresenter(
                 forceOpen,
                 new DataPreviewKey(sourceLocation),
                 dataPreviewTabPresenter -> {
+                    dataPreviewTabPresenter.setInitDataViewType(initDataViewType);
                     dataPreviewTabPresenter.setSourceLocation(sourceLocation);
                 });
 

@@ -65,9 +65,10 @@ public class DataDisplaySupport {
     }
 
     private void openStroomTab(final ShowDataEvent showDataEvent) {
-        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
+        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())
+                || DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
             dataPreviewTabPluginProvider.get()
-                    .open(showDataEvent.getSourceLocation(), true);
+                    .open(showDataEvent.getSourceLocation(), showDataEvent.getDataViewType(), true);
         } else {
             sourceTabPluginProvider.get()
                     .open(showDataEvent.getSourceLocation(), true);
@@ -80,9 +81,11 @@ public class DataDisplaySupport {
         final String caption;
 
         final Focus focus;
-        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
+        if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType()) ||
+                DataViewType.INFO.equals(showDataEvent.getDataViewType())) {
             final DataPresenter dataPresenter = dataPresenterProvider.get();
             dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
+            dataPresenter.setInitDataViewType(showDataEvent.getDataViewType());
             dataPresenter.fetchData(sourceLocation);
             presenter = dataPresenter;
             caption = "Stream "

@@ -122,6 +122,7 @@ public class DataPresenter
     private final NavigatorData navigatorData = new NavigatorData();
 
     private DisplayMode displayMode = null;
+    private DataViewType initDataViewType;
     private Boolean errorMarkerMode = null;
     // This is the parent stream type as opposed to the child stream type,
     // i.e. Raw Events rather than say Context
@@ -535,6 +536,17 @@ public class DataPresenter
                     refreshHighlights(lastResult);
                     refreshMarkers(lastResult);
                 }
+            }
+
+            if (initDataViewType != null) {
+                if (initDataViewType.equals(DataViewType.INFO)) {
+                    setActiveTab(infoTab, currentStreamType);
+                    onNewTabSelected(infoTab);
+                } else if (initDataViewType.equals(DataViewType.PREVIEW)) {
+                    setActiveTab(dataTab, currentStreamType);
+                    onNewTabSelected(dataTab);
+                }
+                setInitDataViewType(null);
             }
         } else {
             // Null meta
@@ -1229,6 +1241,10 @@ public class DataPresenter
         dataView.setSourceLinkVisible(false, false);
         setErrorText(title, errorText);
         showTextPresenter();
+    }
+
+    public void setInitDataViewType(final DataViewType initDataViewType) {
+        this.initDataViewType = initDataViewType;
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
