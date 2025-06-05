@@ -34,8 +34,8 @@ import java.util.regex.Pattern;
                 description = "Similar to a switch/case statement. The arguments are split into 3 parts: " +
                         "the input value to test, pairs of regex patterns with their respective output values " +
                         "and a default result if no matches are found. It must always have an even number " +
-                        "of arguments and can have any number of pattern/result pairs. Result values in the format '$n' " +
-                        "can be used to return the appropriate capture group values from the regex.",
+                        "of arguments and can have any number of pattern/result pairs. Result values in the " +
+                        "format '$n' can be used to return the appropriate capture group values from the regex.",
                 args = {
                         @FunctionArg(
                                 name = "input",
