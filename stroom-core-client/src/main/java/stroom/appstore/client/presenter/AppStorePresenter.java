@@ -53,6 +53,7 @@ implements Refreshable {
         super(eventBus, view);
         this.contentPackListPresenter = contentPackListPresenter;
         this.contentPackDetailsPresenter = contentPackDetailsPresenter;
+        this.contentPackDetailsPresenter.setAppStorePresenter(this);
         this.setInSlot(CONTENT_PACK_LIST, contentPackListPresenter);
         view.getContentPackDetailsPanel().add(contentPackDetailsPresenter);
     }

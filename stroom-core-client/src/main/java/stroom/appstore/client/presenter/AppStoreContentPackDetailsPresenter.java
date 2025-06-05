@@ -10,7 +10,6 @@ import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -27,6 +26,9 @@ import javax.inject.Inject;
 public class AppStoreContentPackDetailsPresenter
     extends SimplePanel
     implements Refreshable, HasHandlers {
+
+    /** Points to top level of this page. Needed for Alert dialogs. */
+    private AppStorePresenter appStorePresenter = null;
 
     /** Converts markdown to HTML */
     private final MarkdownConverter markdownConverter;
@@ -170,8 +172,20 @@ public class AppStoreContentPackDetailsPresenter
         this.setState();
     }
 
+    /**
+     * Gives this component a reference to the top level of this page.
+     * Must be called before UI is used.
+     * @param appStorePresenter The top level of this page. Must not be null.
+     */
+    void setAppStorePresenter(AppStorePresenter appStorePresenter) {
+        this.appStorePresenter = appStorePresenter;
+    }
+
+    /**
+     * Called when page is refreshed.
+     */
     public void refresh() {
-        // Ignore
+        this.setContentPack(null);
     }
 
     /**
@@ -250,27 +264,27 @@ public class AppStoreContentPackDetailsPresenter
                     .create(AppStorePresenter.APP_STORE_RESOURCE)
                     .method(res -> res.create(contentPack))
                     .onSuccess(result -> {
-                        Window.alert("Success: " + result.isOk() + ": " + result.getMessage());
-
-                        // TODO This bit doesn't work yet - alerts are not shown
                         if (result.isOk()) {
-                            AlertEvent.fireInfo(AppStoreContentPackDetailsPresenter.this,
+                            AlertEvent.fireInfo(appStorePresenter,
                                     "Creation success",
                                     result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(AppStoreContentPackDetailsPresenter.this));
+                                    () -> RefreshExplorerTreeEvent.fire(appStorePresenter));
                         } else {
-                            AlertEvent.fireError(AppStoreContentPackDetailsPresenter.this,
+                            AlertEvent.fireError(appStorePresenter,
                                     "Create failed",
                                     result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(AppStoreContentPackDetailsPresenter.this));
+                                    () -> RefreshExplorerTreeEvent.fire(appStorePresenter));
                         }
                     })
                     .onFailure(restError -> {
-                        // TODO Fire error dialog
-                        Window.alert("Failure: " + restError.getMessage());
+                        AlertEvent.fireError(appStorePresenter,
+                                "Create failed",
+                                restError.getMessage(),
+                                () -> RefreshExplorerTreeEvent.fire(appStorePresenter));
                     })
                     .taskMonitorFactory(btnCreateGitRepo)
                     .exec();
         }
     }
+
 }
