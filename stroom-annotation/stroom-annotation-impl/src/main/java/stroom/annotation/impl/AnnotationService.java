@@ -27,10 +27,8 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.impl.PermissionChangeService;
-import stroom.meta.api.MetaService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -78,8 +76,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
-    private final Provider<MetaService> metaServiceProvider;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
     private final Provider<PermissionChangeService> permissionChangeServiceProvider;
@@ -91,8 +87,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final SecurityContext securityContext,
                       final FieldInfoResultPageFactory fieldInfoResultPageFactory,
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
-                      final Provider<MetaService> metaServiceProvider,
-                      final Provider<DocRefInfoService> docRefInfoServiceProvider,
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
                       final Provider<PermissionChangeService> permissionChangeServiceProvider,
@@ -102,8 +96,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
-        this.metaServiceProvider = metaServiceProvider;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.annotationConfigProvider = annotationConfigProvider;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
         this.permissionChangeServiceProvider = permissionChangeServiceProvider;
@@ -405,7 +397,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public void performDataRetention() {
         // First mark annotations as deleted if they haven't been updated since their data retention time.
-        annotationDao.markDeletedByDataRetention(securityContext.getUserRef());
+        annotationDao.markDeletedByDataRetention();
 
         // Now delete items that have been deleted longer than the max deletion age.
         final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
