@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.3] - 2025-06-05
+
+* Issue **#4900** : Add histogram and metric stores to Plan B.
+
+
 ## [v7.10-beta.2] - 2025-06-05
 
 * Issue **#4940** : Fix duplicate store error log.
@@ -1500,7 +1505,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.3...HEAD
+[v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
 [v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
 [v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
