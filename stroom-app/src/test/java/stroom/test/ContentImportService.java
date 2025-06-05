@@ -3,7 +3,7 @@ package stroom.test;
 import stroom.content.ContentPack;
 import stroom.content.ContentPackCollection;
 import stroom.content.ContentPacks;
-import stroom.importexport.impl.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackZipDownloader;

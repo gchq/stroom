@@ -1,0 +1,53 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="gitRepoSettingsUrl" label="Git repository URL">
+            <g:TextBox name="Repository URL"
+                       title="The URL of the GIT repository"
+                       ui:field="url" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsUsername" label="Git repository username">
+            <g:TextBox name="Repository username"
+                       title="The username to access the GIT repository"
+                       ui:field="username" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsPassword" label="Git repository password">
+            <g:PasswordTextBox name="Repository password"
+                               title="The password to access the GIT repository"
+                               ui:field="password" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsBranch" label="Git branch">
+            <g:TextBox name="Branch"
+                       title="The branch of the GIT repository"
+                       ui:field="branch" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsPath" label="Git path">
+            <g:TextBox name="Path"
+                       title="The path within the GIT repository"
+                       ui:field="path" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
+            <g:CheckBox name="AutoPush"
+                        title="Automatically push changes to the Git repository"
+                        ui:field="autoPush" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRepoCommitMessage" label="Commit Message">
+            <g:TextArea name="CommitMessage"
+                        title="Commit Message"
+                        ui:field="commitMessage" />
+        </form:FormGroup>
+        <b:Button ui:field="gitRepoPush"
+                  text="Push to Git"
+                  addStyleNames="allow-focus"
+                  title="Add a commit message before pushing"
+                  width="200px" />
+        <b:Button ui:field="gitRepoPull"
+                  text="Pull from Git"
+                  addStyleNames="allow-focus"
+                  title="Pull remote changes into Stroom"
+                  width="200px" />
+    </g:FlowPanel>
+</ui:UiBinder>
