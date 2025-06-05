@@ -19,7 +19,7 @@ package stroom.planb.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.HistogramKeySchema;
+import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
@@ -36,7 +36,7 @@ import java.util.Objects;
 
 public class MetricKeySchemaSettingsWidget
         extends AbstractSettingsWidget
-        implements HistogramKeySchemaSettingsView {
+        implements MetricKeySchemaSettingsView {
 
     private final Widget widget;
 
@@ -80,9 +80,9 @@ public class MetricKeySchemaSettingsWidget
     }
 
     @Override
-    public HistogramKeySchema getKeySchema() {
+    public MetricKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
-        return new HistogramKeySchema(
+        return new MetricKeySchema(
                 keyType.getValue(),
                 hashLength.getValue(),
                 temporalResolution.getValue(),
@@ -90,7 +90,7 @@ public class MetricKeySchemaSettingsWidget
     }
 
     @Override
-    public void setKeySchema(final HistogramKeySchema keySchema) {
+    public void setKeySchema(final MetricKeySchema keySchema) {
         if (keySchema != null) {
             keyType.setValue(keySchema.getKeyType());
             hashLength.setValue(keySchema.getHashLength());

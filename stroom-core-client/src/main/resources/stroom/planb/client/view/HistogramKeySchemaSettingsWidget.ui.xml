@@ -16,6 +16,6 @@
                         helpText="The temporal resolution of histogram data points?">
             <i:SelectionBox ui:field="temporalResolution" addStyleNames="allow-focus"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="timeZone"/>
+        <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>
     </g:FlowPanel>
 </ui:UiBinder>

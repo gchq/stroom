@@ -583,7 +583,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case SESSION -> addSession(doc);
                     case HISTOGRAM -> addHistogramValue(doc);
                     case METRIC -> addMetricValue(doc);
-                    default -> error("Unexpected state type: " + doc.getStateType());
+                    default -> error("Unexpected Plan B store type: " + doc.getStateType());
                 }
             } catch (final BufferOverflowException boe) {
                 final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",

@@ -18,7 +18,7 @@ import java.util.Objects;
         "keySchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class SessionSettings extends AbstractPlanBSettings {
+public final class SessionSettings extends AbstractPlanBSettings {
 
     @JsonProperty
     private final DurationSetting condense;

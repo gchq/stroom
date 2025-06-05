@@ -52,6 +52,7 @@ public class PlanBSettingsViewImpl
         stateType.addItem(StateType.TEMPORAL_RANGED_STATE);
         stateType.addItem(StateType.SESSION);
         stateType.addItem(StateType.HISTOGRAM);
+        stateType.addItem(StateType.METRIC);
         stateType.setValue(StateType.TEMPORAL_STATE);
     }
 

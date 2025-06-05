@@ -18,7 +18,7 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class RangeStateSettings extends AbstractPlanBSettings {
+public final class RangeStateSettings extends AbstractPlanBSettings {
 
     @JsonProperty
     private final RangeKeySchema keySchema;

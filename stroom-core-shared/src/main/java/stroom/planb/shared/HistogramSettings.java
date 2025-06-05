@@ -18,7 +18,7 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class HistogramSettings extends AbstractPlanBSettings {
+public final class HistogramSettings extends AbstractPlanBSettings {
 
     @JsonProperty
     private final HistogramKeySchema keySchema;

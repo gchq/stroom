@@ -19,7 +19,7 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class TemporalStateSettings extends AbstractPlanBSettings {
+public final class TemporalStateSettings extends AbstractPlanBSettings {
 
     @JsonProperty
     private final DurationSetting condense;
