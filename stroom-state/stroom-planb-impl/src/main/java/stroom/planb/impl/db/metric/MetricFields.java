@@ -39,6 +39,11 @@ public interface MetricFields {
             SUM_FIELD,
             AVERAGE_FIELD);
 
+    List<QueryField> CORE_FIELDS = Arrays.asList(
+            KEY_FIELD,
+            TIME_FIELD,
+            RESOLUTION_FIELD);
+
     Map<String, QueryField> FIELD_MAP = Map.of(
             KEY, KEY_FIELD,
             TIME, TIME_FIELD,

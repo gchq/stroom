@@ -82,11 +82,12 @@ public class MetricValueSchema {
             return false;
         }
         final MetricValueSchema that = (MetricValueSchema) o;
-        return valueType == that.valueType && Objects.equals(storeLatestValue,
-                that.storeLatestValue) && Objects.equals(storeMin, that.storeMin) && Objects.equals(
-                storeMax,
-                that.storeMax) && Objects.equals(storeCount,
-                that.storeCount) && Objects.equals(storeSum, that.storeSum);
+        return valueType == that.valueType &&
+               Objects.equals(storeLatestValue, that.storeLatestValue) &&
+               Objects.equals(storeMin, that.storeMin) &&
+               Objects.equals(storeMax, that.storeMax) &&
+               Objects.equals(storeCount, that.storeCount) &&
+               Objects.equals(storeSum, that.storeSum);
     }
 
     @Override
