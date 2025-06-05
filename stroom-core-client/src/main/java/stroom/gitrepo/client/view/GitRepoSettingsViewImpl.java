@@ -22,7 +22,7 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -41,7 +41,11 @@ public class GitRepoSettingsViewImpl
         extends ViewWithUiHandlers<GitRepoSettingsUiHandlers>
         implements GitRepoSettingsView, ReadOnlyChangeHandler {
 
+    /** The widget that this represents */
     private final Widget widget;
+
+    /** Whether this is readonly */
+    private boolean readOnly = false;
 
     @UiField
     TextBox url;
@@ -76,9 +80,6 @@ public class GitRepoSettingsViewImpl
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        // Set the state of the git repo push button
-        this.gitRepoPush.setEnabled(false);
 
         // TODO Add validation for the TextBoxes
     }
@@ -176,13 +177,63 @@ public class GitRepoSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        url.setEnabled(!readOnly);
-        username.setEnabled(!readOnly);
-        password.setEnabled(!readOnly);
-        branch.setEnabled(!readOnly);
-        path.setEnabled(!readOnly);
-        commit.setEnabled(!readOnly);
-        autoPush.setEnabled(!readOnly);
+        this.readOnly = readOnly;
+        this.setState();
+    }
+
+    /**
+     * Sets the enabled/disabled state of widgets.
+     * Called when the state of widgets changes.
+     * Also called from the Presenter onBind().
+     */
+    @Override
+    public void setState() {
+
+        if (this.readOnly) {
+            // Everything is disabled
+            url.setEnabled(false);
+            username.setEnabled(false);
+            password.setEnabled(false);
+            branch.setEnabled(false);
+            path.setEnabled(false);
+            commit.setEnabled(false);
+            autoPush.setEnabled(false);
+            commitMessage.setEnabled(false);
+            gitRepoPush.setEnabled(false);
+            gitRepoPull.setEnabled(false);
+
+        } else {
+            // Not readonly so enable most stuff
+            url.setEnabled(true);
+            username.setEnabled(true);
+            password.setEnabled(true);
+            branch.setEnabled(true);
+            path.setEnabled(true);
+            commit.setEnabled(true);
+            gitRepoPull.setEnabled(true);
+
+            // Commit hash => Git cannot accept pushes
+            if (commit.getText().isEmpty()) {
+                // Can push manually or automatically
+                autoPush.setEnabled(true);
+                commitMessage.setEnabled(true);
+
+                if (commitMessage.getText().isEmpty()) {
+                    // Cannot push until message isn't empty
+                    gitRepoPush.setEnabled(false);
+
+                } else {
+                    // Can push as we have a commit message
+                    gitRepoPush.setEnabled(true);
+                }
+
+            } else {
+                // Commit hash is specified so cannot push manually or automatically
+                commitMessage.setEnabled(false);
+                autoPush.setEnabled(false);
+                gitRepoPush.setEnabled(false);
+            }
+        }
     }
 
     /**
@@ -191,10 +242,11 @@ public class GitRepoSettingsViewImpl
      */
     @SuppressWarnings("unused")
     @UiHandler({"url", "username", "password", "branch", "path", "commit"})
-    public void onWidgetValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
+    public void onWidgetValueChange(@SuppressWarnings("unused") final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
+        this.setState();
     }
 
     /**
@@ -207,6 +259,7 @@ public class GitRepoSettingsViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().onDirty();
         }
+        this.setState();
     }
 
     /**
@@ -215,8 +268,8 @@ public class GitRepoSettingsViewImpl
      * @param e Event. Ignored. Can be null.
      */
     @UiHandler({"commitMessage"})
-    public void onCommitMessageValueChange(@SuppressWarnings("unused") final KeyDownEvent e) {
-        this.gitRepoPush.setEnabled(!this.getCommitMessage().isEmpty());
+    public void onCommitMessageValueChange(@SuppressWarnings("unused") final ValueChangeEvent<String> e) {
+        this.setState();
     }
 
     /**

@@ -69,24 +69,37 @@ public class GitRepoSettingsPresenter
     @Override
     protected void onRead(final DocRef docRef, final GitRepoDoc doc, final boolean readOnly) {
         gitRepoDoc = doc;
-        this.getView().setUrl(doc.getUrl());
-        this.getView().setUsername(doc.getUsername());
-        this.getView().setPassword(doc.getPassword());
-        this.getView().setBranch(doc.getBranch());
-        this.getView().setPath(doc.getPath());
-        this.getView().setCommit(doc.getCommit());
-        this.getView().setAutoPush(doc.isAutoPush());
+        var view = this.getView();
+        view.setUrl(doc.getUrl());
+        view.setUsername(doc.getUsername());
+        view.setPassword(doc.getPassword());
+        view.setBranch(doc.getBranch());
+        view.setPath(doc.getPath());
+        view.setCommit(doc.getCommit());
+        view.setAutoPush(doc.isAutoPush());
+
+        // Set the initial state of the UI
+        view.setState();
     }
 
     @Override
     protected GitRepoDoc onWrite(final GitRepoDoc doc) {
-        doc.setUrl(this.getView().getUrl());
-        doc.setUsername(this.getView().getUsername());
-        doc.setPassword(this.getView().getPassword());
-        doc.setBranch(this.getView().getBranch());
-        doc.setPath(this.getView().getPath());
-        doc.setCommit(this.getView().getCommit());
-        doc.setAutoPush(this.getView().isAutoPush());
+        var view = this.getView();
+        doc.setUrl(view.getUrl());
+        doc.setUsername(view.getUsername());
+        doc.setPassword(view.getPassword());
+        doc.setBranch(view.getBranch());
+        doc.setPath(view.getPath());
+        doc.setCommit(view.getCommit());
+
+        // Only save autoPush = true if we can push i.e. no commit hash ref
+        if (doc.getCommit().isEmpty()) {
+            doc.setAutoPush(view.isAutoPush());
+        } else {
+            doc.setAutoPush(false);
+            view.setAutoPush(false);
+        }
+
         return doc;
     }
 
@@ -198,5 +211,10 @@ public class GitRepoSettingsPresenter
         Boolean isAutoPush();
 
         void setAutoPush(Boolean autoPush);
+
+        /**
+         * Called by presenter on startup to set the state of the UI.
+         */
+        void setState();
     }
 }
