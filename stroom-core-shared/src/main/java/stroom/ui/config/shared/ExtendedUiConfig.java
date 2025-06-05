@@ -18,6 +18,7 @@ package stroom.ui.config.shared;
 
 import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.collection.GwtCollectionUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -63,15 +64,15 @@ public class ExtendedUiConfig {
                              "when sent to a proxy.")
     private final Set<String> obfuscatedFields;
 
-
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
         this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
         // This set of values comes from
-        // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS
-        this.obfuscatedFields = Set.of(
+        // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS,
+        // and it MUST be in alphabetic order.
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(
                 "AccountId",
                 "AccountName",
                 "Component",
@@ -80,8 +81,8 @@ public class ExtendedUiConfig {
                 "RemoteDN",
                 "RemoteHost",
                 "System",
-                "UploadUserId",
                 "UploadUsername",
+                "UploadUserId",
                 "X-Forwarded-For");
     }
 
@@ -97,7 +98,7 @@ public class ExtendedUiConfig {
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
-        this.obfuscatedFields = obfuscatedFields;
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
     }
 
     public UiConfig getUiConfig() {

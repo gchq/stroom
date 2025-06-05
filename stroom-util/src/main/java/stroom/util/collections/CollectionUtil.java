@@ -2,12 +2,12 @@ package stroom.util.collections;
 
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.collection.GwtCollectionUtil;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,38 +36,29 @@ public class CollectionUtil {
 
     /**
      * Return a {@link Set} containing items, with iteration order matching
-     * the order in items array. Useful in config classes where a HashSet would
+     * the items in natural sort order. Useful in config classes where a HashSet would
      * result in an undefined order on serialisation.
      */
-    public static <T> Set<T> asUnmodifiabledConsistentOrderSet(final Set<T> items) {
-        if (NullSafe.isEmptyCollection(items)) {
-            return Collections.emptySet();
-        } else {
-            // Use a LinkedHashSet to ensure iteration order is consistent
-            final LinkedHashSet<T> cleanedSet = NullSafe.stream(items)
-                    .sorted() // Sort the items for consistent insert order
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            return Collections.unmodifiableSet(cleanedSet);
-        }
+    public static <T> Set<T> asUnmodifiabledConsistentOrderSet(final T... items) {
+        return GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(items);
     }
 
     /**
      * Return a {@link Set} containing items, with iteration order matching
-     * the order in items array. Useful in config classes where a HashSet would
+     * the items in natural sort order. Useful in config classes where a HashSet would
+     * result in an undefined order on serialisation.
+     */
+    public static <T> Set<T> asUnmodifiabledConsistentOrderSet(final Set<T> items) {
+        return GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(items);
+    }
+
+    /**
+     * Return a {@link Set} containing items, with iteration order matching
+     * the items in natural sort order. Useful in config classes where a HashSet would
      * result in an undefined order on serialisation.
      */
     public static <T> Set<T> asUnmodifiabledConsistentOrderSet(final List<T> items) {
-        if (NullSafe.isEmptyCollection(items)) {
-            return Collections.emptySet();
-        } else {
-            // Use a LinkedHashSet to ensure iteration order is consistent
-            final LinkedHashSet<T> cleanedSet = NullSafe.stream(items)
-                    .sorted() // Sort the items for consistent insert order
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            return Collections.unmodifiableSet(cleanedSet);
-        }
+        return GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(items);
     }
 
     public static <K, V> LinkedHashMapBuilder<K, V> linkedHashMapBuilder(final Class<K> keyType,
