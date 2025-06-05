@@ -3527,6 +3527,90 @@ paths:
       summary: Updates a data volume group
       tags:
       - Data Volume Groups
+  /gitRepo/v1/pullFromGit:
+    post:
+      operationId: pullFromGit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: gitRepoDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Pull items from Git
+      tags:
+      - GitRepos
+  /gitRepo/v1/pushToGit:
+    post:
+      operationId: pushToGit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoPushDto"
+        description: gitRepoPushDto
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Push items to Git
+      tags:
+      - GitRepos
+  /gitRepo/v1/{uuid}:
+    get:
+      operationId: fetchGitRepo
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoDoc"
+          description: default response
+      summary: Fetch a GIT repo doc by its UUID
+      tags:
+      - GitRepos
+    put:
+      operationId: updateGitRepo
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoDoc"
+          description: default response
+      summary: Update a GIT repo doc
+      tags:
+      - GitRepos
   /index/v2/addField:
     post:
       operationId: addField
@@ -10302,6 +10386,7 @@ components:
           - DOCUMENT_FAVOURITES
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
+          - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
@@ -10822,7 +10907,9 @@ components:
           type: string
           enum:
           - CREATE
+          - POST_CREATE
           - UPDATE
+          - PRE_DELETE
           - DELETE
           - CLEAR_CACHE
           - CREATE_EXPLORER_NODE
@@ -12168,6 +12255,55 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GitRepoDoc:
+      type: object
+      properties:
+        autoPush:
+          type: boolean
+        branch:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        url:
+          type: string
+        username:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    GitRepoPushDto:
+      type: object
+      properties:
+        commitMessage:
+          type: string
+        gitRepoDoc:
+          $ref: "#/components/schemas/GitRepoDoc"
+    GitRepoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     GlobalConfigCriteria:
       type: object
       properties:
@@ -13486,6 +13622,7 @@ components:
           - DOCUMENT_FAVOURITES
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
+          - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
