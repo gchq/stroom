@@ -16,6 +16,7 @@
 
 package stroom.security.mock;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 
 import com.google.inject.AbstractModule;
@@ -24,6 +25,9 @@ public class MockSecurityContextModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(SecurityContext.class).to(MockSecurityContext.class);
+        // There are the same thing
+        final MockSecurityContext mockSecurityContext = new MockSecurityContext();
+        bind(SecurityContext.class).toInstance(mockSecurityContext);
+        bind(CommonSecurityContext.class).toInstance(mockSecurityContext);
     }
 }
