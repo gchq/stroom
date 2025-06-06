@@ -20,9 +20,9 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.data.TemporalRangeState;
+import stroom.planb.impl.data.TemporalRangeState.Key;
 import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState.Key;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateFields;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateRequest;
@@ -104,7 +104,7 @@ class TestTemporalRangeStateDb {
             assertThat(state).isNotNull();
             assertThat(state.key().getKeyStart()).isEqualTo(10);
             assertThat(state.key().getKeyEnd()).isEqualTo(30);
-            assertThat(state.key().getEffectiveTime()).isEqualTo(refTime);
+            assertThat(state.key().getTime()).isEqualTo(refTime);
             assertThat(state.val().type()).isEqualTo(Type.STRING);
             assertThat(state.val().toString()).isEqualTo("test");
 
@@ -250,7 +250,7 @@ class TestTemporalRangeStateDb {
             for (int i = 0; i < rows; i++) {
                 final Key key = keyFunction.apply(i);
                 final TemporalRangeState temporalState = db.getState(
-                        new TemporalRangeStateRequest(key.getKeyStart(), key.getEffectiveTime()));
+                        new TemporalRangeStateRequest(key.getKeyStart(), key.getTime()));
                 assertThat(temporalState).isNotNull();
                 assertThat(temporalState.val().type()).isEqualTo(valueFunction.apply(i).type());
 //                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
@@ -305,7 +305,7 @@ class TestTemporalRangeStateDb {
 
     private void testGet(final TemporalRangeStateDb db) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-        final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(refTime).build();
+        final Key k = Key.builder().keyStart(10).keyEnd(30).time(refTime).build();
         final Val value = db.get(k);
         assertThat(value).isNotNull();
         assertThat(value.type()).isEqualTo(Type.STRING);
@@ -369,7 +369,7 @@ class TestTemporalRangeStateDb {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
-                final Key k = Key.builder().keyStart(10).keyEnd(30).effectiveTime(effectiveTime).build();
+                final Key k = Key.builder().keyStart(10).keyEnd(30).time(effectiveTime).build();
                 final Val v = ValString.create(value);
                 db.insert(writer, new TemporalRangeState(k, v));
             }

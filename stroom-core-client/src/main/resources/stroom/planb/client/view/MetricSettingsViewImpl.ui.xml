@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:sg="urn:import:stroom.planb.client.view">
+    <g:FlowPanel styleName="max form">
+        <sg:SettingsGroup label="General"
+                          ui:field="generalPanel"/>
+        <sg:SettingsGroup label="Snapshot"
+                          ui:field="snapshotPanel"/>
+        <sg:SettingsGroup label="Data Retention"
+                          ui:field="retentionPanel"/>
+        <sg:SettingsGroup label="Key Schema"
+                          ui:field="keySchemaPanel"/>
+        <sg:SettingsGroup label="Value Schema"
+                          ui:field="valueSchemaPanel"/>
+    </g:FlowPanel>
+</ui:UiBinder> 

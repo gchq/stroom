@@ -4,6 +4,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.HashClashCommitRunnable;
@@ -17,21 +18,35 @@ import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UidLookupDb;
 import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.hash.HashFactory;
-import stroom.planb.impl.db.hash.HashFactoryFactory;
-import stroom.planb.impl.db.serde.time.DayTimeSerde;
-import stroom.planb.impl.db.serde.time.HourTimeSerde;
-import stroom.planb.impl.db.serde.time.MillisecondTimeSerde;
-import stroom.planb.impl.db.serde.time.MinuteTimeSerde;
-import stroom.planb.impl.db.serde.time.NanoTimeSerde;
-import stroom.planb.impl.db.serde.time.SecondTimeSerde;
-import stroom.planb.impl.db.serde.time.TimeSerde;
-import stroom.planb.impl.db.serde.valtime.InsertTimeSerde;
-import stroom.planb.impl.db.serde.valtime.InstantSerde;
+import stroom.planb.impl.serde.hash.HashFactory;
+import stroom.planb.impl.serde.hash.HashFactoryFactory;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.session.BooleanSessionSerde;
+import stroom.planb.impl.serde.session.ByteSessionSerde;
+import stroom.planb.impl.serde.session.DoubleSessionSerde;
+import stroom.planb.impl.serde.session.FloatSessionSerde;
+import stroom.planb.impl.serde.session.HashLookupSessionSerde;
+import stroom.planb.impl.serde.session.IntegerSessionSerde;
+import stroom.planb.impl.serde.session.LimitedStringSessionSerde;
+import stroom.planb.impl.serde.session.LongSessionSerde;
+import stroom.planb.impl.serde.session.SessionSerde;
+import stroom.planb.impl.serde.session.ShortSessionSerde;
+import stroom.planb.impl.serde.session.TagsKeySerde;
+import stroom.planb.impl.serde.session.UidLookupSessionSerde;
+import stroom.planb.impl.serde.session.VariableSessionSerde;
+import stroom.planb.impl.serde.time.DayTimeSerde;
+import stroom.planb.impl.serde.time.HourTimeSerde;
+import stroom.planb.impl.serde.time.MillisecondTimeSerde;
+import stroom.planb.impl.serde.time.MinuteTimeSerde;
+import stroom.planb.impl.serde.time.NanoTimeSerde;
+import stroom.planb.impl.serde.time.SecondTimeSerde;
+import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.valtime.InsertTimeSerde;
+import stroom.planb.impl.serde.valtime.InstantSerde;
 import stroom.planb.shared.HashLength;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
-import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
@@ -65,9 +80,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
     private static final String KEY_LOOKUP_DB_NAME = "key";
 
     private final SessionSettings settings;
+    private final TimeSerde timeSerde;
     private final SessionSerde keySerde;
     private final InstantSerde valueSerde;
-    private final TimeSerde timeSerde;
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
 
@@ -75,15 +90,15 @@ public class SessionDb extends AbstractDb<Session, Session> {
                       final ByteBuffers byteBuffers,
                       final Boolean overwrite,
                       final SessionSettings settings,
+                      final TimeSerde timeSerde,
                       final SessionSerde keySerde,
                       final InstantSerde valueSerde,
-                      final TimeSerde timeSerde,
                       final HashClashCommitRunnable hashClashCommitRunnable) {
         super(env, byteBuffers, overwrite, hashClashCommitRunnable);
         this.settings = settings;
+        this.timeSerde = timeSerde;
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
-        this.timeSerde = timeSerde;
         this.keyRecorder = keySerde.getUsedLookupsRecorder(env);
         this.valueRecorder = valueSerde.getUsedLookupsRecorder(env);
     }
@@ -98,11 +113,11 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 20,
                 readOnly,
                 hashClashCommitRunnable);
-        final StateKeyType stateKeyType = NullSafe.getOrElse(
+        final KeyType keyType = NullSafe.getOrElse(
                 settings,
                 SessionSettings::getKeySchema,
-                SessionKeySchema::getStateKeyType,
-                StateKeyType.VARIABLE);
+                SessionKeySchema::getKeyType,
+                KeyType.VARIABLE);
         final HashLength valueHashLength = NullSafe.getOrElse(
                 settings,
                 SessionSettings::getKeySchema,
@@ -114,7 +129,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 SessionKeySchema::getTemporalPrecision,
                 TemporalPrecision.MILLISECOND));
         final SessionSerde keySerde = createKeySerde(
-                stateKeyType,
+                keyType,
                 valueHashLength,
                 env,
                 byteBuffers,
@@ -126,9 +141,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
                 byteBuffers,
                 settings.overwrite(),
                 settings,
+                timeSerde,
                 keySerde,
                 valueSerde,
-                timeSerde,
                 hashClashCommitRunnable);
     }
 
@@ -143,13 +158,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
         };
     }
 
-    private static SessionSerde createKeySerde(final StateKeyType stateKeyType,
+    private static SessionSerde createKeySerde(final KeyType keyType,
                                                final HashLength hashLength,
                                                final PlanBEnv env,
                                                final ByteBuffers byteBuffers,
                                                final TimeSerde timeSerde,
                                                final HashClashCommitRunnable hashClashCommitRunnable) {
-        return switch (stateKeyType) {
+        return switch (keyType) {
             case BOOLEAN -> new BooleanSessionSerde(byteBuffers, timeSerde);
             case BYTE -> new ByteSessionSerde(byteBuffers, timeSerde);
             case SHORT -> new ShortSessionSerde(byteBuffers, timeSerde);
@@ -190,6 +205,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
                         KEY_LOOKUP_DB_NAME);
                 yield new VariableSessionSerde(uidLookupDb, hashLookupDb, byteBuffers, timeSerde);
             }
+            case TAGS -> {
+                final UidLookupDb uidLookupDb = new UidLookupDb(
+                        env,
+                        byteBuffers,
+                        KEY_LOOKUP_DB_NAME);
+                yield new TagsKeySerde(uidLookupDb, byteBuffers, timeSerde);
+            }
         };
     }
 
@@ -221,9 +243,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
             try (final SessionDb sourceDb = SessionDb.create(source, byteBuffers, settings, true)) {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (keySerde.usesLookup(kv.key())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key())) {
                             // We need to do a full read and merge.
-                            final Session session = keySerde.read(readTxn, kv.key());
+                            final Session session = sourceDb.keySerde.read(readTxn, kv.key());
                             insert(writer, session);
                         } else {
                             // Quick merge.
@@ -289,13 +311,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
                         final Session session = keySerde.read(readTxn, kv.key());
 
                         if (lastSession != null &&
-                            lastSession.key.equals(session.getKey()) &&
+                            lastSession.prefix.equals(session.getPrefix()) &&
                             (lastSession.sessionEnd.isAfter(session.getStart()) ||
                              lastSession.sessionEnd.equals(session.getStart()))) {
 
                             // Extend the session.
                             lastSession = new CurrentSession(
-                                    lastSession.key,
+                                    lastSession.prefix,
                                     lastSession.sessionStart,
                                     session.getEnd(),
                                     vals);
@@ -312,7 +334,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                             }
 
                             lastSession = new CurrentSession(
-                                    session.getKey(),
+                                    session.getPrefix(),
                                     session.getStart(),
                                     session.getEnd(),
                                     vals);
@@ -355,7 +377,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
     public Session getState(final SessionRequest request) {
         return env.read(readTxn ->
                 keySerde.toBufferForGet(readTxn,
-                        new Session(request.key(), request.time(), request.time()),
+                        new Session(request.prefix(), request.time(), request.time()),
                         optionalKeyByteBuffer ->
                                 optionalKeyByteBuffer.map(keyByteBuffer -> {
                                     // Pad out the end time in the buffer.
@@ -442,13 +464,13 @@ public class SessionDb extends AbstractDb<Session, Session> {
                     Session session = keySerde.read(writer.getWriteTxn(), kv.key().duplicate());
 
                     if (lastSession != null &&
-                        lastSession.getKey().equals(session.getKey()) &&
+                        lastSession.getPrefix().equals(session.getPrefix()) &&
                         session.getStart().isBefore(condenseBefore) &&
                         (lastSession.getEnd().isAfter(session.getStart()) ||
                          lastSession.getEnd().equals(session.getStart()))) {
 
                         // Extend the session.
-                        newSession = new Session(lastSession.getKey(),
+                        newSession = new Session(lastSession.getPrefix(),
                                 lastSession.getStart(),
                                 session.getEnd());
 
@@ -502,7 +524,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
         });
     }
 
-    private record CurrentSession(Val key,
+    private record CurrentSession(KeyPrefix prefix,
                                   Instant sessionStart,
                                   Instant sessionEnd,
                                   Val[] vals) {
@@ -515,7 +537,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
         final SessionConverter[] converters = new SessionConverter[fields.length];
         for (int i = 0; i < fields.length; i++) {
             converters[i] = switch (fields[i]) {
-                case SessionFields.KEY -> kv -> kv.getKey().getKey();
+                case SessionFields.KEY -> kv -> kv.getKey().getPrefix().getVal();
                 case SessionFields.START -> kv -> ValDate.create(kv.getKey().getStart());
                 case SessionFields.END -> kv -> ValDate.create(kv.getKey().getEnd());
                 default -> kv -> ValNull.INSTANCE;

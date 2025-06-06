@@ -3,6 +3,8 @@ package stroom.planb.impl.db.rangestate;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.data.RangeState;
+import stroom.planb.impl.data.RangeState.Key;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
@@ -13,10 +15,14 @@ import stroom.planb.impl.db.PlanBSearchHelper.Converter;
 import stroom.planb.impl.db.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.db.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.rangestate.RangeState.Key;
-import stroom.planb.impl.db.serde.valtime.ValTime;
-import stroom.planb.impl.db.serde.valtime.ValTimeSerde;
-import stroom.planb.impl.db.serde.valtime.ValTimeSerdeFactory;
+import stroom.planb.impl.serde.rangestate.ByteRangeKeySerde;
+import stroom.planb.impl.serde.rangestate.IntegerRangeKeySerde;
+import stroom.planb.impl.serde.rangestate.LongRangeKeySerde;
+import stroom.planb.impl.serde.rangestate.RangeKeySerde;
+import stroom.planb.impl.serde.rangestate.ShortRangeKeySerde;
+import stroom.planb.impl.serde.valtime.ValTime;
+import stroom.planb.impl.serde.valtime.ValTimeSerde;
+import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RangeStateSettings;
@@ -150,10 +156,10 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
                     true)) {
                 sourceDb.env.read(readTxn -> {
                     sourceDb.iterate(readTxn, kv -> {
-                        if (keySerde.usesLookup(kv.key()) || valueSerde.usesLookup(kv.val())) {
+                        if (sourceDb.keySerde.usesLookup(kv.key()) || sourceDb.valueSerde.usesLookup(kv.val())) {
                             // We need to do a full read and merge.
-                            final Key key = keySerde.read(readTxn, kv.key());
-                            final Val value = valueSerde.read(readTxn, kv.val()).val();
+                            final Key key = sourceDb.keySerde.read(readTxn, kv.key());
+                            final Val value = sourceDb.valueSerde.read(readTxn, kv.val()).val();
                             insert(writer, new RangeState(key, value));
                         } else {
                             // Quick merge.

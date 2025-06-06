@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -50,6 +51,8 @@ class DuplicateCheckStorePool<K, V> {
                     if (borrowHandler != null) {
                         try {
                             borrowHandler.accept(references.object);
+                        } catch (final UncheckedInterruptedException e) {
+                            LOGGER.debug(e::getMessage, e);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                         }
@@ -70,6 +73,8 @@ class DuplicateCheckStorePool<K, V> {
                     if (releaseHandler != null) {
                         try {
                             releaseHandler.accept(v.object);
+                        } catch (final UncheckedInterruptedException e) {
+                            LOGGER.debug(e::getMessage, e);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                         }
@@ -79,6 +84,8 @@ class DuplicateCheckStorePool<K, V> {
                         if (destructionHandler != null) {
                             try {
                                 destructionHandler.accept(v.object);
+                            } catch (final UncheckedInterruptedException e) {
+                                LOGGER.debug(e::getMessage, e);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }

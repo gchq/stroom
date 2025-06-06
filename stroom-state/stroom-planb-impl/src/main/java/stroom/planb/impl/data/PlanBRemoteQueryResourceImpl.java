@@ -2,7 +2,6 @@ package stroom.planb.impl.data;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.planb.impl.db.PlanBValue;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;

@@ -20,11 +20,11 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.hash.Hash;
-import stroom.planb.impl.db.hash.HashClashCount;
-import stroom.planb.impl.db.hash.HashFactory;
-import stroom.planb.impl.db.hash.IntegerHashFactory;
-import stroom.planb.impl.db.hash.LongHashFactory;
+import stroom.planb.impl.serde.hash.Hash;
+import stroom.planb.impl.serde.hash.HashClashCount;
+import stroom.planb.impl.serde.hash.HashFactory;
+import stroom.planb.impl.serde.hash.IntegerHashFactory;
+import stroom.planb.impl.serde.hash.LongHashFactory;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

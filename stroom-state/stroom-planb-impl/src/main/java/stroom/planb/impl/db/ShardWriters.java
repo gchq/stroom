@@ -7,15 +7,18 @@ import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
-import stroom.planb.impl.db.rangestate.RangeState;
+import stroom.planb.impl.data.RangeState;
+import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.TemporalRangeState;
+import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.db.histogram.HistogramDb;
+import stroom.planb.impl.db.metric.MetricDb;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
-import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
-import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
-import stroom.planb.impl.db.temporalstate.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
@@ -163,6 +166,16 @@ public class ShardWriters {
                 db.insert(writer, session);
             }
 
+            public void addHistogramValue(final TemporalValue temporalValue) {
+                final HistogramDb db = (HistogramDb) lmdb;
+                db.insert(writer, temporalValue);
+            }
+
+            public void addMetricValue(final TemporalValue temporalValue) {
+                final MetricDb db = (MetricDb) lmdb;
+                db.insert(writer, temporalValue);
+            }
+
             public boolean isSynchroniseMerge() {
                 return synchroniseMerge;
             }
@@ -185,18 +198,28 @@ public class ShardWriters {
         }
 
         public void addRangeState(final PlanBDoc doc,
-                                   final RangeState rangeState) {
+                                  final RangeState rangeState) {
             getWriter(doc).addRangeState(rangeState);
         }
 
         public void addTemporalRangeState(final PlanBDoc doc,
-                                           final TemporalRangeState temporalRangeState) {
+                                          final TemporalRangeState temporalRangeState) {
             getWriter(doc).addTemporalRangeState(temporalRangeState);
         }
 
         public void addSession(final PlanBDoc doc,
                                final Session session) {
             getWriter(doc).addSession(session);
+        }
+
+        public void addHistogramValue(final PlanBDoc doc,
+                                      final TemporalValue temporalValue) {
+            getWriter(doc).addHistogramValue(temporalValue);
+        }
+
+        public void addMetricValue(final PlanBDoc doc,
+                                   final TemporalValue temporalValue) {
+            getWriter(doc).addMetricValue(temporalValue);
         }
 
         private WriterInstance getWriter(final PlanBDoc doc) {

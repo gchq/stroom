@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class QueryHelpField extends QueryHelpData {
+public final class QueryHelpField extends QueryHelpData {
 
     @JsonProperty
     @JsonPropertyDescription("A field of a data source.")

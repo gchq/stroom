@@ -1,6 +1,6 @@
 package stroom.planb.impl.db;
 
-import stroom.planb.impl.db.serde.val.VariableValType;
+import stroom.planb.impl.serde.val.VariableValType;
 
 import org.lmdbjava.Txn;
 

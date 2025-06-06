@@ -187,11 +187,11 @@ class TestSerialisation {
 
         if (areDifferent) {
             System.out.println("\n If you are satisfied that the differences are justified, i.e. the java model has " +
-                    "changed then run the following:");
+                               "changed then run the following:");
             System.out.println("cp "
-                    + actualFileIn.toAbsolutePath().normalize()
-                    + " "
-                    + expectedFile.toAbsolutePath().normalize());
+                               + actualFileIn.toAbsolutePath().normalize()
+                               + " "
+                               + expectedFile.toAbsolutePath().normalize());
         }
 
         final String expected = StreamUtil.fileToString(expectedFile);
@@ -251,9 +251,9 @@ class TestSerialisation {
             });
             System.out.println("\n To see the diff in Vim run:");
             System.out.println("vimdiff "
-                    + expectedFile.toAbsolutePath().normalize()
-                    + " "
-                    + actualFile.toAbsolutePath().normalize());
+                               + expectedFile.toAbsolutePath().normalize()
+                               + " "
+                               + actualFile.toAbsolutePath().normalize());
             return true;
         } else {
             System.out.println("\n Files are the same");
@@ -379,7 +379,7 @@ class TestSerialisation {
             @JsonSubTypes.Type(value = Sub1.class, name = "sub1"),
             @JsonSubTypes.Type(value = Sub2.class, name = "sub2")
     })
-    public abstract static class Base {
+    public abstract static sealed class Base permits Sub1, Sub2 {
 
         @XmlElement
         private int num;
@@ -417,7 +417,7 @@ class TestSerialisation {
 
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub1", propOrder = {"num2"})
-    public static class Sub1 extends Base {
+    public static final class Sub1 extends Base {
 
         @XmlElement
         private int num2;
@@ -461,7 +461,7 @@ class TestSerialisation {
 
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(name = "sub2", propOrder = {"str"})
-    public static class Sub2 extends Base {
+    public static final class Sub2 extends Base {
 
         @XmlElement
         private String str;

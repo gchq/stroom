@@ -1,7 +1,7 @@
 package stroom.planb.impl.db.state;
 
-import stroom.query.language.functions.Val;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 
-public record StateRequest(Val key) {
+public record StateRequest(KeyPrefix key) {
 
 }

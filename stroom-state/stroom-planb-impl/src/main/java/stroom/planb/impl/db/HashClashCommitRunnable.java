@@ -1,6 +1,6 @@
 package stroom.planb.impl.db;
 
-import stroom.planb.impl.db.hash.HashClashCount;
+import stroom.planb.impl.serde.hash.HashClashCount;
 
 import org.lmdbjava.Txn;
 

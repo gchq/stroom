@@ -1,0 +1,33 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Value Size"
+                        helpText="Choose how big a value can be for a data point. Larger values require more storage.">
+            <i:SelectionBox ui:field="maxValue" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Store Latest Value"
+                        helpText="Should we store the last value received for the time period?">
+            <tickbox:CustomCheckBox ui:field="storeLatestValue" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Store Min Value"
+                        helpText="Should we store the minimum value received for the time period?">
+            <tickbox:CustomCheckBox ui:field="storeMin" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Store Max Value"
+                        helpText="Should we store the maximum value received for the time period?">
+            <tickbox:CustomCheckBox ui:field="storeMax" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Store Count"
+                        helpText="Should we remember how many values we received for the time period? This is needed for calculating averages.">
+            <tickbox:CustomCheckBox ui:field="storeCount" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Store Sum"
+                        helpText="Should we store the sum of the values we received for the time period? This is needed for calculating averages.">
+            <tickbox:CustomCheckBox ui:field="storeSum" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

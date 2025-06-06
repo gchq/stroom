@@ -13,6 +13,26 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10-beta.3] - 2025-06-05
+
+* Issue **#4900** : Add histogram and metric stores to Plan B.
+
+
+## [v7.10-beta.2] - 2025-06-05
+
+* Issue **#4940** : Fix duplicate store error log.
+
+* Issue **#4941** : Fix annotation data retention.
+
+* Issue **#4957** : Default vis settings are not added to Query pane visualisations.
+
+* Issue **#3861** : Add Shard Id, Index Version to Index Shards searchable.
+
+* Issue **#4112** : Allow use of Capture groups in the decode() function result.
+
+* Issue **#3955** : Add case expression function.
+
+
 ## [v7.10-beta.1] - 2025-05-27
 
 * Issue **#4484** : Change selection handling to use fully qualified keys.
@@ -1485,7 +1505,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10-beta.3...HEAD
+[v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
+[v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
 [v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
 [v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
 [v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11

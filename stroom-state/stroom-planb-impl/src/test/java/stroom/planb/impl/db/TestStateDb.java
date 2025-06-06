@@ -28,14 +28,15 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.State;
 import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
-import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateFields;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateKeySchema;
-import stroom.planb.shared.StateKeyType;
 import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 import stroom.planb.shared.StateValueSchema;
@@ -100,65 +101,65 @@ class TestStateDb {
     private static final Val MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE);
 
     private final List<KeyFunction> keyFunctions = List.of(
-            new KeyFunction(StateKeyType.BOOLEAN.name(), StateKeyType.BOOLEAN,
-                    i -> ValBoolean.create(i > 0)),
-            new KeyFunction(StateKeyType.BYTE.name(), StateKeyType.BYTE,
-                    i -> ValByte.create(i.byteValue())),
-            new KeyFunction(StateKeyType.SHORT.name(), StateKeyType.SHORT,
-                    i -> ValShort.create(i.shortValue())),
-            new KeyFunction(StateKeyType.INT.name(), StateKeyType.INT,
-                    i -> ValInteger.create(i)),
-            new KeyFunction(StateKeyType.LONG.name(), StateKeyType.LONG,
-                    i -> ValLong.create(i.longValue())),
-            new KeyFunction(StateKeyType.FLOAT.name(), StateKeyType.FLOAT,
-                    i -> ValFloat.create(i.floatValue())),
-            new KeyFunction(StateKeyType.DOUBLE.name(), StateKeyType.DOUBLE,
-                    i -> ValDouble.create(i.doubleValue())),
-            new KeyFunction(StateKeyType.STRING.name(), StateKeyType.STRING,
-                    i -> ValString.create("test-" + i)),
-            new KeyFunction(StateKeyType.UID_LOOKUP.name(), StateKeyType.UID_LOOKUP,
-                    i -> ValString.create("test-" + i)),
-            new KeyFunction(StateKeyType.HASH_LOOKUP.name(), StateKeyType.HASH_LOOKUP,
-                    i -> ValString.create("test-" + i)),
-            new KeyFunction(StateKeyType.VARIABLE.name(), StateKeyType.VARIABLE,
-                    i -> ValString.create("test-" + i)),
-            new KeyFunction("Variable mid", StateKeyType.VARIABLE,
-                    i -> ValString.create(makeString(400))),
-            new KeyFunction("Variable long", StateKeyType.VARIABLE,
-                    i -> ValString.create(makeString(1000))));
+            new KeyFunction(KeyType.BOOLEAN.name(), KeyType.BOOLEAN,
+                    i -> KeyPrefix.create(ValBoolean.create(i > 0))),
+            new KeyFunction(KeyType.BYTE.name(), KeyType.BYTE,
+                    i -> KeyPrefix.create(ValByte.create(i.byteValue()))),
+            new KeyFunction(KeyType.SHORT.name(), KeyType.SHORT,
+                    i -> KeyPrefix.create(ValShort.create(i.shortValue()))),
+            new KeyFunction(KeyType.INT.name(), KeyType.INT,
+                    i -> KeyPrefix.create(ValInteger.create(i))),
+            new KeyFunction(KeyType.LONG.name(), KeyType.LONG,
+                    i -> KeyPrefix.create(ValLong.create(i.longValue()))),
+            new KeyFunction(KeyType.FLOAT.name(), KeyType.FLOAT,
+                    i -> KeyPrefix.create(ValFloat.create(i.floatValue()))),
+            new KeyFunction(KeyType.DOUBLE.name(), KeyType.DOUBLE,
+                    i -> KeyPrefix.create(ValDouble.create(i.doubleValue()))),
+            new KeyFunction(KeyType.STRING.name(), KeyType.STRING,
+                    i -> KeyPrefix.create(ValString.create("test-" + i))),
+            new KeyFunction(KeyType.UID_LOOKUP.name(), KeyType.UID_LOOKUP,
+                    i -> KeyPrefix.create(ValString.create("test-" + i))),
+            new KeyFunction(KeyType.HASH_LOOKUP.name(), KeyType.HASH_LOOKUP,
+                    i -> KeyPrefix.create(ValString.create("test-" + i))),
+            new KeyFunction(KeyType.VARIABLE.name(), KeyType.VARIABLE,
+                    i -> KeyPrefix.create(ValString.create("test-" + i))),
+            new KeyFunction("Variable mid", KeyType.VARIABLE,
+                    i -> KeyPrefix.create(ValString.create(makeString(400)))),
+            new KeyFunction("Variable long", KeyType.VARIABLE,
+                    i -> KeyPrefix.create(ValString.create(makeString(1000)))));
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
-        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY");
+        final Function<Integer, KeyPrefix> keyFunction = i -> KeyPrefix.create("TEST_KEY");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWriteRead(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
     }
 
     @Test
     void testReadWriteIntegerMax(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.INT, ValInteger.create(Integer.MAX_VALUE));
+        testReadWriteKeyType(tempDir, KeyType.INT, KeyPrefix.create(ValInteger.create(Integer.MAX_VALUE)));
     }
 
     @Test
     void testReadWriteIntegerMin(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.INT, ValInteger.create(Integer.MIN_VALUE));
+        testReadWriteKeyType(tempDir, KeyType.INT, KeyPrefix.create(ValInteger.create(Integer.MIN_VALUE)));
     }
 
     @Test
     void testReadWriteLongMax(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.LONG, ValLong.create(Long.MAX_VALUE));
+        testReadWriteKeyType(tempDir, KeyType.LONG, KeyPrefix.create(ValLong.create(Long.MAX_VALUE)));
     }
 
     @Test
     void testReadWriteLongMin(@TempDir final Path tempDir) {
-        testReadWriteKeyType(tempDir, StateKeyType.LONG, ValLong.create(Long.MIN_VALUE));
+        testReadWriteKeyType(tempDir, KeyType.LONG, KeyPrefix.create(ValLong.create(Long.MIN_VALUE)));
     }
 
-    void testReadWriteKeyType(@TempDir final Path tempDir, final StateKeyType stateKeyType, final Val key) {
-        final Function<Integer, Val> keyFunction = i -> key;
+    void testReadWriteKeyType(@TempDir final Path tempDir, final KeyType keyType, final KeyPrefix key) {
+        final Function<Integer, KeyPrefix> keyFunction = i -> key;
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         final StateSettings settings = new StateSettings.Builder()
-                .keySchema(new StateKeySchema.Builder().stateKeyType(stateKeyType).build())
+                .keySchema(new StateKeySchema.Builder().keyType(keyType).build())
                 .build();
         testWriteRead(tempDir, settings, 100, keyFunction, valueFunction);
     }
@@ -170,11 +171,11 @@ class TestStateDb {
         Files.createDirectory(dbPath1);
         Files.createDirectory(dbPath2);
 
-        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY1");
+        final Function<Integer, KeyPrefix> keyFunction = i -> KeyPrefix.create("TEST_KEY1");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
         testWrite(dbPath1, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
-        final Function<Integer, Val> keyFunction2 = i -> ValString.create("TEST_KEY2");
+        final Function<Integer, KeyPrefix> keyFunction2 = i -> KeyPrefix.create("TEST_KEY2");
         final Function<Integer, Val> valueFunction2 = i -> ValString.create("test2" + i);
         testWrite(dbPath2, BASIC_SETTINGS, 100, keyFunction2, valueFunction2);
 
@@ -225,9 +226,9 @@ class TestStateDb {
         final List<CompletableFuture<Void>> list = new ArrayList<>();
         for (int thread = 0; thread < threads; thread++) {
             list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, ValString.create("TEST_KEY_1"))));
+                    writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_1"))));
             list.add(CompletableFuture.runAsync(() ->
-                    writePart(mergeProcessor, ValString.create("TEST_KEY_2"))));
+                    writePart(mergeProcessor, KeyPrefix.create("TEST_KEY_2"))));
         }
         CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
 
@@ -289,7 +290,7 @@ class TestStateDb {
     @Test
     void testZipUnzip(@TempDir final Path rootDir) throws IOException {
         // Simulate constant writing to shard.
-        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY1");
+        final Function<Integer, KeyPrefix> keyFunction = i -> KeyPrefix.create("TEST_KEY1");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
 
         final Path source = rootDir.resolve("source");
@@ -349,7 +350,7 @@ class TestStateDb {
 
     @Test
     void testDeleteWhileRead(@TempDir final Path tempDir) {
-        final Function<Integer, Val> keyFunction = i -> ValString.create("TEST_KEY");
+        final Function<Integer, KeyPrefix> keyFunction = i -> KeyPrefix.create("TEST_KEY");
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         testWrite(tempDir, BASIC_SETTINGS, 100, keyFunction, valueFunction);
 
@@ -359,7 +360,7 @@ class TestStateDb {
                 BASIC_SETTINGS,
                 true)) {
             assertThat(db.count()).isEqualTo(1);
-            final Val key = ValString.create("TEST_KEY");
+            final KeyPrefix key = KeyPrefix.create("TEST_KEY");
 
             // Read the data.
             Val value = db.get(key);
@@ -454,9 +455,9 @@ class TestStateDb {
 //        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 //    }
 
-    private void writePart(final MergeProcessor mergeProcessor, final Val keyName) {
+    private void writePart(final MergeProcessor mergeProcessor, final KeyPrefix keyName) {
         try {
-            final Function<Integer, Val> keyFunction = i -> keyName;
+            final Function<Integer, KeyPrefix> keyFunction = i -> keyName;
             final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
             final Path partPath = Files.createTempDirectory("part");
             final Path mapPath = partPath.resolve(MAP_UUID);
@@ -472,8 +473,8 @@ class TestStateDb {
         }
     }
 
-//    private Function<Integer, Val> createKeyFunction(final StateKeyType stateKeyType) {
-//        return switch (stateKeyType) {
+//    private Function<Integer, Val> createKeyFunction(final StateKeyType keyType) {
+//        return switch (keyType) {
 //            case BOOLEAN -> i -> ValBoolean.create(i > 0);
 //            case BYTE -> i -> ValByte.create(i.byteValue());
 //            case SHORT -> i -> ValShort.create(i.shortValue());
@@ -504,9 +505,9 @@ class TestStateDb {
 //        };
 //    }
 
-    private StateSettings getSettings(final StateKeyType stateKeyType) {
+    private StateSettings getSettings(final KeyType keyType) {
         return new StateSettings.Builder()
-                .keySchema(new StateKeySchema.Builder().stateKeyType(stateKeyType).build())
+                .keySchema(new StateKeySchema.Builder().keyType(keyType).build())
                 .build();
     }
 
@@ -551,7 +552,7 @@ class TestStateDb {
     }
 
     private Executable createTest(final StateSettings settings,
-                                  final Function<Integer, Val> keyFunction,
+                                  final Function<Integer, KeyPrefix> keyFunction,
                                   final Function<Integer, Val> valueFunction,
                                   final int iterations,
                                   final boolean read) {
@@ -574,14 +575,14 @@ class TestStateDb {
     }
 
     private DynamicTest createStaticKeyTest(final String displayName,
-                                            final StateKeyType stateKeyType,
-                                            final Val key,
+                                            final KeyType keyType,
+                                            final KeyPrefix key,
                                             final int iterations,
                                             final boolean read) {
-        final Function<Integer, Val> keyFunction = i -> key;
+        final Function<Integer, KeyPrefix> keyFunction = i -> key;
         final Function<Integer, Val> valueFunction = i -> ValString.create("test" + i);
         return DynamicTest.dynamicTest(displayName,
-                createTest(getSettings(stateKeyType), keyFunction, valueFunction, iterations, read));
+                createTest(getSettings(keyType), keyFunction, valueFunction, iterations, read));
     }
 
     Collection<DynamicTest> createWriteTest(final int iterations, final boolean read) {
@@ -590,132 +591,132 @@ class TestStateDb {
         // Byte keys.
         tests.add(createStaticKeyTest(
                 "Byte key min",
-                StateKeyType.BYTE,
-                ValByte.create(Byte.MIN_VALUE),
+                KeyType.BYTE,
+                KeyPrefix.create(ValByte.create(Byte.MIN_VALUE)),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Byte key max",
-                StateKeyType.BYTE,
-                ValByte.create(Byte.MAX_VALUE),
+                KeyType.BYTE,
+                KeyPrefix.create(ValByte.create(Byte.MAX_VALUE)),
                 iterations,
                 read));
 
         // Short keys.
         tests.add(createStaticKeyTest(
                 "Short key min",
-                StateKeyType.SHORT,
-                ValShort.create(Short.MIN_VALUE),
+                KeyType.SHORT,
+                KeyPrefix.create(ValShort.create(Short.MIN_VALUE)),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Short key max",
-                StateKeyType.SHORT,
-                ValShort.create(Short.MAX_VALUE),
+                KeyType.SHORT,
+                KeyPrefix.create(ValShort.create(Short.MAX_VALUE)),
                 iterations,
                 read));
 
         // Integer keys.
         tests.add(createStaticKeyTest(
                 "Integer key min",
-                StateKeyType.INT,
-                ValInteger.create(Integer.MIN_VALUE),
+                KeyType.INT,
+                KeyPrefix.create(ValInteger.create(Integer.MIN_VALUE)),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Integer key max",
-                StateKeyType.INT,
-                ValInteger.create(Integer.MAX_VALUE),
+                KeyType.INT,
+                KeyPrefix.create(ValInteger.create(Integer.MAX_VALUE)),
                 iterations,
                 read));
 
         // Long keys.
         tests.add(createStaticKeyTest(
                 "Long key min",
-                StateKeyType.LONG,
-                ValLong.create(Long.MIN_VALUE),
+                KeyType.LONG,
+                KeyPrefix.create(ValLong.create(Long.MIN_VALUE)),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Long key max",
-                StateKeyType.LONG,
-                ValLong.create(Long.MAX_VALUE),
+                KeyType.LONG,
+                KeyPrefix.create(ValLong.create(Long.MAX_VALUE)),
                 iterations,
                 read));
         // Float keys.
         tests.add(createStaticKeyTest(
                 "Float key min",
-                StateKeyType.FLOAT,
-                MIN_FLOAT,
+                KeyType.FLOAT,
+                KeyPrefix.create(MIN_FLOAT),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Float key max",
-                StateKeyType.FLOAT,
-                MAX_FLOAT,
+                KeyType.FLOAT,
+                KeyPrefix.create(MAX_FLOAT),
                 iterations,
                 read));
 
         // Double keys.
         tests.add(createStaticKeyTest(
                 "Double key min",
-                StateKeyType.DOUBLE,
-                MIN_DOUBLE,
+                KeyType.DOUBLE,
+                KeyPrefix.create(MIN_DOUBLE),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Double key max",
-                StateKeyType.DOUBLE,
-                MAX_DOUBLE,
+                KeyType.DOUBLE,
+                KeyPrefix.create(MAX_DOUBLE),
                 iterations,
                 read));
 
         // String keys.
         tests.add(createStaticKeyTest(
                 "String key",
-                StateKeyType.STRING,
-                ValString.create("TEST_KEY"),
+                KeyType.STRING,
+                KeyPrefix.create(ValString.create("TEST_KEY")),
                 iterations,
                 read));
 
         // Lookup keys.
         tests.add(createStaticKeyTest(
                 "Uid lookup key",
-                StateKeyType.UID_LOOKUP,
-                ValString.create("TEST_KEY"),
+                KeyType.UID_LOOKUP,
+                KeyPrefix.create(ValString.create("TEST_KEY")),
                 iterations,
                 read));
 
         tests.add(createStaticKeyTest(
                 "Hash lookup key",
-                StateKeyType.HASH_LOOKUP,
-                ValString.create("TEST_KEY"),
+                KeyType.HASH_LOOKUP,
+                KeyPrefix.create(ValString.create("TEST_KEY")),
                 iterations,
                 read));
 
         tests.add(createStaticKeyTest(
                 "Hash lookup key (long)",
-                StateKeyType.HASH_LOOKUP,
-                ValString.create(makeString(800)),
+                KeyType.HASH_LOOKUP,
+                KeyPrefix.create(ValString.create(makeString(800))),
                 iterations,
                 read));
 
         tests.add(createStaticKeyTest(
                 "Variable string key",
-                StateKeyType.VARIABLE,
-                ValString.create("TEST_KEY"),
+                KeyType.VARIABLE,
+                KeyPrefix.create("TEST_KEY"),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Variable string uid lookup key",
-                StateKeyType.VARIABLE,
-                ValString.create(makeString(200)),
+                KeyType.VARIABLE,
+                KeyPrefix.create(ValString.create(makeString(200))),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Variable string hash lookup key",
-                StateKeyType.VARIABLE,
-                ValString.create(makeString(800)),
+                KeyType.VARIABLE,
+                KeyPrefix.create(ValString.create(makeString(800))),
                 iterations,
                 read));
         return tests;
@@ -731,7 +732,7 @@ class TestStateDb {
                             final StateSettings settings = new StateSettings
                                     .Builder()
                                     .keySchema(new StateKeySchema.Builder()
-                                            .stateKeyType(keyFunction.stateKeyType)
+                                            .keyType(keyFunction.keyType)
                                             .build())
                                     .valueSchema(new StateValueSchema.Builder()
                                             .stateValueType(valueFunction.stateValueType())
@@ -767,7 +768,7 @@ class TestStateDb {
     private void testWriteRead(final Path tempDir,
                                final StateSettings settings,
                                final int insertRows,
-                               final Function<Integer, Val> keyFunction,
+                               final Function<Integer, KeyPrefix> keyFunction,
                                final Function<Integer, Val> valueFunction) {
         testWrite(tempDir, settings, insertRows, keyFunction, valueFunction);
         testRead(tempDir, settings, insertRows, keyFunction, valueFunction);
@@ -776,7 +777,7 @@ class TestStateDb {
     private void testWrite(final Path dbDir,
                            final StateSettings settings,
                            final int insertRows,
-                           final Function<Integer, Val> keyFunction,
+                           final Function<Integer, KeyPrefix> keyFunction,
                            final Function<Integer, Val> valueFunction) {
         try (final StateDb db = StateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
@@ -786,12 +787,12 @@ class TestStateDb {
     private void testRead(final Path tempDir,
                           final StateSettings settings,
                           final int insertRows,
-                          final Function<Integer, Val> keyFunction,
+                          final Function<Integer, KeyPrefix> keyFunction,
                           final Function<Integer, Val> valueFunction) {
         final Val expectedVal = valueFunction.apply(insertRows - 1);
         try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
             assertThat(db.count()).isEqualTo(1);
-            final Val key = keyFunction.apply(0);
+            final KeyPrefix key = keyFunction.apply(0);
             final Val value = db.get(key);
             assertThat(value).isNotNull();
             assertThat(value.type()).isEqualTo(expectedVal.type());
@@ -810,7 +811,7 @@ class TestStateDb {
                     expressionPredicateFactory,
                     results::add);
             assertThat(results.size()).isEqualTo(1);
-            assertThat(results.getFirst()[0]).isEqualTo(key);
+            assertThat(results.getFirst()[0]).isEqualTo(key.getVal());
             assertThat(results.getFirst()[1].toString()).isEqualTo(expectedVal.type().toString());
             assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
@@ -822,11 +823,11 @@ class TestStateDb {
     private void testSimpleRead(final Path tempDir,
                                 final StateSettings settings,
                                 final int rows,
-                                final Function<Integer, Val> keyFunction,
+                                final Function<Integer, KeyPrefix> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
         try (final StateDb db = StateDb.create(tempDir, BYTE_BUFFERS, settings, false)) {
             for (int i = 0; i < rows; i++) {
-                final Val key = keyFunction.apply(i);
+                final KeyPrefix key = keyFunction.apply(i);
                 final Val value = db.get(key);
                 assertThat(value).isNotNull();
                 assertThat(value.type()).isEqualTo(valueFunction.apply(i).type());
@@ -840,11 +841,11 @@ class TestStateDb {
 
     private void insertData(final StateDb db,
                             final int rows,
-                            final Function<Integer, Val> keyFunction,
+                            final Function<Integer, KeyPrefix> keyFunction,
                             final Function<Integer, Val> valueFunction) {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
-                final Val k = keyFunction.apply(i);
+                final KeyPrefix k = keyFunction.apply(i);
                 final Val v = valueFunction.apply(i);
                 db.insert(writer, new State(k, v));
             }
@@ -852,8 +853,8 @@ class TestStateDb {
     }
 
     private record KeyFunction(String description,
-                               StateKeyType stateKeyType,
-                               Function<Integer, Val> function) {
+                               KeyType keyType,
+                               Function<Integer, KeyPrefix> function) {
 
         @Override
         public String toString() {

@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"timeField", "windowSize", "advanceSize"})
 @JsonInclude(Include.NON_NULL)
-public class HoppingWindow implements Window {
+public final class HoppingWindow implements Window {
 
     @JsonProperty
     private final String timeField;

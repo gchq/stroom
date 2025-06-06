@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsWebCredentials implements AwsCredentials {
+public final class AwsWebCredentials implements AwsCredentials {
 
     /**
      * Define the role arn that should be used by this credentials provider.

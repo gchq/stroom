@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NumberFormatSettings.class, name = "number"),
         @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date")
 })
-public interface FormatSettings {
+public sealed interface FormatSettings permits NumberFormatSettings, DateTimeFormatSettings {
 
     boolean isDefault();
 }

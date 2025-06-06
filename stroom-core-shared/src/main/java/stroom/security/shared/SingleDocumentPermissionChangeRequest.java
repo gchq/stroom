@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class SingleDocumentPermissionChangeRequest implements PermissionChangeRequest {
+public final class SingleDocumentPermissionChangeRequest implements PermissionChangeRequest {
 
     @JsonProperty
     private final DocRef docRef;

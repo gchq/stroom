@@ -36,7 +36,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = EmbeddedQueryComponentSettings.class, name = "embedded-query"),
 })
 @JsonInclude(Include.NON_NULL)
-public interface ComponentSettings {
+public sealed interface ComponentSettings permits
+        QueryComponentSettings,
+        TableComponentSettings,
+        VisComponentSettings,
+        TextComponentSettings,
+        KeyValueInputComponentSettings,
+        ListInputComponentSettings,
+        TextInputComponentSettings,
+        EmbeddedQueryComponentSettings {
+
     AbstractBuilder<?, ?> copy();
 
     abstract class AbstractBuilder<T extends ComponentSettings, B extends ComponentSettings.AbstractBuilder<T, ?>> {

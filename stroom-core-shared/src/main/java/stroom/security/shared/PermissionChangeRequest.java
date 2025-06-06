@@ -16,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SingleDocumentPermissionChangeRequest.class,
                 name = "SingleDocumentPermissionChangeRequest"),
 })
-public interface PermissionChangeRequest {
+public sealed interface PermissionChangeRequest permits
+        BulkDocumentPermissionChangeRequest,
+        SingleDocumentPermissionChangeRequest {
 
 }

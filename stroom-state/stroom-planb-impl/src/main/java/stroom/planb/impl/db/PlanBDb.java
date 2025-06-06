@@ -1,11 +1,15 @@
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.planb.impl.db.histogram.HistogramDb;
+import stroom.planb.impl.db.metric.MetricDb;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.shared.HistogramSettings;
+import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.SessionSettings;
@@ -68,7 +72,26 @@ public class PlanBDb {
                                 new SessionSettings.Builder().build()),
                         readOnly);
             }
-            default -> throw new RuntimeException("Unexpected state type: " + doc.getStateType());
+            case HISTOGRAM -> {
+                return HistogramDb.create(
+                        targetPath,
+                        byteBuffers,
+                        NullSafe.getOrElse(doc,
+                                d -> (HistogramSettings) doc.getSettings(),
+                                new HistogramSettings.Builder().build()),
+                        readOnly);
+            }
+            case METRIC -> {
+                return MetricDb.create(
+                        targetPath,
+                        byteBuffers,
+                        NullSafe.getOrElse(doc,
+                                d -> (MetricSettings) doc.getSettings(),
+                                new MetricSettings.Builder().build()),
+                        readOnly);
+            }
+
+            default -> throw new RuntimeException("Unexpected Plan B store type: " + doc.getStateType());
         }
     }
 }

@@ -26,7 +26,7 @@ import java.util.List;
 
 @JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
-public class VisResult extends Result {
+public final class VisResult extends Result {
 
     @JsonProperty
     private final String jsonData;

@@ -434,6 +434,8 @@ appConfig:
       statisticsMode: "INTERNAL"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
+  gitRepo:
+    localDir: "git_repo"
   haltBootOnConfigValidationFailure: true
   index:
     db:

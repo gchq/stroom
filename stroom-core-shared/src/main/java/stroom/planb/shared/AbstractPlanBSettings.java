@@ -36,7 +36,9 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = TemporalStateSettings.class, name = "temporalState"),
         @JsonSubTypes.Type(value = RangeStateSettings.class, name = "rangeState"),
         @JsonSubTypes.Type(value = TemporalRangeStateSettings.class, name = "temporalRangeState"),
-        @JsonSubTypes.Type(value = SessionSettings.class, name = "session")
+        @JsonSubTypes.Type(value = SessionSettings.class, name = "session"),
+        @JsonSubTypes.Type(value = HistogramSettings.class, name = "histogram"),
+        @JsonSubTypes.Type(value = MetricSettings.class, name = "metric")
 })
 @Description("Defines settings for Plan B")
 @JsonPropertyOrder({
@@ -47,7 +49,14 @@ import java.util.Objects;
         "snapshotSettings"
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractPlanBSettings {
+public abstract sealed class AbstractPlanBSettings permits
+        StateSettings,
+        TemporalStateSettings,
+        RangeStateSettings,
+        TemporalRangeStateSettings,
+        SessionSettings,
+        HistogramSettings,
+        MetricSettings {
 
     @JsonProperty
     private final Long maxStoreSize;

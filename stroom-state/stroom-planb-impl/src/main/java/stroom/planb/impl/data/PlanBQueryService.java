@@ -5,23 +5,18 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.db.PlanBValue;
-import stroom.planb.impl.db.rangestate.RangeState;
 import stroom.planb.impl.db.rangestate.RangeStateDb;
 import stroom.planb.impl.db.rangestate.RangeStateRequest;
-import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionRequest;
-import stroom.planb.impl.db.state.State;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateRequest;
-import stroom.planb.impl.db.temporalstate.TemporalState;
-import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SnapshotSettings;
@@ -163,13 +158,13 @@ public class PlanBQueryService {
                                     final String keyName,
                                     final Instant eventTime) {
         return shardManager.get(mapName, reader -> switch (reader) {
-            case final StateDb db -> db.getState(new StateRequest(ValString.create(keyName)));
+            case final StateDb db -> db.getState(new StateRequest(KeyPrefix.create(keyName)));
             case final TemporalStateDb db ->
-                    db.getState(new TemporalStateRequest(new Key(ValString.create(keyName), eventTime)));
+                    db.getState(new TemporalStateRequest(new TemporalKey(KeyPrefix.create(keyName), eventTime)));
             case final RangeStateDb db -> db.getState(new RangeStateRequest(Long.parseLong(keyName)));
             case final TemporalRangeStateDb db ->
                     db.getState(new TemporalRangeStateRequest(Long.parseLong(keyName), eventTime));
-            case final SessionDb db -> db.getState(new SessionRequest(ValString.create(keyName), eventTime));
+            case final SessionDb db -> db.getState(new SessionRequest(KeyPrefix.create(keyName), eventTime));
             default -> throw new IllegalStateException("Unexpected value: " + reader);
         });
     }
@@ -178,30 +173,30 @@ public class PlanBQueryService {
                                                  final PlanBValue planBValue) {
         return switch (planBValue) {
             case null -> null;
-            case final State state -> new TemporalState(Key
+            case final State state -> new TemporalState(TemporalKey
                     .builder()
-                    .name(state.key())
-                    .effectiveTime(Instant.MIN)
+                    .prefix(KeyPrefix.create(keyName))
+                    .time(Instant.MIN)
                     .build(), state.val());
             case final TemporalState temporalState -> temporalState;
-            case final RangeState rangeState -> new TemporalState(Key
+            case final RangeState rangeState -> new TemporalState(TemporalKey
                     .builder()
-                    .name(keyName)
-                    .effectiveTime(Instant.MIN)
+                    .prefix(KeyPrefix.create(keyName))
+                    .time(Instant.MIN)
                     .build(),
                     rangeState.val());
-            case final TemporalRangeState temporalRangeState -> new TemporalState(Key
+            case final TemporalRangeState temporalRangeState -> new TemporalState(TemporalKey
                     .builder()
-                    .name(keyName)
-                    .effectiveTime(Instant.MIN)
+                    .prefix(KeyPrefix.create(keyName))
+                    .time(Instant.MIN)
                     .build(),
                     temporalRangeState.val());
-            case final Session session -> new TemporalState(Key
+            case final Session session -> new TemporalState(TemporalKey
                     .builder()
-                    .name(keyName)
-                    .effectiveTime(Instant.MIN)
+                    .prefix(KeyPrefix.create(keyName))
+                    .time(Instant.MIN)
                     .build(),
-                    session.getKey());
+                    session.getPrefix().getVal());
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };
     }
@@ -213,8 +208,7 @@ public class PlanBQueryService {
             case final State state -> ValString.create(state.val().toString());
             case final TemporalState temporalState -> ValString.create(temporalState.val().toString());
             case final RangeState rangeState -> ValString.create(rangeState.val().toString());
-            case final TemporalRangeState temporalRangeState ->
-                    ValString.create(temporalRangeState.val().toString());
+            case final TemporalRangeState temporalRangeState -> ValString.create(temporalRangeState.val().toString());
             case final Session ignored -> ValBoolean.create(true);
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };

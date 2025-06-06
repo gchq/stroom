@@ -13,7 +13,7 @@ import java.util.Objects;
 @Deprecated
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
+public final class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final DocRef errorFeed;

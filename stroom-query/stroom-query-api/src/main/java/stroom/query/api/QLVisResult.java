@@ -26,7 +26,7 @@ import java.util.List;
 
 @JsonPropertyOrder({"componentId", "visSettings", "jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
-public class QLVisResult extends Result {
+public final class QLVisResult extends Result {
 
     @JsonProperty
     private final QLVisSettings visSettings;

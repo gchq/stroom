@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.shared.HashLength;
-import stroom.planb.shared.StateKeyType;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
 
@@ -37,7 +37,7 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
     private final Widget widget;
 
     @UiField
-    SelectionBox<StateKeyType> stateKeyType;
+    SelectionBox<KeyType> keyType;
     @UiField
     SelectionBox<HashLength> hashLength;
     @UiField
@@ -48,13 +48,13 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
     @Inject
     public TemporalStateKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        stateKeyType.addItems(StateKeyType.ORDERED_LIST);
-        stateKeyType.setValue(StateKeyType.VARIABLE);
+        keyType.addItems(KeyType.ORDERED_LIST);
+        keyType.setValue(KeyType.VARIABLE);
         hashLength.addItems(HashLength.ORDERED_LIST);
         hashLength.setValue(HashLength.INTEGER);
         temporalPrecision.addItems(TemporalPrecision.ORDERED_LIST);
         temporalPrecision.setValue(TemporalPrecision.MILLISECOND);
-        onStateKeyTypeChange();
+        onKeyTypeChange();
     }
 
     @Override
@@ -64,36 +64,36 @@ public class TemporalStateKeySchemaSettingsWidget extends AbstractSettingsWidget
 
     @Override
     public TemporalStateKeySchema getKeySchema() {
-        return new TemporalStateKeySchema(stateKeyType.getValue(), hashLength.getValue(), temporalPrecision.getValue());
+        return new TemporalStateKeySchema(keyType.getValue(), hashLength.getValue(), temporalPrecision.getValue());
     }
 
     @Override
     public void setKeySchema(final TemporalStateKeySchema keySchema) {
         if (keySchema != null) {
-            stateKeyType.setValue(keySchema.getStateKeyType());
+            keyType.setValue(keySchema.getKeyType());
             hashLength.setValue(keySchema.getHashLength());
             temporalPrecision.setValue(keySchema.getTemporalPrecision());
         }
-        onStateKeyTypeChange();
+        onKeyTypeChange();
     }
 
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        stateKeyType.setEnabled(!readOnly);
+        keyType.setEnabled(!readOnly);
         hashLength.setEnabled(!readOnly);
         temporalPrecision.setEnabled(!readOnly);
     }
 
-    private void onStateKeyTypeChange() {
-        final StateKeyType value = stateKeyType.getValue();
+    private void onKeyTypeChange() {
+        final KeyType value = keyType.getValue();
         hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, StateKeyType.HASH_LOOKUP) ||
-                               Objects.equals(value, StateKeyType.VARIABLE)));
+                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                               Objects.equals(value, KeyType.VARIABLE)));
     }
 
-    @UiHandler("stateKeyType")
-    public void onStateKeyType(final ValueChangeEvent<StateKeyType> event) {
-        onStateKeyTypeChange();
+    @UiHandler("keyType")
+    public void onKeyType(final ValueChangeEvent<KeyType> event) {
+        onKeyTypeChange();
         getUiHandlers().onChange();
     }
 

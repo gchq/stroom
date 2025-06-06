@@ -20,13 +20,14 @@ package stroom.planb.impl.db;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
-import stroom.planb.impl.db.temporalstate.TemporalState;
-import stroom.planb.impl.db.temporalstate.TemporalState.Key;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateFields;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
-import stroom.planb.shared.StateKeyType;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
+import stroom.planb.shared.KeyType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
@@ -75,32 +76,34 @@ class TestTemporalStateDb {
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
-            new KeyFunction(StateKeyType.BOOLEAN.name(), StateKeyType.BOOLEAN,
-                    i -> new Key(ValBoolean.create(i > 0), refTime)),
-            new KeyFunction(StateKeyType.BYTE.name(), StateKeyType.BYTE,
-                    i -> new Key(ValByte.create(i.byteValue()), refTime)),
-            new KeyFunction(StateKeyType.SHORT.name(), StateKeyType.SHORT,
-                    i -> new Key(ValShort.create(i.shortValue()), refTime)),
-            new KeyFunction(StateKeyType.INT.name(), StateKeyType.INT,
-                    i -> new Key(ValInteger.create(i), refTime)),
-            new KeyFunction(StateKeyType.LONG.name(), StateKeyType.LONG,
-                    i -> new Key(ValLong.create(i.longValue()), refTime)),
-            new KeyFunction(StateKeyType.FLOAT.name(), StateKeyType.FLOAT,
-                    i -> new Key(ValFloat.create(i.floatValue()), refTime)),
-            new KeyFunction(StateKeyType.DOUBLE.name(), StateKeyType.DOUBLE,
-                    i -> new Key(ValDouble.create(i.doubleValue()), refTime)),
-            new KeyFunction(StateKeyType.STRING.name(), StateKeyType.STRING,
-                    i -> new Key(ValString.create("test-" + i), refTime)),
-            new KeyFunction(StateKeyType.UID_LOOKUP.name(), StateKeyType.UID_LOOKUP,
-                    i -> new Key(ValString.create("test-" + i), refTime)),
-            new KeyFunction(StateKeyType.HASH_LOOKUP.name(), StateKeyType.HASH_LOOKUP,
-                    i -> new Key(ValString.create("test-" + i), refTime)),
-            new KeyFunction(StateKeyType.VARIABLE.name(), StateKeyType.VARIABLE,
-                    i -> new Key(ValString.create("test-" + i), refTime)),
-            new KeyFunction("Variable mid", StateKeyType.VARIABLE,
-                    i -> new Key(ValString.create(StateValueTestUtil.makeString(400)), refTime)),
-            new KeyFunction("Variable long", StateKeyType.VARIABLE,
-                    i -> new Key(ValString.create(StateValueTestUtil.makeString(1000)), refTime)));
+            new KeyFunction(KeyType.BOOLEAN.name(), KeyType.BOOLEAN,
+                    i -> new TemporalKey(KeyPrefix.create(ValBoolean.create(i > 0)), refTime)),
+            new KeyFunction(KeyType.BYTE.name(), KeyType.BYTE,
+                    i -> new TemporalKey(KeyPrefix.create(ValByte.create(i.byteValue())), refTime)),
+            new KeyFunction(KeyType.SHORT.name(), KeyType.SHORT,
+                    i -> new TemporalKey(KeyPrefix.create(ValShort.create(i.shortValue())), refTime)),
+            new KeyFunction(KeyType.INT.name(), KeyType.INT,
+                    i -> new TemporalKey(KeyPrefix.create(ValInteger.create(i)), refTime)),
+            new KeyFunction(KeyType.LONG.name(), KeyType.LONG,
+                    i -> new TemporalKey(KeyPrefix.create(ValLong.create(i.longValue())), refTime)),
+            new KeyFunction(KeyType.FLOAT.name(), KeyType.FLOAT,
+                    i -> new TemporalKey(KeyPrefix.create(ValFloat.create(i.floatValue())), refTime)),
+            new KeyFunction(KeyType.DOUBLE.name(), KeyType.DOUBLE,
+                    i -> new TemporalKey(KeyPrefix.create(ValDouble.create(i.doubleValue())), refTime)),
+            new KeyFunction(KeyType.STRING.name(), KeyType.STRING,
+                    i -> new TemporalKey(KeyPrefix.create(ValString.create("test-" + i)), refTime)),
+            new KeyFunction(KeyType.UID_LOOKUP.name(), KeyType.UID_LOOKUP,
+                    i -> new TemporalKey(KeyPrefix.create(ValString.create("test-" + i)), refTime)),
+            new KeyFunction(KeyType.HASH_LOOKUP.name(), KeyType.HASH_LOOKUP,
+                    i -> new TemporalKey(KeyPrefix.create(ValString.create("test-" + i)), refTime)),
+            new KeyFunction(KeyType.VARIABLE.name(), KeyType.VARIABLE,
+                    i -> new TemporalKey(KeyPrefix.create(ValString.create("test-" + i)), refTime)),
+            new KeyFunction("Variable mid", KeyType.VARIABLE,
+                    i -> new TemporalKey(KeyPrefix.create(
+                            ValString.create(StateValueTestUtil.makeString(400))), refTime)),
+            new KeyFunction("Variable long", KeyType.VARIABLE,
+                    i -> new TemporalKey(KeyPrefix.create(
+                            ValString.create(StateValueTestUtil.makeString(1000))), refTime)));
 
     @Test
     void test(@TempDir Path tempDir) {
@@ -114,7 +117,7 @@ class TestTemporalStateDb {
                 true)) {
             assertThat(db.count()).isEqualTo(100);
 
-            final Val byteKey = ValString.create("TEST_KEY");
+            final KeyPrefix byteKey = KeyPrefix.create("TEST_KEY");
             // Check exact time states.
             checkState(db, byteKey, refTime, true);
             // Check before time states.
@@ -124,7 +127,7 @@ class TestTemporalStateDb {
 
 //            final TemporalStateRequest stateRequest =
 //                    new TemporalStateRequest("TEST_MAP", "TEST_KEY", refTime);
-            final TemporalState.Key key = TemporalState.Key.builder().name("TEST_KEY").effectiveTime(refTime).build();
+            final TemporalKey key = TemporalKey.builder().prefix(byteKey).time(refTime).build();
             final Val value = db.get(key);
             assertThat(value).isNotNull();
 //            assertThat(res.key()).isEqualTo("TEST_KEY");
@@ -161,14 +164,14 @@ class TestTemporalStateDb {
 
     @Test
     void testGetState(@TempDir Path tempDir) {
-        final Val name = ValString.create("test");
+        final KeyPrefix name = KeyPrefix.create("test");
         final Instant effectiveTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = TemporalStateDb.create(tempDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
             db.write(writer -> {
-                final TemporalState.Key k = TemporalState.Key
+                final TemporalKey k = TemporalKey
                         .builder()
-                        .name(name)
-                        .effectiveTime(effectiveTime)
+                        .prefix(name)
+                        .time(effectiveTime)
                         .build();
                 final Val v = ValString.create("test");
                 db.insert(writer, new TemporalState(k, v));
@@ -217,7 +220,7 @@ class TestTemporalStateDb {
                                 final TemporalStateSettings settings = new TemporalStateSettings
                                         .Builder()
                                         .keySchema(new TemporalStateKeySchema.Builder()
-                                                .stateKeyType(keyFunction.stateKeyType)
+                                                .keyType(keyFunction.keyType)
                                                 .temporalPrecision(temporalPrecision)
                                                 .build())
                                         .valueSchema(new StateValueSchema.Builder()
@@ -292,10 +295,10 @@ class TestTemporalStateDb {
 
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
-            insertData(db, refTime, "TEST_KEY", "test", 100, 60 * 60 * 24);
-            insertData(db, refTime, "TEST_KEY2", "test2", 100, 60 * 60 * 24);
-            insertData(db, refTime, "TEST_KEY", "test", 10, -60 * 60 * 24);
-            insertData(db, refTime, "TEST_KEY2", "test2", 10, -60 * 60 * 24);
+            insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 100, 60 * 60 * 24);
+            insertData(db, refTime, KeyPrefix.create("TEST_KEY2"), "test2", 100, 60 * 60 * 24);
+            insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 10, -60 * 60 * 24);
+            insertData(db, refTime, KeyPrefix.create("TEST_KEY2"), "test2", 10, -60 * 60 * 24);
 
             assertThat(db.count()).isEqualTo(218);
 
@@ -312,14 +315,14 @@ class TestTemporalStateDb {
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, BASIC_SETTINGS, false)) {
-            insertData(db, refTime, "TEST_KEY", "test", 100, 10);
+            insertData(db, refTime, KeyPrefix.create("TEST_KEY"), "test", 100, 10);
         }
     }
 
     private void testWrite(final Path dbDir,
                            final TemporalStateSettings settings,
                            final int insertRows,
-                           final Function<Integer, Key> keyFunction,
+                           final Function<Integer, TemporalKey> keyFunction,
                            final Function<Integer, Val> valueFunction) {
         try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, insertRows, keyFunction, valueFunction);
@@ -328,11 +331,11 @@ class TestTemporalStateDb {
 
     private void insertData(final TemporalStateDb db,
                             final int rows,
-                            final Function<Integer, Key> keyFunction,
+                            final Function<Integer, TemporalKey> keyFunction,
                             final Function<Integer, Val> valueFunction) {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
-                final Key k = keyFunction.apply(i);
+                final TemporalKey k = keyFunction.apply(i);
                 final Val v = valueFunction.apply(i);
                 db.insert(writer, new TemporalState(k, v));
             }
@@ -342,11 +345,11 @@ class TestTemporalStateDb {
     private void testSimpleRead(final Path dbDir,
                                 final TemporalStateSettings settings,
                                 final int rows,
-                                final Function<Integer, Key> keyFunction,
+                                final Function<Integer, TemporalKey> keyFunction,
                                 final Function<Integer, Val> valueFunction) {
         try (final TemporalStateDb db = TemporalStateDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
             for (int i = 0; i < rows; i++) {
-                final Key key = keyFunction.apply(i);
+                final TemporalKey key = keyFunction.apply(i);
                 final TemporalState temporalState = db.getState(new TemporalStateRequest(key));
                 assertThat(temporalState).isNotNull();
                 assertThat(temporalState.val().type()).isEqualTo(valueFunction.apply(i).type());
@@ -357,17 +360,17 @@ class TestTemporalStateDb {
 
     private void insertData(final TemporalStateDb db,
                             final Instant refTime,
-                            final String key,
+                            final KeyPrefix key,
                             final String value,
                             final int rows,
                             final long deltaSeconds) {
         db.write(writer -> {
             for (int i = 0; i < rows; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * deltaSeconds);
-                final TemporalState.Key k = TemporalState.Key
+                final TemporalKey k = TemporalKey
                         .builder()
-                        .name(key)
-                        .effectiveTime(effectiveTime)
+                        .prefix(key)
+                        .time(effectiveTime)
                         .build();
                 final Val v = ValString.create(value);
                 db.insert(writer, new TemporalState(k, v));
@@ -376,18 +379,18 @@ class TestTemporalStateDb {
     }
 
     private void checkState(final TemporalStateDb db,
-                            final Val key,
+                            final KeyPrefix key,
                             final Instant effectiveTime,
                             final boolean expected) {
         final TemporalStateRequest request =
-                new TemporalStateRequest(new Key(key, effectiveTime));
+                new TemporalStateRequest(new TemporalKey(key, effectiveTime));
         final TemporalState state = db.getState(request);
         assertThat(state != null).isEqualTo(expected);
     }
 
     private record KeyFunction(String description,
-                               StateKeyType stateKeyType,
-                               Function<Integer, Key> function) {
+                               KeyType keyType,
+                               Function<Integer, TemporalKey> function) {
 
         @Override
         public String toString() {

@@ -4,9 +4,9 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup label="State Key Type"
-                        helpText="Choose the data type to use for the state key.">
-            <i:SelectionBox ui:field="stateKeyType" addStyleNames="allow-focus"/>
+        <form:FormGroup label="Key Type"
+                        helpText="Choose the data type to use for the key.">
+            <i:SelectionBox ui:field="keyType" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Hash Length"
                         helpText="When using a hashing key type how long should the hash be?">

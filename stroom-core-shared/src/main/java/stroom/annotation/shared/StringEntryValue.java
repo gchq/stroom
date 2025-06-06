@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class StringEntryValue implements EntryValue {
+public final class StringEntryValue implements EntryValue {
 
     @JsonProperty
     private final String value;

@@ -32,7 +32,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = StreamLocation.class, name = "stream"),
         @JsonSubTypes.Type(value = DefaultLocation.class, name = "default")
 })
-public interface Location extends Comparable<Location> {
+public sealed interface Location extends Comparable<Location> permits StreamLocation, DefaultLocation {
 
     int UNKNOWN_VALUE = -1;
 

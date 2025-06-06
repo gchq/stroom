@@ -21,11 +21,12 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.InstantRange;
+import stroom.planb.impl.data.Session;
 import stroom.planb.impl.db.StateKeyTestUtil.ValueFunction;
-import stroom.planb.impl.db.session.Session;
 import stroom.planb.impl.db.session.SessionDb;
 import stroom.planb.impl.db.session.SessionFields;
 import stroom.planb.impl.db.session.SessionRequest;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
@@ -35,7 +36,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
-import stroom.query.language.functions.ValString;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 
@@ -70,7 +70,7 @@ class TestSessionDb {
     void test(@TempDir Path tempDir) {
         final Ranges ranges = testWrite(tempDir);
 
-        final Val key = ValString.create("TEST");
+        final KeyPrefix key = KeyPrefix.create("TEST");
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange = ranges.highRange;
         final InstantRange lowRange = ranges.lowRange;
@@ -150,7 +150,7 @@ class TestSessionDb {
                             final SessionSettings settings = new SessionSettings
                                     .Builder()
                                     .keySchema(new SessionKeySchema.Builder()
-                                            .stateKeyType(valueFunction.stateValueType())
+                                            .keyType(valueFunction.stateValueType())
                                             .temporalPrecision(temporalPrecision)
                                             .build())
                                     .build();
@@ -182,7 +182,7 @@ class TestSessionDb {
     private void testWrite(final Path dbDir,
                            final SessionSettings settings,
                            final int insertRows,
-                           final Function<Integer, Val> valueFunction,
+                           final Function<Integer, KeyPrefix> valueFunction,
                            final Instant refTime) {
         try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, false)) {
             insertData(db, valueFunction, refTime, insertRows, 0);
@@ -192,14 +192,14 @@ class TestSessionDb {
     private void testSimpleRead(final Path dbDir,
                                 final SessionSettings settings,
                                 final int rows,
-                                final Function<Integer, Val> valueFunction,
+                                final Function<Integer, KeyPrefix> valueFunction,
                                 final Instant time) {
         try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, settings, true)) {
             for (int i = 0; i < rows; i++) {
-                final Val key = valueFunction.apply(i);
+                final KeyPrefix key = valueFunction.apply(i);
                 final Session session = db.getState(new SessionRequest(key, time));
                 assertThat(session).isNotNull();
-                assertThat(session.getKey().type()).isEqualTo(valueFunction.apply(i).type());
+                assertThat(session.getPrefix().getVal().type()).isEqualTo(valueFunction.apply(i).getVal().type());
 //                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
             }
         }
@@ -239,7 +239,7 @@ class TestSessionDb {
     }
 
     private Ranges testWrite(final Path dbDir) {
-        final Val key = ValString.create("TEST");
+        final KeyPrefix key = KeyPrefix.create("TEST");
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
         final InstantRange highRange;
         final InstantRange lowRange;
@@ -256,17 +256,17 @@ class TestSessionDb {
     }
 
     private void testGet(final SessionDb db,
-                         final Val key,
+                         final KeyPrefix key,
                          final Instant refTime,
                          final long deltaSeconds) {
-        final Session k = Session.builder().start(refTime).end(refTime.plusSeconds(deltaSeconds)).key(key).build();
+        final Session k = Session.builder().start(refTime).end(refTime.plusSeconds(deltaSeconds)).prefix(key).build();
         final Session session = db.get(k);
         assertThat(session).isNotNull();
-        assertThat(session.getKey()).isEqualTo(key);
+        assertThat(session.getPrefix()).isEqualTo(key);
     }
 
     private void checkState(final SessionDb db,
-                            final Function<Integer, Val> valueFunction,
+                            final Function<Integer, KeyPrefix> valueFunction,
                             final Instant time,
                             final boolean expected) {
         final SessionRequest request = new SessionRequest(valueFunction.apply(0), time);
@@ -275,7 +275,7 @@ class TestSessionDb {
     }
 
     private InstantRange insertData(final SessionDb db,
-                                    final Function<Integer, Val> valueFunction,
+                                    final Function<Integer, KeyPrefix> valueFunction,
                                     final Instant refTime,
                                     final int rows,
                                     final long deltaSeconds) {
@@ -293,7 +293,7 @@ class TestSessionDb {
                     max = end;
                 }
 
-                final Session session = Session.builder().key(valueFunction.apply(i)).start(start).end(end).build();
+                final Session session = Session.builder().prefix(valueFunction.apply(i)).start(start).end(end).build();
                 db.insert(writer, session);
             }
             reference.set(new InstantRange(min, max));

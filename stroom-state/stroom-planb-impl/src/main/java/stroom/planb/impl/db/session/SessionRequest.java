@@ -1,10 +1,10 @@
 package stroom.planb.impl.db.session;
 
-import stroom.query.language.functions.Val;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 
 import java.time.Instant;
 
-public record SessionRequest(Val key, Instant time) {
+public record SessionRequest(KeyPrefix prefix, Instant time) {
 
     public static Builder builder() {
         return new Builder();
@@ -12,19 +12,19 @@ public record SessionRequest(Val key, Instant time) {
 
     public static class Builder {
 
-        private Val key;
+        private KeyPrefix prefix;
         private Instant time;
 
         public Builder() {
         }
 
         public Builder(final SessionRequest request) {
-            this.key = request.key;
+            this.prefix = request.prefix;
             this.time = request.time;
         }
 
-        public Builder key(final Val key) {
-            this.key = key;
+        public Builder prefix(final KeyPrefix prefix) {
+            this.prefix = prefix;
             return this;
         }
 
@@ -34,7 +34,7 @@ public record SessionRequest(Val key, Instant time) {
         }
 
         public SessionRequest build() {
-            return new SessionRequest(key, time);
+            return new SessionRequest(prefix, time);
         }
     }
 }

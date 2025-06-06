@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class LinkEvents extends AbstractAnnotationChange {
+public final class LinkEvents extends AbstractAnnotationChange {
 
     @JsonProperty
     private final List<EventId> events;

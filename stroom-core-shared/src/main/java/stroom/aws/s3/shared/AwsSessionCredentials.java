@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class AwsSessionCredentials implements AwsCredentials {
+public final class AwsSessionCredentials implements AwsCredentials {
 
     @JsonProperty
     private final String accessKeyId;

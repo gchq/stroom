@@ -44,6 +44,8 @@ public class PlanBSettingsPresenter
     private final Provider<RangeStateSettingsPresenter> rangeStateSettingsPresenterProvider;
     private final Provider<TemporalRangeStateSettingsPresenter> temporalRangeStateSettingsPresenterProvider;
     private final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider;
+    private final Provider<HistogramSettingsPresenter> histogramSettingsPresenterProvider;
+    private final Provider<MetricSettingsPresenter> metricSettingsPresenterProvider;
 
     private AbstractPlanBSettingsPresenter<?> settingsPresenter;
     private StateType currentStateType;
@@ -62,13 +64,17 @@ public class PlanBSettingsPresenter
             final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider,
             final Provider<RangeStateSettingsPresenter> rangeStateSettingsPresenterProvider,
             final Provider<TemporalRangeStateSettingsPresenter> temporalRangeStateSettingsPresenterProvider,
-            final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider) {
+            final Provider<SessionSettingsPresenter> sessionSettingsPresenterProvider,
+            final Provider<HistogramSettingsPresenter> histogramSettingsPresenterProvider,
+            final Provider<MetricSettingsPresenter> metricSettingsPresenterProvider) {
         super(eventBus, view);
         this.stateSettingsPresenterProvider = stateSettingsPresenterProvider;
         this.temporalStateSettingsPresenterProvider = temporalStateSettingsPresenterProvider;
         this.rangeStateSettingsPresenterProvider = rangeStateSettingsPresenterProvider;
         this.temporalRangeStateSettingsPresenterProvider = temporalRangeStateSettingsPresenterProvider;
         this.sessionSettingsPresenterProvider = sessionSettingsPresenterProvider;
+        this.histogramSettingsPresenterProvider = histogramSettingsPresenterProvider;
+        this.metricSettingsPresenterProvider = metricSettingsPresenterProvider;
         view.setUiHandlers(this);
     }
 
@@ -155,6 +161,26 @@ public class PlanBSettingsPresenter
                 presenter.getView().setSynchroniseMerge(synchroniseMerge);
                 presenter.getView().setOverwrite(overwrite);
                 presenter.getView().setCondense(condense);
+                presenter.getView().setRetention(retention);
+                settingsPresenter = presenter;
+                break;
+            }
+            case HISTOGRAM: {
+                final HistogramSettingsPresenter presenter =
+                        histogramSettingsPresenterProvider.get();
+                presenter.getView().setMaxStoreSize(maxStoreSize);
+                presenter.getView().setSynchroniseMerge(synchroniseMerge);
+                presenter.getView().setOverwrite(overwrite);
+                presenter.getView().setRetention(retention);
+                settingsPresenter = presenter;
+                break;
+            }
+            case METRIC: {
+                final MetricSettingsPresenter presenter =
+                        metricSettingsPresenterProvider.get();
+                presenter.getView().setMaxStoreSize(maxStoreSize);
+                presenter.getView().setSynchroniseMerge(synchroniseMerge);
+                presenter.getView().setOverwrite(overwrite);
                 presenter.getView().setRetention(retention);
                 settingsPresenter = presenter;
                 break;

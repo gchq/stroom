@@ -26,14 +26,19 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.planb.impl.data.RangeState;
+import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.TemporalRangeState;
+import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.TemporalValue;
 import stroom.planb.impl.db.ShardWriters;
 import stroom.planb.impl.db.ShardWriters.ShardWriter;
-import stroom.planb.impl.db.rangestate.RangeState;
-import stroom.planb.impl.db.session.Session;
-import stroom.planb.impl.db.state.State;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeState;
-import stroom.planb.impl.db.temporalstate.TemporalState;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.keyprefix.Tag;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
@@ -61,9 +66,11 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -130,8 +137,25 @@ public class PlanBFilter extends AbstractXMLFilter {
             </value>
         or
             <value>UK</value>
-     */
 
+    Example histogram
+    <histogram>
+      <map>histogram_name</map>
+      <tags>
+        <tag>
+          <name>TEST</name>
+          <value>TEST</value>
+        </tag>
+        <tag>
+          <name>TEST2</name>
+          <value>TEST2</value>
+        </tag>
+      </tags>
+      <time></time>
+      <value>10</value>
+    </histogram>
+
+     */
 
     /*
     A word about namespaces
@@ -154,7 +178,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 192;
 
     private static final String REFERENCE_ELEMENT = "reference";
+
+    private static final String STATE_ELEMENT = "state";
+    private static final String TEMPORAL_STATE_ELEMENT = "temporal-state";
+    private static final String RANGE_STATE_ELEMENT = "range-state";
+    private static final String TEMPORAL_RANGE_STATE_ELEMENT = "temporal-range-state";
     private static final String SESSION_ELEMENT = "session";
+    private static final String HISTOGRAM_ELEMENT = "histogram";
+    private static final String METRIC_ELEMENT = "metric";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
     private static final String FROM_ELEMENT = "from";
@@ -201,6 +232,12 @@ public class PlanBFilter extends AbstractXMLFilter {
     private Instant time;
     private StroomDuration timeout;
     private ShardWriter writer;
+
+
+    private String currentName;
+    private String currentValue;
+    private List<Tag> currentTags;
+
 
     @Inject
     public PlanBFilter(final ErrorReceiverProxy errorReceiverProxy,
@@ -363,6 +400,13 @@ public class PlanBFilter extends AbstractXMLFilter {
             }
 
             fastInfosetStartElement(localName, uri, qName, atts);
+        } else if ("tags".equalsIgnoreCase(localName)) {
+            currentName = null;
+            currentValue = null;
+            currentTags = new ArrayList<>();
+        } else if ("tag".equalsIgnoreCase(localName)) {
+            currentName = null;
+            currentValue = null;
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -452,15 +496,38 @@ public class PlanBFilter extends AbstractXMLFilter {
                 } catch (final RuntimeException e) {
                     error("Unable to parse string \"" + string + "\" as long for range to", e);
                 }
-            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName) ||
-                       SESSION_ELEMENT.equalsIgnoreCase(localName)) {
-                addData();
-
+            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
+                addReference();
+            } else if (HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.HISTOGRAM);
+            } else if (METRIC_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.METRIC);
+            } else if (SESSION_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.SESSION);
+            } else if (STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.STATE);
+            } else if (RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.RANGED_STATE);
+            } else if (TEMPORAL_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.TEMPORAL_STATE);
+            } else if (TEMPORAL_RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                add(StateType.TEMPORAL_RANGED_STATE);
             } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
                 time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
-
             } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
                 timeout = StroomDuration.parse(contentBuffer.toString());
+            } else if ("name".equalsIgnoreCase(localName)) {
+                currentName = contentBuffer.toString();
+            } else if ("value".equalsIgnoreCase(localName)) {
+                currentValue = contentBuffer.toString();
+            } else if ("tag".equalsIgnoreCase(localName)) {
+                if (currentName == null) {
+                    error("Name is null for tag");
+                } else if (currentValue == null) {
+                    error("Value is null for tag");
+                } else {
+                    currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                }
             }
         }
 
@@ -515,35 +582,65 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addData() {
-        LOGGER.debug(() -> "Adding data to map: " + mapName);
+    private void addReference() {
+        LOGGER.debug(() -> "Adding reference to map: " + mapName);
         final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
         optional.ifPresent(doc -> {
-            // End of the data item so ensure it is persisted in the store
-            try {
+            switch (doc.getStateType()) {
+                case STATE -> addState(doc);
+                case TEMPORAL_STATE -> addTemporalState(doc);
+                case RANGED_STATE -> addRangeState(doc);
+                case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
+                default -> error("Unexpected Plan B store type: " + doc.getStateType());
+            }
+        });
+
+        // Set keys to null.
+        reset();
+    }
+
+    private void add(final StateType stateType) {
+        LOGGER.debug(() -> "Adding " + stateType.getDisplayValue() + " to map: " + mapName);
+        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        optional.ifPresent(doc -> {
+            if (stateType.equals(doc.getStateType())) {
                 switch (doc.getStateType()) {
                     case STATE -> addState(doc);
                     case TEMPORAL_STATE -> addTemporalState(doc);
                     case RANGED_STATE -> addRangeState(doc);
                     case TEMPORAL_RANGED_STATE -> addTemporalRangeState(doc);
                     case SESSION -> addSession(doc);
-                    default -> error("Unexpected state type: " + doc.getStateType());
+                    case HISTOGRAM -> addHistogramValue(doc);
+                    case METRIC -> addMetricValue(doc);
+                    default -> error("Unexpected Plan B store type: " + doc.getStateType());
                 }
-            } catch (final BufferOverflowException boe) {
-                final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
-                        key,
-                        mapName);
-                error(msg, boe);
-                LOGGER.error(msg, boe);
-            } catch (final RuntimeException e) {
-                error(e);
-                LOGGER.error("Error putting key {} into map {}: {} {}",
-                        key, mapName, e.getClass().getSimpleName(), e.getMessage());
-                LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
+            } else {
+                error("Unexpected Plan B store type for " + stateType.getDisplayValue() + ": " + doc.getStateType());
             }
         });
 
         // Set keys to null.
+        reset();
+    }
+
+    private void catchLmdbError(final Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (final BufferOverflowException boe) {
+            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
+                    key,
+                    mapName);
+            error(msg, boe);
+            LOGGER.error(msg, boe);
+        } catch (final RuntimeException e) {
+            error(e);
+            LOGGER.error("Error putting key {} into map {}: {} {}",
+                    key, mapName, e.getClass().getSimpleName(), e.getMessage());
+            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
+        }
+    }
+
+    private void reset() {
         mapName = null;
         key = null;
         rangeFrom = null;
@@ -552,36 +649,36 @@ public class PlanBFilter extends AbstractXMLFilter {
         valueXmlDefaultNamespaceUri = null;
         time = null;
         timeout = null;
+        currentTags = null;
     }
 
     private void addState(final PlanBDoc doc) {
-        if (key == null) {
-            error(LogUtil.message("State 'key' is null for {}", mapName));
-        } else {
-            LOGGER.trace("Putting key {} into table {}", key, mapName);
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            LOGGER.trace("Putting key {} into table {}", prefix, mapName);
             final Val v = getVal();
-            writer.addState(doc, new State(ValString.create(key), v));
+            catchLmdbError(() -> writer.addState(doc, new State(prefix, v)));
         }
     }
 
     private void addTemporalState(final PlanBDoc doc) {
-        final Instant time = this.time != null
-                ? this.time
-                : this.effectiveTime;
-        if (time == null) {
-            error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            final Instant time = this.time != null
+                    ? this.time
+                    : this.effectiveTime;
+            if (time == null) {
+                error(LogUtil.message("Temporal state 'time' is null for {}", mapName));
 
-        } else {
-            if (key == null) {
-                error(LogUtil.message("Temporal state 'key' is null for {}", mapName));
             } else {
-                LOGGER.trace("Putting key {} into table {}", key, mapName);
-                final TemporalState.Key k = TemporalState.Key.builder()
-                        .name(key)
-                        .effectiveTime(time)
+                LOGGER.trace("Putting key {} into table {}", prefix, mapName);
+                final TemporalKey k = TemporalKey
+                        .builder()
+                        .prefix(prefix)
+                        .time(time)
                         .build();
                 final Val v = getVal();
-                writer.addTemporalState(doc, new TemporalState(k, v));
+                catchLmdbError(() -> writer.addTemporalState(doc, new TemporalState(k, v)));
             }
         }
     }
@@ -609,7 +706,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                                 .keyEnd(longKey)
                                 .build();
                         final Val v = getVal();
-                        writer.addRangeState(doc, new RangeState(k, v));
+                        catchLmdbError(() -> writer.addRangeState(doc, new RangeState(k, v)));
                     }
                 } catch (final RuntimeException e) {
                     error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -638,7 +735,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                         .keyEnd(rangeTo)
                         .build();
                 final Val v = getVal();
-                writer.addRangeState(doc, new RangeState(k, v));
+                catchLmdbError(() -> writer.addRangeState(doc, new RangeState(k, v)));
             }
         }
     }
@@ -675,10 +772,10 @@ public class PlanBFilter extends AbstractXMLFilter {
                             final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                                     .keyStart(longKey)
                                     .keyEnd(longKey)
-                                    .effectiveTime(time)
+                                    .time(time)
                                     .build();
                             final Val v = getVal();
-                            writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
+                            catchLmdbError(() -> writer.addTemporalRangeState(doc, new TemporalRangeState(k, v)));
                         }
                     } catch (final RuntimeException e) {
                         error("Unable to parse string \"" + key + "\" as long for range", e);
@@ -709,33 +806,78 @@ public class PlanBFilter extends AbstractXMLFilter {
                     final TemporalRangeState.Key k = TemporalRangeState.Key.builder()
                             .keyStart(rangeFrom)
                             .keyEnd(rangeTo)
-                            .effectiveTime(time)
+                            .time(time)
                             .build();
                     final Val v = getVal();
-                    writer.addTemporalRangeState(doc, new TemporalRangeState(k, v));
+                    catchLmdbError(() -> writer.addTemporalRangeState(doc, new TemporalRangeState(k, v)));
                 }
             }
         }
     }
 
     private void addSession(final PlanBDoc doc) {
-        if (key == null) {
-            error(LogUtil.message("Session 'key' is null for {}", mapName));
-        } else if (time == null) {
-            error(LogUtil.message("Session 'time' is null for {}", mapName));
-        } else {
-            final Session.Builder sessionBuilder = Session
-                    .builder()
-                    .key(ValString.create(key))
-                    .start(time)
-                    .end(time);
-            if (timeout != null) {
-                sessionBuilder.end(time.plus(timeout));
-            }
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Session 'time' is null for {}", mapName));
+            } else {
+                final Session.Builder sessionBuilder = Session
+                        .builder()
+                        .prefix(prefix)
+                        .start(time)
+                        .end(time);
+                if (timeout != null) {
+                    sessionBuilder.end(time.plus(timeout));
+                }
 
-            LOGGER.trace("Putting session {} into table {}", key, mapName);
-            writer.addSession(doc, sessionBuilder.build());
+                LOGGER.trace("Putting session {} into table {}", sessionBuilder.build(), mapName);
+                catchLmdbError(() -> writer.addSession(doc, sessionBuilder.build()));
+            }
         }
+    }
+
+    private void addHistogramValue(final PlanBDoc doc) {
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Histogram 'time' is null for {}", mapName));
+            } else {
+                final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
+                LOGGER.trace("Putting histogram value {} into table {}", temporalKey, mapName);
+                catchLmdbError(() -> writer.addHistogramValue(doc, temporalValue));
+            }
+        }
+    }
+
+    private void addMetricValue(final PlanBDoc doc) {
+        final KeyPrefix prefix = getKeyPrefix();
+        if (prefix != null) {
+            if (time == null) {
+                error(LogUtil.message("Metric 'time' is null for {}", mapName));
+            } else {
+                final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
+                LOGGER.trace("Putting metric value {} into table {}", temporalKey, mapName);
+                catchLmdbError(() -> writer.addMetricValue(doc, temporalValue));
+            }
+        }
+    }
+
+    private KeyPrefix getKeyPrefix() {
+        final KeyPrefix prefix;
+
+        if (currentTags == null || currentTags.isEmpty()) {
+            if (key == null) {
+                error(LogUtil.message("Histogram 'key' is null for {}", mapName));
+                prefix = null;
+            } else {
+                prefix = KeyPrefix.create(key);
+            }
+        } else {
+            prefix = KeyPrefix.create(currentTags);
+        }
+        return prefix;
     }
 
     private Val getVal() {

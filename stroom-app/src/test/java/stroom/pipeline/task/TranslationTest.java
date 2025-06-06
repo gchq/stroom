@@ -26,7 +26,7 @@ import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.impl.ImportExportSerializer;
+import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.shared.ImportSettings;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;

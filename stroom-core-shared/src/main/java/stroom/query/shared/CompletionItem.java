@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = CompletionValue.class, name = "value"),
         @JsonSubTypes.Type(value = CompletionSnippet.class, name = "snippet")
 })
-public interface CompletionItem {
+public sealed interface CompletionItem permits CompletionValue, CompletionSnippet {
 
     String getCaption();
 

@@ -2,10 +2,11 @@ package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.temporalstate.TemporalState;
-import stroom.planb.impl.db.temporalstate.TemporalState.Key;
+import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
 import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
+import stroom.planb.impl.serde.keyprefix.KeyPrefix;
+import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
@@ -81,10 +82,10 @@ class TestStateLookupImpl {
                         final String mapName = buildMapName(KV_TYPE, mapIdx);
                         mapNames.add(mapName);
                         for (int keyIdx = 0; keyIdx < entryCount; keyIdx++) {
-                            final Val key = buildKey(keyIdx);
+                            final KeyPrefix key = buildKey(keyIdx);
                             final String val = buildKeyStoreValue(mapName, keyIdx, key);
 
-                            final Key k = Key.builder().name(buildKey(keyIdx)).effectiveTime(strmTime).build();
+                            final TemporalKey k = TemporalKey.builder().prefix(buildKey(keyIdx)).time(strmTime).build();
                             final Val v = ValString.create(val);
 
                             db.insert(writer, new TemporalState(k, v));
@@ -105,11 +106,11 @@ class TestStateLookupImpl {
                 final int mapIdx = random.nextInt(keyValueMapCount);
                 final int keyIdx = random.nextInt(entryCount);
                 final String mapName = mapNamesMap.get(refStrmIdx).get(mapIdx);
-                final Val key = buildKey(keyIdx);
+                final KeyPrefix key = buildKey(keyIdx);
                 final Instant time = lookupTimes.get(refStrmIdx);
 
                 final TemporalStateRequest request = new TemporalStateRequest(
-                        new Key(key, time));
+                        new TemporalKey(key, time));
 
                 final TemporalState state = db.getState(request);
                 assertThat(state).isNotNull();
@@ -143,13 +144,13 @@ class TestStateLookupImpl {
         }
     }
 
-    private Val buildKey(final int k) {
-        return ValString.create("key" + k);
+    private KeyPrefix buildKey(final int k) {
+        return KeyPrefix.create("key" + k);
     }
 
     private String buildKeyStoreValue(final String mapName,
                                       final int i,
-                                      final Val key) {
+                                      final KeyPrefix key) {
         // pad the values out to make them more realistic in length to see impact on writes
         return LogUtil.message("{}-{}-value{}{}", mapName, key, i, PADDING);
     }

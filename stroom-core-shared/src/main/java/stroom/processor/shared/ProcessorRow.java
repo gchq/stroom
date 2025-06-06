@@ -28,7 +28,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"processor", "expander"})
 @JsonInclude(Include.NON_NULL)
-public class ProcessorRow extends ProcessorListRow {
+public final class ProcessorRow extends ProcessorListRow {
 
     @JsonProperty
     private final Processor processor;

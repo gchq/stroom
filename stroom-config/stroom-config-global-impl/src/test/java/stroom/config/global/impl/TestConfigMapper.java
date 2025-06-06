@@ -44,6 +44,7 @@ import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
+import stroom.gitrepo.impl.GitRepoConfigImpl;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -936,6 +937,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                 @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                 @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfigImpl gitRepoConfig,
                 @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                 @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                 @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -999,6 +1001,7 @@ class TestConfigMapper {
                     explorerConfig,
                     exportConfig,
                     feedConfig,
+                    gitRepoConfig,
                     indexConfig,
                     jobSystemConfig,
                     kafkaConfig,

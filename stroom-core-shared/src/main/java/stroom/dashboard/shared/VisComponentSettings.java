@@ -31,7 +31,7 @@ import java.util.Objects;
         "visualisation",
         "json"})
 @JsonInclude(Include.NON_NULL)
-public class VisComponentSettings implements ComponentSettings {
+public final class VisComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String tableId;
