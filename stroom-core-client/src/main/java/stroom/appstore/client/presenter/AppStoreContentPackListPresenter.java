@@ -14,6 +14,9 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.Handler;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,6 +38,9 @@ public class AppStoreContentPackListPresenter
     /** Data hookup */
     private final RestDataProvider<AppStoreContentPack, ResultPage<AppStoreContentPack>>
                 dataProvider;
+
+    /** Index of the first item in the list of content packs */
+    private final static int FIRST_ITEM_INDEX = 0;
 
     /**
      * Injected constructor.
@@ -65,6 +71,26 @@ public class AppStoreContentPackListPresenter
         // Hook up the data
         this.dataProvider = createDataProvider(eventBus, view, restFactory);
         dataProvider.addDataDisplay(dataGrid);
+
+        // Get notified when the data has loaded & load up the first item on the page
+        dataGrid.addLoadingStateChangeHandler(new Handler() {
+            @Override
+            public void onLoadingStateChanged(final LoadingStateChangeEvent event) {
+
+                // If any data has loaded, try to select something
+                if (event.getLoadingState().equals(LoadingState.LOADED)
+                    || event.getLoadingState().equals(LoadingState.PARTIALLY_LOADED)) {
+
+                    // Got some data, so select the first row if there is one
+                    if (gridSelectionModel.getSelected() == null
+                        && dataGrid.getRowCount() > 0) {
+                        // Nothing selected and we've got data so set something selected
+                        var cp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        gridSelectionModel.setSelected(cp);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -96,6 +122,10 @@ public class AppStoreContentPackListPresenter
         };
     }
 
+    /**
+     * Creates the columns for displaying the Content Packs.
+     * @param dataGrid The widget to display stuff in.
+     */
     private void initColumns(final MyDataGrid<AppStoreContentPack> dataGrid) {
 
         SvgIconCell svgCell = new SvgIconCell();
@@ -113,14 +143,21 @@ public class AppStoreContentPackListPresenter
                 DataGridUtil.headingBuilder("Content Pack")
                         .withToolTip("The name of the content pack")
                         .build(),
-                350);
+                300);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(AppStoreContentPack::getContentStoreUiName)
+                        .build(),
+                DataGridUtil.headingBuilder("Store")
+                        .withToolTip("Name of the Content Store")
+                        .build(),
+                300);
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(AppStoreContentPack::getLicenseName)
                         .build(),
                 DataGridUtil.headingBuilder("License")
                         .withToolTip("License")
                         .build(),
-                350);
+                300);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

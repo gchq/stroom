@@ -31,10 +31,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST server-side implementation for the AppStore stuff.
@@ -86,7 +84,7 @@ public class AppStoreResourceImpl implements AppStoreResource {
         ObjectMapper mapper = YamlUtil.getMapper();
 
         List<String> appStoreUrls = config.getAppStoreUrls();
-        Map<String, AppStoreContentPack> contentPacks = new HashMap<>();
+        List<AppStoreContentPack> contentPacks;
 
         for (String appStoreUrl : appStoreUrls) {
             LOGGER.info("Parsing appStore at '{}'", appStoreUrl);
@@ -95,9 +93,16 @@ public class AppStoreResourceImpl implements AppStoreResource {
                 URI uri = new URI(appStoreUrl);
                 InputStream istr = new BufferedInputStream(uri.toURL().openStream());
                 ContentPacks cps = mapper.readValue(istr, ContentPacks.class);
-                contentPacks.putAll(cps.getMap());
                 LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cps);
+                contentPacks = cps.getContentPacks();
 
+                // Resolve the SVG icons into the Content Pack
+                // and set the content store meta-data
+                for (var cp : contentPacks) {
+                    this.resolveSvgIcon(cp);
+                    cp.setContentStoreUiName(cps.getUiName());
+                }
+                return ResultPage.createPageLimitedList(contentPacks, pageRequest);
             } catch (URISyntaxException | MalformedURLException e) {
                 LOGGER.error("Cannot parse App Store URL '{}'.", appStoreUrl, e);
             } catch (UnrecognizedPropertyException e) {
@@ -107,14 +112,8 @@ public class AppStoreResourceImpl implements AppStoreResource {
             }
         }
 
-        // Resolve the SVG icons into the Content Pack
-        for (var cp : contentPacks.values()) {
-            this.resolveSvgIcon(cp);
-        }
-
-        // For now return the result as a list for back compatibility
-        List<AppStoreContentPack> listOfContentPacks = new ArrayList<>(contentPacks.values());
-        return ResultPage.createPageLimitedList(listOfContentPacks, pageRequest);
+        // Get here and something has gone wrong so return empty list.
+        return ResultPage.createPageLimitedList(Collections.emptyList(), pageRequest);
     }
 
     /**
