@@ -70,7 +70,7 @@ public class AppStoreContentPackDetailsPresenter
     private final Button btnCreateGitRepo = new Button();
 
     /** Checkbox to automatically pull on creation */
-    private final CheckBox chkPull = new CheckBox("Pull content after creation");
+    private final CheckBox chkPull = new CheckBox("Automatically Pull Content");
 
     /** Current content pack selected. Might be null */
     private AppStoreContentPack contentPack = null;
@@ -154,7 +154,7 @@ public class AppStoreContentPackDetailsPresenter
         detailsTable.setWidget(8, 1, lblDetails);
 
         // Buttons
-        btnCreateGitRepo.setText("Create Git Repo");
+        btnCreateGitRepo.setText("Install");
         btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
         FlexTable buttonTable = new FlexTable();
         buttonTable.addStyleName("appstore-details-buttons");
@@ -260,6 +260,7 @@ public class AppStoreContentPackDetailsPresenter
      */
     private void btnCreateGitRepoClick() {
         if (contentPack != null) {
+            // TODO chkPull and automatically pull down the content pack
             restFactory
                     .create(AppStorePresenter.APP_STORE_RESOURCE)
                     .method(res -> res.create(contentPack))

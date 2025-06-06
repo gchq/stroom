@@ -18,6 +18,7 @@ import java.util.Objects;
         "Contains the information for an App Store Content Pack"
 )
 @JsonPropertyOrder({
+        "stroomName",
         "uiName",
         "iconUrl",
         "iconSvg",
@@ -30,6 +31,10 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class AppStoreContentPack {
+
+    /** The name as used by the App Store / Content Store */
+    @JsonProperty
+    private final String stroomName;
 
     /** The name as displayed in the UI */
     @JsonProperty
@@ -55,6 +60,7 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String stroomPath;
 
+    /** Extra Markdown information about this pack */
     @JsonProperty
     private final String details;
 
@@ -74,6 +80,10 @@ public class AppStoreContentPack {
     @JsonProperty
     private final String gitCommit;
 
+    /** Name of the Content Store - resolved later */
+    @JsonProperty
+    private String contentStoreUiName;
+
     /** Default Git path to use - the root */
     private static final String DEFAULT_GIT_PATH =
             "/";
@@ -83,6 +93,7 @@ public class AppStoreContentPack {
 
     /**
      * Constructor. Initialises the values from the YAML.
+     * @param stroomName Name as used in the AppStore. Must not be null.
      * @param uiName Name as shown in the UI. Must not be null.
      * @param iconUrl Icon URL. Can be null in which case null will
      *                be returned.
@@ -101,7 +112,8 @@ public class AppStoreContentPack {
      *                  case the latest commit will be pulled.
      */
     @JsonCreator
-    public AppStoreContentPack(@JsonProperty("uiName") final String uiName,
+    public AppStoreContentPack(@JsonProperty("stroomName") final String stroomName,
+                               @JsonProperty("uiName") final String uiName,
                                @JsonProperty("iconUrl") final String iconUrl,
                                @JsonProperty("iconSvg") final String iconSvg,
                                @JsonProperty("licenseName") final String licenseName,
@@ -116,6 +128,7 @@ public class AppStoreContentPack {
         // Implementation note:
         // Objects.requireNonNullElse() isn't available in GWT
 
+        this.stroomName = Objects.requireNonNull(stroomName);
         this.uiName = Objects.requireNonNull(uiName);
         this.iconUrl = iconUrl;
         this.iconSvg = iconSvg;
@@ -127,6 +140,13 @@ public class AppStoreContentPack {
         this.gitBranch = Objects.requireNonNull(gitBranch);
         this.gitPath = gitPath == null ? DEFAULT_GIT_PATH : gitPath;
         this.gitCommit = gitCommit == null ? "" : gitCommit;
+    }
+
+    /**
+     * @return the Stroom AppStore name for this content pack.
+     */
+    public String getStroomName() {
+        return stroomName;
     }
 
     /**
@@ -226,6 +246,21 @@ public class AppStoreContentPack {
     }
 
     /**
+     * Sets the name of the content store that this belongs to.
+     * Resolved later. This structure may change.
+     */
+    public void setContentStoreUiName(String uiName) {
+        this.contentStoreUiName = uiName;
+    }
+
+    /**
+     * @return The name of the content store this belongs to.
+     */
+    public String getContentStoreUiName() {
+        return contentStoreUiName;
+    }
+
+    /**
      * Returns whether this Content Pack matches the given GitRepoDoc.
      * Note that this ignores the name of the pack. Instead it focuses
      * on the Git content, as the content has UUIDs and shouldn't be
@@ -256,7 +291,8 @@ public class AppStoreContentPack {
             return false;
         }
         final AppStoreContentPack that = (AppStoreContentPack) o;
-        return Objects.equals(uiName, that.uiName)
+        return Objects.equals(stroomName, that.stroomName)
+               && Objects.equals(uiName, that.uiName)
                && Objects.equals(iconUrl, that.iconUrl)
                && Objects.equals(iconSvg, that.iconSvg)
                && Objects.equals(licenseName, that.licenseName)
@@ -266,12 +302,14 @@ public class AppStoreContentPack {
                && Objects.equals(gitUrl, that.gitUrl)
                && Objects.equals(gitBranch, that.gitBranch)
                && Objects.equals(gitPath, that.gitPath)
-               && Objects.equals(gitCommit, that.gitCommit);
+               && Objects.equals(gitCommit, that.gitCommit)
+               && Objects.equals(contentStoreUiName, that.contentStoreUiName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uiName,
+        return Objects.hash(stroomName,
+                uiName,
                 iconUrl,
                 iconSvg,
                 licenseName,
@@ -281,14 +319,16 @@ public class AppStoreContentPack {
                 gitUrl,
                 gitBranch,
                 gitPath,
-                gitCommit);
+                gitCommit,
+                contentStoreUiName);
     }
 
     @Override
     public String toString() {
         String svgContent = (iconSvg == null ? "null" : "<svg content>");
-        return "AppStoreContentPack{" +
-               "uiName='" + uiName + '\'' +
+        return "AppStoreContentPack{"
+               + "stroomName='" + stroomName + '\'' +
+               "  uiName='" + uiName + '\'' +
                ", iconUrl='" + iconUrl + '\'' +
                ", iconSvg='" + svgContent + '\'' +
                ", licenseName='" + licenseName + '\'' +
@@ -299,6 +339,7 @@ public class AppStoreContentPack {
                ", gitBranch='" + gitBranch + '\'' +
                ", gitPath='" + gitPath + '\'' +
                ", gitCommit='" + gitCommit + '\'' +
+               ", contentStore UI name='" + contentStoreUiName + '\'' +
                '}';
     }
 }
