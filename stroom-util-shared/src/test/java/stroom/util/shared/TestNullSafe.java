@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -2201,6 +2202,29 @@ class TestNullSafe {
                 .addThrowsCase(
                         Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
                         NullPointerException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testPredicate() {
+        final String valToTest = "foo";
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<Predicate<String>, Boolean>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final Predicate<String> predicate = NullSafe.predicate(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2());
+                    return predicate.test(valToTest);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, true), true)
+                .addCase(Tuple.of(null, false), false)
+                .addCase(Tuple.of(x -> x.equals("foo"), true), true)
+                .addCase(Tuple.of(x -> x.equals("foo"), false), true)
+                .addCase(Tuple.of(x -> x.equals("bar"), true), false)
+                .addCase(Tuple.of(x -> x.equals("bar"), false), false)
                 .build();
     }
 

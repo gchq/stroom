@@ -76,7 +76,7 @@ public final class ExpressionOperator extends ExpressionItem {
     public boolean containsField(final String... fields) {
         if (children != null) {
             for (final ExpressionItem child : children) {
-                if (child.containsField(fields)) {
+                if (child != null && child.containsField(fields)) {
                     // Found a match so break out
                     return true;
                 }
@@ -89,7 +89,7 @@ public final class ExpressionOperator extends ExpressionItem {
     public boolean containsTerm(final Predicate<ExpressionTerm> predicate) {
         if (children != null) {
             for (final ExpressionItem child : children) {
-                if (child.containsTerm(predicate)) {
+                if (child != null && child.containsTerm(predicate)) {
                     // Found a match so break out
                     return true;
                 }
@@ -307,6 +307,17 @@ public final class ExpressionOperator extends ExpressionItem {
          */
         public Builder addOperators(Collection<ExpressionOperator> items) {
             this.children.addAll(items);
+            return this;
+        }
+
+        /**
+         * Adds an {@link ExpressionItem} to this builder
+         *
+         * @param item The expression item to add as children
+         * @return The {@link Builder}, enabling method chaining
+         */
+        public Builder addItem(ExpressionItem item) {
+            this.children.add(item);
             return this;
         }
 

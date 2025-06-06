@@ -52,7 +52,9 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
@@ -82,6 +84,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
@@ -602,9 +605,10 @@ public abstract class AbstractMetaListPresenter
 
     private void doReprocess(final ProcessChoice processChoice) {
         confirmSelection("reprocess", () -> {
-            final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
-            validateExpression(expression, exp -> {
-                final FindMetaCriteria criteria = expressionToNonPagedCriteria(exp);
+            final ExpressionOperator expression = selectionToExpression(
+                    this.criteria, getSelection(), true);
+            validateExpression(expression, MetaFields.getProcessorFilterFields(), expressionOperator -> {
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(expressionOperator);
                 showSummary(
                         criteria,
                         DocumentPermission.VIEW,
@@ -619,9 +623,15 @@ public abstract class AbstractMetaListPresenter
 
     private void validateExpression(final ExpressionOperator expression,
                                     final Consumer<ExpressionOperator> consumer) {
+        validateExpression(expression, MetaFields.getAllFields(), consumer);
+    }
+
+    private void validateExpression(final ExpressionOperator expression,
+                                    final List<QueryField> validFields,
+                                    final Consumer<ExpressionOperator> consumer) {
         expressionValidator.validateExpression(
                 AbstractMetaListPresenter.this,
-                MetaFields.getAllFields(),
+                validFields,
                 expression,
                 consumer,
                 getView());
@@ -868,28 +878,40 @@ public abstract class AbstractMetaListPresenter
 
     private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
                                                      final Selection<Long> selection) {
+        return selectionToExpression(criteria, selection, false);
+    }
+
+    private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
+                                                     final Selection<Long> selection,
+                                                     final boolean removeStatusTerms) {
 //        final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.
         if (selection.isMatchAll()) {
-            if (criteria != null && criteria.getExpression() != null) {
-//                builder.addOperator(criteria.getExpression());
-                return ExpressionUtil.copyOperator(criteria.getExpression());
+            if (NullSafe.nonNull(criteria, FindMetaCriteria::getExpression)) {
+                final Predicate<ExpressionItem> termFilter = removeStatusTerms
+                        ? AbstractMetaListPresenter::isNotStatusTerm
+                        : null;
+                return ExpressionUtil.copyOperator(criteria.getExpression(), termFilter);
             }
-
         } else if (selection.size() > 0) {
             // If we aren't matching all then create a criteria that
             // only includes the selected streams.
             return MetaExpressionUtil
                     .createDataIdSetExpression(selection.getSet());
-
         }
 //        else {
         return null;
 //        }
 //
 //        return builder;
+    }
+
+    private static boolean isNotStatusTerm(final ExpressionItem expressionItem) {
+        boolean isStatusTerm = expressionItem instanceof ExpressionTerm term
+                               && MetaFields.STATUS.getFldName().equals(term.getField());
+        return !isStatusTerm;
     }
 
     private FindMetaCriteria expressionToNonPagedCriteria(final ExpressionOperator expression) {
