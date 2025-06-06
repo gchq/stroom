@@ -46,6 +46,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
+import stroom.query.common.v2.ExpressionValidationException;
 import stroom.query.common.v2.ExpressionValidator;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -58,6 +59,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -75,6 +77,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -672,18 +675,27 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 // We will be adding in our own status terms after this
                 final Predicate<ExpressionItem> excludeStatusTermPredicate = ProcessorTaskCreatorImpl::isNotStatusTerm;
                 copy = ExpressionUtil.copyOperator(expressionOperator, excludeStatusTermPredicate);
-                LOGGER.warn("""
-                        Removed status term(s) from expression
+                LOGGER.debug("""
+                        sanitiseAndValidateExpression() - Removed status term(s) from expression
                           Before: {}
                           After: {}""", expressionOperator, copy);
             } else {
+                LOGGER.debug("sanitiseAndValidateExpression() - no change to expressionOperator: {}",
+                        expressionOperator);
                 copy = expressionOperator;
             }
 
             // Validate expression.
             final ExpressionValidator expressionValidator = new ExpressionValidator(
                     MetaFields.getProcessorFilterFields());
-            expressionValidator.validate(copy);
+            try {
+                expressionValidator.validate(copy);
+            } catch (ExpressionValidationException e) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "sanitiseAndValidateExpression() - Error validating expression: {} - {}",
+                        copy, LogUtil.exceptionMessage(e)));
+                throw e;
+            }
             return copy;
         } else {
             return null;
@@ -736,7 +748,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     .build();
             builder.addOperator(statusExpression);
 
-            return findMeta(builder, MetaFields.PARENT_ID, length, reprocess);
+            return findMeta(metaService::findReprocess, builder, MetaFields.PARENT_ID, length, reprocess);
 
         } else {
             builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
@@ -759,11 +771,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     .build();
             builder.addOperator(statusExpression);
 
-            return findMeta(builder, MetaFields.ID, length, reprocess);
+            return findMeta(metaService::find, builder, MetaFields.ID, length, reprocess);
         }
     }
 
-    private List<Meta> findMeta(final ExpressionOperator.Builder builder,
+    private List<Meta> findMeta(Function<FindMetaCriteria, ResultPage<Meta>> findFunc,
+                                final ExpressionOperator.Builder builder,
                                 final QueryField idField,
                                 final int length,
                                 final boolean reprocess) {
@@ -771,7 +784,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
         findMetaCriteria.setSort(idField.getFldName(), false, false);
         findMetaCriteria.obtainPageRequest().setLength(length);
-        final List<Meta> list = metaService.find(findMetaCriteria).getValues();
+        final List<Meta> list = findFunc.apply(findMetaCriteria).getValues();
         LOGGER.debug(() -> LogUtil.message("findMeta(), reprocess: {}, findMetaCriteria: {}, listSize: {}",
                 reprocess, findMetaCriteria, list.size()));
         return list;

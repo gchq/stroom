@@ -878,7 +878,7 @@ public abstract class AbstractMetaListPresenter
 
     private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
                                                      final Selection<Long> selection) {
-        return selectionToExpression(criteria, selection);
+        return selectionToExpression(criteria, selection, false);
     }
 
     private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria,
