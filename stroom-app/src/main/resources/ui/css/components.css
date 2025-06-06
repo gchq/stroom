@@ -2492,6 +2492,10 @@ button.main-menu svg {
 .appstore-details {
     width: 100%;
 }
+/** Allows things to scroll in y-direction */
+.appstore-scroll-y {
+    overflow-y: auto;
+}
 /* Details title */
 .appstore-details .appstore-details-heading {
     font-size: 120%;
@@ -2501,6 +2505,7 @@ button.main-menu svg {
 .appstore-details svg {
     height: 100px;
     width: 100px;
+    margin: 10px;
 }
 /* Padding in details table */
 .appstore-details .appstore-details-table th, .appstore-details .appstore-details-table td {
@@ -2533,7 +2538,10 @@ button.main-menu svg {
     width: 100%
 }
 .appstore-details-buttons .gwt-CheckBox {
-    vertical-align: center;
+    vertical-align: middle;
+}
+.appstore-details-buttons .gwt-CheckBox label {
+    margin-left: 5px;
 }
 .multiChooser td {
     vertical-align: middle;
