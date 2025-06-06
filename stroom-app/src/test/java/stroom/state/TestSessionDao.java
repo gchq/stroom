@@ -29,6 +29,7 @@ import stroom.state.impl.dao.SessionFields;
 import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled // ScyllaDB based state store is defunct
 @ExtendWith(MockitoExtension.class)
 class TestSessionDao extends AbstractCoreIntegrationTest {
 
