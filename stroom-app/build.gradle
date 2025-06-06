@@ -415,7 +415,7 @@ clean {
     delete releaseBuildDir
 }
 
-// Generate the confi.yml files for the zip and docker distributions
+// Generate the config.yml files for the zip and docker distributions
 tasks.register('generateConfigFiles', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = "stroom.dist.GenerateDistributionConfig"

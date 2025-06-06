@@ -12,7 +12,7 @@ public class ContentPacks {
             new GitRepo("stroom-content",
                     "https://github.com/gchq/stroom-content.git",
                     "planb",
-                    "e4081362f006bed7f14f376a2049ccbcb56b1144");
+                    "73bf8b6123c76faa61f4edba4e4bbee42fcf07f5");
     private static final GitRepo STROOM_VISUALISATION_DEV_GIT_REPO =
             new GitRepo("stroom-visualisations-dev",
                     "https://github.com/gchq/stroom-visualisations-dev.git",
