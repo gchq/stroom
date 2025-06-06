@@ -117,12 +117,12 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                 if (mapping.getOldName().equals(mapping.getNewName())) {
                     if (!Objects.equals(oldValue, newValue)) {
                         LOGGER.info(() -> "Changing value of DB property '" +
-                                oldName +
-                                "' from '" +
-                                oldValue +
-                                "' to '" +
-                                newValue +
-                                "'");
+                                          oldName +
+                                          "' from '" +
+                                          oldValue +
+                                          "' to '" +
+                                          newValue +
+                                          "'");
                         // Just update the old record.
                         oldRec.setVal(newValue);
                         oldRec.store();
@@ -136,14 +136,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                         final ConfigRecord newRec = optionalNewRec.get();
                         if (!Objects.equals(newRec.getVal(), newValue)) {
                             LOGGER.info(() -> "Updating value of new DB property '" +
-                                    newName +
-                                    "' from old property '" +
-                                    oldName +
-                                    "' from '" +
-                                    oldValue +
-                                    "' to '" +
-                                    newValue +
-                                    "'");
+                                              newName +
+                                              "' from old property '" +
+                                              oldName +
+                                              "' from '" +
+                                              oldValue +
+                                              "' to '" +
+                                              newValue +
+                                              "'");
                             // Update the new record.
                             newRec.setVal(newValue);
                             newRec.store();
@@ -155,20 +155,20 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
                     } else {
                         // Rename the old record.
                         LOGGER.info(() -> "Renaming DB property '" +
-                                mapping.getOldName() +
-                                "' to '" +
-                                mapping.getNewName() +
-                                "'");
+                                          mapping.getOldName() +
+                                          "' to '" +
+                                          mapping.getNewName() +
+                                          "'");
                         oldRec.setName(mapping.getNewName());
                         // Update the value.
                         LOGGER.info(() -> "Changing value of DB property '" +
-                                mapping.getNewName() +
-                                "' from " +
-                                "'" +
-                                oldValue +
-                                "' to '" +
-                                newValue +
-                                "'");
+                                          mapping.getNewName() +
+                                          "' from " +
+                                          "'" +
+                                          oldValue +
+                                          "' to '" +
+                                          newValue +
+                                          "'");
                         oldRec.setVal(newValue);
 
                         oldRec.store();
@@ -177,9 +177,9 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
             } else {
                 LOGGER.info(() -> "Removing old property that has no mapping: " +
-                        oldName +
-                        "=" +
-                        oldRec.getVal());
+                                  oldName +
+                                  "=" +
+                                  oldRec.getVal());
                 oldRec.delete();
             }
         });
@@ -296,7 +296,7 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             ignoredMappings.add("stroom.serviceDiscovery.curator.maxSleepTimeMs");
             ignoredMappings.add("stroom.serviceDiscovery.curator.maxRetries");
             ignoredMappings.add("stroom.serviceDiscovery.zookeeperBasePath");
-            
+
             ignoredMappings.add("stroom.search.extraction.maxThreads");
             ignoredMappings.add("stroom.search.shard.maxThreads");
             ignoredMappings.add("stroom.search.storeSize");
@@ -370,11 +370,14 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             ignoredMappings.add("stroom.theme.tube.visible");
             ignoredMappings.add("stroom.theme.tube.opacity");
             ignoredMappings.add("stroom.unknownClassification");
+            // receiptPolicyUuid has been removed in 7.9
+            ignoredMappings.add("stroom.feed.receiptPolicyUuid");
 
             // TODO what do we do about mapping c3po pool props to hikari?
             //   Can we map some/any of them to equiv hikari props?
             map("stroom.temp", "stroom.path.temp");
-            map("stroom.feed.receiptPolicyUuid", "stroom.receive.receiptPolicyUuid");
+            // receiptPolicyUuid has been removed in 7.9
+//            map("stroom.feed.receiptPolicyUuid", "stroom.receive.receiptPolicyUuid");
             map("stroom.maxFileScan", "stroom.proxyAggregation.maxFileScan");
             map("stroom.maxConcurrentMappedFiles", "stroom.proxyAggregation.maxConcurrentMappedFiles");
             map("stroom.streamAttribute.deleteAge", "stroom.data.meta.metaValue.deleteAge", MSU_2_STROOM_DURATION);
@@ -385,7 +388,6 @@ public class V07_00_00_1202__property_rename extends BaseJavaMigration {
             map("stroom.lifecycle.enabled", "stroom.lifecycle.enabled");
             map("stroom.lifecycle.executionInterval", "stroom.job.executionInterval");
             map("stroom.pipeline.parser.secureProcessing", "stroom.pipeline.parser.secureProcessing");
-
 
             map("stroom.aboutHTML", "stroom.ui.aboutHtml");
             map("stroom.activity.chooseOnStartup", "stroom.ui.activity.chooseOnStartup");
