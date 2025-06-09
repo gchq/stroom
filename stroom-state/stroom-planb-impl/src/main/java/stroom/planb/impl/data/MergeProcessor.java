@@ -144,7 +144,7 @@ public class MergeProcessor {
                     FileUtil.deleteDir(unzipDir);
 
                     // Delete the original zip file.
-                    sequentialFile.delete();
+                    fileStore.delete(sequentialFile);
                 }
             } catch (final IOException | RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -185,7 +185,7 @@ public class MergeProcessor {
                 FileUtil.deleteDir(unzipDir);
 
                 // Delete the original zip file.
-                sequentialFile.delete();
+                fileStore.delete(sequentialFile);
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
