@@ -180,6 +180,11 @@ public class ExpressionUtil {
         return copyOperator(operator, null);
     }
 
+    /**
+     * Return a deep copy of operator where items are only included in the copy if filter
+     * returns true. If an operator is excluded by the filter, then any of its children are
+     * also excluded.
+     */
     public static ExpressionOperator copyOperator(final ExpressionOperator operator,
                                                   final Predicate<ExpressionItem> filter) {
         if (operator == null) {
@@ -218,6 +223,9 @@ public class ExpressionUtil {
         return copyTerm(term, null);
     }
 
+    /**
+     * Return a copy of term if filter returns true.
+     */
     public static ExpressionTerm copyTerm(final ExpressionTerm term,
                                           final Predicate<ExpressionItem> filter) {
         if (term == null) {

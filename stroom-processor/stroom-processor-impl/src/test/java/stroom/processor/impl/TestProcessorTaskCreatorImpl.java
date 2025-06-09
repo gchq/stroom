@@ -25,6 +25,7 @@ class TestProcessorTaskCreatorImpl {
                         .condition(Condition.EQUALS)
                         .value("FEED1")
                         .build())
+                .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .addTerm(ExpressionTerm.builder()
                         .enabled(true)
                         .field(MetaFields.TYPE)
@@ -65,6 +66,37 @@ class TestProcessorTaskCreatorImpl {
                 MetaFields.TYPE.getFldName(),
                 MetaFields.PIPELINE_NAME.getFldName()))
                 .isTrue();
+
+        assertThat(operator2)
+                .isEqualTo(ExpressionOperator.builder()
+                        .enabled(true)
+                        .addTerm(ExpressionTerm.builder()
+                                .field(MetaFields.FEED)
+                                .enabled(true)
+                                .condition(Condition.EQUALS)
+                                .value("FEED1")
+                                .build())
+                        .addTerm(ExpressionTerm.builder()
+                                .enabled(true)
+                                .field(MetaFields.TYPE)
+                                .condition(Condition.NOT_EQUALS)
+                                .value("Events")
+                                .build())
+                        .addOperator(ExpressionOperator.builder()
+                                .op(Op.OR)
+                                .enabled(true)
+                                .addTerm(ExpressionTerm.builder()
+                                        .field(MetaFields.PIPELINE_NAME)
+                                        .enabled(true)
+                                        .condition(Condition.EQUALS)
+                                        .value("foo")
+                                        .build())
+                                .build())
+                        .addOperator(ExpressionOperator.builder()
+                                .op(Op.OR)
+                                .enabled(true)
+                                .build())
+                        .build());
     }
 
     @Test
