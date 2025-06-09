@@ -721,23 +721,23 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                   final int length) {
 
         final ExpressionOperator effectiveExpression = sanitiseAndValidateExpression(expression);
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder()
+        ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .addOperator(effectiveExpression);
 
         if (reprocess) {
-            builder.addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder.addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (pipelineDocRef != null) {
-                builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                builder = builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
             if (minMetaCreateTimeMs != null) {
-                builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
@@ -746,20 +746,20 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
-            builder.addOperator(statusExpression);
+            builder = builder.addOperator(statusExpression);
 
             return findMeta(metaService::findReprocess, builder, MetaFields.PARENT_ID, length, reprocess);
 
         } else {
-            builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder.addDateTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder.addDateTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
@@ -769,7 +769,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
-            builder.addOperator(statusExpression);
+            builder = builder.addOperator(statusExpression);
 
             return findMeta(metaService::find, builder, MetaFields.ID, length, reprocess);
         }
