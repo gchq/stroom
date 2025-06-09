@@ -155,6 +155,12 @@ proxyConfig:
     # the installed software as it has a different lifecycle.
     home: "{{ proxyHome }}"
 
+  downstreamHost:
+    scheme: "http"
+    port: 8080
+    hostname: "localhost"
+    apiKey: ""
+
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
 #  receiptPolicy:
@@ -204,8 +210,7 @@ proxyConfig:
   #    apiKey: ""
 
   feedStatus:
-    apiKey: ""
-
+    url: "{{ 'http://stroom:8080/api/feedStatus/v2' | envVar('FEED_STATUS_URL') }}"
 
   {% if distribution == "docker" %}
   security:
