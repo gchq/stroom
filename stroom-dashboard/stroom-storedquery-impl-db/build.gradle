@@ -25,6 +25,7 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
     testImplementation project(':stroom-task:stroom-task-api')
     testImplementation project(':stroom-security:stroom-security-api')
     testImplementation project(':stroom-security:stroom-security-user-api')
