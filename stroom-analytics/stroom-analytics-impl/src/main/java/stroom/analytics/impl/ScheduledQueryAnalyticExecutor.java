@@ -59,6 +59,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -356,9 +357,13 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                 LOGGER.error(e2::getMessage, e2);
             }
 
-            // Disable future execution.
-            LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(analytic)));
-            executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            // Disable future execution if the error was not an interrupted exception.
+            if (!(e instanceof InterruptedException) &&
+                !(e instanceof UncheckedInterruptedException)) {
+                // Disable future execution.
+                LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(analytic)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+            }
 
         } finally {
             // Record the execution.
