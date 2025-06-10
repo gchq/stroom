@@ -148,7 +148,13 @@ public class MergeProcessor {
     }
 
     public void mergeCurrent() {
-        final long start = receiveStore.getMinStoreId();
+        long start = receiveStore.getMinStoreId();
+
+        if (start == -1) {
+            LOGGER.info("Store is empty");
+            start = 0;
+        }
+
         final long end = receiveStore.getMaxStoreId();
         for (long storeId = start; storeId <= end; storeId++) {
             merge(storeId);

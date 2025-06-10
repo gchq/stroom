@@ -4,7 +4,6 @@ import stroom.content.ContentPack;
 import stroom.content.ContentPackCollection;
 import stroom.content.ContentPacks;
 import stroom.importexport.api.ImportExportSerializer;
-import stroom.importexport.impl.ImportExportService;
 import stroom.importexport.shared.ImportSettings;
 import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -27,13 +26,10 @@ import java.util.List;
  */
 public class ContentImportService {
 
-    private final ImportExportService importExportService;
     private final ImportExportSerializer importExportSerializer;
 
     @Inject
-    ContentImportService(final ImportExportService importExportService,
-                         final ImportExportSerializer importExportSerializer) {
-        this.importExportService = importExportService;
+    ContentImportService(final ImportExportSerializer importExportSerializer) {
         this.importExportSerializer = importExportSerializer;
     }
 
@@ -45,17 +41,6 @@ public class ContentImportService {
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
                 ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK,
                 ContentPacks.TEMPLATE_PIPELINES_PACK,
-                ContentPacks.STANDARD_PIPELINES_PACK,
-                ContentPacks.STATE,
-                ContentPacks.PLANB
-        ));
-    }
-
-    public void importSamplePacks() {
-        importContentPacks(Arrays.asList(
-                ContentPacks.CORE_XML_SCHEMAS_PACK,
-                ContentPacks.EVENT_LOGGING_XML_SCHEMA_PACK,
-                ContentPacks.TEMPLATE_PIPELINES_PACK,
                 ContentPacks.STANDARD_PIPELINES_PACK
         ));
     }
@@ -63,6 +48,12 @@ public class ContentImportService {
     public void importVisualisations() {
         importContentPacks(List.of(
                 ContentPacks.VISUALISATIONS
+        ));
+    }
+
+    public void importPlanBSamples() {
+        importContentPacks(List.of(
+                ContentPacks.PLANB
         ));
     }
 

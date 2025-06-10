@@ -38,6 +38,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
+import stroom.test.ContentImportService;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -77,9 +78,14 @@ class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
     private StoreCreationTool storeCreationTool;
     @Inject
     private MergeProcessor mergeProcessor;
+    @Inject
+    private ContentImportService contentImportService;
 
     @Test
     void test() throws IOException {
+        // Import Plan B samples.
+        contentImportService.importPlanBSamples();
+
         // Load reference data and create processing pipelines.
         commonTranslationTestHelper.createReferenceFeeds();
 

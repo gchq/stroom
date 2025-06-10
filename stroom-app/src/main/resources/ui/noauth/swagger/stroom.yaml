@@ -10513,6 +10513,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -13749,6 +13750,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
