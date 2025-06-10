@@ -42,7 +42,6 @@ import stroom.util.collections.CollectionUtil;
 import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
@@ -96,7 +95,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     public ReceiveDataRules getReceiveDataRules() {
         final ReceiveDataRules receiveDataRules = securityContext.secureResult(
                 MANAGE_RULES_PERM_SET,
-                receiveDataRuleSetStore::getOrCreate);
+                () -> {
+                    // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+                    // access it via the proc user. Assumes it is called from a service that will
+                    return securityContext.asProcessingUserResult(receiveDataRuleSetStore::getOrCreate);
+                });
         LOGGER.debug("getReceiveDataRules() - receiveDataRules: {}", receiveDataRules);
         return receiveDataRules;
     }
@@ -105,8 +108,12 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     public ReceiveDataRules updateReceiveDataRules(final ReceiveDataRules receiveDataRules) {
 
         final ReceiveDataRules receiveDataRules2 = securityContext.secureResult(
-                MANAGE_RULES_PERM_SET, () ->
-                        receiveDataRuleSetStore.writeDocument(receiveDataRules));
+                MANAGE_RULES_PERM_SET, () -> {
+                    // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+                    // access it via the proc user. Assumes it is called from a service that will
+                    return securityContext.asProcessingUserResult(() ->
+                            receiveDataRuleSetStore.writeDocument(receiveDataRules));
+                });
         LOGGER.debug("updateReceiveDataRules() - receiveDataRules2: {}", receiveDataRules2);
         return receiveDataRules2;
     }
@@ -116,9 +123,9 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         final HashedReceiveDataRules hashedReceiveDataRules = securityContext.secureResult(
                 FETCH_HASHED_RULES_PERM_SET,
                 () -> {
-                    final ReceiveDataRules receiveDataRules = receiveDataRuleSetStore.getOrCreate();
-                    final List<ReceiveDataRule> rules = receiveDataRules.getRules();
-                    if (NullSafe.hasItems(rules)) {
+                    final ReceiveDataRules receiveDataRules = getReceiveDataRules();
+                    final List<ReceiveDataRule> ruleList = receiveDataRules.getRules();
+                    if (NullSafe.hasItems(ruleList)) {
                         return buildHashedReceiveDataRules(receiveDataRules);
                     } else {
                         return new HashedReceiveDataRules(
@@ -204,15 +211,17 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         if (expressionOperator.enabled() && expressionOperator.hasChildren()) {
             final List<ExpressionItem> childrenCopy = new ArrayList<>();
             for (final ExpressionItem child : expressionOperator.getChildren()) {
-                final ExpressionItem copy;
+                final ExpressionItem childCopy;
                 if (child instanceof ExpressionTerm childTerm) {
-                    copy = copyAndObfuscateTerm(childTerm,
+                    childCopy = copyAndObfuscateTerm(
+                            childTerm,
                             fieldNameToSaltMap,
                             hashFunction,
                             obfuscatedFields,
                             uuidToFlattenedDictMap);
                 } else if (child instanceof ExpressionOperator childOperator) {
-                    copy = copyAndObfuscateOperator(childOperator,
+                    childCopy = copyAndObfuscateOperator(
+                            childOperator,
                             fieldNameToSaltMap,
                             hashFunction,
                             obfuscatedFields,
@@ -220,9 +229,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                 } else {
                     throw new IllegalStateException("Unexpected type " + child.getClass());
                 }
-                if (copy != null) {
-                    childrenCopy.add(copy);
-                }
+                NullSafe.consume(childCopy, childrenCopy::add);
             }
 
             if (childrenCopy.isEmpty()) {
@@ -242,12 +249,14 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                                                 final HashFunction hashFunction,
                                                 final Set<CIKey> obfuscatedFields,
                                                 final Map<String, DictionaryDoc> flattenedDictsMap) {
+        // No point copying disabled terms
         if (term.enabled()) {
             final Builder builder = term.copy();
             final CIKey fieldCIKey = CIKey.of(term.getField());
+            final boolean isObfuscatedField = obfuscatedFields.contains(fieldCIKey);
+
             if (term.hasCondition(Condition.IN_DICTIONARY)) {
                 // We don't have to change the term, just the dict that it links to
-                final boolean isObfuscatedField = obfuscatedFields.contains(fieldCIKey);
                 flattenedDictsMap.computeIfAbsent(term.getDocRef().getUuid(), k ->
                         getFlattenedDictionary(
                                 term.getDocRef(),
@@ -255,25 +264,32 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                                 hashFunction,
                                 fieldNameToSaltMap,
                                 isObfuscatedField));
-            } else if (obfuscatedFields.contains(fieldCIKey) && term.getValue() != null) {
-                if (term.hasCondition(Condition.IN)) {
+                if (isObfuscatedField) {
+                    builder.field(getSuffixedFieldName(term));
+                }
+            } else if (isObfuscatedField && term.getValue() != null) {
+                // We can only obfuscate certain conditions, the rest stay in the clear
+                if (term.hasCondition(Condition.IN, Condition.BETWEEN)) {
                     final String[] parts = term.getValue()
-                            .split(",");
+                            .split(Condition.IN_CONDITION_DELIMITER);
                     final String obfuscatedValue = Arrays.stream(parts)
                             .map(part ->
                                     hashValue(part, fieldCIKey, fieldNameToSaltMap, hashFunction))
-                            .collect(Collectors.joining(","));
+                            .collect(Collectors.joining(Condition.IN_CONDITION_DELIMITER));
                     builder.value(obfuscatedValue);
-                } else if (term.hasCondition(Condition.EQUALS, Condition.NOT_EQUALS)) {
+                    builder.field(getSuffixedFieldName(term));
+
+                } else if (term.hasCondition(
+                        Condition.EQUALS_CASE_SENSITIVE,
+                        Condition.NOT_EQUALS_CASE_SENSITIVE)) {
+
                     final String obfuscatedValue = hashValue(
                             term.getValue(),
                             fieldCIKey,
                             fieldNameToSaltMap,
                             hashFunction);
                     builder.value(obfuscatedValue);
-                } else {
-                    throw new IllegalStateException(LogUtil.message(
-                            "Condition {} is not supported with obfuscated fields", term.getCondition()));
+                    builder.field(getSuffixedFieldName(term));
                 }
             }
             return builder.build();
@@ -282,12 +298,25 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         }
     }
 
+    private String getSuffixedFieldName(final ExpressionTerm term) {
+        // When the expr tree is evaluated we need to distinguish between a 'Feed' term that has
+        // been obfuscated and one that has not and the value extractors are only passed the field
+        // name. This is not ideal, but the alternative is refactoring all the ExpressionPredicateFactory
+        // code so the whole term is passed to the value extractor.
+        return NullSafe.get(
+                term,
+                ExpressionTerm::getField,
+                field ->
+                        field + ReceiveDataRuleSetService.HASHED_FIELD_NAME_SUFFIX);
+    }
+
     private String hashValue(final String value,
                              final CIKey fieldName,
                              final Map<String, String> fieldNameToSaltMap,
                              final HashFunction hashFunction) {
+        final String lowerFieldName = fieldName.getAsLowerCase();
         final String salt = fieldNameToSaltMap.computeIfAbsent(
-                fieldName.getAsLowerCase(),
+                lowerFieldName,
                 k -> hashFunction.generateSalt());
         return hashFunction.hash(value, salt);
     }

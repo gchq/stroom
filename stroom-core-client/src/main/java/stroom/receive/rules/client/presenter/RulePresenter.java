@@ -66,6 +66,10 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
                 getView().getAction());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface RuleView extends View {
 
         void setExpressionView(View view);

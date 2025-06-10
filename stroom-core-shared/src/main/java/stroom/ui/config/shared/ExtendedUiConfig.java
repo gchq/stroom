@@ -98,6 +98,7 @@ public class ExtendedUiConfig {
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
+        // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
     }
 

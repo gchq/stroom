@@ -1,5 +1,6 @@
 package stroom.receive.rules.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
@@ -18,14 +19,15 @@ import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.string.CIKey;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Map;
@@ -37,23 +39,29 @@ import java.util.function.BiConsumer;
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
  */
+@Singleton
 public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetStoreImpl.class);
+    private static final String LOCK_NAME = "ReceiveDataRuleSetStore";
 
     private static final String DOC_NAME = "Receive Data Rules";
 
     private final Store<ReceiveDataRules> store;
     private final SecurityContext securityContext;
     private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
+    private final ClusterLockService clusterLockService;
+    private final LazyValue<DocRef> lazyRulesDocRef = LazyValue.initialisedBy(this::doGetOrCreate);
 
     @Inject
     public ReceiveDataRuleSetStoreImpl(final StoreFactory storeFactory,
                                        final Serialiser2Factory serialiser2Factory,
                                        final SecurityContext securityContext,
-                                       final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider) {
+                                       final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
+                                       final ClusterLockService clusterLockService) {
         this.securityContext = securityContext;
         this.stroomReceiptPolicyConfigProvider = stroomReceiptPolicyConfigProvider;
+        this.clusterLockService = clusterLockService;
         final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
                 ReceiveDataRules.class);
         this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules.class);
@@ -61,59 +69,75 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
 
     @Override
     public ReceiveDataRules getOrCreate() {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user.
-        return securityContext.asProcessingUserResult(() -> {
-            // Should return 0-1 docs of our store's type, unless we have a problem
-            final List<DocRef> docRefs = store.list();
-            final DocRef docRef;
-            if (NullSafe.isEmptyCollection(docRefs)) {
-                // Not there so create it
-                docRef = createDocument(DOC_NAME);
-                ReceiveDataRules receiveDataRules = store.readDocument(docRef);
-                final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
-                final Set<CIKey> obfuscatedFields = CIKey.setOf(receiptPolicyConfig.getObfuscatedFields());
-                final List<QueryField> fields = NullSafe.map(receiptPolicyConfig.getReceiptRulesInitialFields())
-                        .entrySet()
-                        .stream()
-                        .sorted(Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
-                        .map(entry -> {
-                            final String fieldName = entry.getKey();
-                            final CIKey ciFieldName = CIKey.of(fieldName);
-                            final String typeName = entry.getValue();
-                            final FieldType fieldType = FieldType.fromTypeName(typeName);
-                            if (fieldType == null) {
-                                LOGGER.error("Unknown field type in config '{}', ignoring.", typeName);
-                                return null;
-                            } else {
-                                final Builder builder = QueryField.builder()
-                                        .fldName(fieldName)
-                                        .fldType(fieldType);
-                                if (obfuscatedFields.contains(ciFieldName)) {
-                                    builder.conditionSet(ConditionSet.OBFUSCATED_FIELD);
-                                }
-                                return builder.build();
-                            }
-                        })
-                        .filter(Objects::nonNull)
-                        .toList();
+        final DocRef docRef = lazyRulesDocRef.getValueWithLocks();
+        Objects.requireNonNull(docRef);
+        return readDocument(docRef);
+    }
 
-                receiveDataRules.setFields(fields);
-                store.writeDocument(receiveDataRules);
-                LOGGER.info("Created document {}", docRef);
-            } else {
-                if (docRefs.size() > 1) {
-                    throw new RuntimeException("Found multiple documents, expecting one. " + docRefs);
-                } else {
-                    docRef = Objects.requireNonNull(docRefs.getFirst());
-                    if (!Objects.equals(DOC_NAME, docRef.getName())) {
-                        throw new RuntimeException("Unexpected document " + docRef);
-                    }
-                }
+    private DocRef doGetOrCreate() {
+        // Should return 0-1 docs of our store's type, unless we have a problem
+        final List<DocRef> docRefs = store.list();
+        final DocRef docRef;
+        if (NullSafe.isEmptyCollection(docRefs)) {
+            docRef = clusterLockService.lockResult(LOCK_NAME, this::doGetOrCreateUnderLock);
+        } else {
+            docRef = getFirst(docRefs);
+        }
+        return docRef;
+    }
+
+    private DocRef doGetOrCreateUnderLock() {
+        // Re-check under lock
+        // Should return 0-1 docs of our store's type, unless we have a problem
+        final List<DocRef> docRefs = store.list();
+        final DocRef docRef;
+        if (NullSafe.isEmptyCollection(docRefs)) {
+            // Not there so create it
+            docRef = createDocument(DOC_NAME);
+            ReceiveDataRules receiveDataRules = store.readDocument(docRef);
+            final StroomReceiptPolicyConfig receiptPolicyConfig = stroomReceiptPolicyConfigProvider.get();
+            final List<QueryField> fields = NullSafe.map(receiptPolicyConfig.getReceiptRulesInitialFields())
+                    .entrySet()
+                    .stream()
+                    .sorted(Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                    .map(entry -> {
+                        final String fieldName = entry.getKey();
+                        final String typeName = entry.getValue();
+                        final FieldType fieldType = FieldType.fromTypeName(typeName);
+                        if (fieldType == null) {
+                            LOGGER.error("Unknown field type in config '{}', ignoring.", typeName);
+                            return null;
+                        } else {
+                            Builder builder = QueryField.builder()
+                                    .fldName(fieldName)
+                                    .fldType(fieldType)
+                                    .conditionSet(ConditionSet.RECEIPT_POLICY_CONDITIONS);
+                            return builder.build();
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            receiveDataRules.setFields(fields);
+            store.writeDocument(receiveDataRules);
+            LOGGER.info("Created document {}", docRef);
+        } else {
+            docRef = getFirst(docRefs);
+        }
+        return docRef;
+    }
+
+    private DocRef getFirst(final List<DocRef> docRefs) {
+        final DocRef docRef;
+        if (docRefs.size() > 1) {
+            throw new RuntimeException("Found multiple documents, expecting one. " + docRefs);
+        } else {
+            docRef = Objects.requireNonNull(docRefs.getFirst());
+            if (!Objects.equals(DOC_NAME, docRef.getName())) {
+                throw new RuntimeException("Unexpected document " + docRef);
             }
-            // Return the persisted version whether created or not
-            return readDocument(docRef);
-        });
+        }
+        return docRef;
     }
 
     ////////////////////////////////////////////////////////////////////////

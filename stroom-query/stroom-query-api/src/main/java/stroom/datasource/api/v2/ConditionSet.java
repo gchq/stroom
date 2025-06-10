@@ -64,16 +64,49 @@ public enum ConditionSet {
             Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
-
-    /**
-     * The condition set for a field used in receipt policy rules that
-     * has had its value obfuscated.
-     */
-    OBFUSCATED_FIELD(
+    CASE_SENSITIVE_TEXT(
             Condition.EQUALS,
             Condition.NOT_EQUALS,
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
             Condition.IN,
             Condition.IN_DICTIONARY),
+
+    // Receipt Policy Rules
+    /**
+     * Conditions that support obfuscation/hashing of the values in receipt policy
+     * rule expression terms.
+     */
+    OBFUSCATABLE_CONDITIONS(
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.BETWEEN,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
+    // Must include all the values from OBFUSCATABLE_CONDITIONS
+    RECEIPT_POLICY_CONDITIONS(
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.IN,
+            Condition.IN_DICTIONARY,
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.BETWEEN,
+            Condition.CONTAINS,
+            Condition.CONTAINS_CASE_SENSITIVE,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
+            Condition.IS_NULL,
+            Condition.IS_NOT_NULL,
+            Condition.MATCHES_REGEX,
+            Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.STARTS_WITH,
+            Condition.STARTS_WITH_CASE_SENSITIVE,
+            Condition.ENDS_WITH,
+            Condition.ENDS_WITH_CASE_SENSITIVE),
 
     // Elastic Conditions.
     ELASTIC_NUMERIC(

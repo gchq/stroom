@@ -359,28 +359,44 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
          * @param attributeMap Will not be modified, but may be returned unchanged.
          */
         public AttributeMap mapAttributes(final AttributeMap attributeMap) {
-            if (attributeMap == null) {
-                return null;
-            } else if (attributeMap.isEmpty() || fieldNameToSaltMap.isEmpty()) {
-                // Nothing to hash so return the supplied attributeMap unchanged
-                return attributeMap;
-            } else {
+            if (requiresMapping(attributeMap)) {
                 // Make a new attrMap with all existing values
                 final AttributeMap newAttrMap = new AttributeMap(attributeMap);
                 LOGGER.logDurationIfDebugEnabled(
                         () -> {
                             // Now obfuscate the ones that need obfuscating
+                            // We end up with something a bit like
+                            //  Feed => MY_FEED
+                            //  Feed___!hashed! => c33025dd3916685a0b999d1c13fcdc3f
+                            // We have to have a suffixed version because the expr tree may contain
+                            // a mix of hashed and non-hashed values for the same field.
                             fieldNameToSaltMap.forEach((fieldName, salt) -> {
-                                final String val = newAttrMap.get(fieldName);
-                                if (val != null) {
-                                    final String hashedVal = hashFunction.hash(val, salt);
-                                    newAttrMap.put(fieldName, hashedVal);
-                                }
+                                final String suffixedFieldName = fieldName
+                                                                 + ReceiveDataRuleSetService.HASHED_FIELD_NAME_SUFFIX;
+                                final String unHashedVal = newAttrMap.get(fieldName);
+                                final String hashedVal = NullSafe.get(
+                                        unHashedVal,
+                                        val -> hashFunction.hash(val, salt));
+                                newAttrMap.put(suffixedFieldName, hashedVal);
                             });
                         },
                         "Hash attributeMap values");
                 return newAttrMap;
+            } else {
+                // Nothing to hash so return the supplied attributeMap unchanged
+                return attributeMap;
             }
+        }
+
+        private boolean requiresMapping(final AttributeMap attributeMap) {
+            if (!NullSafe.isEmptyMap(attributeMap) && !fieldNameToSaltMap.isEmpty()) {
+                for (final String fieldName : fieldNameToSaltMap.keySet()) {
+                    if (attributeMap.containsKey(fieldName)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         @Override

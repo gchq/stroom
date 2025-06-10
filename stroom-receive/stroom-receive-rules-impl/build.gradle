@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.receive.rules.impl'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')

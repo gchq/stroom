@@ -172,7 +172,10 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                 .stream()
                 .collect(Collectors.toMap(
                         Entry::getKey,
-                        entry -> new AttributeMapFunctionFactory(entry.getValue())));
+                        entry -> {
+                            final QueryField field = entry.getValue();
+                            return new AttributeMapFunctionFactory(field);
+                        }));
         return fieldPositionMap::get;
     }
 

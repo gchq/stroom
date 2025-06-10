@@ -267,6 +267,9 @@ public final class ExpressionTerm extends ExpressionItem {
         EQUALS_CASE_SENSITIVE("==",
                 "==",
                 "equals (case sensitive)"),
+        NOT_EQUALS_CASE_SENSITIVE("!==",
+                "!==",
+                "equals (case sensitive)"),
         STARTS_WITH_CASE_SENSITIVE("=^",
                 "starts with (case sensitive)",
                 "starts with (case sensitive)"),
@@ -287,6 +290,7 @@ public final class ExpressionTerm extends ExpressionItem {
         USER_HAS_USE("has use permission");
 
         public static final String IN_CONDITION_DELIMITER = ",";
+
 
         private final String operator;
         private final String displayValue;

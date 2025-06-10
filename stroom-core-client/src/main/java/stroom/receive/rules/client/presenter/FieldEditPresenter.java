@@ -18,6 +18,7 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.shared.NullSafe;
@@ -51,17 +52,16 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
     public QueryField write() {
-        String name = getView().getName();
-        name = name.trim();
-
-        if (NullSafe.isBlankString(name)) {
+        final String name = NullSafe.trim(getView().getName());
+        if (name.isEmpty()) {
             AlertEvent.fireWarn(this, "A field must have a name", null);
             return null;
         }
         final CIKey ciName = CIKey.of(name);
         if (otherFieldNames.contains(ciName)) {
-            AlertEvent.fireWarn(this, "A field with this name already exists. " +
-                                      "Field names are case insensitive.", null);
+            AlertEvent.fireWarn(this,
+                    "A field with this name already exists. Field names are case insensitive.",
+                    null);
             return null;
         }
 
@@ -85,6 +85,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
                 .fldName(name)
                 .fldType(type)
                 .queryable(true)
+                .conditionSet(ConditionSet.RECEIPT_POLICY_CONDITIONS)
                 .build();
     }
 

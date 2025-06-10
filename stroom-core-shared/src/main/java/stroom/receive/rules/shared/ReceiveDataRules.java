@@ -55,6 +55,30 @@ public class ReceiveDataRules extends Doc {
     public static final String TYPE = "ReceiveDataRuleSet";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.RECEIVE_DATA_RULESET_DOCUMENT_TYPE;
 
+//    /**
+//     * Conditions that support obfuscation/hashing of the values in rule expression terms.
+//     */
+//    public static final Set<Condition> OBFUSCATABLE_CONDITIONS = EnumSet.of(
+//            Condition.EQUALS,
+//            Condition.EQUALS_CASE_SENSITIVE,
+//            Condition.NOT_EQUALS,
+//            Condition.IN,
+//            Condition.BETWEEN,
+//            Condition.IN_DICTIONARY
+//    );
+
+    /**
+     * All conditions supported in receipt policy rules.
+     */
+//    public static final Set<Condition> ALL_SUPPORTED_CONDITIONS = EnumSet.copyOf(OBFUSCATABLE_CONDITIONS);
+
+//    static {
+////        ALL_SUPPORTED_CONDITIONS.addAll(EnumSet.noneOf(
+//
+//
+//        ));
+//    }
+
     @JsonProperty
     private String description;
     @JsonProperty

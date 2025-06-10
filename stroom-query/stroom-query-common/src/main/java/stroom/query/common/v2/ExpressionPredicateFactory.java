@@ -453,6 +453,8 @@ public class ExpressionPredicateFactory {
         return switch (term.getCondition()) {
             case EQUALS -> StringEquals.create(term, stringExtractor);
             case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
+            case NOT_EQUALS_CASE_SENSITIVE -> NotPredicate.create(
+                    StringEqualsCaseSensitive.create(term, stringExtractor));
             case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
             case CONTAINS -> StringContains.create(term, stringExtractor);
             case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);

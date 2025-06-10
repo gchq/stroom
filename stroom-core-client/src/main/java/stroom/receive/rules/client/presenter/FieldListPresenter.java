@@ -205,7 +205,8 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
                         .build(),
                 DataGridUtil.headingBuilder("Obfuscated?")
                         .withToolTip("Whether expression term values for this field are obfuscated when " +
-                                     "the rules are passed to a Stroom-Proxy or not.")
+                                     "the rules are passed to a Stroom-Proxy or not. These are controlled by " +
+                                     "configuration properties. Speak to your administrator to change them.")
                         .build(),
                 150);
 
