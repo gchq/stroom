@@ -21,14 +21,11 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.data.client.presenter.CopyTextUtil;
-import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.RandomId;
 
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,28 +37,20 @@ public class SelectionHandlerPresenter
         implements Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
-    private final HtmlPresenter htmlPresenter;
+    private final CurrentSelectionPresenter currentSelectionPresenter;
     private FieldSelectionListModel fieldSelectionListModel;
     private ComponentSelectionHandler originalHandler;
-    private DashboardContext dashboardContext;
 
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
                                      final EditExpressionPresenter editExpressionPresenter,
-                                     final HtmlPresenter htmlPresenter) {
+                                     final CurrentSelectionPresenter currentSelectionPresenter) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
-        this.htmlPresenter = htmlPresenter;
+        this.currentSelectionPresenter = currentSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
-        view.setCurrentSelection(htmlPresenter.getView());
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(htmlPresenter.getWidget().addDomHandler(e ->
-                CopyTextUtil.onClick(e.getNativeEvent(), this), MouseDownEvent.getType()));
+        view.setCurrentSelection(currentSelectionPresenter.getView());
     }
 
     @Override
@@ -83,7 +72,7 @@ public class SelectionHandlerPresenter
             editExpressionPresenter.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
-        htmlPresenter.getView().setHtml(dashboardContext.toSafeHtml().asString());
+        currentSelectionPresenter.refresh();
     }
 
     ComponentSelectionHandler write() {
@@ -110,7 +99,7 @@ public class SelectionHandlerPresenter
     }
 
     public void setDashboardContext(final DashboardContext dashboardContext) {
-        this.dashboardContext = dashboardContext;
+        currentSelectionPresenter.setDashboardContext(dashboardContext);
     }
 
     public interface SelectionHandlerView extends View, Focus {

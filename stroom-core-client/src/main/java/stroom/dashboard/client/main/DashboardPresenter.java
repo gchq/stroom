@@ -26,6 +26,7 @@ import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
+import stroom.dashboard.client.query.CurrentSelectionPresenter;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -112,6 +113,8 @@ public class DashboardPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
+    private final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider;
+    private CurrentSelectionPresenter currentSelectionPresenter;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
@@ -131,6 +134,7 @@ public class DashboardPresenter
     private final InlineSvgToggleButton editModeButton;
     private final InlineSvgButton addComponentButton;
     private final InlineSvgButton setConstraintsButton;
+    private final InlineSvgButton selectionInfoButton;
     private final ButtonPanel editToolbar;
 
     @Inject
@@ -142,6 +146,7 @@ public class DashboardPresenter
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final QueryInfo queryInfo,
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
+                              final Provider<CurrentSelectionPresenter> currentSelectionPresenterProvider,
                               final UrlParameters urlParameters) {
         super(eventBus, view);
         this.queryToolbarPresenter = queryToolbarPresenter;
@@ -149,6 +154,7 @@ public class DashboardPresenter
         this.components = components;
         this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
+        this.currentSelectionPresenterProvider = currentSelectionPresenterProvider;
         dashboardContext = new DashboardContextImpl(eventBus, components, queryToolbarPresenter);
         queryToolbarPresenter.setParamValues(dashboardContext);
 
@@ -173,6 +179,11 @@ public class DashboardPresenter
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);
 
+        selectionInfoButton = new InlineSvgButton();
+        selectionInfoButton.setSvg(SvgImage.SELECTION);
+        selectionInfoButton.setTitle("View Current Selection");
+        selectionInfoButton.setVisible(false);
+
 
 //                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
 //            <g:FlowPanel styleName="dock-max">
@@ -193,6 +204,7 @@ public class DashboardPresenter
         editToolbar.addButton(editModeButton);
         editToolbar.addButton(addComponentButton);
         editToolbar.addButton(setConstraintsButton);
+        editToolbar.addButton(selectionInfoButton);
 
         NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
 //        final String linkParams = ;
@@ -240,6 +252,11 @@ public class DashboardPresenter
                 onConstraints();
             }
         }));
+        registerHandler(selectionInfoButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                onSelectionInfo();
+            }
+        }));
     }
 
     @Override
@@ -263,12 +280,18 @@ public class DashboardPresenter
         presenter.read(layoutConstraints);
         ShowPopupEvent.builder(presenter)
                 .popupType(PopupType.CLOSE_DIALOG)
-//                .popupSize(PopupSize.resizableX(500))
                 .caption("Set Layout Constraints")
                 .modal(true)
                 .onShow(e -> presenter.getView().focus())
                 .onHide(e -> handlerRegistration.removeHandler())
                 .fire();
+    }
+
+    private void onSelectionInfo() {
+        if (currentSelectionPresenter == null) {
+            currentSelectionPresenter = currentSelectionPresenterProvider.get();
+        }
+        currentSelectionPresenter.show(dashboardContext);
     }
 
     private void onDesign() {
@@ -279,6 +302,7 @@ public class DashboardPresenter
         this.designMode = designMode;
         addComponentButton.setVisible(designMode);
         setConstraintsButton.setVisible(designMode);
+        selectionInfoButton.setVisible(designMode);
         layoutPresenter.setDesignMode(designMode);
         getView().setDesignMode(designMode);
 //        components.forEach(component -> component.setDesignMode(designMode));
@@ -519,6 +543,7 @@ public class DashboardPresenter
 
         addComponentButton.setEnabled(!readOnly && !embedded);
         setConstraintsButton.setEnabled(!readOnly && !embedded);
+        selectionInfoButton.setEnabled(!readOnly && !embedded);
     }
 
     private Component addComponent(final String type, final ComponentConfig componentConfig) {

@@ -17,9 +17,7 @@
             <g:center>
                 <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
                                 label="Current Selection">
-                    <g:MaxScrollPanel addStyleNames="max form-control-border form-control-background">
-                        <g:SimplePanel ui:field="currentSelection"/>
-                    </g:MaxScrollPanel>
+                    <g:SimplePanel ui:field="currentSelection" styleName="dock-max overflow-hidden"/>
                 </form:FormGroup>
             </g:center>
         </g:MySplitLayoutPanel>
