@@ -80,7 +80,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
-    public static final String PROP_NAME_APP_STORE = "appStore";
+    public static final String PROP_NAME_APP_STORE = "contentStore";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
