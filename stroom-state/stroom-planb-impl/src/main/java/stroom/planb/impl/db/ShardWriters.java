@@ -8,6 +8,7 @@ import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
 import stroom.planb.impl.data.RangeState;
+import stroom.planb.impl.data.SequentialFileStore;
 import stroom.planb.impl.data.Session;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
@@ -247,9 +248,11 @@ public class ShardWriters {
 
         @Override
         public void close() throws IOException {
-            if (!writers.isEmpty()) {
-                Path zipFile = null;
-                try {
+            final Path parent = dir.getParent();
+            final Path zipFile = parent.resolve(dir.getFileName().toString() + SequentialFileStore.ZIP_EXTENSION);
+
+            try {
+                if (!writers.isEmpty()) {
                     writers.values().forEach(WriterInstance::close);
 
                     final boolean synchroniseMerge = writers
@@ -257,11 +260,8 @@ public class ShardWriters {
                             .stream()
                             .anyMatch(WriterInstance::isSynchroniseMerge);
 
-                    // Zip all and delete dir.
-                    zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
+                    // Zip all.
                     ZipUtil.zip(zipFile, dir);
-                    FileUtil.deleteDir(dir);
-
                     final String fileHash = FileHashUtil.hash(zipFile);
 
                     final FileDescriptor fileDescriptor = new FileDescriptor(
@@ -269,19 +269,17 @@ public class ShardWriters {
                             meta.getId(),
                             fileHash);
                     fileTransferClient.storePart(fileDescriptor, zipFile, synchroniseMerge);
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
 
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-
-                } finally {
-                    try {
-                        FileUtil.deleteDir(dir);
-                        if (zipFile != null) {
-                            Files.deleteIfExists(zipFile);
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
+            } finally {
+                try {
+                    // Cleanup.
+                    FileUtil.deleteDir(dir);
+                    Files.deleteIfExists(zipFile);
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }
