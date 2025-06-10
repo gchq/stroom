@@ -30,6 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,6 +42,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@Singleton
 public class ShardWriters {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardWriters.class);
@@ -59,6 +61,12 @@ public class ShardWriters {
         this.byteBuffers = byteBuffers;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
+
+        // Clear writer dir on startup since any remaining data must not have been sent so processing cannot have
+        // completed.
+        if (Files.isDirectory(statePaths.getWriterDir())) {
+            FileUtil.deleteDir(statePaths.getWriterDir());
+        }
     }
 
     public ShardWriter createWriter(final Meta meta) {
