@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.lmdb.DbiProxy;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
@@ -16,7 +17,6 @@ import com.google.inject.assistedinject.Assisted;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.EnvInfo;
@@ -36,6 +36,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Thin wrapper around an {@link LmdbEnv} to also hold the feed and the {@link LmdbDb} instances
+ * within the env.
+ */
 public class RefDataLmdbEnv {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataLmdbEnv.class);
@@ -51,7 +55,7 @@ public class RefDataLmdbEnv {
                           @Assisted("feedName") @Nullable final String feedName,
                           @Assisted("subDirName") @Nullable final String subDirName) {
         this.feedName = Objects.requireNonNullElse(feedName, LEGACY_STORE_NAME);
-        lmdbEnvironment = createEnvironment(
+        this.lmdbEnvironment = createEnvironment(
                 lmdbEnvFactory,
                 referenceDataConfigProvider.get().getLmdbConfig(),
                 subDirName);
@@ -89,7 +93,7 @@ public class RefDataLmdbEnv {
         return lmdbEnvironment.getEnvFlags();
     }
 
-    public Dbi<ByteBuffer> openDbi(final String name, final DbiFlags... dbiFlags) {
+    public DbiProxy openDbi(final String name, final DbiFlags... dbiFlags) {
         return lmdbEnvironment.openDbi(name, dbiFlags);
     }
 
@@ -119,6 +123,10 @@ public class RefDataLmdbEnv {
 
     public <T> T getWithReadTxnUnderReadWriteLock(final Function<Txn<ByteBuffer>, T> work, final Lock readLock) {
         return lmdbEnvironment.getWithReadTxnUnderReadWriteLock(work, readLock);
+    }
+
+    public void compact() {
+        lmdbEnvironment.compact();
     }
 
     public void close() {
@@ -153,12 +161,16 @@ public class RefDataLmdbEnv {
         return lmdbEnvironment.getEnvInfo();
     }
 
-    public Map<String, String> getDbInfo(final Dbi<ByteBuffer> db) {
+    public Map<String, String> getDbInfo(final DbiProxy db) {
         return lmdbEnvironment.getDbInfo(db);
     }
 
     public long getSizeOnDisk() {
         return lmdbEnvironment.getSizeOnDisk();
+    }
+
+    public long getSizeInUse() {
+        return lmdbEnvironment.getSizeInUse();
     }
 
     public void registerDatabases(final LmdbDb... lmdbDbs) {
@@ -233,11 +245,11 @@ public class RefDataLmdbEnv {
     @Override
     public String toString() {
         return "RefDataLmdbEnv{" +
-                "feedName=" + feedName +
-                ", localDir=" + getLocalDir() +
-                ", name='" + getName() + '\'' +
-                ", envFlags=" + getEnvFlags() +
-                '}';
+               "feedName=" + feedName +
+               ", localDir=" + getLocalDir() +
+               ", name='" + getName() + '\'' +
+               ", envFlags=" + getEnvFlags() +
+               '}';
     }
 
 

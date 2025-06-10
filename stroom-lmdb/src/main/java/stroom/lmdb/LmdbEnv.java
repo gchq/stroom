@@ -2,13 +2,18 @@ package stroom.lmdb;
 
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.exception.ThrowingFunction;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.common.collect.ImmutableMap;
+import org.lmdbjava.CopyFlags;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -20,8 +25,11 @@ import org.lmdbjava.Txn;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -31,8 +39,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -56,9 +66,11 @@ public class LmdbEnv implements AutoCloseable {
 
     private final Path localDir;
     private final boolean isDedicatedDir;
-    private final String name;
-    private final Env<ByteBuffer> env;
+    private final String name; // Nullable
+    private final Function<Path, Env<ByteBuffer>> envFactory;
+    private Env<ByteBuffer> env;
     private final Set<EnvFlags> envFlags;
+    private final Map<String, DbiProxy> nameToDbiProxyMap = new ConcurrentHashMap<>();
 
     // Lock to ensure only one thread can hold a write txn at once.
     // If doWritesBlockReads is true then will only one thread can hold an open txn
@@ -67,64 +79,84 @@ public class LmdbEnv implements AutoCloseable {
     private final Function<Function<Txn<ByteBuffer>, ?>, ?> readTxnGetMethod;
     private final ReadWriteLock readWriteLock;
     private final Semaphore activeReadTransactionsSemaphore;
+    private final TransactionMode transactionMode;
 
     /**
-     * @param localDir                The directory where the LMDB env will be persisted or read from if it
-     *                                already exists.
-     * @param name                    A name for the environment.
-     * @param env                     The actual LMDB env.
-     * @param envFlags                The flags used when the LMDB env was created. Mostly for debug purposes.
-     * @param isReaderBlockedByWriter Set to true if you want writes to block reads. If false reads can happen
-     *                                concurrently with writes. Writes always block other writes.
-     * @param isDedicatedDir          True if localDir is dedicated to this LMDB env and contains no other files.
-     *                                When {@link LmdbEnv#delete()} is called, if isDedicatedDir is true,
-     *                                localDir will be deleted, else it will just delete the LMDB .mdb files and
-     *                                leave localDir present.
+     * @param localDir        The directory where the LMDB env will be persisted or read from if it
+     *                        already exists.
+     * @param name            A name for the environment.
+     * @param envFactory      A function to create an {@link Env} in the given directory. Allows for the
+     *                        re-creation of the env after compaction.
+     * @param envFlags        The flags used when the LMDB env was created. Mostly for debug purposes.
+     * @param transactionMode Controls whether/how {@link LmdbEnv} multiple transaction interact.
+     *                        concurrently with writes. Writes always block other writes.
+     * @param isDedicatedDir  True if localDir is dedicated to this LMDB env and contains no other files.
+     *                        When {@link LmdbEnv#delete()} is called, if isDedicatedDir is true,
+     *                        localDir will be deleted, else it will just delete the LMDB .mdb files and
+     *                        leave localDir present.
      */
     LmdbEnv(final Path localDir,
             final String name,
-            final Env<ByteBuffer> env,
+            final Function<Path, Env<ByteBuffer>> envFactory,
             final Set<EnvFlags> envFlags,
-            final boolean isReaderBlockedByWriter,
+            final TransactionMode transactionMode,
             final boolean isDedicatedDir) {
-        this.localDir = localDir;
+        this.localDir = Objects.requireNonNull(localDir);
+        this.envFactory = Objects.requireNonNull(envFactory);
         this.isDedicatedDir = isDedicatedDir;
+        this.transactionMode = Objects.requireNonNull(transactionMode);
         this.name = name;
-        this.env = env;
         this.envFlags = Collections.unmodifiableSet(envFlags);
+        this.env = envFactory.apply(localDir);
 
         // Limit concurrent readers java side to ensure we don't get a max readers reached error
         final int maxReaders = env.info().maxReaders;
         activeReadTransactionsSemaphore = new Semaphore(maxReaders);
 
-        if (isReaderBlockedByWriter) {
-            // Read/write lock enforces writes block reads and the semaphore ensures we don't have
-            // too many readers.
-            readWriteLock = new StampedLock().asReadWriteLock();
-            writeTxnLock = readWriteLock.writeLock();
-            // Read txns open concurrently with write txns mean the writes can't reclaim unused space
-            // in the db, so can lead to excessive growth of the db file.
-            LOGGER.debug("Initialising Environment with isReaderBlockedByWriter: {}",
-                    isReaderBlockedByWriter);
-            readTxnGetMethod = work ->
-                    getWithReadTxnUnderReadWriteLock(work, readWriteLock.readLock());
-        } else {
-            // No lock for readers, only the semaphore to enforce max concurrent readers
-            // Simple re-entrant lock to enforce max one concurrent writer
-            readWriteLock = null;
-            writeTxnLock = new ReentrantLock();
+        switch (transactionMode) {
+            case SINGLE_THREAD -> {
+                readWriteLock = null;
+                writeTxnLock = NoLockingLock.INSTANCE;
+                readTxnGetMethod = this::getWithReadTxnAndNoLocking;
+            }
+            case WRITE_BLOCKS_READ -> {
+                // Read/write lock enforces writes block reads and the semaphore ensures we don't have
+                // too many readers.
+                readWriteLock = new StampedLock().asReadWriteLock();
+                writeTxnLock = readWriteLock.writeLock();
+                // Read txns open concurrently with write txns mean the writes can't reclaim unused space
+                // in the db, so can lead to excessive growth of the db file.
+                LOGGER.debug("Initialising Environment with transactionMode: {}", transactionMode);
+                readTxnGetMethod = work ->
+                        getWithReadTxnUnderReadWriteLock(work, readWriteLock.readLock());
+            }
+            case WRITE_BLOCKS_WRITE -> {
+                // No lock for readers, only the semaphore to enforce max concurrent readers
+                // Simple re-entrant lock to enforce max one concurrent writer
+                readWriteLock = null;
+                writeTxnLock = new ReentrantLock();
 
-            LOGGER.debug("Initialising Environment with permits: {}, isReaderBlockedByWriter: {}",
-                    maxReaders,
-                    isReaderBlockedByWriter);
+                LOGGER.debug("Initialising Environment with permits: {}, transactionMode: {}",
+                        maxReaders, transactionMode);
 
-            readTxnGetMethod = this::getWithReadTxnUnderMaxReaderSemaphore;
+                readTxnGetMethod = this::getWithReadTxnUnderMaxReaderSemaphore;
+            }
+            case null, default -> throw new IllegalArgumentException("Unexpected transactionMode " + transactionMode);
         }
+    }
+
+    private void reOpenEnv() {
+        env = envFactory.apply(localDir);
+        // If there are any dbis then re-create them, if required
+        nameToDbiProxyMap.forEach((dbName, dbiProxy) -> {
+            LOGGER.debug("Renewing {}", dbiProxy);
+            dbiProxy.renew();
+        });
     }
 
     public static boolean isLmdbDataFile(final Path file) {
         return file != null
-                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
+               && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
     }
 
     /**
@@ -161,8 +193,20 @@ public class LmdbEnv implements AutoCloseable {
      * Opens a database with the supplied name. If no dbiFlags are supplied then
      * {@link DbiFlags#MDB_CREATE} is used to create the database if it doesn't exist.
      */
-    public Dbi<ByteBuffer> openDbi(final String name,
-                                   final DbiFlags... dbiFlags) {
+    public DbiProxy openDbi(final String name,
+                            final DbiFlags... dbiFlags) {
+        final DbiProxy dbiProxy = DbiProxy.create(this, name, () ->
+                doOpenDbi(name, dbiFlags));
+        nameToDbiProxyMap.put(name, dbiProxy);
+        return dbiProxy;
+    }
+
+    /**
+     * Opens a database with the supplied name. If no dbiFlags are supplied then
+     * {@link DbiFlags#MDB_CREATE} is used to create the database if it doesn't exist.
+     */
+    private Dbi<ByteBuffer> doOpenDbi(final String name,
+                                      final DbiFlags... dbiFlags) {
 
         final DbiFlags[] flags = (dbiFlags != null && dbiFlags.length > 0)
                 ? dbiFlags
@@ -213,7 +257,7 @@ public class LmdbEnv implements AutoCloseable {
             writeTxnLock.lockInterruptibly();
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -259,7 +303,7 @@ public class LmdbEnv implements AutoCloseable {
             return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -286,7 +330,7 @@ public class LmdbEnv implements AutoCloseable {
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
     }
 
@@ -324,6 +368,17 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    private <T> T getWithReadTxnAndNoLocking(final Function<Txn<ByteBuffer>, T> work) {
+        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+            LOGGER.trace("Performing work with read txn");
+            return work.apply(txn);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error performing work in read transaction: {}",
+                    e.getMessage()), e);
+        }
+    }
+
     private void acquireReadTxnPermit() {
         final Runnable postAcquireAction = LOGGER.isDebugEnabled()
                 ? createWaitLoggingAction("activeReadTransactionsSemaphore")
@@ -343,7 +398,7 @@ public class LmdbEnv implements AutoCloseable {
 
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for read permit on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         if (postAcquireAction != null) {
@@ -372,7 +427,7 @@ public class LmdbEnv implements AutoCloseable {
 
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create("Thread interrupted while waiting for read lock on "
-                    + localDir.toAbsolutePath().normalize(), e);
+                                                       + localDir.toAbsolutePath().normalize(), e);
         }
 
         try {
@@ -386,6 +441,11 @@ public class LmdbEnv implements AutoCloseable {
     @Override
     public void close() {
         LOGGER.debug(() -> "Closing LMDB environment at " + localDir.toAbsolutePath().normalize());
+        nameToDbiProxyMap.forEach((dbName, dbiProxy) -> {
+            LOGGER.debug("Clearing {}", dbiProxy);
+            dbiProxy.clear();
+        });
+
         env.close();
     }
 
@@ -410,24 +470,184 @@ public class LmdbEnv implements AutoCloseable {
                 }
             } else {
                 // Not dedicated dir so just delete the files
-                deleteEnvFile(LOCK_FILE_NAME);
-                deleteEnvFile(DATA_FILE_NAME);
+                deleteEnvFiles(localDir);
             }
         }
     }
 
-    private void deleteEnvFile(final String filename) {
-        final Path file = localDir.resolve(filename);
+    private void deleteEnvFiles(final Path dir) {
+        Objects.requireNonNull(dir);
+        deleteEnvFile(dir, LOCK_FILE_NAME);
+        deleteEnvFile(dir, DATA_FILE_NAME);
+    }
+
+    private void deleteEnvFile(final Path dir, final String filename) {
+        final Path file = dir.resolve(filename);
         if (Files.isRegularFile(file)) {
             try {
                 LOGGER.info("Deleting file {}", file.toAbsolutePath());
                 Files.delete(file);
             } catch (IOException e) {
-                throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+                throw new RuntimeException("Unable to delete file: " + FileUtil.getCanonicalPath(file));
             }
         } else {
-            LOGGER.error("LMDB env file {} doesn't exist", file.toAbsolutePath());
+            LOGGER.error("LMDB env file {} doesn't exist", FileUtil.getCanonicalPath(file));
         }
+    }
+
+    private void moveEnvFiles(final Path sourceDir, final Path destDir) {
+        if (!env.isClosed()) {
+            throw new IllegalStateException(LogUtil.message("Attempt to move LMDB env {} while it is still open.",
+                    this));
+        }
+        moveEnvFiles(sourceDir, destDir, LOCK_FILE_NAME, false);
+        moveEnvFiles(sourceDir, destDir, DATA_FILE_NAME, true);
+    }
+
+    private void moveEnvFiles(final Path sourceDir,
+                              final Path destDir,
+                              final String filename,
+                              final boolean failOnSourceNotExists) {
+        final Path sourceFile = sourceDir.resolve(filename);
+        final Path destFile = destDir.resolve(filename);
+        if (!Files.isRegularFile(sourceFile)) {
+            if (failOnSourceNotExists) {
+                throw new RuntimeException(LogUtil.message("LMDB env source file {} doesn't exist",
+                        FileUtil.getCanonicalPath(sourceFile)));
+            } else {
+                return;
+            }
+        }
+
+        if (!Files.isDirectory(destDir)) {
+            throw new RuntimeException(LogUtil.message("LMDB env dest dir {} doesn't exist",
+                    FileUtil.getCanonicalPath(destDir)));
+        }
+        if (Files.isRegularFile(destFile)) {
+            throw new RuntimeException(LogUtil.message("LMDB env dest file {} already exists",
+                    FileUtil.getCanonicalPath(destFile)));
+        }
+
+        try {
+            LOGGER.info(() -> LogUtil.message("Moving file {} to {}",
+                    FileUtil.getCanonicalPath(sourceFile),
+                    FileUtil.getCanonicalPath(destFile)));
+            Files.move(sourceFile, destFile, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to move file: {} to {}",
+                    FileUtil.getCanonicalPath(sourceFile),
+                    FileUtil.getCanonicalPath(destFile)));
+        }
+    }
+
+    private long getFreeSpaceOnDisk() {
+        try {
+            return NullSafe.get(
+                    localDir,
+                    ThrowingFunction.unchecked(Files::getFileStore),
+                    ThrowingFunction.unchecked(FileStore::getUnallocatedSpace));
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting free space for path " + localDir, e);
+        }
+    }
+
+    private boolean canCompact() {
+        final boolean result = switch (transactionMode) {
+            case WRITE_BLOCKS_READ, SINGLE_THREAD -> true;
+            case WRITE_BLOCKS_WRITE -> false;
+        };
+        LOGGER.debug("canCompact() - transactionMode: {}, result: {}", transactionMode, result);
+        return result;
+    }
+
+    /**
+     * Close the env, create a copy of it, compacting it during the copy,
+     * delete the original env, move the copy back to the original location,
+     * then re-open it.
+     * <p>
+     * Only works if {@link TransactionMode} is {@link TransactionMode#SINGLE_THREAD} or
+     * {@link TransactionMode#WRITE_BLOCKS_READ}.
+     * </p>
+     */
+    public void compact() {
+        if (canCompact()) {
+            try {
+                writeTxnLock.lockInterruptibly();
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(
+                        "Thread interrupted while waiting for write lock on "
+                        + localDir.toAbsolutePath().normalize(), e);
+            }
+
+            final long currSizeOnDisk = getSizeOnDisk();
+            final long freeSpaceOnDisk = getFreeSpaceOnDisk();
+            LOGGER.debug(() -> LogUtil.message("compact() - currSizeOnDisk: {}, freeSpaceOnDisk: {}",
+                    ByteSize.ofBytes(currSizeOnDisk), ByteSize.ofBytes(freeSpaceOnDisk)));
+            try {
+                if (freeSpaceOnDisk > currSizeOnDisk) {
+                    compact(currSizeOnDisk);
+                } else {
+                    LOGGER.error("Unable to compact LMDB env '{}' at {}, insufficient space. " +
+                                 "Available space: {}, required space: {}",
+                            name, localDir, ByteSize.ofBytes(freeSpaceOnDisk), ByteSize.ofBytes(currSizeOnDisk));
+                }
+            } finally {
+                LOGGER.trace("Releasing writeTxnLock");
+                writeTxnLock.unlock();
+            }
+        } else {
+            LOGGER.debug("Compaction not allowed, transactionMode: {}", transactionMode);
+        }
+    }
+
+    private void compact(final long currSizeOnDisk) {
+        Path tempEnvDir = null;
+        try {
+            // Create the temp dir inside localDir as the ref data could be quite large so may blow up
+            // /tmp
+            tempEnvDir = Files.createTempDirectory(localDir, "lmdb-env-clone-");
+            LOGGER.info("Starting compacting copy of LMDB env '{}' from {} to {}, current size on disk: {}",
+                    name, localDir, tempEnvDir, ByteSize.ofBytes(currSizeOnDisk));
+            final Duration compactDuration = doCompact(tempEnvDir);
+
+            long newSizeOnDisk = getSizeOnDisk();
+            double pct = ((1 - (((double) newSizeOnDisk) / currSizeOnDisk))) * 100;
+            final DecimalFormat decimalFormat = new DecimalFormat("0.0");
+            // 0% == no compaction, 100% == Full compaction
+            LOGGER.info(
+                    "Completed compacting copy of LMDB env '{}' from {} to {} in {}, " +
+                    "size on disk: {} => {} (compaction {}%)",
+                    name,
+                    localDir,
+                    tempEnvDir,
+                    compactDuration,
+                    ByteSize.ofBytes(currSizeOnDisk),
+                    ByteSize.ofBytes(newSizeOnDisk),
+                    decimalFormat.format(pct));
+        } catch (Exception e) {
+            throw new RuntimeException("Error compacting LMDB env " + this, e);
+        } finally {
+            if (tempEnvDir != null) {
+                LOGGER.debug("Deleting temp dir {}", tempEnvDir);
+                FileUtil.deleteDir(tempEnvDir);
+            }
+        }
+    }
+
+    private Duration doCompact(final Path finalTempEnvDir) {
+        final DurationTimer timer = DurationTimer.start();
+        // Copy the whole env to a temporary dir, compacting as it goes
+        env.copy(finalTempEnvDir.toFile(), CopyFlags.MDB_CP_COMPACT);
+        // Close the source env and its dbis
+        close();
+        // Delete the source
+        deleteEnvFiles(localDir);
+        // Move temp env back to source
+        moveEnvFiles(finalTempEnvDir, localDir);
+        // Open it back up
+        reOpenEnv();
+        return timer.get();
     }
 
     private Runnable createWaitLoggingAction(final String lockName) {
@@ -459,8 +679,8 @@ public class LmdbEnv implements AutoCloseable {
                             try {
                                 final long fileSizeBytes = Files.size(file);
                                 return localDir.getFileName().resolve(file.getFileName())
-                                        + " - file size: "
-                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
+                                       + " - file size: "
+                                       + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -513,13 +733,49 @@ public class LmdbEnv implements AutoCloseable {
         });
     }
 
-    public Map<String, String> getDbInfo(final Dbi<ByteBuffer> db) {
+    public Map<String, String> getDbInfo(final DbiProxy db) {
         return getWithReadTxn(txn -> {
             final Stat stat = db.stat(txn);
             return convertStatToMap(stat);
         });
     }
 
+    /**
+     * @return The size of the data in use within the LMDB env. This is likely
+     * to be less than {@link LmdbEnv#getSizeOnDisk()} due to space freed up
+     * by deletes that is only available to LMDB.
+     */
+    public long getSizeInUse() {
+        return getWithReadTxn(this::getSizeInUse);
+    }
+
+    /**
+     * @return The size of the data in use within the LMDB env. This is likely
+     * to be less than {@link LmdbEnv#getSizeOnDisk()} due to space freed up
+     * by deletes that is only available to LMDB.
+     */
+    public long getSizeInUse(final Txn<ByteBuffer> txn) {
+        // The stat for the env
+        final long envTotal = getSizeInUse(stat());
+
+        // Now add the stat for each dbi
+        final long dbiTotal = nameToDbiProxyMap.values()
+                .stream()
+                .map(dbi -> dbi.stat(txn))
+                .mapToLong(this::getSizeInUse)
+                .sum();
+        return envTotal + dbiTotal;
+    }
+
+    private long getSizeInUse(final Stat stat) {
+        return stat.pageSize * (
+                stat.leafPages + stat.branchPages + stat.overflowPages);
+    }
+
+    /**
+     * @return The size as seen by the OS. Due to reclaimed space in the env, this
+     * is likely to be lager than {@link LmdbEnv#getSizeInUse()}.
+     */
     public long getSizeOnDisk() {
         long totalSizeBytes;
         final Path localDir = getLocalDir().toAbsolutePath();
@@ -567,10 +823,10 @@ public class LmdbEnv implements AutoCloseable {
     @Override
     public String toString() {
         return "LmdbEnv{" +
-                "localDir=" + localDir +
-                ", name='" + name + '\'' +
-                ", envFlags=" + envFlags +
-                '}';
+               "localDir=" + FileUtil.getCanonicalPath(localDir) +
+               ", name='" + name + '\'' +
+               ", envFlags=" + envFlags +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -637,7 +893,7 @@ public class LmdbEnv implements AutoCloseable {
 
 
     /**
-     * Creates a write txn on calls to {@link BatchingWriteTxn#getTxn()}
+     * Creates a write transaction on calls to {@link BatchingWriteTxn#getTxn()}
      */
     public static class BatchingWriteTxn implements AutoCloseable {
 
@@ -806,9 +1062,81 @@ public class LmdbEnv implements AutoCloseable {
         @Override
         public String toString() {
             return "BatchingWriteTxnWrapper{" +
-                    "maxBatchSize=" + maxBatchSize +
-                    ", batchCounter=" + batchCounter +
-                    '}';
+                   "maxBatchSize=" + maxBatchSize +
+                   ", batchCounter=" + batchCounter +
+                   '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum TransactionMode {
+        /**
+         * Use this if the {@link LmdbEnv} will only be used by a single thread.
+         * No java-side locking will be used as there is only one thread interacting with LMDB.
+         * This is a minor performance optimisation.
+         * <p>
+         * Care still needs to be taken to ensure that you don't open transactions while
+         * already inside a transaction to avoid blowing the max readers as this mode has
+         * no protection for that.
+         * </p>
+         */
+        SINGLE_THREAD,
+        /**
+         * A write transaction will block all other read and write operations.
+         */
+        WRITE_BLOCKS_READ,
+        /**
+         * A write transaction will only block other write transactions.
+         */
+        WRITE_BLOCKS_WRITE,
+        ;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A {@link Lock} that doesn't actually do any locking at all.
+     */
+    static class NoLockingLock implements Lock {
+
+        public static final NoLockingLock INSTANCE = new NoLockingLock();
+
+        private NoLockingLock() {
+        }
+
+        @Override
+        public void lock() {
+            // no-op
+        }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            // no-op
+        }
+
+        @Override
+        public boolean tryLock() {
+            return true;
+        }
+
+        @Override
+        public boolean tryLock(final long time, final TimeUnit unit) throws InterruptedException {
+            return true;
+        }
+
+        @Override
+        public void unlock() {
+            // no-op
+        }
+
+        @Override
+        public Condition newCondition() {
+            throw new UnsupportedOperationException("newCondition not supported");
         }
     }
 }

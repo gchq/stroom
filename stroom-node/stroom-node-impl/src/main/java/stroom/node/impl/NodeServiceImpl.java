@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -136,7 +137,18 @@ public class NodeServiceImpl implements NodeService {
                         .reversed()
                         .thenComparing(Node::getName))
                 .map(Node::getName)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    public Set<String> getEnabledNodes() {
+        final FindNodeCriteria findNodeCriteria = new FindNodeCriteria();
+        findNodeCriteria.setEnabled(true);
+        return find(findNodeCriteria)
+                .getValues()
+                .stream()
+                .map(Node::getName)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
@@ -242,7 +254,7 @@ public class NodeServiceImpl implements NodeService {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()
-                            && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+                        && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
                         throw new WebApplicationException(response);
                     }
                 }

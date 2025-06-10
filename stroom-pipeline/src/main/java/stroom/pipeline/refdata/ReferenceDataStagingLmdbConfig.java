@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
@@ -42,20 +44,22 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
             @JsonProperty("localDir") final String localDir,
             @JsonProperty("maxReaders") final int maxReaders,
             @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-            @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
-            @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+            @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled,
+            @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
 
         this.localDir = localDir;
         this.maxReaders = maxReaders;
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = isReadAheadEnabled;
-        this.isReaderBlockedByWriter = isReaderBlockedByWriter;
+        this.isReadAheadEnabled = Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
+        this.isReaderBlockedByWriter = Objects.requireNonNullElse(
+                isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
     }
 
     @Override
     @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The path to store temporary reference staging data stores in. " +
+    @JsonPropertyDescription(
+            "The path to store temporary reference staging data stores in. " +
             "It will contain one sub directory per staging store. " +
             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "Use the fastest disk you can, but using a tmpfs file system is not advised. " +
@@ -69,24 +73,29 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
     @Override
     @Min(1)
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
+    @JsonPropertyDescription(
+            "The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
     }
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size for the off heap store. There must be " +
+    @JsonPropertyDescription(
+            "The maximum size for the transient LMDB staging environment. There must be " +
             "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
             "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
-            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
+            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc. The staging environment will be deleted once a load " +
+            "is complete so it only needs to be large enough for the largest stream, however as LMDB does not " +
+            "pre-allocate space it is simpler to set it to a very large size.")
     public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
+    @JsonPropertyDescription(
+            "Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
             "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
             "the actively used data is larger than the available RAM, as this will stop it evicting hot " +
@@ -97,7 +106,8 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If true, then a process writing to the data store will block all " +
+    @JsonPropertyDescription(
+            "If true, then a process writing to the data store will block all " +
             "other processes from reading from the store. As only one writer is allowed the active writer will " +
             "also block all other writers. If false, then multiple processes can read from the store regardless " +
             "of whether a process is writing to it. Also when false, if there are active readers during a write " +
@@ -131,11 +141,11 @@ public class ReferenceDataStagingLmdbConfig extends AbstractConfig implements Lm
     @Override
     public String toString() {
         return "ReferenceDataLmdbConfig{" +
-                "localDir='" + localDir + '\'' +
-                ", maxReaders=" + maxReaders +
-                ", maxStoreSize=" + maxStoreSize +
-                ", isReadAheadEnabled=" + isReadAheadEnabled +
-                ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
-                '}';
+               "localDir='" + localDir + '\'' +
+               ", maxReaders=" + maxReaders +
+               ", maxStoreSize=" + maxStoreSize +
+               ", isReadAheadEnabled=" + isReadAheadEnabled +
+               ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
+               '}';
     }
 }

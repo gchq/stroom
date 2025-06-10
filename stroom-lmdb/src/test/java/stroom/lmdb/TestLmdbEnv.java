@@ -13,8 +13,10 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ModelStringUtil;
 
 import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
@@ -33,8 +35,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Demonstrate the behaviour of too many readers trying to do a get() on LMDB at once
@@ -59,6 +64,76 @@ public class TestLmdbEnv {
     static void afterAll() {
         executor.shutdown();
         BYTE_BUFFER_POOL.clear();
+    }
+
+    @Test
+    void testSingleThreaded(@TempDir Path dbDir) {
+        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
+                DB_MAX_SIZE,
+                dbDir.toAbsolutePath(),
+                Arrays.toString(envFlags));
+
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
+
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
+                .builder(dbDir)
+                .withMapSize(DB_MAX_SIZE)
+                .withMaxDbCount(1)
+                .withMaxReaderCount(3)
+                .singleThreaded()
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
+
+        try (lmdbEnv) {
+            final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                    lmdbEnv,
+                    BYTE_BUFFER_POOL,
+                    new StringSerde(),
+                    new StringSerde(),
+                    "MyBasicLmdb");
+
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                db.put(writeTxn, "foo", "FOO", false);
+                // Do get in its own txn, so it can't see the uncommitted put yet
+                assertThat(db.get("foo"))
+                        .isEmpty();
+            });
+
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                db.put(writeTxn, "bar", "BAR", false);
+                // Gets each in their own txn
+                assertThat(db.get("foo"))
+                        .hasValue("FOO");
+                assertThat(db.get("bar"))
+                        .isEmpty();
+            });
+            assertThat(db.get("bar"))
+                    .hasValue("BAR");
+
+            // We have no semaphore protection for max readers so make sure LMDB throws and
+            // doesn't seg fault.
+            Assertions.assertThatThrownBy(
+                            () -> {
+                                lmdbEnv.doWithReadTxn(readTxn1 -> {
+                                    lmdbEnv.doWithReadTxn(readTxn2 -> {
+                                        lmdbEnv.doWithReadTxn(readTxn3 -> {
+                                            lmdbEnv.doWithReadTxn(readTxn4 -> {
+                                                lmdbEnv.doWithReadTxn(readTxn5 -> {
+                                                    assertThat(db.get("bar"))
+                                                            .hasValue("BAR");
+                                                });
+                                            });
+                                        });
+                                    });
+                                });
+                            })
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("maxreaders reached");
+        }
     }
 
     @Test
@@ -142,7 +217,7 @@ public class TestLmdbEnv {
                         batchingWriteTxn.commit();
                     }
 
-                    Assertions.assertThat(database.getEntryCount())
+                    assertThat(database.getEntryCount())
                             .isEqualTo(9);
                 });
     }
@@ -162,7 +237,7 @@ public class TestLmdbEnv {
                         batchingWriteTxn.abort();
                     }
 
-                    Assertions.assertThat(database.getEntryCount())
+                    assertThat(database.getEntryCount())
                             .isEqualTo(8);
                 });
     }
@@ -176,7 +251,7 @@ public class TestLmdbEnv {
                         // do nothing
                     }
 
-                    Assertions.assertThat(database.getEntryCount())
+                    assertThat(database.getEntryCount())
                             .isEqualTo(0);
                 });
     }
@@ -190,7 +265,7 @@ public class TestLmdbEnv {
                         batchingWriteTxn.abort();
                     }
 
-                    Assertions.assertThat(database.getEntryCount())
+                    assertThat(database.getEntryCount())
                             .isEqualTo(0);
                 });
     }
@@ -251,7 +326,7 @@ public class TestLmdbEnv {
                     }
 
                     final Optional<String> optVal = db.get("hello");
-                    Assertions.assertThat(optVal)
+                    assertThat(optVal)
                             .hasValue("world");
 
                     closeTxnLatch.countDown();
@@ -361,6 +436,99 @@ public class TestLmdbEnv {
         }
     }
 
+    @Test
+    void testCompact(@TempDir Path dbDir) {
+        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
+                DB_MAX_SIZE,
+                dbDir.toAbsolutePath(),
+                Arrays.toString(envFlags));
+
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
+
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator,
+                new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
+                .builder(dbDir)
+                .withMapSize(DB_MAX_SIZE)
+                .withMaxDbCount(1)
+                .withMaxReaderCount(MAX_READERS)
+                .withEnvFlags(envFlags)
+                .build();
+
+        try (lmdbEnv) {
+            final BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                    lmdbEnv,
+                    BYTE_BUFFER_POOL,
+                    new StringSerde(),
+                    new StringSerde(),
+                    "MyBasicLmdb");
+
+            final int iterations = 100_000;
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                for (int i = 0; i < iterations; i++) {
+                    db.put(writeTxn, "key-" + i, "val-" + i, false);
+                }
+            });
+            LOGGER.info("Put {} entries", ModelStringUtil.formatCsv(iterations));
+            assertThat(db.getEntryCount())
+                    .isEqualTo(iterations);
+
+            final long sizeOnDisk1 = lmdbEnv.getSizeOnDisk();
+            final long sizeInUse1 = lmdbEnv.getSizeInUse();
+            LOGGER.info("sizeOnDisk1: {}, sizeInUse1: {}", ByteSize.ofBytes(sizeOnDisk1), ByteSize.ofBytes(sizeInUse1));
+
+            // Not a lot should happen
+            lmdbEnv.compact();
+
+            final long sizeOnDisk2 = lmdbEnv.getSizeOnDisk();
+            final long sizeInUse2 = lmdbEnv.getSizeInUse();
+            LOGGER.info("sizeOnDisk2: {}, sizeInUse2: {}", ByteSize.ofBytes(sizeOnDisk2), ByteSize.ofBytes(sizeInUse2));
+
+            assertThat(sizeOnDisk2)
+                    .isCloseTo(sizeInUse1, Percentage.withPercentage(5));
+
+            // Make sure we can query the re-opened db
+            assertThat(db.get("key-5"))
+                    .hasValue("val-5");
+
+            final int tenPct = (int) (iterations * 0.1);
+            final int twentyPct = (int) (iterations * 0.2);
+            final LongAdder delCount = new LongAdder();
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                // Delete all bar the first 10%
+                for (int i = tenPct; i < iterations; i++) {
+                    db.delete(writeTxn, "key-" + i);
+                    delCount.increment();
+                }
+            });
+            LOGGER.info("Deleted {} entries", ModelStringUtil.formatCsv(delCount));
+            assertThat(db.getEntryCount())
+                    .isEqualTo(tenPct);
+
+            final long sizeOnDisk3 = lmdbEnv.getSizeOnDisk();
+            final long sizeInUse3 = lmdbEnv.getSizeInUse();
+            LOGGER.info("sizeOnDisk3: {}, sizeInUse3: {}", ByteSize.ofBytes(sizeOnDisk3), ByteSize.ofBytes(sizeInUse3));
+
+            // Compact again, should get smaller
+            lmdbEnv.compact();
+
+            final long sizeOnDisk4 = lmdbEnv.getSizeOnDisk();
+            final long sizeInUse4 = lmdbEnv.getSizeInUse();
+            LOGGER.info("sizeOnDisk4: {}, sizeInUse4: {}", ByteSize.ofBytes(sizeOnDisk4), ByteSize.ofBytes(sizeInUse4));
+
+            // Make sure the new size on disk is about 20% of the original. Not 10%
+            // as I think
+            assertThat(sizeOnDisk4)
+                    .isCloseTo((long) (sizeInUse1 * 0.2), Percentage.withPercentage(10));
+
+            // Make sure we can query the re-opened db
+            assertThat(db.get("key-0"))
+                    .hasValue("val-0");
+        }
+    }
+
     private void doMultiThreadTest(final LmdbEnv lmdbEnv,
                                    final AbstractLmdbDb<String, String> database,
                                    final boolean isReaderBlockedByWriter,
@@ -371,13 +539,13 @@ public class TestLmdbEnv {
         final HighWaterMarkTracker readersHighWaterMarkTracker = new HighWaterMarkTracker();
         final HighWaterMarkTracker writersHighWaterMarkTracker = new HighWaterMarkTracker();
 
-        Assertions.assertThat(lmdbEnv.info().numReaders)
+        assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
 
 
         database.logDatabaseContents(LOGGER::info);
 
-        Assertions.assertThat(lmdbEnv.info().numReaders)
+        assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(1);
 
         final int threadCount = 50;
@@ -450,7 +618,7 @@ public class TestLmdbEnv {
             LOGGER.info("Exception count: {}", exceptions.size());
 
             // We don't want any max readers exceptions
-            Assertions.assertThat(exceptions)
+            assertThat(exceptions)
                     .isEmpty();
 
             // Can't really test for a min value on the readers to ensure they
@@ -459,16 +627,16 @@ public class TestLmdbEnv {
 
             LOGGER.info("numReaders: {}", lmdbEnv.info().numReaders);
             // numreaders is a high water mark of max concurrent readers
-            Assertions.assertThat(lmdbEnv.info().numReaders)
+            assertThat(lmdbEnv.info().numReaders)
                     .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
 
             LOGGER.info("readersHighWaterMarkTracker: {}", readersHighWaterMarkTracker);
-            Assertions.assertThat(readersHighWaterMarkTracker.getHighWaterMark())
+            assertThat(readersHighWaterMarkTracker.getHighWaterMark())
                     .isLessThanOrEqualTo(expectedNumReadersHighWaterMark);
 
             if (doWrites) {
                 LOGGER.info("writersHighWaterMarkTracker: {}", writersHighWaterMarkTracker);
-                Assertions.assertThat(writersHighWaterMarkTracker.getHighWaterMark())
+                assertThat(writersHighWaterMarkTracker.getHighWaterMark())
                         .isEqualTo(1);
             }
         } catch (InterruptedException e) {
@@ -506,7 +674,7 @@ public class TestLmdbEnv {
                     highWaterMarkTracker.doWithHighWaterMarkTracking(() -> {
                         final Optional<String> optVal = database.get(txnRead, "01");
 
-                        Assertions.assertThat(optVal)
+                        assertThat(optVal)
                                 .isNotEmpty();
                         LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
                     });
@@ -554,7 +722,7 @@ public class TestLmdbEnv {
                         final PutOutcome putOutcome = database.put(
                                 writeTxn, key, "xxxxxx", true);
 
-                        Assertions.assertThat(putOutcome.isSuccess())
+                        assertThat(putOutcome.isSuccess())
                                 .isTrue();
                         LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
                     });

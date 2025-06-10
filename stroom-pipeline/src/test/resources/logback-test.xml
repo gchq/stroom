@@ -12,6 +12,7 @@
     <logger name="stroom.pipeline" level="debug" />
 <!--    <logger name="stroom.pipeline.reader.ByteStreamDecoder" level="TRACE" />-->
     <logger name="stroom.pipeline.refdata" level="info" />
+    <logger name="stroom.lmdb.DbiProxy" level="debug" />
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.TestRangeStoreDb" level="debug" />-->
 
 

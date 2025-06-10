@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
@@ -42,19 +44,21 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     public ReferenceDataLmdbConfig(@JsonProperty("localDir") final String localDir,
                                    @JsonProperty("maxReaders") final int maxReaders,
                                    @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-                                   @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
-                                   @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+                                   @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled,
+                                   @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
         this.maxReaders = maxReaders;
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = isReadAheadEnabled;
-        this.isReaderBlockedByWriter = isReaderBlockedByWriter;
+        this.isReadAheadEnabled = Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
+        this.isReaderBlockedByWriter = Objects.requireNonNullElse(
+                isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
     }
 
     @Override
     @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
+    @JsonPropertyDescription(
+            "The path relative to the home directory to use for storing the reference data store. " +
             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "The directory will be created if it doesn't exist." +
             "If the value is a relative path then it will be treated as being relative to stroom.path.home.")
@@ -77,17 +81,20 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size for the off heap store. There must be " +
+    @JsonPropertyDescription(
+            "The maximum size for each Feed specific LMDB environment. There must be " +
             "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
             "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
-            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
+            "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc. LMDB will grow to fill this space, but never " +
+            "shrink, unless an offline compaction is run.")
     public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
+    @JsonPropertyDescription(
+            "Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
             "available in the page cache. Read ahead is enabled by default. It may be worth disabling it if " +
             "the actively used data is larger than the available RAM, as this will stop it evicting hot " +
@@ -98,7 +105,8 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If true, then a process writing to the data store will block all " +
+    @JsonPropertyDescription(
+            "If true, then a process writing to the data store will block all " +
             "other processes from reading from the store. As only one writer is allowed the active writer will " +
             "also block all other writers. If false, then multiple processes can read from the store regardless " +
             "of whether a process is writing to it. Also when false, if there are active readers during a write " +
@@ -132,11 +140,11 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     @Override
     public String toString() {
         return "ReferenceDataLmdbConfig{" +
-                "localDir='" + localDir + '\'' +
-                ", maxReaders=" + maxReaders +
-                ", maxStoreSize=" + maxStoreSize +
-                ", isReadAheadEnabled=" + isReadAheadEnabled +
-                ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
-                '}';
+               "localDir='" + localDir + '\'' +
+               ", maxReaders=" + maxReaders +
+               ", maxStoreSize=" + maxStoreSize +
+               ", isReadAheadEnabled=" + isReadAheadEnabled +
+               ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
+               '}';
     }
 }

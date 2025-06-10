@@ -104,7 +104,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                             RefDataProcessingInfoSerde.extractProcessingState(newValueBuf);
                     if (!currentProcessingState.equals(expectedProcessingState)) {
                         throw new RuntimeException("currentProcessingState {} does not match expected. " +
-                                "Another thread may have changed it.");
+                                                   "Another thread may have changed it.");
                     }
 
                     valueSerde.updateState(newValueBuf, newProcessingState);
