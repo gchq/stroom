@@ -19,6 +19,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.query.QueryResult;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import net.sf.saxon.value.DateTimeValue;
 import net.sf.saxon.value.DoubleValue;
 import net.sf.saxon.value.Int64Value;
 import net.sf.saxon.value.StringValue;
@@ -199,6 +200,21 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                     } else if (sequence2 instanceof StringValue) {
                         final String str = ((StringValue) sequence2).getStringValue();
                         LOGGER.debug("Got string value:\n{}", str);
+                        return str;
+                    } else {
+                        return sequence.toString();
+                    }
+                });
+    }
+
+    protected static Optional<String> getAsDateTimeValue(final Sequence sequence) {
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof DateTimeValue) {
+                        String str = ((DateTimeValue) sequence2).getStringValue();
+                        LOGGER.debug("Got dateTime value:\n{}", str);
                         return str;
                     } else {
                         return sequence.toString();
