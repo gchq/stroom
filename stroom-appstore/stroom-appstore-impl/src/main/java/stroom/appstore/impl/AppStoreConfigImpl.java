@@ -51,7 +51,7 @@ public class AppStoreConfigImpl extends AbstractConfig implements AppStoreConfig
      */
     @SuppressWarnings("unused")
     @JsonCreator
-    public AppStoreConfigImpl(@JsonProperty("appStoreUrls") final ArrayList<String> appStores) {
+    public AppStoreConfigImpl(@JsonProperty("urls") final ArrayList<String> appStores) {
         this.appStores = new ArrayList<>();
         if (appStores == null || appStores.isEmpty()) {
             //LOGGER.debug("No appstore URLs supplied in the configuration file; using default of '{}'", DEFAULT_URL);
@@ -67,6 +67,7 @@ public class AppStoreConfigImpl extends AbstractConfig implements AppStoreConfig
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The URLs of the App Stores for Stroom Content")
+    @JsonProperty("urls")
     public ArrayList<String> getAppStoreUrls() {
         return this.appStores;
     }
