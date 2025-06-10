@@ -149,7 +149,8 @@ class ParseDateTime extends StroomExtensionFunctionCall {
         return result;
     }
 
-    private Instant parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
+    private Instant parseDate(final XPathContext context, final String value, final String pattern
+            , final String timeZone) {
         // no pattern means iso 8061 format
         if (pattern == null) {
             return DateUtil.parseNormalDateTimeStringToInstant(value);
