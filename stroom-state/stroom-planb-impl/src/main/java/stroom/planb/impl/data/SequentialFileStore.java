@@ -1,15 +1,19 @@
 package stroom.planb.impl.data;
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.StringIdUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,8 @@ public class SequentialFileStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
     private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
+    public static final String ZIP_EXTENSION = ".zip";
+
     private final Path path;
     private final AtomicLong storeId = new AtomicLong();
 
@@ -40,10 +46,13 @@ public class SequentialFileStore {
 
         // Create the store directory and initialise the store id.
         this.path = path;
-        if (ensureDirExists(path)) {
+
+        if (Files.isDirectory(path)) {
             final long maxId = getMaxId(path);
             storeId.set(maxId + 1);
             addedStoreId.set(maxId);
+        } else {
+            ensureDirExists(path);
         }
     }
 
@@ -54,7 +63,45 @@ public class SequentialFileStore {
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
         }
-        add(path, countDownLatch);
+
+        try {
+            try {
+                lock.lockInterruptibly();
+                try {
+                    // Move the new data to the store.
+                    final long currentStoreId = storeId.getAndIncrement();
+                    final SequentialFile storeFileSet = getStoreIdFile(currentStoreId);
+                    if (countDownLatch != null) {
+                        latches.put(currentStoreId, countDownLatch);
+                    }
+
+                    try {
+                        Files.move(path,
+                                storeFileSet.getZip(),
+                                StandardCopyOption.ATOMIC_MOVE);
+                    } catch (final NoSuchFileException e) {
+                        ensureDirExists(storeFileSet.getRoot());
+                        storeFileSet.getSubDirs().forEach(SequentialFileStore.this::ensureDirExists);
+                        Files.move(path,
+                                storeFileSet.getZip(),
+                                StandardCopyOption.ATOMIC_MOVE);
+                    }
+
+                    // Record the sequence id for future use.
+                    addedStoreId.set(currentStoreId);
+                    condition.signalAll();
+
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
+            }
+
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
+        }
     }
 
     public SequentialFile awaitNext(final long storeId) {
@@ -73,74 +120,29 @@ public class SequentialFileStore {
             Thread.currentThread().interrupt();
             throw UncheckedInterruptedException.create(e);
         }
-        return getStoreFileSet(storeId);
+        return getStoreIdFile(storeId);
     }
 
-    private SequentialFile getStoreFileSet(final long storeId) {
-        return SequentialFile.get(path, storeId, true, latches.remove(storeId));
-    }
+    private SequentialFile getStoreIdFile(final long storeId) {
+        // Convert the id to a padded string.
+        final String idString = StringIdUtil.idToString(storeId);
+        Path dir = path;
+        final List<Path> subDirs = new ArrayList<>();
 
-    private void add(final Path tempFile, final CountDownLatch countDownLatch) throws IOException {
-        // Move the new data to the store.
-        final long currentStoreId = storeId.getAndIncrement();
-        final SequentialFile storeFileSet = getStoreFileSet(currentStoreId);
-        if (countDownLatch != null) {
-            latches.put(currentStoreId, countDownLatch);
+        // Create sub dirs if nested.
+        // Add depth.
+        final int depth = (idString.length() / 3) - 1;
+        dir = dir.resolve(Integer.toString(depth));
+        subDirs.add(dir);
+
+        // Add dirs from parts of id string.
+        for (int i = 0; i < idString.length() - 3; i += 3) {
+            dir = dir.resolve(idString.substring(i, i + 3));
+            subDirs.add(dir);
         }
 
-        try {
-            move(
-                    storeFileSet.getRoot(),
-                    storeFileSet.getSubDirs(),
-                    tempFile,
-                    storeFileSet.getZip());
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
-        }
-
-        // Let consumers know there is new data.
-        afterStore(currentStoreId);
-    }
-
-    private void move(final Path root, final List<Path> subDirs, final Path source, final Path dest)
-            throws IOException {
-        boolean success = false;
-        while (!success) {
-            try {
-                Files.move(source,
-                        dest,
-                        StandardCopyOption.ATOMIC_MOVE);
-                success = true;
-            } catch (final NoSuchFileException e) {
-                ensureDirExists(root);
-                subDirs.forEach(SequentialFileStore.this::ensureDirExists);
-            }
-        }
-    }
-
-    private void afterStore(final long storeId) {
-        try {
-            boolean done = false;
-            while (!done) {
-                lock.lockInterruptibly();
-                try {
-                    // Ensure we are adding items in order.
-                    if (addedStoreId.get() + 1 != storeId) {
-                        condition.await();
-                    } else {
-                        // Record the sequence id for future use.
-                        addedStoreId.incrementAndGet();
-                        condition.signalAll();
-                        done = true;
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
-        }
+        final Path zip = dir.resolve(idString + ZIP_EXTENSION);
+        return new SequentialFile(path, subDirs, zip, latches.remove(storeId));
     }
 
     public long getMaxStoreId() {
@@ -229,18 +231,38 @@ public class SequentialFileStore {
         return num;
     }
 
-    private boolean ensureDirExists(final Path path) {
-        if (Files.isDirectory(path)) {
-            return true;
-        }
-
+    private void ensureDirExists(final Path path) {
         try {
             Files.createDirectories(path);
         } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
+    }
 
-        return false;
+    public void delete(final SequentialFile sequentialFile) throws IOException {
+        final Path zip = sequentialFile.getZip();
+        LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(zip));
+        Files.deleteIfExists(zip);
+
+        // Try to delete directories.
+        try {
+            lock.lockInterruptibly();
+            try {
+                boolean success = true;
+                for (int i = sequentialFile.getSubDirs().size() - 1; i >= 0 && success; i--) {
+                    final Path path = sequentialFile.getSubDirs().get(i);
+                    success = Files.deleteIfExists(path);
+                }
+            } catch (final DirectoryNotEmptyException e) {
+                // Expected error.
+                LOGGER.trace(e::getMessage, e);
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
     }
 
     private record NumericFile(Path dir, long num) {

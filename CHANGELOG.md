@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Fix primitive value conversion of query field types.
+
+* Issue **#4940** : Fix duplicate store error log.
+
+* Issue **#4941** : Fix annotation data retention.
+
+* Issue **#4968** : Improve Plan B file receipt.
+
+* Issue **#4956** : Add error handling to duplicate check deletion.
+
+* Issue **#4967** : Fix SQL deadlock.
+
+
 ## [v7.10-beta.3] - 2025-06-05
 
 * Issue **#4900** : Add histogram and metric stores to Plan B.

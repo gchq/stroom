@@ -64,7 +64,7 @@ public class PartDestination {
 
         final FileDescriptor fileDescriptor = new FileDescriptor(createTime, metaId, fileHash);
         final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
-                                       SequentialFile.ZIP_EXTENSION;
+                                       SequentialFileStore.ZIP_EXTENSION;
         final Path receiveFile = receiveDir.resolve(receiveFileName);
         StreamUtil.streamToFile(inputStream, receiveFile);
 
@@ -83,7 +83,7 @@ public class PartDestination {
         } else {
             // Otherwise we need to copy the file to a temporary location first before it can be moved into the store.
             final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
-                                           SequentialFile.ZIP_EXTENSION;
+                                           SequentialFileStore.ZIP_EXTENSION;
             final Path receiveFile = receiveDir.resolve(receiveFileName);
             Files.copy(sourcePath, receiveFile);
             mergeProcessor.add(fileDescriptor, receiveFile, synchroniseMerge);

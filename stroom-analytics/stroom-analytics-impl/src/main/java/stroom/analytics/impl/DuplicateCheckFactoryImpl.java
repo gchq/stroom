@@ -11,6 +11,9 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -20,6 +23,8 @@ import java.util.concurrent.Executor;
 
 @Singleton
 public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckFactoryImpl.class);
 
     private final DuplicateCheckStoreConfig analyticResultStoreConfig;
     private final DuplicateCheckStorePool<String, DuplicateCheckStore> pool;
@@ -49,35 +54,42 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     @Override
     public DuplicateCheck create(final AbstractAnalyticRuleDoc analyticRuleDoc,
                                  final CompiledColumns compiledColumns) {
-        final DuplicateNotificationConfig duplicateNotificationConfig =
-                analyticRuleDoc.getDuplicateNotificationConfig();
-        if (!duplicateNotificationConfig.isRememberNotifications() &&
-            !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
-            return new NoOpDuplicateCheck();
-        }
+        try {
+            final DuplicateNotificationConfig duplicateNotificationConfig =
+                    analyticRuleDoc.getDuplicateNotificationConfig();
+            if (!duplicateNotificationConfig.isRememberNotifications() &&
+                !duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
+                return new NoOpDuplicateCheck();
+            }
 
-        final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
-        final DuplicateCheckRowFactory duplicateCheckRowFactory =
-                new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
-        store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
+            final DuplicateCheckStore store = pool.borrow(analyticRuleDoc.getUuid());
+            final DuplicateCheckRowFactory duplicateCheckRowFactory =
+                    new DuplicateCheckRowFactory(duplicateNotificationConfig, compiledColumns);
+            store.writeColumnNames(duplicateCheckRowFactory.getColumnNames());
 
-        return new DuplicateCheck() {
-            @Override
-            public boolean check(final Row row) {
-                final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
-                final boolean success = store.tryInsert(duplicateCheckRow);
-                if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
-                    return success;
-                } else {
-                    return true;
+            return new DuplicateCheck() {
+                @Override
+                public boolean check(final Row row) {
+                    final DuplicateCheckRow duplicateCheckRow = duplicateCheckRowFactory.createDuplicateCheckRow(row);
+                    final boolean success = store.tryInsert(duplicateCheckRow);
+                    if (duplicateNotificationConfig.isSuppressDuplicateNotifications()) {
+                        return success;
+                    } else {
+                        return true;
+                    }
                 }
-            }
 
-            @Override
-            public void close() {
-                pool.release(analyticRuleDoc.getUuid());
-            }
-        };
+                @Override
+                public void close() {
+                    pool.release(analyticRuleDoc.getUuid());
+                }
+            };
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Error creating duplicate check for {}",
+                    RuleUtil.getRuleIdentity(analyticRuleDoc)), e);
+            throw e;
+        }
     }
 
     public synchronized DuplicateCheckRows fetchData(final FindDuplicateCheckCriteria criteria) {

@@ -18,6 +18,7 @@
 package stroom.storedquery.impl.db;
 
 
+import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.docref.DocRef;
@@ -91,6 +92,7 @@ class TestStoredQueryDao {
                 .thenReturn(Optional.of(owner));
 
         storedQueryDao = new StoredQueryDaoImpl(
+                new MockClusterLockService(),
                 storedQueryDbConnProvider,
                 new QueryJsonSerialiser(),
                 () -> userRefLookup);

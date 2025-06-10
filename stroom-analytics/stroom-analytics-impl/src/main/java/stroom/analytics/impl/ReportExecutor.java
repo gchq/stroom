@@ -65,6 +65,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
@@ -281,7 +282,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
 
             // Disable future execution if the error was not an interrupted exception.
-            if (!(e instanceof InterruptedException)) {
+            if (!(e instanceof InterruptedException) &&
+                !(e instanceof UncheckedInterruptedException)) {
                 // Disable future execution.
                 LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
                 executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
