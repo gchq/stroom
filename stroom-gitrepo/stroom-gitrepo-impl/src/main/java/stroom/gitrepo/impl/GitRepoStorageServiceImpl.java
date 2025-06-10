@@ -6,6 +6,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoConfig;
+import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
@@ -45,7 +46,7 @@ import java.util.Set;
  * local Git repositories, then to sync the local repo with a remote repo.
  */
 @Singleton
-public class GitRepoStorageService {
+public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
     /**
      * The tree model to find parents of the event item.
@@ -75,7 +76,7 @@ public class GitRepoStorageService {
     /**
      * Logger so we can follow what is going on.
      */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoStorageService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoStorageServiceImpl.class);
 
     /**
      * Name of the Git repository directory. We need to ensure we don't delete
@@ -99,11 +100,11 @@ public class GitRepoStorageService {
      */
     @SuppressWarnings("unused")
     @Inject
-    public GitRepoStorageService(final ExplorerService explorerService,
-                                 final ExplorerNodeService explorerNodeService,
-                                 final ImportExportSerializer importExportSerializer,
-                                 final GitRepoConfig config,
-                                 final PathCreator pathCreator) {
+    public GitRepoStorageServiceImpl(final ExplorerService explorerService,
+                                     final ExplorerNodeService explorerNodeService,
+                                     final ImportExportSerializer importExportSerializer,
+                                     final GitRepoConfig config,
+                                     final PathCreator pathCreator) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
@@ -126,6 +127,7 @@ public class GitRepoStorageService {
      * place.
      * @throws IOException if something goes wrong
      */
+    @Override
     public synchronized List<Message> exportDoc(GitRepoDoc gitRepoDoc,
                                                 final String commitMessage,
                                                 boolean calledFromUi)
@@ -247,6 +249,7 @@ public class GitRepoStorageService {
      * @return A list of messages about the import
      * @throws IOException if something goes wrong
      */
+    @Override
     public synchronized List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException {
         List<Message> messages = new ArrayList<>();
 

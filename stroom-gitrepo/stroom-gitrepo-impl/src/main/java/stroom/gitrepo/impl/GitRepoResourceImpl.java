@@ -19,6 +19,7 @@ package stroom.gitrepo.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;

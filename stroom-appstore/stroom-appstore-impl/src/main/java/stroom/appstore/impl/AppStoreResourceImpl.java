@@ -1,16 +1,18 @@
 package stroom.appstore.impl;
 
 import stroom.appstore.api.AppStoreConfig;
+import stroom.appstore.shared.AppStoreCreateGitRepoRequest;
 import stroom.appstore.shared.AppStoreResponse;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.gitrepo.api.GitRepoStore;
+import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.shared.DocPath;
+import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.appstore.shared.AppStoreContentPack;
@@ -31,7 +33,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,7 +48,11 @@ public class AppStoreResourceImpl implements AppStoreResource {
     /** The store used to create a GitRepo */
     private final GitRepoStore gitRepoStore;
 
+    /** Provides access to the Explorer Tree */
     private final ExplorerService explorerService;
+
+    /** Allows this system to automatically pull content */
+    private final GitRepoStorageService gitRepoStorageService;
 
     /** The size of the buffer used to copy stuff around */
     private static final int IO_BUF_SIZE = 4096;
@@ -57,16 +63,20 @@ public class AppStoreResourceImpl implements AppStoreResource {
     /**
      * Injected constructor.
      * @param config Where to get configuration data from.
+     * @param gitRepoStore How to create the GitRepoDoc.
+     * @param explorerService How to interact with the Explorer Tree
+     * @param gitRepoStorageService How to pull content from Git
      */
     @SuppressWarnings("unused")
     @Inject
     public AppStoreResourceImpl(final AppStoreConfig config,
                                 GitRepoStore gitRepoStore,
                                 ExplorerService explorerService,
-                                ExplorerNodeService explorerNodeService) {
+                                GitRepoStorageService gitRepoStorageService) {
         this.config = config;
         this.gitRepoStore = gitRepoStore;
         this.explorerService = explorerService;
+        this.gitRepoStorageService = gitRepoStorageService;
     }
 
     /**
@@ -81,10 +91,22 @@ public class AppStoreResourceImpl implements AppStoreResource {
     @Override
     public ResultPage<AppStoreContentPack> list(PageRequest pageRequest) {
 
+        // Pull out the existing GitRepos so we know what exists
+        List<DocRef> existingDocRefs = gitRepoStore.list();
+        ArrayList<GitRepoDoc> installedGitRepoDocs = new ArrayList<>(existingDocRefs.size());
+        for (var docRef : existingDocRefs) {
+            // Not sure if store can return null, but handle it just in case...
+            GitRepoDoc doc = gitRepoStore.readDocument(docRef);
+            if (doc != null) {
+                installedGitRepoDocs.add(doc);
+            }
+        }
+
+        // Grab YAML describing the content store
         ObjectMapper mapper = YamlUtil.getMapper();
 
         List<String> appStoreUrls = config.getAppStoreUrls();
-        List<AppStoreContentPack> contentPacks;
+        List<AppStoreContentPack> contentPacks = new ArrayList<>();
 
         for (String appStoreUrl : appStoreUrls) {
             LOGGER.info("Parsing appStore at '{}'", appStoreUrl);
@@ -93,16 +115,23 @@ public class AppStoreResourceImpl implements AppStoreResource {
                 URI uri = new URI(appStoreUrl);
                 InputStream istr = new BufferedInputStream(uri.toURL().openStream());
                 ContentPacks cps = mapper.readValue(istr, ContentPacks.class);
-                LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cps);
-                contentPacks = cps.getContentPacks();
 
-                // Resolve the SVG icons into the Content Pack
-                // and set the content store meta-data
-                for (var cp : contentPacks) {
+                // Fill in any extra data needed by the content packs
+                List<AppStoreContentPack> listOfContentPacks = cps.getContentPacks();
+                for (var cp : listOfContentPacks) {
+                    // Resolve icon link to SVG text
                     this.resolveSvgIcon(cp);
+
+                    // Add the content store owner's name
                     cp.setContentStoreUiName(cps.getUiName());
+
+                    // Check if the content pack is already installed
+                    cp.checkIfInstalled(installedGitRepoDocs);
                 }
-                return ResultPage.createPageLimitedList(contentPacks, pageRequest);
+
+                LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cps);
+                contentPacks.addAll(listOfContentPacks);
+
             } catch (URISyntaxException | MalformedURLException e) {
                 LOGGER.error("Cannot parse App Store URL '{}'.", appStoreUrl, e);
             } catch (UnrecognizedPropertyException e) {
@@ -112,8 +141,8 @@ public class AppStoreResourceImpl implements AppStoreResource {
             }
         }
 
-        // Get here and something has gone wrong so return empty list.
-        return ResultPage.createPageLimitedList(Collections.emptyList(), pageRequest);
+
+        return ResultPage.createPageLimitedList(contentPacks, pageRequest);
     }
 
     /**
@@ -175,12 +204,18 @@ public class AppStoreResourceImpl implements AppStoreResource {
 
     /**
      * Creates a GitRepoDoc from a Content Pack.
-     * @param contentPack The content pack that holds the data for the GitRepoDoc.
+     * @param createGitRepoRequest The request holding the content pack
+     *                             that holds the data for the GitRepoDoc.
      */
     @Override
-    public AppStoreResponse create(AppStoreContentPack contentPack) {
-        final AppStoreResponse response;
+    public AppStoreResponse create(AppStoreCreateGitRepoRequest createGitRepoRequest) {
 
+        // Return value
+        AppStoreResponse response;
+
+        final List<Message> messages = new ArrayList<>();
+
+        AppStoreContentPack contentPack = createGitRepoRequest.getContentPack();
         if (this.exists(contentPack)) {
             LOGGER.error("Content pack already exists within Stroom");
             response = new AppStoreResponse(false, "Content pack already exists");
@@ -193,7 +228,7 @@ public class AppStoreResourceImpl implements AppStoreResource {
                         PermissionInheritance.DESTINATION);
                 ExplorerNode gitRepoNode = explorerService.create(
                         GitRepoDoc.TYPE,
-                        contentPack.getUiName(),
+                        contentPack.getGitRepoName(),
                         parentNode,
                         PermissionInheritance.DESTINATION);
 
@@ -203,20 +238,84 @@ public class AppStoreResourceImpl implements AppStoreResource {
                 contentPack.updateSettingsIn(gitRepoDoc);
                 gitRepoStore.writeDocument(gitRepoDoc);
 
-                // TODO Refresh Explorer Tree
-
-                // TODO Pull if necessary
+                // Pull if necessary
+                if (createGitRepoRequest.getAutoPull()) {
+                    // Do the pull
+                    List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
+                    messages.addAll(pullMessages);
+                }
 
                 // Tell the user it worked
-                response = new AppStoreResponse(true,
-                        "Created '" + contentPack.getUiName() + "'");
+                response = this.createOkResponse(contentPack, messages);
+
+            } catch (IOException e) {
+                response = this.createErrResponse(
+                        "Error pulling files from Content Pack: " + e.getMessage(),
+                        messages,
+                        e);
             } catch (RuntimeException e) {
-                LOGGER.error("Error creating GitRepo: {}", e.getMessage(), e);
-                throw e;
+                response = this.createErrResponse(
+                        "Error creating Content Pack: " + e.getMessage(),
+                        messages,
+                        e);
             }
         }
 
         return response;
+    }
+
+    /**
+     * Creates the response to send back to the client if everything went ok.
+     * @param cp The content pack we were trying to import.
+     * @param messages The list of messages to send back.
+     * @return The response to send back. Never null.
+     */
+    private AppStoreResponse createOkResponse(
+            AppStoreContentPack cp,
+            List<Message> messages) {
+
+        var buf = new StringBuilder("Created '");
+        buf.append(cp.getUiName());
+        buf.append("'\n");
+        for (var m : messages) {
+            buf.append('\n');
+            buf.append(m);
+        }
+
+        LOGGER.info("Created Content Pack: \n{}", buf);
+        return new AppStoreResponse(true, buf.toString());
+    }
+
+    /**
+     * Returns the response if something goes wrong.
+     * @param errorMessage The error message to send back.
+     * @param messages List of messages. Must not be null but can be empty.
+     * @param cause The exception, if any. Can be null.
+     * @return The response. Never null.
+     */
+    private AppStoreResponse createErrResponse(
+            String errorMessage,
+            List<Message> messages,
+            Exception cause) {
+
+        var buf = new StringBuilder(errorMessage);
+        if (cause != null) {
+            buf.append("\n    ");
+            buf.append(cause.getMessage());
+        }
+        if (!messages.isEmpty()) {
+            buf.append("\n\nAdditional information:");
+            for (var m : messages) {
+                buf.append("\n    ");
+                buf.append(m);
+            }
+        }
+
+        LOGGER.error("Error creating Content Pack: \n{}",
+                buf,
+                cause);
+
+        return new AppStoreResponse(false, buf.toString());
     }
 
 }
