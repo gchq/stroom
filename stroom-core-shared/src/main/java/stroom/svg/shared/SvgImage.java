@@ -4173,6 +4173,21 @@ public enum SvgImage {
             "5 150 150 225 55.5 273.5q0 220-124 399l343 343q37 37 37 90z\"/></svg>\n" +
             ""),
 
+    SELECTION("selection.svg", "svg-image__selection", "" +
+            "<svg viewBox=\"4 4 23 23\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path " +
+            "style=\"fill:currentColor\" d=\"m 5,13 v 2 h 2 v -2 z\"/><path style=\"fill:currentCo" +
+            "lor\" d=\"m 17.042169,9.0726743 v 1.9999997 h 2 V 9.0726743 Z\"/><path style=\"fill:" +
+            "currentColor\" d=\"m 5,9 v 2 H 7 V 9 Z\"/><path style=\"fill:currentColor\" d=\"m 17.0" +
+            "42169,5.0726743 v 1 1 h 1 1 v -1 -1 h -1 z\"/><path style=\"fill:currentColor\" d=\"" +
+            "m 13,5 v 2 h 2 V 5 Z\"/><path style=\"fill:currentColor\" d=\"m 9,5 v 2 h 2 V 5 Z\"/>" +
+            "<path style=\"fill:currentColor\" d=\"M 5,5 V 6 7 H 6 7 V 6 5 H 6 Z\"/><path style=\"" +
+            "fill:currentColor\" d=\"m 8.9999687,16.99972 v 2 h 2.0000003 v -2 z\"/><path style=" +
+            "\"fill:currentColor\" d=\"m 4.9999686,16.99972 v 1 1 h 1 1 v -1 -1 h -1 z\"/><path s" +
+            "tyle=\"fill:currentColor;fill-opacity:0;stroke:currentColor;stroke-width:2;stroke" +
+            "-linecap:square;stroke-linejoin:round;paint-order:normal\" d=\"M 17.229453,25.9624" +
+            "32 12.2688,13.398157 l 13.662125,6.261807 -7.237673,0.528594 z\"/></svg> \n" +
+            ""),
+
     SETTINGS("settings.svg", "svg-image__settings", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:currentColor\" d=\"M1152 896q0-106-75-181t-181-75-181" +
