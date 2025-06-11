@@ -18,6 +18,7 @@
 package stroom.processor.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -34,8 +35,10 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
@@ -43,6 +46,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
+import stroom.query.common.v2.ExpressionValidationException;
 import stroom.query.common.v2.ExpressionValidator;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -55,6 +59,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -72,6 +77,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -164,8 +171,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
         parentTaskContext.info(() -> "Creating tasks for " +
-                filters.size() +
-                " filters");
+                                     filters.size() +
+                                     " filters");
 
         try {
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
@@ -229,12 +236,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         taskContext -> {
                             final int count = filterCount.incrementAndGet();
                             parentTaskContext.info(() -> "Creating tasks for " +
-                                    count +
-                                    " of " +
-                                    filters.size() +
-                                    " filters (runAs: "
-                                    + runAs
-                                    + ")");
+                                                         count +
+                                                         " of " +
+                                                         filters.size() +
+                                                         " filters (runAs: "
+                                                         + runAs
+                                                         + ")");
                             createTasksForFilter(
                                     taskContext,
                                     filter,
@@ -267,7 +274,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     // Get the tracker for this filter.
                     final ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
                     if (ProcessorFilterTrackerStatus.COMPLETE.equals(tracker.getStatus()) ||
-                            ProcessorFilterTrackerStatus.ERROR.equals(tracker.getStatus())) {
+                        ProcessorFilterTrackerStatus.ERROR.equals(tracker.getStatus())) {
                         // If the tracker is complete we need to make sure the status is updated, so we can
                         // see that it is not delivering any more tasks.
                         if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
@@ -304,17 +311,17 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         // passed since the last attempt.
         ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
         if (tracker.getLastPollTaskCount() == null ||
-                tracker.getLastPollTaskCount() > 0 ||
-                Instant
-                        .ofEpochMilli(tracker.getLastPollMs())
-                        .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
-                        .isBefore(Instant.now())) {
+            tracker.getLastPollTaskCount() > 0 ||
+            Instant
+                    .ofEpochMilli(tracker.getLastPollMs())
+                    .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
+                    .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             totalTasksCreated.add(currentCreatedTasks);
 
             int maxTasks = remaining - currentCreatedTasks;
             if (filter.isProcessingTaskCountBounded() &&
-                    !processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
+                !processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
                 // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
                 maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - currentCreatedTasks;
             }
@@ -327,7 +334,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
                 final QueryData queryData = filter.getQueryData();
                 final boolean isStreamStoreSearch = queryData.getDataSource() != null
-                        && queryData.getDataSource().getType().equals(MetaFields.STREAM_STORE_TYPE);
+                                                    && queryData.getDataSource().getType().equals(
+                        MetaFields.STREAM_STORE_TYPE);
                 try {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}",
                             filter);
@@ -513,9 +521,9 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 if (throwable != null) {
                     final String message =
                             "Error creating tasks for filter (id=" +
-                                    filter.getId() +
-                                    "). " +
-                                    throwable.getMessage();
+                            filter.getId() +
+                            "). " +
+                            throwable.getMessage();
                     LOGGER.error(message);
                     LOGGER.debug(message, throwable);
                     tracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
@@ -656,6 +664,51 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     }
 
     /**
+     * Pkg private for testing
+     */
+    static ExpressionOperator sanitiseAndValidateExpression(final ExpressionOperator expressionOperator) {
+        if (expressionOperator != null) {
+            ExpressionOperator copy;
+            if (expressionOperator.containsField(MetaFields.STATUS.getFldName())) {
+                // Remove any status terms in case the UI has left any in. This is mostly to deal
+                // with a legacy situation where the UI was including status terms in re-process filters.
+                // We will be adding in our own status terms after this
+                final Predicate<ExpressionItem> excludeStatusTermPredicate = ProcessorTaskCreatorImpl::isNotStatusTerm;
+                copy = ExpressionUtil.copyOperator(expressionOperator, excludeStatusTermPredicate);
+                LOGGER.debug("""
+                        sanitiseAndValidateExpression() - Removed status term(s) from expression
+                          Before: {}
+                          After: {}""", expressionOperator, copy);
+            } else {
+                LOGGER.debug("sanitiseAndValidateExpression() - no change to expressionOperator: {}",
+                        expressionOperator);
+                copy = expressionOperator;
+            }
+
+            // Validate expression.
+            final ExpressionValidator expressionValidator = new ExpressionValidator(
+                    MetaFields.getProcessorFilterFields());
+            try {
+                expressionValidator.validate(copy);
+            } catch (ExpressionValidationException e) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "sanitiseAndValidateExpression() - Error validating expression: {} - {}",
+                        copy, LogUtil.exceptionMessage(e)));
+                throw e;
+            }
+            return copy;
+        } else {
+            return null;
+        }
+    }
+
+    private static boolean isNotStatusTerm(final ExpressionItem expressionItem) {
+        boolean isStatusTerm = expressionItem instanceof ExpressionTerm term
+                               && MetaFields.STATUS.getFldName().equals(term.getField());
+        return !isStatusTerm;
+    }
+
+    /**
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
@@ -666,72 +719,75 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
-        // Validate expression.
-        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getProcessorFilterFields());
-        expressionValidator.validate(expression);
+
+        final ExpressionOperator effectiveExpression = sanitiseAndValidateExpression(expression);
+        ExpressionOperator.Builder builder = ExpressionOperator.builder()
+                .addOperator(effectiveExpression);
 
         if (reprocess) {
+            builder = builder.addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+
+            if (pipelineDocRef != null) {
+                builder = builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+            }
+
+            if (minMetaCreateTimeMs != null) {
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                        Condition.GREATER_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
+            }
+            if (maxMetaCreateTimeMs != null) {
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
+            }
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
                     .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTextTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
+            builder = builder.addOperator(statusExpression);
 
-            ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                    .addOperator(expression)
-                    .addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            return findMeta(metaService::findReprocess, builder, MetaFields.PARENT_ID, length, reprocess);
 
-            if (pipelineDocRef != null) {
-                builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
-            }
+        } else {
+            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
-            builder = builder.addOperator(statusExpression);
 
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getFldName(), false, false);
-            findMetaCriteria.obtainPageRequest().setLength(length);
-
-            return metaService.findReprocess(findMetaCriteria).getValues();
-
-        } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
                     .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                     .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
-
-            ExpressionOperator.Builder builder = ExpressionOperator.builder()
-                    .addOperator(expression)
-                    .addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
-
-            if (minMetaCreateTimeMs != null) {
-                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
-                        Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
-            }
-            if (maxMetaCreateTimeMs != null) {
-                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
-                        Condition.LESS_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
-            }
             builder = builder.addOperator(statusExpression);
 
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
-            findMetaCriteria.obtainPageRequest().setLength(length);
-
-            return metaService.find(findMetaCriteria).getValues();
+            return findMeta(metaService::find, builder, MetaFields.ID, length, reprocess);
         }
+    }
+
+    private List<Meta> findMeta(Function<FindMetaCriteria, ResultPage<Meta>> findFunc,
+                                final ExpressionOperator.Builder builder,
+                                final QueryField idField,
+                                final int length,
+                                final boolean reprocess) {
+
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+        findMetaCriteria.setSort(idField.getFldName(), false, false);
+        findMetaCriteria.obtainPageRequest().setLength(length);
+        final List<Meta> list = findFunc.apply(findMetaCriteria).getValues();
+        LOGGER.debug(() -> LogUtil.message("findMeta(), reprocess: {}, findMetaCriteria: {}, listSize: {}",
+                reprocess, findMetaCriteria, list.size()));
+        return list;
     }
 }
 

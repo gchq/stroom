@@ -185,7 +185,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             if (!existingFieldNames.contains(field.getFldName())) {
                                 c = c.values(
                                         fieldSourceId,
-                                        (byte) field.getFldType().getTypeId(),
+                                        field.getFldType().getPrimitiveValue(),
                                         field.getFldName(),
                                         field.getAnalyzerType().getDisplayValue(),
                                         field.isIndexed(),

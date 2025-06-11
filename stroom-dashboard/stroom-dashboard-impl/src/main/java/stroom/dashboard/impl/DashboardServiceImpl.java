@@ -445,6 +445,7 @@ class DashboardServiceImpl implements DashboardService {
         Search search = searchRequest.getSearch();
 
         if (search != null) {
+            Exception exception = null;
             try {
                 final SearchRequest mappedRequest = searchRequestMapper.mapRequest(searchRequest);
 
@@ -459,32 +460,11 @@ class DashboardServiceImpl implements DashboardService {
                     // Add this search to the history so the user can get back to this
                     // search again.
                     storeSearchHistory(searchRequest);
-
-                    // Log this search request for the current user.
-                    searchEventLog.search(
-                            "Dashboard Search",
-                            null,
-                            search.getDataSourceRef(),
-                            search.getExpression(),
-                            search.getQueryInfo(),
-                            search.getParams(),
-                            null);
                 }
-
             } catch (final RuntimeException e) {
+                exception = e;
                 final Search finalSearch = search;
                 LOGGER.debug(() -> "Error processing search " + finalSearch, e);
-
-                if (queryKey == null) {
-                    searchEventLog.search(
-                            "Dashboard Search",
-                            null,
-                            search.getDataSourceRef(),
-                            search.getExpression(),
-                            search.getQueryInfo(),
-                            search.getParams(),
-                            e);
-                }
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
@@ -494,6 +474,24 @@ class DashboardServiceImpl implements DashboardService {
                         null,
                         true,
                         null);
+            } finally {
+                // Log here so we don't log twice if there is an error
+                if (queryKey == null) {
+                    searchEventLog.search(
+                            searchRequest.getQueryKey(),
+                            NullSafe.get(
+                                    searchRequest,
+                                    DashboardSearchRequest::getSearchRequestSource,
+                                    SearchRequestSource::getComponentId),
+                            "Dashboard Search",
+                            null,
+                            search.getDataSourceRef(),
+                            search.getExpression(),
+                            search.getQueryInfo(),
+                            search.getParams(),
+                            NullSafe.get(result, DashboardSearchResponse::getResults),
+                            exception);
+                }
             }
         }
 

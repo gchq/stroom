@@ -129,6 +129,98 @@ class TestExpressionUtil {
                 .build();
     }
 
+    @Test
+    void testCopyOperator() {
+        final ExpressionOperator operator = ExpressionOperator.builder()
+                .enabled(true)
+                .addTerm(ExpressionTerm.builder()
+                        .field("foo")
+                        .enabled(false)
+                        .condition(Condition.EQUALS)
+                        .value("123")
+                        .build())
+                .addTerm(ExpressionTerm.builder()
+                        .enabled(false)
+                        .field("bar")
+                        .condition(Condition.NOT_EQUALS)
+                        .value("456")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .enabled(true)
+                        .addTerm(ExpressionTerm.builder()
+                                .field("apple")
+                                .enabled(false)
+                                .condition(Condition.EQUALS)
+                                .value("789")
+                                .build())
+                        .addTerm(ExpressionTerm.builder()
+                                .enabled(false)
+                                .field("orange")
+                                .condition(Condition.NOT_EQUALS)
+                                .value("789")
+                                .build())
+                        .build())
+                .build();
+
+        final ExpressionOperator operator2 = ExpressionUtil.copyOperator(operator);
+        assertThat(operator2)
+                .isEqualTo(operator);
+        assertThat(operator2)
+                .isNotSameAs(operator);
+    }
+
+    @Test
+    void testCopyOperator_withFilter() {
+        final ExpressionOperator operator = ExpressionOperator.builder()
+                .enabled(true)
+                .addTerm(ExpressionTerm.builder()
+                        .field("foo")
+                        .enabled(false)
+                        .condition(Condition.EQUALS)
+                        .value("123")
+                        .build())
+                .addTerm(ExpressionTerm.builder()
+                        .enabled(false)
+                        .field("bar")
+                        .condition(Condition.NOT_EQUALS)
+                        .value("456")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .enabled(true)
+                        .addTerm(ExpressionTerm.builder()
+                                .field("apple")
+                                .enabled(false)
+                                .condition(Condition.EQUALS)
+                                .value("789")
+                                .build())
+                        .addTerm(ExpressionTerm.builder()
+                                .enabled(false)
+                                .field("orange")
+                                .condition(Condition.NOT_EQUALS)
+                                .value("789")
+                                .build())
+                        .build())
+                .build();
+
+        final ExpressionOperator operator2 = ExpressionUtil.copyOperator(operator, item ->
+                !(item instanceof ExpressionTerm term && term.getField().equals("foo")));
+
+        assertThat(operator2)
+                .isNotEqualTo(operator);
+        assertThat(operator2)
+                .isNotSameAs(operator);
+
+        assertThat(operator.containsField("foo", "bar", "apple", "orange"))
+                .isTrue();
+
+        // foo has gone
+        assertThat(operator2.containsField("foo"))
+                .isFalse();
+        assertThat(operator2.containsField("bar", "apple", "orange"))
+                .isTrue();
+    }
 
     private static ExpressionOperator getExpressionOperator() {
         return ExpressionOperator.builder()

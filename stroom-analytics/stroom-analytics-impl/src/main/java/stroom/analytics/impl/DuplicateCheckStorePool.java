@@ -1,7 +1,9 @@
 package stroom.analytics.impl;
 
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,14 +44,21 @@ class DuplicateCheckStorePool<K, V> {
                 (k, v) -> {
                     References<V> references = v;
                     if (v == null) {
-                        final V newValue = objectFactory.apply(k);
-                        references = new References<>(newValue);
+                        try {
+                            final V newValue = objectFactory.apply(k);
+                            references = new References<>(newValue);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(() -> LogUtil.message("Error creating object for key {}", k), e);
+                            throw e;
+                        }
                     }
 
                     references.borrow();
                     if (borrowHandler != null) {
                         try {
                             borrowHandler.accept(references.object);
+                        } catch (final UncheckedInterruptedException e) {
+                            LOGGER.debug(e::getMessage, e);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                         }
@@ -70,6 +79,8 @@ class DuplicateCheckStorePool<K, V> {
                     if (releaseHandler != null) {
                         try {
                             releaseHandler.accept(v.object);
+                        } catch (final UncheckedInterruptedException e) {
+                            LOGGER.debug(e::getMessage, e);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                         }
@@ -79,6 +90,8 @@ class DuplicateCheckStorePool<K, V> {
                         if (destructionHandler != null) {
                             try {
                                 destructionHandler.accept(v.object);
+                            } catch (final UncheckedInterruptedException e) {
+                                LOGGER.debug(e::getMessage, e);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }

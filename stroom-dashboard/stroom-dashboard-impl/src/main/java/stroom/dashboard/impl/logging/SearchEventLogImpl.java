@@ -24,10 +24,15 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.IncludeExcludeFilter;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.QueryKey;
+import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.TableResult;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
@@ -42,6 +47,7 @@ import event.logging.File;
 import event.logging.MultiObject;
 import event.logging.Purpose;
 import event.logging.Query;
+import event.logging.ResultPage;
 import event.logging.SearchEventAction;
 import event.logging.util.EventLoggingUtil;
 import jakarta.inject.Inject;
@@ -70,35 +76,127 @@ public class SearchEventLogImpl implements SearchEventLog {
     }
 
     @Override
-    public void search(final String type,
+    public void search(final QueryKey queryKey,
+                       final String queryComponentId,
+                       final String type,
                        final String rawQuery,
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
                        final String queryInfo,
                        final List<Param> params,
+                       final List<Result> results,
                        final Exception e) {
         securityContext.insecure(() -> {
             try {
                 final String dataSourceInfo = getDataSourceString(dataSourceRef);
                 final String description = "Searching data source \"" + dataSourceInfo + "\"";
-                final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
-                final Query query = getQuery(expression, params);
+                final DataSources dataSources = DataSources.builder()
+                        .addDataSource(dataSourceInfo)
+                        .build();
+                final Query query = getQuery(queryKey, expression, params);
                 query.setRaw(rawQuery);
 
-                eventLoggingService.log(
-                        type,
-                        description,
-                        getPurpose(queryInfo),
-                        SearchEventAction.builder()
-                                .withDataSources(dataSources)
-                                .withQuery(query)
-                                .addData(buildDataFromParams(params))
-                                .withOutcome(EventLoggingUtil.createOutcome(e))
-                                .build());
+                final List<TableResult> tableResults = getTableResults(results);
+                // One event per table result
+                final int eventCount = tableResults.isEmpty()
+                        ? 1
+                        : tableResults.size();
+
+                for (int i = 0; i < eventCount; i++) {
+                    final TableResult result = !tableResults.isEmpty()
+                            ? tableResults.get(i)
+                            : null;
+                    final SearchEventAction.Builder<Void> actionBuilder = SearchEventAction.builder()
+                            .withDataSources(dataSources)
+                            .withQuery(query)
+                            .addData(buildDataFromParams(params))
+                            .addData(Data.builder()
+                                    .withName("queryComponent")
+                                    .withValue(queryComponentId)
+                                    .build())
+                            .withOutcome(EventLoggingUtil.createOutcome(e));
+                    if (result != null) {
+                        actionBuilder
+                                .withTotalResults(BigInteger.valueOf(result.getTotalResults()))
+                                .withResultPage(NullSafe.get(
+                                        result,
+                                        TableResult::getResultRange,
+                                        offsetRange -> ResultPage.builder()
+                                                .withFrom(BigInteger.valueOf(offsetRange.getOffset()))
+                                                .withTo(BigInteger.valueOf(
+                                                        offsetRange.getOffset() + offsetRange.getLength()))
+                                                .build()))
+                                .addData(Data.builder()
+                                        .withName("tableComponent")
+                                        .withValue(result.getComponentId())
+                                        .build())
+                                .addData(buildResultColumnsData(result));
+                    }
+
+                    eventLoggingService.log(
+                            type,
+                            description,
+                            getPurpose(queryInfo),
+                            actionBuilder.build());
+                }
             } catch (final RuntimeException e2) {
                 LOGGER.error(e.getMessage(), e2);
             }
         });
+    }
+
+    private Data buildResultColumnsData(final TableResult tableResult) {
+        final List<Column> columns = tableResult.getColumns();
+        if (NullSafe.hasItems(columns)) {
+            final Builder<Void> builder = Data.builder()
+                    .withName("columns");
+            for (int i = 0; i < columns.size(); i++) {
+                final Column column = columns.get(i);
+                if (column.isVisible()) {
+                    final Builder<Void> colBuilder = Data.builder();
+                    colBuilder
+                            .withName("column-" + (i + 1))
+                            .addData(Data.builder()
+                                    .withName("name")
+                                    .withValue(column.getDisplayValue())
+                                    .build())
+                            .addData(Data.builder()
+                                    .withName("expression")
+                                    .withValue(column.getExpression())
+                                    .build())
+                            .build();
+                    NullSafe.consume(column, Column::getColumnFilter, columnFilter -> {
+                        colBuilder.addData(Data.builder()
+                                .withName("columnFilter")
+                                .withValue(column.getColumnFilter().getFilter())
+                                .build());
+                    });
+                    NullSafe.consume(column, Column::getFilter, IncludeExcludeFilter::getIncludes, includes -> {
+                        colBuilder.addData(Data.builder()
+                                .withName("includeFilter")
+                                .withValue(includes)
+                                .build());
+                    });
+                    NullSafe.consume(column, Column::getFilter, IncludeExcludeFilter::getExcludes, excludes -> {
+                        colBuilder.addData(Data.builder()
+                                .withName("includeFilter")
+                                .withValue(excludes)
+                                .build());
+                    });
+                    builder.addData(colBuilder.build());
+                }
+            }
+            return builder.build();
+        } else {
+            return null;
+        }
+    }
+
+    private List<TableResult> getTableResults(final List<Result> results) {
+        return NullSafe.stream(results)
+                .filter(result -> result instanceof TableResult)
+                .map(result -> (TableResult) result)
+                .toList();
     }
 
     @Override
@@ -118,7 +216,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                 final String dataSourceInfo = getDataSourceString(dataSourceRef);
                 final String description = "Downloading search results - data source \"" + dataSourceInfo + "\"";
                 final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
-                final Query query = getQuery(search.getExpression(), params);
+                final Query query = getQuery(searchRequest.getQueryKey(), search.getExpression(), params);
 
                 final String fileType = NullSafe.get(request.getFileType(),
                         DownloadSearchResultFileType::getExtension);
@@ -159,7 +257,6 @@ public class SearchEventLogImpl implements SearchEventLog {
                                                 .build())
                                 .withOutcome(EventLoggingUtil.createOutcome(e))
                                 .build());
-
             } catch (final RuntimeException e2) {
                 LOGGER.error(e2.getMessage(), e2);
             }
@@ -185,7 +282,9 @@ public class SearchEventLogImpl implements SearchEventLog {
                                            dataSourceInfo +
                                            "\"";
                 final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
-                final Query query = getQuery(NullSafe.get(qry, stroom.query.api.v2.Query::getExpression),
+                final Query query = getQuery(
+                        request.getKey(),
+                        NullSafe.get(qry, stroom.query.api.v2.Query::getExpression),
                         NullSafe.get(qry, stroom.query.api.v2.Query::getParams));
                 query.setRaw(NullSafe.get(
                         req,
@@ -266,12 +365,13 @@ public class SearchEventLogImpl implements SearchEventLog {
         return sb.toString();
     }
 
-    private Query getQuery(final ExpressionOperator expression,
+    private Query getQuery(final QueryKey queryKey,
+                           final ExpressionOperator expression,
                            final List<Param> params) {
         final ExpressionOperator deReferencedExpression = ExpressionUtil.replaceExpressionParameters(
                 expression,
                 params);
-        return StroomEventLoggingUtil.convertExpression(deReferencedExpression);
+        return StroomEventLoggingUtil.convertExpression(queryKey, deReferencedExpression);
     }
 
     private Iterable<Data> buildDataFromParams(final List<Param> params) {

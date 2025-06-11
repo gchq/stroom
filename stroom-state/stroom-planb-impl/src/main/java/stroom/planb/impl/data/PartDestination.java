@@ -19,14 +19,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Singleton
 public class PartDestination {
 
-    private final SequentialFileStore fileStore;
+    private final StagingFileStore fileStore;
     private final SecurityContext securityContext;
 
     private final Path receiveDir;
     private final AtomicLong receiveId = new AtomicLong();
 
     @Inject
-    public PartDestination(final SequentialFileStore fileStore,
+    public PartDestination(final StagingFileStore fileStore,
                            final SecurityContext securityContext,
                            final StatePaths statePaths) {
         this.fileStore = fileStore;
@@ -61,7 +61,7 @@ public class PartDestination {
 
         final FileDescriptor fileDescriptor = new FileDescriptor(createTime, metaId, fileHash);
         final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
-                                       SequentialFile.ZIP_EXTENSION;
+                                       SequentialFileStore.ZIP_EXTENSION;
         final Path receiveFile = receiveDir.resolve(receiveFileName);
         StreamUtil.streamToFile(inputStream, receiveFile);
         fileStore.add(fileDescriptor, receiveFile);
@@ -78,7 +78,7 @@ public class PartDestination {
         } else {
             // Otherwise we need to copy the file to a temporary location first before it can be moved into the store.
             final String receiveFileName = StringIdUtil.idToString(receiveId.incrementAndGet()) +
-                                           SequentialFile.ZIP_EXTENSION;
+                                           SequentialFileStore.ZIP_EXTENSION;
             final Path receiveFile = receiveDir.resolve(receiveFileName);
             Files.copy(sourcePath, receiveFile);
             fileStore.add(fileDescriptor, receiveFile);

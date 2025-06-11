@@ -45,6 +45,9 @@ import java.util.stream.Stream;
  */
 public class NullSafe {
 
+    private static final Predicate<?> ALWAYS_TRUE_PREDICATE = ignored -> true;
+    private static final Predicate<?> ALWAYS_FALSE_PREDICATE = ignored -> false;
+
     private NullSafe() {
     }
 
@@ -1713,6 +1716,20 @@ public class NullSafe {
                 : Objects.requireNonNull(
                         Objects.requireNonNull(supplier, "supplier").get(),
                         "supplier.get()");
+    }
+
+    /**
+     * If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> predicate(final Predicate<T> predicate, final boolean defaultOutcome) {
+        return predicate != null
+                ? predicate
+                : (defaultOutcome
+                        ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                        : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
+//        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
+
     }
 
     private static String buildNullValueMsg(final String variableName,

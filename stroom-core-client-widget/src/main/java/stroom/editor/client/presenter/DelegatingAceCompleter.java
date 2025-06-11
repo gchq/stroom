@@ -184,6 +184,7 @@ public class DelegatingAceCompleter {
 
         final List<AceCompletionProvider> completionProviders = editorIdToCompletionProviderMap.get(mapKey);
         if (completionProviders != null) {
+            GWT.log("Adding " + completionProviders.size() + " providers for " + mapKey);
             allCompletionProviders.addAll(completionProviders);
         }
     }
@@ -232,7 +233,7 @@ public class DelegatingAceCompleter {
             }
             final MapKey mapKey = (MapKey) o;
             return Objects.equals(editorId, mapKey.editorId) &&
-                    Objects.equals(modeName, mapKey.modeName);
+                   Objects.equals(modeName, mapKey.modeName);
         }
 
         @Override

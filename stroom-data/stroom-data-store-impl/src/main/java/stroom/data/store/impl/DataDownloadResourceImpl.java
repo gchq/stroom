@@ -64,9 +64,8 @@ public class DataDownloadResourceImpl implements DataDownloadResource {
 
                         final ExportEventAction exportEventAction = eventAction.newCopyBuilder()
                                 .withSource(MultiObject.builder()
-                                        .addCriteria(stroomEventLoggingServiceProvider.get().convertExpressionCriteria(
-                                                "Meta",
-                                                criteria))
+                                        .addCriteria(stroomEventLoggingServiceProvider.get()
+                                                .convertExpressionCriteria("Meta", criteria))
                                         .addFile(File.builder()
                                                 .withName(resourceKey.getName())
                                                 .withSize(BigInteger.valueOf(Files.size(tempFile)))

@@ -12,6 +12,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.9-beta.13] - 2025-06-09
+
+* Fix primitive value conversion of query field types.
+
+* Issue **#4940** : Fix duplicate store error log.
+
+* Issue **#4941** : Fix annotation data retention.
+
+* Issue **#4968** : Improve Plan B file receipt.
+
+* Issue **#4956** : Add error handling to duplicate check deletion.
+
+* Issue **#4967** : Fix SQL deadlock.
+
+
+## [v7.9-beta.12] - 2025-05-07
+
+* Fix compile issues.
+
+
+## [v7.9-beta.11] - 2025-05-07
+
+* Issue **#4929** : Improve Plan B merge performance.
+
+* Uplift the stroom/proxy docker base images to 21.0.7_6-jdk-alpine from 21.0.5_11-jdk-alpine.
+
+* Issue **#4934** : Change the audit logging for dashboard queries to log the column names. It now logs one event for each table attached to the query.
+
+* Fix field/function completions not being offered in the dashboard column expression editor.
+
 * Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
 
 * Issue **#4892** : Prevent disabled users from authenticating.
@@ -1442,7 +1473,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.13...HEAD
+[v7.9-beta.13]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.9-beta.13
+[v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
+[v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
 [v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
 [v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
 [v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8

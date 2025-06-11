@@ -143,7 +143,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         } catch (Exception e) {
             // Swallow the exception so failure to log does not prevent the action being logged
             // from succeeding
-            LOGGER.error("Error logging event", e);
+            LOGGER.error("Error logging event {}: {}", event, LogUtil.exceptionMessage(e), e);
         }
     }
 

@@ -6,8 +6,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.QueryKey;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
@@ -188,11 +189,16 @@ public class StroomEventLoggingUtil {
     }
 
     public static Query convertExpression(final ExpressionItem expressionItem) {
+        return convertExpression(null, expressionItem);
+    }
+
+    public static Query convertExpression(final QueryKey queryKey,
+                                          final ExpressionItem expressionItem) {
         final Builder<Void> builder = Query.builder();
+        NullSafe.consume(queryKey, key -> builder.withId(key.getUuid()));
         appendExpression(builder, expressionItem);
         return builder.build();
     }
-
 
     public static void appendExpression(final Query.Builder<Void> queryBuilder,
                                         final ExpressionItem expressionItem) {
@@ -217,7 +223,7 @@ public class StroomEventLoggingUtil {
                             .map(StroomEventLoggingUtil::convertItem)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-                    if (children.size() > 0) {
+                    if (!children.isEmpty()) {
                         if (expressionOperator.op().equals(Op.AND)) {
                             return And.builder().withQueryItems(children).build();
                         } else if (expressionOperator.op().equals(Op.OR)) {

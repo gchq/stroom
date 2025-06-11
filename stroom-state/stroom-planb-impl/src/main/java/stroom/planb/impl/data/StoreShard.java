@@ -14,7 +14,9 @@ import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.SimpleDurationUtil;
+import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Provider;
@@ -23,27 +25,26 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-class LocalShard implements Shard {
+class StoreShard implements Shard {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LocalShard.class);
-
-    private static final String DATA_FILE_NAME = "data.mdb";
-    private static final String LOCK_FILE_NAME = "lock.mdb";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreShard.class);
 
     private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
     private final Path shardDir;
+    private final Path snapshotDir;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -53,8 +54,9 @@ class LocalShard implements Shard {
     private volatile boolean open;
     private volatile Instant lastAccessTime;
     private volatile Instant lastWriteTime;
+    private volatile Instant lastSnapshotTime;
 
-    public LocalShard(final ByteBufferFactory byteBufferFactory,
+    public StoreShard(final ByteBufferFactory byteBufferFactory,
                       final Provider<PlanBConfig> configProvider,
                       final StatePaths statePaths,
                       final PlanBDoc doc) {
@@ -63,6 +65,7 @@ class LocalShard implements Shard {
         this.doc = doc;
         lastWriteTime = Instant.now();
         this.shardDir = statePaths.getShardDir().resolve(doc.getUuid());
+        this.snapshotDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
     }
 
     private void incrementUseCount() {
@@ -115,11 +118,11 @@ class LocalShard implements Shard {
 
     @Override
     public void merge(final Path sourceDir) {
-        boolean success = false;
-
         // See if we can just merge by moving the file.
         lock.lock();
         try {
+            boolean success = false;
+
             // If we don't already have the shard dir then just move the source to the target.
             if (!Files.isDirectory(shardDir)) {
                 try {
@@ -131,24 +134,29 @@ class LocalShard implements Shard {
                     throw new UncheckedIOException(e);
                 }
             }
+
+            // If the file already existed then we must open the DB and merge with LMDB.
+            if (!success) {
+                incrementUseCount();
+                try {
+                    db.merge(sourceDir);
+                    lastWriteTime = Instant.now();
+                } finally {
+                    decrementUseCount();
+                }
+            }
+
+            // Create a new snapshot periodically.
+            createSnapshot();
+
         } finally {
             lock.unlock();
-        }
-
-        // If the file already existed then we must open the DB and merge with LMDB.
-        if (!success) {
-            incrementUseCount();
-            try {
-                db.merge(sourceDir);
-                lastWriteTime = Instant.now();
-            } finally {
-                decrementUseCount();
-            }
         }
     }
 
     @Override
     public void condense(final PlanBDoc doc) {
+        lock.lock();
         try {
             // Find out how old data needs to be before we condense it.
             DurationSetting condense = null;
@@ -189,12 +197,19 @@ class LocalShard implements Shard {
                 incrementUseCount();
                 try {
                     db.condense(condenseBeforeMs, deleteBeforeMs);
+                    lastWriteTime = Instant.now();
                 } finally {
                     decrementUseCount();
                 }
             }
+
+            // Create a new snapshot periodically.
+            createSnapshot();
+
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -202,55 +217,79 @@ class LocalShard implements Shard {
     public void checkSnapshotStatus(final SnapshotRequest request) {
         // If we already have a snapshot for the current write time then don't create a snapshot and just return an
         // error.
-        final Instant lastWriteTime = this.lastWriteTime;
+        final Instant lastSnapshotTime = this.lastSnapshotTime;
         if (request.getCurrentSnapshotTime() != null &&
-            Objects.equals(lastWriteTime.toEpochMilli(), request.getCurrentSnapshotTime())) {
+            lastSnapshotTime != null &&
+            Objects.equals(lastSnapshotTime.toEpochMilli(), request.getCurrentSnapshotTime())) {
             throw new NotModifiedException();
         }
 
-        // Get shard dir.
-        if (!Files.exists(shardDir)) {
-            throw new RuntimeException("Shard not found");
-        }
-        final Path lmdbDataFile = shardDir.resolve(DATA_FILE_NAME);
-        if (!Files.exists(lmdbDataFile)) {
-            throw new RuntimeException("LMDB data file not found");
+        // Do we have a snapshot
+        if (!Files.exists(getSnapshotZip())) {
+            throw new RuntimeException("Snapshot not found");
         }
     }
 
     @Override
-    public void createSnapshot(final SnapshotRequest request,
-                               final OutputStream outputStream) {
-        // TODO : Possibly create windowed snapshots.
-
-        boolean success = false;
-
-        // If the DB is not open then we can just create the zip from the dir.
-        lock.lock();
-        try {
-            if (!open) {
-                success = true;
-                createZip(outputStream, lastWriteTime);
-            }
-        } finally {
-            lock.unlock();
-        }
-
-        // If the DB was open then we will need to lock the DB and zip the dir.
-        if (!success) {
-            incrementUseCount();
-            try {
-                db.lock(() -> createZip(outputStream, lastWriteTime));
-            } finally {
-                decrementUseCount();
-            }
+    public void createSnapshot() {
+        if (isNewSnapshotRequired()) {
+            lockAndCreateSnapshot();
         }
     }
 
-    private void createZip(final OutputStream outputStream,
+    private boolean isNewSnapshotRequired() {
+        final Instant lastWriteTime = this.lastWriteTime;
+        final Instant lastSnapshotTime = this.lastSnapshotTime;
+
+        return lastSnapshotTime == null ||
+               (lastSnapshotTime.isBefore(lastWriteTime) &&
+                lastSnapshotTime.plus(getSnapshotLifespan()).isBefore(Instant.now()));
+    }
+
+    private Duration getSnapshotLifespan() {
+        return NullSafe.getOrElse(
+                configProvider.get(),
+                PlanBConfig::getMinTimeToKeepSnapshots,
+                StroomDuration::getDuration,
+                Duration.ofMinutes(10));
+    }
+
+    public Path getSnapshotTmp() {
+        return snapshotDir.resolve("snapshot.tmp");
+    }
+
+    public Path getSnapshotZip() {
+        return snapshotDir.resolve("snapshot.zip");
+    }
+
+    private void lockAndCreateSnapshot() {
+        lock.lock();
+        try {
+            // TODO : Possibly create windowed snapshots.
+            if (isNewSnapshotRequired()) {
+                final Instant lastWriteTime = this.lastWriteTime;
+                try {
+                    // Get the snapshot file.
+                    Files.createDirectories(snapshotDir);
+                    final Path tmpFile = getSnapshotTmp();
+                    final Path zipFile = getSnapshotZip();
+                    createZip(tmpFile, lastWriteTime);
+                    Files.move(tmpFile, zipFile, StandardCopyOption.ATOMIC_MOVE);
+                } finally {
+                    this.lastSnapshotTime = lastWriteTime;
+                }
+            }
+        } catch (final Exception e) {
+            LOGGER.error(e::getMessage, e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void createZip(final Path zipFile,
                            final Instant lastWriteTime) {
         try (final ZipArchiveOutputStream zipOutputStream =
-                ZipUtil.createOutputStream(new BufferedOutputStream(outputStream))) {
+                ZipUtil.createOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
             ZipUtil.zip(shardDir, zipOutputStream);
             zipOutputStream.putArchiveEntry(new ZipArchiveEntry(SNAPSHOT_INFO_FILE_NAME));
             try {
@@ -299,7 +338,6 @@ class LocalShard implements Shard {
         if (Files.exists(shardDir)) {
             LOGGER.info(() -> "Found local shard for '" + doc + "'");
             db = PlanBDb.open(doc, shardDir, byteBufferFactory, false);
-
 
         } else {
             // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.

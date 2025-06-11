@@ -1,12 +1,15 @@
 package stroom.planb.impl.data;
 
 import stroom.planb.impl.db.StatePaths;
+import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
 import stroom.util.zip.ZipUtil;
 
@@ -17,9 +20,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 @Singleton
@@ -30,17 +35,18 @@ public class MergeProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeProcessor.class);
 
-    private final SequentialFileStore fileStore;
+    private final Map<String, DirQueue> mergeQueues = new ConcurrentHashMap<>();
+    private final StagingFileStore fileStore;
     private final Path mergingDir;
-    private final AtomicLong mergingId = new AtomicLong();
+    private final Path unzipDirRoot;
+    private final AtomicLong unzipSequenceId = new AtomicLong();
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
-    private final ReentrantLock maintenanceLock = new ReentrantLock();
     private volatile boolean merging;
 
     @Inject
-    public MergeProcessor(final SequentialFileStore fileStore,
+    public MergeProcessor(final StagingFileStore fileStore,
                           final StatePaths statePaths,
                           final SecurityContext securityContext,
                           final TaskContextFactory taskContextFactory,
@@ -55,6 +61,7 @@ public class MergeProcessor {
         if (!FileUtil.deleteContents(mergingDir)) {
             throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(mergingDir));
         }
+        unzipDirRoot = mergingDir.resolve("unzip");
     }
 
     public void merge() {
@@ -64,7 +71,7 @@ public class MergeProcessor {
                     merging = true;
                     CompletableFuture.runAsync(() -> {
                         try {
-                            doMerge();
+                            unzipPartFiles();
                         } finally {
                             merging = false;
                         }
@@ -74,7 +81,7 @@ public class MergeProcessor {
         }
     }
 
-    private void doMerge() {
+    private void unzipPartFiles() {
         securityContext.asProcessingUser(() -> {
             final long minStoreId = fileStore.getMinStoreId();
             final long maxStoreId = fileStore.getMaxStoreId();
@@ -92,77 +99,133 @@ public class MergeProcessor {
                 // Wait until new data is available.
                 final long currentStoreId = storeId;
                 final SequentialFile sequentialFile = fileStore.awaitNext(currentStoreId);
-                maintenanceLock.lock();
-                try {
-                    taskContextFactory.context(MERGE_TASK_NAME, taskContext -> {
-                        taskContext.info(() -> "Merging data: " + currentStoreId);
-                        merge(sequentialFile);
-                    }).run();
-                } finally {
-                    maintenanceLock.unlock();
-
-                    // Increment store id.
-                    storeId++;
-                }
+                taskContextFactory.context(MERGE_TASK_NAME, taskContext -> {
+                    taskContext.info(() -> "Decompressing received data: " + currentStoreId);
+                    unzipPartFile(taskContext, sequentialFile);
+                }).run();
+                // Increment store id.
+                storeId++;
             }
         });
     }
 
     public void maintainShards() {
-        securityContext.asProcessingUser(() -> {
-            maintenanceLock.lock();
-            try {
-                shardManager.condenseAll();
-            } finally {
-                maintenanceLock.unlock();
-            }
-        });
+        securityContext.asProcessingUser(shardManager::condenseAll);
     }
 
     public void mergeCurrent() {
         final long start = fileStore.getMinStoreId();
         final long end = fileStore.getMaxStoreId();
         for (long storeId = start; storeId <= end; storeId++) {
-            // Wait until new data is available.
-            final SequentialFile sequentialFile = fileStore.awaitNext(storeId);
-            merge(sequentialFile);
+            merge(storeId);
         }
     }
 
     public void merge(final long storeId) {
         // Wait until new data is available.
         final SequentialFile sequentialFile = fileStore.awaitNext(storeId);
-        merge(sequentialFile);
+        taskContextFactory.context(MERGE_TASK_NAME, parentContext -> {
+            try {
+                final Path zipFile = sequentialFile.getZip();
+                if (Files.isRegularFile(zipFile)) {
+                    final String unzipDirName = StringIdUtil.idToString(unzipSequenceId.incrementAndGet());
+                    final Path unzipDir = unzipDirRoot.resolve(unzipDirName);
+                    ZipUtil.unzip(zipFile, unzipDir);
+
+                    // We ought to have one or more stores to merge in this part zip file.
+                    try (final Stream<Path> stream = Files.list(unzipDir)) {
+                        stream.forEach(source -> {
+                            final String docUuid = source.getFileName().toString();
+                            mergeDir(parentContext, source, docUuid);
+                        });
+                    }
+
+                    // Delete unzip dir.
+                    FileUtil.deleteDir(unzipDir);
+
+                    // Delete the original zip file.
+                    fileStore.delete(sequentialFile);
+                }
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }).run();
     }
 
-    private void merge(final SequentialFile sequentialFile) {
+    private void unzipPartFile(final TaskContext parentContext, final SequentialFile sequentialFile) {
         try {
             final Path zipFile = sequentialFile.getZip();
             if (Files.isRegularFile(zipFile)) {
-                final String mergingDirName = StringIdUtil.idToString(mergingId.incrementAndGet());
-                final Path dir = mergingDir.resolve(mergingDirName);
-                ZipUtil.unzip(zipFile, dir);
+                final String unzipDirName = StringIdUtil.idToString(unzipSequenceId.incrementAndGet());
+                final Path unzipDir = unzipDirRoot.resolve(unzipDirName);
+                ZipUtil.unzip(zipFile, unzipDir);
 
-                // We ought to have one or more stores to merge.
-                try (final Stream<Path> stream = Files.list(dir)) {
+                // We ought to have one or more stores to merge in this part zip file.
+                try (final Stream<Path> stream = Files.list(unzipDir)) {
                     stream.forEach(source -> {
-                        try {
-                            // Merge source.
-                            shardManager.merge(source);
-                        } catch (final IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
+                        final String docUuid = source.getFileName().toString();
+                        final DirQueue queue = mergeQueues.computeIfAbsent(docUuid, k -> {
+                            try {
+                                final Path uuidDir = mergingDir.resolve(docUuid);
+                                Files.createDirectories(uuidDir);
+                                final DirQueue dirQueue = new DirQueue(uuidDir, docUuid);
+                                // Start processing this queue.
+                                CompletableFuture.runAsync(() ->
+                                        mergeStore(parentContext, dirQueue, docUuid));
+                                return dirQueue;
+                            } catch (final IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
+                        queue.add(source);
                     });
                 }
 
-                // Delete dir.
-                FileUtil.deleteDir(dir);
+                // Delete unzip dir.
+                FileUtil.deleteDir(unzipDir);
 
                 // Delete the original zip file.
-                sequentialFile.delete();
+                fileStore.delete(sequentialFile);
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
+    }
+
+    private void mergeStore(final TaskContext parentContext,
+                            final DirQueue dirQueue,
+                            final String uuid) {
+        securityContext.asProcessingUser(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                // Wait until new data is available.
+                try (final Dir dir = dirQueue.next()) {
+                    mergeDir(parentContext, dir.getPath(), uuid);
+                }
+            }
+        });
+    }
+
+    private void mergeDir(final TaskContext parentContext,
+                          final Path path,
+                          final String uuid) {
+        taskContextFactory.childContext(parentContext, uuid, taskContext -> {
+            getShard(uuid).ifPresent(shard -> {
+                taskContext.info(() -> "Merging data into '" +
+                                       NullSafe.get(shard, Shard::getDoc, PlanBDoc::getName) +
+                                       "'");
+                shard.merge(path);
+            });
+            FileUtil.deleteDir(path);
+        }).run();
+    }
+
+    private Optional<Shard> getShard(final String docUuid) {
+        try {
+            // The doc might have been deleted so catch this error.
+            return Optional.of(shardManager.getShardForDocUuid(docUuid));
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return Optional.empty();
     }
 }
