@@ -106,11 +106,6 @@ class TestParseDateTime extends AbstractXsltFunctionTest<ParseDateTime> {
                     assertThat(actualOutput)
                             .isEqualTo(outcome.getExpectedOutput());
                 })
-
-//        * "2010-01-01T23:59:59.123+02" // +2hr zone offset
-//        * "2010-01-01T23:59:59+02:00" // +2hr zone offset
-//        * "2010-01-01T23:59:59+02:30" // +2hr30min zone offset
-//        * "2010-01-01T23:59:59.123-03:00" // -3hr zone offset
                 .addNamedCase(
                         "ISO 8061 no millis",
                         List.of("2024-08-29T00:00:00Z"),
