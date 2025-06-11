@@ -9870,8 +9870,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ComponentConfig"
-          xml:
-            wrapped: true
         designMode:
           type: boolean
         layout:
@@ -9886,8 +9884,6 @@ components:
           $ref: "#/components/schemas/Size"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-      xml:
-        name: dashboard
     DashboardDoc:
       type: object
       properties:
@@ -10067,8 +10063,6 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
-      xml:
-        name: dataRetentionRule
     DataRetentionRules:
       type: object
       properties:
@@ -10094,8 +10088,6 @@ components:
           type: string
         version:
           type: string
-      xml:
-        name: dataRetentionPolicy
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -14100,8 +14092,6 @@ components:
         version:
           type: integer
           format: int32
-      xml:
-        name: parameters
     ProcessorFilter:
       type: object
       properties:
@@ -14834,8 +14824,6 @@ components:
         ruleNumber:
           type: integer
           format: int32
-      xml:
-        name: dataReceiptRule
     ReceiveDataRules:
       type: object
       properties:
@@ -16257,8 +16245,6 @@ components:
         width:
           type: integer
           format: int32
-      xml:
-        name: size
     SnapshotRequest:
       type: object
       properties:
@@ -16299,8 +16285,6 @@ components:
             type: string
         zkPath:
           type: string
-      xml:
-        name: connection
     SolrConnectionTestResponse:
       type: object
       properties:
@@ -16511,13 +16495,9 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/LayoutConfig"
-            xml:
-              wrapped: true
           dimension:
             type: integer
             format: int32
-      xml:
-        name: splitLayout
     State:
       type: object
       allOf:
@@ -17051,8 +17031,6 @@ components:
           type: string
         visible:
           type: boolean
-      xml:
-        name: tab
     TabLayoutConfig:
       type: object
       allOf:
@@ -17066,10 +17044,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/TabConfig"
-            xml:
-              wrapped: true
-      xml:
-        name: tabLayout
     TableBuilderAnalyticProcessConfig:
       type: object
       allOf:

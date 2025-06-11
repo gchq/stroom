@@ -29,12 +29,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,30 +41,16 @@ import java.util.stream.Collectors;
 
 @JsonPropertyOrder({"op", "children"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionOperator",
         description = "A logical addOperator term in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
 
-    @XmlElement(name = "op")
-    @Schema(description = "The logical addOperator type",
-            required = true)
+    @Schema(description = "The logical addOperator type")
     @JsonProperty
-    private Op op; // TODO : XML serialisation still requires no-arg constructor and mutable fields
+    private final Op op;
 
-    @XmlElementWrapper(name = "children")
-    @XmlElements({
-            @XmlElement(name = "operator", type = ExpressionOperator.class),
-            @XmlElement(name = "term", type = ExpressionTerm.class)
-    })
     @JsonProperty
-    // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    private List<ExpressionItem> children;
-
-    public ExpressionOperator() {
-        // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    }
+    private final List<ExpressionItem> children;
 
     @Override
     public boolean containsField(final String... fields) {
@@ -153,7 +133,7 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -163,7 +143,7 @@ public final class ExpressionOperator extends ExpressionItem {
         if (!super.equals(o)) {
             return false;
         }
-        ExpressionOperator that = (ExpressionOperator) o;
+        final ExpressionOperator that = (ExpressionOperator) o;
         return op == that.op &&
                Objects.equals(children, that.children);
     }
@@ -285,7 +265,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param items The expression items to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder add(Collection<ExpressionItem> items) {
+        public Builder add(final Collection<ExpressionItem> items) {
             children.addAll(items);
             return this;
         }
@@ -296,7 +276,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param item The expression item to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOperator(ExpressionOperator item) {
+        public Builder addOperator(final ExpressionOperator item) {
             return addOperators(item);
         }
 
@@ -306,7 +286,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param items The expression items to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOperators(ExpressionOperator... items) {
+        public Builder addOperators(final ExpressionOperator... items) {
             return addOperators(Arrays.asList(items));
         }
 
@@ -316,7 +296,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param items The expression items to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addOperators(Collection<ExpressionOperator> items) {
+        public Builder addOperators(final Collection<ExpressionOperator> items) {
             this.children.addAll(items);
             return this;
         }
@@ -327,7 +307,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param item The expression item to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addTerm(ExpressionTerm item) {
+        public Builder addTerm(final ExpressionTerm item) {
             return addTerms(item);
         }
 
@@ -337,7 +317,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param items The expression items to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addTerms(ExpressionTerm... items) {
+        public Builder addTerms(final ExpressionTerm... items) {
             return addTerms(Arrays.asList(items));
         }
 
@@ -347,7 +327,7 @@ public final class ExpressionOperator extends ExpressionItem {
          * @param items The expression items to add as children
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder addTerms(Collection<ExpressionTerm> items) {
+        public Builder addTerms(final Collection<ExpressionTerm> items) {
             this.children.addAll(items);
             return this;
         }

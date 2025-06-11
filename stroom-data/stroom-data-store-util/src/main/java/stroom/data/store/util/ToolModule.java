@@ -24,7 +24,6 @@ import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
@@ -62,10 +61,6 @@ public class ToolModule extends AbstractModule {
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.db.MetaDaoModule());
         install(new stroom.meta.impl.db.MetaDbModule());
-
-        // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-        });
 
         bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);

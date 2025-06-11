@@ -14077,9 +14077,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ComponentConfig"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "designMode" : {
@@ -14103,9 +14100,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           }
-        },
-        "xml" : {
-          "name" : "dashboard"
         }
       },
       "DashboardDoc" : {
@@ -14341,9 +14335,6 @@
             "type" : "string",
             "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
           }
-        },
-        "xml" : {
-          "name" : "dataRetentionRule"
         }
       },
       "DataRetentionRules" : {
@@ -14381,9 +14372,6 @@
           "version" : {
             "type" : "string"
           }
-        },
-        "xml" : {
-          "name" : "dataRetentionPolicy"
         }
       },
       "DateTimeFormatSettings" : {
@@ -19079,9 +19067,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "parameters"
         }
       },
       "ProcessorFilter" : {
@@ -20007,9 +19992,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "dataReceiptRule"
         }
       },
       "ReceiveDataRules" : {
@@ -21935,9 +21917,6 @@
             "type" : "integer",
             "format" : "int32"
           }
-        },
-        "xml" : {
-          "name" : "size"
         }
       },
       "SnapshotRequest" : {
@@ -21995,9 +21974,6 @@
           "zkPath" : {
             "type" : "string"
           }
-        },
-        "xml" : {
-          "name" : "connection"
         }
       },
       "SolrConnectionTestResponse" : {
@@ -22264,9 +22240,6 @@
               "type" : "array",
               "items" : {
                 "$ref" : "#/components/schemas/LayoutConfig"
-              },
-              "xml" : {
-                "wrapped" : true
               }
             },
             "dimension" : {
@@ -22274,10 +22247,7 @@
               "format" : "int32"
             }
           }
-        } ],
-        "xml" : {
-          "name" : "splitLayout"
-        }
+        } ]
       },
       "State" : {
         "type" : "object",
@@ -22919,9 +22889,6 @@
           "visible" : {
             "type" : "boolean"
           }
-        },
-        "xml" : {
-          "name" : "tab"
         }
       },
       "TabLayoutConfig" : {
@@ -22939,16 +22906,10 @@
               "type" : "array",
               "items" : {
                 "$ref" : "#/components/schemas/TabConfig"
-              },
-              "xml" : {
-                "wrapped" : true
               }
             }
           }
-        } ],
-        "xml" : {
-          "name" : "tabLayout"
-        }
+        } ]
       },
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",

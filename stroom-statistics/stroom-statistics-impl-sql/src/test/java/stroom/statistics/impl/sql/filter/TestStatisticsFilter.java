@@ -518,7 +518,6 @@ class TestStatisticsFilter implements Statistics {
                 new StoreFactoryImpl(
                         persistence,
                         null,
-                        null,
                         securityContext,
                         MockDocRefInfoService::new),
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));

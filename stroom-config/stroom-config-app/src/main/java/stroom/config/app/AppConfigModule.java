@@ -20,8 +20,6 @@ import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexConfig.IndexDbConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
-import stroom.legacy.db.LegacyConfig;
-import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
 import stroom.node.impl.NodeConfig;
@@ -179,13 +177,6 @@ public class AppConfigModule extends AbstractModule {
                                 AppConfig::getJobSystemConfig,
                                 JobSystemConfig::getDbConfig)
                         .orElseGet(JobSystemDbConfig::new));
-
-        bind(LegacyDbConfig.class)
-                .toInstance(NullSafe.getAsOptional(
-                                bootStrapConfig,
-                                AppConfig::getLegacyConfig,
-                                LegacyConfig::getDbConfig)
-                        .orElseGet(LegacyDbConfig::new));
 
         bind(MetaServiceDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(

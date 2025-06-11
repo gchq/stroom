@@ -22,37 +22,21 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "Param", propOrder = {"key", "value"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A key value pair that describes a property of a query")
 public final class Param {
 
-    @XmlElement
-    @Schema(description = "The property key",
-            required = true)
+    @Schema(description = "The property key")
     @JsonProperty
-    private String key;
+    private final String key;
 
-    @XmlElement
-    @Schema(description = "The property value",
-            required = true)
+    @Schema(description = "The property value")
     @JsonProperty
-    private String value;
-
-    @SuppressWarnings("unused") // For XML de-ser
-    private Param() {
-        this.key = null;
-        this.value = null;
-    }
+    private final String value;
 
     @JsonCreator
     public Param(@JsonProperty("key") final String key,
@@ -70,14 +54,14 @@ public final class Param {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Param param = (Param) o;
+        final Param param = (Param) o;
         return Objects.equals(key, param.key) &&
                 Objects.equals(value, param.value);
     }

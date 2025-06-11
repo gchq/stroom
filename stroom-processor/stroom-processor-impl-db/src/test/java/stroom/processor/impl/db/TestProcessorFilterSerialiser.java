@@ -50,7 +50,7 @@ class TestProcessorFilterSerialiser {
         processorFilter.setMinMetaCreateTimeMs(System.currentTimeMillis());
         processorFilter.setMaxMetaCreateTimeMs(System.currentTimeMillis());
 
-        final QueryDataXMLSerialiser serialiser = new QueryDataXMLSerialiser();
+        final QueryDataSerialiser serialiser = new QueryDataSerialiser();
         final String xml1 = serialiser.serialise(processorFilter.getQueryData());
         Assertions.assertThat(xml1)
                 .isNotBlank();

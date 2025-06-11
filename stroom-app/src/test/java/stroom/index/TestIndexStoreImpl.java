@@ -22,15 +22,9 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
-import stroom.legacy.impex_6_1.MappingUtil;
-import stroom.query.api.datasource.FindFieldCriteria;
-import stroom.query.api.datasource.IndexField;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.shared.PageRequest;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,81 +58,81 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index);
     }
 
-    @Test
-    void testIndexRetrieval() {
-        List<DocRef> list = indexStore.list();
-        assertThat(list.size()).isEqualTo(2);
-
-        assertThat(list.stream()
-                .filter(docRef -> docRef.getName().equals("Test index"))
-                .count())
-                .isEqualTo(1);
-        assertThat((int) list.stream()
-                .filter(docRef -> docRef.getName().equals("Ref index"))
-                .count())
-                .isEqualTo(1);
-
-        final LuceneIndexDoc index = indexStore.readDocument(list.stream()
-                .filter(docRef -> docRef.getName().equals("Test index"))
-                .findFirst()
-                .orElseThrow());
-
-        assertThat(index).isNotNull();
-        assertThat(index.getName()).isEqualTo("Test index");
-
-        final String xml =
-                """
-                        <?xml version="1.1" encoding="UTF-8"?>
-                        <fields>
-                           <field>
-                              <analyzerType>KEYWORD</analyzerType>
-                              <caseSensitive>false</caseSensitive>
-                              <fieldName>EventId</fieldName>
-                              <fieldType>ID</fieldType>
-                              <indexed>true</indexed>
-                              <stored>true</stored>
-                              <termPositions>false</termPositions>
-                           </field>
-                           <field>
-                              <analyzerType>KEYWORD</analyzerType>
-                              <caseSensitive>false</caseSensitive>
-                              <fieldName>StreamId</fieldName>
-                              <fieldType>ID</fieldType>
-                              <indexed>true</indexed>
-                              <stored>true</stored>
-                              <termPositions>false</termPositions>
-                           </field>
-                           <field>
-                              <analyzerType>ALPHA_NUMERIC</analyzerType>
-                              <caseSensitive>false</caseSensitive>
-                              <fieldName>TimeCreated</fieldName>
-                              <fieldType>DATE_FIELD</fieldType>
-                              <indexed>true</indexed>
-                              <stored>false</stored>
-                              <termPositions>false</termPositions>
-                           </field>
-                           <field>
-                              <analyzerType>ALPHA_NUMERIC</analyzerType>
-                              <caseSensitive>false</caseSensitive>
-                              <fieldName>User</fieldName>
-                              <fieldType>FIELD</fieldType>
-                              <indexed>true</indexed>
-                              <stored>false</stored>
-                              <termPositions>false</termPositions>
-                           </field>
-                        </fields>
-                        """;
-        final List<IndexField> indexFields = MappingUtil
-                .map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml))
-                .stream()
-                .map(indexField -> (IndexField) new IndexFieldImpl.Builder(indexField).build())
-                .sorted()
-                .toList();
-        final FindFieldCriteria findFieldCriteria =
-                new FindFieldCriteria(PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, index.asDocRef());
-        final List<IndexField> stored = indexFieldService.findFields(findFieldCriteria).getValues();
-        assertThat(stored).isEqualTo(indexFields);
-    }
+//    @Test
+//    void testIndexRetrieval() {
+//        List<DocRef> list = indexStore.list();
+//        assertThat(list.size()).isEqualTo(2);
+//
+//        assertThat(list.stream()
+//                .filter(docRef -> docRef.getName().equals("Test index"))
+//                .count())
+//                .isEqualTo(1);
+//        assertThat((int) list.stream()
+//                .filter(docRef -> docRef.getName().equals("Ref index"))
+//                .count())
+//                .isEqualTo(1);
+//
+//        final LuceneIndexDoc index = indexStore.readDocument(list.stream()
+//                .filter(docRef -> docRef.getName().equals("Test index"))
+//                .findFirst()
+//                .orElseThrow());
+//
+//        assertThat(index).isNotNull();
+//        assertThat(index.getName()).isEqualTo("Test index");
+//
+//        final String xml =
+//                """
+//                        <?xml version="1.1" encoding="UTF-8"?>
+//                        <fields>
+//                           <field>
+//                              <analyzerType>KEYWORD</analyzerType>
+//                              <caseSensitive>false</caseSensitive>
+//                              <fieldName>EventId</fieldName>
+//                              <fieldType>ID</fieldType>
+//                              <indexed>true</indexed>
+//                              <stored>true</stored>
+//                              <termPositions>false</termPositions>
+//                           </field>
+//                           <field>
+//                              <analyzerType>KEYWORD</analyzerType>
+//                              <caseSensitive>false</caseSensitive>
+//                              <fieldName>StreamId</fieldName>
+//                              <fieldType>ID</fieldType>
+//                              <indexed>true</indexed>
+//                              <stored>true</stored>
+//                              <termPositions>false</termPositions>
+//                           </field>
+//                           <field>
+//                              <analyzerType>ALPHA_NUMERIC</analyzerType>
+//                              <caseSensitive>false</caseSensitive>
+//                              <fieldName>TimeCreated</fieldName>
+//                              <fieldType>DATE_FIELD</fieldType>
+//                              <indexed>true</indexed>
+//                              <stored>false</stored>
+//                              <termPositions>false</termPositions>
+//                           </field>
+//                           <field>
+//                              <analyzerType>ALPHA_NUMERIC</analyzerType>
+//                              <caseSensitive>false</caseSensitive>
+//                              <fieldName>User</fieldName>
+//                              <fieldType>FIELD</fieldType>
+//                              <indexed>true</indexed>
+//                              <stored>false</stored>
+//                              <termPositions>false</termPositions>
+//                           </field>
+//                        </fields>
+//                        """;
+//        final List<IndexField> indexFields = MappingUtil
+//                .map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml))
+//                .stream()
+//                .map(indexField -> (IndexField) new IndexFieldImpl.Builder(indexField).build())
+//                .sorted()
+//                .toList();
+//        final FindFieldCriteria findFieldCriteria =
+//                new FindFieldCriteria(PageRequest.unlimited(), FindFieldCriteria.DEFAULT_SORT_LIST, index.asDocRef());
+//        final List<IndexField> stored = indexFieldService.findFields(findFieldCriteria).getValues();
+//        assertThat(stored).isEqualTo(indexFields);
+//    }
 
     @Test
     void testLoad() {

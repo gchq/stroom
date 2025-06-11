@@ -41,7 +41,6 @@ import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.legacy.db.LegacyConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
@@ -90,7 +89,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
     public static final String PROP_NAME_CORE = "core";
-    public static final String PROP_NAME_CORS = "cors";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DOCSTORE = "docstore";
@@ -141,8 +139,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
-    //    private final CorsConfig corsConfig;
-    private final LegacyConfig legacyConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
     private final DocStoreConfig docStoreConfig;
@@ -195,8 +191,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
-//                new CorsConfig(),
-                new LegacyConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
                 new DocStoreConfig(),
@@ -248,8 +242,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
-//                     @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
-                     @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
@@ -297,8 +289,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
-//        this.corsConfig = corsConfig;
-        this.legacyConfig = legacyConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
         this.docStoreConfig = docStoreConfig;
@@ -401,17 +391,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
-    }
-
-//    @JsonProperty(PROP_NAME_CORS)
-//    public CorsConfig getCorsConfig() {
-//        return corsConfig;
-//    }
-
-    @JsonProperty(PROP_NAME_CORE)
-    @JsonPropertyDescription("Configuration for the core stroom DB")
-    public LegacyConfig getLegacyConfig() {
-        return legacyConfig;
     }
 
     @JsonProperty(PROP_NAME_DASHBOARD)

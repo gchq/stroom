@@ -27,12 +27,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlRootElement;
 
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "parameters")
 public class Processor implements HasAuditInfo, HasUuid {
 
     public static final String ENTITY_TYPE = "Processor";

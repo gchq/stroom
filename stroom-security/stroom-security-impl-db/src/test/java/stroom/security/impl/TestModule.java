@@ -20,7 +20,6 @@ import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.ui.config.shared.UserPreferencesService;
-import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
 
 import com.google.inject.AbstractModule;
@@ -51,10 +50,6 @@ public class TestModule extends AbstractModule {
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));
         bind(EntityEventBus.class).toInstance(mock(EntityEventBus.class));
         bind(PermissionChangeEventBus.class).toInstance(mock(PermissionChangeEventBus.class));
-
-        // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
-        });
 
         final StoredQueryService storedQueryService = GuiceTestUtil.bindMock(binder(), StoredQueryService.class);
         Mockito.when(storedQueryService.deleteByOwner(Mockito.any())).thenReturn(0);

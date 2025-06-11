@@ -22,12 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,71 +41,44 @@ import java.util.Objects;
         "incremental",
         "timeout"})
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "searchRequest")
-@XmlType(name = "SearchRequest", propOrder = {
-        "searchRequestSource",
-        "key",
-        "query",
-        "resultRequests",
-        "dateTimeLocale",
-        "incremental",
-        "timeout"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A request for new search or a follow up request for more data for an existing " +
-        "iterative search")
+                      "iterative search")
 public final class SearchRequest {
 
     @JsonProperty
-    private SearchRequestSource searchRequestSource;
+    private final SearchRequestSource searchRequestSource;
 
-    @XmlElement
     @JsonProperty
-    private QueryKey key;
+    private final QueryKey key;
 
-    @XmlElement
-    @Schema(required = true)
     @JsonProperty
-    private Query query;
+    private final Query query;
 
-    @XmlElementWrapper(name = "resultRequests")
-    @XmlElement(name = "resultRequest")
-    @Schema(required = true)
     @JsonProperty
-    private List<ResultRequest> resultRequests;
+    private final List<ResultRequest> resultRequests;
 
-    @XmlElement
     @Schema(description = "The client date/time settings")
     @JsonProperty
-    private DateTimeSettings dateTimeSettings;
+    private final DateTimeSettings dateTimeSettings;
 
-    @JsonProperty
-    @Deprecated
-    private String dateTimeLocale;
-
-    @XmlElement
     @Schema(description = "If true the response will contain all results found so far, typically no results on the " +
-            "first request. Future requests for the same query key may return more results. Intended for use on " +
-            "longer running searches to allow partial result sets to be returned as soon as they are " +
-            "available rather than waiting for the full result set.",
-            required = true)
+                          "first request. Future requests for the same query key may return more results. Intended for use on " +
+                          "longer running searches to allow partial result sets to be returned as soon as they are " +
+                          "available rather than waiting for the full result set.")
     @JsonProperty
-    private Boolean incremental;
+    private final Boolean incremental;
 
-    @XmlElement
     @Schema(description = "Set the maximum time (in ms) for the server to wait for a complete result set. The " +
-            "timeout applies to both incremental and non incremental queries, though the behaviour is slightly " +
-            "different. The timeout will make the server wait for which ever comes first out of the query " +
-            "completing or the timeout period being reached. If no value is supplied then for an " +
-            "incremental query a default value of 0 will be used (i.e. returning immediately) and for a " +
-            "non-incremental query the server's default timeout period will be used. For an incremental " +
-            "query, if the query has not completed by the end of the timeout period, it will return " +
-            "the currently know results with complete=false, however for a non-incremental query it will " +
-            "return no results, complete=false and details of the timeout in the error field")
+                          "timeout applies to both incremental and non incremental queries, though the behaviour is slightly " +
+                          "different. The timeout will make the server wait for which ever comes first out of the query " +
+                          "completing or the timeout period being reached. If no value is supplied then for an " +
+                          "incremental query a default value of 0 will be used (i.e. returning immediately) and for a " +
+                          "non-incremental query the server's default timeout period will be used. For an incremental " +
+                          "query, if the query has not completed by the end of the timeout period, it will return " +
+                          "the currently know results with complete=false, however for a non-incremental query it will " +
+                          "return no results, complete=false and details of the timeout in the error field")
     @JsonProperty
-    private Long timeout;
-
-    public SearchRequest() {
-    }
+    private final Long timeout;
 
     /**
      * @param key              A unique key to identify the instance of the search by. This key is used to
@@ -145,27 +112,8 @@ public final class SearchRequest {
             @JsonProperty("query") final Query query,
             @JsonProperty("resultRequests") final List<ResultRequest> resultRequests,
             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-            @JsonProperty("dateTimeLocale") final String dateTimeLocale, // deprecated dateTimeLocale.
             @JsonProperty("incremental") final Boolean incremental,
             @JsonProperty("timeout") final Long timeout) {
-        this.searchRequestSource = searchRequestSource;
-        this.key = key;
-        this.query = query;
-        this.resultRequests = resultRequests;
-        this.dateTimeSettings = dateTimeSettings;
-        this.dateTimeLocale = dateTimeLocale;
-        this.incremental = incremental;
-        this.timeout = timeout;
-    }
-
-    public SearchRequest(
-            final SearchRequestSource searchRequestSource,
-            final QueryKey key,
-            final Query query,
-            final List<ResultRequest> resultRequests,
-            final DateTimeSettings dateTimeSettings,
-            final Boolean incremental,
-            final Long timeout) {
         this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.query = query;
@@ -206,19 +154,11 @@ public final class SearchRequest {
         return key;
     }
 
-    public void setKey(final QueryKey key) {
-        this.key = key;
-    }
-
     /**
      * @return The {@link Query query} object containing the search terms
      */
     public Query getQuery() {
         return query;
-    }
-
-    public void setQuery(final Query query) {
-        this.query = query;
     }
 
     /**
@@ -228,19 +168,11 @@ public final class SearchRequest {
         return resultRequests;
     }
 
-    public void setResultRequests(final List<ResultRequest> resultRequests) {
-        this.resultRequests = resultRequests;
-    }
-
     /**
      * @return Date and time settings specific to the client making the request.
      */
     public DateTimeSettings getDateTimeSettings() {
         return dateTimeSettings;
-    }
-
-    public void setDateTimeSettings(final DateTimeSettings dateTimeSettings) {
-        this.dateTimeSettings = dateTimeSettings;
     }
 
     /**
@@ -251,19 +183,11 @@ public final class SearchRequest {
         return incremental;
     }
 
-    public void setIncremental(final Boolean incremental) {
-        this.incremental = incremental;
-    }
-
     /**
      * @return The timeout period in ms. Can be null.
      */
     public Long getTimeout() {
         return timeout;
-    }
-
-    public void setTimeout(final Long timeout) {
-        this.timeout = timeout;
     }
 
     /**
@@ -284,11 +208,11 @@ public final class SearchRequest {
         }
         final SearchRequest that = (SearchRequest) o;
         return Objects.equals(key, that.key) &&
-                Objects.equals(query, that.query) &&
-                Objects.equals(resultRequests, that.resultRequests) &&
-                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
-                Objects.equals(incremental, that.incremental) &&
-                Objects.equals(timeout, that.timeout);
+               Objects.equals(query, that.query) &&
+               Objects.equals(resultRequests, that.resultRequests) &&
+               Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
+               Objects.equals(incremental, that.incremental) &&
+               Objects.equals(timeout, that.timeout);
     }
 
     @Override
@@ -299,13 +223,13 @@ public final class SearchRequest {
     @Override
     public String toString() {
         return "SearchRequest{" +
-                "key=" + key +
-                ", query=" + query +
-                ", resultRequests=" + resultRequests +
-                ", dateTimeSettings='" + dateTimeSettings + '\'' +
-                ", incremental=" + incremental +
-                ", timeout=" + timeout +
-                '}';
+               "key=" + key +
+               ", query=" + query +
+               ", resultRequests=" + resultRequests +
+               ", dateTimeSettings='" + dateTimeSettings + '\'' +
+               ", incremental=" + incremental +
+               ", timeout=" + timeout +
+               '}';
     }
 
     public static Builder builder() {

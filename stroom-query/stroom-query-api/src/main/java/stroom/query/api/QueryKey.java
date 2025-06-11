@@ -22,31 +22,19 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"uuid"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "QueryKey", propOrder = {"uuid"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A unique key to identify the instance of the search by. This key is used to " +
-        "identify multiple requests for the same search when running in incremental mode.")
-public final class QueryKey implements Serializable {
+                      "identify multiple requests for the same search when running in incremental mode.")
+public final class QueryKey {
 
-    @XmlElement
     @Schema(description = "The UUID that makes up the query key",
-            example = "7740bcd0-a49e-4c22-8540-044f85770716",
-            required = true)
+            example = "7740bcd0-a49e-4c22-8540-044f85770716")
     @JsonProperty
-    private String uuid;
-
-    public QueryKey() {
-    }
+    private final String uuid;
 
     @JsonCreator
     public QueryKey(@JsonProperty("uuid") final String uuid) {
@@ -57,19 +45,15 @@ public final class QueryKey implements Serializable {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        QueryKey queryKey = (QueryKey) o;
+        final QueryKey queryKey = (QueryKey) o;
         return Objects.equals(uuid, queryKey.uuid);
     }
 

@@ -22,14 +22,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-@XmlType(name = "TimeRange", propOrder = {"name", "condition", "from", "to"})
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"name", "condition", "from", "to"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TimeRange {
@@ -42,14 +37,6 @@ public class TimeRange {
     private final String from;
     @JsonProperty
     private final String to;
-
-    @SuppressWarnings("unused") // For XML de-ser
-    private TimeRange() {
-        this.name = null;
-        this.condition = null;
-        this.from = null;
-        this.to = null;
-    }
 
     public TimeRange(final String name,
                      final String from,

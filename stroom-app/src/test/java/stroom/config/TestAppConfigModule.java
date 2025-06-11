@@ -9,7 +9,6 @@ import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.config.global.impl.ConfigProvidersModule;
-import stroom.legacy.db.LegacyConfig;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
@@ -69,9 +68,9 @@ class TestAppConfigModule {
                 .setPrepStmtCacheSize(newCacheValue);
 
         final String newUser = modifiedAppConfig
-                .getCommonDbConfig()
-                .getConnectionConfig()
-                .getUser() + "XXX";
+                                       .getCommonDbConfig()
+                                       .getConnectionConfig()
+                                       .getUser() + "XXX";
 
         modifiedAppConfig
                 .getCommonDbConfig()
@@ -116,9 +115,7 @@ class TestAppConfigModule {
                     }
                 });
 
-        Stream.concat(
-                Stream.of(new LegacyConfig()), // This is not in the tree but we want to test it
-                hasDbConfigsStream)
+        hasDbConfigsStream
                 .forEach(hasDbConfig -> {
                     LOGGER.info("Testing class: {}", hasDbConfig.getClass().getName());
 
@@ -181,10 +178,10 @@ class TestAppConfigModule {
 
         final Predicate<Class<?>> classFilter = clazz ->
                 clazz.getSimpleName().endsWith("Config")
-                        && !clazz.equals(AbstractConfig.class)
-                        && !clazz.equals(AppConfig.class)
-                        && !Modifier.isPrivate(clazz.getModifiers()) // ignore local sub classes
-                        && IsStroomConfig.class.isAssignableFrom(clazz);
+                && !clazz.equals(AbstractConfig.class)
+                && !clazz.equals(AppConfig.class)
+                && !Modifier.isPrivate(clazz.getModifiers()) // ignore local sub classes
+                && IsStroomConfig.class.isAssignableFrom(clazz);
 
         LOGGER.info("Finding all stroom config classes");
 
@@ -212,7 +209,7 @@ class TestAppConfigModule {
         assertThat(stroomConfigClasses.stream()
                 .filter(clazz ->
                         !AbstractConfig.class.isAssignableFrom(clazz)
-                                || !IsStroomConfig.class.isAssignableFrom(clazz))
+                        || !IsStroomConfig.class.isAssignableFrom(clazz))
                 .collect(Collectors.toList()))
                 .isEmpty();
 

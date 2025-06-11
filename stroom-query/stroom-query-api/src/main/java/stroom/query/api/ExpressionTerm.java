@@ -26,10 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -41,45 +37,27 @@ import java.util.function.Predicate;
         "docRef"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@XmlType(name = "ExpressionTerm", propOrder = {
-        "field",
-        "condition",
-        "value",
-        "docRef"
-})
-@XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionTerm",
         description = "A predicate term in a query expression tree")
 public final class ExpressionTerm extends ExpressionItem {
 
-    @XmlElement
     @Schema(description = "The name of the field that is being evaluated in this predicate term")
     @JsonProperty
-    private String field; // TODO : XML serialisation still requires no-arg constructor and mutable fields
+    private final String field;
 
-    @XmlElement
     @Schema(description = "The condition of the predicate term")
     @JsonProperty
-    // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    private Condition condition;
+    private final Condition condition;
 
-    @XmlElement
     @Schema(description = "The value that the field value is being evaluated against. Not required if a " +
                           "dictionary is supplied")
     @JsonProperty
-    // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    private String value;
+    private final String value;
 
-    @XmlElement
     @Schema(description = "The DocRef that the field value is being evaluated against if the condition is " +
                           "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
-    // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    private DocRef docRef;
-
-    public ExpressionTerm() {
-        // TODO : XML serialisation still requires no-arg constructor and mutable fields
-    }
+    private final DocRef docRef;
 
     @Override
     public boolean containsField(final String... fields) {
@@ -143,7 +121,7 @@ public final class ExpressionTerm extends ExpressionItem {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -153,7 +131,7 @@ public final class ExpressionTerm extends ExpressionItem {
         if (!super.equals(o)) {
             return false;
         }
-        ExpressionTerm that = (ExpressionTerm) o;
+        final ExpressionTerm that = (ExpressionTerm) o;
         return Objects.equals(field, that.field) &&
                condition == that.condition &&
                Objects.equals(value, that.value) &&

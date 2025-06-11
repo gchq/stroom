@@ -45,13 +45,6 @@ import stroom.util.json.JsonUtil;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
@@ -381,7 +374,6 @@ class TestSerialisation {
     })
     public abstract static sealed class Base permits Sub1, Sub2 {
 
-        @XmlElement
         private int num;
 
         public Base() {
@@ -415,11 +407,8 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "sub1", propOrder = {"num2"})
     public static final class Sub1 extends Base {
 
-        @XmlElement
         private int num2;
 
         public Sub1() {
@@ -459,11 +448,8 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "sub2", propOrder = {"str"})
     public static final class Sub2 extends Base {
 
-        @XmlElement
         private String str;
 
         public Sub2() {
@@ -507,14 +493,8 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlRootElement(name = "lst")
     public static class Lst {
 
-        @XmlElementWrapper(name = "list")
-        @XmlElements({
-                @XmlElement(name = "sub1", type = Sub1.class),
-                @XmlElement(name = "sub2", type = Sub2.class)})
         private List<Base> list;
 
         public Lst() {
@@ -552,15 +532,8 @@ class TestSerialisation {
         }
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlRootElement(name = "multi")
     public static class Multi {
 
-        @XmlElementWrapper(name = "list")
-        @XmlElements({
-                @XmlElement(name = "double", type = Double.class),
-                @XmlElement(name = "int", type = Integer.class),
-                @XmlElement(name = "string", type = String.class)})
         private List<Object> list;
 
         public Multi() {

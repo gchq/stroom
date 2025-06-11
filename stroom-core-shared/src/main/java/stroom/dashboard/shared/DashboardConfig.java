@@ -23,17 +23,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
         "parameters",
         "timeRange",
@@ -45,32 +37,14 @@ import java.util.List;
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "dashboard")
-@XmlType(name = "DashboardConfig", propOrder = {
-        "parameters",
-        "timeRange",
-        "components",
-        "layout",
-        "layoutConstraints",
-        "preferredSize",
-        "designMode",
-        "modelVersion"
-})
 public class DashboardConfig {
 
-    @XmlElement(name = "parameters")
     @JsonProperty("parameters")
     private String parameters;
-    @XmlElement(name = "timeRange")
     @JsonProperty("timeRange")
     private TimeRange timeRange;
-    @XmlElementWrapper(name = "components")
-    @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
     @JsonProperty("components")
     private List<ComponentConfig> components;
-    @XmlElements({
-            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
-            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     @JsonProperty("layout")
     private LayoutConfig layout;
     @JsonProperty("layoutConstraints")

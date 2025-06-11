@@ -175,11 +175,6 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
 
-// Legacy code for migration
-include 'stroom-legacy:stroom-legacy-db-migration'
-include 'stroom-legacy:stroom-legacy-impex_6_1'
-include 'stroom-legacy:stroom-legacy-model_6_1'
-
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
 include 'stroom-lifecycle:stroom-lifecycle-impl'

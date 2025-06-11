@@ -25,43 +25,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataReceiptRule", propOrder = {
-        "ruleNumber",
-        "creationTime",
-        "name",
-        "enabled",
-        "expression",
-        "action"})
-@XmlRootElement(name = "dataReceiptRule")
 @JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @JsonInclude(Include.NON_NULL)
 public class ReceiveDataRule {
 
-    @XmlElement(name = "ruleNumber")
     @JsonProperty
     private final int ruleNumber;
-    @XmlElement(name = "creationTime")
     @JsonProperty
     private final long creationTime;
-    @XmlElement(name = "name")
     @JsonProperty
     private final String name;
-    @XmlElement(name = "enabled")
     @JsonProperty
     private final boolean enabled;
-    @XmlElement(name = "expression")
     @JsonProperty
     private final ExpressionOperator expression;
-    @XmlElement(name = "action")
     @JsonProperty
     private final RuleAction action;
 
