@@ -19,6 +19,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.query.QueryResult;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import net.sf.saxon.value.DateTimeValue;
 import net.sf.saxon.value.DoubleValue;
 import net.sf.saxon.value.Int64Value;
 import net.sf.saxon.value.StringValue;
@@ -340,6 +341,8 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                     item = BooleanValue.get((Boolean) val);
                 } else if (val instanceof Instant) {
                     item = convertInstantArg((Instant) val);
+                } else if (val instanceof DateTimeValue) {
+                    item = (DateTimeValue) val;
                 } else {
                     item = StringValue.makeStringValue(val.toString());
                 }
