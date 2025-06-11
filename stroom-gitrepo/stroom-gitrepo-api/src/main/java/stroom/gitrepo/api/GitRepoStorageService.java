@@ -38,4 +38,12 @@ public interface GitRepoStorageService {
      */
     List<Message> importDoc(GitRepoDoc gitRepoDoc) throws IOException;
 
+    /**
+     * Checks if any updates are available in the Git Repo.
+     * @param gitRepoDoc The thing we want to check for updates. Must not be null.
+     * @return true if updates are available, false if not.
+     * @throws IOException if something goes wrong.
+     */
+    boolean areUpdatesAvailable(GitRepoDoc gitRepoDoc) throws IOException;
+
 }

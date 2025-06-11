@@ -77,6 +77,7 @@ public class GitRepoSettingsPresenter
         view.setPath(doc.getPath());
         view.setCommit(doc.getCommit());
         view.setAutoPush(doc.isAutoPush());
+        view.setGitRemoteCommitName(doc.getGitRemoteCommitName());
 
         // Set the initial state of the UI
         view.setState();
@@ -177,6 +178,48 @@ public class GitRepoSettingsPresenter
         }
     }
 
+    /**
+     * Called when the check for updates button is pressed.
+     * @param taskMonitorFactory Where to display the wait icon.
+     */
+    @Override
+    public void onCheckForUpdates(final TaskMonitorFactory taskMonitorFactory) {
+        if (gitRepoDoc != null) {
+
+            final GitRepoDoc doc = onWrite(gitRepoDoc);
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(res -> res.areUpdatesAvailable(doc))
+                    .onSuccess(result -> {
+                        if (result.isOk()) {
+                            AlertEvent.fireInfo(this,
+                                    "Update Check Success",
+                                    result.getMessage(),
+                                    null);
+                        } else {
+                            AlertEvent.fireError(
+                                    this,
+                                    "Update Check Failure",
+                                    result.getMessage(),
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> {
+                        AlertEvent.fireError(
+                                this,
+                                "Update Check Failure",
+                                error.getMessage(),
+                                null);
+                    })
+                    .taskMonitorFactory(taskMonitorFactory)
+                    .exec();
+
+        } else {
+            AlertEvent.fireWarn(this, "Git repository information is not available",
+                    "", null);
+        }
+    }
+
     public interface GitRepoSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
@@ -203,6 +246,8 @@ public class GitRepoSettingsPresenter
         String getCommit();
 
         void setCommit(String commit);
+
+        void setGitRemoteCommitName(String remoteCommitName);
 
         String getCommitMessage();
 

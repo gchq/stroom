@@ -48,6 +48,7 @@ import java.util.Objects;
         "branch",
         "path",
         "commit",
+        "gitRemoteCommitName",
         "autoPush"
 })
 @JsonInclude(Include.NON_NULL)
@@ -77,6 +78,14 @@ public class GitRepoDoc extends Doc {
     @JsonProperty
     private String commit = "";
 
+    /**
+     * Name of the commit that is currently checked out
+     * and imported.
+     * May be null if nothing has been pulled yet.
+     */
+    @JsonProperty
+    private String gitRemoteCommitName = null;
+
     @JsonProperty
     private Boolean autoPush = Boolean.FALSE;
 
@@ -103,6 +112,7 @@ public class GitRepoDoc extends Doc {
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
+                      @JsonProperty("gitRemoteCommitName") final String gitRemoteCommitName,
                       @JsonProperty("autoPush") final Boolean autoPush) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -114,6 +124,7 @@ public class GitRepoDoc extends Doc {
         this.branch = branch;
         this.path = path;
         this.commit = commit;
+        this.gitRemoteCommitName = gitRemoteCommitName;
         this.autoPush = autoPush;
 
         // Make sure none of the settings are null
@@ -172,13 +183,22 @@ public class GitRepoDoc extends Doc {
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
                && Objects.equals(commit, that.commit)
+               && Objects.equals(gitRemoteCommitName, that.gitRemoteCommitName)
                && Objects.equals(autoPush, that.autoPush);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(),
-                description, url, username, password, branch, path, commit, autoPush);
+                description,
+                url,
+                username,
+                password,
+                branch,
+                path,
+                commit,
+                gitRemoteCommitName,
+                autoPush);
     }
 
     public String getDescription() {
@@ -237,6 +257,14 @@ public class GitRepoDoc extends Doc {
         this.commit = commit;
     }
 
+    public String getGitRemoteCommitName() {
+        return gitRemoteCommitName;
+    }
+
+    public void setGitRemoteCommitName(final String gitRemoteCommitName) {
+        this.gitRemoteCommitName = gitRemoteCommitName;
+    }
+
     public Boolean isAutoPush() {
         return autoPush;
     }
@@ -263,6 +291,7 @@ public class GitRepoDoc extends Doc {
                 + branch + "\n  "
                 + path + "\n  "
                 + commit +"\n  "
+                + gitRemoteCommitName + "\n  "
                 + autoPush + "\n}";
     }
 }

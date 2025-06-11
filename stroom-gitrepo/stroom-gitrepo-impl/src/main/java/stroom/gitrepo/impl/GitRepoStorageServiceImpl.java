@@ -7,6 +7,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.api.GitRepoStorageService;
+import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
@@ -24,6 +25,7 @@ import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
@@ -74,6 +76,11 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private final PathCreator pathCreator;
 
     /**
+     * Where to write changes of the GitRepoDoc
+     */
+    private final GitRepoStore gitRepoStore;
+
+    /**
      * Logger so we can follow what is going on.
      */
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GitRepoStorageServiceImpl.class);
@@ -104,12 +111,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final ExplorerNodeService explorerNodeService,
                                      final ImportExportSerializer importExportSerializer,
                                      final GitRepoConfig config,
-                                     final PathCreator pathCreator) {
+                                     final PathCreator pathCreator,
+                                     final GitRepoStore gitRepoStore) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
+        this.gitRepoStore = gitRepoStore;
     }
 
     /**
@@ -182,7 +191,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     // Match new files
                     git.add().setUpdate(false).addFilepattern(".").call();
 
-                    git.commit()
+                    RevCommit gitCommit = git.commit()
                             .setCommitter(GIT_USERNAME, gitRepoDoc.getUsername())
                             .setMessage(commitMessage)
                             .call();
@@ -191,6 +200,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     // Push to remote
                     git.push().setCredentialsProvider(this.getGitCreds(gitRepoDoc)).call();
                     messages.add(new Message(Severity.INFO, "Pushed to Git"));
+
+                    // Store the commit version
+                    gitRepoDoc.setGitRemoteCommitName(gitCommit.getName());
+                    gitRepoStore.writeDocument(gitRepoDoc);
                 } else {
                     // Jobs don't need to know that this didn't do anything
                     if (calledFromUi) {
@@ -503,7 +516,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @param gitWorkDir Where to put the Git repo files.
      * @throws IOException If something goes wrong.
      */
-    private void gitCloneForPull(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+    private void gitCloneForPull(final GitRepoDoc gitRepoDoc,
+                                 final Path gitWorkDir)
             throws IOException {
         LOGGER.info("Cloning repository '{}' to '{}' for pull", gitRepoDoc.getUrl(), gitWorkDir);
 
@@ -523,7 +537,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     .setCloneAllBranches(false)
                     .call()) {
 
-                // No code - close automatically
+                // Store the commit we've got
+                gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
+                gitRepoStore.writeDocument(gitRepoDoc);
+
             } catch (final GitAPIException e) {
                 throw new IOException("Git error cloning repository "
                                       + gitRepoDoc.getUrl(), e);
@@ -540,6 +557,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                 git.checkout()
                         .setName(gitCommit)
                         .call();
+                // Store the commit we've got
+                gitRepoDoc.setGitRemoteCommitName(this.gitGetCurrentRevCommitName(git));
+                gitRepoStore.writeDocument(gitRepoDoc);
+
             } catch (GitAPIException e) {
                 LOGGER.error("Error cloning git commit '{}': {}", gitCommit, e.getMessage(), e);
                 throw new IOException("Git error cloning / checking out commit '"
@@ -547,6 +568,88 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                       + "': " + e.getMessage(), e);
             }
 
+        }
+    }
+
+    /**
+     * Determines whether updates are available, by looking at the latest
+     * commit in the downloaded data from Git and comparing it to the stored
+     * value.
+     * @param gitWorkDir The directory that is the root of the repo.
+     * @return An auto-closeable Git object to use when accessing the repo.
+     * @throws IOException if something goes wrong.
+     */
+    private boolean gitUpdatesAvailable(final GitRepoDoc gitRepoDoc, final Path gitWorkDir)
+            throws IOException, GitAPIException {
+
+        this.ensureDirectoryExists(gitWorkDir);
+
+        // Wipe everything from the local git Work dir
+        this.deleteFileTree(gitWorkDir, false);
+
+        // Clone the remote repo
+        // Note depth is 1 - we only want the latest items not the history
+        LOGGER.debug(
+                "Cloning repository '{}' to '{}' for whether updates are available",
+                gitRepoDoc.getUrl(),
+                gitWorkDir);
+
+        try (Git git = Git.cloneRepository()
+                .setURI(gitRepoDoc.getUrl())
+                .setDirectory(gitWorkDir.toFile())
+                .setCredentialsProvider(this.getGitCreds(gitRepoDoc))
+                .setDepth(1)
+                .setBranch(gitRepoDoc.getBranch())
+                .setCloneAllBranches(false)
+                .call()) {
+
+            String gitCommitName = this.gitGetCurrentRevCommitName(git);
+            LOGGER.info("Stroom commit: {}; git commit available: {}; match: {}",
+                    gitRepoDoc.getGitRemoteCommitName(),
+                    gitCommitName,
+                    Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName));
+
+            return !Objects.equals(gitRepoDoc.getGitRemoteCommitName(), gitCommitName);
+        }
+    }
+
+    /**
+     * Returns the current commit name for the currently cloned code
+     * - whatever is in the local Git repo on disk.
+     * @param git The Git instance to query.
+     * @return The string that identifies the commit.
+     */
+    private String gitGetCurrentRevCommitName(Git git) throws GitAPIException {
+        return git
+                .log()
+                .setMaxCount(1)
+                .call()
+                .iterator().next().getName();
+    }
+
+    /**
+     * Checks if any updates are available in the Git Repo.
+     * @param gitRepoDoc The thing we want to check for updates. Must not be null.
+     * @return true if updates are available, false if not.
+     * @throws IOException if something goes wrong.
+     */
+    @Override
+    public boolean areUpdatesAvailable(GitRepoDoc gitRepoDoc) throws IOException {
+        LOGGER.info("Checking if updates are available for '{}'", gitRepoDoc.getUrl());
+
+        if (!gitRepoDoc.getUrl().isEmpty()) {
+            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
+            final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
+            try {
+                boolean updatesAvailable = this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir);
+                LOGGER.info("==== Updates available: {}", updatesAvailable);
+                return updatesAvailable;
+
+            } catch (GitAPIException e) {
+                throw new IOException("Error checking for updates", e);
+            }
+        } else {
+            return false;
         }
     }
 

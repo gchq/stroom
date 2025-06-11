@@ -72,4 +72,12 @@ public interface GitRepoResource extends RestResource, DirectRestService, FetchW
             operationId = "pullFromGit")
     GitRepoResponse pullFromGit(
             @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
+
+    @POST
+    @Path("/areUpdatesAvailable")
+    @Operation(
+            summary = "Check if any content has changed",
+            operationId = "areUpdatesAvailable")
+    GitRepoResponse areUpdatesAvailable(
+            @Parameter(description = "gitRepoDoc", required = true) GitRepoDoc gitRepoDoc);
 }
