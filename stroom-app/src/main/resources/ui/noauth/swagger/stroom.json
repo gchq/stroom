@@ -15692,9 +15692,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ExpressionItem"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "enabled" : {
@@ -17784,9 +17781,6 @@
             "type" : "integer",
             "format" : "int64"
           }
-        },
-        "xml" : {
-          "name" : "limits"
         }
       },
       "LinkEvents" : {
@@ -19561,9 +19555,6 @@
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
           }
-        },
-        "xml" : {
-          "name" : "query"
         }
       },
       "QueryDoc" : {
@@ -21411,9 +21402,6 @@
         "type" : "object",
         "description" : "A request for new search or a follow up request for more data for an existing iterative search",
         "properties" : {
-          "dateTimeLocale" : {
-            "type" : "string"
-          },
           "dateTimeSettings" : {
             "$ref" : "#/components/schemas/DateTimeSettings"
           },
@@ -21431,9 +21419,6 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ResultRequest"
-            },
-            "xml" : {
-              "wrapped" : true
             }
           },
           "searchRequestSource" : {
@@ -21444,10 +21429,6 @@
             "format" : "int64",
             "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field"
           }
-        },
-        "required" : [ "incremental", "query", "resultRequests" ],
-        "xml" : {
-          "name" : "searchRequest"
         }
       },
       "SearchRequestSource" : {

@@ -11305,8 +11305,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ExpressionItem"
-          xml:
-            wrapped: true
         enabled:
           type: boolean
           description: Whether this item in the expression tree is enabled or not
@@ -12893,8 +12891,6 @@ components:
         streamCount:
           type: integer
           format: int64
-      xml:
-        name: limits
     LinkEvents:
       type: object
       allOf:
@@ -14450,8 +14446,6 @@ components:
             $ref: "#/components/schemas/Param"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-      xml:
-        name: query
     QueryDoc:
       type: object
       properties:
@@ -15825,8 +15819,6 @@ components:
       description: A request for new search or a follow up request for more data for
         an existing iterative search
       properties:
-        dateTimeLocale:
-          type: string
         dateTimeSettings:
           $ref: "#/components/schemas/DateTimeSettings"
         incremental:
@@ -15844,8 +15836,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultRequest"
-          xml:
-            wrapped: true
         searchRequestSource:
           $ref: "#/components/schemas/SearchRequestSource"
         timeout:
@@ -15863,12 +15853,6 @@ components:
             \ it will return the currently know results with complete=false, however\
             \ for a non-incremental query it will return no results, complete=false\
             \ and details of the timeout in the error field"
-      required:
-      - incremental
-      - query
-      - resultRequests
-      xml:
-        name: searchRequest
     SearchRequestSource:
       type: object
       properties:
