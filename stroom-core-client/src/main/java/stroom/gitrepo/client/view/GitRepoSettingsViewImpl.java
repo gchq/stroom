@@ -66,6 +66,9 @@ public class GitRepoSettingsViewImpl
     TextBox commit;
 
     @UiField
+    TextBox gitRemoteCommitName;
+
+    @UiField
     CheckBox autoPush;
 
     @UiField
@@ -76,6 +79,9 @@ public class GitRepoSettingsViewImpl
 
     @UiField
     Button gitRepoPull;
+
+    @UiField
+    Button btnCheckForUpdates;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -150,6 +156,11 @@ public class GitRepoSettingsViewImpl
     }
 
     @Override
+    public void setGitRemoteCommitName(String commitName) {
+        this.gitRemoteCommitName.setText(commitName);
+    }
+
+    @Override
     public Boolean isAutoPush() {
         return this.autoPush.getValue();
     }
@@ -188,6 +199,8 @@ public class GitRepoSettingsViewImpl
      */
     @Override
     public void setState() {
+        // Remote commit name is always readonly
+        //gitRemoteCommitName.setEnabled(false);
 
         if (this.readOnly) {
             // Everything is disabled
@@ -295,6 +308,18 @@ public class GitRepoSettingsViewImpl
     public void onGitRepoPullClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onGitRepoPull(gitRepoPull);
+        }
+    }
+
+    /**
+     * Handles 'Check for updates' button clicks.
+     * @param event The button push event. Ignored. Can be null.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("btnCheckForUpdates")
+    public void onBtnCheckForUpdatesClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onCheckForUpdates(btnCheckForUpdates);
         }
     }
 

@@ -119,6 +119,30 @@ class GitRepoResourceImpl implements GitRepoResource {
         return response;
     }
 
+    /**
+     * Called to determine whether updates are available for a Git repository.
+     * @param gitRepoDoc The git repository to check.
+     * @return A response with a message in it saying whether updates
+     * could be applied.
+     */
+    @Override
+    public GitRepoResponse areUpdatesAvailable(final GitRepoDoc gitRepoDoc) {
+        Objects.requireNonNull(gitRepoDoc);
+
+        GitRepoResponse response;
+        try {
+            if (gitRepoStorageServiceProvider.get().areUpdatesAvailable(gitRepoDoc)) {
+                response = new GitRepoResponse(true, "Updates are available");
+            } else {
+                response = new GitRepoResponse(true, "No updates available");
+            }
+        } catch (Exception e) {
+            response = new GitRepoResponse(false, e.getMessage());
+        }
+
+        return response;
+    }
+
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)

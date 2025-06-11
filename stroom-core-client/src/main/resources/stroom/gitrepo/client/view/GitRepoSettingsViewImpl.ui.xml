@@ -30,9 +30,14 @@
                        ui:field="path" />
         </form:FormGroup>
         <form:FormGroup identity="gitRepoSettingsCommit" label="Git commit">
-            <g:TextBox name="Path"
+            <g:TextBox name="Commit"
                        title="The commit you want to pull from Git"
                        ui:field="commit" />
+        </form:FormGroup>
+        <form:FormGroup identity="gitRemoteCommitName" label="Currently checked out commit">
+            <g:TextBox name="RemoteCommitName"
+                       title="The commit that is currently checked out"
+                       ui:field="gitRemoteCommitName" />
         </form:FormGroup>
         <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
             <g:CheckBox name="AutoPush"
@@ -53,6 +58,11 @@
                   text="Pull from Git"
                   addStyleNames="allow-focus"
                   title="Pull remote changes into Stroom"
+                  width="200px" />
+        <b:Button ui:field="btnCheckForUpdates"
+                  text="Check for updates"
+                  addStyleNames="allow-focus"
+                  title="Check if there are updates that could be pulled"
                   width="200px" />
     </g:FlowPanel>
 </ui:UiBinder>

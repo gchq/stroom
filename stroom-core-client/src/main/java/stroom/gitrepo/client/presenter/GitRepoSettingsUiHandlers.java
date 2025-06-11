@@ -18,4 +18,9 @@ public interface GitRepoSettingsUiHandlers extends DirtyUiHandlers {
      */
     void onGitRepoPull(TaskMonitorFactory taskMonitorFactory);
 
+    /**
+     * 'Check for updates' button event handler.
+     */
+    void onCheckForUpdates(TaskMonitorFactory taskMonitorFactory);
+
 }
