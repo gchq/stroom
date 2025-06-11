@@ -34,7 +34,7 @@ class TestReceiveAction {
             wasCalled.set(true);
             return new IllegalStateException("foo");
         };
-        assertThat(ReceiveAction.RECEIVE.getFilterOutcome(supplier))
+        assertThat(ReceiveAction.RECEIVE.toFilterResultOrThrow(supplier))
                 .isTrue();
         assertThat(wasCalled)
                 .isFalse();
@@ -47,7 +47,7 @@ class TestReceiveAction {
             wasCalled.set(true);
             return new IllegalStateException("foo");
         };
-        assertThat(ReceiveAction.DROP.getFilterOutcome(supplier))
+        assertThat(ReceiveAction.DROP.toFilterResultOrThrow(supplier))
                 .isFalse();
         assertThat(wasCalled)
                 .isFalse();
@@ -61,7 +61,7 @@ class TestReceiveAction {
             return new IllegalStateException("foo");
         };
         assertThatThrownBy(() ->
-                ReceiveAction.REJECT.getFilterOutcome(supplier))
+                ReceiveAction.REJECT.toFilterResultOrThrow(supplier))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("foo");
         assertThat(wasCalled)

@@ -14,6 +14,7 @@ import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -23,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -75,6 +75,7 @@ public class SimpleReceiver implements Receiver {
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+        final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
         if (attributeMapFilter.filter(attributeMap)) {
             long bytesRead = 0;
             try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStreamSupplier.get())) {
@@ -140,13 +141,12 @@ public class SimpleReceiver implements Receiver {
                         EventType.RECEIVE,
                         requestUri,
                         StroomStatusCode.OK,
-                        attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
+                        receiptId,
                         bytesRead,
                         duration.toMillis());
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 throw StroomStreamException.create(e, attributeMap);
             }
-
         } else {
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);

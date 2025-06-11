@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.repo.LogStream;
 import stroom.receive.common.DataReceiptMetrics;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
@@ -22,6 +23,8 @@ import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.hc.core5.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -36,6 +39,7 @@ import java.util.Objects;
 public class ProxyRequestHandler implements RequestHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRequestHandler.class);
+    private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private static final String ZERO_CONTENT = "0";
 
     private final RequestAuthenticator requestAuthenticator;
@@ -44,6 +48,7 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ReceiptIdGenerator receiptIdGenerator;
     private final DataReceiptMetrics dataReceiptMetrics;
     private final CommonSecurityContext commonSecurityContext;
+    private final LogStream logStream;
 
     @Inject
     public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
@@ -51,13 +56,15 @@ public class ProxyRequestHandler implements RequestHandler {
                                final ReceiverFactory receiverFactory,
                                final ReceiptIdGenerator receiptIdGenerator,
                                final DataReceiptMetrics dataReceiptMetrics,
-                               final CommonSecurityContext commonSecurityContext) {
+                               final CommonSecurityContext commonSecurityContext,
+                               final LogStream logStream) {
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
         this.receiverFactory = receiverFactory;
         this.receiptIdGenerator = receiptIdGenerator;
         this.dataReceiptMetrics = dataReceiptMetrics;
         this.commonSecurityContext = commonSecurityContext;
+        this.logStream = logStream;
     }
 
     @Override
@@ -68,19 +75,20 @@ public class ProxyRequestHandler implements RequestHandler {
     }
 
     private void doHandle(final HttpServletRequest request, final HttpServletResponse response) {
+
+        final Instant receiveTime = Instant.now();
+        // Create a new proxy id for the request, so we can track progress of the stream
+        // through the various proxies and into stroom and report back the ID to the sender,
+        final UniqueId receiptId = receiptIdGenerator.generateId();
+        AttributeMap attributeMap = null;
         try {
-            final Instant receiveTime = Instant.now();
-
-            // Create a new proxy id for the request, so we can track progress of the stream
-            // through the various proxies and into stroom and report back the ID to the sender,
-            final UniqueId receiptId = receiptIdGenerator.generateId();
-
             // Create attribute map from headers.
-            final AttributeMap attributeMap = AttributeMapUtil.create(
+            attributeMap = AttributeMapUtil.create(
                     request,
                     certificateExtractor,
                     receiveTime,
                     receiptId);
+            final AttributeMap finAttributeMap = attributeMap;
 
             LOGGER.debug(() -> LogUtil.message(
                     "handle() - requestUri: {}, remoteHost/Addr: {}, attributeMap: {}, ",
@@ -88,7 +96,7 @@ public class ProxyRequestHandler implements RequestHandler {
                     Objects.requireNonNullElseGet(
                             request.getRemoteHost(),
                             request::getRemoteAddr),
-                    attributeMap));
+                    finAttributeMap));
 
             // Authorise request.
             final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
@@ -99,7 +107,7 @@ public class ProxyRequestHandler implements RequestHandler {
             final String compression = AttributeMapUtil.validateAndNormaliseCompression(
                     attributeMap,
                     compressionVal -> new StroomStreamException(
-                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compressionVal));
+                            StroomStatusCode.UNKNOWN_COMPRESSION, finAttributeMap, compressionVal));
 
             final Receiver receiver;
             final String contentLength = attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH);
@@ -112,10 +120,10 @@ public class ProxyRequestHandler implements RequestHandler {
                 // we run as the processing user as the request user won't have perms to do
                 // things like check feed status.
                 receiver = commonSecurityContext.asProcessingUserResult(() -> {
-                    final Receiver receiver2 = receiverFactory.get(attributeMap);
+                    final Receiver receiver2 = receiverFactory.get(finAttributeMap);
                     receiver2.receive(
                             receiveTime,
-                            attributeMap,
+                            finAttributeMap,
                             request.getRequestURI(),
                             request::getInputStream);
                     return receiver2;
@@ -135,8 +143,18 @@ public class ProxyRequestHandler implements RequestHandler {
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
-        } catch (final StroomStreamException e) {
-            e.sendErrorResponse(response);
+        } catch (final Exception e) {
+            final StroomStreamException stroomStreamException = StroomStreamException.create(
+                    e, Objects.requireNonNullElseGet(attributeMap, AttributeMap::new));
+            logStream.log(
+                    RECEIVE_LOG,
+                    stroomStreamException,
+                    request.getRequestURI(),
+                    receiptId.toString(),
+                    -1,
+                    Duration.between(receiveTime, Instant.now()).toMillis());
+            // Craft an error response for the client
+            stroomStreamException.sendErrorResponse(response);
         }
     }
 }

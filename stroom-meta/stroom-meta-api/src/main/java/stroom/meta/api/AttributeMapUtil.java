@@ -305,7 +305,7 @@ public class AttributeMapUtil {
             final String attributesStr = Arrays.stream(attributeKeys)
                     .map(key ->
                             getAttributeStr(attributeMap, key))
-                    .filter(Objects::nonNull)
+                    .filter(NullSafe::isNonBlankString)
                     .collect(Collectors.joining(", "));
 
             if (!attributesStr.isBlank()) {

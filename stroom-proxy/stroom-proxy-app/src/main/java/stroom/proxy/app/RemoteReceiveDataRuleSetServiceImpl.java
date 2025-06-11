@@ -70,7 +70,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     private final HashFunctionFactory hashFunctionFactory;
     private final WordListProviderFactory wordListProviderFactory;
 
-    private final CachedValue<RuleState, Void> cachedHashedReceiveDataRules;
+    private final CachedValue<RuleState, Void> cachedRuleState;
     private final AtomicBoolean isInitialised = new AtomicBoolean(false);
     private final Duration noFetchIntervalAfterFailure = Duration.ofSeconds(30);
 
@@ -93,19 +93,19 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.pathCreator = pathCreator;
         this.hashFunctionFactory = hashFunctionFactory;
-        this.cachedHashedReceiveDataRules = CachedValue.builder()
+        this.cachedRuleState = CachedValue.builder()
                 .withMaxCheckInterval(proxyReceiptPolicyConfigProvider.get()
                         .getSyncFrequency()
                         .getDuration())
                 .withoutStateSupplier()
-                .withValueSupplier(this::createRuleBundle)
+                .withValueSupplier(this::createCachedRuleState)
                 .build();
         this.wordListProviderFactory = wordListProviderFactory;
 
         // No point trying to fetch rules if we are not using them
         if (receiveDataConfigProvider.get().getReceiptCheckMode() == ReceiptCheckMode.RECEIPT_POLICY) {
             // Eagerly init the rules
-            cachedHashedReceiveDataRules.getValue();
+            cachedRuleState.getValue();
         }
     }
 
@@ -126,7 +126,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
         return commonSecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
-                cachedHashedReceiveDataRules.getValueAsync()
+                cachedRuleState.getValueAsync()
                         .hashedReceiveDataRules());
     }
 
@@ -134,11 +134,11 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     public BundledRules getBundledRules() {
         return commonSecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
                 NullSafe.get(
-                        cachedHashedReceiveDataRules.getValueAsync(),
+                        cachedRuleState.getValueAsync(),
                         RuleState::bundledRules));
     }
 
-    private synchronized RuleState createRuleBundle(final RuleState currRuleState) {
+    private synchronized RuleState createCachedRuleState(final RuleState currRuleState) {
         // This may run async so needs to run as the proc user
         return commonSecurityContextProvider.get().asProcessingUserResult(() -> {
             return LOGGER.logDurationIfDebugEnabled(() -> {
@@ -194,11 +194,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
             LOGGER.debug("fetchRulesFromRemote() - got hashedReceiveDataRules {} from remote", hashedReceiveDataRules);
             // Update our value on disk in so if proxy reboots and upstream is
             // not available, we have the latest.
-            if (!Objects.equals(currHashedReceiveDataRules, hashedReceiveDataRules)) {
-                writeToDisk(hashedReceiveDataRules);
-            } else {
-                LOGGER.debug("fetchRulesFromRemote() - value has not changed, skipping writeToDisk");
-            }
+            writeToDisk(hashedReceiveDataRules);
             isInitialised.set(true);
         } else {
             // Couldn't get a value from the remote
@@ -207,6 +203,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                 // We should have the previous value in memory so the caller can fallback to that.
             } else {
                 // We don't have a prev value in mem, so try to get one from disk
+                LOGGER.info("Unable to obtain receipt rules from remote, so attempting to read them from disk");
                 optHashedReceiveDataRules = readFromDisk();
                 optHashedReceiveDataRules.ifPresent(ignored ->
                         isInitialised.set(true));
@@ -285,7 +282,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                 final HashedReceiveDataRules hashedReceiveDataRules = JsonUtil.getMapper().readValue(
                         inputStream, HashedReceiveDataRules.class);
                 if (hashedReceiveDataRules != null) {
-                    LOGGER.info("Read last known receipt policy rules from file '{}' with snapshot time {}",
+                    LOGGER.debug("Read last known receipt policy rules from file '{}' with snapshot time {}",
                             jsonFile, Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()));
                     LOGGER.debug("readFromDisk() - Read hashedReceiveDataRules from file {}\n{}",
                             jsonFile, hashedReceiveDataRules);
@@ -308,19 +305,33 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
     private void writeToDisk(final HashedReceiveDataRules hashedReceiveDataRules) {
         if (hashedReceiveDataRules != null) {
-            final Path jsonFile = getJsonFilePath();
-            final ObjectMapper mapper = JsonUtil.getMapper();
-            try (OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
+            // The salts will change every time we get a new HashedReceiveDataRules from
+            // the remote, so the object on disk will always be different. As long as
+            // they both have the same snapshot time (i.e. the doc last update time) then
+            // we can leave the disk version as is to save the write.
+            final boolean isWriteRequired = readFromDisk()
+                    .map(rulesOnDisk -> !Objects.equals(
+                            hashedReceiveDataRules.getSnapshotTimeEpochMs(),
+                            rulesOnDisk.getSnapshotTimeEpochMs()))
+                    .orElse(true);
 
-                LOGGER.debug("writeToDisk() - Writing hashedReceiveDataRules to file {}\n{}",
-                        jsonFile, hashedReceiveDataRules);
-                mapper.writeValue(outputStream, hashedReceiveDataRules);
-                LOGGER.info("Written receipt policy rules with snapshot time {} to file '{}'",
-                        Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()), jsonFile);
-            } catch (IOException e) {
-                LOGGER.error("Error writing to file " + jsonFile
-                             + ": " + LogUtil.exceptionMessage(e), e);
-                // Swallow and carry on
+            if (isWriteRequired) {
+                final Path jsonFile = getJsonFilePath();
+                final ObjectMapper mapper = JsonUtil.getMapper();
+                try (OutputStream outputStream = Files.newOutputStream(jsonFile, WRITE_OPEN_OPTIONS)) {
+
+                    LOGGER.debug("writeToDisk() - Writing hashedReceiveDataRules to file {}\n{}",
+                            jsonFile, hashedReceiveDataRules);
+                    mapper.writeValue(outputStream, hashedReceiveDataRules);
+                    LOGGER.info("Written receipt policy rules with snapshot time {} to file '{}'",
+                            Instant.ofEpochMilli(hashedReceiveDataRules.getSnapshotTimeEpochMs()), jsonFile);
+                } catch (IOException e) {
+                    LOGGER.error("Error writing to file " + jsonFile
+                                 + ": " + LogUtil.exceptionMessage(e), e);
+                    // Swallow and carry on
+                }
+            } else {
+                LOGGER.debug("writeToDisk() - No write required");
             }
         }
     }
@@ -371,8 +382,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                             // We have to have a suffixed version because the expr tree may contain
                             // a mix of hashed and non-hashed values for the same field.
                             fieldNameToSaltMap.forEach((fieldName, salt) -> {
-                                final String suffixedFieldName = fieldName
-                                                                 + ReceiveDataRuleSetService.HASHED_FIELD_NAME_SUFFIX;
+                                final String suffixedFieldName = HashedReceiveDataRules.markFieldAsHashed(fieldName);
                                 final String unHashedVal = newAttrMap.get(fieldName);
                                 final String hashedVal = NullSafe.get(
                                         unHashedVal,

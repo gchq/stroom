@@ -62,7 +62,11 @@ public enum ReceiveAction implements HasDisplayValue {
         return filterOutcome;
     }
 
-    public boolean getFilterOutcome(final Supplier<RuntimeException> rejectionExceptionSupplier) {
+    /**
+     * Convert the {@link ReceiveAction} into a boolean filter result, throwing the exception
+     * supplied by rejectionExceptionSupplier if the {@link ReceiveAction} is {@link ReceiveAction#REJECT}.
+     */
+    public boolean toFilterResultOrThrow(final Supplier<RuntimeException> rejectionExceptionSupplier) {
         if (this == REJECT && rejectionExceptionSupplier != null) {
             throw rejectionExceptionSupplier.get();
         } else {

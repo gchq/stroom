@@ -146,7 +146,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                                 .map(VerifiedApiKey::getUserDesc);
                     }
                 } else {
-                    LOGGER.debug("verifyApiKey() - Doesn't look like an API key {}", apiKey);
+                    LOGGER.debug("verifyApiKey() - Doesn't look like an API key '{}'", apiKey);
                     return Optional.empty();
                 }
             });

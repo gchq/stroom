@@ -30,7 +30,8 @@ public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
                 StandardHeaderArguments.REMOTE_HOST,
                 StandardHeaderArguments.REMOTE_ADDRESS,
                 StandardHeaderArguments.REMOTE_DN,
-                StandardHeaderArguments.REMOTE_CERT_EXPIRY));
+                StandardHeaderArguments.REMOTE_CERT_EXPIRY,
+                StandardHeaderArguments.DATA_RECEIPT_RULE));
     }
 
     @SuppressWarnings("unused")

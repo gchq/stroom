@@ -77,7 +77,7 @@ public class ReceiveDataRule {
         this.name = name;
         this.enabled = enabled;
         this.expression = expression;
-        this.action = action;
+        this.action = Objects.requireNonNull(action);
     }
 
     private ReceiveDataRule(final Builder builder) {

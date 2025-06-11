@@ -20,6 +20,8 @@ package stroom.receive.common;
 import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -27,6 +29,7 @@ import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;
+import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.util.collections.CollectionUtil;
@@ -125,7 +128,19 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                     // Create a map of fields that are valid fields and have been used in the expressions.
                     final Map<String, QueryField> usedFieldMap = fieldSet
                             .stream()
-                            .map(fieldNameToFieldMap::get)
+                            .map(fieldName -> {
+                                if (HashedReceiveDataRules.isHashedField(fieldName)) {
+                                    // Create a QueryField for the suffixed field name
+                                    final String strippedField = HashedReceiveDataRules.stripHashedSuffix(
+                                            fieldName);
+                                    final QueryField queryField = fieldNameToFieldMap.get(strippedField);
+                                    return queryField.copy()
+                                            .fldName(fieldName)
+                                            .build();
+                                } else {
+                                    return fieldNameToFieldMap.get(fieldName);
+                                }
+                            })
                             .filter(Objects::nonNull)
                             .collect(Collectors.toMap(
                                     QueryField::getFldName,
@@ -191,7 +206,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
     public interface Checker {
 
-        ReceiveAction check(AttributeMap attributeMap);
+        ReceiveAction check(AttributeMap attributeMap) throws StroomStreamException;
     }
 
 
@@ -221,7 +236,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         }
 
         @Override
-        public ReceiveAction check(final AttributeMap attributeMap) {
+        public ReceiveAction check(final AttributeMap attributeMap) throws StroomStreamException {
             return LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         // First we need to hash any values for fields that need hashing.
@@ -231,12 +246,29 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
 
                         final ReceiveDataRule matchingRule = findMatchingRule(effectiveAttrMap);
                         // The default action is to receive data.
-                        LOGGER.debug("check() - matchingRule: {}, noMatchAction: {}",
-                                matchingRule, noMatchAction);
-                        return NullSafe.getOrElse(
+                        final ReceiveAction receiveAction = NullSafe.getOrElse(
                                 matchingRule,
                                 ReceiveDataRule::getAction,
                                 noMatchAction);
+
+                        final String ruleNo = NullSafe.getOrElse(
+                                matchingRule,
+                                ReceiveDataRule::getRuleNumber,
+                                Object::toString,
+                                "NO_MATCH");
+
+                        attributeMap.put(StandardHeaderArguments.DATA_RECEIPT_RULE, ruleNo);
+
+                        LOGGER.debug(() -> LogUtil.message(
+                                "check() - matchingRule: '{}', ruleNo: {}, receiveAction: {}, " +
+                                "noMatchAction: {}, rule count: {}",
+                                matchingRule, ruleNo, receiveAction, noMatchAction, NullSafe.size(activeRules)));
+
+                        if (receiveAction == ReceiveAction.REJECT) {
+                            throw new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap);
+                        } else {
+                            return receiveAction;
+                        }
                     },
                     ruleAction -> LogUtil.message("Checked attributeMap: {} with result: {}",
                             attributeMap, ruleAction));
@@ -247,7 +279,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                 final ExpressionOperator ruleExpression = rule.getExpression();
 
                 if (ruleExpression == null) {
-                    LOGGER.debug(() -> LogUtil.message(
+                    LOGGER.trace(() -> LogUtil.message(
                             "findMatchingRule() - Null ruleExpression, rule {}, ruleAction: {}, attributeMap: {}",
                             rule, rule.getAction(), attributeMap));
                     return rule;
@@ -259,7 +291,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                         ruleNo -> expressionMatcher.create(ruleExpression, valueFunctionFactories));
                 try {
                     final boolean isMatch = predicate.test(attributeMap);
-                    LOGGER.debug(() -> LogUtil.message(
+                    LOGGER.trace(() -> LogUtil.message(
                             "findMatchingRule() - Rule {}, isMatch: {}, ruleAction: {}, attributeMap: {}",
                             rule, isMatch, rule.getAction(), attributeMap));
                     if (isMatch) {
@@ -271,7 +303,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                     // Try the next rule
                 }
             }
-            LOGGER.debug(() -> LogUtil.message("findMatchingRule() - No matched after {} active rules",
+            LOGGER.trace(() -> LogUtil.message("findMatchingRule() - No matched after {} active rules",
                     activeRules.size()));
             return null;
         }

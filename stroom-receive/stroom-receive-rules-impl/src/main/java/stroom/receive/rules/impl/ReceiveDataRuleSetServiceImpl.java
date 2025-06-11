@@ -66,8 +66,10 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetServiceImpl.class);
 
+    // For users in stroom that need to create/update the rules
     private static final AppPermissionSet MANAGE_RULES_PERM_SET = AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION
             .asAppPermissionSet();
+    // For proxies/api calls that just want to get the hashed rules
     private static final AppPermissionSet FETCH_HASHED_RULES_PERM_SET = AppPermissionSet.oneOf(
             AppPermission.FETCH_HASHED_RECEIPT_POLICY_RULES,
             AppPermission.STROOM_PROXY);
@@ -93,8 +95,12 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public ReceiveDataRules getReceiveDataRules() {
+        return getReceiveDataRules(MANAGE_RULES_PERM_SET);
+    }
+
+    private ReceiveDataRules getReceiveDataRules(final AppPermissionSet requiredPerms) {
         final ReceiveDataRules receiveDataRules = securityContext.secureResult(
-                MANAGE_RULES_PERM_SET,
+                Objects.requireNonNull(requiredPerms),
                 () -> {
                     // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
                     // access it via the proc user. Assumes it is called from a service that will
@@ -120,15 +126,17 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
 
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
+        final AppPermissionSet requiredPerms = FETCH_HASHED_RULES_PERM_SET;
         final HashedReceiveDataRules hashedReceiveDataRules = securityContext.secureResult(
-                FETCH_HASHED_RULES_PERM_SET,
+                requiredPerms,
                 () -> {
-                    final ReceiveDataRules receiveDataRules = getReceiveDataRules();
+                    final ReceiveDataRules receiveDataRules = getReceiveDataRules(requiredPerms);
                     final List<ReceiveDataRule> ruleList = receiveDataRules.getRules();
                     if (NullSafe.hasItems(ruleList)) {
                         return buildHashedReceiveDataRules(receiveDataRules);
                     } else {
                         return new HashedReceiveDataRules(
+                                receiveDataRules.getUpdateTimeMs(),
                                 receiveDataRules,
                                 Collections.emptyMap(),
                                 Collections.emptyMap(),
@@ -197,6 +205,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
                 .build();
 
         return new HashedReceiveDataRules(
+                receiveDataRules.getUpdateTimeMs(),
                 receiveDataRulesCopy,
                 uuidToFlattenedDictMap,
                 fieldNameToSaltMap,
@@ -306,8 +315,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
         return NullSafe.get(
                 term,
                 ExpressionTerm::getField,
-                field ->
-                        field + ReceiveDataRuleSetService.HASHED_FIELD_NAME_SUFFIX);
+                HashedReceiveDataRules::markFieldAsHashed);
     }
 
     private String hashValue(final String value,

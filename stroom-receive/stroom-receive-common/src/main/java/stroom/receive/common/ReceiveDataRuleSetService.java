@@ -29,8 +29,6 @@ import java.util.List;
 
 public interface ReceiveDataRuleSetService {
 
-    String HASHED_FIELD_NAME_SUFFIX = "___!hashed!";
-
     /**
      * @return The {@link ReceiveDataRules}. Some implementations may obfuscate expression
      * term values.

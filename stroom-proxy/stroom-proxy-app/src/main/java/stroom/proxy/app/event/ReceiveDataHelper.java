@@ -2,10 +2,8 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.ReceiptIdGenerator;
@@ -116,26 +114,20 @@ public class ReceiveDataHelper {
                     e, errAttributeMap);
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
+
             LOGGER.debug(() -> LogUtil.message("\"handleException()\",{},\"{}\"",
-                    CSVFormatter.format(status.getAttributeMap(), true),
+                    CSVFormatter.format(stroomStreamException.getAttributeMap(), true),
                     CSVFormatter.escape(stroomStreamException.getMessage())));
 
             final long durationMs = System.currentTimeMillis() - startTime.toEpochMilli();
-            final StroomStatusCode stroomStatusCode = status.getStroomStatusCode();
-            final EventType eventType = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(stroomStatusCode)
-                    ? EventType.REJECT
-                    : EventType.ERROR;
 
             logStream.log(
                     RECEIVE_LOG,
-                    status.getAttributeMap(),
-                    eventType,
+                    stroomStreamException,
                     request.getRequestURI(),
-                    stroomStatusCode,
                     receiptId.toString(),
                     -1,
-                    durationMs,
-                    e.getMessage());
+                    durationMs);
 
             throw stroomStreamException;
         }

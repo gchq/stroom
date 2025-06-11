@@ -40,8 +40,9 @@ class DataReceiptPolicyAttributeMapFilter implements AttributeMapFilter {
     @Override
     public boolean filter(final AttributeMap attributeMap) {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
+        // Will throw a StroomStreamException if rejected, but handle REJECT just in case.
         final ReceiveAction action = checker.check(attributeMap);
-        final boolean filterOutcome = action.getFilterOutcome(() ->
+        final boolean filterOutcome = action.toFilterResultOrThrow(() ->
                 new StroomStreamException(StroomStatusCode.REJECTED_BY_POLICY_RULES, attributeMap));
         LOGGER.debug("filter() - filterOutcome: {}, action: {}, attributeMap: {}",
                 filterOutcome, action, attributeMap);

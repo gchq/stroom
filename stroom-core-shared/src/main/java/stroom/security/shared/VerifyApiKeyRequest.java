@@ -47,9 +47,23 @@ public class VerifyApiKeyRequest {
     public String toString() {
         return "VerifyApiKeyRequest{" +
                // Just output the prefix bit
-               "apiKey='" + NullSafe.get(apiKey, k -> k.substring(0, 15)) + '\'' +
+               "apiKey='" + getPrefix(apiKey) +
                ", requiredAppPermissions=" + requiredAppPermissions +
                '}';
+    }
+
+    private String getPrefix(final String apiKey) {
+        if (apiKey == null) {
+            return null;
+        } else if (apiKey.length() < 15) {
+            return apiKey;
+        } else {
+            try {
+                return apiKey.substring(0, 15);
+            } catch (Exception e) {
+                return "ERROR";
+            }
+        }
     }
 
     @Override

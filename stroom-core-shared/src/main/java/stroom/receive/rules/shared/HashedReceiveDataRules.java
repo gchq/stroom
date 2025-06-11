@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @JsonInclude(Include.NON_NULL)
 public class HashedReceiveDataRules {
 
+    public static final String HASHED_FIELD_NAME_SUFFIX = "___!hashed!";
+
     /**
      * The time this snapshot of the rules was taken. Mostly here for debugging.
      */
@@ -196,7 +198,10 @@ public class HashedReceiveDataRules {
         final List<ReceiveDataRule> rules = NullSafe.list(receiveDataRules.getRules());
         for (final ReceiveDataRule rule : rules) {
             final ExpressionOperator expression = rule.getExpression();
-            final List<String> fieldsInRule = ExpressionUtil.fields(expression);
+            //noinspection SimplifyStreamApiCallChains // Cos GWT
+            final List<String> fieldsInRule = ExpressionUtil.fields(expression).stream()
+                    .map(HashedReceiveDataRules::stripHashedSuffix)
+                    .collect(Collectors.toList());
             for (final String fieldInRule : fieldsInRule) {
                 if (!fieldNames.contains(fieldInRule)) {
                     throw new IllegalArgumentException(
@@ -257,5 +262,22 @@ public class HashedReceiveDataRules {
                 uuidToFlattenedDictMap,
                 fieldNameToSaltMap,
                 hashAlgorithm);
+    }
+
+    public static boolean isHashedField(final String fieldName) {
+        return NullSafe.test(fieldName, name -> name.endsWith(HASHED_FIELD_NAME_SUFFIX));
+    }
+
+    public static String markFieldAsHashed(final String fieldName) {
+        return Objects.requireNonNull(fieldName) + HASHED_FIELD_NAME_SUFFIX;
+    }
+
+    public static String stripHashedSuffix(final String fieldName) {
+        Objects.requireNonNull(fieldName);
+        if (fieldName.endsWith(HASHED_FIELD_NAME_SUFFIX)) {
+            return fieldName.substring(0, fieldName.length() - HASHED_FIELD_NAME_SUFFIX.length());
+        } else {
+            return fieldName;
+        }
     }
 }
