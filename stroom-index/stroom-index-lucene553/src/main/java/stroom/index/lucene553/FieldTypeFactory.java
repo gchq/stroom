@@ -69,25 +69,25 @@ final class FieldTypeFactory {
         fieldType.setStoreTermVectorPositions(indexField.isTermPositions());
         fieldType.setStoreTermVectorPayloads(false);
 
-        if (stroom.datasource.api.v2.FieldType.ID.equals(indexField.getFldType())) {
+        if (stroom.query.api.datasource.FieldType.ID.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(Integer.MAX_VALUE);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (stroom.datasource.api.v2.FieldType.INTEGER.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.INTEGER.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.INT);
-        } else if (stroom.datasource.api.v2.FieldType.LONG.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.LONG.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (stroom.datasource.api.v2.FieldType.FLOAT.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.FLOAT.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.FLOAT);
-        } else if (stroom.datasource.api.v2.FieldType.DOUBLE.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.DOUBLE.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.DOUBLE);
-        } else if (stroom.datasource.api.v2.FieldType.DATE.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.DATE.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (stroom.datasource.api.v2.FieldType.LONG.equals(indexField.getFldType())) {
+        } else if (stroom.query.api.datasource.FieldType.LONG.equals(indexField.getFldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
         }

@@ -103,7 +103,8 @@ appConfig:
     # Versioned dirs for dev to allow running multiple stroom instances
     home: "${STROOM_HOME:-~/.stroom/v7/node1a}"
     temp: "${STROOM_TEMP:-/tmp/stroom/v7/node1a}"
-
+  planb:
+    nodeList: [ node2a ]
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}

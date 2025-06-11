@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.QueryKey;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class AbstractQueryComponentSettings implements ComponentSettings, HasSelectionQuery {
+public abstract class AbstractQueryComponentSettings implements HasSelectionQuery {
 
     @JsonProperty
     private final Automate automate;

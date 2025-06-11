@@ -26,6 +26,11 @@ public class KryoDataWriter implements DataWriter {
     }
 
     @Override
+    public void writeShort(final short value) {
+        output.writeShort(value);
+    }
+
+    @Override
     public void writeInt(final int value) {
         output.writeInt(value);
     }
@@ -48,6 +53,12 @@ public class KryoDataWriter implements DataWriter {
     @Override
     public void writeString(final String value) {
         output.writeString(value);
+    }
+
+    @Override
+    public void writeBytes(final byte[] bytes) {
+        output.writeInt(bytes.length);
+        output.write(bytes);
     }
 
     @Override

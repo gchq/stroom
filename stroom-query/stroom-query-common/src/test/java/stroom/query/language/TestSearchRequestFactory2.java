@@ -1,11 +1,11 @@
 package stroom.query.language;
 
-import stroom.datasource.api.v2.QueryField;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.util.json.JsonUtil;

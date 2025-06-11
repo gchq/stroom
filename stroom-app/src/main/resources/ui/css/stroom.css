@@ -646,7 +646,6 @@ select option:disabled {
 .info-page {
 	color: var(--text-color);
 	padding: 5px;
-	padding-top: 0;
 	white-space: nowrap;
 }
 

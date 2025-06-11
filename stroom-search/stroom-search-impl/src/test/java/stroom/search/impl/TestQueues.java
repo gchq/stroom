@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.Event;

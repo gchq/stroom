@@ -1,6 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;

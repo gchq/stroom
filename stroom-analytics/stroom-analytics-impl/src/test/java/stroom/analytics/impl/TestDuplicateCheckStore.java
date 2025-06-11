@@ -6,6 +6,7 @@ import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
@@ -47,6 +48,7 @@ class TestDuplicateCheckStore {
     private static final char[] CHARS = ALPHANUMERIC.toCharArray();
 
     private final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+    private final ByteBuffers byteBuffers = new ByteBuffers(byteBufferFactory);
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Mock
@@ -65,6 +67,7 @@ class TestDuplicateCheckStore {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
+                    byteBuffers,
                     duplicateCheckStoreConfig,
                     serde,
                     () -> executorService,
@@ -117,6 +120,7 @@ class TestDuplicateCheckStore {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
+                    byteBuffers,
                     duplicateCheckStoreConfig,
                     serde,
                     () -> executorService,
@@ -163,6 +167,7 @@ class TestDuplicateCheckStore {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
+                    byteBuffers,
                     duplicateCheckStoreConfig,
                     serde,
                     () -> executorService,
@@ -221,6 +226,7 @@ class TestDuplicateCheckStore {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
+                    byteBuffers,
                     duplicateCheckStoreConfig,
                     serde,
                     () -> executorService,
@@ -274,6 +280,7 @@ class TestDuplicateCheckStore {
             final DuplicateCheckStore duplicateCheckStore = new DuplicateCheckStore(
                     mockDuplicateCheckDirs,
                     byteBufferFactory,
+                    byteBuffers,
                     duplicateCheckStoreConfig,
                     serde,
                     () -> executorService,

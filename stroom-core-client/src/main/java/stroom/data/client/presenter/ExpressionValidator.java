@@ -1,11 +1,11 @@
 package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;

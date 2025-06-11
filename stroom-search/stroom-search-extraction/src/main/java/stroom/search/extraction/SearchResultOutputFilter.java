@@ -20,7 +20,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;

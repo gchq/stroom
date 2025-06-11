@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
 import stroom.statistics.impl.sql.SqlBuilder;

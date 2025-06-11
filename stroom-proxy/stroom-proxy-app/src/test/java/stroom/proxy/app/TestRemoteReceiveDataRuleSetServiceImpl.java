@@ -1,16 +1,16 @@
 package stroom.proxy.app;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.shared.Doc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMap.Builder;
 import stroom.meta.api.AttributeMapper;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;

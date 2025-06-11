@@ -63,6 +63,7 @@ public class FileTransferServiceImpl implements FileTransferService {
      * @param fileHash
      * @param fileName
      * @param inputStream
+     * @param synchroniseMerge
      * @throws IOException
      */
     @Override
@@ -70,7 +71,8 @@ public class FileTransferServiceImpl implements FileTransferService {
                             final long metaId,
                             final String fileHash,
                             final String fileName,
+                            final boolean synchroniseMerge,
                             final InputStream inputStream) throws IOException {
-        partReceiver.receiveRemotePart(createTime, metaId, fileHash, fileName, inputStream);
+        partReceiver.receiveRemotePart(createTime, metaId, fileHash, fileName, synchroniseMerge, inputStream);
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.TokenException;
+import stroom.query.api.token.TokenException;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;

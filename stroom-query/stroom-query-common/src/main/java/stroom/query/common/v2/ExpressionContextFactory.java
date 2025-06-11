@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.ValNull;

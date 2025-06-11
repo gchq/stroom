@@ -16,8 +16,8 @@
 
 package stroom.ui.config.shared;
 
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

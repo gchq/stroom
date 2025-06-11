@@ -34,10 +34,11 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
+import stroom.test.ContentImportService;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -77,9 +78,14 @@ class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
     private StoreCreationTool storeCreationTool;
     @Inject
     private MergeProcessor mergeProcessor;
+    @Inject
+    private ContentImportService contentImportService;
 
     @Test
     void test() throws IOException {
+        // Import Plan B samples.
+        contentImportService.importPlanBSamples();
+
         // Load reference data and create processing pipelines.
         commonTranslationTestHelper.createReferenceFeeds();
 
@@ -181,7 +187,8 @@ class TestPlanBLookupTask extends AbstractProcessIntegrationTest {
     private DocRef createStateDoc(final String name) {
         final DocRef docRef = stateDocStore.createDocument(name);
         PlanBDoc doc = stateDocStore.readDocument(docRef);
-        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).settings(TemporalStateSettings.builder().build()).build();
+        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).settings(
+                new TemporalStateSettings.Builder().build()).build();
         stateDocStore.writeDocument(doc);
         return docRef;
     }

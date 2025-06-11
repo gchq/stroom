@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.Format.Type;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 

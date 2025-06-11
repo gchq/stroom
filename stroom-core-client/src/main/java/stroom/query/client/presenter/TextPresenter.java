@@ -25,7 +25,7 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;

@@ -18,7 +18,7 @@
 package stroom.search.elastic.search;
 
 import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;

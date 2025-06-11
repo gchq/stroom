@@ -1,6 +1,5 @@
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
@@ -13,6 +12,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.AuditUtil;
 import stroom.util.io.ByteSizeUnit;
@@ -196,7 +196,7 @@ class TestIndexShardDaoImpl {
         indexShardDao.create(indexShardKey, indexVolume, nodeName, "1.0-test");
 
         final List<QueryField> fields = IndexShardFields.getFields();
-        assertThat(fields.size()).isEqualTo(10);
+        assertThat(fields.size()).isEqualTo(12);
 
         for (final QueryField field : fields) {
             final FieldIndex fieldIndex = new FieldIndex();

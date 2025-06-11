@@ -27,12 +27,12 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QLVisResult;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QLVisResult;
+import stroom.query.api.Result;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
 import stroom.query.shared.QueryTablePreferences;
@@ -364,14 +364,14 @@ public class QueryEditPresenter
         }
     }
 
-    void start() {
+    public void start() {
         if (queryModel.isSearching()) {
             queryModel.stop();
         }
         run(true, true);
     }
 
-    void stop() {
+    public void stop() {
         queryModel.stop();
     }
 

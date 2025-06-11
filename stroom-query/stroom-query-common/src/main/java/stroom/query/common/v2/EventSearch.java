@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.task.api.TaskContext;
 
 import java.util.concurrent.CompletableFuture;

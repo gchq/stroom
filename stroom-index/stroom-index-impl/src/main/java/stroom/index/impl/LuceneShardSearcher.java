@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.IndexShard;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.task.api.TaskContext;

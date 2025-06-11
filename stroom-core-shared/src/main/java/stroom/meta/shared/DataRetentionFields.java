@@ -1,6 +1,6 @@
 package stroom.meta.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 public final class DataRetentionFields {
 

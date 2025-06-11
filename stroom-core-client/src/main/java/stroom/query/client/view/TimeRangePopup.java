@@ -16,8 +16,8 @@
 
 package stroom.query.client.view;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.TimeRange;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
@@ -92,16 +92,7 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         final String from = normalise(timeFrom.getValue());
         final String to = normalise(timeTo.getValue());
 
-        String name = TimeRanges.ALL_TIME.getName();
-        if (from != null && to != null) {
-            name = "Between " + from + " and " + to;
-        } else if (from != null) {
-            name = "After " + from;
-        } else if (to != null) {
-            name = "Before " + to;
-        }
-
-        final TimeRange range = new TimeRange(name, Condition.BETWEEN, from, to);
+        final TimeRange range = new TimeRange(null, Condition.BETWEEN, from, to);
         // See if this is a quick select range.
         for (final TimeRange timeRange : TimeRanges.ALL_RANGES) {
             if (timeRange.equals(range)) {
@@ -136,7 +127,7 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
     }
 
     private String normalise(final String string) {
-        if (string != null && string.trim().length() > 0) {
+        if (string != null && !string.trim().isEmpty()) {
             return string.trim();
         }
         return null;

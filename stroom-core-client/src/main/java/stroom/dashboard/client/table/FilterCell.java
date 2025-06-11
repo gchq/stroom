@@ -17,8 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FilterCell.ViewData;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.cell.client.AbstractInputCell;

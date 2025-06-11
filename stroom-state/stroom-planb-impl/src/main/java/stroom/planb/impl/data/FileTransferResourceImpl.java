@@ -87,6 +87,7 @@ public class FileTransferResourceImpl implements FileTransferResource {
                              final long metaId,
                              final String fileHash,
                              final String fileName,
+                             final boolean synchroniseMerge,
                              final InputStream inputStream) {
         final Supplier<String> messageDetail = () -> LogUtil.message(
                 "createTime={}, metaId={}, fileHash={}, fileName={}",
@@ -97,7 +98,13 @@ public class FileTransferResourceImpl implements FileTransferResource {
 
         try {
             LOGGER.debug(() -> "Receiving part: " + messageDetail.get());
-            fileTransferServiceProvider.get().receivePart(createTime, metaId, fileHash, fileName, inputStream);
+            fileTransferServiceProvider.get().receivePart(
+                    createTime,
+                    metaId,
+                    fileHash,
+                    fileName,
+                    synchroniseMerge,
+                    inputStream);
             LOGGER.debug(() -> "Successfully received part: " + messageDetail.get());
             return Response
                     .ok()

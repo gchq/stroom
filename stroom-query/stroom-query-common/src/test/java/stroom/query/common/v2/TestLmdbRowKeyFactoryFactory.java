@@ -17,8 +17,9 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.TimeFilter;
+import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
+import stroom.query.api.Column;
+import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -165,7 +166,7 @@ public class TestLmdbRowKeyFactoryFactory {
     }
 
     private ByteBufferFactory getByteBufferFactory() {
-        return new ByteBufferFactory() {
+        return new SimpleByteBufferFactory() {
         };
     }
 

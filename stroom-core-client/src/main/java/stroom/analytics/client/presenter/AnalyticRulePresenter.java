@@ -28,10 +28,12 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class AnalyticRulePresenter
@@ -44,6 +46,8 @@ public class AnalyticRulePresenter
     private static final TabData DUPLICATE_MANAGEMENT = new TabDataImpl("Duplicate Management");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
+    private final AnalyticQueryEditPresenter analyticQueryEditPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
@@ -58,6 +62,7 @@ public class AnalyticRulePresenter
                                  final DocumentUserPermissionsTabProvider<AnalyticRuleDoc>
                                          documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.analyticQueryEditPresenter = analyticQueryEditPresenter;
 
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
@@ -87,6 +92,21 @@ public class AnalyticRulePresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.OK == action
+            && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            analyticQueryEditPresenter.start();
+            return true;
+        } else if (Action.CLOSE == action
+                   && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            analyticQueryEditPresenter.stop();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

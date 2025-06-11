@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.Param;
-
 import java.text.ParseException;
 
 abstract class AbstractManyChildFunction extends AbstractFunction {

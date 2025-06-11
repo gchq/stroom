@@ -18,7 +18,6 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

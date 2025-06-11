@@ -17,8 +17,6 @@
 package stroom.processor.impl;
 
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -27,6 +25,9 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -85,7 +86,10 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer consumer) {
         securityContext.secure(PERMISSION, () ->
                 processorTaskDao.search(criteria, fieldIndex, consumer));
     }

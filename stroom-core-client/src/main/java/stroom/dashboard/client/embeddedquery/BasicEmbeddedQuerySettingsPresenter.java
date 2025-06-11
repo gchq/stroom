@@ -24,6 +24,8 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.query.client.QueryClient;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.security.shared.DocumentPermission;
@@ -32,25 +34,35 @@ import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
 public class BasicEmbeddedQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView>
-        implements Focus {
+        implements Focus, BasicEmbeddedQuerySettingsUiHandlers {
 
     static final int TEN_SECONDS = 10000;
 
     private final DocSelectionBoxPresenter querySelectionPresenter;
+    private final Provider<DocSelectionPopup> docSelectionPopupProvider;
+    private final QueryClient queryClient;
+    private QueryDoc loaded;
 
     @Inject
     public BasicEmbeddedQuerySettingsPresenter(final EventBus eventBus,
                                                final BasicEmbeddedQuerySettingsView view,
-                                               final DocSelectionBoxPresenter querySelectionPresenter) {
+                                               final DocSelectionBoxPresenter querySelectionPresenter,
+                                               final Provider<DocSelectionPopup> docSelectionPopupProvider,
+                                               final QueryClient queryClient) {
         super(eventBus, view);
         this.querySelectionPresenter = querySelectionPresenter;
+        this.docSelectionPopupProvider = docSelectionPopupProvider;
+        this.queryClient = queryClient;
+        view.setUiHandlers(this);
 
         view.setQuerySelectionView(querySelectionPresenter.getView());
         querySelectionPresenter.setIncludedTypes(QueryDoc.TYPE);
@@ -75,6 +87,8 @@ public class BasicEmbeddedQuerySettingsPresenter
         super.read(componentConfig);
 
         final EmbeddedQueryComponentSettings settings = (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+        getView().setReference(settings.reference());
+        querySelectionPresenter.setEnabled(settings.reference());
         setQuery(settings.getQueryRef());
 
         Automate automate = settings.getAutomate();
@@ -102,12 +116,44 @@ public class BasicEmbeddedQuerySettingsPresenter
 
     private EmbeddedQueryComponentSettings writeSettings(final EmbeddedQueryComponentSettings settings) {
         QueryTablePreferences queryTablePreferences = settings.getQueryTablePreferences();
+
+        QueryDoc embeddedQueryDoc = null;
+        if (!getView().isReference()) {
+            embeddedQueryDoc = settings.getEmbeddedQueryDoc();
+            if (loaded != null) {
+                embeddedQueryDoc = loaded;
+                if (queryTablePreferences == null &&
+                    embeddedQueryDoc.getQueryTablePreferences() != null) {
+                    queryTablePreferences = embeddedQueryDoc.getQueryTablePreferences();
+                }
+            }
+
+            if (embeddedQueryDoc == null) {
+                final long now = System.currentTimeMillis();
+                embeddedQueryDoc = new QueryDoc(
+                        QueryDoc.TYPE,
+                        "embedded",
+                        "embedded",
+                        "embedded",
+                        now,
+                        now,
+                        "embedded",
+                        "embedded",
+                        null,
+                        null,
+                        "",
+                        null);
+            }
+        }
+
         QueryTablePreferences.Builder builder = QueryTablePreferences.copy(queryTablePreferences);
         builder.pageSize(getView().getPageSize());
 
         return settings
                 .copy()
+                .reference(getView().isReference())
                 .queryRef(getQuery())
+                .embeddedQueryDoc(embeddedQueryDoc)
                 .automate(Automate.builder()
                         .open(getView().isQueryOnOpen())
                         .refresh(getView().isAutoRefresh())
@@ -115,6 +161,25 @@ public class BasicEmbeddedQuerySettingsPresenter
                         .build())
                 .queryTablePreferences(builder.build())
                 .build();
+    }
+
+    @Override
+    public void onCopyQuery() {
+        final DocSelectionPopup chooser = docSelectionPopupProvider.get();
+        chooser.setCaption("Choose Query To Copy");
+        chooser.setIncludedTypes(QueryDoc.TYPE);
+        chooser.setRequiredPermissions(DocumentPermission.USE);
+        chooser.show(doc -> {
+            if (doc != null) {
+                queryClient.loadQueryDoc(doc, queryDoc -> loaded = queryDoc, this);
+                AlertEvent.fireInfo(this, "Copy of '" + loaded.getName() + "' complete", null);
+            }
+        });
+    }
+
+    @Override
+    public void onReference() {
+        querySelectionPresenter.setEnabled(getView().isReference());
     }
 
     @Override
@@ -147,7 +212,8 @@ public class BasicEmbeddedQuerySettingsPresenter
                 (EmbeddedQueryComponentSettings) componentConfig.getSettings();
         final EmbeddedQueryComponentSettings newSettings = writeSettings(oldSettings);
 
-        final boolean equal = Objects.equals(oldSettings.getQueryRef(), newSettings.getQueryRef()) &&
+        final boolean equal = Objects.equals(oldSettings.getReference(), newSettings.getReference()) &&
+                              Objects.equals(oldSettings.getQueryRef(), newSettings.getQueryRef()) &&
                               Objects.equals(oldSettings.getAutomate(), newSettings.getAutomate()) &&
                               Objects.equals(oldSettings.getQueryTablePreferences(),
                                       newSettings.getQueryTablePreferences());
@@ -156,9 +222,13 @@ public class BasicEmbeddedQuerySettingsPresenter
     }
 
     public interface BasicEmbeddedQuerySettingsView
-            extends BasicSettingsView {
+            extends BasicSettingsView, HasUiHandlers<BasicEmbeddedQuerySettingsUiHandlers> {
 
         void setQuerySelectionView(View view);
+
+        boolean isReference();
+
+        void setReference(boolean reference);
 
         boolean isQueryOnOpen();
 

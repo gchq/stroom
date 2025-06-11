@@ -27,12 +27,13 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Row;
+import stroom.query.api.Column;
+import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.language.functions.ExpressionContext;
@@ -143,12 +144,14 @@ class TestDuplicateCheckFactoryImpl {
         final LmdbEnvDirFactory lmdbEnvDirFactory = new LmdbEnvDirFactory(
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+        final ByteBuffers byteBuffers = new ByteBuffers(byteBufferFactory);
         final DuplicateCheckDirs duplicateCheckDirs = new DuplicateCheckDirs(
                 lmdbEnvDirFactory,
                 new DuplicateCheckStoreConfig());
         return new DuplicateCheckFactoryImpl(
                 duplicateCheckDirs,
                 byteBufferFactory,
+                byteBuffers,
                 new DuplicateCheckStoreConfig(),
                 new DuplicateCheckRowSerde(byteBufferFactory),
                 Executors::newCachedThreadPool);

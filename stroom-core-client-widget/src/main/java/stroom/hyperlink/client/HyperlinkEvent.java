@@ -25,19 +25,30 @@ import com.google.gwt.event.shared.HasHandlers;
 public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
 
     private static Type<Handler> TYPE;
+
     private final Hyperlink hyperlink;
     private final TaskMonitorFactory taskMonitorFactory;
+    private final Object context;
 
     private HyperlinkEvent(final Hyperlink hyperlink,
-                           final TaskMonitorFactory taskMonitorFactory) {
+                           final TaskMonitorFactory taskMonitorFactory,
+                           final Object context) {
         this.hyperlink = hyperlink;
         this.taskMonitorFactory = taskMonitorFactory;
+        this.context = context;
     }
 
     public static void fire(final HasHandlers handlers,
                             final Hyperlink hyperlink,
                             final TaskMonitorFactory taskMonitorFactory) {
-        handlers.fireEvent(new HyperlinkEvent(hyperlink, taskMonitorFactory));
+        handlers.fireEvent(new HyperlinkEvent(hyperlink, taskMonitorFactory, null));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final Hyperlink hyperlink,
+                            final TaskMonitorFactory taskMonitorFactory,
+                            final Object context) {
+        handlers.fireEvent(new HyperlinkEvent(hyperlink, taskMonitorFactory, context));
     }
 
     public static Type<Handler> getType() {
@@ -63,6 +74,10 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
 
     public TaskMonitorFactory getTaskMonitorFactory() {
         return taskMonitorFactory;
+    }
+
+    public Object getContext() {
+        return context;
     }
 
     public interface Handler extends EventHandler {

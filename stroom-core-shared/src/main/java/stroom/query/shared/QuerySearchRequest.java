@@ -16,10 +16,10 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

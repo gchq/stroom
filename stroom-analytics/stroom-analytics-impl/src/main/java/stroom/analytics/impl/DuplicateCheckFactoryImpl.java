@@ -7,7 +7,8 @@ import stroom.analytics.shared.DuplicateCheckRows;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.query.api.v2.Row;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.util.logging.LambdaLogger;
@@ -31,6 +32,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     @Inject
     public DuplicateCheckFactoryImpl(final DuplicateCheckDirs duplicateCheckDirs,
                                      final ByteBufferFactory byteBufferFactory,
+                                     final ByteBuffers byteBuffers,
                                      final DuplicateCheckStoreConfig duplicateCheckStoreConfig,
                                      final DuplicateCheckRowSerde duplicateCheckRowSerde,
                                      final Provider<Executor> executorProvider) {
@@ -39,6 +41,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
         pool = new DuplicateCheckStorePool<>(k -> new DuplicateCheckStore(
                 duplicateCheckDirs,
                 byteBufferFactory,
+                byteBuffers,
                 analyticResultStoreConfig,
                 duplicateCheckRowSerde,
                 executorProvider,

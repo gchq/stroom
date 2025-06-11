@@ -16,8 +16,8 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.IndexField;
 
 public interface IndexFieldCache {
 

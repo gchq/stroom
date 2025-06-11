@@ -14,7 +14,7 @@ import java.util.Objects;
 @Deprecated
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
+public final class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final boolean enabled;

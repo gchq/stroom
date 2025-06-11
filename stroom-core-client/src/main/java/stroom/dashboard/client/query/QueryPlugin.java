@@ -20,12 +20,11 @@ import stroom.dashboard.client.main.ComponentRegistry;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 
 public class QueryPlugin {
 
     @Inject
-    public QueryPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
+    public QueryPlugin(final ComponentRegistry componentRegistry,
                        final Provider<QueryPresenter> provider) {
         componentRegistry.register(QueryPresenter.TYPE, provider);
     }

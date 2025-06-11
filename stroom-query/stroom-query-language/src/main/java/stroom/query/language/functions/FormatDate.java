@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.time.ZoneId;

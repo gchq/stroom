@@ -16,7 +16,6 @@
 
 package stroom.planb.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -29,14 +28,19 @@ import stroom.planb.impl.data.FileTransferResourceImpl;
 import stroom.planb.impl.data.FileTransferService;
 import stroom.planb.impl.data.FileTransferServiceImpl;
 import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
+import stroom.planb.impl.data.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
+import stroom.query.api.QueryNodeResolver;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.language.functions.StateProvider;
+import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -65,10 +69,17 @@ public class PlanBModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(PlanBDocCacheImpl.class);
 
+        GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
+                .addBinding(PlanBShardInfoServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+                .addBinding(PlanBShardInfoServiceImpl.class);
+
         // State
         bind(PlanBDocStore.class).to(PlanBDocStoreImpl.class);
         bind(FileTransferClient.class).to(FileTransferClientImpl.class);
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
+
+        bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(PlanBDocStoreImpl.class);
@@ -82,7 +93,8 @@ public class PlanBModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)
-                .bind(FileTransferResourceImpl.class);
+                .bind(FileTransferResourceImpl.class)
+                .bind(PlanBRemoteQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);

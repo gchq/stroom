@@ -4,7 +4,7 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;

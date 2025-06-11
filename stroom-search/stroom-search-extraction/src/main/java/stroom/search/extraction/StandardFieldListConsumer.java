@@ -16,7 +16,7 @@
 
 package stroom.search.extraction;
 
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;

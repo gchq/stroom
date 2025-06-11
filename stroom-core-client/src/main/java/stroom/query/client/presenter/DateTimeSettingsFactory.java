@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
-import stroom.expression.api.DateTimeSettings;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.DateTimeSettings;
 import stroom.ui.config.shared.UserPreferences;
 
 import javax.inject.Inject;

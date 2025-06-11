@@ -36,6 +36,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.query.impl.datasource.DataSourceModule());
         install(new stroom.dashboard.impl.logging.LoggingModule());
         install(new stroom.dashboard.impl.script.ScriptModule());
+        install(new stroom.gitrepo.impl.GitRepoModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());

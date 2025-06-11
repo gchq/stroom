@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.token.AbstractQueryTest;
 

@@ -17,26 +17,7 @@
 
 package stroom.state.impl;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.language.functions.FieldIndex;
-import stroom.state.impl.dao.State;
-import stroom.state.impl.dao.StateDao;
-import stroom.state.impl.dao.StateFields;
-import stroom.state.impl.dao.StateRequest;
-
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 class TestStateDao {

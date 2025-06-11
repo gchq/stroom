@@ -10,7 +10,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;

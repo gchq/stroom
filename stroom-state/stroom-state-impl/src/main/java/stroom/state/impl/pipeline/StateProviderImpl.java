@@ -26,6 +26,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+@Singleton
 public class StateProviderImpl implements StateProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StateProviderImpl.class);
@@ -51,16 +53,16 @@ public class StateProviderImpl implements StateProvider {
     }
 
     @Override
-    public Val getState(final String mapName, final String keyName, final Instant effectiveTimeMs) {
+    public Val getState(final String mapName, final String keyName, final long effectiveTimeMs) {
         try {
             final String keyspace = mapName.toLowerCase(Locale.ROOT);
             final Optional<StateDoc> stateOptional = stateDocMap.computeIfAbsent(keyspace, k ->
                     Optional.ofNullable(stateDocCache.get(keyspace)));
             return stateOptional
                     .map(stateDoc -> {
-                        final Key key = new Key(keyspace, keyName, effectiveTimeMs);
+                        final Key key = new Key(keyspace, keyName, Instant.ofEpochMilli(effectiveTimeMs));
                         return cache.get(key,
-                                k -> getState(stateDoc, keyspace, keyName, effectiveTimeMs));
+                                k -> getState(stateDoc, keyspace, keyName, Instant.ofEpochMilli(effectiveTimeMs)));
                     })
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {

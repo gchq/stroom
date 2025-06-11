@@ -1,9 +1,9 @@
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
-import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.QueryField;
 
 import jakarta.inject.Inject;
 

@@ -16,7 +16,7 @@
 
 package stroom.index.lucene553.analyser;
 
-import stroom.datasource.api.v2.AnalyzerType;
+import stroom.query.api.datasource.AnalyzerType;
 
 import org.apache.lucene553.analysis.Analyzer;
 import org.apache.lucene553.analysis.core.StopAnalyzer;

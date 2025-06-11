@@ -1,12 +1,12 @@
 package stroom.receive.rules.shared;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NullSafe;
 

@@ -1,10 +1,10 @@
 package stroom.meta.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
 
 import java.util.Objects;
 import java.util.Set;

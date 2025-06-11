@@ -1,7 +1,7 @@
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnValueSelection;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnValueSelection;
 
 public interface FilterCellManager {
 

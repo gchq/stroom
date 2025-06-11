@@ -113,6 +113,8 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-feed:stroom-feed-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-api')
@@ -149,7 +151,6 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-processor:stroom-processor-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-impl')
@@ -414,7 +415,7 @@ clean {
     delete releaseBuildDir
 }
 
-// Generate the confi.yml files for the zip and docker distributions
+// Generate the config.yml files for the zip and docker distributions
 tasks.register('generateConfigFiles', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = "stroom.dist.GenerateDistributionConfig"

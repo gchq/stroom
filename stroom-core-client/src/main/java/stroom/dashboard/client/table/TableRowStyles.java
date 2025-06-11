@@ -3,10 +3,9 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.cf.ConditionalFormattingDynamicStyles;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
-import stroom.query.api.v2.TextAttributes;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingType;
+import stroom.query.api.TextAttributes;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.client.presenter.ClassNameBuilder;
 
@@ -16,7 +15,6 @@ import com.google.gwt.user.cellview.client.RowStyles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class TableRowStyles implements RowStyles<TableRow> {
 

@@ -26,7 +26,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;

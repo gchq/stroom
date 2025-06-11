@@ -17,28 +17,11 @@
 
 package stroom.state;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.ValDate;
-import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.dao.Session;
-import stroom.state.impl.dao.SessionDao;
-import stroom.state.impl.dao.SessionFields;
-import stroom.state.impl.dao.TemporalStateRequest;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled // ScyllaDB based state store is defunct
 @ExtendWith(MockitoExtension.class)

@@ -1,6 +1,6 @@
 package stroom.db.util;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 

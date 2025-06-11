@@ -2,8 +2,8 @@ package stroom.query.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.api.v2.FindResultStoreCriteria;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.FindResultStoreCriteria;
+import stroom.query.api.QueryKey;
 import stroom.query.shared.DestroyStoreRequest;
 import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.ResultStoreResponse;

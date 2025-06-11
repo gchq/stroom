@@ -1,6 +1,6 @@
 package stroom.dashboard.client.main;
 
-import stroom.query.api.v2.Param;
+import stroom.query.api.Param;
 
 import java.util.List;
 

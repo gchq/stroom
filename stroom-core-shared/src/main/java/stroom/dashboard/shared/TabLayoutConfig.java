@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
 @JsonInclude(Include.NON_NULL)
-public class TabLayoutConfig extends LayoutConfig {
+public final class TabLayoutConfig extends LayoutConfig {
 
     @JsonIgnore
     private final String id;

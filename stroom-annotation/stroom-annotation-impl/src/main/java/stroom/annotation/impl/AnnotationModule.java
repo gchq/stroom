@@ -18,9 +18,9 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;

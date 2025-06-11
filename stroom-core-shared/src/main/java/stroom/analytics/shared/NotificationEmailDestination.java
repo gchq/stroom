@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class NotificationEmailDestination extends NotificationDestination {
+public final class NotificationEmailDestination extends NotificationDestination {
 
     @JsonProperty
     private final String to;

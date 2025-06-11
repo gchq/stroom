@@ -1,7 +1,7 @@
 package stroom.preferences.client;
 
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
 import stroom.widget.customdatebox.client.MomentJs;

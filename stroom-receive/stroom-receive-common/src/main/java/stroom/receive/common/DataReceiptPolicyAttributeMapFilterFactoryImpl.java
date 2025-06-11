@@ -17,13 +17,13 @@
 
 package stroom.receive.common;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapper;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;

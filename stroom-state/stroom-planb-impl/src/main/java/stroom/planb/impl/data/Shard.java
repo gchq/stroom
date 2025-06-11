@@ -1,6 +1,6 @@
 package stroom.planb.impl.data;
 
-import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Db;
 import stroom.planb.shared.PlanBDoc;
 
 import java.nio.file.Path;
@@ -18,9 +18,19 @@ public interface Shard {
     void merge(Path sourceDir);
 
     /**
+     * Delete old data in the shard.
+     */
+    long deleteOldData(PlanBDoc doc);
+
+    /**
      * Condense data in the shard.
      */
-    void condense(PlanBDoc doc);
+    long condense(PlanBDoc doc);
+
+    /**
+     * Compact data in the shard.
+     */
+    void compact();
 
     /**
      * Determine if we are allowed to create a snapshot or if the snapshot we have is already the latest.
@@ -41,7 +51,7 @@ public interface Shard {
      * @param <R>
      * @return
      */
-    <R> R get(Function<AbstractDb<?, ?>, R> function);
+    <R> R get(Function<Db<?, ?>, R> function);
 
     /**
      * Close the DB if it isn't currently in use for read or write.
@@ -52,7 +62,7 @@ public interface Shard {
     /**
      * Delete the DB if the associated doc has been deleted.
      */
-    void delete();
+    boolean delete();
 
     /**
      * Get the Plan B doc associated with this shard.
@@ -60,4 +70,11 @@ public interface Shard {
      * @return The Plan B doc associated with this shard.
      */
     PlanBDoc getDoc();
+
+    /**
+     * Get information about the environment and associated databases as a JSON string.
+     *
+     * @return Information about the environment and associated databases as a JSON string.
+     */
+    String getInfo();
 }

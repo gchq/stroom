@@ -21,7 +21,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.task.client.TaskMonitorFactory;

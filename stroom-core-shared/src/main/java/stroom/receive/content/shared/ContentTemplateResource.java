@@ -1,6 +1,6 @@
 package stroom.receive.content.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

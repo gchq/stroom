@@ -17,7 +17,7 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryInfo;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.TaskMonitorFactory;

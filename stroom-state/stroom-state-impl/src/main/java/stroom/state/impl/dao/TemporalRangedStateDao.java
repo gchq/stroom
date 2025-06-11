@@ -1,7 +1,7 @@
 package stroom.state.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -45,16 +45,16 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
     private static final CqlIdentifier COLUMN_VALUE_TYPE = CqlIdentifier.fromCql("value_type");
     private static final CqlIdentifier COLUMN_VALUE = CqlIdentifier.fromCql("value");
     private static final Map<String, ScyllaDbColumn> COLUMN_MAP = Map.of(
-            TemporalRangedStateFields.KEY_START,
-            new ScyllaDbColumn(TemporalRangedStateFields.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
-            TemporalRangedStateFields.KEY_END,
-            new ScyllaDbColumn(TemporalRangedStateFields.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
-            TemporalRangedStateFields.EFFECTIVE_TIME,
-            new ScyllaDbColumn(TemporalRangedStateFields.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
-            TemporalRangedStateFields.VALUE_TYPE,
-            new ScyllaDbColumn(TemporalRangedStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
-            TemporalRangedStateFields.VALUE,
-            new ScyllaDbColumn(TemporalRangedStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
+            TemporalRangeStateFields.KEY_START,
+            new ScyllaDbColumn(TemporalRangeStateFields.KEY_START, DataTypes.BIGINT, COLUMN_KEY_START),
+            TemporalRangeStateFields.KEY_END,
+            new ScyllaDbColumn(TemporalRangeStateFields.KEY_END, DataTypes.BIGINT, COLUMN_KEY_END),
+            TemporalRangeStateFields.EFFECTIVE_TIME,
+            new ScyllaDbColumn(TemporalRangeStateFields.EFFECTIVE_TIME, DataTypes.TIMESTAMP, COLUMN_EFFECTIVE_TIME),
+            TemporalRangeStateFields.VALUE_TYPE,
+            new ScyllaDbColumn(TemporalRangeStateFields.VALUE_TYPE, DataTypes.TINYINT, COLUMN_VALUE_TYPE),
+            TemporalRangeStateFields.VALUE,
+            new ScyllaDbColumn(TemporalRangeStateFields.VALUE, DataTypes.BLOB, COLUMN_VALUE));
 
     public TemporalRangedStateDao(final Provider<CqlSession> sessionProvider, final String tableName) {
         super(sessionProvider, CqlIdentifier.fromCql(tableName));
@@ -135,8 +135,8 @@ public class TemporalRangedStateDao extends AbstractStateDao<TemporalRangedState
                 sessionProvider,
                 table,
                 COLUMN_MAP,
-                TemporalRangedStateFields.VALUE_TYPE,
-                TemporalRangedStateFields.VALUE);
+                TemporalRangeStateFields.VALUE_TYPE,
+                TemporalRangeStateFields.VALUE);
         searchHelper.search(criteria, fieldIndex, dateTimeSettings, consumer);
     }
 

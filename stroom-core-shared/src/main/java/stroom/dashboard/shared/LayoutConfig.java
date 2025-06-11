@@ -35,7 +35,7 @@ import jakarta.xml.bind.annotation.XmlType;
         @JsonSubTypes.Type(value = SplitLayoutConfig.class, name = "splitLayout"),
         @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
 })
-public abstract class LayoutConfig {
+public abstract sealed class LayoutConfig permits SplitLayoutConfig, TabLayoutConfig {
 
     @JsonIgnore
     private transient SplitLayoutConfig parent;

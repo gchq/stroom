@@ -3253,6 +3253,10 @@ paths:
         name: fileName
         schema:
           type: string
+      - in: header
+        name: synchroniseMerge
+        schema:
+          type: boolean
       requestBody:
         content:
           application/octet-stream:
@@ -3523,6 +3527,90 @@ paths:
       summary: Updates a data volume group
       tags:
       - Data Volume Groups
+  /gitRepo/v1/pullFromGit:
+    post:
+      operationId: pullFromGit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: gitRepoDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Pull items from Git
+      tags:
+      - GitRepos
+  /gitRepo/v1/pushToGit:
+    post:
+      operationId: pushToGit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoPushDto"
+        description: gitRepoPushDto
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoResponse"
+          description: default response
+      summary: Push items to Git
+      tags:
+      - GitRepos
+  /gitRepo/v1/{uuid}:
+    get:
+      operationId: fetchGitRepo
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoDoc"
+          description: default response
+      summary: Fetch a GIT repo doc by its UUID
+      tags:
+      - GitRepos
+    put:
+      operationId: updateGitRepo
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitRepoDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitRepoDoc"
+          description: default response
+      summary: Update a GIT repo doc
+      tags:
+      - GitRepos
   /index/v2/addField:
     post:
       operationId: addField
@@ -4942,6 +5030,42 @@ paths:
       summary: Update an state store doc
       tags:
       - State Stores
+  /planb/v1/getStoreInfo:
+    post:
+      operationId: getPlanBStoreInfo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanBShardInfoRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanBShardInfoResponse"
+          description: default response
+      summary: Gets Plan B store info.
+      tags:
+      - Plan B Query
+  /planb/v1/getValue:
+    post:
+      operationId: planBQueryGetValue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanBValue"
+          description: default response
+      summary: Gets a value from a remote Plan B store.
+      tags:
+      - Plan B Query
   /preferences/v1:
     get:
       operationId: fetchUserPreferences
@@ -8112,6 +8236,14 @@ components:
         maxStoreSize:
           type: integer
           format: int64
+        overwrite:
+          type: boolean
+        retention:
+          $ref: "#/components/schemas/RetentionSettings"
+        snapshotSettings:
+          $ref: "#/components/schemas/SnapshotSettings"
+        synchroniseMerge:
+          type: boolean
         type:
           type: string
       required:
@@ -9301,6 +9433,7 @@ components:
             type: string
             enum:
             - DATA_SOURCE
+            - QUERYABLE_FIELD
             - FIELD
             - FUNCTION
             - TITLE
@@ -9318,6 +9451,11 @@ components:
           format: int32
         text:
           type: string
+        textType:
+          type: string
+          enum:
+          - STROOM_QUERY_LANGUAGE
+          - EXPRESSION
     ComponentConfig:
       type: object
       properties:
@@ -10248,6 +10386,7 @@ components:
           - DOCUMENT_FAVOURITES
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
+          - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
@@ -10345,6 +10484,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
@@ -10373,6 +10513,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -10738,6 +10879,8 @@ components:
         properties:
           automate:
             $ref: "#/components/schemas/Automate"
+          embeddedQueryDoc:
+            $ref: "#/components/schemas/QueryDoc"
           lastQueryKey:
             $ref: "#/components/schemas/QueryKey"
           lastQueryNode:
@@ -10746,6 +10889,8 @@ components:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
             $ref: "#/components/schemas/QueryTablePreferences"
+          reference:
+            type: boolean
           selectionFilter:
             type: array
             items:
@@ -10763,7 +10908,9 @@ components:
           type: string
           enum:
           - CREATE
+          - POST_CREATE
           - UPDATE
+          - PRE_DELETE
           - DELETE
           - CLEAR_CACHE
           - CREATE_EXPLORER_NODE
@@ -12089,6 +12236,16 @@ components:
         metaId:
           type: integer
           format: int64
+    GetRequest:
+      type: object
+      properties:
+        eventTime:
+          type: integer
+          format: int64
+        keyName:
+          type: string
+        mapName:
+          type: string
     GetScheduledTimesRequest:
       type: object
       properties:
@@ -12099,6 +12256,55 @@ components:
           format: int64
         scheduleRestriction:
           $ref: "#/components/schemas/ScheduleRestriction"
+    GitRepoDoc:
+      type: object
+      properties:
+        autoPush:
+          type: boolean
+        branch:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        url:
+          type: string
+        username:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+    GitRepoPushDto:
+      type: object
+      properties:
+        commitMessage:
+          type: string
+        gitRepoDoc:
+          $ref: "#/components/schemas/GitRepoDoc"
+    GitRepoResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        ok:
+          type: boolean
     GlobalConfigCriteria:
       type: object
       properties:
@@ -12154,6 +12360,64 @@ components:
         version:
           type: integer
           format: int32
+    HistogramKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalResolution:
+          type: string
+          enum:
+          - YEAR
+          - MONTH
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+        timeZone:
+          $ref: "#/components/schemas/UserTimeZone"
+    HistogramSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          keySchema:
+            $ref: "#/components/schemas/HistogramKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/HistogramValueSchema"
+    HistogramValueSchema:
+      type: object
+      properties:
+        valueType:
+          type: string
+          enum:
+          - ONE
+          - TWO
+          - THREE
+          - FOUR
+          - FIVE
+          - SIX
+          - SEVEN
+          - EIGHT
     HoppingWindow:
       type: object
       allOf:
@@ -12567,6 +12831,27 @@ components:
           type: string
         version:
           type: string
+    Key:
+      type: object
+      properties:
+        keyEnd:
+          type: integer
+          format: int64
+        keyStart:
+          type: integer
+          format: int64
+        time:
+          type: string
+          format: date-time
+    KeyPrefix:
+      type: object
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        val:
+          $ref: "#/components/schemas/Val"
     KeyValueInputComponentSettings:
       type: object
       allOf:
@@ -12881,6 +13166,74 @@ components:
           $ref: "#/components/schemas/Meta"
         pipeline:
           $ref: "#/components/schemas/DocRef"
+    MetricKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalResolution:
+          type: string
+          enum:
+          - YEAR
+          - MONTH
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+        timeZone:
+          $ref: "#/components/schemas/UserTimeZone"
+    MetricSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AbstractPlanBSettings"
+      - type: object
+        properties:
+          keySchema:
+            $ref: "#/components/schemas/MetricKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/MetricValueSchema"
+    MetricValueSchema:
+      type: object
+      properties:
+        storeCount:
+          type: boolean
+        storeLatestValue:
+          type: boolean
+        storeMax:
+          type: boolean
+        storeMin:
+          type: boolean
+        storeSum:
+          type: boolean
+        valueType:
+          type: string
+          enum:
+          - ONE
+          - TWO
+          - THREE
+          - FOUR
+          - FIVE
+          - SIX
+          - SEVEN
+          - EIGHT
     MultiAnnotationChangeRequest:
       type: object
       properties:
@@ -13270,6 +13623,7 @@ components:
           - DOCUMENT_FAVOURITES
           - DOCUMENT_FEED
           - DOCUMENT_FOLDER
+          - DOCUMENT_GIT_REPO
           - DOCUMENT_INDEX
           - DOCUMENT_KAFKA_CONFIG
           - DOCUMENT_PIPELINE
@@ -13367,6 +13721,7 @@ components:
           - PIPELINE_INDEX
           - PIPELINE_JSON
           - PIPELINE_KAFKA
+          - PIPELINE_MERGE
           - PIPELINE_RECORD_COUNT
           - PIPELINE_RECORD_OUTPUT
           - PIPELINE_REFERENCE_DATA
@@ -13395,6 +13750,7 @@ components:
           - SAVE
           - SAVEAS
           - SEARCH
+          - SELECTION
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -13637,6 +13993,8 @@ components:
           - RANGED_STATE
           - TEMPORAL_RANGED_STATE
           - SESSION
+          - HISTOGRAM
+          - METRIC
         type:
           type: string
         updateTimeMs:
@@ -13648,6 +14006,31 @@ components:
           type: string
         version:
           type: string
+    PlanBShardInfoRequest:
+      type: object
+      properties:
+        fields:
+          type: array
+          items:
+            type: string
+    PlanBShardInfoResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+    PlanBValue:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     ProcessConfig:
       type: object
       properties:
@@ -14265,6 +14648,7 @@ components:
             type: string
             enum:
             - DATA_SOURCE
+            - QUERYABLE_FIELD
             - FIELD
             - FUNCTION
             - TITLE
@@ -14304,6 +14688,7 @@ components:
           type: string
           enum:
           - DATA_SOURCE
+          - QUERYABLE_FIELD
           - FIELD
           - FUNCTION
           - TITLE
@@ -14378,6 +14763,16 @@ components:
         to:
           type: integer
           format: int32
+    RangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
     RangeLong:
       type: object
       properties:
@@ -14389,14 +14784,26 @@ components:
         to:
           type: integer
           format: int64
-    RangedStateSettings:
+    RangeState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/Val"
+    RangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
+          keySchema:
+            $ref: "#/components/schemas/RangeKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
     Rec:
       type: object
       properties:
@@ -15137,6 +15544,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResultStoreInfo"
+    RetentionSettings:
+      type: object
+      properties:
+        duration:
+          $ref: "#/components/schemas/SimpleDuration"
+        enabled:
+          type: boolean
+        useStateTime:
+          type: boolean
     Row:
       type: object
       description: A row of data in a result set
@@ -15644,6 +16060,20 @@ components:
             - INACTIVE
             - CLOSED
           uniqueItems: true
+    Session:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          end:
+            type: string
+            format: date-time
+          prefix:
+            $ref: "#/components/schemas/KeyPrefix"
+          start:
+            type: string
+            format: date-time
     SessionDetails:
       type: object
       properties:
@@ -15668,6 +16098,38 @@ components:
           type: string
         userRef:
           $ref: "#/components/schemas/UserRef"
+    SessionKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     SessionListResponse:
       type: object
       properties:
@@ -15685,10 +16147,8 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/SessionKeySchema"
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -15810,6 +16270,15 @@ components:
           format: int64
         planBDocRef:
           $ref: "#/components/schemas/DocRef"
+    SnapshotSettings:
+      type: object
+      properties:
+        useSnapshotsForGet:
+          type: boolean
+        useSnapshotsForLookup:
+          type: boolean
+        useSnapshotsForQuery:
+          type: boolean
     SolrConnectionConfig:
       type: object
       properties:
@@ -16049,6 +16518,16 @@ components:
             format: int32
       xml:
         name: splitLayout
+    State:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/KeyPrefix"
+          value:
+            $ref: "#/components/schemas/Val"
     StateDoc:
       type: object
       properties:
@@ -16116,14 +16595,61 @@ components:
           type: string
         version:
           type: string
+    StateKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
     StateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
       - type: object
         properties:
-          overwrite:
-            type: boolean
+          keySchema:
+            $ref: "#/components/schemas/StateKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+    StateValueSchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        stateValueType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
     StatisticField:
       type: object
       properties:
@@ -16755,6 +17281,13 @@ components:
           $ref: "#/components/schemas/QLVisSettings"
         window:
           $ref: "#/components/schemas/Window"
+    Tag:
+      type: object
+      properties:
+        tagName:
+          type: string
+        tagValue:
+          $ref: "#/components/schemas/Val"
     TaskId:
       type: object
       properties:
@@ -16803,7 +17336,44 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TaskProgress"
-    TemporalRangedStateSettings:
+    TemporalKey:
+      type: object
+      properties:
+        prefix:
+          $ref: "#/components/schemas/KeyPrefix"
+        time:
+          type: string
+          format: date-time
+    TemporalRangeKeySchema:
+      type: object
+      properties:
+        rangeType:
+          type: string
+          enum:
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
+    TemporalRangeState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/Key"
+          value:
+            $ref: "#/components/schemas/Val"
+    TemporalRangeStateSettings:
       type: object
       allOf:
       - $ref: "#/components/schemas/AbstractPlanBSettings"
@@ -16811,10 +17381,52 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/TemporalRangeKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+    TemporalState:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/TemporalKey"
+          value:
+            $ref: "#/components/schemas/Val"
+    TemporalStateKeySchema:
+      type: object
+      properties:
+        hashLength:
+          type: string
+          enum:
+          - INTEGER
+          - LONG
+        keyType:
+          type: string
+          enum:
+          - BOOLEAN
+          - BYTE
+          - SHORT
+          - INT
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - STRING
+          - UID_LOOKUP
+          - HASH_LOOKUP
+          - VARIABLE
+          - TAGS
+        temporalPrecision:
+          type: string
+          enum:
+          - DAY
+          - HOUR
+          - MINUTE
+          - SECOND
+          - MILLISECOND
+          - NANOSECOND
     TemporalStateSettings:
       type: object
       allOf:
@@ -16823,10 +17435,21 @@ components:
         properties:
           condense:
             $ref: "#/components/schemas/DurationSetting"
-          overwrite:
-            type: boolean
-          retention:
-            $ref: "#/components/schemas/DurationSetting"
+          keySchema:
+            $ref: "#/components/schemas/TemporalStateKeySchema"
+          valueSchema:
+            $ref: "#/components/schemas/StateValueSchema"
+    TemporalValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/PlanBValue"
+      - type: object
+        properties:
+          key:
+            $ref: "#/components/schemas/TemporalKey"
+          value:
+            type: integer
+            format: int64
     TerminateTaskProgressRequest:
       type: object
       properties:
@@ -17296,6 +17919,8 @@ components:
           - Offset
       required:
       - use
+    Val:
+      type: object
     ValidateExpressionRequest:
       type: object
       properties:

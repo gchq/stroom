@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  */
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class CompletionSnippet implements CompletionItem {
+public final class CompletionSnippet implements CompletionItem {
 
     /**
      * The caption of the completion (this is the left-aligned autocompletion name on the left side of items in the

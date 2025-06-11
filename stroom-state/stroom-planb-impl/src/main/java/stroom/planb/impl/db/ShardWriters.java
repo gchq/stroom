@@ -1,12 +1,27 @@
 package stroom.planb.impl.db;
 
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBNameValidator;
 import stroom.planb.impl.data.FileDescriptor;
 import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.FileTransferClient;
+import stroom.planb.impl.data.RangeState;
+import stroom.planb.impl.data.SequentialFileStore;
+import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.TemporalRangeState;
+import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.db.histogram.HistogramDb;
+import stroom.planb.impl.db.metric.MetricDb;
+import stroom.planb.impl.db.rangestate.RangeStateDb;
+import stroom.planb.impl.db.session.SessionDb;
+import stroom.planb.impl.db.state.StateDb;
+import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
+import stroom.planb.impl.db.temporalstate.TemporalStateDb;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -15,6 +30,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,24 +42,31 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@Singleton
 public class ShardWriters {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardWriters.class);
 
     private final PlanBDocCache planBDocCache;
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
 
     @Inject
     ShardWriters(final PlanBDocCache planBDocCache,
-                 final ByteBufferFactory byteBufferFactory,
+                 final ByteBuffers byteBuffers,
                  final StatePaths statePaths,
                  final FileTransferClient fileTransferClient) {
         this.planBDocCache = planBDocCache;
-        this.byteBufferFactory = byteBufferFactory;
+        this.byteBuffers = byteBuffers;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
+
+        // Clear writer dir on startup since any remaining data must not have been sent so processing cannot have
+        // completed.
+        if (Files.isDirectory(statePaths.getWriterDir())) {
+            FileUtil.deleteDir(statePaths.getWriterDir());
+        }
     }
 
     public ShardWriter createWriter(final Meta meta) {
@@ -55,13 +78,13 @@ public class ShardWriters {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-        return new ShardWriter(planBDocCache, byteBufferFactory, fileTransferClient, dir, meta);
+        return new ShardWriter(planBDocCache, byteBuffers, fileTransferClient, dir, meta);
     }
 
     public static class ShardWriter implements AutoCloseable {
 
         private final PlanBDocCache planBDocCache;
-        private final ByteBufferFactory byteBufferFactory;
+        private final ByteBuffers byteBuffers;
         private final FileTransferClient fileTransferClient;
         private final Path dir;
         private final Meta meta;
@@ -69,12 +92,12 @@ public class ShardWriters {
         private final Map<String, Optional<PlanBDoc>> stateDocMap = new HashMap<>();
 
         public ShardWriter(final PlanBDocCache planBDocCache,
-                           final ByteBufferFactory byteBufferFactory,
+                           final ByteBuffers byteBuffers,
                            final FileTransferClient fileTransferClient,
                            final Path dir,
                            final Meta meta) {
             this.planBDocCache = planBDocCache;
-            this.byteBufferFactory = byteBufferFactory;
+            this.byteBuffers = byteBuffers;
             this.fileTransferClient = fileTransferClient;
             this.dir = dir;
             this.meta = meta;
@@ -117,12 +140,14 @@ public class ShardWriters {
 
         private static class WriterInstance implements AutoCloseable {
 
-            private final AbstractDb<?, ?> lmdb;
-            private final AbstractDb.Writer writer;
+            private final Db<?, ?> lmdb;
+            private final LmdbWriter writer;
+            private final boolean synchroniseMerge;
 
-            public WriterInstance(final AbstractDb<?, ?> lmdb) {
+            public WriterInstance(final Db<?, ?> lmdb, final boolean synchroniseMerge) {
                 this.lmdb = lmdb;
                 this.writer = lmdb.createWriter();
+                this.synchroniseMerge = synchroniseMerge;
             }
 
             public void addState(final State state) {
@@ -135,19 +160,33 @@ public class ShardWriters {
                 db.insert(writer, temporalState);
             }
 
-            public void addRangedState(final RangedState rangedState) {
-                final RangedStateDb db = (RangedStateDb) lmdb;
-                db.insert(writer, rangedState);
+            public void addRangeState(final RangeState rangeState) {
+                final RangeStateDb db = (RangeStateDb) lmdb;
+                db.insert(writer, rangeState);
             }
 
-            public void addTemporalRangedState(final TemporalRangedState temporalRangedState) {
-                final TemporalRangedStateDb db = (TemporalRangedStateDb) lmdb;
-                db.insert(writer, temporalRangedState);
+            public void addTemporalRangeState(final TemporalRangeState temporalRangeState) {
+                final TemporalRangeStateDb db = (TemporalRangeStateDb) lmdb;
+                db.insert(writer, temporalRangeState);
             }
 
             public void addSession(final Session session) {
                 final SessionDb db = (SessionDb) lmdb;
-                db.insert(writer, session, session);
+                db.insert(writer, session);
+            }
+
+            public void addHistogramValue(final TemporalValue temporalValue) {
+                final HistogramDb db = (HistogramDb) lmdb;
+                db.insert(writer, temporalValue);
+            }
+
+            public void addMetricValue(final TemporalValue temporalValue) {
+                final MetricDb db = (MetricDb) lmdb;
+                db.insert(writer, temporalValue);
+            }
+
+            public boolean isSynchroniseMerge() {
+                return synchroniseMerge;
             }
 
             @Override
@@ -167,14 +206,14 @@ public class ShardWriters {
             getWriter(doc).addTemporalState(temporalState);
         }
 
-        public void addRangedState(final PlanBDoc doc,
-                                   final RangedState rangedState) {
-            getWriter(doc).addRangedState(rangedState);
+        public void addRangeState(final PlanBDoc doc,
+                                  final RangeState rangeState) {
+            getWriter(doc).addRangeState(rangeState);
         }
 
-        public void addTemporalRangedState(final PlanBDoc doc,
-                                           final TemporalRangedState temporalRangedState) {
-            getWriter(doc).addTemporalRangedState(temporalRangedState);
+        public void addTemporalRangeState(final PlanBDoc doc,
+                                          final TemporalRangeState temporalRangeState) {
+            getWriter(doc).addTemporalRangeState(temporalRangeState);
         }
 
         public void addSession(final PlanBDoc doc,
@@ -182,12 +221,27 @@ public class ShardWriters {
             getWriter(doc).addSession(session);
         }
 
+        public void addHistogramValue(final PlanBDoc doc,
+                                      final TemporalValue temporalValue) {
+            getWriter(doc).addHistogramValue(temporalValue);
+        }
+
+        public void addMetricValue(final PlanBDoc doc,
+                                   final TemporalValue temporalValue) {
+            getWriter(doc).addMetricValue(temporalValue);
+        }
+
         private WriterInstance getWriter(final PlanBDoc doc) {
             return writers.computeIfAbsent(doc, k ->
                     new WriterInstance(PlanBDb.open(doc,
                             getLmdbEnvDir(k),
-                            byteBufferFactory,
-                            false)));
+                            byteBuffers,
+                            false),
+                            NullSafe.getOrElse(
+                                    doc,
+                                    PlanBDoc::getSettings,
+                                    AbstractPlanBSettings::getSynchroniseMerge,
+                                    false)));
         }
 
         private Path getLmdbEnvDir(final PlanBDoc doc) {
@@ -202,36 +256,38 @@ public class ShardWriters {
 
         @Override
         public void close() throws IOException {
-            if (!writers.isEmpty()) {
-                Path zipFile = null;
-                try {
+            final Path parent = dir.getParent();
+            final Path zipFile = parent.resolve(dir.getFileName().toString() + SequentialFileStore.ZIP_EXTENSION);
+
+            try {
+                if (!writers.isEmpty()) {
                     writers.values().forEach(WriterInstance::close);
 
-                    // Zip all and delete dir.
-                    zipFile = dir.getParent().resolve(dir.getFileName().toString() + ".zip");
-                    ZipUtil.zip(zipFile, dir);
-                    FileUtil.deleteDir(dir);
+                    final boolean synchroniseMerge = writers
+                            .values()
+                            .stream()
+                            .anyMatch(WriterInstance::isSynchroniseMerge);
 
+                    // Zip all.
+                    ZipUtil.zip(zipFile, dir);
                     final String fileHash = FileHashUtil.hash(zipFile);
 
                     final FileDescriptor fileDescriptor = new FileDescriptor(
                             System.currentTimeMillis(),
                             meta.getId(),
                             fileHash);
-                    fileTransferClient.storePart(fileDescriptor, zipFile);
+                    fileTransferClient.storePart(fileDescriptor, zipFile, synchroniseMerge);
+                }
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
 
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-
-                } finally {
-                    try {
-                        FileUtil.deleteDir(dir);
-                        if (zipFile != null) {
-                            Files.deleteIfExists(zipFile);
-                        }
-                    } catch (final Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                    }
+            } finally {
+                try {
+                    // Cleanup.
+                    FileUtil.deleteDir(dir);
+                    Files.deleteIfExists(zipFile);
+                } catch (final Exception e) {
+                    LOGGER.error(e.getMessage(), e);
                 }
             }
         }

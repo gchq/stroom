@@ -1,6 +1,6 @@
 package stroom.search.impl;
 
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;

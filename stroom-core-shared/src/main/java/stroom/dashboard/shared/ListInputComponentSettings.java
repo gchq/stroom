@@ -37,7 +37,7 @@ import java.util.Objects;
         "allowTextEntry"
 })
 @JsonInclude(Include.NON_NULL)
-public class ListInputComponentSettings implements ComponentSettings {
+public final class ListInputComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String key;

@@ -1,10 +1,8 @@
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.ParamValues;
+import stroom.dashboard.client.main.HasParams;
+import stroom.query.api.ParamValues;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
+public interface ComponentSelection extends ParamValues, HasParams {
 
-public interface ComponentSelection extends ParamValues {
-
-    SafeHtml asSafeHtml();
 }

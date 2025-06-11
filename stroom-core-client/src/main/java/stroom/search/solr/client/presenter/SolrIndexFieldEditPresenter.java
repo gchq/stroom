@@ -17,7 +17,7 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.FieldType;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;

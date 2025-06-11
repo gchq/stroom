@@ -21,8 +21,6 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -42,10 +40,13 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Builder;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -338,6 +339,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
         LOGGER.logDurationIfTraceEnabled(() -> {
             final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),

@@ -2,9 +2,9 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
-import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.CompiledColumn;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.format.ColumnFormatter;

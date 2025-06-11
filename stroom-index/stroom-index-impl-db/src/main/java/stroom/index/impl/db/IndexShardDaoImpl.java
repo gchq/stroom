@@ -36,8 +36,8 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -421,6 +421,8 @@ class IndexShardDaoImpl implements IndexShardDao {
             valueMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, ValDate::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, ValString::create);
             valueMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, ValString::create);
+            valueMapper.map(IndexShardFields.FIELD_SHARD_ID, INDEX_SHARD.ID, ValLong::create);
+            valueMapper.map(IndexShardFields.FIELD_INDEX_VERSION, INDEX_SHARD.INDEX_VERSION, ValString::create);
         }
 
         private Val getDocRefName(final String uuid) {
@@ -477,6 +479,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                     DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getFldName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
+            expressionMapper.map(IndexShardFields.FIELD_SHARD_ID, INDEX_SHARD.ID, Long::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_INDEX_VERSION, INDEX_SHARD.INDEX_VERSION, value -> value);
         }
 
         private List<String> getIndexUuids(final List<String> indexNames) {

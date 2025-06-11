@@ -16,9 +16,9 @@
 
 package stroom.search.elastic.search;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

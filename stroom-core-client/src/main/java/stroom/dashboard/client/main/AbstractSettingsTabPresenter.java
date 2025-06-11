@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.View;
 public abstract class AbstractSettingsTabPresenter<V extends View> extends MyPresenterWidget<V>
         implements ComponentDataModifier {
 
-    private Components components;
+    private DashboardContext dashboardContext;
 
     @Inject
     public AbstractSettingsTabPresenter(final EventBus eventBus, final V view) {
@@ -32,12 +32,12 @@ public abstract class AbstractSettingsTabPresenter<V extends View> extends MyPre
     }
 
     @Override
-    public Components getComponents() {
-        return components;
+    public DashboardContext getDashboardContext() {
+        return dashboardContext;
     }
 
     @Override
-    public void setComponents(final Components components) {
-        this.components = components;
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        this.dashboardContext = dashboardContext;
     }
 }

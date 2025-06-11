@@ -17,12 +17,12 @@
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.TextAttributes;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
+import stroom.query.api.CustomConditionalFormattingStyle;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.TextAttributes;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 

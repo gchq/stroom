@@ -12,7 +12,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 

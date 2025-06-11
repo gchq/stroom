@@ -142,6 +142,9 @@ include 'stroom-explorer:stroom-explorer-impl-db-jooq'
 include 'stroom-feed:stroom-feed-api'
 include 'stroom-feed:stroom-feed-impl'
 
+// GitRepo
+include 'stroom-gitrepo'
+
 // Hadoop
 include 'stroom-hadoop'
 
@@ -223,7 +226,6 @@ include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
-include 'stroom-query:stroom-query-language-api'
 
 // State store
 include 'stroom-state:stroom-state-impl'
@@ -293,3 +295,5 @@ include 'stroom-ssl-test'
 include 'stroom-view:stroom-view-api'
 include 'stroom-index:stroom-index-api'
 include 'stroom-cache:stroom-cache-service-impl'
+include 'stroom-gitrepo:stroom-gitrepo-impl'
+include 'stroom-gitrepo:stroom-gitrepo-api'

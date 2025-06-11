@@ -28,7 +28,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;

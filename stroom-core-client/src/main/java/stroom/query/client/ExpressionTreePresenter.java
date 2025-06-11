@@ -21,7 +21,7 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;

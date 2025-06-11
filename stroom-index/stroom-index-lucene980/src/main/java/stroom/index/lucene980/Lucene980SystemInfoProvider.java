@@ -1,7 +1,5 @@
 package stroom.index.lucene980;
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -13,6 +11,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PathCreator;

@@ -16,10 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.SearchTaskProgress;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;

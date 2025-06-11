@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.datasource.api.v2.IndexField;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDate;

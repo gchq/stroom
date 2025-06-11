@@ -1,6 +1,6 @@
 package stroom.explorer.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.CriteriaFieldSort;

@@ -9,42 +9,50 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
-        "overwrite"
+        "synchroniseMerge",
+        "overwrite",
+        "retention",
+        "snapshotSettings",
+        "condense",
+        "keySchema",
+        "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class TemporalStateSettings extends AbstractPlanBSettings {
+public final class TemporalStateSettings extends AbstractPlanBSettings {
 
     @JsonProperty
     private final DurationSetting condense;
     @JsonProperty
-    private final DurationSetting retention;
+    private final TemporalStateKeySchema keySchema;
     @JsonProperty
-    private final Boolean overwrite;
+    private final StateValueSchema valueSchema;
 
     @JsonCreator
-    public TemporalStateSettings(@JsonProperty("condense") final DurationSetting condense,
-                                 @JsonProperty("retention") final DurationSetting retention,
-                                 @JsonProperty("maxStoreSize") final Long maxStoreSize,
-                                 @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
+    public TemporalStateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
+                                 @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                                 @JsonProperty("overwrite") final Boolean overwrite,
+                                 @JsonProperty("retention") final RetentionSettings retention,
+                                 @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                                 @JsonProperty("condense") final DurationSetting condense,
+                                 @JsonProperty("keySchema") final TemporalStateKeySchema keySchema,
+                                 @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
         this.condense = condense;
-        this.retention = retention;
-        this.overwrite = overwrite;
+        this.keySchema = keySchema;
+        this.valueSchema = valueSchema;
     }
 
     public DurationSetting getCondense() {
         return condense;
     }
 
-    public DurationSetting getRetention() {
-        return retention;
+    public TemporalStateKeySchema getKeySchema() {
+        return keySchema;
     }
 
-    public Boolean getOverwrite() {
-        return overwrite;
+    public StateValueSchema getValueSchema() {
+        return valueSchema;
     }
 
     @Override
@@ -60,37 +68,33 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         }
         final TemporalStateSettings that = (TemporalStateSettings) o;
         return Objects.equals(condense, that.condense) &&
-               Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite);
+               Objects.equals(keySchema, that.keySchema) &&
+               Objects.equals(valueSchema, that.valueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite);
+        return Objects.hash(
+                super.hashCode(),
+                condense,
+                keySchema,
+                valueSchema);
     }
 
     @Override
     public String toString() {
         return "TemporalStateSettings{" +
                "condense=" + condense +
-               ", retention=" + retention +
-               ", overwrite=" + overwrite +
+               ", keySchema=" + keySchema +
+               ", valueSchema=" + valueSchema +
                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
     }
 
     public static class Builder extends AbstractBuilder<TemporalStateSettings, Builder> {
 
-        protected DurationSetting condense;
-        protected DurationSetting retention;
-        protected Boolean overwrite;
+        private DurationSetting condense;
+        private TemporalStateKeySchema keySchema;
+        private StateValueSchema valueSchema;
 
         public Builder() {
         }
@@ -98,8 +102,8 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         public Builder(final TemporalStateSettings settings) {
             super(settings);
             this.condense = settings.condense;
-            this.retention = settings.retention;
-            this.overwrite = settings.overwrite;
+            this.keySchema = settings.keySchema;
+            this.valueSchema = settings.valueSchema;
         }
 
         public Builder condense(final DurationSetting condense) {
@@ -107,13 +111,13 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
             return self();
         }
 
-        public Builder retention(final DurationSetting retention) {
-            this.retention = retention;
+        public Builder keySchema(final TemporalStateKeySchema keySchema) {
+            this.keySchema = keySchema;
             return self();
         }
 
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder valueSchema(final StateValueSchema valueSchema) {
+            this.valueSchema = valueSchema;
             return self();
         }
 
@@ -125,10 +129,14 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         @Override
         public TemporalStateSettings build() {
             return new TemporalStateSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
-                    overwrite);
+                    synchroniseMerge,
+                    overwrite,
+                    retention,
+                    snapshotSettings,
+                    condense,
+                    keySchema,
+                    valueSchema);
         }
     }
 }

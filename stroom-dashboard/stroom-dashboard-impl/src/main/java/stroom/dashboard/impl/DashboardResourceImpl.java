@@ -90,18 +90,19 @@ class DashboardResourceImpl implements DashboardResource {
                                                     final DownloadSearchResultsRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = dashboardServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return dashboardServiceProvider.get().downloadSearchResults(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ResourceGeneration.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     DashboardResource.BASE_PATH,
                                     DashboardResource.DOWNLOAD_SEARCH_RESULTS_PATH_PATH,
-                                    nodeName),
+                                    node),
                             () -> dashboardServiceProvider.get().downloadSearchResults(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -115,18 +116,19 @@ class DashboardResourceImpl implements DashboardResource {
     public DashboardSearchResponse search(final String nodeName, final DashboardSearchRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = dashboardServiceProvider.get().getBestNode(nodeName, request);
+            if (node == null) {
                 return dashboardServiceProvider.get().search(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             DashboardSearchResponse.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     DashboardResource.BASE_PATH,
                                     DashboardResource.SEARCH_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> dashboardServiceProvider.get().search(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
@@ -141,18 +143,19 @@ class DashboardResourceImpl implements DashboardResource {
                                         final ColumnValuesRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
-            if (nodeName == null || nodeName.equals("null")) {
+            final String node = dashboardServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
+            if (node == null) {
                 return dashboardServiceProvider.get().getColumnValues(request);
             }
 
             return nodeServiceProvider.get()
                     .remoteRestResult(
-                            nodeName,
+                            node,
                             ColumnValues.class,
                             () -> ResourcePaths.buildAuthenticatedApiPath(
                                     DashboardResource.BASE_PATH,
                                     DashboardResource.COLUMN_VALUES_PATH_PART,
-                                    nodeName),
+                                    node),
                             () -> dashboardServiceProvider.get().getColumnValues(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {

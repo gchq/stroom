@@ -1,14 +1,14 @@
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.Val;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;

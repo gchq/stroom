@@ -18,18 +18,18 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
 import stroom.lmdb2.WriteTxn;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.CompiledWindow.WindowProcessor;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.ChildData;

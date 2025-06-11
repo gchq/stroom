@@ -1,9 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.VisResult;
+import stroom.query.api.FlatResult;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.VisResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;

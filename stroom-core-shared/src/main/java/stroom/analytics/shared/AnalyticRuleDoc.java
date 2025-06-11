@@ -20,8 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.Param;
+import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

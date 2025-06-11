@@ -18,7 +18,8 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ParamValues;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.client.view.TimeRanges;
@@ -64,7 +65,7 @@ public class QueryToolbarPresenter
             final String msg = currentWarnings.size() == 1
                     ? ("The following warning was created while running this search:")
                     : ("The following " + currentWarnings.size()
-                            + " warnings have been created while running this search:");
+                       + " warnings have been created while running this search:");
             final String errors = String.join("\n", currentWarnings);
             AlertEvent.fireWarn(this, msg, errors, null);
         }
@@ -105,6 +106,10 @@ public class QueryToolbarPresenter
         return currentTimeRange;
     }
 
+    public void setParamValues(final ParamValues paramValues) {
+        getView().setParamValues(paramValues);
+    }
+
     public HandlerRegistration addStartQueryHandler(final StartQueryEvent.Handler handler) {
 //        return addHandlerToSource(StartQueryEvent.getType(), handler);
 
@@ -128,5 +133,7 @@ public class QueryToolbarPresenter
         TimeRange getTimeRange();
 
         void setTimeRange(TimeRange timeRange);
+
+        void setParamValues(ParamValues paramValues);
     }
 }

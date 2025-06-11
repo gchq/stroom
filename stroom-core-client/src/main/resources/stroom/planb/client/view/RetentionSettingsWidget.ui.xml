@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup
+                label="Enabled"
+                helpText="Choose if we want to delete old data after a period of time.">
+            <tickbox:CustomCheckBox ui:field="retentionEnabled"
+                                    identity="retentionEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionAgePanel"
+                        identity="retentionAgePanel"
+                        label="Retain For"
+                        helpText="Choose how long to keep data for.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="retentionAge"/>
+                <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="useStateTimePanel"
+                        label="Use State Time"
+                        helpText="Perform retention based on temporal state time rather than data insert time.">
+            <tickbox:CustomCheckBox ui:field="useStateTime"
+                                    identity="useStateTime"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

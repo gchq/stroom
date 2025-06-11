@@ -1,15 +1,15 @@
 package stroom.receive.rules.impl;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMap.Builder;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;

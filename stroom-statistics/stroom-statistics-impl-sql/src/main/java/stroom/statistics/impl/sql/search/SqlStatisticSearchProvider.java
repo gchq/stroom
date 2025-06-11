@@ -16,14 +16,14 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchTaskProgress;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;

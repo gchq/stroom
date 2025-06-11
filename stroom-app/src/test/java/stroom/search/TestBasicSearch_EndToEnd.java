@@ -18,9 +18,6 @@
 package stroom.search;
 
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexShardDao;
@@ -30,9 +27,12 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.PageRequest;

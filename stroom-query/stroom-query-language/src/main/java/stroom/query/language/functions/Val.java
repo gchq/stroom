@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 
-import stroom.query.language.token.Param;
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
@@ -27,7 +26,7 @@ import java.util.Objects;
 
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
-        permits ValNumber, ValString, ValErr, ValNull, ValBoolean {
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {
 
     Val[] EMPTY_VALUES = new Val[0];
     double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;
@@ -95,8 +94,6 @@ public sealed interface Val
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
-    // TODO rename of( to arrayOf( to make it a bit more clear you are getting an array back
-    //  Best done on master as it affects a lot of files
     static Val[] of(final Val... values) {
         return values;
     }

@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class TableCoprocessorSettings implements CoprocessorSettings {
+public final class TableCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
     private final int coprocessorId;
     @JsonProperty

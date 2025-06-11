@@ -31,6 +31,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = QueryHelpFunctionSignature.class, name = "functionSignature")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class QueryHelpData {
+public abstract sealed class QueryHelpData permits QueryHelpDocument, QueryHelpField, QueryHelpFunctionSignature {
 
 }

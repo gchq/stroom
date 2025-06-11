@@ -1,8 +1,14 @@
 package stroom.lmdb2;
 
-public class KV<K, V> {
+import stroom.util.shared.AbstractBuilder;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public abstract class KV<K, V> {
+
+    @JsonProperty
     private final K key;
+    @JsonProperty
     private final V value;
 
     public KV(final K key, final V value) {
@@ -26,35 +32,32 @@ public class KV<K, V> {
                '}';
     }
 
-    public static <K, V> Builder<K, V> builder() {
-        return new Builder<>();
-    }
 
-    public static class Builder<K, V> {
+    // --------------------------------------------------------------------------------
 
-        private K key;
-        private V value;
 
-        public Builder() {
+    public abstract static class AbstractKVBuilder<T, B extends AbstractKVBuilder<T, ?, K, V>, K, V>
+            extends AbstractBuilder<T, B> {
+
+        protected K key;
+        protected V value;
+
+        public AbstractKVBuilder() {
         }
 
-        public Builder(final KV<K, V> kv) {
+        public AbstractKVBuilder(final KV<K, V> kv) {
             this.key = kv.key();
             this.value = kv.val();
         }
 
-        public Builder<K, V> key(final K key) {
+        public B key(final K key) {
             this.key = key;
-            return this;
+            return self();
         }
 
-        public Builder<K, V> value(final V value) {
+        public B value(final V value) {
             this.value = value;
-            return this;
-        }
-
-        public KV<K, V> build() {
-            return new KV<>(key, value);
+            return self();
         }
     }
 }

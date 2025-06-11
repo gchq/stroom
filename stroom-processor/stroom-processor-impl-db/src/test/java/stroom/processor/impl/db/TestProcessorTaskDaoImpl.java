@@ -1,12 +1,11 @@
 package stroom.processor.impl.db;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

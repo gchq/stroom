@@ -17,10 +17,10 @@
 package stroom.statistics.impl.sql;
 
 
-import stroom.datasource.api.v2.QueryField;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.QueryField;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.search.FilterTermsTree;

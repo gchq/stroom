@@ -26,6 +26,11 @@ public class KryoDataReader implements DataReader, AutoCloseable {
     }
 
     @Override
+    public short readShort() {
+        return input.readShort();
+    }
+
+    @Override
     public int readInt() {
         return input.readInt();
     }
@@ -48,6 +53,14 @@ public class KryoDataReader implements DataReader, AutoCloseable {
     @Override
     public String readString() {
         return input.readString();
+    }
+
+    @Override
+    public byte[] readBytes() {
+        final int length = input.readInt();
+        final byte[] bytes = new byte[length];
+        input.readBytes(bytes);
+        return bytes;
     }
 
     @Override

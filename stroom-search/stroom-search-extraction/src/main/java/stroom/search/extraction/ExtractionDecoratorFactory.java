@@ -3,7 +3,7 @@ package stroom.search.extraction;
 import stroom.meta.api.MetaService;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataCache;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;

@@ -8,6 +8,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
 
 public interface DashboardService {
@@ -27,4 +28,6 @@ public interface DashboardService {
 //    Boolean destroy(DestroySearchRequest request);
 
     ColumnValues getColumnValues(ColumnValuesRequest request);
+
+    String getBestNode(String nodeName, DashboardSearchRequest request);
 }

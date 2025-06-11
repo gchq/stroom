@@ -65,8 +65,7 @@ public class SettingsPresenter
         tabViewMap.put(tab, layer);
         getView().getTabBar().addTab(tab);
 
-        if (layer instanceof ComponentDataModifier) {
-            final ComponentDataModifier componentDataModifier = (ComponentDataModifier) layer;
+        if (layer instanceof final ComponentDataModifier componentDataModifier) {
             componentDataModifier.setTaskMonitorFactory(this);
             modifiers.put(tab, componentDataModifier);
         }
@@ -95,9 +94,9 @@ public class SettingsPresenter
         registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
-    public void setComponents(final Components components) {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
         for (final ComponentDataModifier modifier : modifiers.values()) {
-            modifier.setComponents(components);
+            modifier.setDashboardContext(dashboardContext);
         }
 
         if (firstShowing) {
@@ -125,7 +124,7 @@ public class SettingsPresenter
     }
 
     public boolean validate() {
-        return !modifiers.values().stream().anyMatch(v -> !v.validate());
+        return modifiers.values().stream().allMatch(ComponentDataModifier::validate);
     }
 
     public boolean isDirty(final ComponentConfig componentConfig) {

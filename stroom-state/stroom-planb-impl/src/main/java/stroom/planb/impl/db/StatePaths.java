@@ -20,6 +20,8 @@ public class StatePaths {
     private final Path receiveDir;
     // Once received the data is moved to the staging dir awaiting merge.
     private final Path stagingDir;
+    // After staging decompress the zip files and queue the individual parts for merging.
+    private final Path unzipDir;
     // During the merging process shards are decompressed to the merging dir.
     private final Path mergingDir;
     // Active shards end up in the shard directory.
@@ -38,6 +40,7 @@ public class StatePaths {
         writerDir = rootDir.resolve("writer");
         receiveDir = rootDir.resolve("receive");
         stagingDir = rootDir.resolve("staging");
+        unzipDir = rootDir.resolve("unzip");
         mergingDir = rootDir.resolve("merging");
         shardDir = rootDir.resolve("shards");
         snapshotDir = rootDir.resolve("snapshots");
@@ -53,6 +56,10 @@ public class StatePaths {
 
     public Path getReceiveDir() {
         return receiveDir;
+    }
+
+    public Path getUnzipDir() {
+        return unzipDir;
     }
 
     public Path getStagingDir() {

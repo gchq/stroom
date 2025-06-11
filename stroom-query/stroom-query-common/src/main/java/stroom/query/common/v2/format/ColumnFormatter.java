@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.query.language.functions.Val;
 
 import java.util.HashMap;

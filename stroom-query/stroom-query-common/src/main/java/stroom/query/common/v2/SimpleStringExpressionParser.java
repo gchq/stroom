@@ -1,17 +1,17 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.KeywordGroup;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.language.token.StructureBuilder;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.util.shared.NullSafe;
 

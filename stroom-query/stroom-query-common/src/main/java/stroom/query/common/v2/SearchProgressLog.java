@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

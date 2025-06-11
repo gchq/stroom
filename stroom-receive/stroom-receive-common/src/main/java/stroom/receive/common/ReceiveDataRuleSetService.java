@@ -17,10 +17,10 @@
 
 package stroom.receive.common;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapper;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;

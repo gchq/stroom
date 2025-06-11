@@ -4,10 +4,10 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Builder;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 

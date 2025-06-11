@@ -30,9 +30,6 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
         extends MyPresenterWidget<V>
         implements PlanBSettingsUiHandlers, HasDirtyHandlers {
 
-    // 10 GiB
-    static final Long DEFAULT_MAX_STORE_SIZE = 10737418240L;
-
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;

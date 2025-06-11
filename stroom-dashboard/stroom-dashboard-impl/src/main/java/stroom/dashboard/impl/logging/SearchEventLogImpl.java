@@ -24,15 +24,15 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.Param;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.TableResult;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
@@ -270,12 +270,12 @@ public class SearchEventLogImpl implements SearchEventLog {
                                 final Exception ex) {
         securityContext.insecure(() -> {
             try {
-                final stroom.query.api.v2.Query qry = NullSafe.get(
+                final stroom.query.api.Query qry = NullSafe.get(
                         request,
                         SearchRequest::getQuery);
                 final DocRef dataSourceRef = NullSafe.get(
                         qry,
-                        stroom.query.api.v2.Query::getDataSource);
+                        stroom.query.api.Query::getDataSource);
 
                 final String dataSourceInfo = getDataSourceString(dataSourceRef);
                 final String description = "Downloading StroomQL search results - data source \"" +
@@ -284,13 +284,13 @@ public class SearchEventLogImpl implements SearchEventLog {
                 final DataSources dataSources = DataSources.builder().addDataSource(dataSourceInfo).build();
                 final Query query = getQuery(
                         request.getKey(),
-                        NullSafe.get(qry, stroom.query.api.v2.Query::getExpression),
-                        NullSafe.get(qry, stroom.query.api.v2.Query::getParams));
+                        NullSafe.get(qry, stroom.query.api.Query::getExpression),
+                        NullSafe.get(qry, stroom.query.api.Query::getParams));
                 query.setRaw(NullSafe.get(
                         req,
                         DownloadQueryResultsRequest::getSearchRequest,
                         QuerySearchRequest::getQuery));
-                final List<Param> params = NullSafe.get(qry, stroom.query.api.v2.Query::getParams);
+                final List<Param> params = NullSafe.get(qry, stroom.query.api.Query::getParams);
                 final String fileType = NullSafe.get(req.getFileType(),
                         DownloadSearchResultFileType::getExtension);
 

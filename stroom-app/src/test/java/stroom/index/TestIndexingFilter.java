@@ -16,9 +16,6 @@
 
 package stroom.index;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFields;
@@ -39,6 +36,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;

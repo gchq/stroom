@@ -1,7 +1,7 @@
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +25,8 @@ public class IndexShardFields {
     public static final String FIELD_NAME_FILE_SIZE = "File Size";
     public static final String FIELD_NAME_STATUS = "Status";
     public static final String FIELD_NAME_LAST_COMMIT = "Last Commit";
+    public static final String FIELD_NAME_SHARD_ID = "Shard Id";
+    public static final String FIELD_NAME_INDEX_VERSION = "Index Version";
 
     public static final QueryField FIELD_NODE = QueryField.createText(FIELD_NAME_NODE);
     public static final QueryField FIELD_INDEX = QueryField
@@ -38,12 +40,16 @@ public class IndexShardFields {
     public static final QueryField FIELD_FILE_SIZE = QueryField.createLong(FIELD_NAME_FILE_SIZE);
     public static final QueryField FIELD_STATUS = QueryField.createText(FIELD_NAME_STATUS);
     public static final QueryField FIELD_LAST_COMMIT = QueryField.createDate(FIELD_NAME_LAST_COMMIT);
+    public static final QueryField FIELD_SHARD_ID = QueryField.createLong(FIELD_NAME_SHARD_ID);
+    public static final QueryField FIELD_INDEX_VERSION = QueryField.createText(FIELD_NAME_INDEX_VERSION);
 
     // GWT so no List.of
     private static final List<QueryField> FIELDS = Arrays.asList(
+            FIELD_SHARD_ID,
             FIELD_NODE,
             FIELD_INDEX,
             FIELD_INDEX_NAME,
+            FIELD_INDEX_VERSION,
             FIELD_VOLUME_PATH,
             FIELD_VOLUME_GROUP,
             FIELD_PARTITION,

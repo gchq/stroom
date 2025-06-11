@@ -16,8 +16,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -28,6 +31,7 @@ import java.util.stream.Stream;
 public class SequentialFileStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialFileStore.class);
+    private final Map<Long, CountDownLatch> latches = new ConcurrentHashMap<>();
 
     public static final String ZIP_EXTENSION = ".zip";
 
@@ -44,7 +48,7 @@ public class SequentialFileStore {
         this.path = path;
 
         if (Files.isDirectory(path)) {
-            long maxId = getMaxId(path);
+            final long maxId = getMaxId(path);
             storeId.set(maxId + 1);
             addedStoreId.set(maxId);
         } else {
@@ -53,7 +57,8 @@ public class SequentialFileStore {
     }
 
     public void add(final FileDescriptor fileDescriptor,
-                    final Path path) throws IOException {
+                    final Path path,
+                    final CountDownLatch countDownLatch) throws IOException {
         final String fileHash = FileHashUtil.hash(path);
         if (!Objects.equals(fileHash, fileDescriptor.fileHash())) {
             throw new IOException("File hash is not equal");
@@ -66,6 +71,9 @@ public class SequentialFileStore {
                     // Move the new data to the store.
                     final long currentStoreId = storeId.getAndIncrement();
                     final SequentialFile storeFileSet = getStoreIdFile(currentStoreId);
+                    if (countDownLatch != null) {
+                        latches.put(currentStoreId, countDownLatch);
+                    }
 
                     try {
                         Files.move(path,
@@ -133,9 +141,8 @@ public class SequentialFileStore {
             subDirs.add(dir);
         }
 
-        final Path zip = dir.resolve(idString +
-                                     ZIP_EXTENSION);
-        return new SequentialFile(path, subDirs, zip);
+        final Path zip = dir.resolve(idString + ZIP_EXTENSION);
+        return new SequentialFile(path, subDirs, zip, latches.remove(storeId));
     }
 
     public long getMaxStoreId() {
@@ -205,7 +212,7 @@ public class SequentialFileStore {
             }
             start = i + 1;
         }
-        int end = name.indexOf(".");
+        final int end = name.indexOf(".");
         final String numericPart;
         if (start == 0 && end == -1) {
             numericPart = name;

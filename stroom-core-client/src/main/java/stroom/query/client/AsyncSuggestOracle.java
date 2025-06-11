@@ -16,9 +16,9 @@
 
 package stroom.query.client;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 import stroom.task.client.TaskMonitorFactory;

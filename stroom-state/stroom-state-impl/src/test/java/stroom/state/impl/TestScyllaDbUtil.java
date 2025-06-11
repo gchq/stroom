@@ -1,20 +1,6 @@
 package stroom.state.impl;
 
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.state.impl.dao.State;
-import stroom.state.impl.dao.StateDao;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 public class TestScyllaDbUtil {

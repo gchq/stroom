@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicQuerySettingsId" label="Id">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
@@ -11,14 +12,25 @@
         <form:FormGroup identity="basicQuerySettingsName" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsQueryRef" label="Referenced Query">
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="referenceExistingQuery" identity="basicQuerySettingsLocal"
+                                    label="Reference Existing Query"/>
+        </form:FormGroup>
+        <form:FormGroup  ui:field="queryRefFormGroup"
+                         identity="basicQuerySettingsQueryRef"
+                         label="Referenced Query">
             <g:SimplePanel ui:field="queryRef" addStyleNames="w-100"/>
         </form:FormGroup>
+        <b:Button ui:field="copyQuery" addStyleNames="allow-focus" text="Copy Query"/>
         <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="queryOnOpen" identity="basicQuerySettingsQueryOnOpen" label="Query On Open"/>
+            <tickbox:CustomCheckBox ui:field="queryOnOpen"
+                                    identity="basicQuerySettingsQueryOnOpen"
+                                    label="Query On Open"/>
         </form:FormGroup>
         <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="autoRefresh" identity="basicQuerySettingsAutoRefresh" label="Auto Refresh"/>
+            <tickbox:CustomCheckBox ui:field="autoRefresh"
+                                    identity="basicQuerySettingsAutoRefresh"
+                                    label="Auto Refresh"/>
         </form:FormGroup>
         <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval">
             <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>

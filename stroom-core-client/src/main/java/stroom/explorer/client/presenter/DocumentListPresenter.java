@@ -9,7 +9,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;

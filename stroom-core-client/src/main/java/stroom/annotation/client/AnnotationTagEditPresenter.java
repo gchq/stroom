@@ -23,7 +23,7 @@ import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingStyle;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;

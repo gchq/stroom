@@ -12,6 +12,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TableBuilderAnalyticProcessConfig.class, name = "table_builder"),
         @JsonSubTypes.Type(value = ScheduledQueryAnalyticProcessConfig.class, name = "scheduled_query"),
 })
-public abstract class AnalyticProcessConfig {
+public abstract sealed class AnalyticProcessConfig permits
+        StreamingAnalyticProcessConfig,
+        TableBuilderAnalyticProcessConfig,
+        ScheduledQueryAnalyticProcessConfig {
 
 }

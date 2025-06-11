@@ -16,47 +16,9 @@
 
 package stroom.pipeline.task;
 
-import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.mock.MockStore;
-import stroom.docref.DocRef;
-import stroom.meta.mock.MockMetaService;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineDataUtil;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorResult;
-import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.state.impl.ScyllaDbDocStore;
-import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.StateDocStore;
-import stroom.state.shared.ScyllaDbDoc;
-import stroom.state.shared.StateDoc;
-import stroom.state.shared.StateType;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.CommonTranslationTestHelper;
-import stroom.test.StoreCreationTool;
-import stroom.test.common.ComparisonHelper;
-import stroom.test.common.StroomPipelineTestFileUtil;
-import stroom.util.shared.Severity;
 
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 class TestStateLookupTask extends AbstractProcessIntegrationTest {

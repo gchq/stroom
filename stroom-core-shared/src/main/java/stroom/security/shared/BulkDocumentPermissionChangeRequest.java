@@ -1,6 +1,6 @@
 package stroom.security.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class BulkDocumentPermissionChangeRequest implements PermissionChangeRequest {
+public final class BulkDocumentPermissionChangeRequest implements PermissionChangeRequest {
 
     @JsonProperty
     private final ExpressionOperator expression;

@@ -16,7 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
+import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.FindWithCriteria;
 import stroom.util.shared.ResourcePaths;

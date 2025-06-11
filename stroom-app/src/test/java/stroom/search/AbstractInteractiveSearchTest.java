@@ -22,18 +22,18 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.search.impl.EventSearchTask;
@@ -509,26 +509,26 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         final Column streamIdColumn = Column.builder()
                 .id("1")
                 .name("Stream Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
+                .expression(ParamUtil.create(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
                 .id("2")
                 .name("Event Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
+                .expression(ParamUtil.create(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
                 .id("3")
                 .name("Event Time")
-                .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                .expression(ParamUtil.create("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
                 .id("4")
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationDecorationFields.ANNOTATION_STATUS))
+                .expression(ParamUtil.create(AnnotationDecorationFields.ANNOTATION_STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

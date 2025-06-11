@@ -1,12 +1,11 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
+import stroom.query.api.Param;
 
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,25 +50,16 @@ public class VisComponentSelection implements ComponentSelection {
     }
 
     @Override
-    public SafeHtml asSafeHtml() {
-        boolean firstParam = true;
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    public List<Param> getParams() {
+        final List<Param> params = new ArrayList<>();
         for (final Entry<String, String> entry : values.entrySet()) {
-            if (!firstParam) {
-                sb.appendHtmlConstant(", ");
-            }
-            sb.appendHtmlConstant("<b>");
-            sb.appendEscaped(entry.getKey());
-            sb.appendHtmlConstant("</b>");
-            sb.appendEscaped("=");
-            sb.appendEscaped(entry.getValue());
-            firstParam = false;
+            params.add(new Param(entry.getKey(), entry.getValue()));
         }
-        return sb.toSafeHtml();
+        return params;
     }
 
     @Override
-    public String get(final String key) {
+    public String getParamValue(final String key) {
         return values.get(key);
     }
 }

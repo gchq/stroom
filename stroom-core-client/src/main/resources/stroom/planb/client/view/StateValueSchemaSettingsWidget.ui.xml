@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="State Value Type"
+                        helpText="Choose the data type to use for the state value.">
+            <i:SelectionBox ui:field="stateValueType" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Hash Length"
+                        helpText="When using a hashing value type how long should the hash be?">
+            <i:SelectionBox ui:field="hashLength" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

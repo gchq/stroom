@@ -1,7 +1,5 @@
 package stroom.bytebuffer.impl6;
 
-import stroom.bytebuffer.ByteBufferSupport;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -13,7 +11,7 @@ import java.nio.ByteBuffer;
  * <p>
  * Depending on the implementation, the pool may block when requesting a buffer from the pool.
  */
-public class ByteBufferFactory {
+public interface ByteBufferFactory {
 
     /**
      * Get a byte buffer from the pool or create a new one if we have no pooled buffers.
@@ -21,18 +19,12 @@ public class ByteBufferFactory {
      * @param size The minimum size of the buffer to get.
      * @return A byte buffer.
      */
-    public ByteBuffer acquire(final int size) {
-        return ByteBuffer.allocateDirect(size);
-    }
+    ByteBuffer acquire(int size);
 
     /**
      * Release a byte buffer back to the pool ready for use by another process.
      *
      * @param byteBuffer The byte buffer to release back to the pool.
      */
-    public void release(final ByteBuffer byteBuffer) {
-        if (byteBuffer != null && byteBuffer.isDirect()) {
-            ByteBufferSupport.unmap(byteBuffer);
-        }
-    }
+    void release(ByteBuffer byteBuffer);
 }

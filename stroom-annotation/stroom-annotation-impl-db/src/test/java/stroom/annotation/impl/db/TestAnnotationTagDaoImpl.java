@@ -5,9 +5,9 @@ import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.ResultPage;
 
 import com.google.inject.Guice;

@@ -16,7 +16,7 @@
 
 package stroom.storedquery.impl.db;
 
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.util.json.AbstractJsonSerialiser;
 
 public class QueryJsonSerialiser extends AbstractJsonSerialiser<Query> {

@@ -18,9 +18,9 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;

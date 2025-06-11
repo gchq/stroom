@@ -1,6 +1,6 @@
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class QueryHelpField extends QueryHelpData {
+public final class QueryHelpField extends QueryHelpData {
 
     @JsonProperty
     @JsonPropertyDescription("A field of a data source.")

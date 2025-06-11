@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.QLVisResult;
-import stroom.query.api.v2.QLVisSettings;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
+import stroom.query.api.FlatResult;
+import stroom.query.api.QLVisResult;
+import stroom.query.api.QLVisSettings;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;

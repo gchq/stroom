@@ -1,6 +1,6 @@
 package stroom.processor.shared;
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

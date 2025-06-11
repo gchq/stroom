@@ -17,8 +17,6 @@
 
 package stroom.index;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexDocument;
@@ -40,6 +38,8 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;

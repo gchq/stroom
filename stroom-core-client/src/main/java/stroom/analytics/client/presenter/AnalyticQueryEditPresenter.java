@@ -33,6 +33,14 @@ public class AnalyticQueryEditPresenter
         super(eventBus, queryEditPresenter);
     }
 
+    void start() {
+        queryEditPresenter.start();
+    }
+
+    void stop() {
+        queryEditPresenter.stop();
+    }
+
     @Override
     protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc entity) {
         return entity

@@ -17,9 +17,9 @@
 package stroom.preferences.client;
 
 import stroom.document.client.event.DirtyUiHandlers;
-import stroom.expression.api.UserTimeZone.Use;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.customdatebox.client.MomentJs;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;

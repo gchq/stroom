@@ -1,6 +1,6 @@
 package stroom.query.language.functions;
 
-import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.DateTimeSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 

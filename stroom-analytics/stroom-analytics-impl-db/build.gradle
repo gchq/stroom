@@ -13,7 +13,6 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')

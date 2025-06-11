@@ -584,7 +584,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
                         LogUtil.message("Error deserialising {} from store {}, {}",
-                                toDocRefDisplayString(uuid),
+                                new DocRef(type, uuid),
                                 persistence.getClass().getSimpleName(),
                                 e.getMessage()), e);
             }

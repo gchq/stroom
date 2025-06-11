@@ -32,6 +32,7 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
         final Path path = Files.createTempFile("test", "test");
         Files.writeString(path, "TestFileTransferService");
         final String inputFileHash = FileHashUtil.hash(path);
+        final boolean merge = true;
         final long inputCreateTime = System.currentTimeMillis();
         final FileDescriptor fileDescriptor = new FileDescriptor(inputCreateTime, 1, inputFileHash);
         final FileTransferClientImpl fileTransferClient = new FileTransferClientImpl(
@@ -49,10 +50,12 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                     final long metaId = invocation.getArgument(1);
                     final String fileHash = invocation.getArgument(2);
                     final String fileName = invocation.getArgument(3);
-                    final InputStream inputStream = invocation.getArgument(4);
+                    final boolean synchroniseMerge = invocation.getArgument(4);
+                    final InputStream inputStream = invocation.getArgument(5);
                     assertThat(createTime).isEqualTo(inputCreateTime);
                     assertThat(metaId).isEqualTo(1);
                     assertThat(fileHash).isEqualTo(inputFileHash);
+                    assertThat(synchroniseMerge).isEqualTo(merge);
                     assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("TestFileTransferService");
                     return null;
                 })
@@ -61,10 +64,11 @@ class TestFileTransferService extends AbstractResourceTest<FileTransferResource>
                         Mockito.anyLong(),
                         Mockito.anyString(),
                         Mockito.anyString(),
+                        Mockito.anyBoolean(),
                         Mockito.any(InputStream.class));
 
         final WebTarget webTarget = getWebTarget(FileTransferResource.SEND_PART_PATH_PART);
-        fileTransferClient.storePartRemotely(webTarget, fileDescriptor, path);
+        fileTransferClient.storePartRemotely(webTarget, fileDescriptor, path, merge);
     }
 
     @Test

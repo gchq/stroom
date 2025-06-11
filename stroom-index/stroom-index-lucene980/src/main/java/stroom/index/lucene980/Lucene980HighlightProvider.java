@@ -2,10 +2,10 @@ package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;

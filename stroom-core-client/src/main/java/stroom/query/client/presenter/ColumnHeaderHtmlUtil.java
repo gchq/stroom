@@ -1,8 +1,8 @@
 package stroom.query.client.presenter;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.Sort;
+import stroom.query.api.Column;
+import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.Sort;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SvgImageUtil;
 

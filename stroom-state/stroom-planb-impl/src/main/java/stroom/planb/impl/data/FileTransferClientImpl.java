@@ -50,9 +50,9 @@ public class FileTransferClientImpl implements FileTransferClient {
     @Inject
     public FileTransferClientImpl(final Provider<PlanBConfig> configProvider,
                                   final NodeService nodeService,
-                                  final NodeInfo nodeInfo,
+                                  @Nullable final NodeInfo nodeInfo,
                                   @Nullable final TargetNodeSetFactory targetNodeSetFactory,
-                                  @Nullable final WebTargetFactory webTargetFactory,
+                                  final WebTargetFactory webTargetFactory,
                                   final PartDestination partDestination,
                                   final SecurityContext securityContext) {
         this.configProvider = configProvider;
@@ -66,7 +66,8 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     @Override
     public void storePart(final FileDescriptor fileDescriptor,
-                          final Path path) {
+                          final Path path,
+                          final boolean synchroniseMerge) {
         securityContext.asProcessingUser(() -> {
             try {
                 final Set<String> targetNodes = new HashSet<>();
@@ -76,18 +77,22 @@ public class FileTransferClientImpl implements FileTransferClient {
                 final List<String> configuredNodes = planBConfig.getNodeList();
                 if (configuredNodes == null || configuredNodes.isEmpty()) {
                     LOGGER.warn("No node list configured for PlanB, assuming this is a single node test setup");
-                    targetNodes.add(nodeInfo.getThisNodeName());
+                    if (nodeInfo != null) {
+                        targetNodes.add(nodeInfo.getThisNodeName());
+                    }
 
                 } else {
                     try {
-                        final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                        for (final String node : configuredNodes) {
-                            if (enabledActiveNodes.contains(node)) {
-                                targetNodes.add(node);
-                            } else {
-                                throw new RuntimeException("Plan B target node '" +
-                                                           node +
-                                                           "' is not enabled or active");
+                        if (targetNodeSetFactory != null) {
+                            final Set<String> enabledActiveNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                            for (final String node : configuredNodes) {
+                                if (enabledActiveNodes.contains(node)) {
+                                    targetNodes.add(node);
+                                } else {
+                                    throw new RuntimeException("Plan B target node '" +
+                                                               node +
+                                                               "' is not enabled or active");
+                                }
                             }
                         }
                     } catch (final Exception e) {
@@ -98,18 +103,20 @@ public class FileTransferClientImpl implements FileTransferClient {
 
                 // Send the data to all nodes.
                 for (final String nodeName : targetNodes) {
-                    if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                    if (nodeInfo == null || NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                         // Allow file move if the only target is the local node.
                         final boolean allowMove = targetNodes.size() == 1;
                         storePartLocally(
                                 fileDescriptor,
                                 path,
-                                allowMove);
+                                allowMove,
+                                synchroniseMerge);
                     } else {
                         storePartRemotely(
                                 nodeName,
                                 fileDescriptor,
-                                path);
+                                path,
+                                synchroniseMerge);
                     }
                 }
             } catch (final IOException e) {
@@ -121,19 +128,21 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     private void storePartLocally(final FileDescriptor fileDescriptor,
                                   final Path path,
-                                  final boolean allowMove) throws IOException {
-        partDestination.receiveLocalPart(fileDescriptor, path, allowMove);
+                                  final boolean allowMove,
+                                  final boolean synchroniseMerge) throws IOException {
+        partDestination.receiveLocalPart(fileDescriptor, path, allowMove, synchroniseMerge);
     }
 
     private void storePartRemotely(final String targetNode,
                                    final FileDescriptor fileDescriptor,
-                                   final Path path) throws IOException {
+                                   final Path path,
+                                   final boolean synchroniseMerge) throws IOException {
         final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, targetNode);
         final String url = baseEndpointUrl + ResourcePaths.buildAuthenticatedApiPath(FileTransferResource.BASE_PATH,
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
         try {
-            storePartRemotely(webTarget, fileDescriptor, path);
+            storePartRemotely(webTarget, fileDescriptor, path, synchroniseMerge);
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
             throw new IOException("Unable to send file to '" + targetNode + "': " + e.getMessage(), e);
@@ -142,19 +151,22 @@ public class FileTransferClientImpl implements FileTransferClient {
 
     void storePartRemotely(final WebTarget webTarget,
                            final FileDescriptor fileDescriptor,
-                           final Path path) throws IOException {
+                           final Path path,
+                           final boolean synchroniseMerge) throws IOException {
         try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
-            final Response response = webTarget
+            try (final Response response = webTarget
                     .request()
                     .header("createTime", fileDescriptor.createTimeMs())
                     .header("metaId", fileDescriptor.metaId())
                     .header("fileHash", fileDescriptor.fileHash())
                     .header("fileName", path.getFileName().toString())
-                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM));
-            if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
-                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
-            } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                    .header("synchroniseMerge", synchroniseMerge)
+                    .post(Entity.entity(inputStream, MediaType.APPLICATION_OCTET_STREAM))) {
+                if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
+                    throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+                } else if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                }
             }
         }
     }
@@ -189,7 +201,7 @@ public class FileTransferClientImpl implements FileTransferClient {
     Instant fetchSnapshot(final WebTarget webTarget,
                           final SnapshotRequest request,
                           final Path snapshotDir) throws IOException {
-        try (Response response = webTarget
+        try (final Response response = webTarget
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .post(Entity.json(request))) {
             if (response.getStatus() == Status.NOT_MODIFIED.getStatusCode()) {

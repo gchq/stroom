@@ -2,16 +2,16 @@ package stroom.query.client.presenter;
 
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dashboard.client.main.UniqueUtil;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Column.Builder;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.Column;
+import stroom.query.api.Column.Builder;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;
@@ -289,7 +289,7 @@ public class DynamicColumnSelectionListModel
 
         private static String buildAnnotationFieldExpression(final FieldType fieldType,
                                                              final String indexFieldName) {
-            String fieldParam = ParamSubstituteUtil.makeParam(indexFieldName);
+            String fieldParam = ParamUtil.create(indexFieldName);
             if (FieldType.DATE.equals(fieldType)) {
                 fieldParam = "formatDate(" + fieldParam + ")";
             }
@@ -306,7 +306,7 @@ public class DynamicColumnSelectionListModel
 
         private static void addFieldIfPresent(final List<String> params,
                                               final String fieldName) {
-            params.add(ParamSubstituteUtil.makeParam(fieldName));
+            params.add(ParamUtil.create(fieldName));
         }
 
         private static Column convertFieldInfo(final QueryField fieldInfo) {
@@ -346,7 +346,7 @@ public class DynamicColumnSelectionListModel
                     }
                 }
 
-                expression = ParamSubstituteUtil.makeParam(indexFieldName);
+                expression = ParamUtil.create(indexFieldName);
                 columnBuilder.expression(expression);
             }
 

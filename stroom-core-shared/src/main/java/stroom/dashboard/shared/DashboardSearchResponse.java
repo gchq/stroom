@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
 import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

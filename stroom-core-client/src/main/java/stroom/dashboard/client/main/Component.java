@@ -27,9 +27,9 @@ import com.gwtplatform.mvp.client.Layer;
 
 public interface Component extends TabData, Layer, HasDisplayValue {
 
-    Components getComponents();
+    DashboardContext getDashboardContext();
 
-    void setComponents(Components components);
+    void setDashboardContext(DashboardContext dashboardContext);
 
     ComponentType getComponentType();
 
@@ -67,8 +67,6 @@ public interface Component extends TabData, Layer, HasDisplayValue {
     void read(ComponentConfig componentConfig);
 
     ComponentConfig write();
-
-    void setDashboardContext(DashboardContext dashboardContext);
 
     void setDesignMode(boolean designMode);
 }

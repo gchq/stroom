@@ -29,7 +29,9 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TableCoprocessorSettings.class, name = "table"),
         @JsonSubTypes.Type(value = EventCoprocessorSettings.class, name = "event")
 })
-public interface CoprocessorSettings extends Serializable {
+public sealed interface CoprocessorSettings extends Serializable permits
+        TableCoprocessorSettings,
+        EventCoprocessorSettings {
 
     int getCoprocessorId();
 }

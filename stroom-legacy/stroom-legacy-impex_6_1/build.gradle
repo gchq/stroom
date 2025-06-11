@@ -13,7 +13,6 @@ dependencies {
     implementation project(':stroom-legacy:stroom-legacy-model_6_1')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')

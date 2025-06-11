@@ -16,10 +16,10 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.TableSettings;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

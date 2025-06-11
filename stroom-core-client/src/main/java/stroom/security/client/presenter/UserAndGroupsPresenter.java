@@ -18,8 +18,8 @@ package stroom.security.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
 import stroom.security.client.presenter.UserListPresenter.Mode;

@@ -49,16 +49,16 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
     private static final String CACHE_NAME = "Plan B State Doc Cache";
 
-    private final PlanBDocStore stateDocStore;
+    private final PlanBDocStore planBDocStore;
     private final LoadingStroomCache<String, PlanBDoc> cache;
     private final SecurityContext securityContext;
 
     @Inject
     PlanBDocCacheImpl(final CacheManager cacheManager,
-                      final PlanBDocStore stateDocStore,
+                      final PlanBDocStore planBDocStore,
                       final SecurityContext securityContext,
                       final Provider<PlanBConfig> stateConfigProvider) {
-        this.stateDocStore = stateDocStore;
+        this.planBDocStore = planBDocStore;
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -68,7 +68,7 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
 
     private PlanBDoc create(final String name) {
         return securityContext.asProcessingUserResult(() -> {
-            final List<DocRef> list = stateDocStore.findByName(name);
+            final List<DocRef> list = planBDocStore.findByName(name);
             if (list.size() > 1) {
                 throw new RuntimeException("Unexpectedly found more than one state doc with key: " + name);
             }
@@ -77,7 +77,7 @@ public class PlanBDocCacheImpl implements PlanBDocCache, Clearable, EntityEvent.
             }
 
             final DocRef docRef = list.getFirst();
-            final PlanBDoc loaded = stateDocStore.readDocument(docRef);
+            final PlanBDoc loaded = planBDocStore.readDocument(docRef);
             if (loaded == null) {
                 throw new NullPointerException("No state doc can be found for: " + docRef);
             }

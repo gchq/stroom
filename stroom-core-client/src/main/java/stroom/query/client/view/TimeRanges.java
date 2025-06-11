@@ -1,6 +1,6 @@
 package stroom.query.client.view;
 
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.TimeRange;
 
 public class TimeRanges {
 

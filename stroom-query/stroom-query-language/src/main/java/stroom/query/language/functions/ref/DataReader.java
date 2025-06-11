@@ -8,6 +8,8 @@ public interface DataReader extends AutoCloseable {
 
     boolean readBoolean();
 
+    short readShort();
+
     int readInt();
 
     long readLong();
@@ -17,6 +19,8 @@ public interface DataReader extends AutoCloseable {
     double readDouble();
 
     String readString();
+
+    byte[] readBytes();
 
     @Override
     void close();

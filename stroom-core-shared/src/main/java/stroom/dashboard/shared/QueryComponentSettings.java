@@ -17,8 +17,8 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,7 +38,7 @@ import java.util.Objects;
         "lastQueryNode"
 })
 @JsonInclude(Include.NON_NULL)
-public class QueryComponentSettings extends AbstractQueryComponentSettings {
+public final class QueryComponentSettings extends AbstractQueryComponentSettings implements ComponentSettings {
 
     @JsonProperty("dataSource")
     private final DocRef dataSource;
@@ -90,9 +90,9 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     @Override
     public String toString() {
         return "QueryComponentSettings{" +
-                "dataSource=" + dataSource +
-                ", expression=" + expression +
-                '}';
+               "dataSource=" + dataSource +
+               ", expression=" + expression +
+               '}';
     }
 
     public static Builder builder() {
@@ -105,7 +105,8 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     }
 
     public static final class Builder
-            extends AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder>
+            extends AbstractQueryComponentSettings
+            .AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder>
             implements
             HasSelectionQueryBuilder<QueryComponentSettings, Builder> {
 

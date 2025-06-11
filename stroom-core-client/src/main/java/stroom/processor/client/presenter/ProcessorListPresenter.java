@@ -50,7 +50,7 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;

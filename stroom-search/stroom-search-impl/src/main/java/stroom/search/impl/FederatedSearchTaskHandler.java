@@ -23,7 +23,7 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Query;
+import stroom.query.api.Query;
 import stroom.query.common.v2.ResultStore;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;

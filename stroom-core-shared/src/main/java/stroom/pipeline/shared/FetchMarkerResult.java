@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FetchMarkerResult extends AbstractFetchDataResult {
+public final class FetchMarkerResult extends AbstractFetchDataResult {
 
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;

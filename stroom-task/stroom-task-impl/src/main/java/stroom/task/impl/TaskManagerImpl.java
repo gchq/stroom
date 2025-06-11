@@ -16,8 +16,8 @@
 
 package stroom.task.impl;
 
-import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;

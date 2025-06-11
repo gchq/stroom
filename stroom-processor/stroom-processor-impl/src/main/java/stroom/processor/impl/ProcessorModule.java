@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
@@ -28,6 +27,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;

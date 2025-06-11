@@ -17,17 +17,17 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMapper;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Builder;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Builder;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRule;

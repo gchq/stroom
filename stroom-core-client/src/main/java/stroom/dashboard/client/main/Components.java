@@ -18,20 +18,12 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
-import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.HasDisplayValue;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,9 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class Components implements HasHandlers, HasChangeDataHandlers<Components>, Iterable<Component> {
+public class Components implements Iterable<Component> {
 
-    private final EventBus eventBus;
     private final ComponentRegistry componentRegistry;
 
     private final Map<String, Component> idMap = new HashMap<>();
@@ -52,34 +43,26 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     private final Provider<UnknownComponentPresenter> unknownComponentProvider;
 
     private final JavaScriptObject context;
-    private DashboardDoc dashboard;
 
     @Inject
-    public Components(final EventBus eventBus, final ComponentRegistry componentRegistry,
+    public Components(final ComponentRegistry componentRegistry,
                       final Provider<UnknownComponentPresenter> unknownComponentProvider) {
-        this.eventBus = eventBus;
         this.componentRegistry = componentRegistry;
         this.unknownComponentProvider = unknownComponentProvider;
         this.context = new JSONObject().getJavaScriptObject();
     }
 
-    public Component add(final String type, final String id) {
+    public Component add(final String type,
+                         final String id) {
         Component component = componentRegistry.getComponent(type);
         if (component == null) {
             component = unknownComponentProvider.get();
-            component.setComponents(this);
             idMap.put(id, component);
 
         } else {
-            component.setComponents(this);
             idMap.put(id, component);
-
             typeMap.computeIfAbsent(type, k -> new ArrayList<>()).add(component);
-            ChangeDataEvent.fire(this, this);
         }
-
-        // component.onOpen();
-
         return component;
     }
 
@@ -90,24 +73,21 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
         }
     }
 
-    public void remove(final String id, final boolean fireEvents) {
+    public Component remove(final String id) {
         final Component component = idMap.remove(id);
         if (component != null) {
             final String type = component.getComponentType().getId();
             final List<Component> list = typeMap.get(type);
             if (list != null) {
                 list.remove(component);
-                if (list.size() == 0) {
+                if (list.isEmpty()) {
                     typeMap.remove(type);
                 }
             }
 
             component.onRemove();
-
-            if (fireEvents) {
-                ChangeDataEvent.fire(this, this);
-            }
         }
+        return component;
     }
 
     public void onClose() {
@@ -120,7 +100,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     public void removeAll() {
         final List<String> componentIdList = new ArrayList<>(idMap.keySet());
         for (final String id : componentIdList) {
-            remove(id, false);
+            remove(id);
         }
     }
 
@@ -161,7 +141,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
             // If we didn't find the component or it has an invalid type then just choose the last component of the
             // required type if we can find one.
             final List<Component> list = typeMap.get(typeId);
-            if (list != null && list.size() > 0) {
+            if (list != null && !list.isEmpty()) {
                 newId = list.get(list.size() - 1).getId();
             }
         }
@@ -179,38 +159,12 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     }
 
     @Override
-    public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEventFromSource(event, this);
-    }
-
-    @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<Components> handler) {
-        return eventBus.addHandlerToSource(ChangeDataEvent.getType(), this, handler);
-    }
-
-    public HandlerRegistration addComponentChangeHandler(final ComponentChangeEvent.Handler handler) {
-        return eventBus.addHandlerToSource(ComponentChangeEvent.getType(), this, handler);
-    }
-
-    public void fireComponentChangeEvent(final Component component) {
-        ComponentChangeEvent.fire(this, component);
-    }
-
-    @Override
     public Iterator<Component> iterator() {
         return idMap.values().iterator();
     }
 
     public int size() {
         return idMap.size();
-    }
-
-    public DashboardDoc getDashboard() {
-        return dashboard;
-    }
-
-    public void setDashboard(final DashboardDoc dashboard) {
-        this.dashboard = dashboard;
     }
 
     public JavaScriptObject getContext() {

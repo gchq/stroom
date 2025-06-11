@@ -2,10 +2,10 @@ package stroom.processor.impl;
 
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionValidationException;
 
 import org.assertj.core.api.Assertions;

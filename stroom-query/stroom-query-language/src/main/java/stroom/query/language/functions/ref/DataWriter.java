@@ -8,6 +8,8 @@ public interface DataWriter extends AutoCloseable {
 
     void writeBoolean(boolean value);
 
+    void writeShort(short value);
+
     void writeInt(int value);
 
     void writeLong(long value);
@@ -17,6 +19,8 @@ public interface DataWriter extends AutoCloseable {
     void writeDouble(double value);
 
     void writeString(String value);
+
+    void writeBytes(byte[] bytes);
 
     @Override
     void close();

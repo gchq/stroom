@@ -1,12 +1,11 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.ComponentSelection;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.Param;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,30 +49,21 @@ public class TableComponentSelection implements ComponentSelection {
     }
 
     @Override
-    public SafeHtml asSafeHtml() {
-        boolean firstParam = true;
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+    public List<Param> getParams() {
+        final List<Param> params = new ArrayList<>();
         for (final ColumnRef column : columns) {
             if (column.getId() != null) {
                 final String value = tableRow.getText(column.getId());
                 if (value != null) {
-                    if (!firstParam) {
-                        sb.appendHtmlConstant(", ");
-                    }
-                    sb.appendHtmlConstant("<b>");
-                    sb.appendEscaped(column.getName());
-                    sb.appendHtmlConstant("</b>");
-                    sb.appendEscaped("=");
-                    sb.appendEscaped(value);
-                    firstParam = false;
+                    params.add(new Param(column.getName(), value));
                 }
             }
         }
-        return sb.toSafeHtml();
+        return params;
     }
 
     @Override
-    public String get(final String key) {
+    public String getParamValue(final String key) {
         return values.get(key);
     }
 }

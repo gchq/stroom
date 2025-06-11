@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.ExpressionOperator.Op;
 
 public final class Operator extends Item {
 

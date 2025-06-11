@@ -1,0 +1,470 @@
+before "test of inner \" strings " after
+=====
+<UNKNOWN>before </UNKNOWN><DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+"test of inner \" strings " after
+=====
+<DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+ "test of inner \" strings " after
+=====
+<UNKNOWN> </UNKNOWN><DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+before "test of inner \" strings "
+=====
+<UNKNOWN>before </UNKNOWN><DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+-----
+before "test of inner \" strings "
+=====
+<UNKNOWN>before </UNKNOWN><DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+-----
+before 'test of inner \' strings ' after
+=====
+<UNKNOWN>before </UNKNOWN><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+'test of inner \' strings ' after
+=====
+<SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+ 'test of inner \' strings ' after
+=====
+<UNKNOWN> </UNKNOWN><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING><UNKNOWN> after</UNKNOWN>
+-----
+before 'test of inner \' strings '
+=====
+<UNKNOWN>before </UNKNOWN><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+-----
+before 'test of inner \' strings '
+=====
+<UNKNOWN>before </UNKNOWN><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+-----
+test end slash /
+=====
+<UNKNOWN>test end slash /</UNKNOWN>
+-----
+test end comment //
+=====
+<UNKNOWN>test end comment </UNKNOWN><COMMENT>//</COMMENT>
+-----
+test end comment /*
+=====
+<UNKNOWN>test end comment </UNKNOWN><BLOCK_COMMENT>/*</BLOCK_COMMENT>
+-----
+test end comment /**/
+=====
+<UNKNOWN>test end comment </UNKNOWN><BLOCK_COMMENT>/**/</BLOCK_COMMENT>
+-----
+test ' comments // in strings \' strings '
+=====
+<UNKNOWN>test </UNKNOWN><SINGLE_QUOTED_STRING>' comments // in strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments /* in */ strings \' strings '
+=====
+<UNKNOWN>test </UNKNOWN><SINGLE_QUOTED_STRING>' comments /* in */ strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments /* in strings \' strings '
+=====
+<UNKNOWN>test </UNKNOWN><SINGLE_QUOTED_STRING>' comments /* in strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+test ' comments in */ strings \' strings '
+=====
+<UNKNOWN>test </UNKNOWN><SINGLE_QUOTED_STRING>' comments in */ strings \' strings '</SINGLE_QUOTED_STRING>
+-----
+where this = that
+and foo = 'test of inner \' strings '
+select
+=====
+<UNKNOWN>where this = that
+and foo = </UNKNOWN><SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING><UNKNOWN>
+select</UNKNOWN>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z</UNKNOWN>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now()
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where UserId = user5 and Description = e0567
+and EventTime <= now()</UNKNOWN>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3d
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3d</UNKNOWN>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3</UNKNOWN>
+-----
+from Events
+where Name = "Start"
+=====
+<UNKNOWN>from Events
+where Name = </UNKNOWN><DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
+-----
+from "index_view" // view
+// add a where
+where EventTime > 2000-01-01T00:00:00.000Z
+// and StreamId = 1210
+eval UserId = upperCase(UserId)
+eval FirstName = substringBefore(UserId, '.')
+eval count = count()
+group by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+where EventTime > 2000-01-01T00:00:00.000Z
+</UNKNOWN><COMMENT>// and StreamId = 1210</COMMENT><UNKNOWN>
+eval UserId = upperCase(UserId)
+eval FirstName = substringBefore(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'.'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval count = count()
+group by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+from "index_view" // view
+// add a where
+where EventTime > 2000-01-01T00:00:00.000Z
+/* this
+ * is a multi line
+ * block
+ * comment ***
+ */
+eval UserId = upperCase(UserId)
+eval FirstName = substringBefore(UserId, '.')
+eval count = count()
+group by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+where EventTime > 2000-01-01T00:00:00.000Z
+</UNKNOWN><BLOCK_COMMENT>/* this
+ * is a multi line
+ * block
+ * comment ***
+ */</BLOCK_COMMENT><UNKNOWN>
+eval UserId = upperCase(UserId)
+eval FirstName = substringBefore(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'.'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval count = count()
+group by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+"index_view" // view
+// add a where
+| where EventTime > 2000-01-01T00:00:00.000Z
+//| and StreamId = 1210
+| eval UserId = upperCase(UserId)
+| eval FirstName = first(substringBefore(UserId, '.'))
+=====
+<DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+| where EventTime > 2000-01-01T00:00:00.000Z
+</UNKNOWN><COMMENT>//| and StreamId = 1210</COMMENT><UNKNOWN>
+| eval UserId = upperCase(UserId)
+| eval FirstName = first(substringBefore(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'.'</SINGLE_QUOTED_STRING><UNKNOWN>))</UNKNOWN>
+-----
+/*
+doc comment
+*/
+
+from "index_view" // view
+// add a where
+where EventTime > 2000-01-01T00:00:00.000Z
+// and StreamId = 1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId//lowerCase(substringBefore(UserId, '.'))
+// eval FirstName = top(FirstName)
+eval count = count()
+// group by StreamId
+sort by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<BLOCK_COMMENT>/*
+doc comment
+*/</BLOCK_COMMENT><UNKNOWN>
+
+from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+where EventTime > 2000-01-01T00:00:00.000Z
+</UNKNOWN><COMMENT>// and StreamId = 1210</COMMENT><UNKNOWN>
+eval UserId = upperCase(UserId)
+eval FirstName = UserId</UNKNOWN><COMMENT>//lowerCase(substringBefore(UserId, '.'))</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// eval FirstName = top(FirstName)</COMMENT><UNKNOWN>
+eval count = count()
+</UNKNOWN><COMMENT>// group by StreamId</COMMENT><UNKNOWN>
+sort by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+/*
+doc comment
+*/
+
+from "index_view" // view
+// add a where
+where EventTime > 2000-01-01T00:00:00.000Z
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId//lowerCase(substringBefore(UserId, '.'))
+// eval FirstName = top(FirstName)
+eval count = count()
+// group by StreamId
+sort by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<BLOCK_COMMENT>/*
+doc comment
+*/</BLOCK_COMMENT><UNKNOWN>
+
+from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+where EventTime > 2000-01-01T00:00:00.000Z
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId</UNKNOWN><COMMENT>//lowerCase(substringBefore(UserId, '.'))</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// eval FirstName = top(FirstName)</COMMENT><UNKNOWN>
+eval count = count()
+</UNKNOWN><COMMENT>// group by StreamId</COMMENT><UNKNOWN>
+sort by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+/*
+doc comment
+*/
+
+from "index_view" // view
+// add a where
+EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId//lowerCase(substringBefore(UserId, '.'))
+// eval FirstName = top(FirstName)
+eval count = count()
+// group by StreamId
+sort by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<BLOCK_COMMENT>/*
+doc comment
+*/</BLOCK_COMMENT><UNKNOWN>
+
+from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+EventTime > 2023-05-05T00:00:00.000Z and  (Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING><UNKNOWN> or Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING><UNKNOWN>)
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId</UNKNOWN><COMMENT>//lowerCase(substringBefore(UserId, '.'))</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// eval FirstName = top(FirstName)</COMMENT><UNKNOWN>
+eval count = count()
+</UNKNOWN><COMMENT>// group by StreamId</COMMENT><UNKNOWN>
+sort by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+/*
+doc comment
+*/
+
+from "index_view" // view
+// add a where
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId//lowerCase(substringBefore(UserId, '.'))
+// eval FirstName = top(FirstName)
+eval count = count()
+// group by StreamId
+sort by StreamId
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", UserId as "User Id", FirstName, count
+limit 10
+=====
+<BLOCK_COMMENT>/*
+doc comment
+*/</BLOCK_COMMENT><UNKNOWN>
+
+from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN> </UNKNOWN><COMMENT>// view</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// add a where</COMMENT><UNKNOWN>
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING><UNKNOWN> or Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING><UNKNOWN>)
+and StreamId=1210
+eval UserId = upperCase(UserId)
+eval FirstName = UserId</UNKNOWN><COMMENT>//lowerCase(substringBefore(UserId, '.'))</COMMENT><UNKNOWN>
+</UNKNOWN><COMMENT>// eval FirstName = top(FirstName)</COMMENT><UNKNOWN>
+eval count = count()
+</UNKNOWN><COMMENT>// group by StreamId</COMMENT><UNKNOWN>
+sort by StreamId
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, FirstName, count
+limit 10</UNKNOWN>
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where "My Field" = "Field Name"
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><DOUBLE_QUOTED_STRING>"My Field"</DOUBLE_QUOTED_STRING><UNKNOWN> = </UNKNOWN><DOUBLE_QUOTED_STRING>"Field Name"</DOUBLE_QUOTED_STRING><UNKNOWN>
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' = 'Field Name'
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> = </UNKNOWN><SINGLE_QUOTED_STRING>'Field Name'</SINGLE_QUOTED_STRING><UNKNOWN>
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' = '"Field Name"'
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> = </UNKNOWN><SINGLE_QUOTED_STRING>'"Field Name"'</SINGLE_QUOTED_STRING><UNKNOWN>
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' = 2022-01-01T00:00:00.000Z
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> = 2022-01-01T00:00:00.000Z
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' = 2022-01-01T00:00:00.000Z - 1w
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> = 2022-01-01T00:00:00.000Z - 1w
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' between 2022-01-01T00:00:00.000Z + 1d and 2022-01-01T00:00:00.000Z + 5d
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> between 2022-01-01T00:00:00.000Z + 1d and 2022-01-01T00:00:00.000Z + 5d
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where 'My Field' between now()-1w and now()
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'My Field'</SINGLE_QUOTED_STRING><UNKNOWN> between now()-1w and now()
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where StreamId in (123, 456)
+select StreamId</UNKNOWN>
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+=====
+<UNKNOWN>from </UNKNOWN><DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING><UNKNOWN>
+where StreamId in dictionary </UNKNOWN><DOUBLE_QUOTED_STRING>"my_dictionary"</DOUBLE_QUOTED_STRING><UNKNOWN>
+select StreamId</UNKNOWN>
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed
+=====
+<COMMENT>// From example index</COMMENT><UNKNOWN>
+from View
+</UNKNOWN><COMMENT>// eval MaxD=max(parseDuration('PT10M'))</COMMENT><UNKNOWN>
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed</UNKNOWN>
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+=====
+<UNKNOWN>from </UNKNOWN><SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING><UNKNOWN>
+where </UNKNOWN><SINGLE_QUOTED_STRING>'my.name'</SINGLE_QUOTED_STRING><UNKNOWN> = </UNKNOWN><SINGLE_QUOTED_STRING>'"foo bar"'</SINGLE_QUOTED_STRING><UNKNOWN>
+eval UserId =
+select UserId</UNKNOWN>
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval idx1 = indexOf(UserId, 'user1')
+eval idx2 = indexOf(UserId, 'user')
+eval test = if(and(idx1 >= 0, idx2 >= 0), 1, 0)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id", test
+=====
+<UNKNOWN>from </UNKNOWN><SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING><UNKNOWN>
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING><UNKNOWN> or Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval idx1 = indexOf(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'user1'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval idx2 = indexOf(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'user'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval test = if(and(idx1 >= 0, idx2 >= 0), 1, 0)
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, Status, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, test</UNKNOWN>
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval idx1 = indexOf(UserId, 'user1')
+eval idx2 = indexOf(UserId, 'user')
+eval bool = and(idx1 >= 0, idx2 >= 0)
+eval test = if(bool, 1, 0)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id", test
+=====
+<UNKNOWN>from </UNKNOWN><SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING><UNKNOWN>
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING><UNKNOWN> or Field = </UNKNOWN><SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval idx1 = indexOf(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'user1'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval idx2 = indexOf(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'user'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval bool = and(idx1 >= 0, idx2 >= 0)
+eval test = if(bool, 1, 0)
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, Status, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, test</UNKNOWN>
+-----
+from 'Test Index'
+where EventTime > ${et1} and  (Field = ${'blah'} or Field = ${'blip'})
+eval idx1 = indexOf(UserId, 'user1')
+eval idx2 = indexOf(UserId, ${usr1})
+eval bool = and(idx1 >= 0, idx2 >= 0)
+eval test = if(bool, 1, 0)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id", test
+=====
+<UNKNOWN>from </UNKNOWN><SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING><UNKNOWN>
+where EventTime > </UNKNOWN><PARAM>${et1}</PARAM><UNKNOWN> and  (Field = ${</UNKNOWN><SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING><UNKNOWN>} or Field = ${</UNKNOWN><SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING><UNKNOWN>})
+eval idx1 = indexOf(UserId, </UNKNOWN><SINGLE_QUOTED_STRING>'user1'</SINGLE_QUOTED_STRING><UNKNOWN>)
+eval idx2 = indexOf(UserId, </UNKNOWN><PARAM>${usr1}</PARAM><UNKNOWN>)
+eval bool = and(idx1 >= 0, idx2 >= 0)
+eval test = if(bool, 1, 0)
+select StreamId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventId as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, EventTime as </UNKNOWN><DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING><UNKNOWN>, Status, UserId as </UNKNOWN><DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING><UNKNOWN>, test</UNKNOWN>
+-----

@@ -27,10 +27,12 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class ReportPresenter
@@ -43,6 +45,8 @@ public class ReportPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
+    private final ReportQueryEditPresenter reportQueryEditPresenter;
+
     @Inject
     public ReportPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
@@ -54,6 +58,7 @@ public class ReportPresenter
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.reportQueryEditPresenter = reportQueryEditPresenter;
 
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
@@ -80,6 +85,21 @@ public class ReportPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
+    }
+
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.OK == action
+            && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            reportQueryEditPresenter.start();
+            return true;
+        } else if (Action.CLOSE == action
+                   && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            reportQueryEditPresenter.stop();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

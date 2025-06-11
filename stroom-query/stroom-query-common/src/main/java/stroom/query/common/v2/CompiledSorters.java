@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Sort;
+import stroom.query.api.Column;
+import stroom.query.api.Sort;
 import stroom.query.language.functions.Val;
 
 import java.util.Comparator;

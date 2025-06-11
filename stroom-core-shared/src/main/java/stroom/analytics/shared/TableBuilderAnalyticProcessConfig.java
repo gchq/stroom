@@ -14,7 +14,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
+public final class TableBuilderAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final boolean enabled;

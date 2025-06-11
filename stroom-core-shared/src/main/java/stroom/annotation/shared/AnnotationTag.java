@@ -2,7 +2,7 @@ package stroom.annotation.shared;
 
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.query.api.v2.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingStyle;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

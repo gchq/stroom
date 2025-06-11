@@ -22,17 +22,17 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
@@ -133,14 +133,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -205,21 +205,21 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .group(1)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression("first(" + ParamSubstituteUtil.makeParam("Text2") + ")")
+                        .expression("first(" + ParamUtil.create("Text2") + ")")
                         .format(Format.TEXT)
                         .build())
                 .addColumns(Column.builder()
@@ -361,19 +361,19 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("StreamId")
                         .name("StreamId")
-                        .expression(ParamSubstituteUtil.makeParam("StreamId"))
+                        .expression(ParamUtil.create("StreamId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventId")
                         .name("EventId")
-                        .expression(ParamSubstituteUtil.makeParam("EventId"))
+                        .expression(ParamUtil.create("EventId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                        .expression(ParamUtil.create("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())
                 .build();

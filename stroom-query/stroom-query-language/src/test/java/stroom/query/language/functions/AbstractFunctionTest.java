@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.language.token.Param;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Offset;
@@ -42,16 +41,13 @@ public abstract class AbstractFunctionTest<T extends Function> {
 
     @TestFactory
     Stream<DynamicTest> functionTests() {
-
-        final T function = getFunctionSupplier().get();
-
         return getTestCases()
                 .map(testCase ->
-                        createDynamicTest(function, testCase));
+                        createDynamicTest(() -> getFunctionSupplier().get(), testCase));
     }
 
-    private DynamicTest createDynamicTest(final T function, final TestCase testCase) {
-
+    private DynamicTest createDynamicTest(final Supplier<T> functionSupplier, final TestCase testCase) {
+        T function = functionSupplier.get();
         return DynamicTest.dynamicTest(
                 function.getClass().getSimpleName() + "(" + testCase.getTestVariantName() + ")",
                 () -> {

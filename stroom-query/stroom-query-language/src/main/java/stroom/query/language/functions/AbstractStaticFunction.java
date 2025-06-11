@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.language.token.Param;
 
 import java.util.Map;
 

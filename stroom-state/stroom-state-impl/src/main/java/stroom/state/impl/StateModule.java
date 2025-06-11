@@ -17,14 +17,13 @@
 package stroom.state.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.xsltfunctions.StateLookup;
-import stroom.pipeline.xsltfunctions.StateLookupProvider;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.language.functions.StateFetcher;

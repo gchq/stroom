@@ -766,6 +766,20 @@ public enum SvgImage {
             "6 158v32h672q92 0 158 66t66 158z\"/></svg>\n" +
             ""),
 
+    DOCUMENT_GIT_REPO("document/GitRepo.svg", "svg-image__document-git-repo", "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"92pt\" height=\"92pt\" viewBox=\"0 0 " +
+            "92 92\"><defs><clipPath id=\"a\"><path d=\"M0 .113h91.887V92H0Zm0 0\"/></clipPath></d" +
+            "efs><g clip-path=\"url(#a)\"><path style=\"stroke:none;fill-rule:nonzero;fill:#f03c" +
+            "2e;fill-opacity:1\" d=\"M90.156 41.965 50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.3" +
+            "28 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.034 7.034 0 0 1 1.669 7.277l" +
+            "10.187 10.184a7.028 7.028 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.05 7.05 0 " +
+            "0 1-9.965 0 7.044 7.044 0 0 1-1.528-7.66l-9.5-9.497V59.36a7.04 7.04 0 0 1 1.86 1" +
+            "1.29 7.04 7.04 0 0 1-9.957 0 7.04 7.04 0 0 1 0-9.958 7.06 7.06 0 0 1 2.304-1.539" +
+            "V33.926a7.049 7.049 0 0 1-3.82-9.234L29.242 14.272 1.73 41.777a5.925 5.925 0 0 0" +
+            " 0 8.371L41.852 90.27a5.925 5.925 0 0 0 8.37 0l39.934-39.934a5.925 5.925 0 0 0 0" +
+            "-8.371\"/></g></svg>\n" +
+            ""),
+
     DOCUMENT_INDEX("document/Index.svg", "svg-image__document-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:var(--icon-colour__orange)\" d=\"M896 768q237 0 443-4" +
@@ -4157,6 +4171,21 @@ public enum SvgImage {
             "512 832q0 52-38 90t-90 38q-54 0-90-38l-343-342q-179 124-399 124-143 0-273.5-55.5" +
             "t-225-150-150-225-55.5-273.5 55.5-273.5 150-225 225-150 273.5-55.5 273.5 55.5 22" +
             "5 150 150 225 55.5 273.5q0 220-124 399l343 343q37 37 37 90z\"/></svg>\n" +
+            ""),
+
+    SELECTION("selection.svg", "svg-image__selection", "" +
+            "<svg viewBox=\"4 4 23 23\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\"><path " +
+            "style=\"fill:currentColor\" d=\"m 5,13 v 2 h 2 v -2 z\"/><path style=\"fill:currentCo" +
+            "lor\" d=\"m 17.042169,9.0726743 v 1.9999997 h 2 V 9.0726743 Z\"/><path style=\"fill:" +
+            "currentColor\" d=\"m 5,9 v 2 H 7 V 9 Z\"/><path style=\"fill:currentColor\" d=\"m 17.0" +
+            "42169,5.0726743 v 1 1 h 1 1 v -1 -1 h -1 z\"/><path style=\"fill:currentColor\" d=\"" +
+            "m 13,5 v 2 h 2 V 5 Z\"/><path style=\"fill:currentColor\" d=\"m 9,5 v 2 h 2 V 5 Z\"/>" +
+            "<path style=\"fill:currentColor\" d=\"M 5,5 V 6 7 H 6 7 V 6 5 H 6 Z\"/><path style=\"" +
+            "fill:currentColor\" d=\"m 8.9999687,16.99972 v 2 h 2.0000003 v -2 z\"/><path style=" +
+            "\"fill:currentColor\" d=\"m 4.9999686,16.99972 v 1 1 h 1 1 v -1 -1 h -1 z\"/><path s" +
+            "tyle=\"fill:currentColor;fill-opacity:0;stroke:currentColor;stroke-width:2;stroke" +
+            "-linecap:square;stroke-linejoin:round;paint-order:normal\" d=\"M 17.229453,25.9624" +
+            "32 12.2688,13.398157 l 13.662125,6.261807 -7.237673,0.528594 z\"/></svg> \n" +
             ""),
 
     SETTINGS("settings.svg", "svg-image__settings", "" +

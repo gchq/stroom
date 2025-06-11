@@ -16,6 +16,7 @@
 
 package stroom.query.language.token;
 
+import stroom.query.api.token.TokenType;
 import stroom.test.common.TestUtil;
 
 import com.google.inject.TypeLiteral;

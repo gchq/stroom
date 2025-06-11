@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerDecorator;
+import stroom.importexport.api.ImportExportActionHandlers;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.common.v2.ExpressionPredicateFactory;

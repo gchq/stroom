@@ -31,6 +31,8 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-feed:stroom-feed-impl')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
+    implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db')

@@ -18,8 +18,8 @@
 package stroom.search.impl;
 
 import stroom.annotation.shared.AnnotationDecorationFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Query;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;

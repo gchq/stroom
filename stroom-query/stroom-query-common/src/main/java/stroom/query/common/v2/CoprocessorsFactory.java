@@ -1,14 +1,14 @@
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;

@@ -28,11 +28,8 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-
-import javax.inject.Singleton;
 
 abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagPresenter> {
 

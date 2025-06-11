@@ -26,30 +26,34 @@ import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.QueryFieldProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResultBuilder;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.QueryNodeResolver;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResultBuilder;
+import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryFieldProvider;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -65,9 +69,6 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -150,6 +151,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
+    private final QueryNodeResolver queryNodeResolver;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -166,7 +168,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
-                     final ValPredicateFactory valPredicateFactory) {
+                     final ValPredicateFactory valPredicateFactory,
+                     final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -182,6 +185,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
+        this.queryNodeResolver = queryNodeResolver;
     }
 
     @Override
@@ -265,7 +269,6 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     };
 
                     // Write delimited file.
-
                     try {
                         target.start();
 
@@ -862,6 +865,9 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                         // 'from xxx '
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
+                case WHERE -> count > 2
+                        ? EnumSet.of(QueryHelpType.QUERYABLE_FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE)
+                        : EnumSet.of(QueryHelpType.QUERYABLE_FIELD);
                 case LIMIT -> count > 3
                         // LIMIT only allows numbers/strings
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
@@ -1033,5 +1039,22 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return securityContext.useAsReadResult(() ->
                 dataSourceProviderRegistry.fetchDocumentation(docRef));
+    }
+
+    @Override
+    public String getBestNode(final String nodeName, final QuerySearchRequest request) {
+        if (nodeName == null || nodeName.equals("null")) {
+            if (queryNodeResolver == null) {
+                return null;
+            }
+            try {
+                final SearchRequest mappedRequest = mapRequest(request);
+                final DocRef docRef = NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource);
+                return queryNodeResolver.getNode(docRef);
+            } catch (final RuntimeException e) {
+                return null;
+            }
+        }
+        return nodeName;
     }
 }

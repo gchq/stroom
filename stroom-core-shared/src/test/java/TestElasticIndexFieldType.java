@@ -1,4 +1,4 @@
-import stroom.datasource.api.v2.FieldType;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
 

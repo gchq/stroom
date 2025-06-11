@@ -25,7 +25,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;

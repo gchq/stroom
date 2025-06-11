@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.ContentTemplate;

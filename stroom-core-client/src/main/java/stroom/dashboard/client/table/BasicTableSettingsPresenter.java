@@ -93,7 +93,7 @@ public class BasicTableSettingsPresenter
     }
 
     private void setQueryId(final String queryId) {
-        getView().setQuery(getComponents().get(queryId));
+        getView().setQuery(getDashboardContext().getComponents().get(queryId));
     }
 
     private boolean extractValues() {
@@ -155,7 +155,8 @@ public class BasicTableSettingsPresenter
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
+        final List<Component> list = getDashboardContext()
+                .getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
@@ -203,13 +204,14 @@ public class BasicTableSettingsPresenter
 
         // Need to compare extractionPipeline including name in case it has been renamed after decoration
         final boolean equal = Objects.equals(oldSettings.getQueryId(), newSettings.getQueryId()) &&
-                Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
-                Objects.equals(oldSettings.useDefaultExtractionPipeline(),
-                        newSettings.useDefaultExtractionPipeline()) &&
-                Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
-                Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
-                Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
-                Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
+                              Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
+                              Objects.equals(oldSettings.useDefaultExtractionPipeline(),
+                                      newSettings.useDefaultExtractionPipeline()) &&
+                              Objects.equals(oldSettings.getExtractionPipeline(),
+                                      newSettings.getExtractionPipeline()) &&
+                              Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
+                              Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
+                              Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
 
         return !equal;
     }

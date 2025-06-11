@@ -21,7 +21,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.svg.client.Preset;

@@ -25,10 +25,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QLVisResult;
-import stroom.query.api.v2.Result;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.QLVisResult;
+import stroom.query.api.Result;
 import stroom.query.client.presenter.QueryResultVisPresenter.QueryResultVisView;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
@@ -302,7 +302,6 @@ public class QueryResultVisPresenter
             if (componentResult != null) {
                 final QLVisResult visResult = (QLVisResult) componentResult;
 
-                currentSettings = getJSONSettings(visResult);
                 currentData = getJSONData(visResult);
 //                    final List<String> errors = visResult.getErrors();
 //                    if (currentError == null && errors != null && !errors.isEmpty()) {
@@ -325,7 +324,7 @@ public class QueryResultVisPresenter
                     function.addStatusHandler(this);
 
                     // Load the visualisation.
-                    loadVisualisation(function, visualisation);
+                    loadVisualisation(function, visualisation, visResult);
 
                 } else {
                     if (currentFunction != visFunction) {
@@ -384,7 +383,8 @@ public class QueryResultVisPresenter
         return settings;
     }
 
-    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
+    private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef,
+                                   final QLVisResult visResult) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
@@ -402,6 +402,8 @@ public class QueryResultVisPresenter
                             failure(function, "Unable to parse settings for visualisation: "
                                     + visualisationDocRef);
                         }
+
+                        currentSettings = getJSONSettings(visResult);
 
                         function.setFunctionName(result.getFunctionName());
 
@@ -631,7 +633,7 @@ public class QueryResultVisPresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        return NullSafe.get(visSelectionModel, VisSelectionModel::getSelection);
+        return NullSafe.list(NullSafe.get(visSelectionModel, VisSelectionModel::getSelection));
     }
 
     @Override

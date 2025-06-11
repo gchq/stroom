@@ -17,7 +17,8 @@
 package stroom.query.client.view;
 
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ParamValues;
+import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;
@@ -93,6 +94,11 @@ public class QueryToolbarViewImpl
         if (getUiHandlers() != null) {
             getUiHandlers().onTimeRange(event.getValue());
         }
+    }
+
+    @Override
+    public void setParamValues(final ParamValues paramValues) {
+        timeRangeSelector.setParamValues(paramValues);
     }
 
 

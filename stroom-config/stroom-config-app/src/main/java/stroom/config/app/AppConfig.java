@@ -33,6 +33,7 @@ import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
+import stroom.gitrepo.impl.GitRepoConfigImpl;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -98,6 +99,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_EXPLORER = "explorer";
     public static final String PROP_NAME_EXPORT = "export";
     public static final String PROP_NAME_FEED = "feed";
+    public static final String PROP_NAME_GIT_REPO = "gitRepo";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_INDEX = "index";
     public static final String PROP_NAME_JOB = "job";
@@ -150,6 +152,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ExplorerConfig explorerConfig;
     private final ExportConfig exportConfig;
     private final FeedConfig feedConfig;
+    private final GitRepoConfigImpl gitRepoConfig;
     private final IndexConfig indexConfig;
     private final JobSystemConfig jobSystemConfig;
     private final KafkaConfig kafkaConfig;
@@ -204,6 +207,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ExplorerConfig(),
                 new ExportConfig(),
                 new FeedConfig(),
+                new GitRepoConfigImpl(),
                 new IndexConfig(),
                 new JobSystemConfig(),
                 new KafkaConfig(),
@@ -257,6 +261,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                      @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                      @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                     @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfigImpl gitRepoConfig,
                      @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                      @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                      @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -306,6 +311,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.feedConfig = feedConfig;
+        this.gitRepoConfig = gitRepoConfig;
         this.indexConfig = indexConfig;
         this.jobSystemConfig = jobSystemConfig;
         this.kafkaConfig = kafkaConfig;
@@ -449,6 +455,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_EXPORT)
     public ExportConfig getExportConfig() {
         return exportConfig;
+    }
+
+    @JsonProperty(PROP_NAME_GIT_REPO)
+    public GitRepoConfigImpl getGitRepoConfig() {
+        return gitRepoConfig;
     }
 
     @JsonProperty(PROP_NAME_INDEX)

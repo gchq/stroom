@@ -18,7 +18,7 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.ReceiveAction;

@@ -1,6 +1,5 @@
 package stroom.receive.common;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.meta.api.AttributeMap;
@@ -8,11 +7,12 @@ import stroom.meta.api.AttributeMap.Builder;
 import stroom.meta.api.AttributeMapper;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactoryFactory;
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.receive.common.ReceiveDataRuleSetService.BundledRules;

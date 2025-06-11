@@ -1,12 +1,12 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

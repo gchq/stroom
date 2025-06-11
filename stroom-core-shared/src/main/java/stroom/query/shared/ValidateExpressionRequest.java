@@ -1,8 +1,8 @@
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.QueryField;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

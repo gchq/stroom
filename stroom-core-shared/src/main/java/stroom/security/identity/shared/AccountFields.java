@@ -1,6 +1,6 @@
 package stroom.security.identity.shared;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.List;

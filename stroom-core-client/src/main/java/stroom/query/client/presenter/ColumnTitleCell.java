@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.SvgImageUtil;
 

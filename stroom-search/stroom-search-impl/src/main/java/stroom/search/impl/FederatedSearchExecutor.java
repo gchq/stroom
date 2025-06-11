@@ -1,7 +1,7 @@
 package stroom.search.impl;
 
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.api.SearchTaskProgress;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.SearchProcess;
 import stroom.task.api.TaskContextFactory;

@@ -18,8 +18,6 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -37,11 +35,14 @@ import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -720,7 +721,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer consumer) {
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
                                 doSearch(criteria, fieldIndex, consumer, taskContext))

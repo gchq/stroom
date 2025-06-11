@@ -26,12 +26,13 @@ import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.impl.PermissionChangeService;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -162,6 +163,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer consumer) {
         checkAppPermission();
 

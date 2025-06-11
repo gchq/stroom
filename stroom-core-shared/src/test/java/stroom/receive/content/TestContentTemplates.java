@@ -2,7 +2,7 @@ package stroom.receive.content;
 
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.receive.content.shared.ContentTemplate;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.receive.content.shared.TemplateType;

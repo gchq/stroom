@@ -16,10 +16,10 @@
 
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.Field;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.IndexField;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.Field;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

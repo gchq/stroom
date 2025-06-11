@@ -1,9 +1,5 @@
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
@@ -12,6 +8,10 @@ import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.exception.ThrowingRunnable;
 import stroom.util.logging.LambdaLogger;

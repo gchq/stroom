@@ -25,7 +25,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.query.api.v2.Result;
+import stroom.query.api.Result;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;

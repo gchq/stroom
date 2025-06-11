@@ -37,18 +37,19 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResultBuilder;
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.QueryNodeResolver;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResultBuilder;
+import stroom.query.api.TimeFilter;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.Key;
@@ -131,6 +132,7 @@ class DashboardServiceImpl implements DashboardService {
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
+    private final QueryNodeResolver queryNodeResolver;
 
     @Inject
     DashboardServiceImpl(final DashboardStore dashboardStore,
@@ -146,7 +148,8 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final ValPredicateFactory valPredicateFactory) {
+                         final ValPredicateFactory valPredicateFactory,
+                         final QueryNodeResolver queryNodeResolver) {
         this.dashboardStore = dashboardStore;
         this.queryService = queryService;
         this.documentResourceHelper = documentResourceHelper;
@@ -161,6 +164,7 @@ class DashboardServiceImpl implements DashboardService {
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
+        this.queryNodeResolver = queryNodeResolver;
     }
 
     @Override
@@ -617,5 +621,17 @@ class DashboardServiceImpl implements DashboardService {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    @Override
+    public String getBestNode(final String nodeName, final DashboardSearchRequest request) {
+        if (nodeName == null || nodeName.equals("null")) {
+            if (queryNodeResolver == null) {
+                return null;
+            }
+            final DocRef docRef = NullSafe.get(request, DashboardSearchRequest::getSearch, Search::getDataSourceRef);
+            return queryNodeResolver.getNode(docRef);
+        }
+        return nodeName;
     }
 }

@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.SearchRequestSource;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.UserRef;
 

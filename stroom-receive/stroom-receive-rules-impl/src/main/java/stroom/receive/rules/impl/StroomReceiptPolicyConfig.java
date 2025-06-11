@@ -1,7 +1,7 @@
 package stroom.receive.rules.impl;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.query.api.datasource.FieldType;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;

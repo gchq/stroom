@@ -115,6 +115,22 @@ public class ImportSettings {
                 Objects.equals(rootDocRef, that.rootDocRef);
     }
 
+    /**
+     * toString to aid debugging import
+     * @return Meaningful string describing the object.
+     */
+    @Override
+    public String toString() {
+        return "ImportSettings{" +
+               "importMode=" + importMode +
+               ", enableFilters=" + enableFilters +
+               ", enableFiltersFromTime=" + enableFiltersFromTime +
+               ", useImportNames=" + useImportNames +
+               ", useImportFolders=" + useImportFolders +
+               ", rootDocRef=" + rootDocRef +
+               '}';
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(importMode,

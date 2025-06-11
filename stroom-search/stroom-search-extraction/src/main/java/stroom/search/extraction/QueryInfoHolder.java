@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.language.functions.FieldIndex;
 import stroom.util.pipeline.scope.PipelineScoped;
 

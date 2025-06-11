@@ -1,13 +1,13 @@
 package stroom.legacy.impex_6_1;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.expression.api.UserTimeZone;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.IncludeExcludeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.datasource.AnalyzerType;
 import stroom.util.shared.time.TimeUnit;
 
 import java.util.ArrayList;
@@ -261,7 +261,7 @@ public final class MappingUtil {
                 value.getModelVersion());
     }
 
-    public static stroom.query.api.v2.ExpressionItem map(stroom.legacy.model_6_1.ExpressionItem value) {
+    public static stroom.query.api.ExpressionItem map(stroom.legacy.model_6_1.ExpressionItem value) {
         if (value == null) {
             return null;
         }
@@ -275,12 +275,12 @@ public final class MappingUtil {
         return null;
     }
 
-    public static stroom.query.api.v2.ExpressionOperator map(stroom.legacy.model_6_1.ExpressionOperator value) {
+    public static stroom.query.api.ExpressionOperator map(stroom.legacy.model_6_1.ExpressionOperator value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.ExpressionOperator
+        return stroom.query.api.ExpressionOperator
                 .builder()
                 .enabled(value.getEnabled())
                 .op(map(value.getOp()))
@@ -288,20 +288,20 @@ public final class MappingUtil {
                 .build();
     }
 
-    public static stroom.query.api.v2.ExpressionOperator.Op map(stroom.legacy.model_6_1.ExpressionOperator.Op value) {
+    public static stroom.query.api.ExpressionOperator.Op map(stroom.legacy.model_6_1.ExpressionOperator.Op value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.ExpressionOperator.Op.valueOf(value.name());
+        return stroom.query.api.ExpressionOperator.Op.valueOf(value.name());
     }
 
-    public static stroom.query.api.v2.ExpressionTerm map(stroom.legacy.model_6_1.ExpressionTerm value) {
+    public static stroom.query.api.ExpressionTerm map(stroom.legacy.model_6_1.ExpressionTerm value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.ExpressionTerm
+        return stroom.query.api.ExpressionTerm
                 .builder()
                 .enabled(value.getEnabled())
                 .field(value.getField())
@@ -311,12 +311,12 @@ public final class MappingUtil {
                 .build();
     }
 
-    public static stroom.query.api.v2.ExpressionTerm.Condition map(stroom.legacy.model_6_1.ExpressionTerm.Condition value) {
+    public static stroom.query.api.ExpressionTerm.Condition map(stroom.legacy.model_6_1.ExpressionTerm.Condition value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.ExpressionTerm.Condition.valueOf(value.name());
+        return stroom.query.api.ExpressionTerm.Condition.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.Automate map(stroom.legacy.model_6_1.Automate value) {
@@ -357,21 +357,21 @@ public final class MappingUtil {
                 value.getName());
     }
 
-    public static stroom.query.api.v2.Sort map(stroom.legacy.model_6_1.Sort value) {
+    public static stroom.query.api.Sort map(stroom.legacy.model_6_1.Sort value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Sort(
+        return new stroom.query.api.Sort(
                 value.getOrder(), map(value.getDirection()));
     }
 
-    public static stroom.query.api.v2.Sort.SortDirection map(stroom.legacy.model_6_1.Sort.SortDirection value) {
+    public static stroom.query.api.Sort.SortDirection map(stroom.legacy.model_6_1.Sort.SortDirection value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.Sort.SortDirection.valueOf(value.name());
+        return stroom.query.api.Sort.SortDirection.valueOf(value.name());
     }
 
     public static IncludeExcludeFilter map(stroom.legacy.model_6_1.Filter value) {
@@ -382,35 +382,35 @@ public final class MappingUtil {
         return new IncludeExcludeFilter(value.getIncludes(), value.getExcludes());
     }
 
-    public static stroom.query.api.v2.Format map(stroom.legacy.model_6_1.Format value) {
+    public static stroom.query.api.Format map(stroom.legacy.model_6_1.Format value) {
         if (value == null) {
             return null;
         }
 
-        stroom.query.api.v2.FormatSettings formatSettings = null;
+        stroom.query.api.FormatSettings formatSettings = null;
         if (stroom.legacy.model_6_1.Format.Type.NUMBER.equals(value.getType())) {
             if (value.getNumberFormat() != null) {
                 final stroom.legacy.model_6_1.NumberFormat numberFormat = value.getNumberFormat();
-                formatSettings = new stroom.query.api.v2.NumberFormatSettings(numberFormat.getDecimalPlaces(),
+                formatSettings = new stroom.query.api.NumberFormatSettings(numberFormat.getDecimalPlaces(),
                         numberFormat.getUseSeparator());
             }
         } else if (stroom.legacy.model_6_1.Format.Type.DATE_TIME.equals(value.getType())) {
             if (value.getDateTimeFormat() != null) {
                 final stroom.legacy.model_6_1.DateTimeFormat dateTimeFormat = value.getDateTimeFormat();
-                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(false, dateTimeFormat.getPattern(),
+                formatSettings = new stroom.query.api.DateTimeFormatSettings(false, dateTimeFormat.getPattern(),
                         map(dateTimeFormat.getTimeZone()));
             }
         }
 
-        return new stroom.query.api.v2.Format(map(value.getType()), formatSettings, false);
+        return new stroom.query.api.Format(map(value.getType()), formatSettings, false);
     }
 
-    public static stroom.query.api.v2.Format.Type map(stroom.legacy.model_6_1.Format.Type value) {
+    public static stroom.query.api.Format.Type map(stroom.legacy.model_6_1.Format.Type value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.Format.Type.valueOf(value.name());
+        return stroom.query.api.Format.Type.valueOf(value.name());
     }
 
     public static UserTimeZone map(stroom.legacy.model_6_1.TimeZone value) {
@@ -469,23 +469,23 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.TabConfig(value.getId(), value.isVisible());
     }
 
-    public static stroom.query.api.v2.Query map(stroom.legacy.model_6_1.Query value) {
+    public static stroom.query.api.Query map(stroom.legacy.model_6_1.Query value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Query(map(value.getDataSource()),
+        return new stroom.query.api.Query(map(value.getDataSource()),
                 map(value.getExpression()),
                 mapList(value.getParams(), MappingUtil::map),
                 null);
     }
 
-    public static stroom.query.api.v2.Param map(stroom.legacy.model_6_1.Param value) {
+    public static stroom.query.api.Param map(stroom.legacy.model_6_1.Param value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Param(value.getKey(), value.getValue());
+        return new stroom.query.api.Param(value.getKey(), value.getValue());
     }
 
     public static stroom.pipeline.shared.TextConverterDoc.TextConverterType map(stroom.legacy.model_6_1.TextConverter.TextConverterType value) {

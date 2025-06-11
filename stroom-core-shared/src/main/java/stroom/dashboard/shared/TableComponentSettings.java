@@ -17,9 +17,9 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
         "applyValueFilters",
         "selectionHandlers"})
 @JsonInclude(Include.NON_NULL)
-public class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
+public final class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
 
     public static final long[] DEFAULT_MAX_RESULTS = {};
 

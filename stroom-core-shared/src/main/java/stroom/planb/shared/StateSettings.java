@@ -10,23 +10,40 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "maxStoreSize",
-        "overwrite"
+        "synchroniseMerge",
+        "overwrite",
+        "retention",
+        "snapshotSettings",
+        "keySchema",
+        "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class StateSettings extends AbstractPlanBSettings {
+public final class StateSettings extends AbstractPlanBSettings {
 
     @JsonProperty
-    private final Boolean overwrite;
+    private final StateKeySchema keySchema;
+    @JsonProperty
+    private final StateValueSchema valueSchema;
 
     @JsonCreator
     public StateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
-                         @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
-        this.overwrite = overwrite;
+                         @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                         @JsonProperty("overwrite") final Boolean overwrite,
+                         @JsonProperty("retention") final RetentionSettings retention,
+                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                         @JsonProperty("keySchema") final StateKeySchema keySchema,
+                         @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        this.keySchema = keySchema;
+        this.valueSchema = valueSchema;
     }
 
-    public Boolean getOverwrite() {
-        return overwrite;
+    public StateKeySchema getKeySchema() {
+        return keySchema;
+    }
+
+    public StateValueSchema getValueSchema() {
+        return valueSchema;
     }
 
     @Override
@@ -41,43 +58,44 @@ public class StateSettings extends AbstractPlanBSettings {
             return false;
         }
         final StateSettings that = (StateSettings) o;
-        return Objects.equals(overwrite, that.overwrite);
+        return Objects.equals(keySchema, that.keySchema) &&
+               Objects.equals(valueSchema, that.valueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), overwrite);
+        return Objects.hash(super.hashCode(), keySchema, valueSchema);
     }
 
     @Override
     public String toString() {
         return "StateSettings{" +
-               "overwrite=" + overwrite +
+               "keySchema=" + keySchema +
+               ", valueSchema=" + valueSchema +
                '}';
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public Builder copy() {
-        return new Builder(this);
     }
 
     public static class Builder extends AbstractBuilder<StateSettings, Builder> {
 
-        protected Boolean overwrite;
+        private StateKeySchema keySchema;
+        private StateValueSchema valueSchema;
 
         public Builder() {
         }
 
         public Builder(final StateSettings settings) {
             super(settings);
-            this.overwrite = settings.overwrite;
+            this.keySchema = settings.keySchema;
+            this.valueSchema = settings.valueSchema;
         }
 
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder keySchema(final StateKeySchema keySchema) {
+            this.keySchema = keySchema;
+            return self();
+        }
+
+        public Builder valueSchema(final StateValueSchema valueSchema) {
+            this.valueSchema = valueSchema;
             return self();
         }
 
@@ -90,7 +108,12 @@ public class StateSettings extends AbstractPlanBSettings {
         public StateSettings build() {
             return new StateSettings(
                     maxStoreSize,
-                    overwrite);
+                    synchroniseMerge,
+                    overwrite,
+                    retention,
+                    snapshotSettings,
+                    keySchema,
+                    valueSchema);
         }
     }
 }

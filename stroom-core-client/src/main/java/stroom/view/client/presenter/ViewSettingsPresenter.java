@@ -25,7 +25,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;

@@ -17,7 +17,6 @@
 package stroom.processor.impl.db;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -45,8 +44,9 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;

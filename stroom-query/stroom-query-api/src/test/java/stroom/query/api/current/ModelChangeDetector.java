@@ -1,6 +1,6 @@
 package stroom.query.api.current;
 
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 import stroom.test.common.ComparisonHelper;
 
 import org.assertj.core.api.Assertions;

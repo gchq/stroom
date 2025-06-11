@@ -8,7 +8,6 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-db-util')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

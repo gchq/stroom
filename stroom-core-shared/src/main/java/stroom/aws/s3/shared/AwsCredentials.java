@@ -18,6 +18,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = AwsSystemPropertyCredentials.class, name = "system"),
         @Type(value = AwsWebCredentials.class, name = "web")
 })
-public interface AwsCredentials {
+public sealed interface AwsCredentials permits
+        AwsAnonymousCredentials,
+        AwsBasicCredentials,
+        AwsDefaultCredentials,
+        AwsEnvironmentVariableCredentials,
+        AwsProfileCredentials,
+        AwsSessionCredentials,
+        AwsSystemPropertyCredentials,
+        AwsWebCredentials {
     // TODO: Make sealed class when GWT supports them.
 }

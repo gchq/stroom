@@ -18,13 +18,13 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.logging.LambdaLogger;

@@ -1,31 +1,6 @@
 package stroom.state.impl.pipeline;
 
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.state.impl.ScyllaDbUtil;
-import stroom.state.impl.dao.TemporalState;
-import stroom.state.impl.dao.TemporalStateDao;
-import stroom.state.impl.dao.TemporalStateRequest;
-import stroom.util.logging.DurationTimer;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.ModelStringUtil;
-
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Disabled
 class TestStateLookupImpl {

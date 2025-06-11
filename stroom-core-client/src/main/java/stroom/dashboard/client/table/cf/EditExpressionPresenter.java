@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.FieldSelectionListModel;

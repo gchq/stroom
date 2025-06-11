@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class QueryHelpFunctionSignature extends QueryHelpData {
+public final class QueryHelpFunctionSignature extends QueryHelpData {
 
     @JsonProperty
     private final String name;

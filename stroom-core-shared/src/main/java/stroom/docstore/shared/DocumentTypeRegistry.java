@@ -147,6 +147,11 @@ public class DocumentTypeRegistry {
             "S3Config",
             "S3 Configuration",
             SvgImage.DOCUMENT_S3);
+    public static final DocumentType GIT_REPO_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "GitRepo",
+            "GIT Repo",
+            SvgImage.DOCUMENT_GIT_REPO);
     public static final DocumentType SCRIPT_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Script",
@@ -219,6 +224,11 @@ public class DocumentTypeRegistry {
             "ProcessorTasks",
             "Processor Tasks",
             SvgImage.DOCUMENT_SEARCHABLE);
+    public static final DocumentType PLAN_B_SHARD_INFO_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "PlanBShards",
+            "Plan B Shards",
+            SvgImage.DOCUMENT_SEARCHABLE);
 
 
     static {
@@ -243,6 +253,7 @@ public class DocumentTypeRegistry {
         put(REPORT_DOCUMENT_TYPE);
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
+        put(GIT_REPO_DOCUMENT_TYPE);
         put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
         put(STATE_STORE_DOCUMENT_TYPE);
@@ -264,6 +275,7 @@ public class DocumentTypeRegistry {
         put(STREAM_STORE_DOCUMENT_TYPE);
         put(INDEX_SHARDS_DOCUMENT_TYPE);
         put(PROCESSOR_TASK_DOCUMENT_TYPE);
+        put(PLAN_B_SHARD_INFO_DOCUMENT_TYPE);
     }
 
     private static void put(final DocumentType documentType) {

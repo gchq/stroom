@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Use Snapshots For Lookup"
+                        helpText="Use snapshots for lookups.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForLookup" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Use Snapshots For Get"
+                        helpText="Use snapshots for get.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForGet" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Use Snapshots For Query"
+                        helpText="Use snapshots for query.">
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForQuery" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

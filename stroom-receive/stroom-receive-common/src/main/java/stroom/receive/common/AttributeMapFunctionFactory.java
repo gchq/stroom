@@ -1,8 +1,8 @@
 package stroom.receive.common;
 
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

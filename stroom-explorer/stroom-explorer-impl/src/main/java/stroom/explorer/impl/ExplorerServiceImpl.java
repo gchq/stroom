@@ -52,9 +52,10 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.TermMatcher;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
@@ -115,7 +116,8 @@ class ExplorerServiceImpl
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM_TYPE,
             ExplorerConstants.FAVOURITES_TYPE,
-            ExplorerConstants.FOLDER_TYPE);
+            ExplorerConstants.FOLDER_TYPE,
+            GitRepoDoc.TYPE);
 
     // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
     // All are something only an OWNER (or admin) can do.
@@ -946,6 +948,9 @@ class ExplorerServiceImpl
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
+        // Fire a POST_CREATE event
+        EntityEvent.fire(entityEventBus, result, EntityAction.POST_CREATE);
+
         return ExplorerNode.builder()
                 .docRef(result)
                 .rootNodeUuid(destinationFolder != null
@@ -1070,6 +1075,9 @@ class ExplorerServiceImpl
             // Although the copy above will have fired entity events, they were before the deps
             // get re-mapped. Thus, we need to let the exp tree know that deps may have changed
             EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
+
+            // Tell listeners that the nodes are in the explorer tree
+            EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.POST_CREATE);
         });
 
         return new BulkActionResult(new ArrayList<>(remappings.values()), resultMessage.toString());
@@ -1245,6 +1253,7 @@ class ExplorerServiceImpl
             }
             // Let the tree know it has changed
             EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE);
         }
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
@@ -1285,6 +1294,7 @@ class ExplorerServiceImpl
 
         // Make sure the tree model is rebuilt.
         EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
+        EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE);
 
         return result;
     }
@@ -1319,6 +1329,7 @@ class ExplorerServiceImpl
 
             // Make sure the tree model is rebuilt.
             EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
             return afterNode;
         } catch (final Exception e) {
             explorerEventLog.update(beforeNode, afterNode, e);
@@ -1384,6 +1395,11 @@ class ExplorerServiceImpl
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
+
+        // Fire the PRE_DELETE event so listeners can find ancestors of
+        // the nodes before they disappear from the Explorer
+        explorerNodes.forEach(explorerNode ->
+                EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), EntityAction.PRE_DELETE));
 
         final HashSet<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {

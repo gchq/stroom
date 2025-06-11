@@ -16,12 +16,12 @@
 
 package stroom.query.impl;
 
-import stroom.datasource.api.v2.QueryFieldProvider;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.shared.QueryDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;

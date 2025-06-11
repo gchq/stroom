@@ -1,12 +1,12 @@
 package stroom.event.logging.api;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.QueryKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.Selection;

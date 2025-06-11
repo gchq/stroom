@@ -29,7 +29,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilterRow extends ProcessorListRow {
+public final class ProcessorFilterRow extends ProcessorListRow {
 
     private static final Expander EXPANDER = new Expander(1, false, true);
 

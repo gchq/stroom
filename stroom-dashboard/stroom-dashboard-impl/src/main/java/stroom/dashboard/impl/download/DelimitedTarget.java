@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

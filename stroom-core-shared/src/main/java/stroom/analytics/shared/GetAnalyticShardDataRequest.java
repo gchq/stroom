@@ -16,9 +16,9 @@
 
 package stroom.analytics.shared;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

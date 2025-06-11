@@ -1,10 +1,6 @@
 package stroom.receive.rules.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.QueryField.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -15,6 +11,10 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryField.Builder;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.SecurityContext;

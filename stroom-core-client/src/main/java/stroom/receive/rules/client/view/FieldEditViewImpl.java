@@ -17,8 +17,8 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.FieldType;
 import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 import com.google.gwt.uibinder.client.UiBinder;

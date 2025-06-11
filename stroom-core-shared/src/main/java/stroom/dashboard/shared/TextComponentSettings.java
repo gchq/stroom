@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,7 +43,7 @@ import java.util.Objects;
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
-public class TextComponentSettings implements ComponentSettings {
+public final class TextComponentSettings implements ComponentSettings {
 
     @JsonProperty("tableId")
     private final String tableId;

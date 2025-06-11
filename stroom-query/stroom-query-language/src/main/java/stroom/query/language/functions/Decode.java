@@ -17,10 +17,10 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -34,7 +34,8 @@ import java.util.regex.Pattern;
                 description = "Similar to a switch/case statement. The arguments are split into 3 parts: " +
                         "the input value to test, pairs of regex patterns with their respective output values " +
                         "and a default result if no matches are found. It must always have an even number " +
-                        "of arguments and can have any number of pattern/result pairs.",
+                        "of arguments and can have any number of pattern/result pairs. Result values in the " +
+                        "format '$n' can be used to return the appropriate capture group values from the regex.",
                 args = {
                         @FunctionArg(
                                 name = "input",
@@ -100,8 +101,19 @@ class Decode extends AbstractManyChildFunction {
                 }
 
                 final Pattern pattern = PatternCache.get(regex);
-                if (pattern.matcher(value).matches()) {
-                    newValue = params[i + 1].toString();
+                Matcher matcher = pattern.matcher(value);
+                if (matcher.matches()) {
+                    String returnValue = params[i + 1].toString();
+                    if (returnValue.startsWith("$")) {
+                        try {
+                            int index = Integer.parseInt(returnValue.substring(1));
+                            newValue = matcher.group(index);
+                        } catch (NumberFormatException | IllegalStateException | IndexOutOfBoundsException ex) {
+                            throw new ParseException("Unable to get capture group " + returnValue + " from regex", 0);
+                        }
+                    } else {
+                        newValue = returnValue;
+                    }
                     break;
                 }
             }
@@ -176,17 +188,28 @@ class Decode extends AbstractManyChildFunction {
                     }
 
                     final String regex = valRegex.toString();
-                    if (regex.length() == 0) {
+                    if (regex.isEmpty()) {
                         return ValErr.create("Empty regex");
                     }
 
                     final Pattern pattern = PatternCache.get(regex);
-                    if (pattern.matcher(value).matches()) {
+                    Matcher matcher = pattern.matcher(value);
+                    if (matcher.matches()) {
                         newVal = childGenerators[i + 1].eval(storedValues, childDataSupplier);
                         if (!newVal.type().isValue()) {
                             return ValErr.wrap(newVal);
                         }
-                        newValue = newVal.toString();
+                        String returnValue = newVal.toString();
+                        if (returnValue.startsWith("$")) {
+                            try {
+                                int index = Integer.parseInt(returnValue.substring(1));
+                                newValue = matcher.group(index);
+                            } catch (NumberFormatException | IllegalStateException | IndexOutOfBoundsException ex) {
+                                return ValErr.create("Unable to get capture group " + returnValue + " from regex");
+                            }
+                        } else {
+                            newValue = returnValue;
+                        }
                         break;
                     }
                 }
