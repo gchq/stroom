@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
@@ -78,6 +79,11 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         };
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
+    }
+
+    @Override
+    public void setPipelineModel(final PipelineModel pipelineModel) {
+        treePanel.setPipelineModel(pipelineModel);
     }
 
     @Override

@@ -256,27 +256,28 @@ public class SteppingPresenter
         steppingFilterPresenter.show(
                 elements,
                 getSelectedPipeElement(),
-                requestBuilder.build().getStepFilterMap(),
+                pipelineModel.getStepFilterMap(),
                 stepFilterMap -> {
-                    pipelineModel.setStepFilters(stepFilterMap);
-                    requestBuilder.stepFilterMap(stepFilterMap);
+                    pipelineModel.setStepFilterMap(stepFilterMap);
                     // Need to refresh the view in case any elements need to reflect active filters
                     pipelineTreePresenter.getView().refresh();
                     pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
                 });
     }
 
+    private boolean hasActiveFilters(final PipelineElement element) {
+        return NullSafe.getOrElse(pipelineModel, pm -> pm.hasActiveFilters(element), false);
+    }
+
     private List<Item> buildContextMenu() {
         final List<Item> menuItems = new ArrayList<>();
 
-        final boolean isClearFiltersOnSelectedEnabled = NullSafe.test(
-                getSelectedPipeElement(),
-                PipelineElement::hasActiveFilters);
+        final boolean isClearFiltersOnSelectedEnabled = hasActiveFilters(getSelectedPipeElement());
 
         final List<PipelineElement> elements = new ArrayList<>();
         getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
         final boolean isClearAllFiltersEnabled = elements.stream()
-                .anyMatch(PipelineElement::hasActiveFilters);
+                .anyMatch(this::hasActiveFilters);
 
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
@@ -304,24 +305,21 @@ public class SteppingPresenter
     }
 
     private void clearAllFilters() {
-        requestBuilder.stepFilterMap(null);
-        // Update the model so the filter icon in the pipe elements is updated
-        pipelineModel.setStepFilters(requestBuilder.build().getStepFilterMap());
+        pipelineModel.setStepFilterMap(null);
         pipelineTreePresenter.getView().refresh();
     }
 
     private void clearFiltersOnSelected() {
         final PipelineElement selectedPipeElement = getSelectedPipeElement();
-        final Map<String, SteppingFilterSettings> stepFilterMap = requestBuilder.build().getStepFilterMap();
+        final Map<String, SteppingFilterSettings> stepFilterMap = pipelineModel.getStepFilterMap();
         if (selectedPipeElement != null && stepFilterMap != null) {
             final SteppingFilterSettings steppingFilterSettings = stepFilterMap.get(selectedPipeElement.getId());
             if (steppingFilterSettings != null) {
                 final Map<String, SteppingFilterSettings> newMap = new HashMap<>(stepFilterMap);
                 newMap.remove(selectedPipeElement.getId());
-                requestBuilder.stepFilterMap(newMap);
 
                 // Update the model so the filter icon in the pipe elements is updated
-                pipelineModel.setStepFilters(newMap);
+                pipelineModel.setStepFilterMap(newMap);
             }
         }
         pipelineTreePresenter.getView().refresh();
@@ -603,10 +601,9 @@ public class SteppingPresenter
                 requestBuilder.stepLocation(null);
                 requestBuilder.stepType(null);
 
-                final Map<String, SteppingFilterSettings> stepFilterMap = requestBuilder.build().getStepFilterMap();
+                final Map<String, SteppingFilterSettings> stepFilterMap = pipelineModel.getStepFilterMap();
                 if (stepFilterMap != null) {
-                    stepFilterMap.values().forEach(steppingFilterSettings ->
-                            steppingFilterSettings.clearUniqueValues());
+                    stepFilterMap.values().forEach(SteppingFilterSettings::clearUniqueValues);
                 }
             }
 
@@ -627,6 +624,7 @@ public class SteppingPresenter
             requestBuilder.timeout(40L);
             requestBuilder.code(codeMap);
             requestBuilder.stepType(stepType);
+            requestBuilder.stepFilterMap(pipelineModel.getStepFilterMap());
 
             poll();
         }
@@ -798,7 +796,7 @@ public class SteppingPresenter
             }
 
             // Sync step filters.
-            requestBuilder.stepFilterMap(result.getStepFilterMap());
+            pipelineModel.setStepFilterMap(result.getStepFilterMap());
 
             if (result.getGeneralErrors() != null && result.getGeneralErrors().size() > 0) {
                 final StringBuilder sb = new StringBuilder();

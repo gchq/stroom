@@ -16,9 +16,6 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -71,11 +68,6 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @JsonProperty
     private String type;
 
-    // Only used in the UI to filter stepping. Not persisted.
-    @XmlTransient
-    @JsonIgnore
-    private SteppingFilterSettings steppingFilterSettings = null;
-
     public PipelineElement() {
     }
 
@@ -117,20 +109,6 @@ public class PipelineElement implements Comparable<PipelineElement> {
         this.type = value;
     }
 
-    @JsonIgnore
-    public void setSteppingFilterSettings(final SteppingFilterSettings steppingFilterSettings) {
-        this.steppingFilterSettings = steppingFilterSettings;
-    }
-
-    @JsonIgnore
-    public SteppingFilterSettings getSteppingFilterSettings() {
-        return steppingFilterSettings;
-    }
-
-    public boolean hasActiveFilters() {
-        return NullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
-    }
-
     @Override
     public int compareTo(final PipelineElement o) {
         return id.compareTo(o.id);
@@ -146,7 +124,7 @@ public class PipelineElement implements Comparable<PipelineElement> {
         }
         final PipelineElement that = (PipelineElement) o;
         return id.equals(that.id) &&
-                type.equals(that.type);
+               type.equals(that.type);
     }
 
     @Override

@@ -73,6 +73,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
     public void setModel(final PipelineModel model) {
         this.pipelineModel = model;
+        getView().setPipelineModel(pipelineModel);
         if (model != null) {
             model.addChangeDataHandler(this);
         }
@@ -177,6 +178,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
 
 
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {
+
+        void setPipelineModel(PipelineModel pipelineModel);
 
         void setTree(DefaultTreeForTreeLayout<PipelineElement> tree);
 

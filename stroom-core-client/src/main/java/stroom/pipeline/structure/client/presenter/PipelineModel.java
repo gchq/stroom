@@ -70,6 +70,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private List<PipelineData> baseStack;
     private PipelineDataMerger baseData;
     private PipelineDataMerger combinedData;
+    private Map<String, SteppingFilterSettings> stepFilterMap;
 
     public PipelineModel() {
         baseData = new PipelineDataMerger();
@@ -483,14 +484,32 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         this.pipelineData = pipelineData;
     }
 
-    /**
-     * Set the provided filters on the pipeline elements in our model
-     */
-    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
-            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
-        });
-        refresh();
+//    /**
+//     * Set the provided filters on the pipeline elements in our model
+//     */
+//    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
+//        this.elementIdToStepFilterMap = elementIdToStepFilterMap;
+//        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
+//            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
+//        });
+//        refresh();
+//    }
+
+
+    public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
+        this.stepFilterMap = stepFilterMap;
+    }
+
+    public Map<String, SteppingFilterSettings> getStepFilterMap() {
+        return stepFilterMap;
+    }
+
+    public boolean hasActiveFilters(final PipelineElement element) {
+        if (element == null || stepFilterMap == null) {
+            return false;
+        }
+        final SteppingFilterSettings settings = stepFilterMap.get(element.getId());
+        return settings != null && settings.hasActiveFilters();
     }
 
     private void removeLinks(final List<PipelineLink> list, final String element) {
