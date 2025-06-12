@@ -49,14 +49,30 @@ class CIStringHashMap implements Map<String, String> {
         return map.containsValue(value);
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value or null.
+     */
     @Override
     public String get(final Object key) {
         return map.get(new CIString((String) key));
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value from the map or defaultVal
+     */
     @Override
-    public String getOrDefault(Object key, String defaultVal) {
-        String val = map.get(new CIString((String) key));
+    public String getOrDefault(final Object key, final String defaultVal) {
+        final String val = map.get(new CIString((String) key));
         return val == null
                 ? defaultVal
                 : val;

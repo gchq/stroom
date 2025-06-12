@@ -67,6 +67,9 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
     private ReceiveDataRuleSetService mockReceiveDataRuleSetService;
     @Mock
     private ReceiveDataConfig mockReceiveDataConfig;
+    @Mock
+    private ReceiveActionMetricsRecorder mockReceiveActionMetricsRecorder;
+
 
     @Test
     void test_noRules() {
@@ -74,7 +77,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .build();
@@ -100,7 +104,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -141,7 +146,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -190,7 +196,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -240,7 +247,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         int ruleNo = 0;
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
@@ -314,7 +322,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -367,7 +376,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
                 .addRule(ReceiveDataRule.builder()
@@ -429,7 +439,8 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 new DataReceiptPolicyAttributeMapFilterFactoryImpl(
                         mockReceiveDataRuleSetService,
                         new ExpressionPredicateFactoryFactory(),
-                        () -> mockReceiveDataConfig);
+                        () -> mockReceiveDataConfig,
+                        () -> mockReceiveActionMetricsRecorder);
 
         final DictionaryDoc feedDict = createDict(
                 "FeedDict",

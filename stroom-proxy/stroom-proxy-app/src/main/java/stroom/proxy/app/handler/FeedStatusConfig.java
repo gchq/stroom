@@ -18,6 +18,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_URL = "url";
     //    public static final String PROP_NAME_API_KEY = "apiKey";
     public static final String DEFAULT_URL_PATH = ResourcePaths.buildAuthenticatedApiPath(
             FeedStatusResourceV2.BASE_RESOURCE_PATH,
@@ -28,7 +29,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 //                             " unable to fetch the status.")
 //    private final FeedStatus defaultStatus;
 
-    @JsonProperty("url")
+    @JsonProperty(PROP_NAME_URL)
     @JsonPropertyDescription("The remote URL to fetch feed status from if enabled. If not set the default " +
                              "path will be combined with the downstreamHost.")
     private final String feedStatusUrl;
@@ -54,7 +55,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     @JsonCreator
     public FeedStatusConfig(
 //            @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
-            @JsonProperty("url") final String feedStatusUrl,
+            @JsonProperty(PROP_NAME_URL) final String feedStatusUrl,
 //            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
             @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
 //        this.defaultStatus = defaultStatus;

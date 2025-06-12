@@ -11,7 +11,6 @@ import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.GetFeedStatusRequestAdapter;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.AppPermission;
@@ -114,8 +113,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
-            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-
             final FeedStatus defaultFeedStatus = getDefaultFeedStatus();
 
             // If remote feed status checking is disabled then return the default status.
@@ -158,8 +155,13 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     }
 
     private boolean isFeedStatusCheckEnabled() {
-        return receiveDataConfigProvider.get().getReceiptCheckMode() == ReceiptCheckMode.FEED_STATUS
-               && NullSafe.isNonBlankString(feedStatusConfigProvider.get().getFeedStatusUrl());
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final boolean hasUrl = NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl());
+        if (!hasUrl) {
+            LOGGER.warn("Feed status check requested but property '{}' not configured.",
+                    feedStatusConfig.getFullPath(FeedStatusConfig.PROP_NAME_URL));
+        }
+        return hasUrl;
     }
 
     private FeedStatus getDefaultFeedStatus() {

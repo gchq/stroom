@@ -1,7 +1,6 @@
 package stroom.receive.common;
 
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
-import stroom.receive.rules.shared.ReceiveAction;
 import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;
@@ -13,7 +12,6 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Builds a chain of filters for checking and possibly adding to the contents
@@ -28,6 +26,7 @@ public class AttributeMapFilterFactory {
     private final Provider<StreamTypeValidator> streamTypeValidatorProvider;
     private final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider;
     private final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider;
+    private final Provider<FeedExistenceAttributeMapFilter> feedExistenceAttributeMapFilterProvider;
     private final Provider<DataReceiptPolicyAttributeMapFilterFactory> dataReceiptPolicyAttrMapFilterFactoryProvider;
     private final CommonSecurityContext securityContext;
     private final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory;
@@ -39,6 +38,7 @@ public class AttributeMapFilterFactory {
             final Provider<StreamTypeValidator> streamTypeValidatorProvider,
             final Provider<FeedNameCheckAttributeMapFilter> feedNameCheckAttributeMapFilterProvider,
             final Provider<FeedStatusAttributeMapFilter> feedStatusAttributeMapFilterProvider,
+            final Provider<FeedExistenceAttributeMapFilter> feedExistenceAttributeMapFilterProvider,
             final Provider<DataReceiptPolicyAttributeMapFilterFactory> dataReceiptPolicyAttrMapFilterFactoryProvider,
             final CommonSecurityContext securityContext,
             final ContentAutoCreationAttrMapFilterFactory contentAutoCreationAttrMapFilterFactory) {
@@ -47,6 +47,7 @@ public class AttributeMapFilterFactory {
         this.streamTypeValidatorProvider = streamTypeValidatorProvider;
         this.feedNameCheckAttributeMapFilterProvider = feedNameCheckAttributeMapFilterProvider;
         this.feedStatusAttributeMapFilterProvider = feedStatusAttributeMapFilterProvider;
+        this.feedExistenceAttributeMapFilterProvider = feedExistenceAttributeMapFilterProvider;
         this.securityContext = securityContext;
         this.contentAutoCreationAttrMapFilterFactory = contentAutoCreationAttrMapFilterFactory;
         this.dataReceiptPolicyAttrMapFilterFactoryProvider = dataReceiptPolicyAttrMapFilterFactoryProvider;
@@ -80,7 +81,7 @@ public class AttributeMapFilterFactory {
             filters.add(feedNameCheckAttributeMapFilterProvider.get());
 
             final ReceiptCheckMode receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
-            filters.add(getReceiptCheckFilter(receiptCheckMode));
+            filters.addAll(getReceiptCheckFilters(receiptCheckMode));
 
             // Auto-create the feed/pipe/procFilter/userGrp/etc, if configured.
             // On Proxy this will always be a ReceiveAll filter
@@ -94,29 +95,32 @@ public class AttributeMapFilterFactory {
         });
     }
 
-    private AttributeMapFilter getReceiptCheckFilter(final ReceiptCheckMode receiptCheckMode) {
+    private List<AttributeMapFilter> getReceiptCheckFilters(final ReceiptCheckMode receiptCheckMode) {
         return switch (receiptCheckMode) {
-            // The feed status filter will determine if the feed status check needs
-            // to happen as the config for it is different between proxy and stroom.
-            // Proxy and stroom each have a different FeedStatusService impl bound.
-            case FEED_STATUS -> feedStatusAttributeMapFilterProvider.get();
-            case RECEIPT_POLICY -> dataReceiptPolicyAttrMapFilterFactoryProvider.get().create();
-            case RECEIVE_ALL -> ReceiveAllAttributeMapFilter.getInstance();
-            case REJECT_ALL -> RejectAllAttributeMapFilter.getInstance();
-            case DROP_ALL -> DropAllAttributeMapFilter.getInstance();
+            // This will check the feed existence and status in one go
+            case FEED_STATUS -> List.of(feedStatusAttributeMapFilterProvider.get());
+            // Need to check feed exists after passing all the policy rules
+            case RECEIPT_POLICY -> List.of(
+                    dataReceiptPolicyAttrMapFilterFactoryProvider.get().create(),
+                    feedExistenceAttributeMapFilterProvider.get());
+            // Receiving everything
+            case RECEIVE_ALL -> List.of(
+                    feedExistenceAttributeMapFilterProvider.get());
+            case REJECT_ALL -> List.of(RejectAllAttributeMapFilter.getInstance());
+            case DROP_ALL -> List.of(DropAllAttributeMapFilter.getInstance());
         };
     }
 
-    private AttributeMapFilter createFallbackFilter(final ReceiveAction fallbackReceiveAction) {
-        final ReceiveAction receiveAction = Objects.requireNonNullElse(
-                fallbackReceiveAction,
-                ReceiveDataConfig.DEFAULT_FALLBACK_RECEIVE_ACTION);
-        return switch (receiveAction) {
-            case RECEIVE -> ReceiveAllAttributeMapFilter.getInstance();
-            case REJECT -> RejectAllAttributeMapFilter.getInstance();
-            case DROP -> DropAllAttributeMapFilter.getInstance();
-        };
-    }
+//    private AttributeMapFilter createFallbackFilter(final ReceiveAction fallbackReceiveAction) {
+//        final ReceiveAction receiveAction = Objects.requireNonNullElse(
+//                fallbackReceiveAction,
+//                ReceiveDataConfig.DEFAULT_FALLBACK_RECEIVE_ACTION);
+//        return switch (receiveAction) {
+//            case RECEIVE -> ReceiveAllAttributeMapFilter.getInstance();
+//            case REJECT -> RejectAllAttributeMapFilter.getInstance();
+//            case DROP -> DropAllAttributeMapFilter.getInstance();
+//        };
+//    }
 
     public AttributeMapFilter create() {
         // Async so we don't hold up receipt while waiting for a response to come

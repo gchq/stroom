@@ -66,16 +66,19 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     private final ReceiveDataRuleSetService ruleSetService;
     private final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<ReceiveActionMetricsRecorder> receiveActionMetricsRecorderProvider;
 
     @Inject
     public DataReceiptPolicyAttributeMapFilterFactoryImpl(
             final ReceiveDataRuleSetService ruleSetService,
             final ExpressionPredicateFactoryFactory expressionPredicateFactoryFactory,
-            final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+            final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+            final Provider<ReceiveActionMetricsRecorder> receiveActionMetricsRecorderProvider) {
 
         this.ruleSetService = ruleSetService;
         this.expressionPredicateFactoryFactory = expressionPredicateFactoryFactory;
         this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.receiveActionMetricsRecorderProvider = receiveActionMetricsRecorderProvider;
     }
 
     @Override
@@ -159,7 +162,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                             activeRules,
                             valueFunctionFactories,
                             attributeMapper,
-                            NO_MATCH_OR_NO_RULES_ACTION); // Rules are essentially 'allow' rules rather than 'deny'.
+                            NO_MATCH_OR_NO_RULES_ACTION, // Rules are essentially 'allow' rules rather than 'deny'.
+                            receiveActionMetricsRecorderProvider.get());
                 }
             }
             // If no rules then fall back to a reject-all filter
@@ -221,16 +225,19 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
         private final AttributeMapper attributeMapper;
         private final Map<Integer, Predicate<AttributeMap>> ruleNoToPredicateFactoryMap;
         private final ReceiveAction noMatchAction;
+        private final ReceiveActionMetricsRecorder receiveActionMetricsRecorder;
 
         CheckerImpl(final ExpressionPredicateFactory expressionMatcher,
                     final List<ReceiveDataRule> activeRules,
                     final ValueFunctionFactories<AttributeMap> valueFunctionFactories,
                     final AttributeMapper attributeMapper,
-                    final ReceiveAction noMatchAction) {
+                    final ReceiveAction noMatchAction,
+                    final ReceiveActionMetricsRecorder receiveActionMetricsRecorder) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.valueFunctionFactories = valueFunctionFactories;
             this.attributeMapper = attributeMapper;
+            this.receiveActionMetricsRecorder = receiveActionMetricsRecorder;
             this.ruleNoToPredicateFactoryMap = new HashMap<>();
             this.noMatchAction = noMatchAction;
         }
@@ -250,6 +257,8 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
                                 matchingRule,
                                 ReceiveDataRule::getAction,
                                 noMatchAction);
+
+                        receiveActionMetricsRecorder.record(receiveAction);
 
                         final String ruleNo = NullSafe.getOrElse(
                                 matchingRule,

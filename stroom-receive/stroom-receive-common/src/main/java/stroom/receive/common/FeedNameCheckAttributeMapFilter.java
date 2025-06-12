@@ -18,9 +18,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Checks the Feed attribute is supplied. If auto content creation is enabled
- * then the Feed may be derived from the supplied attributes if all the mandatory
- * attributes have been provided.
+ * Checks the Feed attribute is supplied. If content auto creation is not enabled and
+ * the Feed attribute is not provided, then a reject {@link StroomStreamException} will be thrown.
+ * <p>
+ * If content auto creation is enabled then the Feed name may be derived from the supplied
+ * attributes if all the mandatory attributes have been provided.
+ * If the mandatory attributes have not been provided then a reject {@link StroomStreamException}
+ * will be thrown.
+ * </p>
  */
 public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
@@ -41,14 +46,12 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+        final String feedName = NullSafe.string(attributeMap.get(StandardHeaderArguments.FEED));
 
-        String feedName = NullSafe.trim(attributeMap.get(StandardHeaderArguments.FEED));
-        if (receiveDataConfig.isFeedNameGenerationEnabled()) {
-            LOGGER.debug("feedNameGenerationEnabled");
-            // If they supply a feed then go with that
-            if (feedName.isEmpty()) {
-                LOGGER.debug("No feed name supplied");
+        if (feedName.isEmpty()) {
+            final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+            if (receiveDataConfig.isFeedNameGenerationEnabled()) {
+                LOGGER.debug("filter() - No feed name supplied, feedNameGenerationEnabled: true");
                 final Set<String> mandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
                 if (NullSafe.hasItems(mandatoryHeaders)) {
                     for (final String mandatoryHeader : mandatoryHeaders) {
@@ -61,14 +64,13 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                         }
                     }
                 }
-                feedName = cachedFeedNameGenerator.getValue()
+                final String generatedFeedName = cachedFeedNameGenerator.getValue()
                         .generateName(attributeMap);
-                // Add the derived feed name as everything else depends on the feed name
-                LOGGER.debug("filter() - feedName: {}, attributeMap: {}", feedName, attributeMap);
-                attributeMap.put(StandardHeaderArguments.FEED, feedName);
-            }
-        } else {
-            if (feedName.isEmpty()) {
+                // Add the generated feed name as everything else depends on the feed name
+                LOGGER.debug("filter() - generatedFeedName: '{}', attributeMap: {}", generatedFeedName, attributeMap);
+                attributeMap.put(StandardHeaderArguments.FEED, generatedFeedName);
+            } else {
+                LOGGER.debug("filter() - No feed name supplied, feedNameGenerationEnabled: false");
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
             }
         }
@@ -101,7 +103,13 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
      */
     static class FeedNameGenerator {
 
+        /**
+         * Finds unwanted chars in a param
+         */
         private static final Pattern PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_]");
+        /**
+         * Finds unwanted chars in the static text
+         */
         private static final Pattern STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9_-]");
 
         private static final String FEED_ONLY_TEMPLATE = "${feed}";
@@ -117,7 +125,8 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                             FeedNameGenerator::normaliseStaticText);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(LogUtil.message(
-                            "Error parsing feed name template '{}'", configState.feedNameTemplate));
+                            "Error parsing feed name template '{}': {}",
+                            configState.feedNameTemplate, LogUtil.exceptionMessage(e)));
                 }
             } else {
                 // Feed name gen not enabled so just get the feed name from the attr map

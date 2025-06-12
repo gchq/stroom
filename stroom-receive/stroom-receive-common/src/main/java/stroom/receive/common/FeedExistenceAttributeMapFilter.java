@@ -3,7 +3,6 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.shared.NullSafe;
@@ -15,41 +14,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Gets the feed status from the {@link stroom.feed.shared.FeedDoc}.
- * <ul>
- *     <li>Receive -> return true</li>
- *     <li>Reject -> throw {@link StroomStreamException}</li>
- *     <li>Drop -> return false</li>
- * </ul>
- * <p>
- * If the {@link stroom.feed.shared.FeedDoc} does not exist then the filter will throw
- * a {@link StroomStreamException}.
- * </p>
- * <p>
+ * Checks whether the Feed in the {@link AttributeMap} exists or not.
+ * If it does not exist then the filter will return false.
  * If auto content creation is enabled on stroom, then when the check is performed,
  * the feed will be auto-created (if various conditions for that are met) and this
  * filter will then return true.
+ * <p>
+ * It is intended to be used alongside the {@link DataReceiptPolicyAttributeMapFilter}
+ * and should not be used with {@link FeedStatusAttributeMapFilter} (as it is doing similar
+ * work).
  * </p>
  */
-public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
+public class FeedExistenceAttributeMapFilter implements AttributeMapFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedStatusAttributeMapFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeedExistenceAttributeMapFilter.class);
 
     private final Provider<FeedStatusService> feedStatusServiceProvider;
-    private final ReceiveActionMetricsRecorder receiveActionMetricsRecorder;
 
     @Inject
-    public FeedStatusAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider,
-                                        final ReceiveActionMetricsRecorder receiveActionMetricsRecorder) {
+    public FeedExistenceAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider) {
         this.feedStatusServiceProvider = feedStatusServiceProvider;
-        this.receiveActionMetricsRecorder = receiveActionMetricsRecorder;
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        final String feedName = NullSafe.get(
-                attributeMap.get(StandardHeaderArguments.FEED),
-                String::trim);
+        final String feedName = NullSafe.string(attributeMap.get(StandardHeaderArguments.FEED));
         final UserDesc userDesc;
         // These two have been added by RequestAuthenticatorImpl
         final String uploadUserId = NullSafe.get(
@@ -66,36 +55,23 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
             userDesc = null;
         }
 
+        // Slightly abusing the feedStatus service for this. We just ignore the
+        // status if found. Only care if feedDoc is there or not.
         final GetFeedStatusRequestV2 request = new GetFeedStatusRequestV2(
                 feedName,
                 userDesc,
                 attributeMap);
         final GetFeedStatusResponse response = getFeedStatus(request);
+        final StroomStatusCode stroomStatusCode = response.getStroomStatusCode();
+        // Don't care what the feed status on the feed is
+        final boolean result = response.getStroomStatusCode() != StroomStatusCode.FEED_IS_NOT_DEFINED;
 
-        final FeedStatus feedStatus = response.getStatus();
-        final boolean result = switch (feedStatus) {
-            case Receive -> true;
-            case Drop -> false;
-            case Reject -> {
-                receiveActionMetricsRecorder.record(feedStatus);
-                throw new StroomStreamException(
-                        StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
-            }
-            //noinspection UnnecessaryDefault
-            default -> {
-                LOGGER.error("Unexpected feed status {} for request {}, treating as RECEIVE.",
-                        response.getStatus(), request);
-                yield true;
-            }
-        };
-        receiveActionMetricsRecorder.record(feedStatus);
-
-        LOGGER.debug("Returning {} for feed '{}', feedStatus: {}", result, feedName, feedStatus);
+        LOGGER.debug("Returning {} for feed '{}', stroomStatusCode: {}",
+                result, feedName, stroomStatusCode);
         return result;
     }
 
     private GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
-        // Proxy and stroom each have a different FeedStatusService impl bound.
         final GetFeedStatusResponse response = feedStatusServiceProvider.get()
                 .getFeedStatus(request);
         LOGGER.debug("getFeedStatus() " + request + " -> " + response);

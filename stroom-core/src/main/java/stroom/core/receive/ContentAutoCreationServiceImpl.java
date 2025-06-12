@@ -126,6 +126,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+
         // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
                 .withMaxCheckInterval(CHECK_INTERVAL)
