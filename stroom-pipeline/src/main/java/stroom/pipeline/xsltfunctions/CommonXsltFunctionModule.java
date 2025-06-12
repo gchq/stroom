@@ -31,6 +31,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(FeedNameFunction.class);
         bindFunction(FetchJsonFunction.class);
         bindFunction(FormatDateFunction.class);
+        bindFunction(FormatDateTimeFunction.class);
         bindFunction(GetFunction.class);
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
@@ -49,6 +50,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(MetaAttributesFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
+        bindFunction(ParseDateTimeFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
         bindFunction(PointIsInsideXYPolygonFunction.class);
@@ -243,6 +245,42 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                             SequenceType.SINGLE_STRING,
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ParseDateTimeFunction extends StroomExtensionFunctionDefinition<ParseDateTime> {
+
+        @Inject
+        ParseDateTimeFunction(final Provider<ParseDateTime> functionCallProvider) {
+            super(
+                    ParseDateTime.FUNCTION_NAME,
+                    1,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
+                    SequenceType.OPTIONAL_DATE_TIME,
+                    functionCallProvider);
+        }
+    }
+
+    private static class FormatDateTimeFunction extends StroomExtensionFunctionDefinition<FormatDateTime> {
+
+        @Inject
+        FormatDateTimeFunction(final Provider<FormatDateTime> functionCallProvider) {
+            super(
+                    FormatDateTime.FUNCTION_NAME,
+                    1,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.OPTIONAL_DATE_TIME,
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_STRING
                     },

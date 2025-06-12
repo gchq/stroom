@@ -29,6 +29,7 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import net.sf.saxon.value.DateTimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +88,31 @@ abstract class StroomExtensionFunctionCall {
         }
 
         return string;
+    }
+
+    DateTimeValue getSafeDateTime(final String functionName,
+                                       final XPathContext context,
+                                       final Sequence[] arguments,
+                                       final int index) throws XPathException {
+        DateTimeValue dateTime = null;
+        final Sequence sequence = arguments[index];
+        if (sequence != null) {
+            final Item item = sequence.iterate().next();
+            if (item != null && item instanceof DateTimeValue) {
+                dateTime = ((DateTimeValue) item);
+            }
+        }
+
+        if (dateTime == null) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Illegal non dateTime argument found in function ");
+            sb.append(functionName);
+            sb.append("() at position ");
+            sb.append(index);
+            outputWarning(context, sb, null);
+        }
+
+        return dateTime;
     }
 
     Boolean getSafeBoolean(final String functionName,
