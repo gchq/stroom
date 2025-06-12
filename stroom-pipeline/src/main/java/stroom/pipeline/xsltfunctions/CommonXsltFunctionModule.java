@@ -50,6 +50,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(MetaAttributesFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
+        bindFunction(ParseDateTimeFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
         bindFunction(PointIsInsideXYPolygonFunction.class);
@@ -248,6 +249,24 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                             SequenceType.OPTIONAL_STRING
                     },
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ParseDateTimeFunction extends StroomExtensionFunctionDefinition<ParseDateTime> {
+
+        @Inject
+        ParseDateTimeFunction(final Provider<ParseDateTime> functionCallProvider) {
+            super(
+                    ParseDateTime.FUNCTION_NAME,
+                    1,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
+                    SequenceType.OPTIONAL_DATE_TIME,
                     functionCallProvider);
         }
     }

@@ -207,6 +207,21 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
                 });
     }
 
+    protected static Optional<String> getAsDateTimeValue(final Sequence sequence) {
+        return Optional.ofNullable(sequence)
+                .map(sequence2 -> {
+                    if (sequence2 instanceof EmptyAtomicSequence) {
+                        return null;
+                    } else if (sequence2 instanceof DateTimeValue) {
+                        String str = ((DateTimeValue) sequence2).getStringValue();
+                        LOGGER.debug("Got dateTime value:\n{}", str);
+                        return str;
+                    } else {
+                        return sequence.toString();
+                    }
+                });
+    }
+
     protected static Optional<Long> getAsLongValue(final Sequence sequence) {
         return Optional.ofNullable(sequence)
                 .map(sequence2 -> {
