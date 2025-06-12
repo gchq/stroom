@@ -78,7 +78,7 @@ class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDo
 
     @Override
     public List<FetchPropertyTypesResult> getPropertyTypes() {
-        return  elementRegistryFactoryProvider.get().get().getPropertyTypes()
+        return elementRegistryFactoryProvider.get().get().getPropertyTypes()
                     .entrySet()
                     .stream()
                     .map(entry ->

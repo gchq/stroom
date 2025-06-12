@@ -46,10 +46,6 @@ public class PipelineDataMerger {
             null);
     private static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
 
-    static {
-        SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);
-    }
-
     private final Map<String, PipelineElement> elementMap = new HashMap<>();
     private final Map<String, Map<String, PipelineProperty>> propertyMap = new HashMap<>();
     private final Map<String, Map<String, List<PipelineReference>>> pipelineReferenceMap = new HashMap<>();
@@ -61,7 +57,7 @@ public class PipelineDataMerger {
     public static Map<String, PipelineElementType> createElementMap() {
         final Map<String, PipelineElementType> map = new HashMap<>();
         // Ensure we always have a source element to link from.
-        map.put(SOURCE, SOURCE_ELEMENT.getElementType());
+        map.put(SOURCE, SOURCE_ELEMENT_TYPE);
         return map;
     }
 

@@ -33,7 +33,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -86,8 +85,8 @@ public class PropertyListPresenter
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
-    private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineDoc pipelineDoc;
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
@@ -98,7 +97,8 @@ public class PropertyListPresenter
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -108,6 +108,7 @@ public class PropertyListPresenter
 
         this.newPropertyPresenter = newPropertyPresenter;
         this.restFactory = restFactory;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         editButton = view.addButton(SvgPresets.EDIT);
 
@@ -314,24 +315,26 @@ public class PropertyListPresenter
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        final List<PipelineProperty> defaultProperties = new ArrayList<>();
-        if (currentElement != null && allPropertyTypes != null) {
-            final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
-                    .get(currentElement.getElementType());
-            if (propertyTypes != null) {
-                for (final PipelinePropertyType propertyType : propertyTypes.values()) {
-                    if (!propertyType.isPipelineReference()) {
-                        final PipelineProperty property = createDefaultProperty(currentElement.getId(), propertyType);
-                        defaultProperties.add(property);
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            final List<PipelineProperty> defaultProperties = new ArrayList<>();
+            if (currentElement != null) {
+                final Map<String, PipelinePropertyType> propertyTypes = elementTypes.getPropertyTypes(currentElement);
+                if (propertyTypes != null) {
+                    for (final PipelinePropertyType propertyType : propertyTypes.values()) {
+                        if (!propertyType.isPipelineReference()) {
+                            final PipelineProperty property = createDefaultProperty(currentElement.getId(),
+                                    propertyType);
+                            defaultProperties.add(property);
+                        }
                     }
                 }
             }
-        }
-        Collections.sort(defaultProperties);
-        this.defaultProperties = defaultProperties;
+            Collections.sort(defaultProperties);
+            this.defaultProperties = defaultProperties;
 
-        enableButtons();
-        refresh();
+            enableButtons();
+            refresh();
+        });
     }
 
     private PipelineProperty createDefaultProperty(final String elementName, final PipelinePropertyType propertyType) {
@@ -511,10 +514,6 @@ public class PropertyListPresenter
         if (dirty) {
             DirtyEvent.fire(this, dirty);
         }
-    }
-
-    public void setPropertyTypes(final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes) {
-        this.allPropertyTypes = propertyTypes;
     }
 
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {

@@ -42,6 +42,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     private final DraggableTreePanel<PipelineElement> layoutPanel;
     private SelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
+    private PipelineModel pipelineModel;
 
     @Inject
     public PipelineTreeViewImpl(final PipelineElementBoxFactory pipelineElementBoxFactory) {
@@ -51,8 +52,12 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
-                final PipelineElementType parentType = parent.getElementType();
-                final PipelineElementType childType = child.getElementType();
+                final PipelineElementType parentType = pipelineModel.getElementType(parent);
+                final PipelineElementType childType = pipelineModel.getElementType(child);
+                if (parentType == null || childType == null) {
+                    return false;
+                }
+
                 int childCount = 0;
 
                 final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
@@ -83,6 +88,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
 
     @Override
     public void setPipelineModel(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
         treePanel.setPipelineModel(pipelineModel);
     }
 

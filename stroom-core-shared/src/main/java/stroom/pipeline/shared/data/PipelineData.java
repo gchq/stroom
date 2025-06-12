@@ -110,7 +110,6 @@ public class PipelineData {
         final PipelineElement element = new PipelineElement();
         element.setId(id);
         element.setType(elementType.getType());
-        element.setElementType(elementType);
         addElement(element);
     }
 
@@ -122,7 +121,6 @@ public class PipelineData {
         final PipelineElement element = new PipelineElement();
         element.setId(id);
         element.setType(elementType.getType());
-        element.setElementType(elementType);
         removeElement(element);
     }
 

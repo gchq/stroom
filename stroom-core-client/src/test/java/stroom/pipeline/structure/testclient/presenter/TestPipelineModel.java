@@ -29,6 +29,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
+import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -37,7 +38,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -389,9 +392,13 @@ class TestPipelineModel {
     void testMove1() {
         final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
 
-        final PipelineElement source = createElement("Source", null, "Source");
-        final PipelineElement combinedParser = createElement("CombinedParser", Category.PARSER, "combinedParser");
-        final PipelineElement findReplaceFilter = createElement("FindReplaceFilter",
+        final Map<String, PipelineElementType> elementTypesByTypeName = new HashMap<>();
+        final PipelineElement source = createElement(elementTypesByTypeName, "Source", null, "Source");
+        final PipelineElement combinedParser = createElement(elementTypesByTypeName,
+                "CombinedParser",
+                Category.PARSER,
+                "combinedParser");
+        final PipelineElement findReplaceFilter = createElement(elementTypesByTypeName, "FindReplaceFilter",
                 Category.READER,
                 "FindReplaceFilter");
 
@@ -403,10 +410,12 @@ class TestPipelineModel {
         pipelineData.addLink(source, combinedParser);
         pipelineData.addLink(source, findReplaceFilter);
 
-        final PipelineModel pipelineModel = new PipelineModel();
+        final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
+        final PipelineModel pipelineModel = new PipelineModel(elementTypes);
         pipelineModel.setBaseStack(null);
         pipelineModel.setPipelineData(pipelineData);
         pipelineModel.build();
+
         final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
         checkChildren(tree1, source, new PipelineElement[]{combinedParser, findReplaceFilter});
 
@@ -422,12 +431,19 @@ class TestPipelineModel {
     void testMove2() {
         final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
 
-        final PipelineElement source = createElement("Source", null, "Source");
-        final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
-        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter",
+        final Map<String, PipelineElementType> elementTypesByTypeName = new HashMap<>();
+        final PipelineElement source = createElement(elementTypesByTypeName, "Source", null, "Source");
+        final PipelineElement xmlParser = createElement(elementTypesByTypeName,
+                "XMLParser",
+                Category.PARSER,
+                "xmlParser");
+        final PipelineElement idEnrichmentFilter = createElement(elementTypesByTypeName, "IDEnrichmentFilter",
                 Category.FILTER,
                 "idEnrichmentFilter");
-        final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
+        final PipelineElement xsltFilter = createElement(elementTypesByTypeName,
+                "XSLTFilter",
+                Category.FILTER,
+                "xsltFilter");
 
         final PipelineData base = new PipelineData();
 //        pipelineData.addElement(sourceElementType, "Source");
@@ -439,7 +455,8 @@ class TestPipelineModel {
         base.addLink(xmlParser, idEnrichmentFilter);
         base.addLink(idEnrichmentFilter, xsltFilter);
 
-        final PipelineModel pipelineModel = new PipelineModel();
+        final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
+        final PipelineModel pipelineModel = new PipelineModel(elementTypes);
         pipelineModel.setBaseStack(Collections.singletonList(base));
         pipelineModel.setPipelineData(new PipelineData());
         pipelineModel.build();
@@ -462,12 +479,19 @@ class TestPipelineModel {
     void testMove3() {
         final DefaultPipelineTreeBuilder builder = new DefaultPipelineTreeBuilder();
 
-        final PipelineElement source = createElement("Source", null, "Source");
-        final PipelineElement xmlParser = createElement("XMLParser", Category.PARSER, "xmlParser");
-        final PipelineElement idEnrichmentFilter = createElement("IDEnrichmentFilter",
+        final Map<String, PipelineElementType> elementTypesByTypeName = new HashMap<>();
+        final PipelineElement source = createElement(elementTypesByTypeName, "Source", null, "Source");
+        final PipelineElement xmlParser = createElement(elementTypesByTypeName,
+                "XMLParser",
+                Category.PARSER,
+                "xmlParser");
+        final PipelineElement idEnrichmentFilter = createElement(elementTypesByTypeName, "IDEnrichmentFilter",
                 Category.FILTER,
                 "idEnrichmentFilter");
-        final PipelineElement xsltFilter = createElement("XSLTFilter", Category.FILTER, "xsltFilter");
+        final PipelineElement xsltFilter = createElement(elementTypesByTypeName,
+                "XSLTFilter",
+                Category.FILTER,
+                "xsltFilter");
 //        final PipelineElement xsltFilter2 = createElement("XSLTFilter", Category.FILTER, "xsltFilter2");
 
         final PipelineData base = new PipelineData();
@@ -480,7 +504,8 @@ class TestPipelineModel {
         base.addLink(xmlParser, idEnrichmentFilter);
         base.addLink(idEnrichmentFilter, xsltFilter);
 
-        final PipelineModel pipelineModel = new PipelineModel();
+        final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
+        final PipelineModel pipelineModel = new PipelineModel(elementTypes);
         pipelineModel.setBaseStack(Collections.singletonList(base));
         pipelineModel.setPipelineData(new PipelineData());
         pipelineModel.build();
@@ -525,12 +550,15 @@ class TestPipelineModel {
         }
     }
 
-    private PipelineElement createElement(final String type, final Category category, final String id) {
+    private PipelineElement createElement(final Map<String, PipelineElementType> elementTypesByTypeName,
+                                          final String type,
+                                          final Category category,
+                                          final String id) {
         final PipelineElementType elementType = createType(type, category);
         final PipelineElement element = new PipelineElement();
         element.setId(id);
         element.setType(elementType.getType());
-        element.setElementType(elementType);
+        elementTypesByTypeName.put(elementType.getType(), elementType);
         return element;
     }
 
@@ -585,7 +613,7 @@ class TestPipelineModel {
                       final int removedPipelineReferences,
                       final int addedLinks,
                       final int removedLinks) throws PipelineModelException {
-        final PipelineModel pipelineModel = new PipelineModel();
+        final PipelineModel pipelineModel = new PipelineModel(new PipelineElementTypes(Collections.emptyMap()));
         pipelineModel.setBaseStack(baseStack);
         pipelineModel.setPipelineData(pipelineData);
         pipelineModel.build();

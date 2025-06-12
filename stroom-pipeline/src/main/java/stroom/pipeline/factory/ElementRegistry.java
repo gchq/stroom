@@ -21,14 +21,26 @@ import stroom.docref.HasType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.svg.shared.SvgImage;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ElementRegistry {
+
+    private static final String SOURCE = "Source";
+    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
+            SOURCE,
+            null,
+            new String[]{
+                    PipelineElementType.ROLE_SOURCE,
+                    PipelineElementType.ROLE_HAS_TARGETS,
+                    PipelineElementType.VISABILITY_SIMPLE},
+            SvgImage.PIPELINE_STREAM);
 
     private final Map<String, Class<Element>> elementMap = new HashMap<>();
     private final Map<String, Map<String, Method>> propertyMap = new HashMap<>();
@@ -37,6 +49,11 @@ public class ElementRegistry {
 
     @SuppressWarnings("unchecked")
     ElementRegistry(final Collection<Class<?>> elementClasses) {
+        // Make sure source exists.
+        elementTypes.put(SOURCE, SOURCE_ELEMENT_TYPE);
+        propertyMap.put(SOURCE, Collections.emptyMap());
+        propertyTypes.put(SOURCE_ELEMENT_TYPE, Collections.emptyMap());
+
         for (final Class<?> elementClass : elementClasses) {
             final ConfigurableElement configurableElement = elementClass.getAnnotation(ConfigurableElement.class);
             // Not all elements are configurable so won't necessarily have an annotation.
@@ -54,7 +71,7 @@ public class ElementRegistry {
                 // name.
                 if (existing != null) {
                     throw new PipelineFactoryException("PipelineElement \"" + existing
-                            + "\" has already been registered for \"" + elementTypeName + "\"");
+                                                       + "\" has already been registered for \"" + elementTypeName + "\"");
                 }
 
                 registerProperties(clazz, configurableElement);
@@ -78,7 +95,7 @@ public class ElementRegistry {
                 String name = method.getName();
                 if (!name.startsWith("set") || name.length() <= 3) {
                     throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                            + "\" must start with 'set'");
+                                                       + "\" must start with 'set'");
                 }
 
                 // Convert the setter to a camel case property name.
@@ -88,7 +105,7 @@ public class ElementRegistry {
 
                 if (parameters.length != 1) {
                     throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                            + "\" must have only 1 parameter");
+                                                       + "\" must have only 1 parameter");
                 }
 
                 final Map<String, Method> map = propertyMap.computeIfAbsent(elementTypeName, k -> new HashMap<>());
@@ -97,19 +114,19 @@ public class ElementRegistry {
                 // Make sure the class type is one we know how to deal with.
 
                 if (!String.class.isAssignableFrom(clazz) &&
-                        !boolean.class.equals(clazz) &&
-                        !int.class.equals(clazz) &&
-                        !long.class.equals(clazz) &&
-                        !DocRef.class.isAssignableFrom(clazz) &&
-                        !PipelineReference.class.isAssignableFrom(clazz)) {
+                    !boolean.class.equals(clazz) &&
+                    !int.class.equals(clazz) &&
+                    !long.class.equals(clazz) &&
+                    !DocRef.class.isAssignableFrom(clazz) &&
+                    !PipelineReference.class.isAssignableFrom(clazz)) {
                     throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                            + "\" has an unexpected type of \"" + clazz.getName() + "\"");
+                                                       + "\" has an unexpected type of \"" + clazz.getName() + "\"");
                 }
 
                 if (DocRef.class.isAssignableFrom(clazz)) {
                     if (null == docRefProperty) {
                         throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
+                                                           + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
                     }
                 }
 
@@ -150,11 +167,11 @@ public class ElementRegistry {
             try {
                 typeName = ((HasType) paramType.getDeclaredConstructor(new Class[0]).newInstance()).getType();
             } catch (final InstantiationException
-                    | IllegalAccessException
-                    | NoSuchMethodException
-                    | InvocationTargetException e) {
+                           | IllegalAccessException
+                           | NoSuchMethodException
+                           | InvocationTargetException e) {
                 throw new PipelineFactoryException("Unable to create global property for type " +
-                        typeName + " (reason: " + e.getMessage() + ")");
+                                                   typeName + " (reason: " + e.getMessage() + ")");
             }
         }
 
@@ -182,10 +199,7 @@ public class ElementRegistry {
     public Method getMethod(final String elementType, final String name) {
         final Map<String, Method> map = propertyMap.get(elementType);
         if (map != null) {
-            final Method method = map.get(name);
-            if (method != null) {
-                return method;
-            }
+            return map.get(name);
         }
 
         return null;

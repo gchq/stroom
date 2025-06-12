@@ -45,8 +45,8 @@ public class PipelineDataValidator {
         final ElementRegistry registry = pipelineElementRegistryFactory.get();
 
         // Validate elements.
-        validateElementList(registry, sourcePipeline, pipelineData.getElements().getAdd(), elementMap);
-        validateElementList(registry, sourcePipeline, pipelineData.getElements().getRemove(), elementMap);
+        validateElementList(registry, pipelineData.getElements().getAdd(), elementMap);
+        validateElementList(registry, pipelineData.getElements().getRemove(), elementMap);
 
         // Validate properties.
         validatePropertiesList(registry, sourcePipeline, pipelineData.getProperties().getAdd(), elementMap);
@@ -68,7 +68,6 @@ public class PipelineDataValidator {
     }
 
     private void validateElementList(final ElementRegistry registry,
-                                     final DocRef sourcePipeline,
                                      final List<PipelineElement> elementsList,
                                      final Map<String, PipelineElementType> elementMap) {
         for (final PipelineElement element : elementsList) {
@@ -85,12 +84,10 @@ public class PipelineDataValidator {
                 throw new PipelineFactoryException("Element type \"" + element.getType() + "\" is unknown");
             }
 
-            element.setElementType(elementType);
-//            element.setSource(source);
             final PipelineElementType existing = elementMap.put(element.getId(), elementType);
             if (existing != null && !existing.getType().equals(elementType.getType())) {
                 throw new PipelineFactoryException("Attempt to add element with id=" + element.getId()
-                        + " but element already exists with the same id but different type");
+                                                   + " but element already exists with the same id but different type");
             }
         }
     }
@@ -120,7 +117,7 @@ public class PipelineDataValidator {
                 final PipelinePropertyType propertyType = registry.getPropertyType(elementType, property.getName());
                 if (propertyType == null) {
                     throw new PipelineFactoryException("Attempt to set property \"" + property.getName()
-                            + "\" on element \"" + property.getElement() + "\" but property is unknown.");
+                                                       + "\" on element \"" + property.getElement() + "\" but property is unknown.");
                 }
 
                 property.setPropertyType(propertyType);
@@ -156,8 +153,8 @@ public class PipelineDataValidator {
                         pipelineReference.getName());
                 if (propertyType == null) {
                     throw new PipelineFactoryException("Attempt to set pipeline reference \"" +
-                            pipelineReference.getName() + "\" on element \"" + pipelineReference.getElement() +
-                            "\" but property is unknown.");
+                                                       pipelineReference.getName() + "\" on element \"" + pipelineReference.getElement() +
+                                                       "\" but property is unknown.");
                 }
 
                 pipelineReference.setSourcePipeline(sourcePipeline);

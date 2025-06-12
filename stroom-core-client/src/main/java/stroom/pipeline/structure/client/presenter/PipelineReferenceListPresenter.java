@@ -34,7 +34,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
@@ -89,8 +88,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private final RestFactory restFactory;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
-    private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineDoc pipeline;
     private PipelineModel pipelineModel;
     private PipelineElement currentElement;
@@ -102,7 +101,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
-                                          final RestFactory restFactory) {
+                                          final RestFactory restFactory,
+                                          final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -112,6 +112,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
         this.restFactory = restFactory;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         addButton = view.addButton(SvgPresets.NEW_ITEM);
         editButton = view.addButton(SvgPresets.EDIT);
@@ -311,28 +312,25 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        this.currentElement = currentElement;
-        enableButtons();
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            this.currentElement = currentElement;
+            enableButtons();
 
-        // Discover the reference property type.
-        this.propertyType = null;
-        if (currentElement != null && allPropertyTypes != null) {
-            final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
-                    .get(currentElement.getElementType());
-            if (propertyTypes != null) {
-                for (final PipelinePropertyType propertyType : propertyTypes.values()) {
-                    if (propertyType.isPipelineReference()) {
-                        this.propertyType = propertyType;
+            // Discover the reference property type.
+            this.propertyType = null;
+            if (currentElement != null) {
+                final Map<String, PipelinePropertyType> propertyTypes = elementTypes.getPropertyTypes(currentElement);
+                if (propertyTypes != null) {
+                    for (final PipelinePropertyType propertyType : propertyTypes.values()) {
+                        if (propertyType.isPipelineReference()) {
+                            this.propertyType = propertyType;
+                        }
                     }
                 }
             }
-        }
 
-        refresh();
-    }
-
-    public void setPropertyTypes(final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes) {
-        this.allPropertyTypes = propertyTypes;
+            refresh();
+        });
     }
 
     private void onAdd(final ClickEvent event) {

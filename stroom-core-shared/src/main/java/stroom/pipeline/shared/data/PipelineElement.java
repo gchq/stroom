@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
@@ -54,12 +53,8 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Element", propOrder = {"id", "type"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elementType", "source", "id", "type"})
+@JsonPropertyOrder({"id", "type"})
 public class PipelineElement implements Comparable<PipelineElement> {
-
-    @XmlTransient
-    @JsonProperty
-    private PipelineElementType elementType;
 
     @XmlElement(required = true)
     @JsonProperty
@@ -71,26 +66,11 @@ public class PipelineElement implements Comparable<PipelineElement> {
     public PipelineElement() {
     }
 
-    public PipelineElement(final String id, final String type) {
-        this.id = id;
-        this.type = type;
-    }
-
     @JsonCreator
-    public PipelineElement(@JsonProperty("elementType") final PipelineElementType elementType,
-                           @JsonProperty("id") final String id,
+    public PipelineElement(@JsonProperty("id") final String id,
                            @JsonProperty("type") final String type) {
-        this.elementType = elementType;
         this.id = id;
         this.type = type;
-    }
-
-    public PipelineElementType getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
     }
 
     public String getId() {

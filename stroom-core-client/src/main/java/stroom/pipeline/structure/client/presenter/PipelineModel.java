@@ -25,11 +25,12 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -50,19 +51,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
-    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
-            SOURCE,
-            null,
-            new String[]{
-                    PipelineElementType.ROLE_SOURCE,
-                    PipelineElementType.ROLE_HAS_TARGETS,
-                    PipelineElementType.VISABILITY_SIMPLE},
-            SvgImage.PIPELINE_STREAM);
 
-    static {
-        SOURCE_ELEMENT.setElementType(SOURCE_ELEMENT_TYPE);
-    }
-
+    private final PipelineElementTypes elementTypes;
     private final EventBus eventBus = new SimpleEventBus();
     private Map<PipelineElement, List<PipelineElement>> childMap;
     private Map<PipelineElement, PipelineElement> parentMap;
@@ -72,7 +62,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private PipelineDataMerger combinedData;
     private Map<String, SteppingFilterSettings> stepFilterMap;
 
-    public PipelineModel() {
+    public PipelineModel(final PipelineElementTypes elementTypes) {
+        this.elementTypes = elementTypes;
         baseData = new PipelineDataMerger();
         combinedData = new PipelineDataMerger();
     }
@@ -329,10 +320,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             }
 
             element = PipelineDataUtil.createElement(id, elementType.getType());
-            element.setElementType(elementType);
             if (pipelineData.getRemovedElements().contains(element)) {
                 throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
-                        "element. Restore the existing element if required or change the element id.");
+                                                 "element. Restore the existing element if required or change the element id.");
             }
 
             pipelineData.addElement(element);
@@ -519,6 +509,26 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     @Override
     public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
         return eventBus.addHandler(ChangeDataEvent.getType(), handler);
+    }
+
+
+
+
+
+    public Map<Category, List<PipelineElementType>> getElementTypesByCategory() {
+        return elementTypes.getElementTypesByCategory();
+    }
+
+    public PipelineElementType getElementType(final PipelineElement element) {
+        return elementTypes.getElementType(element);
+    }
+
+    public boolean hasRole(final PipelineElement element, final String role) {
+        return elementTypes.hasRole(element, role);
+    }
+
+    public Map<String, PipelinePropertyType> getPropertyTypes(final PipelineElement element) {
+        return elementTypes.getPropertyTypes(element);
     }
 
     @Override

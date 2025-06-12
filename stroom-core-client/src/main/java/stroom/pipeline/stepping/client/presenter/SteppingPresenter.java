@@ -42,6 +42,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.svg.client.SvgPresets;
@@ -105,10 +106,11 @@ public class SteppingPresenter
     private final StepLocationLinkPresenter stepLocationLinkPresenter;
     private final StepControlPresenter stepControlPresenter;
     private final SteppingFilterPresenter steppingFilterPresenter;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
     // elementId => ElementPresenter
     private final Map<String, ElementPresenter> elementPresenterMap = new HashMap<>();
-    private final PipelineModel pipelineModel;
+    private PipelineModel pipelineModel;
     private final ButtonView saveButton;
     private final InlineSvgButton terminateButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
@@ -132,7 +134,8 @@ public class SteppingPresenter
                              final Provider<ElementPresenter> elementPresenterProvider,
                              final StepLocationLinkPresenter stepLocationLinkPresenter,
                              final StepControlPresenter stepControlPresenter,
-                             final SteppingFilterPresenter steppingFilterPresenter) {
+                             final SteppingFilterPresenter steppingFilterPresenter,
+                             final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
@@ -142,6 +145,7 @@ public class SteppingPresenter
         this.stepLocationLinkPresenter = stepLocationLinkPresenter;
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         terminateButton = new InlineSvgButton();
         terminateButton.setEnabled(false);
@@ -160,8 +164,6 @@ public class SteppingPresenter
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
-        pipelineModel = new PipelineModel();
-        pipelineTreePresenter.setModel(pipelineModel);
         pipelineTreePresenter.setPipelineTreeBuilder(new SteppingPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
@@ -243,26 +245,28 @@ public class SteppingPresenter
     }
 
     private void showChangeFiltersDialog() {
-        final List<PipelineElement> elements = new ArrayList<>();
-        getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            final List<PipelineElement> elements = new ArrayList<>();
+            getDescendantFilters(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements);
 //            GWT.log("elements: \n" + NullSafe.stream(elements)
 //                    .map(PipelineElement::toString)
 //                    .map(str -> "  " + str)
 //                    .collect(Collectors.joining("\n")));
 
-        // Make a note of the selected element as it is lost on refresh
-        final PipelineElement selectedObject = pipelineTreePresenter.getSelectionModel()
-                .getSelectedObject();
-        steppingFilterPresenter.show(
-                elements,
-                getSelectedPipeElement(),
-                pipelineModel.getStepFilterMap(),
-                stepFilterMap -> {
-                    pipelineModel.setStepFilterMap(stepFilterMap);
-                    // Need to refresh the view in case any elements need to reflect active filters
-                    pipelineTreePresenter.getView().refresh();
-                    pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
-                });
+            // Make a note of the selected element as it is lost on refresh
+            final PipelineElement selectedObject = pipelineTreePresenter.getSelectionModel()
+                    .getSelectedObject();
+            steppingFilterPresenter.show(
+                    elements,
+                    getSelectedPipeElement(),
+                    pipelineModel.getStepFilterMap(),
+                    stepFilterMap -> {
+                        pipelineModel.setStepFilterMap(stepFilterMap);
+                        // Need to refresh the view in case any elements need to reflect active filters
+                        pipelineTreePresenter.getView().refresh();
+                        pipelineTreePresenter.getSelectionModel().setSelected(selectedObject, true);
+                    });
+        });
     }
 
     private boolean hasActiveFilters(final PipelineElement element) {
@@ -344,8 +348,7 @@ public class SteppingPresenter
         final List<PipelineElement> children = childMap.get(parent);
         if (NullSafe.hasItems(children)) {
             for (final PipelineElement child : children) {
-                final PipelineElementType type = child.getElementType();
-                if (type.hasRole(PipelineElementType.VISABILITY_STEPPING)) {
+                if (pipelineModel.hasRole(child, PipelineElementType.VISABILITY_STEPPING)) {
                     descendants.add(child);
                 }
                 getDescendantFilters(child, childMap, descendants);
@@ -354,7 +357,7 @@ public class SteppingPresenter
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {
-        if (PipelineModel.SOURCE_ELEMENT.getElementType().equals(element.getElementType())) {
+        if (PipelineModel.SOURCE_ELEMENT.getType().equals(element.getType())) {
             currentElementPresenter = null;
             updateToggleConsoleBtn(null);
             return sourcePresenter;
@@ -370,6 +373,7 @@ public class SteppingPresenter
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
                 final ElementPresenter presenter = elementPresenterProvider.get();
+                presenter.setPipelineModel(pipelineModel);
                 presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
@@ -425,7 +429,8 @@ public class SteppingPresenter
         });
     }
 
-    private void clearIndicators(final ElementPresenter elementPresenter, final String elementId) {
+    private void clearIndicators(final ElementPresenter elementPresenter,
+                                 final String elementId) {
         elementPresenter.clearAllIndicators();
         updateToggleConsoleBtnVisibility(null, elementId);
     }
@@ -516,64 +521,70 @@ public class SteppingPresenter
                      final StepLocation stepLocation,
                      final Meta meta,
                      final String childStreamType) {
-        this.meta = meta;
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            this.meta = meta;
 
-        // Load the stream.
-        // When we start stepping we are not on a record so want to see
-        // from the start of the stream for non-segmented with no highlight and
-        // nothing for segmented. DataFetcher will interpret the -1 rec no to return
-        // the right data.
-        final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
-                .withChildStreamType(childStreamType)
-                .withPartIndex(stepLocation.getPartIndex())
-                .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
-                .build();
-        sourcePresenter.setSourceLocation(sourceLocation);
+            // Load the stream.
+            // When we start stepping we are not on a record so want to see
+            // from the start of the stream for non-segmented with no highlight and
+            // nothing for segmented. DataFetcher will interpret the -1 rec no to return
+            // the right data.
+            final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
+                    .withChildStreamType(childStreamType)
+                    .withPartIndex(stepLocation.getPartIndex())
+                    .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
+                    .build();
+            sourcePresenter.setSourceLocation(sourceLocation);
 
-        // Set the pipeline on the stepping action.
-        requestBuilder.pipeline(pipeline);
+            // Set the pipeline on the stepping action.
+            requestBuilder.pipeline(pipeline);
 
-        // Set the stream id on the stepping action.
-        final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
-        requestBuilder.criteria(findMetaCriteria);
-        requestBuilder.childStreamType(childStreamType);
+            // Set the stream id on the stepping action.
+            final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
+            requestBuilder.criteria(findMetaCriteria);
+            requestBuilder.childStreamType(childStreamType);
 
-        // Load the pipeline.
-        restFactory
-                .create(PIPELINE_RESOURCE)
-                .method(res -> res.fetchPipelineData(pipeline))
-                .onSuccess(result -> {
-                    final PipelineData pipelineData = result.get(result.size() - 1);
-                    final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+            // Load the pipeline.
+            restFactory
+                    .create(PIPELINE_RESOURCE)
+                    .method(res -> res.fetchPipelineData(pipeline))
+                    .onSuccess(result -> {
+                        final PipelineData pipelineData = result.get(result.size() - 1);
+                        final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
 
-                    // If there is a stack of pipeline data then we need
-                    // to make sure changes are reflected appropriately.
-                    for (int i = 0; i < result.size() - 1; i++) {
-                        baseStack.add(result.get(i));
-                    }
+                        // If there is a stack of pipeline data then we need
+                        // to make sure changes are reflected appropriately.
+                        for (int i = 0; i < result.size() - 1; i++) {
+                            baseStack.add(result.get(i));
+                        }
 
-                    try {
-                        pipelineModel.setPipelineData(pipelineData);
-                        pipelineModel.setBaseStack(baseStack);
-                        pipelineModel.build();
-                        pipelineTreePresenter.getSelectionModel()
-                                .setSelected(PipelineModel.SOURCE_ELEMENT, true);
+                        try {
+                            if (pipelineModel == null) {
+                                pipelineModel = new PipelineModel(elementTypes);
+                                pipelineTreePresenter.setModel(pipelineModel);
+                            }
+                            pipelineModel.setPipelineData(pipelineData);
+                            pipelineModel.setBaseStack(baseStack);
+                            pipelineModel.build();
+                            pipelineTreePresenter.getSelectionModel()
+                                    .setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                        Scheduler.get().scheduleDeferred(() ->
-                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 13));
-                    } catch (final PipelineModelException e) {
-                        AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
-                    }
+                            Scheduler.get().scheduleDeferred(() ->
+                                    getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 13));
+                        } catch (final PipelineModelException e) {
+                            AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
+                        }
 
-                    if (stepType != null) {
-                        step(stepType, new StepLocation(
-                                meta.getId(),
-                                stepLocation.getPartIndex(),
-                                stepLocation.getRecordIndex()));
-                    }
-                })
-                .taskMonitorFactory(this)
-                .exec();
+                        if (stepType != null) {
+                            step(stepType, new StepLocation(
+                                    meta.getId(),
+                                    stepLocation.getPartIndex(),
+                                    stepLocation.getRecordIndex()));
+                        }
+                    })
+                    .taskMonitorFactory(this)
+                    .exec();
+        });
     }
 
     public void save() {
@@ -585,7 +596,8 @@ public class SteppingPresenter
         saveButton.setEnabled(false);
     }
 
-    private void step(final StepType stepType, final StepLocation stepLocation) {
+    private void step(final StepType stepType,
+                      final StepLocation stepLocation) {
         if (!busyTranslating) {
             busyTranslating = true;
             stepMessage.getElement().setInnerHTML("Stepping...");
@@ -852,16 +864,17 @@ public class SteppingPresenter
             final TaskMonitor taskMonitor = createTaskMonitor();
             final Task task = new SimpleTask("Stepping");
             taskMonitor.onStart(task);
-            Scheduler.get().scheduleDeferred(() -> {
-                final PresenterWidget<?> content = getContent(element);
-                if (content != null) {
-                    // Set the content.
-                    getView().getLayerContainer().show((Layer) content);
+            Scheduler.get().scheduleDeferred(() ->
+                    pipelineElementTypesFactory.get(this, elementTypes -> {
+                        final PresenterWidget<?> content = getContent(element);
+                        if (content != null) {
+                            // Set the content.
+                            getView().getLayerContainer().show((Layer) content);
 
-                    updateElementSeverities();
-                }
-                taskMonitor.onEnd(task);
-            });
+                            updateElementSeverities();
+                        }
+                        taskMonitor.onEnd(task);
+                    }));
         }
     }
 
