@@ -518,6 +518,7 @@ class stroom.query.api.ExpressionTerm - public java.lang.String stroom.query.api
 class stroom.query.api.ExpressionTerm - public java.lang.String stroom.query.api.ExpressionTerm.getValue()
 class stroom.query.api.ExpressionTerm - public static boolean stroom.query.api.ExpressionItem.isEnabled(stroom.query.api.ExpressionItem)
 class stroom.query.api.ExpressionTerm - public static stroom.query.api.ExpressionTerm stroom.query.api.ExpressionTerm.equals(java.lang.String,java.lang.String)
+class stroom.query.api.ExpressionTerm - public static stroom.query.api.ExpressionTerm stroom.query.api.ExpressionTerm.equalsCaseSensitive(java.lang.String,java.lang.String)
 class stroom.query.api.ExpressionTerm - public static stroom.query.api.ExpressionTerm$Builder stroom.query.api.ExpressionTerm.builder()
 class stroom.query.api.ExpressionTerm - public stroom.docref.DocRef stroom.query.api.ExpressionTerm.getDocRef()
 class stroom.query.api.ExpressionTerm - public stroom.query.api.ExpressionTerm$Builder stroom.query.api.ExpressionTerm.copy()

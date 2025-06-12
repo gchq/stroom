@@ -89,6 +89,7 @@ class TestReceiveDataRuleSetServiceImpl {
 
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .withUpdateTimeMs(Instant.now().toEpochMilli())
                         .build());
 
         final HashedReceiveDataRules hashedReceiveDataRules = service.getHashedReceiveDataRules();
@@ -126,12 +127,14 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .withUpdateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
                                 .withAction(ReceiveAction.REJECT)
                                 .withExpression(ExpressionOperator.builder()
-                                        .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_1))
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
+                                                StandardHeaderArguments.FEED, FEED_1))
                                         .addTerm(ExpressionTerm.equals(StandardHeaderArguments.SYSTEM, SYSTEM_1))
                                         .build())
                                 .build())
@@ -140,8 +143,9 @@ class TestReceiveDataRuleSetServiceImpl {
                                 .withEnabled(true)
                                 .withAction(ReceiveAction.DROP)
                                 .withExpression(ExpressionOperator.builder()
-                                        .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_2))
-                                        .addTerm(ExpressionTerm.equals(
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
+                                                StandardHeaderArguments.FEED, FEED_2))
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
                                                 StandardHeaderArguments.ENVIRONMENT, ENVIRONMENT_1))
                                         .build())
                                 .build())
@@ -171,7 +175,7 @@ class TestReceiveDataRuleSetServiceImpl {
         final ReceiveDataRule rule1 = hashedReceiveDataRules.getReceiveDataRules().getRules().get(0);
         final ExpressionTerm rule1Term1 = getChildAsTerm(rule1.getExpression(), 0);
         assertThat(rule1Term1.getField())
-                .isEqualTo(StandardHeaderArguments.FEED);
+                .isEqualTo(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.FEED));
         assertThat(rule1Term1.getValue())
                 .isNotEqualTo(FEED_1);
         final String hashedFeed1 = md5Hasher.hash(FEED_1, feedSalt);
@@ -185,7 +189,7 @@ class TestReceiveDataRuleSetServiceImpl {
         final ReceiveDataRule rule2 = hashedReceiveDataRules.getReceiveDataRules().getRules().get(1);
         final ExpressionTerm rule2Term1 = getChildAsTerm(rule2.getExpression(), 0);
         assertThat(rule2Term1.getField())
-                .isEqualTo(StandardHeaderArguments.FEED);
+                .isEqualTo(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.FEED));
         assertThat(rule2Term1.getValue())
                 .isNotEqualTo(FEED_2);
         final String hashedFeed2 = md5Hasher.hash(FEED_2, feedSalt);
@@ -194,7 +198,7 @@ class TestReceiveDataRuleSetServiceImpl {
                 .isEqualTo(hashedFeed2);
         final ExpressionTerm rule2Term2 = getChildAsTerm(rule2.getExpression(), 1);
         assertThat(rule2Term2.getField())
-                .isEqualTo(StandardHeaderArguments.ENVIRONMENT);
+                .isEqualTo(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.ENVIRONMENT));
         // This is a hashed term value
         final String hashedEnvironment = md5Hasher.hash(ENVIRONMENT_1, environmentSalt);
         assertThat(rule2Term2.getValue())
@@ -250,13 +254,15 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
+                        .withUpdateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
                                 .withAction(ReceiveAction.REJECT)
                                 .withExpression(ExpressionOperator.builder()
                                         .op(Op.OR)
-                                        .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_1))
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
+                                                StandardHeaderArguments.FEED, FEED_1))
                                         .addTerm(ExpressionTerm.builder()
                                                 .field(StandardHeaderArguments.FEED)
                                                 .condition(Condition.IN_DICTIONARY)
@@ -274,8 +280,9 @@ class TestReceiveDataRuleSetServiceImpl {
                                 .withEnabled(true)
                                 .withAction(ReceiveAction.DROP)
                                 .withExpression(ExpressionOperator.builder()
-                                        .addTerm(ExpressionTerm.equals(StandardHeaderArguments.FEED, FEED_2))
-                                        .addTerm(ExpressionTerm.equals(
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
+                                                StandardHeaderArguments.FEED, FEED_2))
+                                        .addTerm(ExpressionTerm.equalsCaseSensitive(
                                                 StandardHeaderArguments.ENVIRONMENT, ENVIRONMENT_1))
                                         .build())
                                 .build())
@@ -315,7 +322,6 @@ class TestReceiveDataRuleSetServiceImpl {
         assertThat(systemDict2.getData().lines().toList())
                 .containsExactly(SYSTEM_1, SYSTEM_2);
 
-
         assertThat(hashedReceiveDataRules.getRules())
                 .hasSize(2);
         assertThat(hashedReceiveDataRules.getFields())
@@ -329,7 +335,7 @@ class TestReceiveDataRuleSetServiceImpl {
         final ReceiveDataRule rule1 = hashedReceiveDataRules.getReceiveDataRules().getRules().get(0);
         final ExpressionTerm rule1Term1 = getChildAsTerm(rule1.getExpression(), 0);
         assertThat(rule1Term1.getField())
-                .isEqualTo(StandardHeaderArguments.FEED);
+                .isEqualTo(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.FEED));
         assertThat(rule1Term1.getValue())
                 .isNotEqualTo(FEED_1);
         final String hashedFeed1 = md5Hasher.hash(FEED_1, feedSalt);
@@ -340,7 +346,7 @@ class TestReceiveDataRuleSetServiceImpl {
         final ReceiveDataRule rule2 = hashedReceiveDataRules.getReceiveDataRules().getRules().get(1);
         final ExpressionTerm rule2Term1 = getChildAsTerm(rule2.getExpression(), 0);
         assertThat(rule2Term1.getField())
-                .isEqualTo(StandardHeaderArguments.FEED);
+                .isEqualTo(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.FEED));
         assertThat(rule2Term1.getValue())
                 .isNotEqualTo(FEED_2);
         final String hashedFeed2 = md5Hasher.hash(FEED_2, feedSalt);

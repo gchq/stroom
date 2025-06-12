@@ -208,11 +208,15 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
                     .isNotEqualTo(attrMap1);
             // Make sure the attrs we expect to be hashed are hashed and have been hashed
             // with the correct salt
-            assertThat(attrMap2.get(StandardHeaderArguments.FEED))
+            assertThat(attrMap2.get(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.FEED)))
                     .isEqualTo(feedHasher.apply(attrMap1.get(StandardHeaderArguments.FEED)));
+            assertThat(attrMap2.get(StandardHeaderArguments.FEED))
+                    .isEqualTo(attrMap1.get(StandardHeaderArguments.FEED));
             assertThat(attrMap2.get(StandardHeaderArguments.SYSTEM))
                     .isEqualTo(attrMap1.get(StandardHeaderArguments.SYSTEM));
             assertThat(attrMap2.get(StandardHeaderArguments.ENVIRONMENT))
+                    .isEqualTo(attrMap1.get(StandardHeaderArguments.ENVIRONMENT));
+            assertThat(attrMap2.get(HashedReceiveDataRules.markFieldAsHashed(StandardHeaderArguments.ENVIRONMENT)))
                     .isEqualTo(environmentHasher.apply(attrMap1.get(StandardHeaderArguments.ENVIRONMENT)));
 
             assertThat(bundledRules1.wordListProvider().getWords(feedDict.asDocRef()))

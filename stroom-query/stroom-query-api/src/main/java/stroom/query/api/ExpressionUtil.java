@@ -27,6 +27,12 @@ public class ExpressionUtil {
                 .build();
     }
 
+    public static ExpressionOperator equalsCaseSense(final String field, final String value) {
+        return ExpressionOperator.builder()
+                .addTerm(field, Condition.EQUALS_CASE_SENSITIVE, value)
+                .build();
+    }
+
     public static ExpressionOperator equalsBoolean(final QueryField field, final boolean value) {
         return ExpressionOperator.builder()
                 .addBooleanTerm(field, Condition.EQUALS, value)

@@ -89,6 +89,13 @@ public final class ExpressionTerm extends ExpressionItem {
         return new ExpressionTerm(true, field, Condition.EQUALS, value, null);
     }
 
+    /**
+     * Convenience method for creating an enabled {@code field = value} {@link ExpressionTerm}
+     */
+    public static ExpressionTerm equalsCaseSensitive(final String field, final String value) {
+        return new ExpressionTerm(true, field, Condition.EQUALS_CASE_SENSITIVE, value, null);
+    }
+
     @Override
     public boolean containsField(final String... fields) {
         if (fields != null) {

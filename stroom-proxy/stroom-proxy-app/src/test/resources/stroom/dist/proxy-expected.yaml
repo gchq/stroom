@@ -109,6 +109,7 @@ proxyConfig:
     - "RemoteAddress"
     - "RemoteDN"
     - "RemoteCertExpiry"
+    - "DataReceiptRule"
   path:
     data: "data"
     home: null
