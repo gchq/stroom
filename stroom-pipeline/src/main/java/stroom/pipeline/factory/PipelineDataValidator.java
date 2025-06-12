@@ -120,7 +120,6 @@ public class PipelineDataValidator {
                                                        + "\" on element \"" + property.getElement() + "\" but property is unknown.");
                 }
 
-                property.setPropertyType(propertyType);
                 property.setSourcePipeline(sourcePipeline);
             }
         }

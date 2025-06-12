@@ -531,6 +531,10 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return elementTypes.getPropertyTypes(element);
     }
 
+    public PipelinePropertyType getPropertyType(final PipelineElement element, final PipelineProperty property) {
+        return elementTypes.getPropertyType(element, property);
+    }
+
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEventFromSource(event, this);

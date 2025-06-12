@@ -85,11 +85,11 @@ public class PropertyListPresenter
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
-    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
     private PipelineDoc pipelineDoc;
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
+    private PipelineElement currentElement;
 
     private boolean readOnly = true;
 
@@ -97,8 +97,7 @@ public class PropertyListPresenter
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final RestFactory restFactory,
-                                 final PipelineElementTypesFactory pipelineElementTypesFactory) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>();
@@ -108,7 +107,6 @@ public class PropertyListPresenter
 
         this.newPropertyPresenter = newPropertyPresenter;
         this.restFactory = restFactory;
-        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         editButton = view.addButton(SvgPresets.EDIT);
 
@@ -230,7 +228,10 @@ public class PropertyListPresenter
         dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
-                return getSafeHtml(property.getPropertyType().getDescription());
+                return getSafeHtml(NullSafe.get(
+                        pipelineModel,
+                        pm -> pm.getPropertyType(currentElement, property),
+                        PipelinePropertyType::getDescription));
             }
         }, "Description", 70, 200);
     }
@@ -315,31 +316,29 @@ public class PropertyListPresenter
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        pipelineElementTypesFactory.get(this, elementTypes -> {
-            final List<PipelineProperty> defaultProperties = new ArrayList<>();
-            if (currentElement != null) {
-                final Map<String, PipelinePropertyType> propertyTypes = elementTypes.getPropertyTypes(currentElement);
-                if (propertyTypes != null) {
-                    for (final PipelinePropertyType propertyType : propertyTypes.values()) {
-                        if (!propertyType.isPipelineReference()) {
-                            final PipelineProperty property = createDefaultProperty(currentElement.getId(),
-                                    propertyType);
-                            defaultProperties.add(property);
-                        }
+        this.currentElement = currentElement;
+        final List<PipelineProperty> defaultProperties = new ArrayList<>();
+        if (currentElement != null) {
+            final Map<String, PipelinePropertyType> propertyTypes = pipelineModel.getPropertyTypes(currentElement);
+            if (propertyTypes != null) {
+                for (final PipelinePropertyType propertyType : propertyTypes.values()) {
+                    if (!propertyType.isPipelineReference()) {
+                        final PipelineProperty property = createDefaultProperty(currentElement.getId(),
+                                propertyType);
+                        defaultProperties.add(property);
                     }
                 }
             }
-            Collections.sort(defaultProperties);
-            this.defaultProperties = defaultProperties;
+        }
+        Collections.sort(defaultProperties);
+        this.defaultProperties = defaultProperties;
 
-            enableButtons();
-            refresh();
-        });
+        enableButtons();
+        refresh();
     }
 
     private PipelineProperty createDefaultProperty(final String elementName, final PipelinePropertyType propertyType) {
         final PipelineProperty property = new PipelineProperty(elementName, propertyType.getName());
-        property.setPropertyType(propertyType);
         property.setValue(getDefaultValue(propertyType));
 
         return property;
@@ -351,9 +350,10 @@ public class PropertyListPresenter
             PipelineProperty localProperty = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
                     property);
             PipelineProperty inheritedProperty = getInheritedProperty(property);
+            final PipelinePropertyType pipelinePropertyType = pipelineModel.getPropertyType(currentElement, property);
             final PipelineProperty defaultProperty = property;
 
-            final String defaultValue = property.getPropertyType().getDefaultValue();
+            final String defaultValue = pipelinePropertyType.getDefaultValue();
             final String inheritedValue = inheritedProperty == null || inheritedProperty.getValue() == null
                     ? null
                     : inheritedProperty.getValue().toString();
@@ -376,7 +376,7 @@ public class PropertyListPresenter
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
-            editor.edit(defaultProperty, inheritedProperty, editing, source,
+            editor.edit(pipelinePropertyType, defaultProperty, inheritedProperty, editing, source,
                     defaultValue,
                     inheritedValue,
                     inheritedFrom);

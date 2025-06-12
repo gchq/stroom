@@ -3,6 +3,7 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.util.shared.NullSafe;
 
@@ -47,5 +48,11 @@ public class PipelineElementTypes {
         final PipelineElementType pipelineElementType = getElementType(element);
         return NullSafe.getOrElse(pipelineElementType, et ->
                 propertyTypes.get(pipelineElementType), Collections.emptyMap());
+    }
+
+    public PipelinePropertyType getPropertyType(final PipelineElement element, final PipelineProperty property) {
+        final PipelineElementType pipelineElementType = getElementType(element);
+        return NullSafe.get(pipelineElementType, et ->
+                propertyTypes.get(pipelineElementType), ptm -> ptm.get(property.getName()));
     }
 }

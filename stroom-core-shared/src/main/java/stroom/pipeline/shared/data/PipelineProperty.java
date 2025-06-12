@@ -58,12 +58,9 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Property", propOrder = {"element", "name", "value"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"propertyType", "source", "element", "name", "value"})
+@JsonPropertyOrder({"source", "element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
 
-    @XmlTransient
-    @JsonProperty
-    private PipelinePropertyType propertyType;
     @XmlTransient
     @JsonProperty
     private DocRef sourcePipeline;
@@ -86,24 +83,14 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
     }
 
     @JsonCreator
-    public PipelineProperty(@JsonProperty("propertyType") final PipelinePropertyType propertyType,
-                            @JsonProperty("sourcePipeline") final DocRef sourcePipeline,
+    public PipelineProperty(@JsonProperty("sourcePipeline") final DocRef sourcePipeline,
                             @JsonProperty("element") final String element,
                             @JsonProperty("name") final String name,
                             @JsonProperty("value") final PipelinePropertyValue value) {
-        this.propertyType = propertyType;
         this.sourcePipeline = sourcePipeline;
         this.element = element;
         this.name = name;
         this.value = value;
-    }
-
-    public PipelinePropertyType getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(final PipelinePropertyType propertyType) {
-        this.propertyType = propertyType;
     }
 
     public DocRef getSourcePipeline() {
@@ -148,7 +135,7 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
         }
         final PipelineProperty that = (PipelineProperty) o;
         return element.equals(that.element) &&
-                name.equals(that.name);
+               name.equals(that.name);
     }
 
     @Override
@@ -171,7 +158,6 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
 
     @Override
     public void copyFrom(final PipelineProperty other) {
-        this.propertyType = other.propertyType;
         this.sourcePipeline = other.sourcePipeline;
         this.element = other.element;
         this.name = other.name;

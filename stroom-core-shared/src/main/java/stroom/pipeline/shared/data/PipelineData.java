@@ -130,7 +130,6 @@ public class PipelineData {
 
     public void addProperty(final String element, final PipelinePropertyType propertyType, final boolean value) {
         final PipelineProperty property = new PipelineProperty(element, propertyType.getName());
-        property.setPropertyType(propertyType);
         final PipelinePropertyValue val = new PipelinePropertyValue(value);
         property.setValue(val);
         addProperty(property);
@@ -142,7 +141,6 @@ public class PipelineData {
 
     public void removeProperty(final String element, final PipelinePropertyType propertyType) {
         final PipelineProperty property = new PipelineProperty(element, propertyType.getName());
-        property.setPropertyType(propertyType);
         removeProperty(property);
     }
 
