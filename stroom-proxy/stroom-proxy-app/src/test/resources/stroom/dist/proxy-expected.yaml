@@ -10,6 +10,7 @@ proxyConfig:
   downstreamHost:
     apiKey: null
     apiKeyVerificationUrl: null
+    enabled: true
     hostname: null
     maxCachedKeyAge: "PT10M"
     maxPersistedKeyAge: "P30D"

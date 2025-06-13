@@ -167,13 +167,13 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
             return false;
         }
         final DownstreamHostConfig that = (DownstreamHostConfig) object;
-        return enabled == that.enabled && Objects.equals(apiKey, that.apiKey) && Objects.equals(
-                apiKeyVerificationUrl,
-                that.apiKeyVerificationUrl) && persistedKeysHashAlgorithm == that.persistedKeysHashAlgorithm && Objects.equals(
-                maxCachedKeyAge,
-                that.maxCachedKeyAge) && Objects.equals(maxPersistedKeyAge,
-                that.maxPersistedKeyAge) && Objects.equals(noFetchIntervalAfterFailure,
-                that.noFetchIntervalAfterFailure);
+        return enabled == that.enabled
+               && Objects.equals(apiKey, that.apiKey)
+               && Objects.equals(apiKeyVerificationUrl, that.apiKeyVerificationUrl)
+               && persistedKeysHashAlgorithm == that.persistedKeysHashAlgorithm
+               && Objects.equals(maxCachedKeyAge, that.maxCachedKeyAge)
+               && Objects.equals(maxPersistedKeyAge, that.maxPersistedKeyAge)
+               && Objects.equals(noFetchIntervalAfterFailure, that.noFetchIntervalAfterFailure);
     }
 
     @Override
