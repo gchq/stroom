@@ -17,7 +17,6 @@ import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.ws.rs.core.NoContentException;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -88,7 +87,7 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     }
 
     @Override
-    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) throws NoContentException {
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
         LOGGER.debug("verifyApiKey() - request: {}", request);
         Objects.requireNonNull(request);
         // Null return is mapped to 204 status
@@ -96,18 +95,5 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
                 .orElse(null);
         LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
         return userDesc;
-
-//        LOGGER.debug("verifyApiKey() - request: {}", request);
-//        Objects.requireNonNull(request);
-//        final Optional<UserDesc> optUserDesc = apiKeyServiceProvider.get().verifyApiKey(request);
-//        if (optUserDesc.isPresent()) {
-//            final UserDesc userDesc = optUserDesc.get();
-//            LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
-//            return optUserDesc.get();
-//        } else {
-//            LOGGER.debug("verifyApiKey() - Not found, request: {}", request);
-//            throw new NoContentException(LogUtil.message("No valid API key exists with the permissions {}.",
-//                    request.getRequiredAppPermissions()));
-//        }
     }
 }

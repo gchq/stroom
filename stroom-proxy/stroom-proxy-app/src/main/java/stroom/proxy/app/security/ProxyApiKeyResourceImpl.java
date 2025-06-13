@@ -7,7 +7,6 @@ import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.ws.rs.core.NoContentException;
 
 import java.util.Objects;
 
@@ -23,7 +22,7 @@ public class ProxyApiKeyResourceImpl implements ProxyApiKeyResource {
     }
 
     @Override
-    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) throws NoContentException {
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
         LOGGER.debug("verifyApiKey() - request: {}", request);
         Objects.requireNonNull(request);
         // Null return is mapped to 204 status
