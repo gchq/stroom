@@ -39,8 +39,8 @@ include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
 
-include 'stroom-appstore:stroom-appstore-api'
-include 'stroom-appstore:stroom-appstore-impl'
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore:stroom-contentstore-impl'
 
 // AWS
 include 'stroom-aws:stroom-aws-s3-impl'
@@ -303,5 +303,5 @@ include 'stroom-cache:stroom-cache-service-impl'
 include 'stroom-gitrepo:stroom-gitrepo-impl'
 include 'stroom-gitrepo:stroom-gitrepo-api'
 
-include 'stroom-appstore:stroom-appstore-api'
-include 'stroom-appstore'
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore'

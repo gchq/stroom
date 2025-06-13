@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-impl-db')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
-    implementation project(':stroom-appstore:stroom-appstore-impl')
+    implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cluster:stroom-cluster-api')
