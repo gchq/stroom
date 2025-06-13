@@ -13,7 +13,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.Handler;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
@@ -31,6 +30,8 @@ import java.util.function.Consumer;
 public class AppStoreContentPackListPresenter
         extends MyPresenterWidget<PagerView>
         implements Refreshable {
+    /** Table of content packs */
+    final MyDataGrid<AppStoreContentPack> dataGrid = new MyDataGrid<>();
 
     /** Shows what is selected in the App Store list */
     private final MultiSelectionModel<AppStoreContentPack> gridSelectionModel;
@@ -56,7 +57,6 @@ public class AppStoreContentPackListPresenter
         super(eventBus, view);
 
         // Create the grid
-        final MyDataGrid<AppStoreContentPack> dataGrid = new MyDataGrid<>();
         view.setDataWidget(dataGrid);
 
         // Add the style MULTI_LINE to the CSS
@@ -128,15 +128,15 @@ public class AppStoreContentPackListPresenter
      */
     private void initColumns(final MyDataGrid<AppStoreContentPack> dataGrid) {
 
-        SvgIconCell svgCell = new SvgIconCell();
-        Column<AppStoreContentPack, String> svgColumn = new Column<>(svgCell) {
-            @Override
-            public String getValue(final AppStoreContentPack cp) {
-                return cp.getIconSvg();
-            }
-        };
-        dataGrid.addColumn(svgColumn, "Icon");
+        // Icon for content pack, pulled from String in content pack
+        dataGrid.addResizableColumn(
+                DataGridUtil.svgStringColumn(AppStoreContentPack::getIconSvg),
+                DataGridUtil.headingBuilder("")
+                        .withToolTip("Content Pack Icon")
+                        .build(),
+                50);
 
+        // Name of content pack
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(AppStoreContentPack::getUiName)
                         .build(),
@@ -144,21 +144,30 @@ public class AppStoreContentPackListPresenter
                         .withToolTip("The name of the content pack")
                         .build(),
                 300);
+
+        // Installation status
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(AppStoreContentPack::getContentStoreUiName)
+                DataGridUtil.textColumnBuilder((AppStoreContentPack cp) -> {
+                    return cp.isInstalled() ? "Installed" : "-";
+                })
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("Whether installed, and if updates are available")
+                        .build(),
+                200);
+
+        // Which 'store' it is from
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                        (AppStoreContentPack cp) -> cp.getContentStoreMetadata().getOwnerName()
+                        )
                         .build(),
                 DataGridUtil.headingBuilder("Store")
                         .withToolTip("Name of the Content Store")
                         .build(),
                 300);
-        dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(AppStoreContentPack::getLicenseName)
-                        .build(),
-                DataGridUtil.headingBuilder("License")
-                        .withToolTip("License")
-                        .build(),
-                300);
 
+        // End the columns
         dataGrid.addEndColumn(new EndColumn<>());
     }
 

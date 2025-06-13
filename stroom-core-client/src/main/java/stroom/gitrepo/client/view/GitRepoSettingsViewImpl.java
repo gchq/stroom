@@ -20,13 +20,14 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.widget.button.client.Button;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -66,10 +67,10 @@ public class GitRepoSettingsViewImpl
     TextBox commit;
 
     @UiField
-    TextBox gitRemoteCommitName;
+    Label gitRemoteCommitName;
 
     @UiField
-    CheckBox autoPush;
+    CustomCheckBox autoPush;
 
     @UiField
     TextArea commitMessage;
@@ -199,8 +200,6 @@ public class GitRepoSettingsViewImpl
      */
     @Override
     public void setState() {
-        // Remote commit name is always readonly
-        //gitRemoteCommitName.setEnabled(false);
 
         if (this.readOnly) {
             // Everything is disabled

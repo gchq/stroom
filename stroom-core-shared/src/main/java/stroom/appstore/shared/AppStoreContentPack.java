@@ -37,6 +37,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class AppStoreContentPack {
 
+    @JsonProperty
+    private ContentStoreMetadata contentStoreMetadata = null;
+
     /** The name as used by the App Store / Content Store */
     @JsonProperty
     private final String stroomName;
@@ -92,10 +95,6 @@ public class AppStoreContentPack {
     /** Whether this repo requires authentication */
     @JsonProperty
     private final Boolean gitNeedsAuth;
-
-    /** Name of the Content Store - resolved later */
-    @JsonProperty
-    private String contentStoreUiName;
 
     /** Whether this content pack is already installed */
     @JsonProperty
@@ -289,18 +288,18 @@ public class AppStoreContentPack {
     }
 
     /**
-     * Sets the name of the content store that this belongs to.
+     * Sets the metadata of the content store that this belongs to.
      * Resolved later. This structure may change.
      */
-    public void setContentStoreUiName(String uiName) {
-        this.contentStoreUiName = uiName;
+    public void setContentStoreMetadata(ContentStoreMetadata meta) {
+        this.contentStoreMetadata = meta;
     }
 
     /**
-     * @return The name of the content store this belongs to.
+     * @return The metadata of the content store this belongs to.
      */
-    public String getContentStoreUiName() {
-        return contentStoreUiName;
+    public ContentStoreMetadata getContentStoreMetadata() {
+        return contentStoreMetadata;
     }
 
     /**
@@ -375,7 +374,8 @@ public class AppStoreContentPack {
             return false;
         }
         final AppStoreContentPack that = (AppStoreContentPack) o;
-        return Objects.equals(stroomName, that.stroomName)
+        return Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
+               && Objects.equals(stroomName, that.stroomName)
                && Objects.equals(uiName, that.uiName)
                && Objects.equals(iconUrl, that.iconUrl)
                && Objects.equals(iconSvg, that.iconSvg)
@@ -389,13 +389,13 @@ public class AppStoreContentPack {
                && Objects.equals(gitPath, that.gitPath)
                && Objects.equals(gitCommit, that.gitCommit)
                && Objects.equals(gitNeedsAuth, that.gitNeedsAuth)
-               && Objects.equals(contentStoreUiName, that.contentStoreUiName)
                && Objects.equals(isInstalled, that.isInstalled);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(stroomName,
+        return Objects.hash(contentStoreMetadata,
+                stroomName,
                 uiName,
                 iconUrl,
                 iconSvg,
@@ -409,7 +409,6 @@ public class AppStoreContentPack {
                 gitPath,
                 gitNeedsAuth,
                 gitCommit,
-                contentStoreUiName,
                 isInstalled);
     }
 
@@ -417,22 +416,22 @@ public class AppStoreContentPack {
     public String toString() {
         String svgContent = (iconSvg == null ? "null" : "<svg content>");
         return "AppStoreContentPack{"
-               + "stroomName='" + stroomName + '\'' +
-               "  uiName='" + uiName + '\'' +
-               ", iconUrl='" + iconUrl + '\'' +
-               ", iconSvg='" + svgContent + '\'' +
-               ", licenseName='" + licenseName + '\'' +
-               ", licenseUrl='" + licenseUrl + '\'' +
-               ", stroomPath='" + stroomPath + '\'' +
-               ", details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC)) + '\'' +
-               ", gitRepoName='" + gitRepoName + '\'' +
-               ", gitUrl='" + gitUrl + '\'' +
-               ", gitBranch='" + gitBranch + '\'' +
-               ", gitPath='" + gitPath + '\'' +
-               ", gitCommit='" + gitCommit + '\'' +
-               ", gitNeedsAuth='" + gitNeedsAuth + '\'' +
-               ", contentStore UI name='" + contentStoreUiName + '\'' +
-               ", isInstalled=" + isInstalled + '\'' +
-               '}';
+               + "contentStore Metadata='" + contentStoreMetadata + '\''
+               + "stroomName='" + stroomName + '\''
+               + "  uiName='" + uiName + '\''
+               + ", iconUrl='" + iconUrl + '\''
+               + ", iconSvg='" + svgContent + '\''
+               + ", licenseName='" + licenseName + '\''
+               + ", licenseUrl='" + licenseUrl + '\''
+               + ", stroomPath='" + stroomPath + '\''
+               + ", details='" + details.substring(0, Math.min(details.length(), DETAILS_TRUNC)) + '\''
+               + ", gitRepoName='" + gitRepoName + '\''
+               + ", gitUrl='" + gitUrl + '\''
+               + ", gitBranch='" + gitBranch + '\''
+               + ", gitPath='" + gitPath + '\''
+               + ", gitCommit='" + gitCommit + '\''
+               + ", gitNeedsAuth='" + gitNeedsAuth + '\''
+               + ", isInstalled=" + isInstalled + '\''
+               + '}';
     }
 }
