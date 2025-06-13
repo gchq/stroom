@@ -10,7 +10,7 @@ import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.openid.api.IdpType;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.logging.LambdaLogger;

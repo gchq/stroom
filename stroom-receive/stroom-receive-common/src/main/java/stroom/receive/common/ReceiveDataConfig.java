@@ -2,12 +2,12 @@ package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.HasCaseInsensitiveForm.CaseInsensitiveConverter;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
@@ -111,7 +111,7 @@ public class ReceiveDataConfig
 //                    .add(StandardHeaderArguments.X_FORWARDED_FOR, FieldType.TEXT.getTypeName())
 //                    .build();
 
-    public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.FEED_STATUS;
+    public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.getDefault();
     // If we can't hit the downstream then we have to let everything in
     public static final ReceiveAction DEFAULT_FALLBACK_RECEIVE_ACTION = ReceiveAction.RECEIVE;
 
@@ -534,63 +534,6 @@ public class ReceiveDataConfig
                 .expireAfterWrite(StroomDuration.ofMinutes(5))
                 .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
                 .build();
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum ReceiptCheckMode {
-        /**
-         * The feed status (RECEIVE|DROP|REJECT) for the feed of the received data will be checked by calling
-         * the downstream stroom/proxy.
-         */
-        FEED_STATUS(true),
-        /**
-         * The meta attributes from the headers will be checked against the receipt policy rules to determine
-         * whether the data should be accepted for receipt, rejected or silently dropped. ALL downstream
-         * stroom-proxy instances in the chain must also use this mode if this mode is set.
-         */
-        RECEIPT_POLICY(true),
-        /**
-         * No check is performed. All data is accepted for receipt (subject to other checks
-         * like presence of stream type).
-         */
-        RECEIVE_ALL(true),
-        /**
-         * No check is performed. All data is dropped.
-         */
-        DROP_ALL(false),
-        /**
-         * No check is performed. All data is rejected.
-         */
-        REJECT_ALL(false),
-        ;
-
-        private static final CaseInsensitiveConverter<ReceiptCheckMode> CASE_INSENSITIVE_CONVERTER =
-                CaseInsensitiveConverter.create(ReceiptCheckMode.class);
-
-        private final boolean canReceiveData;
-
-        ReceiptCheckMode(final boolean canReceiveData) {
-            this.canReceiveData = canReceiveData;
-        }
-
-        /**
-         * @return True if this {@link ReceiveAction} allows data to be received, subject to constraints.
-         */
-        public boolean canReceiveData() {
-            return canReceiveData;
-        }
-
-        /**
-         * Allow deserialisation from the enum's name in any case.
-         */
-        @SuppressWarnings("unused") // JSON de-ser
-        @JsonCreator
-        public static ReceiptCheckMode fromCaseInsensitiveString(final String name) {
-            return CASE_INSENSITIVE_CONVERTER.convert(name);
-        }
     }
 
 

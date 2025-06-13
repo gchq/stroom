@@ -1,6 +1,6 @@
 package stroom.receive.common;
 
-import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.CachedValue;
 import stroom.util.logging.LambdaLogger;

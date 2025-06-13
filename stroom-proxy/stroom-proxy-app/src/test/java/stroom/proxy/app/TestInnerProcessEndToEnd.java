@@ -13,7 +13,7 @@ import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ZipWriter;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.ReceiveDataConfig;
-import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.api.CommonSecurityContext;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
