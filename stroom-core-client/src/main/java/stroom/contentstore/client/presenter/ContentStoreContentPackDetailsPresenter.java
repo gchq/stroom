@@ -8,7 +8,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.widget.button.client.Button;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
