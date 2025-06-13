@@ -84,9 +84,7 @@ public class KafkaEventConsumer implements EventConsumer {
                 headers.add(header);
             });
 
-            final String feed = attributeMap.get("Feed");
-            final String type = attributeMap.get("type");
-            final FeedKey feedKey = new FeedKey(feed, type);
+            final FeedKey feedKey = FeedKey.from(attributeMap);
 
             final String string = eventSerialiser.serialise(
                     receiptId,
@@ -97,7 +95,7 @@ public class KafkaEventConsumer implements EventConsumer {
             final String topic = config.getTopic();
             final Integer partition = null;
             final Long timestamp = System.currentTimeMillis();
-            final byte[] key = createKey(new FeedKey(attributeMap.get("Feed"), attributeMap.get("Type")));
+            final byte[] key = createKey(FeedKey.from(attributeMap));
             final byte[] value = string.getBytes(StandardCharsets.UTF_8);
 
             final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(

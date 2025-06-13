@@ -3,8 +3,13 @@ package stroom.util;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheck.Result;
+import com.codahale.metrics.health.HealthCheck.ResultBuilder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -19,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class HealthCheckUtils {
 
@@ -110,5 +116,50 @@ public class HealthCheckUtils {
                 }
             }
         });
+    }
+
+    /**
+     * Create a healthy {@link Result} with the supplied message.
+     */
+    public static Result healthy(final String message) {
+        return HealthCheck.Result.builder()
+                .healthy()
+                .withMessage(message)
+                .build();
+    }
+
+    /**
+     * Create a {@link HealthCheck} {@link ResultBuilder} from a {@link Response}.
+     * If the response status is {@link Status#OK} then it will be healthy, else unhealthy
+     * with the response code, reasonPhrase and expectedStatus added as detail.
+     */
+    public static ResultBuilder fromResponse(final Response response) {
+        return fromResponse(response, Status.OK);
+    }
+
+    /**
+     * Create a {@link HealthCheck} {@link ResultBuilder} from a {@link Response}.
+     * If the response status matches expectedStatus then it will be healthy, else unhealthy
+     * with the response code, reasonPhrase and expectedStatus added as detail.
+     */
+    public static ResultBuilder fromResponse(final Response response, final Status expectedStatus) {
+        final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+        try {
+            Objects.requireNonNull(response);
+            Objects.requireNonNull(expectedStatus);
+            final int statusCode = response.getStatus();
+            if (expectedStatus.getStatusCode() == statusCode) {
+                resultBuilder.healthy();
+            } else {
+                response.getStatusInfo();
+                resultBuilder.withDetail("expectedResponseCode", expectedStatus.getStatusCode());
+                resultBuilder.withDetail("responseCode", statusCode);
+                resultBuilder.withDetail("reasonPhrase", response.getStatusInfo().getReasonPhrase());
+                resultBuilder.unhealthy();
+            }
+            return resultBuilder;
+        } catch (final Exception e) {
+            return resultBuilder.unhealthy(e);
+        }
     }
 }

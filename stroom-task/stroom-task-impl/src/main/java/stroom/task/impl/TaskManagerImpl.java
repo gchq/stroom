@@ -284,7 +284,7 @@ class TaskManagerImpl implements TaskManager {
         if (userIdentity instanceof final HasUserRef hasUserRef) {
             userRef = hasUserRef.getUserRef();
         } else {
-            userRef = UserRef.builder().subjectId(userIdentity.getSubjectId()).build();
+            userRef = UserRef.builder().subjectId(userIdentity.subjectId()).build();
         }
 
         final TaskProgress taskProgress = new TaskProgress();

@@ -44,6 +44,7 @@ public class ExpressionMatcher {
     private final Map<String, QueryField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
+    // TODO Ideally we should be holding a map of Set<S
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;

@@ -38,7 +38,7 @@ class CurrentUser extends StroomExtensionFunctionCall {
     private static final Function<UserIdentity, String> DEFAULT_FUNC = UserIdentity::getUserIdentityForAudit;
     private static Map<String, Function<UserIdentity, String>> TYPE_TO_FUNC_MAP = Map.of(
             "display", DEFAULT_FUNC,
-            "subject", UserIdentity::getSubjectId,
+            "subject", UserIdentity::subjectId,
             "full", userIdentity -> userIdentity.getFullName().orElse(""));
 
     private final CurrentUserHolder currentUserHolder;

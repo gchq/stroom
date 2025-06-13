@@ -11,10 +11,19 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
  * A class for generating globally unique IDs that can be used on multiple nodes/threads.
  * This is stateful so the node should hold a singleton instance of this class.
- * IDs are globally unique on the conditions that each node only has one instance of this
- * class and each node provides a unique nodeId.
+ * It uses non-blocking CAS logic to avoid contention between threads generating IDs.
+ * </p>
+ * <p>
+ * IDs are globally unique IF the following conditions are met:
+ * <ul>
+ *     <li>Each node only has one instance of this class</li>
+ *     <li>Each node provides a nodeId that is unique across all nodes of that nodeType
+ *     in the environment that the {@link UniqueId}s will be used.</li>
+ * </ul>
+ * </p>
  */
 public class UniqueIdGenerator {
 
@@ -78,7 +87,11 @@ public class UniqueIdGenerator {
                 // one node.
                 long newEpochMs = System.currentTimeMillis();
 
-                LOGGER.debug("About to loop, epochMs {}, newEpochMs {}", epochMs, newEpochMs);
+                // With 24 threads generating a total of 2.5mil UniqueIds, you see this message
+                // <10 times, often not at all.
+                LOGGER.debug("Run out of sequence numbers, waiting for the next epoch milli so " +
+                             "we can restart at seq no zero. " +
+                             "epochMs: {}, newEpochMs: {}", epochMs, newEpochMs);
                 while (newEpochMs <= epochMs) {
                     LockSupport.parkNanos(PARK_NANOS);
                     newEpochMs = System.currentTimeMillis();

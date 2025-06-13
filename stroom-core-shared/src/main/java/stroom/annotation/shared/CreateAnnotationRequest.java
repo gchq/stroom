@@ -1,5 +1,7 @@
 package stroom.annotation.shared;
 
+import stroom.util.shared.UserRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -18,16 +20,24 @@ public class CreateAnnotationRequest {
     @JsonProperty
     private final String status;
     @JsonProperty
+    private final UserRef assignTo;
+    @JsonProperty
+    private final String comment;
+    @JsonProperty
     private final List<EventId> linkedEvents;
 
     @JsonCreator
     public CreateAnnotationRequest(@JsonProperty("title") final String title,
                                    @JsonProperty("subject") final String subject,
                                    @JsonProperty("status") final String status,
+                                   @JsonProperty("assignTo") final UserRef assignTo,
+                                   @JsonProperty("comment") final String comment,
                                    @JsonProperty("linkedEvents") final List<EventId> linkedEvents) {
         this.title = title;
         this.subject = subject;
         this.status = status;
+        this.assignTo = assignTo;
+        this.comment = comment;
         this.linkedEvents = linkedEvents;
     }
 
@@ -43,6 +53,14 @@ public class CreateAnnotationRequest {
         return status;
     }
 
+    public UserRef getAssignTo() {
+        return assignTo;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
     public List<EventId> getLinkedEvents() {
         return linkedEvents;
     }
@@ -55,16 +73,18 @@ public class CreateAnnotationRequest {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final CreateAnnotationRequest request = (CreateAnnotationRequest) o;
-        return Objects.equals(title, request.title) &&
-               Objects.equals(subject, request.subject) &&
-               Objects.equals(status, request.status) &&
-               Objects.equals(linkedEvents, request.linkedEvents);
+        final CreateAnnotationRequest that = (CreateAnnotationRequest) o;
+        return Objects.equals(title, that.title) &&
+               Objects.equals(subject, that.subject) &&
+               Objects.equals(status, that.status) &&
+               Objects.equals(assignTo, that.assignTo) &&
+               Objects.equals(comment, that.comment) &&
+               Objects.equals(linkedEvents, that.linkedEvents);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, subject, status, linkedEvents);
+        return Objects.hash(title, subject, status, assignTo, comment, linkedEvents);
     }
 
     @Override
@@ -73,10 +93,11 @@ public class CreateAnnotationRequest {
                "title='" + title + '\'' +
                ", subject='" + subject + '\'' +
                ", status='" + status + '\'' +
+               ", assignTo=" + assignTo +
+               ", comment='" + comment + '\'' +
                ", linkedEvents=" + linkedEvents +
                '}';
     }
-
 
     public static Builder builder() {
         return new Builder();
@@ -91,16 +112,20 @@ public class CreateAnnotationRequest {
         private String title;
         private String subject;
         private String status;
+        private UserRef assignTo;
+        private String comment;
         private List<EventId> linkedEvents;
 
         public Builder() {
         }
 
-        public Builder(final CreateAnnotationRequest doc) {
-            this.title = doc.title;
-            this.subject = doc.subject;
-            this.status = doc.status;
-            this.linkedEvents = doc.linkedEvents;
+        public Builder(final CreateAnnotationRequest request) {
+            this.title = request.title;
+            this.subject = request.subject;
+            this.status = request.status;
+            this.assignTo = request.assignTo;
+            this.comment = request.comment;
+            this.linkedEvents = request.linkedEvents;
         }
 
         public Builder title(final String title) {
@@ -118,6 +143,16 @@ public class CreateAnnotationRequest {
             return self();
         }
 
+        public Builder assignTo(final UserRef assignTo) {
+            this.assignTo = assignTo;
+            return self();
+        }
+
+        public Builder comment(final String comment) {
+            this.comment = comment;
+            return self();
+        }
+
         public Builder linkedEvents(final List<EventId> linkedEvents) {
             this.linkedEvents = linkedEvents;
             return self();
@@ -129,7 +164,7 @@ public class CreateAnnotationRequest {
 
         public CreateAnnotationRequest build() {
             return new CreateAnnotationRequest(
-                    title, subject, status, linkedEvents);
+                    title, subject, status, assignTo, comment, linkedEvents);
         }
     }
 }

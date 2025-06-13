@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxySecurityConfig extends AbstractConfig implements IsProxyConfig {
@@ -23,7 +25,8 @@ public class ProxySecurityConfig extends AbstractConfig implements IsProxyConfig
     @JsonCreator
     public ProxySecurityConfig(
             @JsonProperty(PROP_NAME_AUTHENTICATION) final ProxyAuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
+        this.authenticationConfig = Objects.requireNonNullElseGet(
+                authenticationConfig, ProxyAuthenticationConfig::new);
     }
 
     @JsonProperty(PROP_NAME_AUTHENTICATION)
@@ -34,7 +37,7 @@ public class ProxySecurityConfig extends AbstractConfig implements IsProxyConfig
     @Override
     public String toString() {
         return "ProxySecurityConfig{" +
-                "authenticationConfig=" + authenticationConfig +
-                '}';
+               "authenticationConfig=" + authenticationConfig +
+               '}';
     }
 }

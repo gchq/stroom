@@ -47,7 +47,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
-    private final HashAlgorithm hashAlgorithm;
+    private final ApiKeyHashAlgorithm hashAlgorithm;
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
@@ -63,7 +63,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
                         @JsonProperty("enabled") final boolean enabled,
-                        @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
+                        @JsonProperty("hashAlgorithm") final ApiKeyHashAlgorithm hashAlgorithm) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -177,7 +177,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
-    public HashAlgorithm getHashAlgorithm() {
+    public ApiKeyHashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
 
@@ -224,16 +224,16 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     @Override
     public String toString() {
         return "ApiKey{" +
-                "id=" + id +
-                ", version=" + version +
-                ", owner=" + owner +
-                ", apiKeyHash='" + apiKeyHash + '\'' +
-                ", apiKeyPrefix='" + apiKeyPrefix + '\'' +
-                ", expireTimeMs=" + expireTimeMs + '\'' +
-                ", name='" + name + '\'' +
-                ", enabled=" + enabled +
-                ", hashAlgorithm=" + hashAlgorithm +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", owner=" + owner +
+               ", apiKeyHash='" + apiKeyHash + '\'' +
+               ", apiKeyPrefix='" + apiKeyPrefix + '\'' +
+               ", expireTimeMs=" + expireTimeMs + '\'' +
+               ", name='" + name + '\'' +
+               ", enabled=" + enabled +
+               ", hashAlgorithm=" + hashAlgorithm +
+               '}';
     }
 
     // --------------------------------------------------------------------------------
@@ -254,7 +254,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String name;
         private String comments;
         private boolean enabled = true;
-        private HashAlgorithm hashAlgorithm = HashAlgorithm.DEFAULT;
+        private ApiKeyHashAlgorithm hashAlgorithm = ApiKeyHashAlgorithm.DEFAULT;
 
         private Builder() {
         }
@@ -340,7 +340,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withHashAlgorithm(final HashAlgorithm val) {
+        public Builder withHashAlgorithm(final ApiKeyHashAlgorithm val) {
             hashAlgorithm = val;
             return this;
         }

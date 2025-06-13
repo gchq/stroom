@@ -1,5 +1,7 @@
 package stroom.config.common;
 
+import stroom.util.net.UriConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -25,7 +27,8 @@ public class NodeUriConfig extends UriConfig {
     }
 
     @Override
-    @JsonPropertyDescription("The hostname, FQDN or IP address of the node. " +
+    @JsonPropertyDescription(
+            "The hostname, FQDN or IP address of the node. " +
             "The value must be resolvable by all other nodes in the cluster. This is used for inter-node " +
             "communications. If not set, Stroom will attempt to determine this.")
     public String getHostname() {
@@ -33,7 +36,8 @@ public class NodeUriConfig extends UriConfig {
     }
 
     @Override
-    @JsonPropertyDescription("This is the port to use for inter-node communications. " +
+    @JsonPropertyDescription(
+            "This is the port to use for inter-node communications. " +
             "This is typically the Drop Wizard application port and would typically only be open within " +
             "the Stroom cluster. If not set, Stroom will attempt to determine this.")
     public Integer getPort() {
@@ -41,7 +45,8 @@ public class NodeUriConfig extends UriConfig {
     }
 
     @Override
-    @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the inter-node " +
+    @JsonPropertyDescription(
+            "An optional prefix to the base path. This may be needed when the inter-node " +
             "communication goes via some form of gateway where the paths are mapped to something else.")
     public String getPathPrefix() {
         return super.getPathPrefix();

@@ -49,7 +49,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return userRef.getSubjectId();
     }
 
@@ -98,7 +98,7 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
 
     @Override
     public String toString() {
-        return getSubjectId();
+        return subjectId();
     }
 
     @Override

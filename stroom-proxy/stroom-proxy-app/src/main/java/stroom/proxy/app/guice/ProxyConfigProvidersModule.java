@@ -18,10 +18,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.ContentSyncConfig getContentSyncConfig(
+    stroom.proxy.app.DownstreamHostConfig getDownstreamHostConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.ContentSyncConfig.class);
+                stroom.proxy.app.DownstreamHostConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -78,6 +78,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.app.ProxyPathConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.ProxyReceiptPolicyConfig getProxyReceiptPolicyConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.ProxyReceiptPolicyConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -172,6 +181,16 @@ public class ProxyConfigProvidersModule extends AbstractModule {
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.proxy.app.handler.ForwardQueueConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.handler.PathTemplateConfig getPathTemplateConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.handler.PathTemplateConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

@@ -6,46 +6,64 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="feedSettingsClassification"
-                        label="Classification">
+                        label="Classification"
+                        helpText="The classification or protective marking of the data in this Feed.">
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReferenceFeed"
-                        label="Reference Feed">
+                        label="Reference Feed"
+                        helpText="Marks the Feed as containing reference data, as used for reference data look-ups.
+                            It also ensures loaded data does not contain multiple sub-stream.">
             <tickbox:CustomCheckBox ui:field="reference"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus"
-                        label="Feed Status">
+                        label="Feed Status"
+                        helpText="If Stroom is configured to check Feed Status on receipt
+                        (receiptCheckMode = FEED_STATUS), then this value defines what happens to all data sent to this
+                        Feed. If receiptCheckMode is not FEED_STATUS then this will be disabled and its value will
+                        have no effect.">
             <l:SelectionBox ui:field="feedStatus"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReceivedType"
-                        label="Received Type">
+                        label="Received Type"
+                        helpText="The stream type that will be assigned to received data.">
             <l:SelectionBox ui:field="receivedType"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsDataEncoding"
-                        label="Data Encoding">
+                        label="Data Encoding"
+                        helpText="The character encoding of the data part of streams received into this Feed.">
             <l:SelectionBox ui:field="dataEncoding"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsContextEncoding"
-                        label="Context Encoding">
+                        label="Context Encoding"
+                        helpText="The character encoding of the context part of streams received into this Feed.">
             <l:SelectionBox ui:field="contextEncoding"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsDataFormat"
-                        label="Data Format">
+                        label="Data Format"
+                        helpText="The format of the data part of streams received into this Feed,
+                        e.g. XML, JSON, CSV, etc.">
             <l:SelectionBox ui:field="dataFormat"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsContextFormat"
-                        label="Context Format">
+                        label="Context Format"
+                        helpText="The format of the context part of streams received into this Feed,
+                        e.g. XML, JSON, CSV, etc.">
             <l:SelectionBox ui:field="contextFormat"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsSchema"
-                        label="Data Schema">
+                        label="Data Schema"
+                        helpText="The name of the schema that the data conforms to, if applicable.">
             <g:TextBox ui:field="schema"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsSchemaVersion"
-                        label="Data Schema Version">
+                        label="Data Schema Version"
+                        helpText="The version of the schema that the data conforms to, if applicable.">
             <g:TextBox ui:field="schemaVersion"/>
         </form:FormGroup>
-        <form:FormGroup identity="feedVolumeGroup" label="Volume Group">
+        <form:FormGroup identity="feedVolumeGroup"
+                        label="Volume Group"
+                        helpText="The volume group that this Feed's data will be stored in.">
             <l:SelectionBox ui:field="volumeGroup"/>
         </form:FormGroup>
     </g:FlowPanel>

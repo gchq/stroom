@@ -187,6 +187,7 @@ public class AppPermissionsEditPresenter
                         .exec();
             });
         }
+        dataGrid.setMultiLine(true);
 
         dataGrid.addColumn(selectionColumn,
                 DataGridUtil.headingBuilder("Granted")

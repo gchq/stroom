@@ -525,50 +525,61 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Instant now = Instant.now();
         final long nowMs = now.toEpochMilli();
 
-        final Optional<AnnotationTag> annotationTag =
-                annotationTagDao.findAnnotationTag(AnnotationTagType.STATUS, request.getStatus());
-
-        Annotation.Builder builder = Annotation.builder()
-                .type(Annotation.TYPE)
-                .uuid(UUID.randomUUID().toString())
-                .name(request.getTitle())
-                .subject(request.getSubject())
-                .status(annotationTag.orElse(null));
-
+        final AnnotationTag statusTag = annotationTagDao
+                .findAnnotationTag(AnnotationTagType.STATUS, request.getStatus())
+                .orElse(null);
         final SimpleDuration retentionPeriod = getDefaultRetentionPeriod();
         final Long retainUntilTimeMs = calculateRetainUntilTimeMs(retentionPeriod, nowMs);
 
-        Annotation annotation = builder
+        Annotation annotation = Annotation.builder()
+                .type(Annotation.TYPE)
+                .uuid(UUID.randomUUID().toString())
                 .createTimeMs(nowMs)
                 .createUser(userName)
                 .updateTimeMs(nowMs)
                 .updateUser(userName)
+                .name(request.getTitle())
+                .subject(request.getSubject())
+                .status(statusTag)
+                .assignedTo(request.getAssignTo())
                 .retentionPeriod(retentionPeriod)
                 .retainUntilTimeMs(retainUntilTimeMs)
                 .build();
         annotation = create(annotation);
+        final long annotationId = annotation.getId();
 
         // Create default entries.
-        if (annotation.getStatus() != null) {
-            createEntry(
-                    annotation.getId(),
-                    userUuid,
-                    now,
-                    AnnotationEntryType.STATUS,
-                    NullSafe.get(annotation.getStatus(), AnnotationTag::getName));
+        if (statusTag != null) {
+            // Add the new tag.
+            JooqUtil.context(connectionProvider, context ->
+                    addTag(context, annotationId, statusTag));
+
+            // Create history entry.
+            createEntry(annotationId, userUuid, now, AnnotationEntryType.STATUS, statusTag.getName());
         }
 
         if (annotation.getAssignedTo() != null) {
-            createEntry(
-                    annotation.getId(),
-                    userUuid,
-                    now,
-                    AnnotationEntryType.ASSIGNED,
-                    NullSafe.get(annotation.getAssignedTo(), UserRef::getUuid));
+            final String assignedToUuid = NullSafe
+                    .get(annotation.getAssignedTo(), UserRef::getUuid);
+//            JooqUtil.context(connectionProvider, context ->
+//                    context
+//                            .update(ANNOTATION)
+//                            .set(ANNOTATION.ASSIGNED_TO_UUID, assignedToUuid)
+//                            .set(ANNOTATION.UPDATE_USER, userName)
+//                            .set(ANNOTATION.UPDATE_TIME_MS, nowMs)
+//                            .where(ANNOTATION.ID.eq(annotationId))
+//                            .execute());
+            // Create history entry.
+            createEntry(annotationId, userUuid, now, AnnotationEntryType.ASSIGNED, assignedToUuid);
         }
 
+//        if (NullSafe.isNonBlankString(request.getComment())) {
+//            // Create history entry.
+//            createEntry(annotationId, userUuid, now, AnnotationEntryType.COMMENT,
+//                    request.getComment());
+//        }
+
         if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-            final long annotationId = annotation.getId();
             request.getLinkedEvents().forEach(eventID ->
                     createEventLink(userUuid, now, annotationId, eventID));
         }

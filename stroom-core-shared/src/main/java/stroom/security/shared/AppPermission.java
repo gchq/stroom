@@ -9,7 +9,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * <p>
+ * !!!!!!!! WARNING !!!!!!!!!
+ * </p>
+ * DO NOT change the displayValue of these items unless you also write a migration
+ * script to migrate the value in the permission_app_id table, else it will break
+ * users' permissions.
+ */
 public enum AppPermission implements HasDisplayValue {
+
     ADMINISTRATOR(
             "Administrator",
             "Full administrator rights to access and manage everything."),
@@ -19,10 +28,6 @@ public enum AppPermission implements HasDisplayValue {
     MANAGE_CACHE_PERMISSION(
             "Manage Cache",
             "Access the Caches screen to view and clear system caches."),
-    MANAGE_CONTENT_TEMPLATES_PERMISSION(
-            "Manage Content Templates",
-            "Access the Content Templates screen to view and manage the templates for auto-creating " +
-            "content."),
     VIEW_DATA_PERMISSION(
             "Data - View",
             "View stream data (e.g. in the Data Viewer or a Dashboard text pane)."),
@@ -63,6 +68,14 @@ public enum AppPermission implements HasDisplayValue {
             "'" + MANAGE_USERS_PERMISSION.displayValue +
             "' permission is also required to managed other users' " +
             "API keys"),
+    MANAGE_CONTENT_TEMPLATES_PERMISSION(
+            "Manage Content Templates",
+            "Access the Content Templates screen to view and manage the templates for auto-creating " +
+            "content."),
+    MANAGE_DATA_RECEIPT_RULES_PERMISSION(
+            "Manage Data Receipt Rules",
+            "Access the Data Receipt Rules screen to view and manage the rules for accepting, " +
+            "rejecting or dropping received data."),
     MANAGE_JOBS_PERMISSION(
             "Manage Jobs",
             "Access the Jobs screen to manage Stroom's background jobs."),
@@ -97,7 +110,19 @@ public enum AppPermission implements HasDisplayValue {
     CHECK_RECEIPT_STATUS(
             "Check Receipt Status",
             "Ability to check the receipt status of a feed."),
-    ;
+    FETCH_HASHED_RECEIPT_POLICY_RULES(
+            "Fetch hashed receipt policy rules",
+            "Ability to fetch the obfuscated receipt policy rules. This permission is required for " +
+            "any Stroom-Proxy that needs to fetch receipt policy rules."),
+    VERIFY_API_KEY(
+            "Check the validity of an API Key.",
+            "Ability to call the API endpoint to verify an API Key. This is required for any " +
+            "Stroom-Proxy that needs to verify API keys sent to it from upstream Stroom-Proxies."),
+    STROOM_PROXY(
+            "Stroom Proxy",
+            "Intended to be granted to a non-human user account that is used by a Stroom-Proxy instance " +
+            "to communicate with Stroom or another Stroom-Proxy. It provides the permission to check feed status, " +
+            "fetch receipt policy rules and verify API keys.");
 
     private static final Map<String, AppPermission> APP_PERMISSION_ENUM_MAP;
     public static final List<AppPermission> LIST;
@@ -118,11 +143,14 @@ public enum AppPermission implements HasDisplayValue {
 
     private final String displayValue;
     private final String description;
+    private final AppPermissionSet appPermissionSet;
 
     AppPermission(final String displayValue,
                   final String description) {
         this.displayValue = displayValue;
         this.description = description;
+        // Saves us having to wrap the perm every time we use SecurityContext
+        this.appPermissionSet = AppPermissionSet.of(this);
     }
 
     @Override
@@ -132,5 +160,9 @@ public enum AppPermission implements HasDisplayValue {
 
     public String getDescription() {
         return description;
+    }
+
+    public AppPermissionSet asAppPermissionSet() {
+        return appPermissionSet;
     }
 }

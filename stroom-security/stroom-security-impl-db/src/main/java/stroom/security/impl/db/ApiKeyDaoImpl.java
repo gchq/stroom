@@ -11,6 +11,7 @@ import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
+import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashAlgorithm;
@@ -341,7 +342,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 .withName(record.get(API_KEY.NAME))
                 .withComments(record.get(API_KEY.COMMENTS))
                 .withEnabled(record.get(API_KEY.ENABLED))
-                .withHashAlgorithm(HashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                .withHashAlgorithm(ApiKeyHashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                         record.get(API_KEY.HASH_ALGORITHM)))
                 .build();
     }

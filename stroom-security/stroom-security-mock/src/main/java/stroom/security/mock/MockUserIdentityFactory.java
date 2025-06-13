@@ -53,7 +53,7 @@ public class MockUserIdentityFactory implements UserIdentityFactory {
     }
 
     @Override
-    public Map<String, String> getAuthHeaders(final String jwt) {
+    public Map<String, String> getAuthHeaders(final String token) {
         return Collections.emptyMap();
     }
 

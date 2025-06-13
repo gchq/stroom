@@ -22,6 +22,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -59,8 +60,8 @@ public class StroomStreamException extends RuntimeException {
 
     public static StroomStreamException create(final Throwable ex, final AttributeMap attributeMap) {
         final RuntimeException unwrappedException = unwrap(ex, attributeMap);
-        if (unwrappedException instanceof StroomStreamException) {
-            return (StroomStreamException) unwrappedException;
+        if (unwrappedException instanceof StroomStreamException stroomStreamException) {
+            return stroomStreamException;
         } else {
             return new StroomStreamException(
                     StroomStatusCode.UNKNOWN_ERROR,
@@ -77,12 +78,12 @@ public class StroomStreamException extends RuntimeException {
         } else if (ex instanceof AuthenticationException) {
             return new StroomStreamException(
                     StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, ex.getMessage());
-        } else if (ex instanceof StroomStreamException) {
-            return (StroomStreamException) ex;
+        } else if (ex instanceof StroomStreamException stroomStreamException) {
+            return stroomStreamException;
         } else if (ex.getCause() != null) {
             return unwrap(ex.getCause(), attributeMap);
-        } else if (ex instanceof RuntimeException) {
-            return (RuntimeException) ex;
+        } else if (ex instanceof RuntimeException runtimeException) {
+            return runtimeException;
         } else {
             return new RuntimeException(ex);
         }
@@ -112,5 +113,19 @@ public class StroomStreamException extends RuntimeException {
 
     public StroomStreamStatus getStroomStreamStatus() {
         return stroomStreamStatus;
+    }
+
+    public AttributeMap getAttributeMap() {
+        return NullSafe.getOrElseGet(
+                stroomStreamStatus,
+                StroomStreamStatus::getAttributeMap,
+                AttributeMap::new);
+    }
+
+    public StroomStatusCode getStroomStatusCode() {
+        return NullSafe.getOrElse(
+                stroomStreamStatus,
+                StroomStreamStatus::getStroomStatusCode,
+                StroomStatusCode.UNKNOWN_ERROR);
     }
 }

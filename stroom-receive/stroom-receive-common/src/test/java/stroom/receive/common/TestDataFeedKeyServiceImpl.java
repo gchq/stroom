@@ -180,11 +180,11 @@ class TestDataFeedKeyServiceImpl {
                 attributeMap);
 
         final UserIdentity userIdentity = optUserIdentity.get();
-        assertThat(userIdentity.getSubjectId())
+        assertThat(userIdentity.subjectId())
                 .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
                            + hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID));
         assertThat(userIdentity.getDisplayName())
-                .isEqualTo(userIdentity.getSubjectId());
+                .isEqualTo(userIdentity.subjectId());
     }
 
     @Test
@@ -223,11 +223,11 @@ class TestDataFeedKeyServiceImpl {
                     attributeMap);
 
             final UserIdentity userIdentity = optUserIdentity.get();
-            assertThat(userIdentity.getSubjectId())
+            assertThat(userIdentity.subjectId())
                     .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
                                + accId);
             assertThat(userIdentity.getDisplayName())
-                    .isEqualTo(userIdentity.getSubjectId());
+                    .isEqualTo(userIdentity.subjectId());
         }
     }
 
@@ -273,11 +273,11 @@ class TestDataFeedKeyServiceImpl {
                         attributeMap);
 
                 final UserIdentity userIdentity = optUserIdentity.get();
-                assertThat(userIdentity.getSubjectId())
+                assertThat(userIdentity.subjectId())
                         .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
                                    + accId2);
                 assertThat(userIdentity.getDisplayName())
-                        .isEqualTo(userIdentity.getSubjectId());
+                        .isEqualTo(userIdentity.subjectId());
             }
         }
     }

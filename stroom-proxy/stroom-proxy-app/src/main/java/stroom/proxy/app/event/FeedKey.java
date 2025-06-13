@@ -1,8 +1,12 @@
 package stroom.proxy.app.event;
 
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
+
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public record FeedKey(String feed, String type) {
 
@@ -23,6 +27,13 @@ public record FeedKey(String feed, String type) {
         if (parts.length > 1) {
             type = decode(parts[1]);
         }
+        return new FeedKey(feed, type);
+    }
+
+    public static FeedKey from(final AttributeMap attributeMap) {
+        Objects.requireNonNull(attributeMap);
+        final String feed = attributeMap.get(StandardHeaderArguments.FEED);
+        final String type = attributeMap.get(StandardHeaderArguments.TYPE);
         return new FeedKey(feed, type);
     }
 

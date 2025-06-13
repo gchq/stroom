@@ -26,6 +26,7 @@ local.yml*
 local2.yml*
 local3.yml*
 proxy-local.yml*
+proxy-remote.yml*
 !local.yml.sh
 
 # IntelliJ

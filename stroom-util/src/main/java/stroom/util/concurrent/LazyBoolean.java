@@ -10,7 +10,6 @@ public class LazyBoolean {
 
     private final BooleanSupplier valueSupplier;
     private transient volatile boolean isInitialised = false;
-
     // Volatile piggybacking ensures that a thread sees the right value
     // as long as we read/write value after reading/writing initialised,
     // hence no volatile on this one.
@@ -20,7 +19,7 @@ public class LazyBoolean {
         this.valueSupplier = Objects.requireNonNull(valueSupplier);
     }
 
-    public static  LazyBoolean initialisedBy(final BooleanSupplier valueSupplier) {
+    public static LazyBoolean initialisedBy(final BooleanSupplier valueSupplier) {
         return new LazyBoolean(valueSupplier);
     }
 

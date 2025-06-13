@@ -17,23 +17,35 @@
 
 package stroom.receive.rules.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmCallback;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.SafeHtmlUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
@@ -41,7 +53,10 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class RuleSetSettingsPresenter
         extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
@@ -50,7 +65,9 @@ public class RuleSetSettingsPresenter
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
+    private final UiConfigCache uiConfigCache;
     private List<ReceiveDataRule> rules;
+    private List<QueryField> fields;
 
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -65,11 +82,13 @@ public class RuleSetSettingsPresenter
                                     final RuleSetSettingsView view,
                                     final RuleSetListPresenter listPresenter,
                                     final ExpressionTreePresenter expressionPresenter,
-                                    final Provider<RulePresenter> editRulePresenterProvider) {
+                                    final Provider<RulePresenter> editRulePresenterProvider,
+                                    final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
+        this.uiConfigCache = uiConfigCache;
 
         getView().setTableView(listPresenter.getView());
         getView().setExpressionView(expressionPresenter.getView());
@@ -105,9 +124,32 @@ public class RuleSetSettingsPresenter
         super.onBind();
     }
 
+//    private void saveRuleButtonClickHandler(final ClickEvent event) {
+//        if (!isReadOnly() && rules != null) {
+//            SaveDocumentEvent.fire(RuleSetSettingsPresenter.this, this);
+//            if (NullSafe.isEmptyCollection(fields)) {
+//                AlertEvent.fireError(
+//                        RuleSetSettingsPresenter.this,
+//                        "You need to create one or more fields before you can add a rule.",
+//                        null,
+//                        null);
+//            } else {
+//                add();
+//            }
+//        }
+//    }
+
     private void addRuleButtonClickHandler(final ClickEvent event) {
         if (!isReadOnly() && rules != null) {
-            add();
+            if (NullSafe.isEmptyCollection(fields)) {
+                AlertEvent.fireError(
+                        RuleSetSettingsPresenter.this,
+                        "You need to create one or more fields before you can add a rule.",
+                        null,
+                        null);
+            } else {
+                add();
+            }
         }
     }
 
@@ -240,7 +282,7 @@ public class RuleSetSettingsPresenter
                 "",
                 true,
                 ExpressionOperator.builder().build(),
-                RuleAction.RECEIVE);
+                ReceiveAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fieldSelectionBoxModel);
 
@@ -277,29 +319,106 @@ public class RuleSetSettingsPresenter
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(rulePresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Edit Rule")
-                .onShow(e -> listPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        okHandler.run();
+        uiConfigCache.get(extendedUiConfig -> {
+            ShowPopupEvent.builder(rulePresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Edit Rule")
+                    .onShow(e -> listPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            validateRules(rulePresenter, extendedUiConfig, isConfirmOk -> {
+                                if (isConfirmOk) {
+                                    okHandler.run();
+                                    e.hide();
+                                } else {
+                                    e.reset();
+                                }
+                            });
+                        } else {
+                            e.hide();
+                        }
+                    })
+                    .fire();
+        });
+    }
+
+    private void validateRules(final RulePresenter rulePresenter,
+                               final ExtendedUiConfig extendedUiConfig,
+                               final ConfirmCallback confirmCallback) {
+        final List<ExpressionTerm> unHashableTerms = getUnhashableTermsInExpression(
+                rulePresenter,
+                extendedUiConfig);
+
+        if (unHashableTerms.isEmpty()) {
+            confirmCallback.onResult(true);
+        } else {
+            final HtmlBuilder htmlBuilder = HtmlBuilder.builder()
+                    .para("The following terms have obfuscated fields and conditions " +
+                          "that do not support obfuscation:");
+
+            for (final ExpressionTerm term : unHashableTerms) {
+                htmlBuilder.para(termBuilder -> {
+                    termBuilder.code(codeBuilder -> codeBuilder.append(term.getField()))
+                            .append(SafeHtmlUtil.ENSP)
+                            .append(term.getCondition().getDisplayValue())
+                            .append(SafeHtmlUtil.ENSP)
+                            .code(codeBuilder -> codeBuilder.append(term.getValue()));
+                });
+            }
+
+            ConfirmEvent.fireWarn(
+                    rulePresenter,
+                    SafeHtmlUtil.toParagraphs(
+                            "This rule contains conditions that are not compatible with obfuscated fields. " +
+                            "Values in the effected terms will not be obfuscated on Stroom-Proxy.\n" +
+                            "Do you wish to continue?"),
+                    htmlBuilder.toSafeHtml(),
+                    confirmCallback);
+        }
+    }
+
+    private List<ExpressionTerm> getUnhashableTermsInExpression(final RulePresenter rulePresenter,
+                                                                final ExtendedUiConfig extendedUiConfig) {
+        final ReceiveDataRule receiveDataRule = rulePresenter.write();
+        final ExpressionOperator expression = receiveDataRule.getExpression();
+        if (expression != null) {
+            final Set<String> obfuscatedFields = extendedUiConfig.getObfuscatedFields();
+            final List<String> fieldsInExpr = ExpressionUtil.fields(expression);
+            if (NullSafe.stream(fieldsInExpr).anyMatch(obfuscatedFields::contains)) {
+                final List<ExpressionTerm> unhashableTerms = new ArrayList<>();
+                // We have obfuscated fields so see if the conditions are ok
+                ExpressionUtil.walkExpressionTree(expression, expressionItem -> {
+                    if (expressionItem instanceof ExpressionTerm term
+                        && obfuscatedFields.contains(term.getField())
+                        && term.getCondition() != null
+                        && !ConditionSet.OBFUSCATABLE_CONDITIONS.supportsCondition(term.getCondition())) {
+                        unhashableTerms.add(term);
                     }
-                    e.hide();
-                })
-                .fire();
+                    return true;
+                });
+                return unhashableTerms;
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef,
+                          final ReceiveDataRules document,
+                          final boolean readOnly) {
         updateButtons();
 
         if (document != null) {
             fieldSelectionBoxModel.clear();
             fieldSelectionBoxModel.addItems(document.getFields());
-            this.rules = document.getRules();
-            listPresenter.getSelectionModel().clear();
+            rules = document.getRules();
+            fields = document.getFields();
+            listPresenter.getSelectionModel()
+                    .clear();
             setDirty(false);
             update();
         }
@@ -307,6 +426,7 @@ public class RuleSetSettingsPresenter
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
+        document.setRules(this.rules);
         return document;
     }
 
@@ -330,6 +450,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void updateButtons() {
+        GWT.log("isReadOnly: " + isReadOnly());
         final boolean loadedPolicy = rules != null;
         final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
@@ -352,6 +473,15 @@ public class RuleSetSettingsPresenter
         moveUpButton.setEnabled(!isReadOnly() && selected && index > 0);
         moveDownButton.setEnabled(!isReadOnly() && selected && index >= 0 && index < rules.size() - 1);
     }
+
+    @Override
+    public void setDirty(final boolean dirty) {
+        super.setDirty(dirty);
+        updateButtons();
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RuleSetSettingsView extends View {
 

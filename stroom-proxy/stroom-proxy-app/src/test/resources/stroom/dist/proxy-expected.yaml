@@ -7,11 +7,18 @@ proxyConfig:
     maxUncompressedByteSize: "1.0G"
     splitSources: true
   contentDir: "content"
-  contentSync:
+  downstreamHost:
     apiKey: null
-    contentSyncEnabled: false
-    syncFrequency: "PT1M"
-    upstreamUrl: null
+    apiKeyVerificationUrl: null
+    enabled: true
+    hostname: null
+    maxCachedKeyAge: "PT10M"
+    maxPersistedKeyAge: "P30D"
+    noFetchIntervalAfterFailure: "PT30S"
+    pathPrefix: null
+    persistedKeysHashAlgorithm: "SHA2_512"
+    port: null
+    scheme: "https"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
@@ -25,9 +32,6 @@ proxyConfig:
       statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
-    apiKey: null
-    defaultStatus: "Receive"
-    enabled: true
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null
@@ -106,11 +110,15 @@ proxyConfig:
     - "RemoteAddress"
     - "RemoteDN"
     - "RemoteCertExpiry"
+    - "DataReceiptRule"
   path:
     data: "data"
     home: null
     temp: null
   proxyId: null
+  receiptPolicy:
+    receiveDataRulesUrl: null
+    syncFrequency: "PT1M"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -124,6 +132,7 @@ proxyConfig:
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
     - "CERTIFICATE"
+    fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
     - "AccountId"
@@ -143,7 +152,7 @@ proxyConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptPolicyUuid: null
+    receiptCheckMode: "FEED_STATUS"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
   security:

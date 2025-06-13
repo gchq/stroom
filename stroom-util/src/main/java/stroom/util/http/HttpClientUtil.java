@@ -3,8 +3,11 @@ package stroom.util.http;
 import stroom.util.cert.SSLConfig;
 
 import io.dropwizard.client.ssl.TlsConfiguration;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class HttpClientUtil {
 
@@ -53,5 +56,29 @@ public class HttpClientUtil {
                 .trustStoreType(sslConfig.getTrustStoreType())
                 .verifyHostname(sslConfig.isHostnameVerificationEnabled())
                 .build();
+    }
+
+    /**
+     * @return True if response is 200 - OK.
+     */
+    public static boolean isOK(final Response response) {
+        Objects.requireNonNull(response);
+        return response.getStatus() == Status.OK.getStatusCode();
+    }
+
+    /**
+     * @return True if response is 404 - Not found.
+     */
+    public static boolean isNotFound(final Response response) {
+        Objects.requireNonNull(response);
+        return response.getStatus() == Status.NOT_FOUND.getStatusCode();
+    }
+
+    /**
+     * @return True if response is 204 - No content.
+     */
+    public static boolean isNoContent(final Response response) {
+        Objects.requireNonNull(response);
+        return response.getStatus() == Status.NO_CONTENT.getStatusCode();
     }
 }

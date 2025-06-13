@@ -13,6 +13,7 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -125,6 +126,7 @@ public class InstantForwardFile {
                             final AttributeMap attributeMap,
                             final String requestUri,
                             final InputStreamSupplier inputStreamSupplier) {
+            final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
             try {
                 final Path dir = receivingDirProvider.get();
 
@@ -169,10 +171,9 @@ public class InstantForwardFile {
                         EventType.RECEIVE,
                         requestUri,
                         StroomStatusCode.OK,
-                        attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
+                        receiptId,
                         receivedBytes,
                         duration.toMillis());
-
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

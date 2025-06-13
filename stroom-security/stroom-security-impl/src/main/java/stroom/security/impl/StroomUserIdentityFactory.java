@@ -429,12 +429,12 @@ public class StroomUserIdentityFactory
                     .orElse(false);
         } else {
             final String requiredIssuer = openIdConfigProvider.get().getIssuer();
-            final boolean isProcessingUser = Objects.equals(subject, serviceUser.getSubjectId())
+            final boolean isProcessingUser = Objects.equals(subject, serviceUser.subjectId())
                                              && Objects.equals(issuer, requiredIssuer);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                         subject,
-                        serviceUser.getSubjectId(),
+                        serviceUser.subjectId(),
                         issuer,
                         requiredIssuer,
                         isProcessingUser);

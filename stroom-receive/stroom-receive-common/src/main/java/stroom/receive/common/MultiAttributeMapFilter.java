@@ -27,8 +27,10 @@ class MultiAttributeMapFilter implements AttributeMapFilter {
         for (final AttributeMapFilter attributeMapFilter : attributeMapFilters) {
             if (attributeMapFilter != null) {
                 final boolean filterResult = attributeMapFilter.filter(attributeMap);
-                LOGGER.debug(() -> LogUtil.message("filter: {}, filterResult: {}",
-                        attributeMapFilter.getClass().getSimpleName(), filterResult));
+                LOGGER.debug(() -> LogUtil.message("filter: {}, filterResult: {}, attributeMap: {}",
+                        attributeMapFilter.getClass().getSimpleName(),
+                        filterResult,
+                        attributeMap));
                 if (!filterResult) {
                     return false;
                 }
@@ -39,9 +41,8 @@ class MultiAttributeMapFilter implements AttributeMapFilter {
 
     @Override
     public String toString() {
-        return "Filters: " + attributeMapFilters.stream()
-                .map(AttributeMapFilter::getClass)
-                .map(Class::getSimpleName)
-                .collect(Collectors.joining(", "));
+        return attributeMapFilters.stream()
+                .map(AttributeMapFilter::getName)
+                .collect(Collectors.joining(" -> "));
     }
 }

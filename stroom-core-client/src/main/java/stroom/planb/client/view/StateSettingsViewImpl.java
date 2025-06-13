@@ -165,6 +165,10 @@ public class StateSettingsViewImpl
         stateValueSchemaSettingsWidget.onReadOnly(readOnly);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {
 
     }

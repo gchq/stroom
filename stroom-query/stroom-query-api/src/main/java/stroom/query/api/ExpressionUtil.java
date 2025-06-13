@@ -27,6 +27,12 @@ public class ExpressionUtil {
                 .build();
     }
 
+    public static ExpressionOperator equalsCaseSense(final String field, final String value) {
+        return ExpressionOperator.builder()
+                .addTerm(field, Condition.EQUALS_CASE_SENSITIVE, value)
+                .build();
+    }
+
     public static ExpressionOperator equalsBoolean(final QueryField field, final boolean value) {
         return ExpressionOperator.builder()
                 .addBooleanTerm(field, Condition.EQUALS, value)
@@ -124,8 +130,10 @@ public class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator,
-                null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, null)
+                .stream()
+                .map(ExpressionTerm::getField)
+                .collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {
@@ -177,40 +185,73 @@ public class ExpressionUtil {
     }
 
     public static ExpressionOperator copyOperator(final ExpressionOperator operator) {
+        return copyOperator(operator, null);
+    }
+
+    /**
+     * Return a deep copy of operator where items are only included in the copy if filter
+     * returns true. If an operator is excluded by the filter, then any of its children are
+     * also excluded.
+     */
+    public static ExpressionOperator copyOperator(final ExpressionOperator operator,
+                                                  final Predicate<ExpressionItem> filter) {
         if (operator == null) {
             return null;
         }
 
-        final ExpressionOperator.Builder builder = ExpressionOperator
-                .builder()
-                .enabled(operator.getEnabled())
-                .op(operator.getOp());
-        if (operator.getChildren() != null) {
-            operator.getChildren().forEach(item -> {
-                if (item instanceof ExpressionOperator) {
-                    builder.addOperator(copyOperator((ExpressionOperator) item));
+        final Predicate<ExpressionItem> effectiveFilter = NullSafe.predicate(filter, true);
 
-                } else if (item instanceof ExpressionTerm) {
-                    builder.addTerm(copyTerm((ExpressionTerm) item));
-                }
-            });
+        if (effectiveFilter.test(operator)) {
+            final ExpressionOperator.Builder builder = ExpressionOperator
+                    .builder()
+                    .enabled(operator.getEnabled())
+                    .op(operator.getOp());
+            if (operator.getChildren() != null) {
+                operator.getChildren()
+                        .stream()
+                        .filter(effectiveFilter)
+                        .forEach(item -> {
+                            ExpressionItem childCopy = null;
+                            if (item instanceof ExpressionOperator) {
+                                childCopy = copyOperator((ExpressionOperator) item, effectiveFilter);
+
+                            } else if (item instanceof ExpressionTerm) {
+                                childCopy = copyTerm((ExpressionTerm) item, effectiveFilter);
+                            }
+                            NullSafe.consume(childCopy, builder::addItem);
+                        });
+            }
+            return builder.build();
+        } else {
+            return null;
         }
-        return builder.build();
     }
 
     public static ExpressionTerm copyTerm(final ExpressionTerm term) {
+        return copyTerm(term, null);
+    }
+
+    /**
+     * Return a copy of term if filter returns true.
+     */
+    public static ExpressionTerm copyTerm(final ExpressionTerm term,
+                                          final Predicate<ExpressionItem> filter) {
         if (term == null) {
             return null;
         }
-
-        return ExpressionTerm
-                .builder()
-                .enabled(term.getEnabled())
-                .field(term.getField())
-                .condition(term.getCondition())
-                .value(term.getValue())
-                .docRef(term.getDocRef())
-                .build();
+        final Predicate<ExpressionItem> effectiveFilter = NullSafe.predicate(filter, true);
+        if (effectiveFilter.test(term)) {
+            return ExpressionTerm
+                    .builder()
+                    .enabled(term.getEnabled())
+                    .field(term.getField())
+                    .condition(term.getCondition())
+                    .value(term.getValue())
+                    .docRef(term.getDocRef())
+                    .build();
+        } else {
+            return null;
+        }
     }
 
     public static SearchRequest replaceExpressionParameters(final SearchRequest searchRequest) {

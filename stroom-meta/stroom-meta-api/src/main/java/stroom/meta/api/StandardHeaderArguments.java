@@ -92,6 +92,12 @@ public interface StandardHeaderArguments {
      * To have ReceiptId appended to it by EACH proxy/stroom instance on receipt.
      */
     String RECEIPT_ID_PATH = "ReceiptIdPath";
+
+    /**
+     * The number of the Data Receipt rule that matched the data, or 'NO_MATCH' if
+     * no rule matched.
+     */
+    String DATA_RECEIPT_RULE = "DataReceiptRule";
     /**
      * The unique message from an AWS SQS queue.
      */

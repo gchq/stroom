@@ -11,33 +11,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.AssertTrue;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_OPENID = "openId";
+    public static final boolean DEFAULT_IS_AUTHENTICATION_REQUIRED = true;
 
     private final boolean authenticationRequired;
     private final ProxyOpenIdConfig openIdConfig;
 
     public ProxyAuthenticationConfig() {
-        authenticationRequired = true;
+        authenticationRequired = DEFAULT_IS_AUTHENTICATION_REQUIRED;
         openIdConfig = new ProxyOpenIdConfig();
     }
 
     @JsonCreator
     public ProxyAuthenticationConfig(
-            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED) final boolean authenticationRequired,
+            @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED) final Boolean authenticationRequired,
             @JsonProperty(PROP_NAME_OPENID) final ProxyOpenIdConfig openIdConfig) {
 
-        this.authenticationRequired = authenticationRequired;
-        this.openIdConfig = openIdConfig;
+        this.authenticationRequired = Objects.requireNonNullElse(
+                authenticationRequired, DEFAULT_IS_AUTHENTICATION_REQUIRED);
+        this.openIdConfig = Objects.requireNonNullElseGet(openIdConfig, ProxyOpenIdConfig::new);
     }
 
     @ReadOnly
     @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED)
     @JsonPropertyDescription("Choose whether Stroom requires authenticated access. " +
-            "Only intended for use in development or testing.")
+                             "Only intended for use in development or testing.")
     @AssertTrue(
             message = "All authentication is disabled. This should only be used in development or test environments.",
             payload = ValidationSeverity.Warning.class)
@@ -53,8 +57,8 @@ public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxy
     @Override
     public String toString() {
         return "AuthenticationConfig{" +
-                ", authenticationRequired=" + authenticationRequired +
-                '}';
+               ", authenticationRequired=" + authenticationRequired +
+               '}';
     }
 
     public static Builder builder() {
