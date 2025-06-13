@@ -18,6 +18,7 @@ package stroom.pipeline.xml;
 
 
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,6 +33,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -176,7 +178,7 @@ public class F2XTestUtil {
         final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
         final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-        final TestAppender testAppender = filters.get(0);
+        final TestAppender testAppender = filters.getFirst();
         testAppender.setOutputStream(out);
 
         pipeline.process(dataStream);
@@ -215,7 +217,7 @@ public class F2XTestUtil {
         return taskContextFactory.contextResult("F2XTestUtil", taskContext -> {
             // Persist the text converter.
             final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
-            TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
+            final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
             textConverter.setConverterType(textConverterType);
             textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
             textConverterStore.writeDocument(textConverter);
@@ -227,6 +229,7 @@ public class F2XTestUtil {
             // Create the pipeline.
             final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
                     StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
+            final DocRef pipelineDocRef = DocRefUtil.create(pipelineDoc);
             final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
             // final ElementType parserElementType = new ElementType("Parser");
@@ -244,11 +247,13 @@ public class F2XTestUtil {
 
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            final PipelineData mergedPipelineData = new PipelineDataMerger().merge(pipelineData).createMergedData();
+            final PipelineData mergedPipelineData = new PipelineDataMerger()
+                    .merge(new PipelineLayer(pipelineDocRef, pipelineData))
+                    .createMergedData();
             final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, taskContext);
 
             final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-            final TestAppender testAppender = filters.get(0);
+            final TestAppender testAppender = filters.getFirst();
             testAppender.setOutputStream(out);
 
             pipeline.process(inputStream);

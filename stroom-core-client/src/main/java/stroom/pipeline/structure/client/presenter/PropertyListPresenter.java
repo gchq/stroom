@@ -26,12 +26,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
@@ -86,7 +84,6 @@ public class PropertyListPresenter
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
 
-    private PipelineDoc pipelineDoc;
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
     private PipelineElement currentElement;
@@ -213,7 +210,7 @@ public class PropertyListPresenter
 
     private PipelineProperty getActualProperty(final List<PipelineProperty> properties,
                                                final PipelineProperty defaultProperty) {
-        if (properties != null && properties.size() > 0) {
+        if (properties != null && !properties.isEmpty()) {
             for (final PipelineProperty property : properties) {
                 if (property.equals(defaultProperty)) {
                     return property;
@@ -236,13 +233,14 @@ public class PropertyListPresenter
         }, "Description", 70, 200);
     }
 
-    private SafeHtml getSafeHtmlWithState(final PipelineProperty property, final String string,
+    private SafeHtml getSafeHtmlWithState(final PipelineProperty property,
+                                          final String string,
                                           final boolean showRemovedAsDefault) {
         if (string == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        String className = null;
+        final String className;
         if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
             className = ADDED;
         } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
@@ -270,7 +268,7 @@ public class PropertyListPresenter
 
     private String getStateCssClass(final PipelineProperty property,
                                     final boolean showRemovedAsDefault) {
-        String className = null;
+        final String className;
         if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
             className = ADDED;
         } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
@@ -305,10 +303,6 @@ public class PropertyListPresenter
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
-    }
-
-    public void setPipeline(final PipelineDoc pipelineDoc) {
-        this.pipelineDoc = pipelineDoc;
     }
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
@@ -351,18 +345,19 @@ public class PropertyListPresenter
                     property);
             PipelineProperty inheritedProperty = getInheritedProperty(property);
             final PipelinePropertyType pipelinePropertyType = pipelineModel.getPropertyType(currentElement, property);
-            final PipelineProperty defaultProperty = property;
 
             final String defaultValue = pipelinePropertyType.getDefaultValue();
-            final String inheritedValue = inheritedProperty == null || inheritedProperty.getValue() == null
-                    ? null
-                    : inheritedProperty.getValue().toString();
-            final String inheritedFrom = inheritedProperty == null || inheritedProperty.getSourcePipeline() == null
-                    ? null
-                    : inheritedProperty.getSourcePipeline().getName();
+            final String inheritedValue = NullSafe.get(
+                    inheritedProperty,
+                    PipelineProperty::getValue,
+                    PipelinePropertyValue::toString);
+            final String inheritedFrom = NullSafe.get(
+                    inheritedProperty,
+                    this::getInheritedPropertySource,
+                    DocRef::getName);
 
             if (inheritedProperty == null) {
-                inheritedProperty = defaultProperty;
+                inheritedProperty = property;
             }
             if (localProperty == null) {
                 localProperty = inheritedProperty;
@@ -370,13 +365,12 @@ public class PropertyListPresenter
 
             final PipelineProperty editing = new PipelineProperty();
             editing.copyFrom(localProperty);
-            editing.setSourcePipeline(DocRefUtil.create(pipelineDoc));
             editing.setValue(localProperty.getValue());
 
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
-            editor.edit(pipelinePropertyType, defaultProperty, inheritedProperty, editing, source,
+            editor.edit(pipelinePropertyType, property, inheritedProperty, editing, source,
                     defaultValue,
                     inheritedValue,
                     inheritedFrom);
@@ -464,7 +458,7 @@ public class PropertyListPresenter
             }
         }
 
-        if (docRefs.size() > 0) {
+        if (!docRefs.isEmpty()) {
             // Load entities.
             restFactory
                     .create(EXPLORER_RESOURCE)
@@ -519,20 +513,20 @@ public class PropertyListPresenter
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
         final PipelinePropertyValue value = new PipelinePropertyValue();
         if ("boolean".equals(propertyType.getType())) {
-            Boolean defaultValue = Boolean.TRUE;
-            if (propertyType.getDefaultValue() != null && propertyType.getDefaultValue().length() > 0) {
+            boolean defaultValue = true;
+            if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Boolean.parseBoolean(propertyType.getDefaultValue());
             }
             value.setBoolean(defaultValue);
         } else if ("int".equals(propertyType.getType())) {
-            Integer defaultValue = 0;
-            if (propertyType.getDefaultValue() != null && propertyType.getDefaultValue().length() > 0) {
+            int defaultValue = 0;
+            if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Integer.parseInt(propertyType.getDefaultValue());
             }
             value.setInteger(defaultValue);
         } else if ("long".equals(propertyType.getType())) {
-            Long defaultValue = 0L;
-            if (propertyType.getDefaultValue() != null && propertyType.getDefaultValue().length() > 0) {
+            long defaultValue = 0L;
+            if (propertyType.getDefaultValue() != null && !propertyType.getDefaultValue().isEmpty()) {
                 defaultValue = Long.parseLong(propertyType.getDefaultValue());
             }
             value.setLong(defaultValue);
@@ -555,6 +549,14 @@ public class PropertyListPresenter
         }
 
         return null;
+    }
+
+    public DocRef getInheritedPropertySource(final PipelineProperty property) {
+        if (property == null) {
+            return null;
+        }
+
+        return pipelineModel.getBaseData().getPropertySource(property);
     }
 
     @Override

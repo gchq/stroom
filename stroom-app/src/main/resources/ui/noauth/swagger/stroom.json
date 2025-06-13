@@ -7098,9 +7098,9 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
-    "/pipeline/v1/fetchPipelineData" : {
+    "/pipeline/v1/fetchPipelineLayers" : {
       "post" : {
-        "operationId" : "fetchPipelineData",
+        "operationId" : "fetchPipelineLayers",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7119,7 +7119,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/PipelineData"
+                    "$ref" : "#/components/schemas/PipelineLayer"
                   }
                 }
               }
@@ -7127,7 +7127,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch data for a pipeline",
+        "summary" : "Fetch layers for a pipeline",
         "tags" : [ "Pipelines" ]
       }
     },
@@ -15704,8 +15704,7 @@
             "description" : "The logical addOperator type",
             "enum" : [ "AND", "OR", "NOT" ]
           }
-        },
-        "required" : [ "op" ]
+        }
       },
       "ExpressionTerm" : {
         "type" : "object",
@@ -18516,8 +18515,7 @@
             "type" : "string",
             "description" : "The property value"
           }
-        },
-        "required" : [ "key", "value" ]
+        }
       },
       "ParamInfo" : {
         "type" : "object",
@@ -18614,9 +18612,6 @@
       "PipelineElement" : {
         "type" : "object",
         "properties" : {
-          "elementType" : {
-            "$ref" : "#/components/schemas/PipelineElementType"
-          },
           "id" : {
             "type" : "string"
           },
@@ -18671,14 +18666,22 @@
           }
         }
       },
+      "PipelineLayer" : {
+        "type" : "object",
+        "properties" : {
+          "pipelineData" : {
+            "$ref" : "#/components/schemas/PipelineData"
+          },
+          "sourcePipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          }
+        }
+      },
       "PipelineLink" : {
         "type" : "object",
         "properties" : {
           "from" : {
             "type" : "string"
-          },
-          "sourcePipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
           },
           "to" : {
             "type" : "string"
@@ -18740,12 +18743,6 @@
           },
           "name" : {
             "type" : "string"
-          },
-          "propertyType" : {
-            "$ref" : "#/components/schemas/PipelinePropertyType"
-          },
-          "sourcePipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
           },
           "value" : {
             "$ref" : "#/components/schemas/PipelinePropertyValue"
@@ -18821,9 +18818,6 @@
             "type" : "string"
           },
           "pipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "sourcePipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
           "streamType" : {
@@ -19803,8 +19797,7 @@
             "description" : "The UUID that makes up the query key",
             "example" : "7740bcd0-a49e-4c22-8540-044f85770716"
           }
-        },
-        "required" : [ "uuid" ]
+        }
       },
       "QuerySearchRequest" : {
         "type" : "object",

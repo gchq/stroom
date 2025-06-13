@@ -70,8 +70,9 @@ public class ElementRegistry {
                 // Check that there isn't a factory already associated with the
                 // name.
                 if (existing != null) {
-                    throw new PipelineFactoryException("PipelineElement \"" + existing
-                                                       + "\" has already been registered for \"" + elementTypeName + "\"");
+                    throw new PipelineFactoryException("PipelineElement \"" + existing +
+                                                       "\" has already been registered for \"" +
+                                                       elementTypeName + "\"");
                 }
 
                 registerProperties(clazz, configurableElement);
@@ -94,8 +95,8 @@ public class ElementRegistry {
             if (property != null) {
                 String name = method.getName();
                 if (!name.startsWith("set") || name.length() <= 3) {
-                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                                       + "\" must start with 'set'");
+                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName +
+                                                       "\" must start with 'set'");
                 }
 
                 // Convert the setter to a camel case property name.
@@ -104,8 +105,8 @@ public class ElementRegistry {
                 final Class<?>[] parameters = method.getParameterTypes();
 
                 if (parameters.length != 1) {
-                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                                       + "\" must have only 1 parameter");
+                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName +
+                                                       "\" must have only 1 parameter");
                 }
 
                 final Map<String, Method> map = propertyMap.computeIfAbsent(elementTypeName, k -> new HashMap<>());
@@ -119,14 +120,24 @@ public class ElementRegistry {
                     !long.class.equals(clazz) &&
                     !DocRef.class.isAssignableFrom(clazz) &&
                     !PipelineReference.class.isAssignableFrom(clazz)) {
-                    throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                                       + "\" has an unexpected type of \"" + clazz.getName() + "\"");
+                    throw new PipelineFactoryException("PipelineProperty \"" +
+                                                       name +
+                                                       "\" on \"" +
+                                                       elementTypeName +
+                                                       "\" has an unexpected type of \"" +
+                                                       clazz.getName() +
+                                                       "\"");
                 }
 
                 if (DocRef.class.isAssignableFrom(clazz)) {
                     if (null == docRefProperty) {
-                        throw new PipelineFactoryException("PipelineProperty \"" + name + "\" on \"" + elementTypeName
-                                                           + "\" is a DocRef, so also needs \"" + PipelinePropertyDocRef.class.getName() + "\"");
+                        throw new PipelineFactoryException("PipelineProperty \"" +
+                                                           name +
+                                                           "\" on \"" +
+                                                           elementTypeName +
+                                                           "\" is a DocRef, so also needs \"" +
+                                                           PipelinePropertyDocRef.class.getName() +
+                                                           "\"");
                     }
                 }
 

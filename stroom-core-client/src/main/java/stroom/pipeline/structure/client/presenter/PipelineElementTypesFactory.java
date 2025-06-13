@@ -45,8 +45,10 @@ public class PipelineElementTypesFactory {
                     .method(PipelineResource::getPropertyTypes)
                     .onSuccess(result -> {
                         final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
-                                result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
-                                        FetchPropertyTypesResult::getPropertyTypes));
+                                result
+                                        .stream()
+                                        .collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
+                                                FetchPropertyTypesResult::getPropertyTypes));
 
                         final Map<Category, List<PipelineElementType>> elementTypesByCategory = new HashMap<>();
                         final Map<String, PipelineElementType> elementTypesByName = new HashMap<>();

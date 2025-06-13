@@ -17,8 +17,6 @@
 package stroom.pipeline.shared.data;
 
 
-import stroom.docref.DocRef;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
@@ -56,12 +53,8 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"source", "from", "to"})
+@JsonPropertyOrder({"from", "to"})
 public class PipelineLink implements Comparable<PipelineLink> {
-
-    @XmlTransient
-    @JsonProperty
-    private DocRef sourcePipeline;
 
     @XmlElement(required = true)
     @JsonProperty
@@ -73,26 +66,11 @@ public class PipelineLink implements Comparable<PipelineLink> {
     public PipelineLink() {
     }
 
-    public PipelineLink(final String from, final String to) {
-        this.from = from;
-        this.to = to;
-    }
-
     @JsonCreator
-    public PipelineLink(@JsonProperty("sourcePipeline") final DocRef sourcePipeline,
-                        @JsonProperty("from") final String from,
+    public PipelineLink(@JsonProperty("from") final String from,
                         @JsonProperty("to") final String to) {
-        this.sourcePipeline = sourcePipeline;
         this.from = from;
         this.to = to;
-    }
-
-    public DocRef getSourcePipeline() {
-        return sourcePipeline;
-    }
-
-    public void setSourcePipeline(final DocRef sourcePipeline) {
-        this.sourcePipeline = sourcePipeline;
     }
 
     public String getFrom() {
@@ -113,7 +91,7 @@ public class PipelineLink implements Comparable<PipelineLink> {
         }
         final PipelineLink that = (PipelineLink) o;
         return from.equals(that.from) &&
-                to.equals(that.to);
+               to.equals(that.to);
     }
 
     @Override

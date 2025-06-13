@@ -24,7 +24,7 @@ import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SavePipelineXmlRequest;
-import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.shared.FetchWithUuid;
 
 import jakarta.inject.Inject;
@@ -72,8 +72,8 @@ class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDo
     }
 
     @Override
-    public List<PipelineData> fetchPipelineData(final DocRef pipeline) {
-        return pipelineServiceProvider.get().fetchPipelineData(pipeline);
+    public List<PipelineLayer> fetchPipelineLayers(final DocRef pipeline) {
+        return pipelineServiceProvider.get().fetchPipelineLayers(pipeline);
     }
 
     @Override

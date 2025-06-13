@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Copyable;
 
@@ -28,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlTransient;
 import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
@@ -58,12 +56,8 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Property", propOrder = {"element", "name", "value"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"source", "element", "name", "value"})
+@JsonPropertyOrder({"element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
-
-    @XmlTransient
-    @JsonProperty
-    private DocRef sourcePipeline;
 
     @XmlElement(required = true)
     @JsonProperty
@@ -83,22 +77,12 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
     }
 
     @JsonCreator
-    public PipelineProperty(@JsonProperty("sourcePipeline") final DocRef sourcePipeline,
-                            @JsonProperty("element") final String element,
+    public PipelineProperty(@JsonProperty("element") final String element,
                             @JsonProperty("name") final String name,
                             @JsonProperty("value") final PipelinePropertyValue value) {
-        this.sourcePipeline = sourcePipeline;
         this.element = element;
         this.name = name;
         this.value = value;
-    }
-
-    public DocRef getSourcePipeline() {
-        return sourcePipeline;
-    }
-
-    public void setSourcePipeline(final DocRef sourcePipeline) {
-        this.sourcePipeline = sourcePipeline;
     }
 
     public String getElement() {
@@ -158,7 +142,6 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
 
     @Override
     public void copyFrom(final PipelineProperty other) {
-        this.sourcePipeline = other.sourcePipeline;
         this.element = other.element;
         this.name = other.name;
         if (other.value == null) {

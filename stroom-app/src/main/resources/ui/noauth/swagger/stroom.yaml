@@ -4865,9 +4865,9 @@ paths:
       summary: Get a detailed report of doc permissions for the specified user
       tags:
       - Doc Permissions
-  /pipeline/v1/fetchPipelineData:
+  /pipeline/v1/fetchPipelineLayers:
     post:
-      operationId: fetchPipelineData
+      operationId: fetchPipelineLayers
       requestBody:
         content:
           application/json:
@@ -4882,9 +4882,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/PipelineData"
+                  $ref: "#/components/schemas/PipelineLayer"
           description: default response
-      summary: Fetch data for a pipeline
+      summary: Fetch layers for a pipeline
       tags:
       - Pipelines
   /pipeline/v1/fetchPipelineXml:
@@ -11316,8 +11316,6 @@ components:
           - AND
           - OR
           - NOT
-      required:
-      - op
     ExpressionTerm:
       type: object
       allOf:
@@ -13480,9 +13478,6 @@ components:
         value:
           type: string
           description: The property value
-      required:
-      - key
-      - value
     ParamInfo:
       type: object
       properties:
@@ -13549,8 +13544,6 @@ components:
     PipelineElement:
       type: object
       properties:
-        elementType:
-          $ref: "#/components/schemas/PipelineElementType"
         id:
           type: string
         type:
@@ -13793,13 +13786,18 @@ components:
             $ref: "#/components/schemas/PipelineElement"
           xml:
             wrapped: true
+    PipelineLayer:
+      type: object
+      properties:
+        pipelineData:
+          $ref: "#/components/schemas/PipelineData"
+        sourcePipeline:
+          $ref: "#/components/schemas/DocRef"
     PipelineLink:
       type: object
       properties:
         from:
           type: string
-        sourcePipeline:
-          $ref: "#/components/schemas/DocRef"
         to:
           type: string
       required:
@@ -13842,10 +13840,6 @@ components:
           type: string
         name:
           type: string
-        propertyType:
-          $ref: "#/components/schemas/PipelinePropertyType"
-        sourcePipeline:
-          $ref: "#/components/schemas/DocRef"
         value:
           $ref: "#/components/schemas/PipelinePropertyValue"
       required:
@@ -13898,8 +13892,6 @@ components:
         name:
           type: string
         pipeline:
-          $ref: "#/components/schemas/DocRef"
-        sourcePipeline:
           $ref: "#/components/schemas/DocRef"
         streamType:
           type: string
@@ -14689,8 +14681,6 @@ components:
           type: string
           description: The UUID that makes up the query key
           example: 7740bcd0-a49e-4c22-8540-044f85770716
-      required:
-      - uuid
     QuerySearchRequest:
       type: object
       properties:

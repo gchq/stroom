@@ -27,12 +27,12 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -229,20 +229,20 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                 .eventBus(getEventBus())
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
+                    final DocRef source = pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference);
                     if (pipelineReference == null ||
-                        pipelineReference.getSourcePipeline() == null ||
-                        pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
+                        source == null ||
+                        pipeline.getUuid().equals(source.getUuid())) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        return SafeHtmlUtils.fromString(pipelineReference.getSourcePipeline()
+                        return SafeHtmlUtils.fromString(source
                                 .getDisplayValue(NullSafe.requireNonNullElse(
                                         DisplayType.AUTO,
                                         DisplayType.AUTO)));
                     }
                 })
-                .docRefFunction(pipelineProperty -> NullSafe.get(
-                        pipelineProperty,
-                        PipelineReference::getSourcePipeline));
+                .docRefFunction(pipelineReference ->
+                        pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference));
 
         final Column<PipelineReference, PipelineReference> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
                         cellBuilder)
@@ -260,19 +260,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        String className = null;
         final State state = referenceStateMap.get(pipelineReference);
-        switch (state) {
-            case ADDED:
-                className = ADDED;
-                break;
-            case REMOVED:
-                className = REMOVED;
-                break;
-            case INHERITED:
-                className = INHERITED;
-                break;
-        }
+        final String className = switch (state) {
+            case ADDED -> ADDED;
+            case REMOVED -> REMOVED;
+            case INHERITED -> INHERITED;
+        };
 
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
@@ -282,20 +275,12 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private String getStateCssClass(final PipelineReference pipelineReference) {
-        String className = null;
         final State state = referenceStateMap.get(pipelineReference);
-        switch (state) {
-            case ADDED:
-                className = ADDED;
-                break;
-            case REMOVED:
-                className = REMOVED;
-                break;
-            case INHERITED:
-                className = INHERITED;
-                break;
-        }
-        return className;
+        return switch (state) {
+            case ADDED -> ADDED;
+            case REMOVED -> REMOVED;
+            case INHERITED -> INHERITED;
+        };
     }
 
     public void setReadOnly(final boolean readOnly) {
@@ -336,8 +321,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private void onAdd(final ClickEvent event) {
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
-                    propertyType.getName(), null, null, StreamTypeNames.REFERENCE, null);
-            pipelineReference.setSourcePipeline(DocRefUtil.create(pipeline));
+                    propertyType.getName(), null, null, StreamTypeNames.REFERENCE);
             showEditor(pipelineReference, true);
         }
     }
@@ -354,7 +338,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
     private void showEditor(final PipelineReference pipelineReference, final boolean isNew) {
         if (pipelineReference != null) {
-            final List<PipelineReference> added = pipelineModel.getPipelineData().getAddedPipelineReferences();
+            final PipelineData pipelineData = pipelineModel.getPipelineData();
+            final List<PipelineReference> added = pipelineData.getAddedPipelineReferences();
             added.remove(pipelineReference);
 
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
@@ -417,15 +402,16 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private void onRemove() {
         final PipelineReference selected = selectionModel.getSelected();
         if (selected != null) {
-            if (pipelineModel.getPipelineData().getAddedPipelineReferences().contains(selected)) {
-                pipelineModel.getPipelineData().getAddedPipelineReferences().remove(selected);
-                pipelineModel.getPipelineData().getRemovedPipelineReferences().remove(selected);
+            final PipelineData pipelineData = pipelineModel.getPipelineData();
+            if (pipelineData.getAddedPipelineReferences().contains(selected)) {
+                pipelineData.getAddedPipelineReferences().remove(selected);
+                pipelineData.getRemovedPipelineReferences().remove(selected);
 
             } else {
-                if (pipelineModel.getPipelineData().getRemovedPipelineReferences().contains(selected)) {
-                    pipelineModel.getPipelineData().getRemovedPipelineReferences().remove(selected);
+                if (pipelineData.getRemovedPipelineReferences().contains(selected)) {
+                    pipelineData.getRemovedPipelineReferences().remove(selected);
                 } else {
-                    pipelineModel.getPipelineData().getRemovedPipelineReferences().add(selected);
+                    pipelineData.getRemovedPipelineReferences().add(selected);
                 }
             }
 
@@ -434,7 +420,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    private void addReference(final PipelineReference reference, State state) {
+    private void addReference(final PipelineReference reference, final State state) {
         // It is important that the pipe references are displayed in the order in which
         // they appear in the pipe doc (with inherited ones first)
         // Order is important as the ref lookup will try each loader in this o
@@ -463,7 +449,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         }
                     }
                 }
-                for (final PipelineReference reference : pipelineModel.getPipelineData().getAddedPipelineReferences()) {
+                for (final PipelineReference reference : pipelineModel.getPipelineData()
+                        .getAddedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
                         addReference(reference, State.ADDED);
                     }
@@ -517,7 +504,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         return docRef;
     }
 
-    private void addPipelineReference(final Set<DocRef> docRefs, PipelineReference reference) {
+    private void addPipelineReference(final Set<DocRef> docRefs, final PipelineReference reference) {
         if (reference.getFeed() != null) {
             docRefs.add(reference.getFeed());
         }

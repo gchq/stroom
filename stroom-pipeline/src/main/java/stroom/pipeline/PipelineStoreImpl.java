@@ -101,7 +101,7 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRefInfo info(DocRef docRef) {
+    public DocRefInfo info(final DocRef docRef) {
         return store.info(docRef);
     }
 
@@ -163,7 +163,6 @@ public class PipelineStoreImpl implements PipelineStore {
             pipelineReferences.forEach(pipelineReference -> {
                 pipelineReference.setFeed(dependencyRemapper.remap(pipelineReference.getFeed()));
                 pipelineReference.setPipeline(dependencyRemapper.remap(pipelineReference.getPipeline()));
-                pipelineReference.setSourcePipeline(dependencyRemapper.remap(pipelineReference.getSourcePipeline()));
             });
         }
     }
@@ -218,13 +217,13 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
-        Set<DocRef> processorFilters = new HashSet<>();
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        final Set<DocRef> processorFilters = new HashSet<>();
 
         if (docRef != null && PipelineDoc.TYPE.equals(docRef.getType())) {
-            ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+            final ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
-            List<DocRef> docRefs = filterResultPage.getValues().stream()
+            final List<DocRef> docRefs = filterResultPage.getValues().stream()
                     .filter(ProcessorFilterUtil::shouldExport)
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .toList();

@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineLayer;
 
 import java.util.List;
 
@@ -32,11 +32,5 @@ public interface PipelineService {
 
     String fetchPipelineXml(final DocRef pipeline);
 
-    List<PipelineData> fetchPipelineData(final DocRef pipeline);
-
-    /**
-     * @param nameFilter Exact match or wild-carded with a '*' character
-     * @return List of Pipeline UUIDs corresponding to the pipelines that match nameFilter
-     */
-    List<String> findUuidsByName(final String nameFilter);
+    List<PipelineLayer> fetchPipelineLayers(final DocRef pipeline);
 }

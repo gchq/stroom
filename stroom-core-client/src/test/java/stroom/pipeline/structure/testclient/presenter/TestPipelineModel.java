@@ -27,6 +27,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypes;
@@ -68,6 +69,9 @@ class TestPipelineModel {
             .name("TestProperty4")
             .type("String")
             .build();
+    private static final DocRef BASE = new DocRef(PipelineDoc.TYPE, "base", "base");
+    private static final DocRef OVERRIDE = new DocRef(PipelineDoc.TYPE, "override", "override");
+    private static final DocRef SINGLE = new DocRef(PipelineDoc.TYPE, "single", "single");
 
     @Test
     void testBasic() {
@@ -81,7 +85,7 @@ class TestPipelineModel {
         pipelineData.addElement(ELEM_TYPE, "test2");
         pipelineData.addLink("test1", "test2");
 
-        test(null, pipelineData, 2, 0, 0, 0, 0, 0, 1, 0);
+        test(null, new PipelineLayer(SINGLE, pipelineData), 2, 0, 0, 0, 0, 0, 1, 0);
     }
 
     @Test
@@ -96,7 +100,7 @@ class TestPipelineModel {
         pipelineData.addLink("test3", "test4");
         pipelineData.removeElement(ELEM_TYPE, "test4");
 
-        test(null, pipelineData, 3, 0, 0, 0, 0, 0, 2, 0);
+        test(null, new PipelineLayer(SINGLE, pipelineData), 3, 0, 0, 0, 0, 0, 2, 0);
     }
 
     @Test
@@ -115,7 +119,7 @@ class TestPipelineModel {
         pipelineData.addProperty("test4", PROP_TYPE4, true);
         pipelineData.removeElement(ELEM_TYPE, "test4");
 
-        test(null, pipelineData, 3, 0, 3, 0, 0, 0, 2, 0);
+        test(null, new PipelineLayer(SINGLE, pipelineData), 3, 0, 3, 0, 0, 0, 2, 0);
     }
 
     @Test
@@ -135,7 +139,7 @@ class TestPipelineModel {
         pipelineData.removeProperty("test2", PROP_TYPE2);
         pipelineData.removeElement(ELEM_TYPE, "test4");
 
-        test(null, pipelineData, 3, 0, 2, 1, 0, 0, 2, 0);
+        test(null, new PipelineLayer(SINGLE, pipelineData), 3, 0, 2, 1, 0, 0, 2, 0);
     }
 
     @Test
@@ -144,42 +148,42 @@ class TestPipelineModel {
         pipelineData.addElement(ELEM_TYPE, "test");
         pipelineData.addLink("unknown", "test");
 
-        test(null, pipelineData, 0, 0, 0, 0, 0, 0, 0, 0);
+        test(null, new PipelineLayer(SINGLE, pipelineData), 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
     void testInheritanceAdditive() {
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addElement(ELEM_TYPE, "test3");
         override.addLink("test2", "test3");
 
-        test(baseStack, override, 1, 0, 0, 0, 0, 0, 1, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 1, 0, 0, 0, 0, 0, 1, 0);
     }
 
     @Test
     void testInheritanceRemove() {
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addElement(ELEM_TYPE, "test3");
         override.removeElement(ELEM_TYPE, "test2");
         override.addLink("test2", "test3");
 
-        test(baseStack, override, 0, 1, 0, 0, 0, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 1, 0, 0, 0, 0, 0, 0);
     }
 
     @Test
@@ -243,7 +247,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_STREAM);
 
 
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(sourceType, "Source");
@@ -261,65 +265,65 @@ class TestPipelineModel {
         base.addLink("xsltFilter3", "schemaFilter");
         base.addLink("schemaFilter", "xmlWriter");
         base.addLink("xmlWriter", "streamAppender");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.removeElement(xsltType, "xsltFilter2");
         override.addLink("xsltFilter1", "schemaFilter");
         override.removeLink("xsltFilter1", "xsltFilter2");
 
-        test(baseStack, override, 0, 1, 0, 0, 0, 0, 1, 1);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 1, 0, 0, 0, 0, 1, 1);
     }
 
     @Test
     void testInheritancePropertiesSame() {
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addProperty("test1", PROP_TYPE1, false);
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addProperty("test1", PROP_TYPE1, false);
 
-        test(baseStack, override, 0, 0, 1, 0, 0, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 1, 0, 0, 0, 0, 0);
     }
 
     @Test
     void testInheritancePropertiesDiff() {
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addProperty("test1", PROP_TYPE1, false);
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addProperty("test1", PROP_TYPE1, true);
 
-        test(baseStack, override, 0, 0, 1, 0, 0, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 1, 0, 0, 0, 0, 0);
     }
 
     @Test
     void testInheritancePropertiesRemove() {
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addProperty("test1", PROP_TYPE1, false);
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.removeProperty("test1", PROP_TYPE1);
 
-        test(baseStack, override, 0, 0, 0, 1, 0, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 0, 1, 0, 0, 0, 0);
     }
 
     @Test
@@ -327,7 +331,7 @@ class TestPipelineModel {
         final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
@@ -335,13 +339,13 @@ class TestPipelineModel {
         base.addPipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.EVENTS));
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.EVENTS));
 
-        test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 0, 0, 1, 0, 0, 0);
     }
 
     @Test
@@ -349,7 +353,7 @@ class TestPipelineModel {
         final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
@@ -357,13 +361,13 @@ class TestPipelineModel {
         base.addPipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.EVENTS));
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.REFERENCE));
 
-        test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 0, 0, 1, 0, 0, 0);
     }
 
     @Test
@@ -371,7 +375,7 @@ class TestPipelineModel {
         final DocRef pipeline = new DocRef(PipelineDoc.TYPE, "1");
         final DocRef feed = new DocRef(FeedDoc.TYPE, "1");
 
-        final List<PipelineData> baseStack = new ArrayList<>();
+        final List<PipelineLayer> baseStack = new ArrayList<>();
 
         final PipelineData base = new PipelineData();
         base.addElement(ELEM_TYPE, "test1");
@@ -379,13 +383,13 @@ class TestPipelineModel {
         base.addPipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.EVENTS));
         base.addLink("test1", "test2");
-        baseStack.add(base);
+        baseStack.add(new PipelineLayer(BASE, base));
 
         final PipelineData override = new PipelineData();
         override.removePipelineReference(
                 PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeNames.EVENTS));
 
-        test(baseStack, override, 0, 0, 0, 0, 0, 1, 0, 0);
+        test(baseStack, new PipelineLayer(OVERRIDE, override), 0, 0, 0, 0, 0, 1, 0, 0);
     }
 
     @Test
@@ -413,7 +417,8 @@ class TestPipelineModel {
         final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
         final PipelineModel pipelineModel = new PipelineModel(elementTypes);
         pipelineModel.setBaseStack(null);
-        pipelineModel.setPipelineData(pipelineData);
+        pipelineModel.setPipelineLayer(
+                new PipelineLayer(SINGLE, pipelineData));
         pipelineModel.build();
 
         final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
@@ -457,8 +462,8 @@ class TestPipelineModel {
 
         final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
         final PipelineModel pipelineModel = new PipelineModel(elementTypes);
-        pipelineModel.setBaseStack(Collections.singletonList(base));
-        pipelineModel.setPipelineData(new PipelineData());
+        pipelineModel.setBaseStack(Collections.singletonList(new PipelineLayer(BASE, base)));
+        pipelineModel.setPipelineLayer(new PipelineLayer(OVERRIDE, new PipelineData()));
         pipelineModel.build();
 
         final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
@@ -506,8 +511,8 @@ class TestPipelineModel {
 
         final PipelineElementTypes elementTypes = new PipelineElementTypes(elementTypesByTypeName);
         final PipelineModel pipelineModel = new PipelineModel(elementTypes);
-        pipelineModel.setBaseStack(Collections.singletonList(base));
-        pipelineModel.setPipelineData(new PipelineData());
+        pipelineModel.setBaseStack(Collections.singletonList(new PipelineLayer(BASE, base)));
+        pipelineModel.setPipelineLayer(new PipelineLayer(OVERRIDE, new PipelineData()));
         pipelineModel.build();
 
         final DefaultTreeForTreeLayout<PipelineElement> tree1 = builder.getTree(pipelineModel);
@@ -539,9 +544,9 @@ class TestPipelineModel {
     private void checkChildren(final DefaultTreeForTreeLayout<PipelineElement> tree,
                                final PipelineElement parent,
                                final PipelineElement[] children) {
-        List<PipelineElement> list = tree.getChildren(parent);
+        final List<PipelineElement> list = tree.getChildren(parent);
         if (children.length == 0) {
-            assertThat(list == null || list.size() == 0).isTrue();
+            assertThat(list == null || list.isEmpty()).isTrue();
         } else {
             assertThat(list.size()).isEqualTo(children.length);
             for (final PipelineElement child : children) {
@@ -570,31 +575,25 @@ class TestPipelineModel {
                     PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE};
         } else {
-            switch (category) {
-                case READER:
-                    roles = new String[]{
-                            PipelineElementType.ROLE_TARGET,
-                            PipelineElementType.ROLE_HAS_TARGETS,
-                            PipelineElementType.ROLE_READER,
-                            PipelineElementType.ROLE_MUTATOR,
-                            PipelineElementType.VISABILITY_STEPPING};
-                    break;
-                case PARSER:
-                    roles = new String[]{
-                            PipelineElementType.ROLE_PARSER,
-                            PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-                            PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-                            PipelineElementType.ROLE_HAS_CODE};
-                    break;
-
-                case FILTER:
-                    roles = new String[]{
-                            PipelineElementType.ROLE_TARGET,
-                            PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
-                            PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
-                            PipelineElementType.ROLE_HAS_CODE};
-                    break;
-            }
+            roles = switch (category) {
+                case READER -> new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS,
+                        PipelineElementType.ROLE_READER,
+                        PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.VISABILITY_STEPPING};
+                case PARSER -> new String[]{
+                        PipelineElementType.ROLE_PARSER,
+                        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
+                        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.ROLE_HAS_CODE};
+                case FILTER -> new String[]{
+                        PipelineElementType.ROLE_TARGET,
+                        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
+                        PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
+                        PipelineElementType.ROLE_HAS_CODE};
+                default -> roles;
+            };
         }
 
         return new PipelineElementType(
@@ -603,8 +602,8 @@ class TestPipelineModel {
                 roles, null);
     }
 
-    private void test(final List<PipelineData> baseStack,
-                      final PipelineData pipelineData,
+    private void test(final List<PipelineLayer> baseStack,
+                      final PipelineLayer pipelineLayer,
                       final int addedElements,
                       final int removedElements,
                       final int addedProperties,
@@ -615,7 +614,7 @@ class TestPipelineModel {
                       final int removedLinks) throws PipelineModelException {
         final PipelineModel pipelineModel = new PipelineModel(new PipelineElementTypes(Collections.emptyMap()));
         pipelineModel.setBaseStack(baseStack);
-        pipelineModel.setPipelineData(pipelineData);
+        pipelineModel.setPipelineLayer(pipelineLayer);
         pipelineModel.build();
         final PipelineData diff = pipelineModel.diff();
 

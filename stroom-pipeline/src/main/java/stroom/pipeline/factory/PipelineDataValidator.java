@@ -16,7 +16,6 @@
 
 package stroom.pipeline.factory;
 
-import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -40,7 +39,7 @@ public class PipelineDataValidator {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
     }
 
-    public void validate(final DocRef sourcePipeline, final PipelineData pipelineData,
+    public void validate(final PipelineData pipelineData,
                          final Map<String, PipelineElementType> elementMap) {
         final ElementRegistry registry = pipelineElementRegistryFactory.get();
 
@@ -49,22 +48,20 @@ public class PipelineDataValidator {
         validateElementList(registry, pipelineData.getElements().getRemove(), elementMap);
 
         // Validate properties.
-        validatePropertiesList(registry, sourcePipeline, pipelineData.getProperties().getAdd(), elementMap);
-        validatePropertiesList(registry, sourcePipeline, pipelineData.getProperties().getRemove(), elementMap);
+        validatePropertiesList(registry, pipelineData.getProperties().getAdd(), elementMap);
+        validatePropertiesList(registry, pipelineData.getProperties().getRemove(), elementMap);
 
         // Validate pipeline references.
         validatePipelineReferencesList(registry,
-                sourcePipeline,
                 pipelineData.getPipelineReferences().getAdd(),
                 elementMap);
         validatePipelineReferencesList(registry,
-                sourcePipeline,
                 pipelineData.getPipelineReferences().getRemove(),
                 elementMap);
 
         // Validate links.
-        validateLinksList(sourcePipeline, pipelineData.getLinks().getAdd(), elementMap);
-        validateLinksList(sourcePipeline, pipelineData.getLinks().getRemove(), elementMap);
+        validateLinksList(pipelineData.getLinks().getAdd(), elementMap);
+        validateLinksList(pipelineData.getLinks().getRemove(), elementMap);
     }
 
     private void validateElementList(final ElementRegistry registry,
@@ -93,7 +90,6 @@ public class PipelineDataValidator {
     }
 
     private void validatePropertiesList(final ElementRegistry registry,
-                                        final DocRef sourcePipeline,
                                         final List<PipelineProperty> propertiesList,
                                         final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineProperty> iterator = propertiesList.iterator();
@@ -116,17 +112,15 @@ public class PipelineDataValidator {
             } else {
                 final PipelinePropertyType propertyType = registry.getPropertyType(elementType, property.getName());
                 if (propertyType == null) {
-                    throw new PipelineFactoryException("Attempt to set property \"" + property.getName()
-                                                       + "\" on element \"" + property.getElement() + "\" but property is unknown.");
+                    throw new PipelineFactoryException("Attempt to set property \"" + property.getName() +
+                                                       "\" on element \"" + property.getElement() +
+                                                       "\" but property is unknown.");
                 }
-
-                property.setSourcePipeline(sourcePipeline);
             }
         }
     }
 
     private void validatePipelineReferencesList(final ElementRegistry registry,
-                                                final DocRef sourcePipeline,
                                                 final List<PipelineReference> pipelineReferencesList,
                                                 final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineReference> iterator = pipelineReferencesList.iterator();
@@ -152,16 +146,15 @@ public class PipelineDataValidator {
                         pipelineReference.getName());
                 if (propertyType == null) {
                     throw new PipelineFactoryException("Attempt to set pipeline reference \"" +
-                                                       pipelineReference.getName() + "\" on element \"" + pipelineReference.getElement() +
+                                                       pipelineReference.getName() + "\" on element \"" +
+                                                       pipelineReference.getElement() +
                                                        "\" but property is unknown.");
                 }
-
-                pipelineReference.setSourcePipeline(sourcePipeline);
             }
         }
     }
 
-    private void validateLinksList(final DocRef sourcePipeline, final List<PipelineLink> linksList,
+    private void validateLinksList(final List<PipelineLink> linksList,
                                    final Map<String, PipelineElementType> elementMap) {
         final Iterator<PipelineLink> iterator = linksList.iterator();
         while (iterator.hasNext()) {
@@ -174,8 +167,6 @@ public class PipelineDataValidator {
                 iterator.remove();
 //                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
 //                        + link.getTo() + "\" but \"" + link.getTo() + "\" is unknown");
-            } else {
-                link.setSourcePipeline(sourcePipeline);
             }
         }
     }

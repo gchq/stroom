@@ -26,12 +26,12 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,8 +56,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private final EventBus eventBus = new SimpleEventBus();
     private Map<PipelineElement, List<PipelineElement>> childMap;
     private Map<PipelineElement, PipelineElement> parentMap;
-    private PipelineData pipelineData;
-    private List<PipelineData> baseStack;
+    private PipelineLayer pipelineLayer;
+    private List<PipelineLayer> baseStack;
     private PipelineDataMerger baseData;
     private PipelineDataMerger combinedData;
     private Map<String, SteppingFilterSettings> stepFilterMap;
@@ -78,16 +78,17 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private void fixSourceNodes() {
         boolean first = true;
         if (baseStack != null) {
-            for (final PipelineData base : baseStack) {
+            for (final PipelineLayer base : baseStack) {
                 fixSourceNode(base, first);
                 first = false;
             }
         }
-        fixSourceNode(pipelineData, first);
+        fixSourceNode(pipelineLayer, first);
     }
 
-    private void fixSourceNode(final PipelineData pipelineData, final boolean root) {
-        if (pipelineData != null) {
+    private void fixSourceNode(final PipelineLayer pipelineLayer, final boolean root) {
+        if (pipelineLayer != null) {
+            final PipelineData pipelineData = pipelineLayer.getPipelineData();
             final boolean exists = pipelineData.getAddedElements().contains(SOURCE_ELEMENT);
             if (!exists) {
                 pipelineData.addElement(SOURCE_ELEMENT);
@@ -132,7 +133,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private void buildCombinedData() throws PipelineModelException {
         // Merge pipeline data together.
-        List<PipelineData> combined;
+        final List<PipelineLayer> combined;
         if (baseStack != null) {
             combined = new ArrayList<>(baseStack.size() + 1);
         } else {
@@ -142,8 +143,8 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         if (baseStack != null) {
             combined.addAll(baseStack);
         }
-        if (pipelineData != null) {
-            combined.add(pipelineData);
+        if (pipelineLayer != null) {
+            combined.add(pipelineLayer);
         }
 
         final PipelineDataMerger pipelineDataMerger = new PipelineDataMerger();
@@ -163,7 +164,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public PipelineData diff() {
         final PipelineData result = new PipelineData();
 
-        if (pipelineData != null) {
+        if (pipelineLayer != null) {
+            final PipelineData pipelineData = pipelineLayer.getPipelineData();
+
             // Get a set of valid (used/linked) elements.
             final Set<String> validElements = new HashSet<>();
             for (final List<PipelineLink> list : combinedData.getLinks().values()) {
@@ -265,7 +268,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public List<PipelineElement> getRemovedElements() {
-        return pipelineData.getElements().getRemove();
+        return pipelineLayer.getPipelineData().getElements().getRemove();
     }
 
     private void refresh() {
@@ -306,9 +309,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public PipelineElement addElement(final PipelineElement parent,
                                       final PipelineElementType elementType,
                                       final String id) throws PipelineModelException {
-        PipelineElement element;
+        final PipelineElement element;
 
-        if (id == null || id.length() == 0) {
+        if (id == null || id.isEmpty()) {
             throw new PipelineModelException("No id has been set for this element");
         } else if (elementType == null) {
             throw new PipelineModelException("No element type has been chosen");
@@ -319,10 +322,12 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
                 throw new PipelineModelException("An element with this id already exists");
             }
 
+            final PipelineData pipelineData = pipelineLayer.getPipelineData();
             element = PipelineDataUtil.createElement(id, elementType.getType());
             if (pipelineData.getRemovedElements().contains(element)) {
                 throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
-                                                 "element. Restore the existing element if required or change the element id.");
+                                                 "element. Restore the existing element if required or change " +
+                                                 "the element id.");
             }
 
             pipelineData.addElement(element);
@@ -363,6 +368,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 //        debugLinks("LINKS 1", pipelineData.getLinks());
 //        debugLinks("LINKS 1", combinedData.getLinks());
 
+        final PipelineData pipelineData = pipelineLayer.getPipelineData();
         final String id = existingElement.getId();
 
         if (combinedData.getElements().containsKey(id)) {
@@ -421,6 +427,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public void removeElement(final PipelineElement element) throws PipelineModelException {
         final String id = element.getId();
 
+        final PipelineData pipelineData = pipelineLayer.getPipelineData();
         // Remove the element.
         pipelineData.removeElement(element);
         // Remove all links from/to this element.
@@ -462,16 +469,24 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return baseData;
     }
 
-    public void setBaseStack(final List<PipelineData> baseStack) {
+    public PipelineDataMerger getCombinedData() {
+        return combinedData;
+    }
+
+    public void setBaseStack(final List<PipelineLayer> baseStack) {
         this.baseStack = baseStack;
     }
 
-    public PipelineData getPipelineData() {
-        return pipelineData;
+    public PipelineLayer getPipelineLayer() {
+        return pipelineLayer;
     }
 
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
+    public void setPipelineLayer(final PipelineLayer pipelineLayer) {
+        this.pipelineLayer = pipelineLayer;
+    }
+
+    public PipelineData getPipelineData() {
+        return pipelineLayer.getPipelineData();
     }
 
 //    /**
@@ -510,9 +525,6 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
         return eventBus.addHandler(ChangeDataEvent.getType(), handler);
     }
-
-
-
 
 
     public Map<Category, List<PipelineElementType>> getElementTypesByCategory() {

@@ -66,23 +66,19 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
 
     @XmlElement(name = "element", required = true)
     @JsonProperty
-    protected String element;
+    private String element;
     @XmlElement(name = "name", required = true)
     @JsonProperty
-    protected String name;
+    private String name;
     @XmlElement(name = "pipeline", required = true)
     @JsonProperty
-    protected DocRef pipeline;
+    private DocRef pipeline;
     @XmlElement(name = "feed", required = true)
     @JsonProperty
-    protected DocRef feed;
+    private DocRef feed;
     @XmlElement(name = "streamType", required = true)
     @JsonProperty
-    protected String streamType;
-
-    @XmlTransient
-    @JsonProperty
-    private DocRef sourcePipeline;
+    private String streamType;
 
     @XmlTransient
     @JsonIgnore
@@ -93,7 +89,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
 
     public PipelineReference(final DocRef pipeline, final DocRef feed,
                              final String streamType) {
-        this(null, null, pipeline, feed, streamType, null);
+        this(null, null, pipeline, feed, streamType);
     }
 
     @JsonCreator
@@ -101,14 +97,12 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
                              @JsonProperty("name") final String name,
                              @JsonProperty("pipeline") final DocRef pipeline,
                              @JsonProperty("feed") final DocRef feed,
-                             @JsonProperty("streamType") final String streamType,
-                             @JsonProperty("sourcePipeline") final DocRef sourcePipeline) {
+                             @JsonProperty("streamType") final String streamType) {
         this.element = element;
         this.name = name;
         this.pipeline = pipeline;
         this.feed = feed;
         this.streamType = streamType;
-        this.sourcePipeline = sourcePipeline;
     }
 
     public String getElement() {
@@ -151,14 +145,6 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         this.streamType = value;
     }
 
-    public DocRef getSourcePipeline() {
-        return sourcePipeline;
-    }
-
-    public void setSourcePipeline(final DocRef sourcePipeline) {
-        this.sourcePipeline = sourcePipeline;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -169,10 +155,10 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         }
         final PipelineReference that = (PipelineReference) o;
         return Objects.equals(element, that.element) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(pipeline, that.pipeline) &&
-                Objects.equals(feed, that.feed) &&
-                Objects.equals(streamType, that.streamType);
+               Objects.equals(name, that.name) &&
+               Objects.equals(pipeline, that.pipeline) &&
+               Objects.equals(feed, that.feed) &&
+               Objects.equals(streamType, that.streamType);
     }
 
     @Override
@@ -197,12 +183,11 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
     @Override
     public String toString() {
         return "element=" + element + ", name=" + name + ", pipeline=" + pipeline + ", feed=" + feed + ", streamType="
-                + streamType;
+               + streamType;
     }
 
     @Override
     public void copyFrom(final PipelineReference other) {
-        this.sourcePipeline = other.sourcePipeline;
         this.element = other.element;
         this.name = other.name;
         this.pipeline = other.pipeline;

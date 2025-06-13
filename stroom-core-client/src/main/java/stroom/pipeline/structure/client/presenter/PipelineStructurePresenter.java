@@ -34,6 +34,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -160,7 +161,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
                     selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
 
-                    propertyListPresenter.setPipeline(pipelineDoc);
                     propertyListPresenter.setPipelineModel(pipelineModel);
                     propertyListPresenter.setCurrentElement(selectedElement);
 
@@ -209,10 +209,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                 restFactory
                         .create(PIPELINE_RESOURCE)
-                        .method(res -> res.fetchPipelineData(docRef))
+                        .method(res -> res.fetchPipelineLayers(docRef))
                         .onSuccess(result -> {
-                            final PipelineData pipelineData = result.get(result.size() - 1);
-                            final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+                            final PipelineLayer pipelineLayer = result.get(result.size() - 1);
+                            final List<PipelineLayer> baseStack = new ArrayList<>(result.size() - 1);
 
                             // If there is a stack of pipeline data then we need
                             // to make sure changes are reflected appropriately.
@@ -221,7 +221,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             }
 
                             try {
-                                pipelineModel.setPipelineData(pipelineData);
+                                pipelineModel.setPipelineLayer(pipelineLayer);
                                 pipelineModel.setBaseStack(baseStack);
                                 pipelineModel.build();
                                 pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
@@ -260,14 +260,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     public void onAdd(final ClickEvent event) {
-        if (addMenuItems != null && addMenuItems.size() > 0) {
+        if (addMenuItems != null && !addMenuItems.isEmpty()) {
             showMenu(event, addMenuItems);
         }
     }
 
     @Override
     public void onRestore(final ClickEvent event) {
-        if (restoreMenuItems != null && restoreMenuItems.size() > 0) {
+        if (restoreMenuItems != null && !restoreMenuItems.isEmpty()) {
             showMenu(event, restoreMenuItems);
         }
     }
@@ -298,14 +298,14 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 .priority(0)
                 .icon(SvgImage.ADD)
                 .text("Add")
-                .enabled(addMenuItems != null && addMenuItems.size() > 0)
+                .enabled(addMenuItems != null && !addMenuItems.isEmpty())
                 .children(addMenuItems)
                 .build());
         menuItems.add(new IconParentMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.UNDO)
                 .text("Restore")
-                .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
+                .enabled(restoreMenuItems != null && !restoreMenuItems.isEmpty())
                 .children(restoreMenuItems)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
@@ -351,7 +351,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         }
                     }
 
-                    if (children.size() > 0) {
+                    if (!children.isEmpty()) {
                         children.sort(new MenuItems.ItemComparator());
                         final Item parentItem = new IconParentMenuItem.Builder()
                                 .priority(category.getOrder())
@@ -371,7 +371,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private List<Item> getRestoreMenuItems() {
         final List<PipelineElement> existingElements = getExistingElements();
 
-        if (existingElements.size() == 0) {
+        if (existingElements.isEmpty()) {
             return null;
         }
 
@@ -546,8 +546,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             restoreMenuItems = null;
         }
 
-        getView().setAddEnabled(!isReadOnly() && addMenuItems != null && addMenuItems.size() > 0);
-        getView().setRestoreEnabled(!isReadOnly() && restoreMenuItems != null && restoreMenuItems.size() > 0);
+        getView().setAddEnabled(!isReadOnly() && addMenuItems != null && !addMenuItems.isEmpty());
+        getView().setRestoreEnabled(!isReadOnly() && restoreMenuItems != null && !restoreMenuItems.isEmpty());
         getView().setRemoveEnabled(!isReadOnly()
                                    && advancedMode
                                    && selectedElement != null
@@ -578,7 +578,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         } else {
             restFactory
                     .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineData(parentPipeline))
+                    .method(res -> res.fetchPipelineLayers(parentPipeline))
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);
 

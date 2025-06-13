@@ -31,9 +31,9 @@ import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
@@ -119,7 +119,7 @@ public class SteppingPresenter
     private boolean busyTranslating;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
-    private ButtonPanel leftButtons;
+    private final ButtonPanel leftButtons;
 
     private Meta meta;
     private String classification;
@@ -216,9 +216,8 @@ public class SteppingPresenter
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
-        registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
-            showChangeFiltersDialog();
-        }));
+        registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
+                showChangeFiltersDialog()));
         registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(terminateButton.addClickHandler(event -> terminate()));
         registerHandler(toggleLogPaneButton.addClickHandler(event -> {
@@ -454,12 +453,12 @@ public class SteppingPresenter
 
     private void updateToggleConsoleBtnVisibility(final Indicators indicators, final String elementId) {
         final Severity maxSeverity = NullSafe.get(indicators, Indicators::getMaxSeverity);
-        boolean isButtonVisible = maxSeverity != null;
+        final boolean isButtonVisible = maxSeverity != null;
 
         final ElementPresenter elementPresenter = NullSafe.get(elementId, elementPresenterMap::get);
-        boolean isLogPaneVisible = isButtonVisible
-                                   && elementPresenter != null
-                                   && elementPresenter.getDesiredLogPanVisibility();
+        final boolean isLogPaneVisible = isButtonVisible
+                                         && elementPresenter != null
+                                         && elementPresenter.getDesiredLogPanVisibility();
 
         setLogPaneVisibility(isLogPaneVisible);
 
@@ -547,10 +546,10 @@ public class SteppingPresenter
             // Load the pipeline.
             restFactory
                     .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineData(pipeline))
+                    .method(res -> res.fetchPipelineLayers(pipeline))
                     .onSuccess(result -> {
-                        final PipelineData pipelineData = result.get(result.size() - 1);
-                        final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+                        final PipelineLayer pipelineLayer = result.get(result.size() - 1);
+                        final List<PipelineLayer> baseStack = new ArrayList<>(result.size() - 1);
 
                         // If there is a stack of pipeline data then we need
                         // to make sure changes are reflected appropriately.
@@ -563,7 +562,7 @@ public class SteppingPresenter
                                 pipelineModel = new PipelineModel(elementTypes);
                                 pipelineTreePresenter.setModel(pipelineModel);
                             }
-                            pipelineModel.setPipelineData(pipelineData);
+                            pipelineModel.setPipelineLayer(pipelineLayer);
                             pipelineModel.setBaseStack(baseStack);
                             pipelineModel.build();
                             pipelineTreePresenter.getSelectionModel()
@@ -810,7 +809,7 @@ public class SteppingPresenter
             // Sync step filters.
             pipelineModel.setStepFilterMap(result.getStepFilterMap());
 
-            if (result.getGeneralErrors() != null && result.getGeneralErrors().size() > 0) {
+            if (result.getGeneralErrors() != null && !result.getGeneralErrors().isEmpty()) {
                 final StringBuilder sb = new StringBuilder();
                 for (final String err : result.getGeneralErrors()) {
                     sb.append(err);
