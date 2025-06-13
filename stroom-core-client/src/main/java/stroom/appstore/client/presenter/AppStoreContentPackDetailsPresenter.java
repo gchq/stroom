@@ -8,11 +8,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.widget.button.client.Button;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTML;
@@ -74,7 +74,7 @@ public class AppStoreContentPackDetailsPresenter
     private final Button btnCreateGitRepo = new Button();
 
     /** Checkbox to automatically pull on creation */
-    private final CheckBox chkPull = new CheckBox("Automatically Pull Content");
+    private final CustomCheckBox chkPull = new CustomCheckBox();
 
     /** Current content pack selected. Might be null */
     private AppStoreContentPack contentPack = null;
@@ -109,6 +109,7 @@ public class AppStoreContentPackDetailsPresenter
         pnlHorizontal.addStyleName("appstore-details");
 
         // Icon
+        lblIcon.addStyleName("appstore-details-icon");
         pnlHorizontal.add(lblIcon);
 
         // Everything else is in a vertical stack
@@ -147,6 +148,7 @@ public class AppStoreContentPackDetailsPresenter
         // Git details
         lnkGitUrl.setTarget(GIT_URL_TARGET);
         lnkGitUrl.setTitle(GIT_URL_TITLE);
+
         detailsTable.setHTML(5, 0, "Git URL:");
         detailsTable.setWidget(5, 1, lnkGitUrl);
         detailsTable.setHTML(6, 0, "Git branch:");
@@ -158,12 +160,14 @@ public class AppStoreContentPackDetailsPresenter
 
         // Details
         lblDetails.setWordWrap(true);
+        lblDetails.setStyleName("form-control-border");
         detailsTable.setHTML(9, 0, "Info:");
         detailsTable.setWidget(9, 1, lblDetails);
 
         // Buttons
         btnCreateGitRepo.setText("Install");
         btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
+        chkPull.setLabel("Automatically Pull Content");
         FlexTable buttonTable = new FlexTable();
         buttonTable.addStyleName("appstore-details-buttons");
         buttonTable.setWidget(0, 0, btnCreateGitRepo);

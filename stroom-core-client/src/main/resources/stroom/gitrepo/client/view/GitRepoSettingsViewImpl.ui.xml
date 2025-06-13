@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="gitRepoSettingsUrl" label="Git repository URL">
             <g:TextBox name="Repository URL"
@@ -35,12 +36,11 @@
                        ui:field="commit" />
         </form:FormGroup>
         <form:FormGroup identity="gitRemoteCommitName" label="Currently checked out commit">
-            <g:TextBox name="RemoteCommitName"
-                       title="The commit that is currently checked out"
-                       ui:field="gitRemoteCommitName" />
+            <g:Label title="The commit that is currently checked out"
+                     ui:field="gitRemoteCommitName" />
         </form:FormGroup>
         <form:FormGroup identity="gitRepoSettingsAutoPush" label="Automatically push">
-            <g:CheckBox name="AutoPush"
+            <tickbox:CustomCheckBox name="AutoPush"
                         title="Automatically push changes to the Git repository"
                         ui:field="autoPush" />
         </form:FormGroup>

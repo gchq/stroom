@@ -2502,7 +2502,7 @@ button.main-menu svg {
     font-weight: bold;
 }
 /* Set the SVG to 100x100px */
-.appstore-details svg {
+.appstore-details-icon svg {
     height: 100px;
     width: 100px;
     margin: 10px;
@@ -2516,14 +2516,13 @@ button.main-menu svg {
     width: 100%;
     padding-right: 15px;
 }
-/* The box that the markdown is displayed in */
+/* The box that the markdown is displayed in, based on .form-control-border */
 .appstore-details div.markdown {
-    border-style: solid;
-    border-width: 1px;
-    border-color: white;
-    padding: 4px;
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;padding: 4px;
     height: 200px;
-    overflow: auto;
+    overflow-y: auto;
 }
 /* Appstore Markdown - make it a bit smaller */
 .appstore-details .markdown {

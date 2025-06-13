@@ -114,22 +114,22 @@ public class AppStoreResourceImpl implements AppStoreResource {
             try {
                 URI uri = new URI(appStoreUrl);
                 InputStream istr = new BufferedInputStream(uri.toURL().openStream());
-                ContentPacks cps = mapper.readValue(istr, ContentPacks.class);
+                ContentStore cs = mapper.readValue(istr, ContentStore.class);
 
                 // Fill in any extra data needed by the content packs
-                List<AppStoreContentPack> listOfContentPacks = cps.getContentPacks();
+                List<AppStoreContentPack> listOfContentPacks = cs.getContentPacks();
                 for (var cp : listOfContentPacks) {
                     // Resolve icon link to SVG text
                     this.resolveSvgIcon(cp);
 
-                    // Add the content store owner's name
-                    cp.setContentStoreUiName(cps.getUiName());
+                    // Add the content store metadata
+                    cp.setContentStoreMetadata(cs.getMeta());
 
                     // Check if the content pack is already installed
                     cp.checkIfInstalled(installedGitRepoDocs);
                 }
 
-                LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cps);
+                LOGGER.info("Adding content packs from '{}' -> '{}'", appStoreUrl, cs);
                 contentPacks.addAll(listOfContentPacks);
 
             } catch (URISyntaxException | MalformedURLException e) {
