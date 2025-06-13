@@ -88,7 +88,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
                         final String feedName;
                         try {
                             feedName = request.getFeedName();
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             return new GetFeedStatusResponse(stroom.proxy.feed.remote.FeedStatus.Reject,
                                     e.getMessage(),
                                     StroomStatusCode.FEED_MUST_BE_SPECIFIED);

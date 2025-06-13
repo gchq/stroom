@@ -63,12 +63,18 @@ public class FeedExistenceAttributeMapFilter implements AttributeMapFilter {
                 attributeMap);
         final GetFeedStatusResponse response = getFeedStatus(request);
         final StroomStatusCode stroomStatusCode = response.getStroomStatusCode();
+        if (stroomStatusCode == StroomStatusCode.FEED_IS_NOT_DEFINED) {
+            LOGGER.debug("filter() - Throwing StroomStreamException for feed '{}', stroomStatusCode: {}",
+                    feedName, stroomStatusCode);
+            throw new StroomStreamException(stroomStatusCode, attributeMap);
+        }
         // Don't care what the feed status on the feed is
-        final boolean result = response.getStroomStatusCode() != StroomStatusCode.FEED_IS_NOT_DEFINED;
-
-        LOGGER.debug("filter() - Returning {} for feed '{}', stroomStatusCode: {}",
-                result, feedName, stroomStatusCode);
-        return result;
+        return true;
+//        final boolean result = response.getStroomStatusCode() != StroomStatusCode.FEED_IS_NOT_DEFINED;
+//
+//        LOGGER.debug("filter() - Returning {} for feed '{}', stroomStatusCode: {}",
+//                result, feedName, stroomStatusCode);
+//        return result;
     }
 
     private GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {

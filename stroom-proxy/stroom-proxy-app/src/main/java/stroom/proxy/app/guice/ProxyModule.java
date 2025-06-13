@@ -25,9 +25,12 @@ import stroom.proxy.app.Config;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
+import stroom.proxy.app.ReceiveDataRuleSetClient;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwarderModule;
+import stroom.proxy.app.handler.RemoteFeedStatusClient;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
@@ -93,7 +96,9 @@ public class ProxyModule extends AbstractModule {
                 .bind(FeedStatusResourceV2Impl.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
-                .bind(RemoteFeedStatusService.class);
+                .bind(ProxyApiKeyCheckClient.class)
+                .bind(ReceiveDataRuleSetClient.class)
+                .bind(RemoteFeedStatusClient.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

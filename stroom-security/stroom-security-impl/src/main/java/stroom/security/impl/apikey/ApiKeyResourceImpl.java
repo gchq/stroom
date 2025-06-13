@@ -17,6 +17,7 @@ import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.core.NoContentException;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -57,8 +58,8 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
             if (!didDelete) {
                 throw new RuntimeException("No API Key found with ID " + id);
             }
-            return didDelete;
-        } catch (Exception e) {
+            return true;
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error deleting API key with ID {}: {}",
                     id, LogUtil.exceptionMessage(e)));
             throw e;
@@ -87,9 +88,26 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     }
 
     @Override
-    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) throws NoContentException {
+        LOGGER.debug("verifyApiKey() - request: {}", request);
         Objects.requireNonNull(request);
-        return apiKeyServiceProvider.get().verifyApiKey(request)
+        // Null return is mapped to 204 status
+        final UserDesc userDesc = apiKeyServiceProvider.get().verifyApiKey(request)
                 .orElse(null);
+        LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
+        return userDesc;
+
+//        LOGGER.debug("verifyApiKey() - request: {}", request);
+//        Objects.requireNonNull(request);
+//        final Optional<UserDesc> optUserDesc = apiKeyServiceProvider.get().verifyApiKey(request);
+//        if (optUserDesc.isPresent()) {
+//            final UserDesc userDesc = optUserDesc.get();
+//            LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
+//            return optUserDesc.get();
+//        } else {
+//            LOGGER.debug("verifyApiKey() - Not found, request: {}", request);
+//            throw new NoContentException(LogUtil.message("No valid API key exists with the permissions {}.",
+//                    request.getRequiredAppPermissions()));
+//        }
     }
 }

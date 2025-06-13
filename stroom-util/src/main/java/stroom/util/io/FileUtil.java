@@ -379,7 +379,7 @@ public final class FileUtil {
             work.run();
 
             LOGGER.debug("Work complete, releasing lock");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
         }
     }
@@ -402,7 +402,7 @@ public final class FileUtil {
                     Duration.between(start, Instant.now())));
 
             // Do the work while under the lock
-            T result = work.get();
+            final T result = work.get();
 
             LOGGER.debug("Work complete, releasing lock");
             return result;

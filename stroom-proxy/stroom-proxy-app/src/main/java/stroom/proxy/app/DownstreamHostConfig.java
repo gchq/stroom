@@ -17,6 +17,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+/**
+ * Configuration for the downstream (in datafeed flow terms) stroom/stroom-proxy instance.
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
 
@@ -32,7 +35,9 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     public static final String DEFAULT_SCHEME = "https";
     public static final String PROP_NAME_API_KEY_VERIFICATION_URL = "apiKeyVerificationUrl";
     public static final String PROP_NAME_VERIFIED_KEYS_CACHE = "verifiedApiKeysCache";
+    public static final boolean DEFAULT_ENABLED = true;
 
+    private final boolean enabled;
     private final String apiKey;
     private final String apiKeyVerificationUrl;
     private final HashAlgorithm persistedKeysHashAlgorithm;
@@ -42,6 +47,7 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
 
     public DownstreamHostConfig() {
         super(DEFAULT_SCHEME, null, null, null);
+        this.enabled = DEFAULT_ENABLED;
         this.apiKey = null;
         this.apiKeyVerificationUrl = null;
         this.persistedKeysHashAlgorithm = DEFAULT_HASH_ALGORITHM;
@@ -52,6 +58,7 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
 
     @JsonCreator
     public DownstreamHostConfig(
+            @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty(UriConfig.PROP_NAME_SCHEME) final String scheme,
             @JsonProperty(UriConfig.PROP_NAME_HOSTNAME) final String hostname,
             @JsonProperty(UriConfig.PROP_NAME_PORT) final Integer port,
@@ -67,6 +74,7 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
                 Objects.requireNonNull(hostname),
                 port,
                 pathPrefix);
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.apiKey = apiKey;
         this.apiKeyVerificationUrl = apiKeyVerificationUrl;
         this.persistedKeysHashAlgorithm = Objects.requireNonNullElse(
@@ -75,6 +83,14 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
         this.maxPersistedKeyAge = Objects.requireNonNullElse(maxPersistedKeyAge, DEFAULT_MAX_PERSISTED_KEY_AGE);
         this.noFetchIntervalAfterFailure = Objects.requireNonNullElse(
                 noFetchIntervalAfterFailure, DEFAULT_NO_FETCH_INTERVAL);
+    }
+
+    @JsonPropertyDescription("Whether this stroom-proxy has a downstream stroom/stroom-proxy instance " +
+                             "to use for feed/API key/receipt poliocy checking. If this proxy is just used " +
+                             "to forward to file only then set to false.")
+    @JsonProperty("enabled")
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override
@@ -140,9 +156,43 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     }
 
     @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        if (!super.equals(object)) {
+            return false;
+        }
+        final DownstreamHostConfig that = (DownstreamHostConfig) object;
+        return enabled == that.enabled && Objects.equals(apiKey, that.apiKey) && Objects.equals(
+                apiKeyVerificationUrl,
+                that.apiKeyVerificationUrl) && persistedKeysHashAlgorithm == that.persistedKeysHashAlgorithm && Objects.equals(
+                maxCachedKeyAge,
+                that.maxCachedKeyAge) && Objects.equals(maxPersistedKeyAge,
+                that.maxPersistedKeyAge) && Objects.equals(noFetchIntervalAfterFailure,
+                that.noFetchIntervalAfterFailure);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(),
+                enabled,
+                apiKey,
+                apiKeyVerificationUrl,
+                persistedKeysHashAlgorithm,
+                maxCachedKeyAge,
+                maxPersistedKeyAge,
+                noFetchIntervalAfterFailure);
+    }
+
+    @Override
     public String toString() {
         return "DownstreamHostConfig{" +
-               "apiKey='" + apiKey + '\'' +
+               "enabled=" + enabled +
+               ", apiKey='" + apiKey + '\'' +
                ", apiKeyVerificationUrl='" + apiKeyVerificationUrl + '\'' +
                ", persistedKeysHashAlgorithm=" + persistedKeysHashAlgorithm +
                ", maxCachedKeyAge=" + maxCachedKeyAge +

@@ -112,7 +112,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         securityContext.asProcessingUser(() -> {
             final Instant receivedTime = Instant.now();
-            final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
             final UniqueId receiptId = receiptIdGenerator.generateId();
             final AttributeMap attributeMap = AttributeMapUtil.create(
                     request,
@@ -126,6 +125,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
             // Get the type name from the header arguments if supplied.
             final String typeName = NullSafe.string(attributeMap.get(StandardHeaderArguments.TYPE));
+            final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             try {
                 if (attributeMapFilter.filter(attributeMap)) {

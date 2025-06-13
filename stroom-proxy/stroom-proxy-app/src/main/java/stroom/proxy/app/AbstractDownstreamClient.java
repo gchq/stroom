@@ -30,7 +30,6 @@ public abstract class AbstractDownstreamClient {
     protected final JerseyClientFactory jerseyClientFactory;
     protected final UserIdentityFactory userIdentityFactory;
     protected final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
-//    private final Provider<ProxyApiKeyService> proxyApiKeyServiceProvider;
 
 
     public AbstractDownstreamClient(final JerseyClientFactory jerseyClientFactory,
@@ -39,7 +38,6 @@ public abstract class AbstractDownstreamClient {
         this.jerseyClientFactory = jerseyClientFactory;
         this.userIdentityFactory = userIdentityFactory;
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
-//        this.proxyApiKeyServiceProvider = proxyApiKeyServiceProvider;
     }
 
     /**
@@ -51,6 +49,10 @@ public abstract class AbstractDownstreamClient {
      * @return The default path part for the resource, e.g. /api/blah/blah
      */
     protected abstract String getDefaultPath();
+
+    public boolean isDownstreamEnabled() {
+        return downstreamHostConfigProvider.get().isEnabled();
+    }
 
     public String getFullUrl() {
         // This allows a full url to be explicitly configured, else we just combine the default path
@@ -90,15 +92,6 @@ public abstract class AbstractDownstreamClient {
             // and add it to config.
             LOGGER.debug(() -> LogUtil.message("getAuthHeaders() - Using API key from config prop {}",
                     downstreamHostConfig.getFullPathStr(DownstreamHostConfig.PROP_NAME_API_KEY)));
-            // Make sure the API key is valid
-//            proxyApiKeyServiceProvider.get()
-//                    .verifyApiKey(new VerifyApiKeyRequest(apiKey))
-//                    .map(userDesc -> new ApiKeyUserIdentity(apiKey, userDesc))
-//                    .orElseThrow(() -> {
-//                        final String prefix = ApiKeyGenerator.extractPrefixPart(apiKey);
-//                        return new AuthenticationException(LogUtil.message(
-//                                "API Key with prefix '{}' is not valid.", prefix));
-//                    });
             headers = userIdentityFactory.getAuthHeaders(apiKey);
         } else {
             LOGGER.debug("getAuthHeaders() - Adding service user token to headers");

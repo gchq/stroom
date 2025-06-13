@@ -2,15 +2,19 @@ package stroom.proxy.app;
 
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.security.api.UserIdentityFactory;
+import stroom.util.HasHealthCheck;
+import stroom.util.HealthCheckUtils;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import com.codahale.metrics.health.HealthCheck.Result;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.SyncInvoker;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.Response.StatusType;
@@ -20,7 +24,7 @@ import java.util.Optional;
 /**
  * Separate the rest call from {@link RemoteReceiveDataRuleSetServiceImpl} to make testing easier
  */
-public class ReceiveDataRuleSetClient extends AbstractDownstreamClient {
+public class ReceiveDataRuleSetClient extends AbstractDownstreamClient implements HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRuleSetClient.class);
 
@@ -51,7 +55,7 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient {
         final String url = getFullUrl();
         if (NullSafe.isNonBlankString(url)) {
             try {
-                try (Response response = getResponse(Builder::get)) {
+                try (final Response response = getResponse(Builder::get)) {
                     final StatusType statusInfo = response.getStatusInfo();
                     if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
                         LOGGER.error("Error fetching receive data rules using url '{}', " +
@@ -64,12 +68,10 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient {
                                 optHashedReceiveDataRules);
                     }
                 }
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 final String fullUrl = getFullUrl();
-                LOGGER.error("Error fetching receive data rules using url '{}': {}. (Enable debug for stack trace)",
+                LOGGER.errorAndDebug(e, "Error fetching receive data rules using url '{}': {}",
                         fullUrl, LogUtil.exceptionMessage(e));
-                LOGGER.debug("Error fetching receive data rules using url '{}': {}",
-                        fullUrl, LogUtil.exceptionMessage(e), e);
             }
         } else {
             LOGGER.warn("No url configured for receipt policy rules.");
@@ -78,4 +80,20 @@ public class ReceiveDataRuleSetClient extends AbstractDownstreamClient {
         return optHashedReceiveDataRules;
     }
 
+    @Override
+    public Result getHealth() {
+        LOGGER.debug("getHealth() called");
+        if (!isDownstreamEnabled()) {
+            return HealthCheckUtils.healthy("Downstream host disabled");
+        } else {
+            try {
+                try (final Response response = getResponse(SyncInvoker::get)) {
+                    return HealthCheckUtils.fromResponse(response)
+                            .build();
+                }
+            } catch (final Throwable e) {
+                return Result.unhealthy(e);
+            }
+        }
+    }
 }

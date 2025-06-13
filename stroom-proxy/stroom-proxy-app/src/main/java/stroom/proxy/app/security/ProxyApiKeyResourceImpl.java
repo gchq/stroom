@@ -1,6 +1,5 @@
 package stroom.proxy.app.security;
 
-import stroom.security.api.UserIdentity;
 import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -8,8 +7,9 @@ import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.core.NoContentException;
 
-import java.util.Optional;
+import java.util.Objects;
 
 public class ProxyApiKeyResourceImpl implements ProxyApiKeyResource {
 
@@ -23,16 +23,13 @@ public class ProxyApiKeyResourceImpl implements ProxyApiKeyResource {
     }
 
     @Override
-    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) throws NoContentException {
         LOGGER.debug("verifyApiKey() - request: {}", request);
+        Objects.requireNonNull(request);
+        // Null return is mapped to 204 status
         final UserDesc userDesc = proxyApiKeyServiceProvider.get().verifyApiKey(request)
                 .orElse(null);
-        LOGGER.debug("verifyApiKey() - returning: {}", userDesc);
+        LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
         return userDesc;
-    }
-
-    @Override
-    public Optional<UserIdentity> verifyIdentity(final String apiKey) {
-        return proxyApiKeyServiceProvider.get().verifyIdentity(apiKey);
     }
 }

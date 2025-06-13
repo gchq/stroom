@@ -48,9 +48,13 @@ public interface LambdaLogger extends Logger {
     void error(Supplier<String> message, Throwable t);
 
     /**
-     * Logs to ERROR using args but NOT including throwable. " (Enable debug for stack trace)" is
-     * appended to the end of message. Also logs to DEBUG using args AND throwable so DEBUG gets
-     * the full stack trace.
+     * Logs to ERROR using args but NOT including throwable.
+     * <p>
+     * {@code " (Enable debug for stack trace)"} is appended to the end of message.
+     * </p>
+     * <p>
+     * Also logs to DEBUG using args AND throwable so DEBUG gets the full stack trace.
+     * </p>
      *
      * @param message   The message to log. " (Enable debug for stack trace)" will be appended to the
      *                  end of message for the ERROR log.
