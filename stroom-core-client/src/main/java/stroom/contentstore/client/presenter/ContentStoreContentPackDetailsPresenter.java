@@ -73,9 +73,6 @@ public class ContentStoreContentPackDetailsPresenter
     /** Button to create the GitRepo */
     private final Button btnCreateGitRepo = new Button();
 
-    /** Checkbox to automatically pull on creation */
-    private final CustomCheckBox chkPull = new CustomCheckBox();
-
     /** Current content pack selected. Might be null */
     private ContentStoreContentPack contentPack = null;
 
@@ -128,54 +125,50 @@ public class ContentStoreContentPackDetailsPresenter
         detailsFormatter.setColSpan(0, 0, 2);
         detailsFormatter.setHorizontalAlignment(0, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
 
+        // Details
+        lblDetails.setWordWrap(true);
+        detailsFormatter.setColSpan(1, 0, 2);
+        detailsTable.setWidget(1, 0, lblDetails);
+
+        // Install button
+        btnCreateGitRepo.setText("Install");
+        btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
+        detailsFormatter.setColSpan(2, 0, 2);
+        detailsFormatter.setHorizontalAlignment(2, 0, HasAutoHorizontalAlignment.ALIGN_CENTER);
+        detailsTable.setWidget(2, 0, btnCreateGitRepo);
+
         // Whether installed
-        detailsTable.setHTML(1, 0, "Installed status:");
-        detailsTable.setWidget(1, 1, lblIsInstalled);
+        detailsTable.setHTML(3, 0, "Installed status:");
+        detailsTable.setWidget(3, 1, lblIsInstalled);
 
         // License
-        detailsTable.setHTML(2, 0, "License:");
-        detailsTable.setWidget(2, 1, lblLicense);
+        detailsTable.setHTML(4, 0, "License:");
+        detailsTable.setWidget(4, 1, lblLicense);
 
         lnkLicense.setTarget(LICENCE_URL_TARGET);
         lnkLicense.setTitle(LICENCE_URL_TITLE);
-        detailsTable.setHTML(3, 0, "License details:");
-        detailsTable.setWidget(3, 1, lnkLicense);
+        detailsTable.setHTML(5, 0, "License details:");
+        detailsTable.setWidget(5, 1, lnkLicense);
 
         // Installed location
-        detailsTable.setHTML(4, 0, "Installed location:");
-        detailsTable.setWidget(4, 1, lblStroomPath);
+        detailsTable.setHTML(6, 0, "Installed location:");
+        detailsTable.setWidget(6, 1, lblStroomPath);
 
         // Git details
         lnkGitUrl.setTarget(GIT_URL_TARGET);
         lnkGitUrl.setTitle(GIT_URL_TITLE);
 
-        detailsTable.setHTML(5, 0, "Git URL:");
-        detailsTable.setWidget(5, 1, lnkGitUrl);
-        detailsTable.setHTML(6, 0, "Git branch:");
-        detailsTable.setWidget(6, 1, lblGitBranch);
-        detailsTable.setHTML(7, 0, "Git path:");
-        detailsTable.setWidget(7, 1, lblGitPath);
-        detailsTable.setHTML(8, 0, "Git commit:");
-        detailsTable.setWidget(8, 1, lblGitCommit);
-
-        // Details
-        lblDetails.setWordWrap(true);
-        lblDetails.setStyleName("form-control-border");
-        detailsTable.setHTML(9, 0, "Info:");
-        detailsTable.setWidget(9, 1, lblDetails);
-
-        // Buttons
-        btnCreateGitRepo.setText("Install");
-        btnCreateGitRepo.addClickHandler(event -> btnCreateGitRepoClick());
-        chkPull.setLabel("Automatically Pull Content");
-        FlexTable buttonTable = new FlexTable();
-        buttonTable.addStyleName("contentstore-details-buttons");
-        buttonTable.setWidget(0, 0, btnCreateGitRepo);
-        buttonTable.setWidget(0, 1, chkPull);
+        detailsTable.setHTML(7, 0, "Git URL:");
+        detailsTable.setWidget(7, 1, lnkGitUrl);
+        detailsTable.setHTML(8, 0, "Git branch:");
+        detailsTable.setWidget(8, 1, lblGitBranch);
+        detailsTable.setHTML(9, 0, "Git path:");
+        detailsTable.setWidget(9, 1, lblGitPath);
+        detailsTable.setHTML(10, 0, "Git commit:");
+        detailsTable.setWidget(10, 1, lblGitCommit);
 
         // Add the panels into the structure
         pnlVertical.add(detailsTable);
-        pnlVertical.add(buttonTable);
 
         // Add everything to the presenter's panel
         this.add(pnlHorizontal);
@@ -271,24 +264,12 @@ public class ContentStoreContentPackDetailsPresenter
         if (contentPack != null) {
             if (contentPack.isInstalled()) {
                 btnCreateGitRepo.setEnabled(false);
-                chkPull.setEnabled(false);
             } else {
                 btnCreateGitRepo.setEnabled(true);
-
-                // Only enable the autopull button if the
-                // repo doesn't need authentication
-                if (contentPack.getGitNeedsAuth()) {
-                    chkPull.setEnabled(false);
-                    chkPull.setValue(false);
-                } else {
-                    chkPull.setEnabled(true);
-                    chkPull.setValue(true);
-                }
             }
 
         } else {
             btnCreateGitRepo.setEnabled(false);
-            chkPull.setEnabled(false);
         }
     }
 
@@ -298,10 +279,11 @@ public class ContentStoreContentPackDetailsPresenter
     private void btnCreateGitRepoClick() {
         if (contentPack != null) {
 
-            // Only enable autoPull if widget is enabled and checked
-            boolean autoPull = chkPull.isEnabled() && chkPull.getValue();
+            // TODO Ask for credentials if (contentPack.getGitNeedsAuth())
             ContentStoreCreateGitRepoRequest request =
-                    new ContentStoreCreateGitRepoRequest(contentPack, autoPull);
+                    new ContentStoreCreateGitRepoRequest(contentPack,
+                            "",
+                            "");
 
             restFactory
                     .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)

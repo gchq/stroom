@@ -20,7 +20,8 @@ import java.util.Objects;
 )
 @JsonPropertyOrder({
         "contentPack",
-        "autoPull"
+        "username",
+        "password"
 })
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreCreateGitRepoRequest {
@@ -29,23 +30,26 @@ public class ContentStoreCreateGitRepoRequest {
     private final ContentStoreContentPack contentPack;
 
     @JsonProperty
-    private final Boolean autoPull;
+    private final String username;
+
+    @JsonProperty
+    private final String password;
 
     /**
      * Constructor for content pack. Called by JSON serialisation system.
      * @param contentPack The content pack to create the GitRepoDoc from.
      *                    Must never be null.
-     * @param autoPull Whether to automatically pull the content after the
-     *                 GitRepoDoc has been created. Can be null in which case
-     *                 FALSE is assumed.
      */
     @JsonCreator
     @SuppressWarnings("unused")
     public ContentStoreCreateGitRepoRequest(@JsonProperty("contentPack") final ContentStoreContentPack contentPack,
-                                            @JsonProperty("autoPull") final Boolean autoPull) {
+                                            @JsonProperty("username") final String username,
+                                            @JsonProperty("password") final String password) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
-        this.autoPull = autoPull == null ? Boolean.FALSE : autoPull;
+        boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
+        this.username = gitNeedsAuth && username != null ? username : "";
+        this.password = gitNeedsAuth && password != null ? password : "";
     }
 
     /**
@@ -56,10 +60,18 @@ public class ContentStoreCreateGitRepoRequest {
     }
 
     /**
-     * @return Whether to automatically pull content when the GitRepoDoc is
-     * created. Never returns null.
+     * @return The username, if getGitNeedsAuth() returns true.
+     * Never returns null but may return empty string.
      */
-    public Boolean getAutoPull() {
-        return autoPull;
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * @return The password, if getGitNeedsAuth() returns true.
+     * Never returns null but may return empty string.
+     */
+    public String getPassword() {
+        return password;
     }
 }
