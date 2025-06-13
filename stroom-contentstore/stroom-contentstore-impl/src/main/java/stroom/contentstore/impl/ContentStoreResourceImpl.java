@@ -17,6 +17,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.contentstore.shared.ContentStoreResource;
+import stroom.util.shared.Severity;
 import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -236,14 +237,20 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 DocRef docRef = gitRepoNode.getDocRef();
                 GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
                 contentPack.updateSettingsIn(gitRepoDoc);
+
+                // Add credentials if necessary
+                if (contentPack.getGitNeedsAuth()) {
+                    messages.add(new Message(Severity.INFO, "Adding credentials for pull"));
+                    gitRepoDoc.setUsername(createGitRepoRequest.getUsername());
+                    gitRepoDoc.setPassword(createGitRepoRequest.getPassword());
+                }
+
+                // Write doc to DB
                 gitRepoStore.writeDocument(gitRepoDoc);
 
-                // Pull if necessary
-                if (createGitRepoRequest.getAutoPull()) {
-                    // Do the pull
-                    List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
-                    messages.addAll(pullMessages);
-                }
+                // Do the pull
+                List<Message> pullMessages = gitRepoStorageService.importDoc(gitRepoDoc);
+                messages.addAll(pullMessages);
 
                 // Tell the user it worked
                 response = this.createOkResponse(contentPack, messages);

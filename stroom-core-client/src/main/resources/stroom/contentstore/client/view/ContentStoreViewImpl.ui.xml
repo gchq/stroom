@@ -9,7 +9,7 @@
                 <g:SimplePanel ui:field="contentPackList" styleName="max dashboard-panel"/>
             </g:north>
             <g:center>
-                <g:SimplePanel ui:field="contentPackDetails" styleName="max dashboard-panel appstore-scroll-y"/>
+                <g:SimplePanel ui:field="contentPackDetails" styleName="max dashboard-panel contentstore-scroll-y"/>
             </g:center>
         </g:ThinSplitLayoutPanel>
     </g:SimplePanel>
