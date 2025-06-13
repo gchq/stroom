@@ -75,6 +75,7 @@ public class ZipReceiver implements Receiver {
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
+    //    private final CommonSecurityContext commonSecurityContext;
     private final ZipSplitter zipSplitter;
     private final LogStream logStream;
     private Consumer<Path> destination;
@@ -82,9 +83,11 @@ public class ZipReceiver implements Receiver {
     @Inject
     public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                        final DataDirProvider dataDirProvider,
+//                       final CommonSecurityContext commonSecurityContext,
                        final LogStream logStream,
                        final ZipSplitter zipSplitter) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
+//        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.zipSplitter = zipSplitter;
 
@@ -118,7 +121,6 @@ public class ZipReceiver implements Receiver {
                         final AttributeMap attributeMap,
                         final String requestUri,
                         final InputStreamSupplier inputStreamSupplier) {
-
         final Path receivingDir;
         final ReceiveResult receiveResult;
         try {
@@ -149,33 +151,7 @@ public class ZipReceiver implements Receiver {
 
             // Only keep data for allowed feeds.
             if (!allowedEntries.isEmpty()) {
-                // Write out the allowed entries so the destination knows which entries are in the zip
-                // that are allowed to be used, i.e. so zipSplitter can drop zip entries that have no
-                // corresponding entry in the entries file
-                writeZipEntryGroups(fileGroup.getEntries(), allowedEntries);
-
-                // If the data we received was for a perfectly formed zip file with data for a single feed then don't
-                // bother to rewrite it in the zipSplitter.
-                final int feedGroupCount = receiveResult.feedGroups.size();
-                if (receiveResult.valid && feedGroupCount == 1) {
-                    final FeedKey feedKey = allowedEntries.keySet().iterator().next();
-
-                    // Write meta. Single feed/type so add them to the attr map
-                    AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
-                    AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-
-                    // Move receiving dir to destination.
-                    LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
-                    destination.accept(receivingDir);
-                } else {
-                    // We have more than one feed in the source zip so split the source into a zip file for each feed.
-                    // Before we can queue the zip for splitting we need to serialise the attr map, so it is
-                    // available for the split process.
-                    AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
-                    LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",
-                            receivingDir, receiveResult.valid, feedGroupCount));
-                    zipSplitter.add(receivingDir);
-                }
+                processAllowedEntries(attributeMap, fileGroup, allowedEntries, receiveResult, receivingDir);
             } else {
                 LOGGER.debug("No allowed feedKeys, all are dropped");
                 // Delete the source zip.
@@ -196,6 +172,40 @@ public class ZipReceiver implements Receiver {
                 attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
                 receiveResult.receivedBytes,
                 duration.toMillis());
+    }
+
+    private void processAllowedEntries(final AttributeMap attributeMap,
+                                       final FileGroup fileGroup,
+                                       final Map<FeedKey, List<ZipEntryGroup>> allowedEntries,
+                                       final ReceiveResult receiveResult,
+                                       final Path receivingDir) throws IOException {
+        // Write out the allowed entries so the destination knows which entries are in the zip
+        // that are allowed to be used, i.e. so zipSplitter can drop zip entries that have no
+        // corresponding entry in the entries file
+        writeZipEntryGroups(fileGroup.getEntries(), allowedEntries);
+
+        // If the data we received was for a perfectly formed zip file with data for a single feed then don't
+        // bother to rewrite it in the zipSplitter.
+        final int feedGroupCount = receiveResult.feedGroups.size();
+        if (receiveResult.valid && feedGroupCount == 1) {
+            final FeedKey feedKey = allowedEntries.keySet().iterator().next();
+
+            // Write meta. Single feed/type so add them to the attr map
+            AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
+            AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
+
+            // Move receiving dir to destination.
+            LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
+            destination.accept(receivingDir);
+        } else {
+            // We have more than one feed in the source zip so split the source into a zip file for each feed.
+            // Before we can queue the zip for splitting we need to serialise the attr map, so it is
+            // available for the split process.
+            AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
+            LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",
+                    receivingDir, receiveResult.valid, feedGroupCount));
+            zipSplitter.add(receivingDir);
+        }
     }
 
     private Map<FeedKey, List<ZipEntryGroup>> filterAllowedEntries(final AttributeMap attributeMap,

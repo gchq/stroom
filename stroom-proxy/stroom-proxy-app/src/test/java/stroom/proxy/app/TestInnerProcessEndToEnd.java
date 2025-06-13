@@ -15,7 +15,6 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.ReceiveDataConfig.ReceiptCheckMode;
 import stroom.security.api.CommonSecurityContext;
-import stroom.security.mock.MockCommonSecurityContext;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -31,6 +30,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -54,7 +54,8 @@ class TestInnerProcessEndToEnd {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
 
-    private final CommonSecurityContext commonSecurityContext = new MockCommonSecurityContext();
+    @Inject
+    private CommonSecurityContext commonSecurityContext;
 
     @Test
     void testSimple() {

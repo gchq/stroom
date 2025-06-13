@@ -8,8 +8,8 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug" />
-    <logger name="stroom.proxy.app" level="debug" />
+    <logger name="stroom" level="info" />
+    <logger name="stroom.proxy.app" level="info" />
 <!--    <logger name="stroom.proxy.repo;" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler" level="debug" />-->
 <!--    <logger name="stroom.proxy.app.handler.DirUtil" level="debug" />-->

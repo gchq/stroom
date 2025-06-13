@@ -66,7 +66,7 @@ public class FeedExistenceAttributeMapFilter implements AttributeMapFilter {
         // Don't care what the feed status on the feed is
         final boolean result = response.getStroomStatusCode() != StroomStatusCode.FEED_IS_NOT_DEFINED;
 
-        LOGGER.debug("Returning {} for feed '{}', stroomStatusCode: {}",
+        LOGGER.debug("filter() - Returning {} for feed '{}', stroomStatusCode: {}",
                 result, feedName, stroomStatusCode);
         return result;
     }

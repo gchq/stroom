@@ -158,7 +158,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
         final boolean hasUrl = NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl());
         if (!hasUrl) {
-            LOGGER.warn("Feed status check requested but property '{}' not configured.",
+            LOGGER.debug("Feed status check requested but property '{}' not configured.",
                     feedStatusConfig.getFullPath(FeedStatusConfig.PROP_NAME_URL));
         }
         return hasUrl;
