@@ -651,7 +651,7 @@ tasks.register('downloadSend', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = System.getEnv('GITHUB_TOKEN')
+    def token = System.getenv('GITHUB_TOKEN')
     if (token != null && !token.isEmpty()) {
         // Don't log the actual token obvs
         println "Adding auth token for ${src}"
@@ -666,7 +666,7 @@ tasks.register('downloadSendArgs', Download) {
 
     // Github rate limits unless you authenticate so use the special
     // auto generated workflow GITHUB_TOKEN
-    def token = System.getEnv('GITHUB_TOKEN')
+    def token = System.getenv('GITHUB_TOKEN')
     if (token != null && !token.isEmpty()) {
         // Don't log the actual token obvs
         println "Adding auth token for ${src}"
