@@ -158,8 +158,8 @@ class GitRepoResourceImpl implements GitRepoResource {
      */
     private GitRepoResponse createResponse(final List<Message> messages) {
         Objects.requireNonNull(messages);
-        final var buf = new StringBuilder("Success:\n");
-        for (final var m : messages) {
+        final StringBuilder buf = new StringBuilder("Success:\n");
+        for (final Message m : messages) {
             buf.append(m);
             buf.append("\n");
         }

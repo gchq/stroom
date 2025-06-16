@@ -1,5 +1,6 @@
 package stroom.gitrepo.impl;
 
+import stroom.docref.DocRef;
 import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
@@ -10,6 +11,7 @@ import stroom.util.shared.EntityServiceException;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Runs the job to automatically push stuff to
@@ -63,8 +65,8 @@ public class GitRepoPushExecutor {
         LOGGER.info(() -> TASK_NAME + " Running");
 
         // Get all the GitRepoDoc instances and push them
-        final var docRefs = gitRepoStore.list();
-        for (final var docRef : docRefs) {
+        final List<DocRef> docRefs = gitRepoStore.list();
+        for (final DocRef docRef : docRefs) {
             final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(docRef);
 
             if (gitRepoDoc.isAutoPush()) {

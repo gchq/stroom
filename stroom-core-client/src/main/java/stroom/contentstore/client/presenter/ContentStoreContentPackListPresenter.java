@@ -85,7 +85,7 @@ public class ContentStoreContentPackListPresenter
                     if (gridSelectionModel.getSelected() == null
                         && dataGrid.getRowCount() > 0) {
                         // Nothing selected and we've got data so set something selected
-                        var cp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                        ContentStoreContentPack cp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                         gridSelectionModel.setSelected(cp);
                     }
                 }

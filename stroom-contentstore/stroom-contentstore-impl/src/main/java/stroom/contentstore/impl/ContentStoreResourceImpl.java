@@ -95,7 +95,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         // Pull out the existing GitRepos so we know what exists
         List<DocRef> existingDocRefs = gitRepoStore.list();
         ArrayList<GitRepoDoc> installedGitRepoDocs = new ArrayList<>(existingDocRefs.size());
-        for (var docRef : existingDocRefs) {
+        for (DocRef docRef : existingDocRefs) {
             // Not sure if store can return null, but handle it just in case...
             GitRepoDoc doc = gitRepoStore.readDocument(docRef);
             if (doc != null) {
@@ -119,7 +119,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
                 // Fill in any extra data needed by the content packs
                 List<ContentStoreContentPack> listOfContentPacks = cs.getContentPacks();
-                for (var cp : listOfContentPacks) {
+                for (ContentStoreContentPack cp : listOfContentPacks) {
                     // Resolve icon link to SVG text
                     this.resolveSvgIcon(cp);
 
@@ -194,7 +194,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     @Override
     public boolean exists(ContentStoreContentPack contentPack) {
         List<DocRef> existingDocRefs = gitRepoStore.list();
-        for (var existingDocRef : existingDocRefs) {
+        for (DocRef existingDocRef : existingDocRefs) {
             GitRepoDoc existingGitRepoDoc = gitRepoStore.readDocument(existingDocRef);
             if (contentPack.matches(existingGitRepoDoc)) {
                 return true;
@@ -281,10 +281,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             ContentStoreContentPack cp,
             List<Message> messages) {
 
-        var buf = new StringBuilder("Created '");
+        StringBuilder buf = new StringBuilder("Created '");
         buf.append(cp.getUiName());
         buf.append("'\n");
-        for (var m : messages) {
+        for (Message m : messages) {
             buf.append('\n');
             buf.append(m);
         }
@@ -305,14 +305,14 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             List<Message> messages,
             Exception cause) {
 
-        var buf = new StringBuilder(errorMessage);
+        StringBuilder buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
             buf.append(cause.getMessage());
         }
         if (!messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
-            for (var m : messages) {
+            for (Message m : messages) {
                 buf.append("\n    ");
                 buf.append(m);
             }
