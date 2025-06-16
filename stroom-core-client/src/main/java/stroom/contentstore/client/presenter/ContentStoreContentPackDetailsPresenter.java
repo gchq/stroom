@@ -8,6 +8,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.widget.button.client.Button;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -35,6 +36,9 @@ public class ContentStoreContentPackDetailsPresenter
 
     /** Connection to the server */
     private final RestFactory restFactory;
+
+    /** Credentials dialog */
+    private final ContentStoreCredentialsDialogPresenter credentialsDialog;
 
     /** Displays the icon of the content pack */
     private final HTML lblIcon = new HTML();
@@ -95,13 +99,15 @@ public class ContentStoreContentPackDetailsPresenter
      */
     @SuppressWarnings("unused")
     @Inject
-    public ContentStoreContentPackDetailsPresenter(MarkdownConverter markdownConverter,
-                                                   final RestFactory restFactory) {
+    public ContentStoreContentPackDetailsPresenter(final MarkdownConverter markdownConverter,
+                                                   final RestFactory restFactory,
+                                                   final ContentStoreCredentialsDialogPresenter credentialsDialog) {
 
         this.markdownConverter = markdownConverter;
         this.restFactory = restFactory;
+        this.credentialsDialog = credentialsDialog;
 
-        HorizontalPanel pnlHorizontal = new HorizontalPanel();
+        final HorizontalPanel pnlHorizontal = new HorizontalPanel();
         pnlHorizontal.addStyleName("contentstore-details");
 
         // Icon
@@ -109,12 +115,12 @@ public class ContentStoreContentPackDetailsPresenter
         pnlHorizontal.add(lblIcon);
 
         // Everything else is in a vertical stack
-        VerticalPanel pnlVertical = new VerticalPanel();
+        final VerticalPanel pnlVertical = new VerticalPanel();
         pnlVertical.addStyleName("contentstore-details-vertical");
         pnlHorizontal.add(pnlVertical);
 
         // Main layout
-        FlexTable detailsTable = new FlexTable();
+        final FlexTable detailsTable = new FlexTable();
         detailsTable.addStyleName("contentstore-details-table");
         FlexCellFormatter detailsFormatter = detailsTable.getFlexCellFormatter();
 
@@ -181,7 +187,7 @@ public class ContentStoreContentPackDetailsPresenter
      * Must be called before UI is used.
      * @param contentStorePresenter The top level of this page. Must not be null.
      */
-    void setContentStorePresenter(ContentStorePresenter contentStorePresenter) {
+    void setContentStorePresenter(final ContentStorePresenter contentStorePresenter) {
         this.contentStorePresenter = contentStorePresenter;
     }
 
@@ -197,7 +203,7 @@ public class ContentStoreContentPackDetailsPresenter
      * @param cp The content pack to display. Can be null
      *           in which case the display will be blank.
      */
-    public void setContentPack(ContentStoreContentPack cp) {
+    public void setContentPack(final ContentStoreContentPack cp) {
         // Store for click handler
         this.contentPack = cp;
 
@@ -244,7 +250,7 @@ public class ContentStoreContentPackDetailsPresenter
      * @param cp The content pack with the info. Must not be null.
      * @return The string to display to the user.
      */
-    private String resolveInstalledLocation(ContentStoreContentPack cp) {
+    private String resolveInstalledLocation(final ContentStoreContentPack cp) {
         String stroomPath = cp.getStroomPath();
         String gitRepoName = cp.getGitRepoName();
         StringBuilder buf = new StringBuilder(stroomPath);
@@ -278,37 +284,80 @@ public class ContentStoreContentPackDetailsPresenter
     private void btnCreateGitRepoClick() {
         if (contentPack != null) {
 
-            // TODO Ask for credentials if (contentPack.getGitNeedsAuth())
-            ContentStoreCreateGitRepoRequest request =
-                    new ContentStoreCreateGitRepoRequest(contentPack,
-                            "",
-                            "");
+            // Ask for credentials if (contentPack.getGitNeedsAuth())
+            if (contentPack.getGitNeedsAuth()) {
+                ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsDialog);
+                credentialsDialog.setupBuilder(
+                        contentPack,
+                        builder);
+                builder.onHideRequest(e -> {
+                            if (e.isOk()) {
+                                if (credentialsDialog.isValid()) {
+                                    // Create the GitRepo with the given credentials
+                                    requestGitRepoCreation(contentPack,
+                                            credentialsDialog.getView().getUsername(),
+                                            credentialsDialog.getView().getPassword());
+                                } else {
+                                    // Something is wrong
+                                    AlertEvent.fireWarn(credentialsDialog,
+                                            credentialsDialog.getValidationMessage(),
+                                            e::reset);
+                                }
+                            } else {
+                                // Cancel pressed
+                                e.hide();
+                            }
+                        })
+                        .fire();
 
-            restFactory
-                    .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
-                    .method(res -> res.create(request))
-                    .onSuccess(result -> {
-                        if (result.isOk()) {
-                            AlertEvent.fireInfo(contentStorePresenter,
-                                    "Creation success",
-                                    result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                        } else {
-                            AlertEvent.fireError(contentStorePresenter,
-                                    "Create failed",
-                                    result.getMessage(),
-                                    () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                        }
-                    })
-                    .onFailure(restError -> {
+            } else {
+                // No authentication needed
+                requestGitRepoCreation(contentPack, null, null);
+            }
+        }
+    }
+
+    /**
+     * Performs the REST request to the server to create a GitRepo.
+     * @param cp The content pack. Must not be null.
+     * @param username The username for authentication, if required.
+     * @param password The password for authentication, if required.
+     */
+    private void requestGitRepoCreation(final ContentStoreContentPack cp,
+                                        final String username,
+                                        final String password) {
+
+        ContentStoreCreateGitRepoRequest request =
+                new ContentStoreCreateGitRepoRequest(cp,
+                        username,
+                        password);
+
+        restFactory
+                .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
+                .method(res -> res.create(request))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(contentStorePresenter,
+                                "Creation success",
+                                result.getMessage(),
+                                () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                    } else {
                         AlertEvent.fireError(contentStorePresenter,
                                 "Create failed",
-                                restError.getMessage(),
+                                result.getMessage(),
                                 () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
-                    })
-                    .taskMonitorFactory(btnCreateGitRepo)
-                    .exec();
-        }
+                    }
+                })
+                .onFailure(restError -> {
+                    AlertEvent.fireError(contentStorePresenter,
+                            "Create failed",
+                            restError.getMessage(),
+                            () -> RefreshExplorerTreeEvent.fire(contentStorePresenter));
+                })
+                .taskMonitorFactory(btnCreateGitRepo)
+                .exec();
+
+
     }
 
 }
