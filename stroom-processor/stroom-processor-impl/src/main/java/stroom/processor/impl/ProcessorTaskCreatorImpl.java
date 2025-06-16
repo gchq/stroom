@@ -18,7 +18,6 @@
 package stroom.processor.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -43,6 +42,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Param;
 import stroom.query.api.Query;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
 import stroom.query.common.v2.EventSearch;
