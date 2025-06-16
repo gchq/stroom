@@ -25,6 +25,11 @@ class TestRoundHour extends AbstractFunctionTest<RoundHour> {
 
         final Instant truncated = time.truncatedTo(ChronoUnit.HOURS);
 
+        final Instant timeWithZone = LocalDateTime.of(2025, 4, 7, 12, 30, 1)
+                .toInstant(ZoneOffset.ofHours(2));
+
+        final Instant truncatedUpWithZone = timeWithZone.truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS);
+
         return Stream.of(
                 TestCase.of(
                         "long date",
@@ -41,7 +46,11 @@ class TestRoundHour extends AbstractFunctionTest<RoundHour> {
                 TestCase.of(
                         "string date",
                         ValDate.create(truncated.toEpochMilli()),
-                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli())))
+                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli()))),
+                TestCase.of(
+                        "long date with timezone",
+                        ValDate.create(truncatedUpWithZone.toEpochMilli()),
+                        ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
 }

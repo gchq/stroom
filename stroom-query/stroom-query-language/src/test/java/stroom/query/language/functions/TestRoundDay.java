@@ -26,6 +26,11 @@ class TestRoundDay extends AbstractFunctionTest<RoundDay> {
 
         final Instant truncated = time.truncatedTo(ChronoUnit.DAYS);
 
+        final Instant timeWithZone = LocalDateTime.of(2025, 4, 7, 10, 0, 1)
+                .toInstant(ZoneOffset.ofHours(-2));
+
+        final Instant truncatedUpWithZone = timeWithZone.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
+
         return Stream.of(
                 TestCase.of(
                         "long date",
@@ -42,7 +47,11 @@ class TestRoundDay extends AbstractFunctionTest<RoundDay> {
                 TestCase.of(
                         "string date down",
                         ValDate.create(truncated.toEpochMilli()),
-                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli())))
+                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli()))),
+                TestCase.of(
+                        "long date with timezone",
+                        ValDate.create(truncatedUpWithZone.toEpochMilli()),
+                        ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
 

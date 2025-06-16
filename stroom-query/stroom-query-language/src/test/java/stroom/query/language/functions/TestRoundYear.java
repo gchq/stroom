@@ -37,6 +37,19 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
                 .withNano(0)
                 .toInstant(ZoneOffset.UTC);
 
+        final Instant timeWithZone = LocalDateTime.of(2025, 7, 1, 0, 0, 1)
+                .toInstant(ZoneOffset.ofHours(-2));
+
+        final Instant truncatedUpWithZone = LocalDateTime.ofInstant(timeWithZone, ZoneOffset.ofHours(2))
+                .plusYears(1)
+                .withMonth(1)
+                .withDayOfMonth(1)
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0)
+                .toInstant(ZoneOffset.ofHours(0));
+
         return Stream.of(
                 TestCase.of(
                         "long date",
@@ -53,7 +66,11 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
                 TestCase.of(
                         "string date",
                         ValDate.create(truncated.toEpochMilli()),
-                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli())))
+                        ValString.create(DateUtil.createNormalDateTimeString(timeT.toEpochMilli()))),
+                TestCase.of(
+                        "long date with timezone",
+                        ValDate.create(truncatedUpWithZone.toEpochMilli()),
+                        ValLong.create(timeWithZone.toEpochMilli()))
         );
     }
 
