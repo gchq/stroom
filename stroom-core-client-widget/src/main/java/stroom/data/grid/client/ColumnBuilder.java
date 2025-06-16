@@ -159,11 +159,11 @@ public class ColumnBuilder<
             styleFunctions = new ArrayList<>();
         }
         if (enabledFunction != null) {
-//            final Function<T_ROW, String> sytleFunction = row ->
-//                    enabledFunction.apply(row)
-//                            ? ""
-//                            : "dataGridDisabledCell";
-//            styleFunctions.add(sytleFunction);
+            final Function<T_ROW, String> sytleFunction = row ->
+                    enabledFunction.apply(row)
+                            ? ""
+                            : "dataGridDisabledCell";
+            styleFunctions.add(sytleFunction);
         }
         return this;
     }
