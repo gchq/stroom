@@ -8,8 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Used for generating documentation in stroom-docs.
  * Provides a description of the associated field/type which can
- * be in markdown.
- * Should be one sentence per line so it meets the style guide of
+ * be in markdown and include short-codes.
+ * Should be one sentence per line, so it meets the style guide of
  * stroom-docs.
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -17,5 +17,4 @@ import java.lang.annotation.Target;
 public @interface Description {
 
     String value();
-
 }
