@@ -1,10 +1,8 @@
 package stroom.gitrepo.impl;
 
-import stroom.gitrepo.api.GitRepoConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -16,8 +14,7 @@ import jakarta.validation.constraints.NotNull;
  * Provides configuration for the GitRepo stuff on the server.
  */
 @JsonPropertyOrder(alphabetic = true)
-@NotInjectableConfig
-public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, IsStroomConfig {
+public class GitRepoConfig extends AbstractConfig implements IsStroomConfig {
     /**
      * Default location where local GitRepos are stored
      */
@@ -31,7 +28,7 @@ public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, 
     /**
      * Default constructor. Configuration created with default values.
      */
-    public GitRepoConfigImpl() {
+    public GitRepoConfig() {
         localDir = DEFAULT_LOCAL_DIR;
     }
 
@@ -41,14 +38,13 @@ public class GitRepoConfigImpl extends AbstractConfig implements GitRepoConfig, 
      */
     @SuppressWarnings("unused")
     @JsonCreator
-    public GitRepoConfigImpl(@JsonProperty("localDir") final String localDir) {
+    public GitRepoConfig(@JsonProperty("localDir") final String localDir) {
         this.localDir = localDir;
     }
 
     /**
      * @return Where to store local Git repos.
      */
-    @Override
     @NotNull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The path relative to the home directory to use "
