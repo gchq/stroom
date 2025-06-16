@@ -5,7 +5,6 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.gitrepo.api.GitRepoConfig;
 import stroom.gitrepo.api.GitRepoStorageService;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
@@ -21,6 +20,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -68,7 +68,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Where we get configuration from.
      */
-    private final GitRepoConfig config;
+    private final Provider<GitRepoConfig> config;
 
     /**
      * Object to create paths for local storage.
@@ -110,7 +110,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     public GitRepoStorageServiceImpl(final ExplorerService explorerService,
                                      final ExplorerNodeService explorerNodeService,
                                      final ImportExportSerializer importExportSerializer,
-                                     final GitRepoConfig config,
+                                     final Provider<GitRepoConfig> config,
                                      final PathCreator pathCreator,
                                      final GitRepoStore gitRepoStore) {
         this.explorerService = explorerService;
@@ -155,7 +155,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         // Only try to do anything if the settings exist
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
-            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
+            final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
             final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
 
             // Create Git object for the gitWork directory
@@ -277,7 +277,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         // Only try to do anything if the settings exist
         if (!gitRepoDoc.getUrl().isEmpty()) {
             // Find the path to the root of the local Git repository
-            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
+            final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
             final Path gitWork = localDir.resolve(gitRepoDoc.getUuid());
 
             // Grab everything from server - it won't be too big
@@ -638,7 +638,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
         LOGGER.info("Checking if updates are available for '{}'", gitRepoDoc.getUrl());
 
         if (!gitRepoDoc.getUrl().isEmpty()) {
-            final Path localDir = pathCreator.toAppPath(config.getLocalDir());
+            final Path localDir = pathCreator.toAppPath(config.get().getLocalDir());
             final Path gitWorkDir = localDir.resolve(gitRepoDoc.getUuid());
             try {
                 boolean updatesAvailable = this.gitUpdatesAvailable(gitRepoDoc, gitWorkDir);

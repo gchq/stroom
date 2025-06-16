@@ -34,7 +34,7 @@ import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
-import stroom.gitrepo.impl.GitRepoConfigImpl;
+import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -149,7 +149,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ExplorerConfig explorerConfig;
     private final ExportConfig exportConfig;
     private final FeedConfig feedConfig;
-    private final GitRepoConfigImpl gitRepoConfig;
+    private final GitRepoConfig gitRepoConfig;
     private final IndexConfig indexConfig;
     private final JobSystemConfig jobSystemConfig;
     private final KafkaConfig kafkaConfig;
@@ -202,7 +202,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ExplorerConfig(),
                 new ExportConfig(),
                 new FeedConfig(),
-                new GitRepoConfigImpl(),
+                new GitRepoConfig(),
                 new IndexConfig(),
                 new JobSystemConfig(),
                 new KafkaConfig(),
@@ -254,7 +254,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                      @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                      @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
-                     @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfigImpl gitRepoConfig,
+                     @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfig gitRepoConfig,
                      @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                      @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                      @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -442,7 +442,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty(PROP_NAME_GIT_REPO)
-    public GitRepoConfigImpl getGitRepoConfig() {
+    public GitRepoConfig getGitRepoConfig() {
         return gitRepoConfig;
     }
 
