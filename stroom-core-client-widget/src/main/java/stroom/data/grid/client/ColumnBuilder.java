@@ -128,11 +128,11 @@ public class ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
             styleFunctions = new ArrayList<>();
         }
         if (enabledFunction != null) {
-//            final Function<T_ROW, String> sytleFunction = row ->
-//                    enabledFunction.apply(row)
-//                            ? ""
-//                            : "dataGridDisabledCell";
-//            styleFunctions.add(sytleFunction);
+            final Function<T_ROW, String> sytleFunction = row ->
+                    enabledFunction.apply(row)
+                            ? ""
+                            : "dataGridDisabledCell";
+            styleFunctions.add(sytleFunction);
         }
         return this;
     }
