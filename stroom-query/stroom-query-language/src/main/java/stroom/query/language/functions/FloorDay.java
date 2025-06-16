@@ -16,7 +16,11 @@
 
 package stroom.query.language.functions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -37,8 +41,11 @@ class FloorDay extends RoundDate {
     static final String NAME = "floorDay";
     private static final Calc CALC = new Calc();
 
-    public FloorDay(final String name) {
+    private final ExpressionContext expressionContext;
+
+    public FloorDay(final String name, final ExpressionContext expressionContext) {
         super(name);
+        this.expressionContext = expressionContext;
     }
 
     @Override
@@ -46,12 +53,17 @@ class FloorDay extends RoundDate {
         return CALC;
     }
 
+    protected ZonedDateTime toZonedDateTime(final long epochMillis) {
+        final ZoneId zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
+    }
+
     static class Calc extends RoundDateCalculator {
-
-
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            return dateTime.toLocalDate().atStartOfDay();
+            ZonedDateTime zoned = dateTime.atZone(ZoneId.of("UTC"));
+            ZonedDateTime floored = zoned.truncatedTo(ChronoUnit.DAYS);
+            return floored.toLocalDateTime();
         }
     }
 }

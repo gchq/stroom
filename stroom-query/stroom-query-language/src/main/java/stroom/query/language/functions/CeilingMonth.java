@@ -16,7 +16,12 @@
 
 package stroom.query.language.functions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -37,8 +42,11 @@ class CeilingMonth extends RoundDate {
     static final String NAME = "ceilingMonth";
     private static final Calc CALC = new Calc();
 
-    public CeilingMonth(final String name) {
+    private final ExpressionContext expressionContext;
+
+    public CeilingMonth(final String name, final ExpressionContext expressionContext) {
         super(name);
+        this.expressionContext = expressionContext;
     }
 
     @Override
@@ -46,15 +54,26 @@ class CeilingMonth extends RoundDate {
         return CALC;
     }
 
+    protected ZonedDateTime toZonedDateTime(final long epochMillis) {
+        final ZoneId zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        return Instant.ofEpochMilli(epochMillis).atZone(zoneId);
+    }
+
     static class Calc extends RoundDateCalculator {
 
         @Override
         protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
-            if (dateTime.isAfter(result)) {
-                result = result.plusMonths(1);
+            ZonedDateTime zoned = dateTime.atZone(ZoneOffset.UTC);
+            ZonedDateTime startOfMonth = zoned
+                    .withDayOfMonth(1)
+                    .withHour(0)
+                    .withMinute(0)
+                    .withSecond(0)
+                    .withNano(0);
+            if (zoned.isAfter(startOfMonth)) {
+                startOfMonth = startOfMonth.plusMonths(1);
             }
-            return result;
+            return startOfMonth.toLocalDateTime();
         }
     }
 }

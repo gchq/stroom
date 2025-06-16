@@ -32,7 +32,12 @@ class RoundTime extends RoundDate {
 
     static final String NAME = "roundTime";
 
+
     public RoundTime(final String name) {
+        super(name);
+    }
+
+    public RoundTime(final String name, final ExpressionContext expressionContext) {
         super(name);
     }
 
@@ -54,6 +59,37 @@ class RoundTime extends RoundDate {
             return calc(value, params);
         }
 
+        public Val calc(final Val value, final Param[] params) {
+            final Long val = value.toLong();
+            if (val == null) {
+                return ValNull.INSTANCE;
+            }
+            try {
+                final Duration duration = parseDuration(params[1], "duration");
+                final Duration offset = parseDuration(params[2], "offset");
+
+                final long offsetMillis = offset.toMillis();
+                final long shiftedTime = val - offsetMillis;
+
+                final long durationMillis = duration.toMillis();
+                final long remainder = shiftedTime % durationMillis;
+                long roundedMillis = shiftedTime - remainder;
+                if (remainder >= durationMillis / 2) {
+                    roundedMillis += durationMillis;
+                }
+
+                return ValLong.create(roundedMillis + offsetMillis);
+
+            } catch (IllegalArgumentException e) {
+                return ValErr.create(e.getMessage());
+            }
+        }
+
+        @Override
+        protected LocalDateTime adjust(final LocalDateTime dateTime) {
+            throw new UnsupportedOperationException("Use calc(Val, Param[]) instead.");
+        }
+
         private Duration parseDuration(final Param param, final String paramName) {
             if (param == null) {
                 return Duration.ZERO;
@@ -63,47 +99,6 @@ class RoundTime extends RoundDate {
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException("Invalid " + paramName + " format: " + param.toString());
             }
-        }
-
-        public Val calc(final Val value, final Param[] params) {
-            final Long val = value.toLong();
-            if (val == null) {
-                return ValNull.INSTANCE;
-            }
-
-            try {
-                final Duration duration = parseDuration(params[1], "duration");
-                final Duration offset = parseDuration(params[2], "offset");
-
-                long epochMillis = val;
-                long durationMillis = duration.toMillis();
-                long offsetMillis = offset.toMillis();
-
-                // Adjust for offset
-                epochMillis -= offsetMillis;
-
-                // Calculate the remainder
-                long remainder = epochMillis % durationMillis;
-
-                // Round to the nearest duration
-                if (remainder >= durationMillis / 2) {
-                    epochMillis += (durationMillis - remainder);
-                } else {
-                    epochMillis -= remainder;
-                }
-
-                // Apply the offset adjustment
-                epochMillis += offsetMillis;
-
-                return ValLong.create(epochMillis);
-            } catch (IllegalArgumentException e) {
-                return ValErr.create(e.getMessage());
-            }
-        }
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            throw new UnsupportedOperationException("Use calc(Val, Param[]) instead.");
         }
     }
 }
