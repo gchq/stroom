@@ -39,6 +39,8 @@ public class ContentStoreCreateGitRepoRequest {
      * Constructor for content pack. Called by JSON serialisation system.
      * @param contentPack The content pack to create the GitRepoDoc from.
      *                    Must never be null.
+     * @param username The username, if authentication is required. Can be null.
+     * @param password The password, if authentication is required. Can be null.
      */
     @JsonCreator
     @SuppressWarnings("unused")
