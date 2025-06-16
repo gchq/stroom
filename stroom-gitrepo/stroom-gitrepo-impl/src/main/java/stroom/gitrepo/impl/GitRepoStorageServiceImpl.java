@@ -236,19 +236,19 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      */
     private void gitStatusToMessages(final Status gitStatus,
                                      final List<Message> messages) {
-        for (var filename : gitStatus.getUncommittedChanges()) {
+        for (String filename : gitStatus.getUncommittedChanges()) {
             messages.add(new Message(Severity.INFO, "Changed: " + filename));
         }
-        for (var dirname : gitStatus.getUntrackedFolders()) {
+        for (String dirname : gitStatus.getUntrackedFolders()) {
             messages.add(new Message(Severity.INFO, "New folder: " + dirname));
         }
-        for (var filename : gitStatus.getUntracked()) {
+        for (String filename : gitStatus.getUntracked()) {
             messages.add(new Message(Severity.INFO, "New file: " + filename));
         }
-        for (var filename : gitStatus.getMissing()) {
+        for (String filename : gitStatus.getMissing()) {
             messages.add(new Message(Severity.INFO, "Deleted: " + filename));
         }
-        for (var filename : gitStatus.getModified()) {
+        for (String filename : gitStatus.getModified()) {
             messages.add(new Message(Severity.INFO, "Modified: " + filename));
         }
     }
@@ -309,7 +309,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             }
 
             Set<DocRef> docRefs = importExportSerializer.read(pathToImport, importStates, importSettings);
-            for (var docRef : docRefs) {
+            for (DocRef docRef : docRefs) {
                 // ImportExportSerializerImpl adds the System docref to the returned set,
                 // but we don't use that here, so ignore it
                 if (!docRef.equals(ExplorerConstants.SYSTEM_DOC_REF)) {
@@ -342,14 +342,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
             throws IOException {
 
         LOGGER.error("{}, {}, {}", errorMessage, cause, messages);
-        var buf = new StringBuilder(errorMessage);
+        StringBuilder buf = new StringBuilder(errorMessage);
         if (cause != null) {
             buf.append("\n    ");
             buf.append(cause.getMessage());
         }
         if (!messages.isEmpty()) {
             buf.append("\n\nAdditional information:");
-            for (var m : messages) {
+            for (Message m : messages) {
                 buf.append("\n    ");
                 buf.append(m);
             }
