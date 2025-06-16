@@ -2,6 +2,8 @@ package stroom.receive.content.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
+import stroom.docs.shared.Description;
+import stroom.docs.shared.NotDocumented;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@NotDocumented
+@Description("")
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class ContentTemplates extends Doc {
