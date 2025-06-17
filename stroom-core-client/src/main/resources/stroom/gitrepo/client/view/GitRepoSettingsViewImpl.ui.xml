@@ -44,15 +44,10 @@
                         title="Automatically push changes to the Git repository"
                         ui:field="autoPush" />
         </form:FormGroup>
-        <form:FormGroup identity="gitRepoCommitMessage" label="Commit Message">
-            <g:TextArea name="CommitMessage"
-                        title="Commit Message"
-                        ui:field="commitMessage" />
-        </form:FormGroup>
         <b:Button ui:field="gitRepoPush"
                   text="Push to Git"
                   addStyleNames="allow-focus"
-                  title="Add a commit message before pushing"
+                  title="Push any changes into the Git repository"
                   width="200px" />
         <b:Button ui:field="gitRepoPull"
                   text="Pull from Git"

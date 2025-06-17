@@ -2532,3 +2532,11 @@ button.main-menu svg {
 .contentstore-details-buttons .gwt-CheckBox label {
     margin-left: 5px;
 }
+
+/* GitRepo stuff */
+/* Commit message dialog */
+.gitrepo-commit-message-dialog textarea {
+    width: 100%;
+    height: 220px;
+    resize: none;
+}

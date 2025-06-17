@@ -27,6 +27,7 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,14 +43,19 @@ public class GitRepoSettingsPresenter
         implements GitRepoSettingsUiHandlers {
 
     /**
-     * Server REST API.
-     */
-    private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
-
-    /**
      * Provides REST connection to the server.
      */
     private final RestFactory restFactory;
+
+    /**
+     * Shows the commit message dialog box.
+     */
+    private final GitRepoCommitDialogPresenter commitDialog;
+
+    /**
+     * Server REST API.
+     */
+    private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
 
     /**
      * Local copy of the gitRepoDoc, saved in the onRead() method.
@@ -60,10 +66,12 @@ public class GitRepoSettingsPresenter
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
-                                    final RestFactory restFactory) {
+                                    final RestFactory restFactory,
+                                    final GitRepoCommitDialogPresenter commitDialog) {
         super(eventBus, view);
         this.restFactory = restFactory;
         view.setUiHandlers(this);
+        this.commitDialog = commitDialog;
     }
 
     @Override
@@ -115,35 +123,64 @@ public class GitRepoSettingsPresenter
      */
     @Override
     public void onGitRepoPush(final TaskMonitorFactory taskMonitorFactory) {
+
         // Use the gitRepoDoc saved in the onRead() method, if available
         if (gitRepoDoc != null) {
-            final GitRepoDoc doc = onWrite(gitRepoDoc);
-            final GitRepoPushDto dto = new GitRepoPushDto(doc, this.getView().getCommitMessage());
-            restFactory
-                    .create(GIT_REPO_RESOURCE)
-                    .method(res -> res.pushToGit(dto))
-                    .onSuccess(result -> {
-                        // Wipe the commit message
-                        this.getView().setCommitMessage("");
-
-                        // Pop up an alert to show what happened
-                        if (result.isOk()) {
-                            AlertEvent.fireInfo(GitRepoSettingsPresenter.this,
-                                    "Push Success",
-                                    result.getMessage(),
-                                    null);
+            ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
+            commitDialog.setupDialog(builder);
+            builder.onHideRequest(e -> {
+                        if (e.isOk()) {
+                            // OK pressed so check if the dialog is valid
+                            if (commitDialog.isValid()) {
+                                e.hide();
+                                requestGitRepoPush(taskMonitorFactory,
+                                        commitDialog.getView().getCommitMessage());
+                            } else {
+                                // Something is wrong - tell user what it is and reset the dialog
+                                AlertEvent.fireWarn(commitDialog,
+                                        commitDialog.getValidationMessage(),
+                                        e::reset);
+                            }
                         } else {
-                            AlertEvent.fireError(GitRepoSettingsPresenter.this,
-                                    "Push Failure",
-                                    result.getMessage(),
-                                    null);
+                            // Cancel pressed
+                            e.hide();
                         }
                     })
-                    .taskMonitorFactory(taskMonitorFactory)
-                    .exec();
+                    .fire();
         } else {
             AlertEvent.fireWarn(this, "Git repository information not available", "", null);
         }
+    }
+
+    /**
+     * Does the push into Git, once the CommitDialog has been OK'd.
+     * @param taskMonitorFactory Where to display the wait icon
+     * @param commitMessage The commit message, from the dialog box.
+     */
+    private void requestGitRepoPush(final TaskMonitorFactory taskMonitorFactory,
+                                    final String commitMessage) {
+
+        final GitRepoDoc doc = onWrite(gitRepoDoc);
+        final GitRepoPushDto dto = new GitRepoPushDto(doc, commitMessage);
+        restFactory
+                .create(GIT_REPO_RESOURCE)
+                .method(res -> res.pushToGit(dto))
+                .onSuccess(result -> {
+                    // Pop up an alert to show what happened
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(GitRepoSettingsPresenter.this,
+                                "Push Success",
+                                result.getMessage(),
+                                null);
+                    } else {
+                        AlertEvent.fireError(GitRepoSettingsPresenter.this,
+                                "Push Failure",
+                                result.getMessage(),
+                                null);
+                    }
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     /**
@@ -248,10 +285,6 @@ public class GitRepoSettingsPresenter
         void setCommit(String commit);
 
         void setGitRemoteCommitName(String remoteCommitName);
-
-        String getCommitMessage();
-
-        void setCommitMessage(final String commitMessage);
 
         Boolean isAutoPush();
 
